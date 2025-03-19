@@ -1,0 +1,34 @@
+name: Build and Deploy Game
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'data/characters/**'
+      - 'data/audio/**'
+      
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v1
+        with:
+          version: 4.2.1
+          export-templates: true
+          
+      - name: Build WASM
+        run: |
+          mkdir -p build/web
+          godot --headless --export-release "Web" build/web/index.html
+          
+      - name: Deploy to hosting
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: pages deploy build/web --project-name=game
