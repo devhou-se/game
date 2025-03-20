@@ -4,6 +4,11 @@ var grid_size = 16
 var is_moving = false
 var target_position = Vector2.ZERO
 var speed = 50
+var max_stamina = 100
+var stamina_regen = 20
+var stamina = 0
+var stamina_drain = 1
+var sprint_speed = 100
 var last_direction = "down"  # Track last direction for idle state
 var particles
 var footstep_player: AudioStreamPlayer2D
@@ -87,7 +92,7 @@ func _process(delta):
 		stamina = max(0, stamina - stamina_drain * delta * (1.0 + wind_resistance))  # Drain stamina faster in wind
 		particles.emitting = is_moving
 	else:
-		speed = base_speed * (1.0 - wind_resistance * 0.3)  # Reduce base speed less in wind
+		speed = speed * (1.0 - wind_resistance * 0.3)  # Reduce base speed less in wind
 		stamina = min(max_stamina, stamina + stamina_regen * delta)
 		particles.emitting = false
 	
