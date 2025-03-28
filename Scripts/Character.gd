@@ -1,9 +1,10 @@
-extends AnimatedSprite
+extends KinematicBody2D
 
 var grid_size = 16
 var is_moving = false
 var target_position = Vector2.ZERO
 var speed = 50
+var base_speed = 50
 var max_stamina = 100
 var stamina_regen = 20
 var stamina = 0
@@ -67,15 +68,15 @@ func update_animation(direction: String, is_walking: bool):
 	
 	match direction:
 		"left":
-			play(animation_prefix + "_side")
-			flip_h = true
+			sprite.play(animation_prefix + "_side")
+			sprite.flip_h = true
 		"right":
-			play(animation_prefix + "_side")
-			flip_h = false
+			sprite.play(animation_prefix + "_side")
+			sprite.flip_h = false
 		"up":
-			play(animation_prefix + "_back")
+			sprite.play(animation_prefix + "_back")
 		"down":
-			play(animation_prefix)  # Using default animations for front
+			sprite.play(animation_prefix)  # Using default animations for front
 	
 	last_direction = direction
 
