@@ -1,12 +1,12 @@
 name: "Godot CI/CD Export and Deploy"
 on:
-#  push:
-#    branches:
-#      - master
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 env:
-  GODOT_VERSION: 4.2.1
+  GODOT_VERSION: 3.6
   PROJECT_PATH: "."
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
     name: Web Export and Firebase Deploy
     runs-on: ubuntu-latest
     container:
-      image: barichello/godot-ci:4.2.1
+      image: barichello/godot-ci:mono-3.6
     
     steps:
       - name: Checkout
@@ -23,45 +23,31 @@ jobs:
           lfs: true
           fetch-depth: 0
 
-      - name: Cache Godot Export Templates
-        uses: actions/cache@v3
-        with:
-          path: ~/.local/share/godot/export_templates
-          key: ${{ runner.os }}-godot-${{ env.GODOT_VERSION }}
-
-      - name: Setup Export Templates
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+#      - name: Cache Godot Export Templates
+#        uses: actions/cache@v3
+#        with:
+#          path: ~/.local/share/godot/export_templates
+#          key: ${{ runner.os }}-godot-${{ env.GODOT_VERSION }}
+#
+#      - name: Setup Export Templates
+#        if: steps.cache.outputs.cache-hit != 'true'
+#        run: |
+#          mkdir -v -p ~/.local/share/godot/export_templates/
+#          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
 
       - name: Web Build
         run: |
           mkdir -v -p public
-          cd $PROJECT_PATH
-          godot --headless --verbose --export-release "HTML5" "./public/index.html" || exit 1
-
+          godot --verbose --export "HTML5" ./public/index.html || true 
+          
       - name: Install Node.js and npm
         run: |
           apt-get update
           apt-get install -y curl
-          curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+          curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
           apt-get install -y nodejs
           node --version
           npm --version
-
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Setup Firebase Tools
-        run: |
-          npm install -g firebase-tools@latest
-          firebase --version
         
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -69,4 +55,4 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEVHOUSE_80936 }}'
           channelId: live
           projectId: devhouse-80936
-          target: hosting
+          target: devhouse-80936

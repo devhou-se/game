@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "devhouse-80936",
     "public": "public",
     "ignore": [
       "firebase.json",
