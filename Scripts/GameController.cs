@@ -52,4 +52,22 @@ public class GameController : Node
 		
 		player.Teleport(Vector2.Zero);
 	}
+
+	public enum TimeOfDay
+	{
+		Morning,
+		Day,
+		Evening,
+		Night,
+	}
+	private TimeOfDay timeOfDay;
+
+	public TimeOfDay GetTime()
+	{
+		return timeOfDay;
+	}
+	public void SetTime(TimeOfDay time)
+	{
+		timeOfDay = time;
+	}
 }
