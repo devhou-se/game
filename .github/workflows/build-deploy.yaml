@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'data/characters/**'
-      - 'data/audio/**'
       
 jobs:
   build-and-deploy:
