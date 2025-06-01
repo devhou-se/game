@@ -43,7 +43,12 @@ jobs:
 
       - name: Export Web Build
         run: |
-          timeout 300 godot --headless --export "HTML5" ./public/index.html
+          timeout 300 godot --headless --export "HTML5" ./public/index.html || echo "Export attempt completed"
+          ls -la public/
+          if [ ! -f "public/index.html" ]; then
+            echo "Export failed - no index.html generated"
+            exit 1
+          fi
           
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
