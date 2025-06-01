@@ -16,3 +16,6 @@ mono_crash.*.json
 
 .idea
 .DS_Store
+
+# Build output
+public/
