@@ -37,8 +37,18 @@ jobs:
       - name: Build Project
         run: |
           mkdir -v -p public
+          
+          # Set up Godot templates directory and initialize project
+          mkdir -p ~/.local/share/godot/templates
           godot --headless --verbose --editor --quit
+          
+          # Build C# project
           dotnet build game.sln
+          
+          # Check if export templates are available
+          echo "Checking Godot version and export templates..."
+          godot --version
+          ls -la ~/.local/share/godot/templates/ || echo "No templates directory found"
 
       - name: Export Web Build
         run: |
