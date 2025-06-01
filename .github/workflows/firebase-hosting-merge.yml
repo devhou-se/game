@@ -23,22 +23,10 @@ jobs:
           lfs: true
           fetch-depth: 0
 
-#      - name: Cache Godot Export Templates
-#        uses: actions/cache@v3
-#        with:
-#          path: ~/.local/share/godot/export_templates
-#          key: ${{ runner.os }}-godot-${{ env.GODOT_VERSION }}
-#
-#      - name: Setup Export Templates
-#        if: steps.cache.outputs.cache-hit != 'true'
-#        run: |
-#          mkdir -v -p ~/.local/share/godot/export_templates/
-#          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-
       - name: Web Build
         run: |
           mkdir -v -p public
-          godot --verbose --export "HTML5" ./public/index.html || true 
+          godot --verbose --export "HTML5" ./public/index.html 
           
       - name: Install Node.js and npm
         run: |
