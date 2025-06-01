@@ -26,6 +26,10 @@ jobs:
       - name: Setup and Build
         run: |
           mkdir -v -p public
+          apt-get update && apt-get install -y wget
+          wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          dpkg -i packages-microsoft-prod.deb
+          apt-get update && apt-get install -y dotnet-sdk-7.0
           godot --headless --verbose --editor --quit
           dotnet build game.sln
           
