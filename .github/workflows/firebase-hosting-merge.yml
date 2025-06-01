@@ -44,6 +44,12 @@ jobs:
         run: |
           timeout 300 godot --headless --verbose --export "HTML5" ./public/index.html || echo "Export attempt completed"
           ls -la public/
+          if [ ! -f "public/index.html" ]; then
+            echo "Export failed - no files generated in public/"
+            exit 1
+          fi
+          echo "Export successful - files generated:"
+          ls -la public/*.html public/*.js public/*.wasm public/*.pck || true
           
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
