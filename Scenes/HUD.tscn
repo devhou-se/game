@@ -88,7 +88,7 @@ margin_left = 7.0
 margin_top = 13.0
 margin_right = 93.0
 margin_bottom = 27.0
-text = "Sunny"
+text = "Sunny :)"
 align = 1
 
 [node name="Energy" type="ProgressBar" parent="MarginContainer/HBoxContainer"]
