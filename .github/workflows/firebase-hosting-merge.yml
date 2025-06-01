@@ -23,10 +23,15 @@ jobs:
           lfs: true
           fetch-depth: 0
 
-      - name: Web Build
+      - name: Setup and Build
         run: |
           mkdir -v -p public
-          godot --verbose --export "HTML5" ./public/index.html 
+          godot --headless --verbose --editor --quit
+          dotnet build game.sln
+          
+      - name: Web Build
+        run: |
+          godot --headless --verbose --export "HTML5" ./public/index.html 
           
       - name: Install Node.js and npm
         run: |
