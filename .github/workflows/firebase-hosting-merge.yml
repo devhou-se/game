@@ -24,7 +24,7 @@ jobs:
       - name: Setup Dependencies
         run: |
           apt-get update
-          apt-get install -y wget curl
+          apt-get install -y wget curl unzip
           
           wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
           dpkg -i packages-microsoft-prod.deb
@@ -38,17 +38,18 @@ jobs:
         run: |
           mkdir -v -p public
           
-          # Set up Godot templates directory and initialize project
-          mkdir -p ~/.local/share/godot/templates
+          # Download and install Godot export templates
+          echo "Installing Godot 3.6 export templates..."
+          mkdir -p ~/.local/share/godot/templates/3.6.stable.mono
+          wget -q https://downloads.tuxfamily.org/godotengine/3.6/mono/Godot_v3.6-stable_mono_export_templates.tpz
+          unzip -q Godot_v3.6-stable_mono_export_templates.tpz -d /tmp/
+          cp -r /tmp/templates/* ~/.local/share/godot/templates/3.6.stable.mono/
+          
+          # Initialize project
           godot --headless --verbose --editor --quit
           
           # Build C# project
           dotnet build game.sln
-          
-          # Check if export templates are available
-          echo "Checking Godot version and export templates..."
-          godot --version
-          ls -la ~/.local/share/godot/templates/ || echo "No templates directory found"
 
       - name: Export Web Build
         run: |
