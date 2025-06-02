@@ -34,7 +34,26 @@ public class NPC : Character, Bumper
 		_control = GetNode<Control>("Control");
 		
 		// Try to find the interaction screen in the scene
-		_interactionScreen = GetTree().CurrentScene.GetNodeOrNull<InteractionScreen>("InteractionScreen");
+		// First try to find it as a sibling in the parent
+		_interactionScreen = GetParent()?.GetParent()?.GetNodeOrNull<InteractionScreen>("InteractionScreen");
+		
+		// If not found, try to find it in the scene tree
+		if (_interactionScreen == null)
+		{
+			try 
+			{
+				_interactionScreen = GetNode<InteractionScreen>("/root/Main/CurrentLevel/InteractionScreen");
+			}
+			catch 
+			{
+				GD.Print($"InteractionScreen not found for NPC {NPCName}");
+			}
+		}
+		
+		if (_interactionScreen != null)
+		{
+			GD.Print($"InteractionScreen found for NPC {NPCName}!");
+		}
 		
 		// Update name label if it exists
 		var nameLabel = GetNodeOrNull<Label>("NameLabel");
@@ -76,6 +95,8 @@ public class NPC : Character, Bumper
 		}
 		
 		// Check if we should use full interaction screen
+		GD.Print($"Bump called on {NPCName} - EnableFullInteraction: {EnableFullInteraction}, InteractionScreen: {_interactionScreen != null}");
+		
 		if (EnableFullInteraction && _interactionScreen != null)
 		{
 			List<string> dialogue = new List<string>();
