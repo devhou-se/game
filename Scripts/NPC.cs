@@ -9,15 +9,40 @@ public class NPC : Character, Bumper
 	[Export]
 	public bool CaresAboutBaileyButlerBeingInTheOffice { get; set; } 
 	
+	[Export]
+	public bool EnableFullInteraction { get; set; } = true;
+	
+	[Export]
+	public string NPCName { get; set; } = "NPC";
+	
+	[Export(PropertyHint.MultilineText)]
+	public string[] DialogueLines { get; set; } = new string[] {
+		"Hello there!",
+		"Nice to meet you.",
+		"How can I help you today?"
+	};
+	
 	private bool _isBaileyButlerInTheOffice;
 
 	private float _textTimeLeft = 0.0f;
 	private Control _control;
+	private InteractionScreen _interactionScreen;
 
 	public override void _Ready()
 	{
 		base._Ready();
 		_control = GetNode<Control>("Control");
+		
+		// Try to find the interaction screen in the scene
+		_interactionScreen = GetTree().CurrentScene.GetNodeOrNull<InteractionScreen>("InteractionScreen");
+		
+		// Update name label if it exists
+		var nameLabel = GetNodeOrNull<Label>("NameLabel");
+		if (nameLabel != null)
+		{
+			NPCName = nameLabel.Text;
+		}
+		
 		CheckIfBaileyButlerIsInTheOffice();
 	}
 
@@ -47,6 +72,38 @@ public class NPC : Character, Bumper
 	{
 		if (_textTimeLeft > 0)
 		{
+			return;
+		}
+		
+		// Check if we should use full interaction screen
+		if (EnableFullInteraction && _interactionScreen != null)
+		{
+			List<string> dialogue = new List<string>();
+			
+			// Add special dialogue if they care about Bailey Butler
+			if (CaresAboutBaileyButlerBeingInTheOffice)
+			{
+				if (_isBaileyButlerInTheOffice)
+				{
+					dialogue.Add("Oh thank goodness I found you!");
+					dialogue.Add("I need to let you know that Bailey Butler is in the office today!");
+					dialogue.Add("You should definitely go say hi!");
+				}
+				else
+				{
+					dialogue.Add("Sorry, I can't talk right now...");
+					dialogue.Add("I'm too busy looking for Bailey Butler.");
+					dialogue.Add("He's definitely not in the office today!");
+				}
+			}
+			else
+			{
+				// Use the configured dialogue lines
+				dialogue.AddRange(DialogueLines);
+			}
+			
+			// Show the interaction screen
+			_interactionScreen.ShowInteraction(NPCName, dialogue, GetNode<AnimatedSprite>("AnimatedSprite").Frames);
 			return;
 		}
 
