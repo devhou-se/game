@@ -32,5 +32,54 @@ SpeedBoostDuration = 5.0
 [node name="NPC" parent="Characters" instance=ExtResource( 1 )]
 position = Vector2( -48, -16 )
 
+[node name="NameLabel" type="Label" parent="Characters/NPC"]
+margin_left = -20.0
+margin_top = -30.0
+margin_right = 20.0
+margin_bottom = -20.0
+text = "Bailey"
+align = 1
+
 [node name="NPC2" parent="Characters" instance=ExtResource( 1 )]
 position = Vector2( 48, -16 )
+
+[node name="NameLabel" type="Label" parent="Characters/NPC2"]
+margin_left = -20.0
+margin_top = -30.0
+margin_right = 20.0
+margin_bottom = -20.0
+text = "Dylan"
+align = 1
+
+[node name="NPC3" parent="Characters" instance=ExtResource( 1 )]
+position = Vector2( 0, 48 )
+
+[node name="NameLabel" type="Label" parent="Characters/NPC3"]
+margin_left = -20.0
+margin_top = -30.0
+margin_right = 20.0
+margin_bottom = -20.0
+text = "Damian"
+align = 1
+
+[node name="NPC4" parent="Characters" instance=ExtResource( 1 )]
+position = Vector2( -96, 16 )
+
+[node name="NameLabel" type="Label" parent="Characters/NPC4"]
+margin_left = -20.0
+margin_top = -30.0
+margin_right = 20.0
+margin_bottom = -20.0
+text = "Julia"
+align = 1
+
+[node name="NPC5" parent="Characters" instance=ExtResource( 1 )]
+position = Vector2( 96, 16 )
+
+[node name="NameLabel" type="Label" parent="Characters/NPC5"]
+margin_left = -20.0
+margin_top = -30.0
+margin_right = 20.0
+margin_bottom = -20.0
+text = "Yashuk"
+align = 1
