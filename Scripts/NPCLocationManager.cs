@@ -85,17 +85,22 @@ public class NPCLocationManager : Node
         }
         
         // Find the Characters node (with YSort)
-        var charactersNode = currentScene.GetNode("YSort/Characters");
+        var charactersNode = currentScene.GetNode("Characters");
         if (charactersNode == null)
         {
-            GD.PrintErr("Characters node not found in current scene");
-            return;
+            // Try alternative path
+            charactersNode = currentScene.GetNode("YSort/Characters");
+            if (charactersNode == null)
+            {
+                GD.PrintErr("Characters node not found in current scene");
+                return;
+            }
         }
         
         // Check if NPC already exists
         foreach (Node child in charactersNode.GetChildren())
         {
-            if (child is NPC npc && npc.Name == npcName)
+            if (child is NPC npc && npc.NPCName == npcName)
             {
                 // Move existing NPC
                 npc.Position = coords;
