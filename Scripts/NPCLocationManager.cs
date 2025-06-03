@@ -117,7 +117,7 @@ public class NPCLocationManager : Node
         
         // Configure the NPC
         newNPC.Name = npcName;
-        newNPC.npcName = npcName;
+        newNPC.NPCName = npcName;
         newNPC.Position = coords;
         
         // Add to scene
