@@ -29,12 +29,16 @@ public class NPCLocationManager : Node
         
         // World locations
         var worldLocations = new Dictionary<string, Vector2>();
-        worldLocations["vending machine"] = new Vector2(-32, -24); // Two cells (16px each) to the left of vending machine at (0, -24)
+        worldLocations["vending machine"] = new Vector2(-200, -150); // Top left corner - more visible location
         worldLocations["center"] = new Vector2(0, 0);
         worldLocations["north entrance"] = new Vector2(0, -100);
         worldLocations["south entrance"] = new Vector2(0, 100);
         worldLocations["east plaza"] = new Vector2(100, 0);
         worldLocations["west plaza"] = new Vector2(-100, 0);
+        worldLocations["top left corner"] = new Vector2(-200, -150);
+        worldLocations["top right corner"] = new Vector2(200, -150);
+        worldLocations["bottom left corner"] = new Vector2(-200, 150);
+        worldLocations["bottom right corner"] = new Vector2(200, 150);
         
         locationMappings["World"] = worldLocations;
         
