@@ -24,6 +24,12 @@ public class InteractionScreen : Control
         
         continueButton.Connect("pressed", this, nameof(OnContinuePressed));
         
+        // Ensure this control can receive input
+        SetProcessInput(true);
+        
+        // Allow processing when paused
+        PauseMode = PauseModeEnum.Process;
+        
         // Hide by default
         Visible = false;
     }
@@ -32,12 +38,8 @@ public class InteractionScreen : Control
     {
         if (!Visible) return;
         
-        // Allow clicking anywhere or pressing space/enter to continue
-        if (@event is InputEventMouseButton mouseEvent && mouseEvent.Pressed && mouseEvent.ButtonIndex == 1)
-        {
-            OnContinuePressed();
-        }
-        else if (@event is InputEventKey keyEvent && keyEvent.Pressed)
+        // Only handle keyboard input here, mouse clicks are handled by the button
+        if (@event is InputEventKey keyEvent && keyEvent.Pressed)
         {
             if (keyEvent.Scancode == (uint)KeyList.Space || keyEvent.Scancode == (uint)KeyList.Enter)
             {
@@ -46,22 +48,17 @@ public class InteractionScreen : Control
         }
     }
     
-    public void ShowInteraction(string npcName, List<string> dialogue, SpriteFrames spriteFrames = null)
+    public void ShowInteraction(NPC npc, string lastScene = "")
     {
-        this.npcName = npcName;
-        this.dialogueLines = new List<string>(dialogue);
-        this.npcSpriteFrames = spriteFrames;
+        this.npcName = npc.NPCName;
+        this.dialogueLines = new List<string>(npc.DialogueLines);
+        this.characterSprite = npc.GetNode<AnimatedSprite>("CharacterDisplay/AnimatedSprite");
+        
         currentLineIndex = 0;
         
         // Set up the display
         nameLabel.Text = npcName;
         
-        if (spriteFrames != null)
-        {
-            characterSprite.Frames = spriteFrames;
-        }
-        
-        // Show first line
         ShowCurrentLine();
         
         // Show the screen
@@ -108,11 +105,9 @@ public class InteractionScreen : Control
     
     private void CloseInteraction()
     {
-        Visible = false;
-        GetTree().Paused = false;
+        this.QueueFree();
         
-        // Emit signal that interaction is complete
-        EmitSignal("interaction_completed", npcName);
+        GetTree().Paused = false;
     }
     
     [Signal]
