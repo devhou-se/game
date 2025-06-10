@@ -13,10 +13,10 @@ public class NPC : Character, Bumper
 	public bool EnableFullInteraction { get; set; } = true;
 	
 	[Export]
-	public string NPCName { get; set; } = "NPC";
+	public string NPCName { get; set; }
 	
 	[Export(PropertyHint.MultilineText)]
-	public string[] DialogueLines { get; set; } = new string[] {
+	public string[] DialogueLines { get; set; } = {
 		"Hello there!",
 		"Nice to meet you.",
 		"How can I help you today?"
@@ -54,13 +54,9 @@ public class NPC : Character, Bumper
 		{
 			GD.Print($"InteractionScreen found for NPC {NPCName}!");
 		}
-		
-		// Update name label if it exists
-		var nameLabel = GetNodeOrNull<Label>("NameLabel");
-		if (nameLabel != null)
-		{
-			NPCName = nameLabel.Text;
-		}
+
+		var nameLabel = GetNode<Label>("Title");
+		nameLabel.Text = NPCName;
 		
 		CheckIfBaileyButlerIsInTheOffice();
 	}

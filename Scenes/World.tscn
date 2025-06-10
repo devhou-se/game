@@ -1,10 +1,9 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://Scenes/NPC.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Assets/Tilemap/Tilemap.tres" type="TileSet" id=2]
 [ext_resource path="res://Scenes/vendingMachine.tscn" type="PackedScene" id=3]
 [ext_resource path="res://Scenes/Door.tscn" type="PackedScene" id=4]
-[ext_resource path="res://Scenes/InteractionScreen.tscn" type="PackedScene" id=5]
 
 [node name="World" type="Node2D"]
 
@@ -30,70 +29,27 @@ SpeedBoostDuration = 5.0
 
 [node name="Characters" type="YSort" parent="."]
 
-[node name="NPC" parent="Characters" instance=ExtResource( 1 )]
+[node name="Bailey" parent="Characters" instance=ExtResource( 1 )]
 position = Vector2( -48, -16 )
 NPCName = "Bailey"
-DialogueLines = PoolStringArray( "Hey there! I'm Bailey.", "I run the development house around here.", "Always happy to chat about game development!", "Feel free to ask me anything!" )
+DialogueLines = PoolStringArray( "Hey there! I\'m Bailey.", "I run the development house around here.", "Always happy to chat about game development!", "Feel free to ask me anything!" )
 
-[node name="NameLabel" type="Label" parent="Characters/NPC"]
-margin_left = -20.0
-margin_top = -30.0
-margin_right = 20.0
-margin_bottom = -20.0
-text = "Bailey"
-align = 1
-
-[node name="NPC2" parent="Characters" instance=ExtResource( 1 )]
+[node name="Dylan" parent="Characters" instance=ExtResource( 1 )]
 position = Vector2( 48, -16 )
 NPCName = "Dylan"
-DialogueLines = PoolStringArray( "Hi! I'm Dylan, nice to meet you!", "I love working on creative projects.", "Have you seen any cool games lately?", "Let's build something awesome together!" )
+DialogueLines = PoolStringArray( "Hi! I\'m Dylan, nice to meet you!", "I love working on creative projects.", "Have you seen any cool games lately\?", "Let\'s build something awesome together!" )
 
-[node name="NameLabel" type="Label" parent="Characters/NPC2"]
-margin_left = -20.0
-margin_top = -30.0
-margin_right = 20.0
-margin_bottom = -20.0
-text = "Dylan"
-align = 1
-
-[node name="NPC3" parent="Characters" instance=ExtResource( 1 )]
+[node name="Damian" parent="Characters" instance=ExtResource( 1 )]
 position = Vector2( 0, 48 )
 NPCName = "Damian"
-DialogueLines = PoolStringArray( "Hey, I'm Damian!", "I'm passionate about game mechanics and design.", "What brings you to the dev house?", "I'm always looking for new challenges!" )
+DialogueLines = PoolStringArray( "Hey, I\'m Damian!", "I\'m passionate about game mechanics and design.", "What brings you to the dev house\?", "I\'m always looking for new challenges!" )
 
-[node name="NameLabel" type="Label" parent="Characters/NPC3"]
-margin_left = -20.0
-margin_top = -30.0
-margin_right = 20.0
-margin_bottom = -20.0
-text = "Damian"
-align = 1
-
-[node name="NPC4" parent="Characters" instance=ExtResource( 1 )]
+[node name="Julia" parent="Characters" instance=ExtResource( 1 )]
 position = Vector2( -96, 16 )
 NPCName = "Julia"
-DialogueLines = PoolStringArray( "Hello! I'm Julia.", "I specialize in UI/UX design.", "Making games beautiful and intuitive is my passion!", "Have you tried the interaction system? I helped design it!" )
+DialogueLines = PoolStringArray( "Hello! I\'m Julia.", "I specialize in UI/UX design.", "Making games beautiful and intuitive is my passion!", "Have you tried the interaction system\? I helped design it!" )
 
-[node name="NameLabel" type="Label" parent="Characters/NPC4"]
-margin_left = -20.0
-margin_top = -30.0
-margin_right = 20.0
-margin_bottom = -20.0
-text = "Julia"
-align = 1
-
-[node name="NPC5" parent="Characters" instance=ExtResource( 1 )]
+[node name="Yashuk" parent="Characters" instance=ExtResource( 1 )]
 position = Vector2( 96, 16 )
 NPCName = "Yashuk"
-DialogueLines = PoolStringArray( "Greetings! I'm Yashuk.", "I love working on AI and game logic.", "Have you noticed how the NPCs move around?", "There's always something new to discover here!" )
-
-[node name="NameLabel" type="Label" parent="Characters/NPC5"]
-margin_left = -20.0
-margin_top = -30.0
-margin_right = 20.0
-margin_bottom = -20.0
-text = "Yashuk"
-align = 1
-
-[node name="InteractionScreen" parent="." instance=ExtResource( 5 )]
-pause_mode = 2
+DialogueLines = PoolStringArray( "Greetings! I\'m Yashuk.", "I love working on AI and game logic.", "Have you noticed how the NPCs move around\?", "There\'s always something new to discover here!" )
