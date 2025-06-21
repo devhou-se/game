@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/F9C4AB7D-CD42-45BC-8224-3BCA02B3D78B.png-676bf18759a62f2f97228d76b4391e16.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://some-assets/Pixaki/Stores/Lawson sign 3.pixaki/images/drawings/F9C4AB7D-CD42-45BC-8224-3BCA02B3D78B.png"
+dest_files=[ "res://.import/F9C4AB7D-CD42-45BC-8224-3BCA02B3D78B.png-676bf18759a62f2f97228d76b4391e16.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=0
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=2
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+process/normal_map_invert_y=false
+stream=false
+size_limit=0
+detect_3d=true
+svg/scale=1.0

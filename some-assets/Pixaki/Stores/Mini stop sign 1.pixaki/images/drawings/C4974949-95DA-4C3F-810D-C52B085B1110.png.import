@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/C4974949-95DA-4C3F-810D-C52B085B1110.png-35c33e54ef4a01de64af89db9ed9943a.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://some-assets/Pixaki/Stores/Mini stop sign 1.pixaki/images/drawings/C4974949-95DA-4C3F-810D-C52B085B1110.png"
+dest_files=[ "res://.import/C4974949-95DA-4C3F-810D-C52B085B1110.png-35c33e54ef4a01de64af89db9ed9943a.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=0
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=2
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+process/normal_map_invert_y=false
+stream=false
+size_limit=0
+detect_3d=true
+svg/scale=1.0

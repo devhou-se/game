@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/D5018B16-EA57-4399-9730-C0E1CFEB8B6C.png-3068789603a8fe2ecb3241bfaa05df5a.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://some-assets/Pixaki/Landmarks/Tokyo Station.pixaki/images/drawings/D5018B16-EA57-4399-9730-C0E1CFEB8B6C.png"
+dest_files=[ "res://.import/D5018B16-EA57-4399-9730-C0E1CFEB8B6C.png-3068789603a8fe2ecb3241bfaa05df5a.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=0
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=2
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+process/normal_map_invert_y=false
+stream=false
+size_limit=0
+detect_3d=true
+svg/scale=1.0

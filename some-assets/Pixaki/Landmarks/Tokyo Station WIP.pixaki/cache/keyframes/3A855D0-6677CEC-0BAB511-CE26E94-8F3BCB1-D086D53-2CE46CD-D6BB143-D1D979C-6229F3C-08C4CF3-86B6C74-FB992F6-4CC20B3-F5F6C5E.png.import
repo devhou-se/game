@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/3A855D0-6677CEC-0BAB511-CE26E94-8F3BCB1-D086D53-2CE46CD-D6BB143-D1D979C-6229F3C-08C4CF3-86B6C74-FB992F6-4CC20B3-F5F6C5E.png-b9a6f364fdce152e3d3332cda7a07e3b.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://some-assets/Pixaki/Landmarks/Tokyo Station WIP.pixaki/cache/keyframes/3A855D0-6677CEC-0BAB511-CE26E94-8F3BCB1-D086D53-2CE46CD-D6BB143-D1D979C-6229F3C-08C4CF3-86B6C74-FB992F6-4CC20B3-F5F6C5E.png"
+dest_files=[ "res://.import/3A855D0-6677CEC-0BAB511-CE26E94-8F3BCB1-D086D53-2CE46CD-D6BB143-D1D979C-6229F3C-08C4CF3-86B6C74-FB992F6-4CC20B3-F5F6C5E.png-b9a6f364fdce152e3d3332cda7a07e3b.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=0
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=2
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+process/normal_map_invert_y=false
+stream=false
+size_limit=0
+detect_3d=true
+svg/scale=1.0
