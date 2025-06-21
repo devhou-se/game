@@ -7,7 +7,7 @@ public class GameController : Node
 	private Player currentPlayer;
 	private Node2D level;
 	private Node2D levelParent;
-	private NPCLocationManager locationManager;
+	private DayNightController dayNightController;
 	
 	public override void _Ready()
 	{
@@ -15,9 +15,8 @@ public class GameController : Node
 		levelParent = GetNode<Node2D>("../CurrentLevel");
 		player = GD.Load<PackedScene>("res://Scenes/Player.tscn").Instance<Player>();
 		
-		// Initialize location manager
-		locationManager = new NPCLocationManager();
-		AddChild(locationManager);
+		// Initialize day/night system
+		InitializeDayNightSystem();
 		
 		Goto("World");
 		
@@ -66,6 +65,9 @@ public class GameController : Node
 		ySort.AddChild(player);
 		
 		player.Teleport(Vector2.Zero);
+		
+		// Setup day/night effects for outdoor scenes
+		SetupSceneDayNight(scene);
 	}
 
 	public enum TimeOfDay
@@ -86,8 +88,59 @@ public class GameController : Node
 		timeOfDay = time;
 	}
 	
-	public NPCLocationManager GetLocationManager()
+	private void InitializeDayNightSystem()
 	{
-		return locationManager;
+		// Create day/night controller
+		dayNightController = new DayNightController();
+		dayNightController.Name = "DayNightController";
+		GetParent().AddChild(dayNightController);
+		
+		// Create time/weather HUD
+		var hud = new TimeWeatherHUD();
+		hud.Name = "TimeWeatherHUD";
+		GetParent().AddChild(hud);
+	}
+	
+	private void SetupSceneDayNight(string sceneName)
+	{
+		// Only apply day/night effects to outdoor scenes
+		string[] outdoorScenes = { "World", "Town", "tokyo_overworld" };
+		bool isOutdoor = false;
+		
+		foreach (string outdoorScene in outdoorScenes)
+		{
+			if (sceneName.Equals(outdoorScene, StringComparison.OrdinalIgnoreCase))
+			{
+				isOutdoor = true;
+				break;
+			}
+		}
+		
+		if (isOutdoor && dayNightController != null)
+		{
+			// Setup street lights for this scene
+			dayNightController.SetupStreetLights(level);
+			
+			// Add environment controller if particles exist
+			var environmentController = new EnvironmentController();
+			environmentController.Name = "EnvironmentController";
+			level.AddChild(environmentController);
+		}
+	}
+	
+	// Public methods for other systems to access day/night info
+	public DayNightController GetDayNightController()
+	{
+		return dayNightController;
+	}
+	
+	public bool IsNightTime()
+	{
+		return dayNightController?.IsNightTime() ?? false;
+	}
+	
+	public string GetCurrentWeather()
+	{
+		return dayNightController?.GetCurrentWeather() ?? "clear";
 	}
 }
