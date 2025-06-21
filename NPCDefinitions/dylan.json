@@ -1,0 +1,104 @@
+{
+  "Id": "dylan",
+  "Name": "Dylan",
+  "Description": "A creative developer who loves working on innovative projects",
+  "Personality": "Creative, enthusiastic, collaborative, always looking for new ideas",
+  "BackgroundStory": "Dylan is a creative developer at the development house who specializes in innovative game mechanics and unique player experiences.",
+  "Visual": {
+    "SpriteSheetPath": "res://Assets/16x16/dylan_spritesheet.tres",
+    "PortraitPath": "",
+    "Scale": 1.0,
+    "TintColor": "#FFFFFF",
+    "AnimationOverrides": {},
+    "UseCustomShader": false,
+    "CustomShaderPath": ""
+  },
+  "Behavior": {
+    "EnableFullInteraction": true,
+    "CaresAboutBaileyButlerOfficeStatus": false,
+    "InteractionRadius": 32.0,
+    "CanBePickedUp": false,
+    "ReactsToWeather": true,
+    "ReactsToTimeOfDay": true,
+    "CustomFlags": ["creative", "idea_generator"],
+    "CustomProperties": {
+      "favorite_genre": "puzzle_platformer",
+      "current_project": "experimental_vr"
+    }
+  },
+  "Dialogue": {
+    "Type": "Simple",
+    "SimpleDialogueLines": [
+      "Hi! I'm Dylan, nice to meet you!",
+      "I love working on creative projects.",
+      "Have you seen any cool games lately?",
+      "Let's build something awesome together!",
+      "I'm always looking for unique game mechanics.",
+      "Creativity is the key to great game design!"
+    ],
+    "ComplexDialogueTree": null,
+    "ConditionalDialogue": {
+      "rainy": ["Perfect weather for indoor game development!"],
+      "sunny": ["Beautiful day! But I'd rather be coding."],
+      "has_idea": ["I just had an amazing idea for a new game mechanic!"]
+    },
+    "CollisionResponses": {
+      "default": "Hey! Let's chat properly!",
+      "busy": "Sorry, deep in thought about a puzzle design!"
+    },
+    "DefaultGreeting": "Hey there, creative soul!",
+    "DefaultFarewell": "Keep creating awesome things!",
+    "TextDisplaySpeed": 0.04,
+    "UseTypewriterEffect": true
+  },
+  "Movement": {
+    "Pattern": "Random",
+    "MoveSpeed": 60.0,
+    "WaitTimeBetweenMoves": 2.5,
+    "PatrolPoints": [],
+    "CanChasePlayer": false,
+    "ChaseSpeed": 100.0,
+    "ChaseRadius": 150.0,
+    "AvoidObstacles": true,
+    "MovementModifiers": {
+      "excited": 1.5,
+      "thinking": 0.5
+    }
+  },
+  "Audio": {
+    "VoiceId": "dylan_voice_001",
+    "VoicePitch": 1.1,
+    "VoiceVolume": 0.9,
+    "SoundEffects": {
+      "idea": "res://Audio/SFX/lightbulb.ogg",
+      "thinking": "res://Audio/SFX/hmm.ogg"
+    },
+    "FootstepSound": "res://Audio/SFX/footstep_normal.ogg",
+    "InteractionSound": "res://Audio/SFX/interaction_start.ogg",
+    "EnableVoiceSynthesis": true
+  },
+  "GameData": {
+    "SpawnLocation": "east plaza",
+    "SpawnWorld": "World",
+    "RequiredItems": [],
+    "GivesItems": ["creative_spark"],
+    "Stats": {
+      "creativity": 10,
+      "enthusiasm": 8
+    },
+    "QuestIds": ["creative_challenge", "prototype_together"],
+    "IsMerchant": false,
+    "ShopInventory": []
+  },
+  "Metadata": {
+    "CreatedBy": "Original",
+    "CreatedAt": "2024-01-01T00:00:00Z",
+    "BlogPostUrl": "",
+    "BlogPostTitle": "",
+    "Tags": ["developer", "creative", "friendly", "enthusiastic"],
+    "Version": "1.0.0",
+    "AdditionalData": {
+      "preferred_tools": "Unity, Blender, Aseprite"
+    }
+  }
+}

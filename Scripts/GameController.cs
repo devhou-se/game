@@ -27,7 +27,7 @@ public class GameController : Node
 	private void PlaceBaileyAtVendingMachine()
 	{
 		// Place Bailey at the vending machine location
-		locationManager.PlaceNPC("Bailey", "World", "vending machine");
+		NPCLocationManager.Instance.PlaceNPC("Bailey", "World", "vending machine");
 	}
 	
 	public override void _Process(float delta)

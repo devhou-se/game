@@ -27,7 +27,6 @@ config/icon="res://icon.png"
 [autoload]
 
 Global="*res://Scripts/Global.cs"
-GameInit="*res://Scripts/GameInit.cs"
 NPCDefinitions="*res://Scripts/NPCDefinitions.cs"
 
 [display]

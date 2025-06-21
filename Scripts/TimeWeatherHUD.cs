@@ -10,10 +10,14 @@ public class TimeWeatherHUD : Control
     public override void _Ready()
     {
         // Create the UI elements
-        SetAnchorsAndMargins(MARGIN_LEFT, 0.0f);
-        SetAnchorsAndMargins(MARGIN_TOP, 0.0f);
-        SetAnchorsAndMargins(MARGIN_RIGHT, 0.0f);
-        SetAnchorsAndMargins(MARGIN_BOTTOM, 0.0f);
+        AnchorLeft = 0.0f;
+        AnchorTop = 0.0f;
+        AnchorRight = 1.0f;
+        AnchorBottom = 0.0f;
+        MarginLeft = 0.0f;
+        MarginTop = 0.0f;
+        MarginRight = 0.0f;
+        MarginBottom = 0.0f;
         
         var vbox = new VBoxContainer();
         vbox.AnchorRight = 1.0f;
