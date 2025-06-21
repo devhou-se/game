@@ -90,12 +90,12 @@ public class GameController : Node
 	
 	private void InitializeDayNightSystem()
 	{
-		// Create day/night controller
+		// Create day/night controller (use CallDeferred to avoid timing issues)
 		dayNightController = new DayNightController();
 		dayNightController.Name = "DayNightController";
 		GetParent().CallDeferred("add_child", dayNightController);
 		
-		// Create time/weather HUD
+		// Create time/weather HUD (use CallDeferred to avoid timing issues)
 		var hud = new TimeWeatherHUD();
 		hud.Name = "TimeWeatherHUD";
 		GetParent().CallDeferred("add_child", hud);
@@ -118,13 +118,32 @@ public class GameController : Node
 		
 		if (isOutdoor && dayNightController != null)
 		{
-			// Setup street lights for this scene (defer to ensure DayNightController is ready)
-			dayNightController.CallDeferred("SetupStreetLights", level);
+			// Setup street lights for this scene (deferred to avoid timing issues)
+			CallDeferred("SetupSceneLighting", level);
 			
 			// Add environment controller if particles exist
 			var environmentController = new EnvironmentController();
 			environmentController.Name = "EnvironmentController";
 			level.CallDeferred("add_child", environmentController);
+			
+			// Ensure CanvasModulate is working for this scene (deferred to avoid timing issues)
+			CallDeferred("EnsureSceneCanvasModulate");
+		}
+	}
+	
+	private void SetupSceneLighting(Node2D scene)
+	{
+		if (dayNightController != null && scene != null)
+		{
+			dayNightController.SetupStreetLights(scene);
+		}
+	}
+	
+	private void EnsureSceneCanvasModulate()
+	{
+		if (dayNightController != null)
+		{
+			dayNightController.EnsureCanvasModulate();
 		}
 	}
 	
@@ -141,6 +160,6 @@ public class GameController : Node
 	
 	public string GetCurrentWeather()
 	{
-		return dayNightController?.GetCurrentWeather() ?? "clear";
+		return dayNightController?.GetCurrentWeather() ?? "Sunny";
 	}
 }

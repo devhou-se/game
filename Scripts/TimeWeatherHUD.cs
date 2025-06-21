@@ -9,41 +9,57 @@ public class TimeWeatherHUD : Control
     
     public override void _Ready()
     {
-        // Create the UI elements
-        AnchorLeft = 0.0f;
+        // Create the UI elements - centered at top of screen
+        AnchorLeft = 0.5f;
         AnchorTop = 0.0f;
-        AnchorRight = 1.0f;
+        AnchorRight = 0.5f;
         AnchorBottom = 0.0f;
-        MarginLeft = 0.0f;
-        MarginTop = 0.0f;
-        MarginRight = 0.0f;
-        MarginBottom = 0.0f;
+        MarginLeft = -100; // Half of expected width
+        MarginTop = 10;
+        MarginRight = 100;
+        MarginBottom = 100;
         
         var vbox = new VBoxContainer();
-        vbox.AnchorRight = 1.0f;
-        vbox.MarginLeft = 10;
-        vbox.MarginTop = 10;
+        vbox.Alignment = BoxContainer.AlignMode.Center;
         AddChild(vbox);
         
         // Time label
         timeLabel = new Label();
         timeLabel.Text = "Time: Loading...";
+        timeLabel.Align = Label.AlignEnum.Center;
         timeLabel.AddStyleboxOverride("normal", CreatePanelBackground());
         vbox.AddChild(timeLabel);
         
         // Weather label
         weatherLabel = new Label();
         weatherLabel.Text = "Weather: Loading...";
+        weatherLabel.Align = Label.AlignEnum.Center;
         weatherLabel.AddStyleboxOverride("normal", CreatePanelBackground());
         vbox.AddChild(weatherLabel);
         
-        // Find day/night controller
-        dayNightController = GetNodeOrNull<DayNightController>("/root/Main/DayNightController");
+        // Find day/night controller (as sibling)
+        CallDeferred(nameof(FindDayNightController));
+    }
+    
+    private void FindDayNightController()
+    {
+        // Try to find as sibling first
+        dayNightController = GetParent()?.GetNodeOrNull<DayNightController>("DayNightController");
+        
+        // If not found, try the Main node path
+        if (dayNightController == null)
+        {
+            dayNightController = GetNodeOrNull<DayNightController>("/root/Main/DayNightController");
+        }
         
         if (dayNightController != null)
         {
             dayNightController.Connect(nameof(DayNightController.TimeChanged), this, nameof(OnTimeChanged));
             dayNightController.Connect(nameof(DayNightController.WeatherChanged), this, nameof(OnWeatherChanged));
+            
+            // Get initial values
+            OnTimeChanged(dayNightController.GetTimeOfDay(), dayNightController.GetCurrentHour());
+            OnWeatherChanged(dayNightController.GetCurrentWeather());
         }
     }
     

@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <GodotTargetPlatform>desktop</GodotTargetPlatform>
+  </PropertyGroup>
+</Project>

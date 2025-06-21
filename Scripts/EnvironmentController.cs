@@ -21,8 +21,12 @@ public class EnvironmentController : Node2D
         waterReflections = GetNodeOrNull<CPUParticles2D>("WaterReflections");
         leafParticles = GetNodeOrNull<CPUParticles2D>("LeafParticles");
         
-        // Find day/night controller
-        dayNightController = GetNodeOrNull<DayNightController>("/root/Main/DayNightController");
+        // Find day/night controller - it's added as a sibling to Main
+        var main = GetNodeOrNull("/root/Main");
+        if (main != null)
+        {
+            dayNightController = main.GetParent()?.GetNodeOrNull<DayNightController>("DayNightController");
+        }
         
         // Connect to wind controller if it exists
         var windController = GetNodeOrNull("/root/Main/WindController");
@@ -81,7 +85,7 @@ public class EnvironmentController : Node2D
         // Handle fireflies with pulsing glow and wind influence
         if (fireflies != null)
         {
-            fireflies.Emitting = isNight && (weather == "clear" || weather == "cloudy");
+            fireflies.Emitting = isNight && (weather == "Sunny" || weather == "Cloudy");
             if (fireflies.Emitting)
             {
                 float pulse = (Mathf.Sin(time * 2) + 1) * 0.5f;
@@ -96,7 +100,7 @@ public class EnvironmentController : Node2D
         // Make butterflies react to wind
         if (butterflies != null)
         {
-            butterflies.Emitting = !isNight && (weather == "clear" || weather == "cloudy");
+            butterflies.Emitting = !isNight && (weather == "Sunny" || weather == "Cloudy");
             if (butterflies.Emitting)
             {
                 butterflies.Direction = windInfluence;
@@ -107,7 +111,7 @@ public class EnvironmentController : Node2D
         // Enhance leaf particles with wind
         if (leafParticles != null)
         {
-            leafParticles.Emitting = weather == "rain" || windInfluence.Length() > 0.3f;
+            leafParticles.Emitting = weather == "Rainy" || windInfluence.Length() > 0.3f;
             if (leafParticles.Emitting)
             {
                 leafParticles.Direction = windInfluence;
@@ -118,7 +122,7 @@ public class EnvironmentController : Node2D
         // Make water reflections respond to wind
         if (waterReflections != null)
         {
-            waterReflections.Amount = weather == "clear" ? 50 : 30;
+            waterReflections.Amount = weather == "Sunny" ? 50 : 30;
             waterReflections.InitialVelocity = 5 + windInfluence.Length() * 10;
             waterReflections.Direction = windInfluence;
         }
