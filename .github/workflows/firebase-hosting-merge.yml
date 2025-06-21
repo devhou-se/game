@@ -46,6 +46,15 @@ jobs:
           cp -r /tmp/templates/* ~/.local/share/godot/templates/3.6.stable.mono/
           ls -la ~/.local/share/godot/templates/3.6.stable.mono/
           
+          # Ensure NPCDefinitions directory is present with all JSON files
+          echo "Verifying NPCDefinitions directory..."
+          if [ ! -d "NPCDefinitions" ]; then
+            echo "ERROR: NPCDefinitions directory not found!"
+            exit 1
+          fi
+          echo "NPCDefinitions contents:"
+          ls -la NPCDefinitions/
+          
           # Initialize project
           godot --headless --verbose --editor --quit
           
@@ -54,6 +63,10 @@ jobs:
 
       - name: Export Web Build
         run: |
+          # Ensure NPCDefinitions directory exists and contains JSON files
+          echo "Checking NPCDefinitions directory..."
+          ls -la NPCDefinitions/ || echo "NPCDefinitions directory not found"
+          
           timeout 300 godot --headless --verbose --export "HTML5" ./public/index.html || echo "Export attempt completed"
           ls -la public/
           if [ ! -f "public/index.html" ]; then
@@ -62,6 +75,10 @@ jobs:
           fi
           echo "Export successful - files generated:"
           ls -la public/*.html public/*.js public/*.wasm public/*.pck || true
+          
+          # Verify that NPCDefinitions are included in the export
+          echo "Checking if NPCDefinitions are in the .pck file..."
+          strings public/*.pck | grep -i "npcdefin" | head -20 || echo "Warning: NPCDefinitions may not be included in export"
           
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
