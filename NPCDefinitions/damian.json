@@ -1,0 +1,106 @@
+{
+  "Id": "damian",
+  "Name": "Damian",
+  "Description": "A passionate game developer focused on mechanics and design",
+  "Personality": "Enthusiastic, analytical, challenge-seeking, technical",
+  "BackgroundStory": "Damian is a core member of the development house who specializes in game mechanics and design patterns. He loves tackling complex technical challenges and discussing innovative gameplay ideas.",
+  "Visual": {
+    "SpriteSheetPath": "res://Assets/16x16/damian_spritesheet.tres",
+    "PortraitPath": "",
+    "Scale": 1.0,
+    "TintColor": "#FFFFFF",
+    "AnimationOverrides": {},
+    "UseCustomShader": false,
+    "CustomShaderPath": ""
+  },
+  "Behavior": {
+    "EnableFullInteraction": true,
+    "CaresAboutBaileyButlerOfficeStatus": false,
+    "InteractionRadius": 32.0,
+    "CanBePickedUp": false,
+    "ReactsToWeather": false,
+    "ReactsToTimeOfDay": true,
+    "CustomFlags": ["game_designer", "mechanics_expert", "problem_solver"],
+    "CustomProperties": {
+      "favorite_mechanic": "emergent_gameplay",
+      "current_obsession": "procedural_generation"
+    }
+  },
+  "Dialogue": {
+    "Type": "Simple",
+    "SimpleDialogueLines": [
+      "Hey, I'm Damian!",
+      "I'm passionate about game mechanics and design.",
+      "What brings you to the dev house?",
+      "I'm always looking for new challenges!",
+      "Have you ever designed a game mechanic?",
+      "The best games have simple rules but deep gameplay.",
+      "I believe every mechanic should serve the core experience."
+    ],
+    "ComplexDialogueTree": null,
+    "ConditionalDialogue": {
+      "morning": ["Early morning is the best time for design work!"],
+      "evening": ["Still iterating on that mechanic from this morning..."],
+      "excited": ["I just had an amazing idea for a new game mechanic!"]
+    },
+    "CollisionResponses": {
+      "default": "Whoa! Let's discuss this properly!",
+      "thinking": "Sorry, deep in design thoughts..."
+    },
+    "DefaultGreeting": "Hey! Ready to talk game design?",
+    "DefaultFarewell": "Keep iterating on those ideas!",
+    "TextDisplaySpeed": 0.045,
+    "UseTypewriterEffect": true
+  },
+  "Movement": {
+    "Pattern": "Random",
+    "MoveSpeed": 55.0,
+    "WaitTimeBetweenMoves": 2.8,
+    "PatrolPoints": [],
+    "CanChasePlayer": false,
+    "ChaseSpeed": 100.0,
+    "ChaseRadius": 150.0,
+    "AvoidObstacles": true,
+    "MovementModifiers": {
+      "pondering": 0.4,
+      "excited": 1.3
+    }
+  },
+  "Audio": {
+    "VoiceId": "damian_voice_001",
+    "VoicePitch": 0.95,
+    "VoiceVolume": 0.95,
+    "SoundEffects": {
+      "eureka": "res://Audio/SFX/idea_spark.ogg",
+      "hmm": "res://Audio/SFX/thinking.ogg"
+    },
+    "FootstepSound": "res://Audio/SFX/footstep_normal.ogg",
+    "InteractionSound": "res://Audio/SFX/interaction_start.ogg",
+    "EnableVoiceSynthesis": true
+  },
+  "GameData": {
+    "SpawnLocation": "south entrance",
+    "SpawnWorld": "World",
+    "RequiredItems": [],
+    "GivesItems": ["design_document"],
+    "Stats": {
+      "technical_skill": 9,
+      "creativity": 8,
+      "focus": 10
+    },
+    "QuestIds": ["design_challenge", "mechanic_workshop"],
+    "IsMerchant": false,
+    "ShopInventory": []
+  },
+  "Metadata": {
+    "CreatedBy": "Original",
+    "CreatedAt": "2024-01-01T00:00:00Z",
+    "BlogPostUrl": "",
+    "BlogPostTitle": "",
+    "Tags": ["developer", "game_designer", "technical", "analytical"],
+    "Version": "1.0.0",
+    "AdditionalData": {
+      "specialty": "Game Mechanics & Systems Design"
+    }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "Id": "yashuk",
+  "Name": "Yashuk",
+  "Description": "An AI and game logic specialist who loves creating intelligent systems",
+  "Personality": "Logical, curious, methodical, insightful",
+  "BackgroundStory": "Yashuk is the AI and systems expert at the development house. They're fascinated by creating intelligent behaviors and emergent gameplay through clever programming and logic systems.",
+  "Visual": {
+    "SpriteSheetPath": "res://Assets/16x16/yashuk_spritesheet.tres",
+    "PortraitPath": "",
+    "Scale": 1.0,
+    "TintColor": "#FFFFFF",
+    "AnimationOverrides": {},
+    "UseCustomShader": false,
+    "CustomShaderPath": ""
+  },
+  "Behavior": {
+    "EnableFullInteraction": true,
+    "CaresAboutBaileyButlerOfficeStatus": false,
+    "InteractionRadius": 32.0,
+    "CanBePickedUp": false,
+    "ReactsToWeather": false,
+    "ReactsToTimeOfDay": true,
+    "CustomFlags": ["ai_expert", "logic_master", "systems_thinker"],
+    "CustomProperties": {
+      "favorite_algorithm": "a_star_pathfinding",
+      "current_project": "npc_behavior_trees"
+    }
+  },
+  "Dialogue": {
+    "Type": "Simple",
+    "SimpleDialogueLines": [
+      "Greetings! I'm Yashuk.",
+      "I love working on AI and game logic.",
+      "Have you noticed how the NPCs move around?",
+      "There's always something new to discover here!",
+      "AI doesn't need to be complex to be effective.",
+      "Sometimes the simplest algorithms create the most interesting behaviors.",
+      "I've been experimenting with emergent AI patterns.",
+      "Every NPC here has their own personality matrix!"
+    ],
+    "ComplexDialogueTree": null,
+    "ConditionalDialogue": {
+      "morning": ["Good morning! Time to optimize some algorithms."],
+      "evening": ["The NPCs seem more active in the evening, don't they?"],
+      "analyzing": ["Fascinating... I'm observing some interesting patterns."]
+    },
+    "CollisionResponses": {
+      "default": "Collision detected! Please interact properly.",
+      "calculating": "Processing... please wait..."
+    },
+    "DefaultGreeting": "Greetings! Ready to discuss AI logic?",
+    "DefaultFarewell": "May your algorithms be efficient!",
+    "TextDisplaySpeed": 0.04,
+    "UseTypewriterEffect": true
+  },
+  "Movement": {
+    "Pattern": "Patrol",
+    "MoveSpeed": 48.0,
+    "WaitTimeBetweenMoves": 3.5,
+    "PatrolPoints": [
+      {"x": 96, "y": 16},
+      {"x": 96, "y": -64},
+      {"x": 16, "y": -64},
+      {"x": 16, "y": 16}
+    ],
+    "CanChasePlayer": false,
+    "ChaseSpeed": 100.0,
+    "ChaseRadius": 150.0,
+    "AvoidObstacles": true,
+    "MovementModifiers": {
+      "analyzing": 0.2,
+      "curious": 1.1
+    }
+  },
+  "Audio": {
+    "VoiceId": "yashuk_voice_001",
+    "VoicePitch": 1.05,
+    "VoiceVolume": 0.9,
+    "SoundEffects": {
+      "calculate": "res://Audio/SFX/compute.ogg",
+      "eureka": "res://Audio/SFX/discovery.ogg"
+    },
+    "FootstepSound": "res://Audio/SFX/footstep_precise.ogg",
+    "InteractionSound": "res://Audio/SFX/interaction_digital.ogg",
+    "EnableVoiceSynthesis": true
+  },
+  "GameData": {
+    "SpawnLocation": "east plaza",
+    "SpawnWorld": "World",
+    "RequiredItems": [],
+    "GivesItems": ["algorithm_notes"],
+    "Stats": {
+      "logic": 10,
+      "pattern_recognition": 9,
+      "optimization": 10
+    },
+    "QuestIds": ["ai_tutorial", "behavior_tree_workshop"],
+    "IsMerchant": false,
+    "ShopInventory": []
+  },
+  "Metadata": {
+    "CreatedBy": "Original",
+    "CreatedAt": "2024-01-01T00:00:00Z",
+    "BlogPostUrl": "",
+    "BlogPostTitle": "",
+    "Tags": ["developer", "ai_specialist", "logical", "methodical"],
+    "Version": "1.0.0",
+    "AdditionalData": {
+      "specialty": "AI & Game Logic Systems"
+    }
+  }
+}

@@ -1,0 +1,294 @@
+{
+  "Id": "bailey",
+  "Name": "Bailey",
+  "Description": "The creator and lead developer of DevHou.se",
+  "Personality": "Friendly, enthusiastic, knowledgeable about game development, always happy to help",
+  "BackgroundStory": "Bailey runs the development house and loves sharing knowledge about game development, technology, and creative projects. Always excited to discuss new ideas and help others learn.",
+  "Visual": {
+    "SpriteSheetPath": "res://Assets/16x16/bailey_spritesheet.tres",
+    "PortraitPath": "",
+    "Scale": 1.0,
+    "TintColor": "#FFFFFF",
+    "AnimationOverrides": {},
+    "UseCustomShader": false,
+    "CustomShaderPath": ""
+  },
+  "Behavior": {
+    "EnableFullInteraction": true,
+    "CaresAboutBaileyButlerOfficeStatus": true,
+    "InteractionRadius": 32.0,
+    "CanBePickedUp": false,
+    "ReactsToWeather": false,
+    "ReactsToTimeOfDay": false,
+    "CustomFlags": ["is_main_character", "gives_game_tips"],
+    "CustomProperties": {
+      "favorite_engine": "Godot",
+      "office_url": "isbaileybutlerintheoffice.today"
+    }
+  },
+  "Dialogue": {
+    "Type": "Complex",
+    "SimpleDialogueLines": [],
+    "ComplexDialogueTree": {
+      "StartNodeId": "start",
+      "Nodes": {
+        "start": {
+          "Id": "start",
+          "Text": "Hey there! I'm Bailey, and I run the development house around here. Always happy to chat!",
+          "Choices": [
+            {
+              "Text": "Tell me about the development house",
+              "NextNodeId": "devhouse",
+              "RequiredFlag": null,
+              "SetFlag": null
+            },
+            {
+              "Text": "Are you in the office today?",
+              "NextNodeId": "office_status",
+              "RequiredFlag": null,
+              "SetFlag": null
+            },
+            {
+              "Text": "Any game development tips?",
+              "NextNodeId": "gamedev",
+              "RequiredFlag": null,
+              "SetFlag": null
+            }
+          ],
+          "NextNodeId": null,
+          "IsEndNode": false
+        },
+        "devhouse": {
+          "Id": "devhouse",
+          "Text": "DevHou.se is where I blog about game development, tech experiments, and creative projects. It's a place where code meets creativity!",
+          "Choices": [
+            {
+              "Text": "How do blog posts become NPCs?",
+              "NextNodeId": "blog_npcs",
+              "RequiredFlag": null,
+              "SetFlag": null
+            },
+            {
+              "Text": "What kind of projects do you work on?",
+              "NextNodeId": "projects",
+              "RequiredFlag": null,
+              "SetFlag": null
+            },
+            {
+              "Text": "That's interesting!",
+              "NextNodeId": "end_positive",
+              "RequiredFlag": null,
+              "SetFlag": null
+            }
+          ],
+          "NextNodeId": null,
+          "IsEndNode": false
+        },
+        "office_status": {
+          "Id": "office_status",
+          "Text": "Let me check... I'm currently {{OFFICE_STATUS}}.",
+          "Choices": [
+            {
+              "Text": "How can I check your office status?",
+              "NextNodeId": "check_status",
+              "RequiredFlag": null,
+              "SetFlag": null
+            },
+            {
+              "Text": "Do you prefer the office or remote?",
+              "NextNodeId": "work_preference",
+              "RequiredFlag": null,
+              "SetFlag": null
+            }
+          ],
+          "NextNodeId": null,
+          "IsEndNode": false
+        },
+        "gamedev": {
+          "Id": "gamedev",
+          "Text": "Always start with a simple prototype! This whole world started as a basic pixel art experiment. Don't be afraid to iterate and improve as you go.",
+          "Choices": [
+            {
+              "Text": "What engine do you use?",
+              "NextNodeId": "engine",
+              "RequiredFlag": null,
+              "SetFlag": null
+            },
+            {
+              "Text": "Any advice for beginners?",
+              "NextNodeId": "beginner_advice",
+              "RequiredFlag": null,
+              "SetFlag": null
+            },
+            {
+              "Text": "Thanks for the tip!",
+              "NextNodeId": "end_positive",
+              "RequiredFlag": null,
+              "SetFlag": null
+            }
+          ],
+          "NextNodeId": null,
+          "IsEndNode": false
+        },
+        "blog_npcs": {
+          "Id": "blog_npcs",
+          "Text": "It's pretty cool! Each blog post gets analyzed by AI to generate a unique personality, then ElevenLabs creates a voice for them. They become living characters in this world!",
+          "Choices": [],
+          "NextNodeId": "blog_npcs_2",
+          "IsEndNode": false
+        },
+        "blog_npcs_2": {
+          "Id": "blog_npcs_2",
+          "Text": "So every NPC you meet here might have started as an idea, a project, or a story from the blog. It's like giving digital life to creativity!",
+          "Choices": [
+            {
+              "Text": "That's amazing!",
+              "NextNodeId": "end_positive",
+              "RequiredFlag": null,
+              "SetFlag": null
+            },
+            {
+              "Text": "Tell me more about your projects",
+              "NextNodeId": "projects",
+              "RequiredFlag": null,
+              "SetFlag": null
+            }
+          ],
+          "NextNodeId": null,
+          "IsEndNode": false
+        },
+        "projects": {
+          "Id": "projects",
+          "Text": "I work on everything from web apps to game development, AI experiments to creative coding. This game itself is one of my favorite projects - a living portfolio!",
+          "Choices": [],
+          "NextNodeId": null,
+          "IsEndNode": true
+        },
+        "check_status": {
+          "Id": "check_status",
+          "Text": "You can visit isbaileybutlerintheoffice.today - it's a simple API that returns whether I'm physically in the office. Some NPCs here even check it!",
+          "Choices": [],
+          "NextNodeId": null,
+          "IsEndNode": true
+        },
+        "work_preference": {
+          "Id": "work_preference",
+          "Text": "I enjoy both! The office is great for collaboration, but remote work gives me flexibility. This virtual world is kind of the best of both - always accessible from anywhere!",
+          "Choices": [],
+          "NextNodeId": null,
+          "IsEndNode": true
+        },
+        "engine": {
+          "Id": "engine",
+          "Text": "This game is built with Godot 3.6! It's a fantastic open-source engine. The mix of C# and GDScript gives a lot of flexibility.",
+          "Choices": [
+            {
+              "Text": "Why Godot?",
+              "NextNodeId": "why_godot",
+              "RequiredFlag": null,
+              "SetFlag": null
+            },
+            {
+              "Text": "Thanks!",
+              "NextNodeId": "end_positive",
+              "RequiredFlag": null,
+              "SetFlag": null
+            }
+          ],
+          "NextNodeId": null,
+          "IsEndNode": false
+        },
+        "why_godot": {
+          "Id": "why_godot",
+          "Text": "Godot is free, open-source, and exports to web perfectly. Plus, the node system is intuitive and the community is amazing. Perfect for indie developers!",
+          "Choices": [],
+          "NextNodeId": null,
+          "IsEndNode": true
+        },
+        "beginner_advice": {
+          "Id": "beginner_advice",
+          "Text": "Start small, finish projects, and share your work! Don't worry about making everything perfect. This game has evolved so much from its first version.",
+          "Choices": [],
+          "NextNodeId": "beginner_advice_2",
+          "IsEndNode": false
+        },
+        "beginner_advice_2": {
+          "Id": "beginner_advice_2",
+          "Text": "Also, join communities, ask questions, and help others. Game development is more fun when you're learning together!",
+          "Choices": [],
+          "NextNodeId": null,
+          "IsEndNode": true
+        },
+        "end_positive": {
+          "Id": "end_positive",
+          "Text": "Glad I could help! Feel free to explore the world and chat with the other NPCs. They all have their own stories to tell!",
+          "Choices": [],
+          "NextNodeId": null,
+          "IsEndNode": true
+        }
+      }
+    },
+    "ConditionalDialogue": {
+      "morning": ["Good morning! Early bird gets the bug fixed!"],
+      "evening": ["Working late? Me too! The best code happens after midnight."],
+      "first_meeting": ["Welcome to DevHou.se! I don't think we've met before."]
+    },
+    "CollisionResponses": {
+      "default": "Oops! Use the interact button to chat!",
+      "running": "Whoa there, slow down!",
+      "multiple": "Getting a bit crowded here!"
+    },
+    "DefaultGreeting": "Hey there!",
+    "DefaultFarewell": "See you around the dev house!",
+    "TextDisplaySpeed": 0.05,
+    "UseTypewriterEffect": true
+  },
+  "Movement": {
+    "Pattern": "Static",
+    "MoveSpeed": 50.0,
+    "WaitTimeBetweenMoves": 3.0,
+    "PatrolPoints": [],
+    "CanChasePlayer": false,
+    "ChaseSpeed": 100.0,
+    "ChaseRadius": 150.0,
+    "AvoidObstacles": true,
+    "MovementModifiers": {}
+  },
+  "Audio": {
+    "VoiceId": "bailey_voice_001",
+    "VoicePitch": 1.0,
+    "VoiceVolume": 1.0,
+    "SoundEffects": {
+      "greeting": "res://Audio/Voices/bailey_hello.ogg",
+      "laugh": "res://Audio/Voices/bailey_laugh.ogg"
+    },
+    "FootstepSound": "res://Audio/SFX/footstep_normal.ogg",
+    "InteractionSound": "res://Audio/SFX/interaction_start.ogg",
+    "EnableVoiceSynthesis": true
+  },
+  "GameData": {
+    "SpawnLocation": "center",
+    "SpawnWorld": "World",
+    "RequiredItems": [],
+    "GivesItems": ["developer_badge"],
+    "Stats": {
+      "friendship": 0,
+      "knowledge_shared": 0
+    },
+    "QuestIds": ["intro_to_devhouse", "learn_godot_basics"],
+    "IsMerchant": false,
+    "ShopInventory": []
+  },
+  "Metadata": {
+    "CreatedBy": "Original",
+    "CreatedAt": "2024-01-01T00:00:00Z",
+    "BlogPostUrl": "https://devhou.se/about",
+    "BlogPostTitle": "Welcome to DevHou.se",
+    "Tags": ["main_character", "developer", "friendly", "helper"],
+    "Version": "1.0.0",
+    "AdditionalData": {
+      "voice_actor": "ElevenLabs AI",
+      "sprite_artist": "Original"
+    }
+  }
+}
