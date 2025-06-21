@@ -12,7 +12,6 @@ public class InteractionScreen : Control
     private List<string> dialogueLines = new List<string>();
     private int currentLineIndex = 0;
     private string npcName = "";
-    private SpriteFrames npcSpriteFrames;
     
     public override void _Ready()
     {

@@ -19,7 +19,7 @@ public class Menu : MarginContainer
 
 		// Create and setup background
 		background = new TextureRect();
-		background.Texture = (Texture)GD.Load("res://path_to_your_background_image.png");
+		background.Texture = (Texture)GD.Load("res://Assets/menu.jpeg");
 		background.StretchMode = TextureRect.StretchModeEnum.Scale;
 		background.Expand = true;
 		AddChild(background);
