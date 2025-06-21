@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/D1F4E7E5-5385-4472-BC6A-5498085E4940.png-071ad7b06804775db79b613b83fdfd16.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://Assets/some-assets/Pixaki/Stores/Family Mart style 1.pixaki/images/drawings/D1F4E7E5-5385-4472-BC6A-5498085E4940.png"
+dest_files=[ "res://.import/D1F4E7E5-5385-4472-BC6A-5498085E4940.png-071ad7b06804775db79b613b83fdfd16.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=0
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=2
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+process/normal_map_invert_y=false
+stream=false
+size_limit=0
+detect_3d=true
+svg/scale=1.0

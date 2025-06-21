@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/767AED9-60D2896-2F5EC3B-F618B67-7703577-F9A0E6D-09F3F71-6539A5C-182BD18-E248318-C3660B7-4B2C215.png-fc7c75336d2eb6404e04253dd9718258.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://Assets/some-assets/711 - style 1.pixaki/cache/keyframes/767AED9-60D2896-2F5EC3B-F618B67-7703577-F9A0E6D-09F3F71-6539A5C-182BD18-E248318-C3660B7-4B2C215.png"
+dest_files=[ "res://.import/767AED9-60D2896-2F5EC3B-F618B67-7703577-F9A0E6D-09F3F71-6539A5C-182BD18-E248318-C3660B7-4B2C215.png-fc7c75336d2eb6404e04253dd9718258.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=0
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=2
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+process/normal_map_invert_y=false
+stream=false
+size_limit=0
+detect_3d=true
+svg/scale=1.0
