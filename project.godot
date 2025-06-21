@@ -37,7 +37,7 @@ window/stretch/aspect="keep"
 
 [dotnet]
 
-project/assembly_name="game"
+project/assembly_name="devgame"
 
 [editor_plugins]
 
@@ -51,6 +51,12 @@ scene=false
 [gui]
 
 common/drop_mouse_on_gui_input_disabled=true
+
+[importer_defaults]
+
+texture={
+"flags/filter": false
+}
 
 [input]
 
@@ -78,3 +84,4 @@ quality/driver/driver_name="GLES2"
 2d/snapping/use_gpu_pixel_snap=true
 vram_compression/import_etc=true
 vram_compression/import_etc2=false
+quality/shadows/filter_mode=0
