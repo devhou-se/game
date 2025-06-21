@@ -4,91 +4,87 @@ using System;
 public class Menu : MarginContainer
 {
 	private VBoxContainer mainContainer;
-	private MarginContainer marginContainer;
-	private VBoxContainer buttonContainer;
 	private Button playButton;
 	private Button quitButton;
 	private LineEdit nameInput;
 	private Label nameLabel;
-	private TextureRect background;
 
 	public override void _Ready()
 	{
-		// Set the size of the MarginContainer
-		SetAnchorsAndMarginsPreset(LayoutPreset.Wide);
-
-		// Create and setup background
-		background = new TextureRect();
-		background.Texture = (Texture)GD.Load("res://path_to_your_background_image.png");
-		background.StretchMode = TextureRect.StretchModeEnum.Scale;
-		background.Expand = true;
-		AddChild(background);
-
-		// Create main container
-		mainContainer = new VBoxContainer();
-		AddChild(mainContainer);
-
-		// Set main container properties
-		mainContainer.SetAnchorsPreset(Control.LayoutPreset.Center);
-		mainContainer.SizeFlagsHorizontal = (int)Control.SizeFlags.Fill;
-		mainContainer.SizeFlagsVertical = (int)Control.SizeFlags.Fill;
-		mainContainer.AddConstantOverride("separation", 10);
-
-		// Create margin container
-		marginContainer = new MarginContainer();
-		marginContainer.AddConstantOverride("margin_top", 50);
-		mainContainer.AddChild(marginContainer);
-
-		// Create child container for buttons and input
-		buttonContainer = new VBoxContainer();
-		marginContainer.AddChild(buttonContainer);
-
-		// Set child container properties
-		buttonContainer.SetAnchorsPreset(Control.LayoutPreset.Center);
-		buttonContainer.SizeFlagsHorizontal = (int)Control.SizeFlags.Fill;
-		buttonContainer.SizeFlagsVertical = (int)Control.SizeFlags.Fill;
-		buttonContainer.AddConstantOverride("separation", 10);
-
+		// Get the existing VBoxContainer from the scene
+		mainContainer = GetNode<VBoxContainer>("VBoxContainer");
+		
+		// Create a container for the menu items with proper centering
+		var centerContainer = new CenterContainer();
+		mainContainer.AddChild(centerContainer);
+		
+		var menuContainer = new VBoxContainer();
+		menuContainer.AddConstantOverride("separation", 20);
+		centerContainer.AddChild(menuContainer);
+		
+		// Add some top margin
+		var topSpacer = new Control();
+		topSpacer.RectMinSize = new Vector2(0, 100);
+		menuContainer.AddChild(topSpacer);
+		
 		// Create and setup name input
 		nameLabel = new Label();
 		nameLabel.Text = "Enter your name:";
-		nameLabel.SizeFlagsHorizontal = (int)Control.SizeFlags.ShrinkCenter;
-		buttonContainer.AddChild(nameLabel);
-
+		nameLabel.Modulate = new Color(1, 1, 1);
+		menuContainer.AddChild(nameLabel);
+		
 		nameInput = new LineEdit();
-		nameInput.SizeFlagsHorizontal = (int)Control.SizeFlags.ShrinkCenter;
+		nameInput.RectMinSize = new Vector2(300, 40);
+		nameInput.PlaceholderText = "Your name";
 		nameInput.Connect("text_entered", this, nameof(OnNameEntered));
-		buttonContainer.AddChild(nameInput);
-
+		menuContainer.AddChild(nameInput);
+		
+		// Add some spacing
+		var spacer = new Control();
+		spacer.RectMinSize = new Vector2(0, 20);
+		menuContainer.AddChild(spacer);
+		
 		// Create and setup buttons
-		playButton = CreateButton("Play");
-		quitButton = CreateButton("Quit");
-
+		playButton = CreateButton("Play", menuContainer);
+		quitButton = CreateButton("Quit", menuContainer);
+		
 		// Connect button signals
 		playButton.Connect("pressed", this, nameof(OnPlayPressed));
 		quitButton.Connect("pressed", this, nameof(OnQuitPressed));
+		
+		// Give focus to name input
+		nameInput.CallDeferred("grab_focus");
 	}
-
-	private Button CreateButton(string text)
+	
+	private Button CreateButton(string text, VBoxContainer parent)
 	{
 		var button = new Button();
 		button.Text = text;
 		button.RectMinSize = new Vector2(200, 50);
-		button.SizeFlagsHorizontal = (int)Control.SizeFlags.ShrinkCenter;
-		buttonContainer.AddChild(button);
+		parent.AddChild(button);
 		return button;
 	}
 
 	private void OnNameEntered(string text)
 	{
-		GD.Print("User entered name: " + text);
-		// Store the entered name in the Global singleton
-		Global.PlayerName = text;
+		if (!string.IsNullOrEmpty(text))
+		{
+			OnPlayPressed();
+		}
 	}
 
 	private void OnPlayPressed()
 	{
-		OnNameEntered(nameInput.Text);
+		string playerName = nameInput.Text;
+		if (string.IsNullOrEmpty(playerName))
+		{
+			playerName = "Player";
+		}
+		
+		GD.Print("User entered name: " + playerName);
+		Global.PlayerName = playerName;
+		
+		// Change to the main game scene
 		GetTree().ChangeScene("res://Scenes/Main.tscn");
 	}
 

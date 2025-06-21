@@ -93,12 +93,12 @@ public class GameController : Node
 		// Create day/night controller
 		dayNightController = new DayNightController();
 		dayNightController.Name = "DayNightController";
-		GetParent().AddChild(dayNightController);
+		GetParent().CallDeferred("add_child", dayNightController);
 		
 		// Create time/weather HUD
 		var hud = new TimeWeatherHUD();
 		hud.Name = "TimeWeatherHUD";
-		GetParent().AddChild(hud);
+		GetParent().CallDeferred("add_child", hud);
 	}
 	
 	private void SetupSceneDayNight(string sceneName)
@@ -118,13 +118,13 @@ public class GameController : Node
 		
 		if (isOutdoor && dayNightController != null)
 		{
-			// Setup street lights for this scene
-			dayNightController.SetupStreetLights(level);
+			// Setup street lights for this scene (defer to ensure DayNightController is ready)
+			dayNightController.CallDeferred("SetupStreetLights", level);
 			
 			// Add environment controller if particles exist
 			var environmentController = new EnvironmentController();
 			environmentController.Name = "EnvironmentController";
-			level.AddChild(environmentController);
+			level.CallDeferred("add_child", environmentController);
 		}
 	}
 	

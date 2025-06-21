@@ -133,4 +133,65 @@ public class NPCLocationManager : Node
         charactersNode.AddChild(newNPC);
         GD.Print($"Created new NPC {npcName} at {coords}");
     }
+    
+    public void PlaceNPCFromDefinition(string definitionId, string world, string area)
+    {
+        var coords = GetLocation(world, area);
+        if (!coords.HasValue)
+        {
+            GD.PrintErr($"Cannot place NPC from definition {definitionId}: location not found");
+            return;
+        }
+        
+        PlaceNPCFromDefinitionAtCoords(definitionId, coords.Value);
+    }
+    
+    public void PlaceNPCFromDefinitionAtCoords(string definitionId, Vector2 coords)
+    {
+        // Load NPC scene
+        var npcScene = GD.Load<PackedScene>("res://Scenes/NPC.tscn");
+        if (npcScene == null)
+        {
+            GD.PrintErr("Failed to load NPC scene");
+            return;
+        }
+        
+        var npc = npcScene.Instance() as NPC;
+        if (npc == null)
+        {
+            GD.PrintErr("Failed to instantiate NPC");
+            return;
+        }
+        
+        // Set the definition ID so the NPC can load its data
+        npc.NPCDefinitionId = definitionId;
+        
+        // Get the current scene
+        var currentScene = GetTree()?.CurrentScene;
+        if (currentScene == null)
+        {
+            GD.PrintErr("No current scene found");
+            npc.QueueFree();
+            return;
+        }
+        
+        // Find the Characters node (with YSort)
+        var charactersNode = currentScene.GetNode("Characters");
+        if (charactersNode == null)
+        {
+            // Try alternative path
+            charactersNode = currentScene.GetNode("YSort/Characters");
+            if (charactersNode == null)
+            {
+                GD.PrintErr("Characters node not found in current scene");
+                npc.QueueFree();
+                return;
+            }
+        }
+        
+        // Set position and add to scene
+        npc.Position = coords;
+        charactersNode.AddChild(npc);
+        GD.Print($"Created NPC {npc.NPCName} from definition at {coords}");
+    }
 }
