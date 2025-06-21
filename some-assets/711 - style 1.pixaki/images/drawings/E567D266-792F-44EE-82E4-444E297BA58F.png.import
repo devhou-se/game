@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/E567D266-792F-44EE-82E4-444E297BA58F.png-3b584c3ff598e3d1234a9e14e6e89495.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://some-assets/711 - style 1.pixaki/images/drawings/E567D266-792F-44EE-82E4-444E297BA58F.png"
+dest_files=[ "res://.import/E567D266-792F-44EE-82E4-444E297BA58F.png-3b584c3ff598e3d1234a9e14e6e89495.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=0
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=2
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+process/normal_map_invert_y=false
+stream=false
+size_limit=0
+detect_3d=true
+svg/scale=1.0

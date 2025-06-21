@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/8E88EABD-2580-4423-8F89-C2B16DFDBCA9.png-466d3f4e064a95879f41976e688485ed.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://some-assets/Pixaki/Concrete pavement.pixaki/images/drawings/8E88EABD-2580-4423-8F89-C2B16DFDBCA9.png"
+dest_files=[ "res://.import/8E88EABD-2580-4423-8F89-C2B16DFDBCA9.png-466d3f4e064a95879f41976e688485ed.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=0
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=2
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+process/normal_map_invert_y=false
+stream=false
+size_limit=0
+detect_3d=true
+svg/scale=1.0

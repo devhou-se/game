@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/A4FBA8E7-5A29-4B83-8481-D1297642372B.png-6d281be2a169f3b2820174e8c3edc6ba.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://some-assets/Pixaki/Characters/Julia front.pixaki/images/drawings/A4FBA8E7-5A29-4B83-8481-D1297642372B.png"
+dest_files=[ "res://.import/A4FBA8E7-5A29-4B83-8481-D1297642372B.png-6d281be2a169f3b2820174e8c3edc6ba.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=0
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=2
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+process/normal_map_invert_y=false
+stream=false
+size_limit=0
+detect_3d=true
+svg/scale=1.0
