@@ -1,0 +1,13 @@
+npc_id,context,dialogue_text,emotion,voice_note
+example_npc,greeting,"Hello there, traveler!",happy,cheerful tone
+example_npc,greeting_morning,"Good morning! Beautiful day, isn't it?",happy,energetic
+example_npc,greeting_night,"Oh, you're out late!",surprised,slightly worried
+example_npc,first_meeting,"I don't believe we've met. I'm [Name].",neutral,friendly introduction
+example_npc,quest_offer,"I could use some help with something...",hopeful,mysterious
+example_npc,quest_complete,"Thank you so much! Here, take this.",grateful,very happy
+example_npc,collision_1,"Oof! Watch where you're going!",annoyed,slightly angry
+example_npc,collision_2,"Excuse me!",neutral,polite but firm
+example_npc,collision_3,"Are you trying to push me around?",angry,frustrated
+example_npc,idle_1,"*humming a tune*",happy,content
+example_npc,idle_2,"I wonder what's for dinner...",thoughtful,daydreaming
+example_npc,goodbye,"See you around!",happy,friendly farewell
