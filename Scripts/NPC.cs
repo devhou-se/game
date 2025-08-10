@@ -22,6 +22,8 @@ public class NPC : Character, Bumper
 		"How can I help you today?"
 	};
 	
+	public NPCPersonality Personality { get; set; } = new NPCPersonality();
+	
 	private bool _isBaileyButlerInTheOffice;
 
 	private float _textTimeLeft = 0.0f;
