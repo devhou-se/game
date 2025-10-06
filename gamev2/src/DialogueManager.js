@@ -120,18 +120,60 @@ class DialogueManager {
         this.currentNPC = npc;
         this.currentDialogueIndex = 0;
 
-        // Create NPC sprite (2x scale, centered above dialogue panel)
+        // Create NPC sprite (use configured scale * 2 for dialogue view)
         if (this.npcSprite) {
             this.npcSprite.destroy();
         }
 
-        const spriteKey = npc.sprite.texture.key;
+        // Get the base sprite key and config
+        const baseSpriteKey = npc.baseSpriteKey || npc.sprite.texture.key;
+        console.log('[DialogueManager] baseSpriteKey:', baseSpriteKey);
+
+        const spriteConfig = this.scene.getSpriteConfig(baseSpriteKey);
+        console.log('[DialogueManager] spriteConfig:', spriteConfig);
+
+        // Use the down/forward directional sprite if available
+        let displaySpriteKey = baseSpriteKey;
+        if (spriteConfig.isDirectional) {
+            const downSpriteKey = this.scene.getDirectionalSpriteKey(baseSpriteKey, 'down');
+            console.log('[DialogueManager] downSpriteKey:', downSpriteKey);
+            if (downSpriteKey) {
+                displaySpriteKey = downSpriteKey;
+            }
+        }
+
+        console.log('[DialogueManager] displaySpriteKey:', displaySpriteKey);
+
+        // Get the config for the display sprite
+        const displaySpriteConfig = this.scene.getSpriteConfig(displaySpriteKey);
+        console.log('[DialogueManager] displaySpriteConfig:', displaySpriteConfig);
+
+        // Determine texture key - for multi-frame sprites, use frame_0
+        let textureKey = displaySpriteKey;
+        if (displaySpriteConfig.frameCount > 1 && !displaySpriteConfig.spriteSheet) {
+            textureKey = `${displaySpriteKey}_frame_0`;
+        }
+
+        console.log('[DialogueManager] textureKey:', textureKey);
+        console.log('[DialogueManager] Texture exists?', this.scene.textures.exists(textureKey));
+
         this.npcSprite = this.scene.add.sprite(
             this.scene.cameras.main.width / 2,
             this.npcSpriteY,
-            spriteKey
+            textureKey
         );
-        this.npcSprite.setScale(2); // 2x size
+
+        // Apply flip info if directional
+        if (spriteConfig.isDirectional) {
+            const flipInfo = this.scene.getDirectionalFlipInfo(baseSpriteKey, 'down');
+            if (flipInfo) {
+                this.npcSprite.setFlipX(flipInfo.flipX);
+                this.npcSprite.setFlipY(flipInfo.flipY);
+            }
+        }
+
+        // Use sprite's configured scale * 2 for dialogue close-up
+        this.npcSprite.setScale(spriteConfig.scale * 2);
         this.npcSprite.setScrollFactor(0);
         this.npcSprite.setDepth(3002);
 

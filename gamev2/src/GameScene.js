@@ -4,12 +4,62 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        // Load default sprites
         this.load.image("background", "assets/background-grid.png");
         this.load.image("tile", "assets/single-tile.png");
         this.load.image("npc-tile", "assets/npc-tile.png");
         this.load.image("transporter", "assets/transporter.png");
         this.load.image("object-tile", "assets/object-tile.png");
+
+        // Load config first
         this.load.json("config", "config.json");
+
+        // When config loads, dynamically load sprite frames for animations
+        this.load.once('filecomplete-json-config', (key, type, data) => {
+            const spriteMetadata = data.spriteMetadata || {};
+
+            // For each sprite with multiple frames, load animation frames
+            for (const [spriteKey, metadata] of Object.entries(spriteMetadata)) {
+                const frameCount = metadata.frameCount || 1;
+                const isSpriteSheet = metadata.spriteSheet === true;
+
+                // Check if this sprite uses a sprite sheet (single PNG with multiple frames)
+                if (isSpriteSheet) {
+                    // Load sprite sheet
+                    const spritePath = `assets/sprites/${spriteKey}.png`;
+
+                    // Configure sprite sheet frame dimensions
+                    const frameConfig = {
+                        frameWidth: metadata.frameWidth,
+                        frameHeight: metadata.frameHeight
+                    };
+
+                    // Optional parameters
+                    if (metadata.startFrame !== undefined) frameConfig.startFrame = metadata.startFrame;
+                    if (metadata.endFrame !== undefined) frameConfig.endFrame = metadata.endFrame;
+                    if (metadata.margin !== undefined) frameConfig.margin = metadata.margin;
+                    if (metadata.spacing !== undefined) frameConfig.spacing = metadata.spacing;
+
+                    this.load.spritesheet(spriteKey, spritePath, frameConfig);
+                }
+                // Multiple frames as separate images
+                else if (frameCount > 1) {
+                    // Load each frame from assets/sprites/ folder
+                    for (let i = 0; i < frameCount; i++) {
+                        const framePath = `assets/sprites/${spriteKey}_frame_${i}.png`;
+                        this.load.image(`${spriteKey}_frame_${i}`, framePath);
+                    }
+                }
+                // Single frame sprite
+                else {
+                    const spritePath = `assets/sprites/${spriteKey}.png`;
+                    // Only load if not already loaded from assets/
+                    if (!this.textures.exists(spriteKey)) {
+                        this.load.image(spriteKey, spritePath);
+                    }
+                }
+            }
+        });
     }
 
     create() {
@@ -23,6 +73,30 @@ class GameScene extends Phaser.Scene {
         this.DEADZONE_CELLS = this.config.game.deadzoneCells;
         this.DEADZONE_SIZE = this.DEADZONE_CELLS * this.GRID_SIZE;
         this.MOVE_DURATION = this.config.game.moveDuration;
+
+        // Store sprite metadata for later use
+        this.spriteMetadata = this.config.spriteMetadata || {};
+
+        // Apply player's directional sprites if defined
+        if (this.config.player.directionalSprites) {
+            const playerSpriteKey = this.config.player.sprite;
+            if (this.spriteMetadata[playerSpriteKey]) {
+                // Update the player sprite metadata with directional sprites
+                this.spriteMetadata[playerSpriteKey].isDirectional = true;
+                this.spriteMetadata[playerSpriteKey].directions = this.config.player.directionalSprites;
+
+                // Apply auto-flip settings if defined
+                if (this.config.player.autoFlip) {
+                    this.spriteMetadata[playerSpriteKey].autoFlip = this.config.player.autoFlip;
+                }
+            }
+        }
+
+        // Debug: log loaded sprite metadata
+        console.log('Loaded sprite metadata:', this.spriteMetadata);
+
+        // Create animations from sprite metadata
+        this.createAnimations();
 
         // Room system (will be initialized after centerGrid is calculated)
         this.currentRoom = this.config.player.startRoom;
@@ -109,6 +183,17 @@ class GameScene extends Phaser.Scene {
             roomConfig.npcs.forEach(npcConfig => {
                 const npcGridX = npcConfig.gridX !== null ? npcConfig.gridX : centerGridX + npcConfig.gridOffsetX;
                 const npcGridY = npcConfig.gridY !== null ? npcConfig.gridY : centerGridY + npcConfig.gridOffsetY;
+
+                // Apply NPC's directional sprites if defined
+                if (npcConfig.directionalSprites && this.spriteMetadata[npcConfig.sprite]) {
+                    this.spriteMetadata[npcConfig.sprite].isDirectional = true;
+                    this.spriteMetadata[npcConfig.sprite].directions = npcConfig.directionalSprites;
+
+                    // Apply auto-flip settings if defined
+                    if (npcConfig.autoFlip) {
+                        this.spriteMetadata[npcConfig.sprite].autoFlip = npcConfig.autoFlip;
+                    }
+                }
 
                 const npc = this.spawnNPC(npcGridX, npcGridY, npcConfig.sprite, npcConfig.name, {
                     dialogue: npcConfig.dialogue
@@ -706,5 +791,148 @@ class GameScene extends Phaser.Scene {
                 }
             }
         });
+    }
+
+    // Get sprite configuration (scale and anchor) from metadata
+    getSpriteConfig(spriteKey) {
+        const metadata = this.spriteMetadata[spriteKey];
+
+        // Debug log
+        if (!metadata) {
+            console.warn(`No metadata found for sprite: ${spriteKey}`);
+        }
+
+        return {
+            scale: metadata?.scale || 1,
+            anchorX: metadata?.anchorX !== undefined ? metadata.anchorX : 0.5,
+            anchorY: metadata?.anchorY !== undefined ? metadata.anchorY : 0.5,
+            hasAnimation: metadata?.frameCount > 1,
+            frameCount: metadata?.frameCount || 1,
+            frameRate: metadata?.frameRate || 10,
+            loop: metadata?.loop !== undefined ? metadata.loop : true,
+            spriteSheet: metadata?.spriteSheet || false,
+            isDirectional: metadata?.isDirectional || false,
+            directions: metadata?.directions || {},
+            autoFlip: metadata?.autoFlip || { horizontal: false, vertical: false },
+            defaultDirection: metadata?.defaultDirection || 'down'
+        };
+    }
+
+    // Get the sprite key for a specific direction
+    getDirectionalSpriteKey(baseSpriteKey, direction) {
+        const metadata = this.spriteMetadata[baseSpriteKey];
+
+        if (!metadata || !metadata.isDirectional) {
+            return baseSpriteKey;
+        }
+
+        const directionSprite = metadata.directions?.[direction];
+
+        // If specific direction sprite exists, use it
+        if (directionSprite) {
+            return directionSprite;
+        }
+
+        // Check for auto-flip alternatives
+        const autoFlip = metadata.autoFlip || {};
+
+        if (direction === 'right' && autoFlip.horizontal && metadata.directions?.left) {
+            return metadata.directions.left;
+        } else if (direction === 'left' && autoFlip.horizontal && metadata.directions?.right) {
+            return metadata.directions.right;
+        } else if (direction === 'down' && autoFlip.vertical && metadata.directions?.up) {
+            return metadata.directions.up;
+        } else if (direction === 'up' && autoFlip.vertical && metadata.directions?.down) {
+            return metadata.directions.down;
+        }
+
+        // Default to base sprite
+        return baseSpriteKey;
+    }
+
+    // Get flip information for directional sprites
+    getDirectionalFlipInfo(baseSpriteKey, direction) {
+        const metadata = this.spriteMetadata[baseSpriteKey];
+
+        if (!metadata || !metadata.isDirectional) {
+            return { flipX: false, flipY: false };
+        }
+
+        const directionSprite = metadata.directions?.[direction];
+        const autoFlip = metadata.autoFlip || {};
+
+        // If specific direction sprite exists, no flipping needed
+        if (directionSprite) {
+            return { flipX: false, flipY: false };
+        }
+
+        // Check if we need to flip
+        let flipX = false;
+        let flipY = false;
+
+        if (direction === 'right' && autoFlip.horizontal && metadata.directions?.left) {
+            flipX = true;
+        } else if (direction === 'left' && autoFlip.horizontal && metadata.directions?.right) {
+            flipX = true;
+        } else if (direction === 'down' && autoFlip.vertical && metadata.directions?.up) {
+            flipY = true;
+        } else if (direction === 'up' && autoFlip.vertical && metadata.directions?.down) {
+            flipY = true;
+        }
+
+        return { flipX, flipY };
+    }
+
+    // Create Phaser animations from sprite metadata
+    createAnimations() {
+        for (const [spriteKey, metadata] of Object.entries(this.spriteMetadata)) {
+            const frameCount = metadata.frameCount || 1;
+            const isSpriteSheet = metadata.spriteSheet === true;
+
+            // Only create animation if there are multiple frames
+            if (frameCount > 1) {
+                const animKey = spriteKey + '_anim';
+
+                // Don't recreate if animation already exists
+                if (this.anims.exists(animKey)) {
+                    continue;
+                }
+
+                let frames = [];
+
+                // Handle sprite sheet frames
+                if (isSpriteSheet && this.textures.exists(spriteKey)) {
+                    // Use Phaser's sprite sheet frame numbers
+                    const startFrame = metadata.startFrame || 0;
+                    const endFrame = metadata.endFrame !== null && metadata.endFrame !== undefined
+                        ? metadata.endFrame
+                        : frameCount - 1;
+
+                    frames = this.anims.generateFrameNumbers(spriteKey, {
+                        start: startFrame,
+                        end: endFrame
+                    });
+                }
+                // Handle separate frame images
+                else {
+                    for (let i = 0; i < frameCount; i++) {
+                        const frameKey = `${spriteKey}_frame_${i}`;
+                        if (this.textures.exists(frameKey)) {
+                            frames.push({ key: frameKey });
+                        }
+                    }
+                }
+
+                // Only create animation if we have frames
+                if (frames.length > 0) {
+                    this.anims.create({
+                        key: animKey,
+                        frames: frames,
+                        frameRate: metadata.frameRate || 10,
+                        repeat: metadata.loop !== false ? -1 : 0 // -1 = loop forever, 0 = play once
+                    });
+                }
+            }
+        }
     }
 }

@@ -10,9 +10,9 @@ const config = {
         height: 960
     },
     render: {
-        pixelArt: false,
-        antialias: true,
-        roundPixels: false
+        pixelArt: true,
+        antialias: false,
+        roundPixels: true
     },
     physics: {
         default: 'arcade',

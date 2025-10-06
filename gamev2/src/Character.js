@@ -13,11 +13,37 @@ class Character {
         this.minGridY = config.minGridY || 0;
         this.maxGridY = config.maxGridY || (this.worldSize / this.gridSize - 1);
 
+        // Get sprite configuration (scale, anchor, animation)
+        const spriteConfig = scene.getSpriteConfig ? scene.getSpriteConfig(spriteKey) : {
+            scale: 1, anchorX: 0.5, anchorY: 0.5, hasAnimation: false
+        };
+
+        // Debug: log sprite config
+        console.log(`Character ${spriteKey}:`, spriteConfig);
+
         // Create sprite
         const pixelX = this.gridX * this.gridSize + this.gridSize / 2;
         const pixelY = this.gridY * this.gridSize + this.gridSize / 2;
-        this.sprite = scene.add.sprite(pixelX, pixelY, spriteKey);
+
+        // Determine texture key - for multi-frame sprites, use frame_0
+        let textureKey = spriteKey;
+        if (spriteConfig.frameCount > 1 && !spriteConfig.spriteSheet) {
+            textureKey = `${spriteKey}_frame_0`;
+        }
+
+        this.sprite = scene.add.sprite(pixelX, pixelY, textureKey);
         this.sprite.setDepth(1); // Above floor tiles (transporters, objects)
+
+        // Apply sprite configuration
+        this.sprite.setScale(spriteConfig.scale);
+        this.sprite.setOrigin(spriteConfig.anchorX, spriteConfig.anchorY);
+
+        console.log(`Applied scale ${spriteConfig.scale} to ${spriteKey}, actual scale:`, this.sprite.scale);
+
+        // Play animation if available
+        if (spriteConfig.hasAnimation && scene.anims.exists(spriteKey + '_anim')) {
+            this.sprite.play(spriteKey + '_anim');
+        }
 
         // Movement state
         this.isMoving = false;
@@ -34,6 +60,63 @@ class Character {
         // Facing direction (for player interaction detection)
         this.facingX = 0;
         this.facingY = 0;
+
+        // Directional sprite support
+        this.currentDirection = spriteConfig.defaultDirection || 'down';
+        this.baseSpriteKey = spriteKey;
+        this.isDirectional = spriteConfig.isDirectional || false;
+    }
+
+    updateDirectionSprite(deltaX, deltaY) {
+        if (!this.isDirectional) return;
+
+        // Determine new direction based on movement
+        let newDirection = this.currentDirection;
+
+        if (deltaY < 0) {
+            newDirection = 'up';
+        } else if (deltaY > 0) {
+            newDirection = 'down';
+        } else if (deltaX < 0) {
+            newDirection = 'left';
+        } else if (deltaX > 0) {
+            newDirection = 'right';
+        }
+
+        // Only update if direction changed
+        if (newDirection !== this.currentDirection) {
+            this.currentDirection = newDirection;
+
+            // Get the directional sprite key from scene
+            const directionSpriteKey = this.scene.getDirectionalSpriteKey(this.baseSpriteKey, newDirection);
+
+            if (directionSpriteKey) {
+                // Get sprite config to determine texture key
+                const directionSpriteConfig = this.scene.getSpriteConfig(directionSpriteKey);
+
+                // Determine texture key - for multi-frame sprites, use frame_0
+                let textureKey = directionSpriteKey;
+                if (directionSpriteConfig.frameCount > 1 && !directionSpriteConfig.spriteSheet) {
+                    textureKey = `${directionSpriteKey}_frame_0`;
+                }
+
+                // Update sprite texture
+                this.sprite.setTexture(textureKey);
+
+                // Check if we need to flip the sprite
+                const flipInfo = this.scene.getDirectionalFlipInfo(this.baseSpriteKey, newDirection);
+                if (flipInfo) {
+                    this.sprite.setFlipX(flipInfo.flipX);
+                    this.sprite.setFlipY(flipInfo.flipY);
+                }
+
+                // Update animation if it exists
+                const animKey = directionSpriteKey + '_anim';
+                if (this.scene.anims.exists(animKey)) {
+                    this.sprite.play(animKey);
+                }
+            }
+        }
     }
 
     startMovement(deltaX, deltaY, speedMultiplier = 1) {
@@ -44,6 +127,9 @@ class Character {
         if (deltaX !== 0 || deltaY !== 0) {
             this.facingX = Math.sign(deltaX);
             this.facingY = Math.sign(deltaY);
+
+            // Update directional sprite
+            this.updateDirectionSprite(deltaX, deltaY);
         }
 
         // Check collision before moving

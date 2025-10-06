@@ -35,6 +35,31 @@ Then navigate to `http://localhost:8000` in your browser.
 - `src/Character.js` - Character movement class with grid-based tweening
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
+- `editor/` - Visual editor for editing game configuration
+  - `editor/index.html` - Entry point for the visual editor (access at `/editor/`)
+  - `editor/GridEditor.js` - Main editor grid and placement logic
+  - `editor/ConfigManager.js` - Config loading/saving functionality
+  - `editor/editor.js` - Editor UI and interaction handling
+
+### Visual Editor
+
+A WYSIWYG visual editor is available for editing game configuration without manually editing JSON. Access it by running a local server and navigating to `/editor/`:
+
+```bash
+python3 -m http.server 8000
+# Navigate to http://localhost:8000/editor/
+```
+
+**Features:**
+- Visual grid editing with actual game sprites and background
+- Room management (create, delete, switch between rooms)
+- NPC placement and dialogue editing
+- Object placement for obstacles
+- Transporter system with visual targeting
+- Custom boundary polygon editing (define non-rectangular room shapes)
+- Sprite management and upload
+- Config import/export
+- Drag-and-drop item repositioning
 
 ### Core Constants (config.json)
 
@@ -60,6 +85,7 @@ Player movement bounds are calculated based on camera deadzone to prevent camera
 
 Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room has:
 - `name`: Display name
+- `boundary`: Array of [x, y] points defining a polygon boundary (optional, defaults to rectangular world bounds)
 - `npcs`: Array of NPC definitions with position (absolute or offset from center), sprite, name, and dialogue
 - `objects`: Array of static obstacles with position (absolute or offset from center) that block movement
 - `transporters`: Array of teleport points with position, targetRoom, and target position
@@ -67,6 +93,14 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
 Position system supports both absolute grid coordinates (`gridX`/`gridY`) or center-relative offsets (`gridOffsetX`/`gridOffsetY`).
 
 Room transitions use camera fade effects (250ms fade out, 250ms hold, 250ms fade in) and block input during transition via `isTransitioning` flag.
+
+**Boundary System:**
+- Each room can define a custom polygon boundary to restrict player movement
+- Boundaries are arrays of grid coordinate points: `[[x1,y1], [x2,y2], [x3,y3], ...]`
+- If no boundary is specified, defaults to rectangular bounds matching world dimensions
+- Player movement is validated using point-in-polygon detection (cell center must be inside boundary)
+- Boundaries can create non-rectangular rooms (L-shapes, hexagons, irregular polygons, etc.)
+- The visual editor provides a boundary editing tool for creating custom shapes
 
 ### HUD System
 
@@ -92,6 +126,7 @@ Run with: `python3 tools/generate_<type>.py`
 
 ### Collision Detection
 All intermediate cells in movement path are checked for:
+- Room boundaries (polygon containment check)
 - Objects (static obstacles)
 - Stationary character positions
 - Moving character destinations

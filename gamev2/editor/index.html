@@ -18,6 +18,15 @@
             </div>
         </div>
 
+        <!-- Tab Navigation -->
+        <div id="tab-navigation">
+            <button class="tab-btn active" data-view="editor-view">Editor</button>
+            <button class="tab-btn" data-view="sprites-view">Sprites</button>
+            <button class="tab-btn" data-view="characters-view">Characters</button>
+        </div>
+
+        <!-- Editor View -->
+        <div id="editor-view" class="view-container active">
         <!-- Main content area -->
         <div id="main-content">
             <!-- Left sidebar - Tools and properties -->
@@ -94,6 +103,17 @@
                 <div id="sprite-list"></div>
             </div>
         </div>
+        </div><!-- End Editor View -->
+
+        <!-- Sprites View -->
+        <div id="sprites-view" class="view-container">
+            <div id="sprites-page-container"></div>
+        </div><!-- End Sprites View -->
+
+        <!-- Characters View -->
+        <div id="characters-view" class="view-container">
+            <div id="characters-page-container"></div>
+        </div><!-- End Characters View -->
 
         <!-- Modals -->
         <div id="dialogue-modal" class="modal" style="display:none">
@@ -139,8 +159,35 @@
 
     <input type="file" id="config-file-input" accept=".json" style="display:none">
 
+    <!-- External libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Core modules -->
     <script src="ConfigManager.js"></script>
+    <script src="SpriteManager.js"></script>
+
+    <!-- GridEditor modules -->
+    <script src="BoundaryEditor.js"></script>
+    <script src="RenderEngine.js"></script>
     <script src="GridEditor.js"></script>
+
+    <!-- UI modules -->
+    <script src="UIManager.js"></script>
+    <script src="DialogueEditor.js"></script>
+    <script src="PropertiesPanel.js"></script>
+
+    <!-- Sprite management modules -->
+    <script src="AnimationPreview.js"></script>
+    <script src="FrameSelector.js"></script>
+    <script src="SpriteSheetEditor.js"></script>
+    <script src="DirectionalSpriteEditor.js"></script>
+    <script src="SpritesPage.js"></script>
+
+    <!-- Character management modules -->
+    <script src="CharacterEditor.js"></script>
+    <script src="CharactersPage.js"></script>
+
+    <!-- Main editor -->
     <script src="editor.js"></script>
 </body>
 </html>

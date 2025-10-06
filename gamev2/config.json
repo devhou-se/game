@@ -14,8 +14,18 @@
     "startRoom": "Tokyo",
     "startX": 7,
     "startY": 5,
-    "sprite": "tile",
-    "name": "Player"
+    "sprite": "james_front",
+    "name": "Player",
+    "directionalSprites": {
+      "up": "james_back",
+      "down": "james_front",
+      "left": "",
+      "right": "james_side"
+    },
+    "autoFlip": {
+      "horizontal": true,
+      "vertical": false
+    }
   },
   "rooms": {
     "Tokyo": {
@@ -40,17 +50,65 @@
       ],
       "npcs": [
         {
+          "name": "Bailey",
+          "sprite": "bailey_front",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": 3,
           "gridOffsetY": 1,
-          "sprite": "npc-tile",
-          "name": "Bailey",
           "dialogue": [
             "Hello! I'm Bailey.",
             "Welcome to game.devhou.se!",
             "Press ESC to open the menu."
-          ]
+          ],
+          "directionalSprites": {
+            "up": "bailey_back",
+            "down": "bailey_front",
+            "left": "",
+            "right": "bailey_side"
+          },
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          }
+        },
+        {
+          "name": "Julia",
+          "sprite": "julia_front",
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -4,
+          "gridOffsetY": 0,
+          "dialogue": [],
+          "directionalSprites": {
+            "up": "julia_back",
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side"
+          },
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          }
+        },
+        {
+          "name": "Damian",
+          "sprite": "damian_front",
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": 1,
+          "gridOffsetY": -3,
+          "dialogue": [],
+          "directionalSprites": {
+            "up": "damian_back",
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side"
+          },
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          }
         }
       ],
       "objects": [
@@ -109,20 +167,23 @@
       ],
       "npcs": [
         {
+          "name": "Dylan",
+          "sprite": "dylan_front",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": -1,
           "gridOffsetY": -2,
-          "sprite": "npc-tile",
-          "name": "Dylan",
-          "dialogue": [
-            "Hey there! I'm Dylan.",
-            "Self-proclaimed world's best software engineer.",
-            "I can code in my sleep. Literally.",
-            "My commits are works of art.",
-            "Bug? What bug? I don't make bugs.",
-            "Welcome to Osaka!"
-          ]
+          "dialogue": [],
+          "directionalSprites": {
+            "up": "dylan_back",
+            "down": "dylan_front",
+            "left": "",
+            "right": "dylan_side"
+          },
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          }
         }
       ],
       "objects": [
@@ -158,6 +219,388 @@
           "targetOffsetY": -2
         }
       ]
+    }
+  },
+  "spriteMetadata": {
+    "tile": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 1,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "npc-tile": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 1,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "object-tile": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 1,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "transporter": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 1,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "bailey_back": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "bailey_side": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 2,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "bailey_front": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "damian_front": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "damian_back": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "damian_side": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 2,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "dylan_front": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "dylan_back": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "dylan_side": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 2,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "james_back": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "james_side": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 2,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "james_front": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "julia_side": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 2,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "julia_back": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "julia_front": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
     }
   }
 }
