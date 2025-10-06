@@ -30,6 +30,7 @@
   "rooms": {
     "Tokyo": {
       "name": "Tokyo",
+      "floor": {},
       "boundary": [
         [
           0,
@@ -120,18 +121,21 @@
       ],
       "objects": [
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": -4,
           "gridOffsetY": -3
         },
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": 4,
           "gridOffsetY": -2
         },
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": -3,
@@ -149,11 +153,23 @@
           "targetY": null,
           "targetOffsetX": 3,
           "targetOffsetY": 2
+        },
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -1,
+          "gridOffsetY": 2,
+          "targetRoom": "Outside",
+          "targetX": null,
+          "targetY": null,
+          "targetOffsetX": -7,
+          "targetOffsetY": -5
         }
       ]
     },
     "Osaka": {
       "name": "Osaka",
+      "floor": {},
       "boundary": [
         [
           0,
@@ -198,18 +214,21 @@
       ],
       "objects": [
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": 1,
           "gridOffsetY": 1
         },
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": -4,
           "gridOffsetY": 2
         },
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": 4,
@@ -229,6 +248,362 @@
           "targetOffsetY": -2
         }
       ]
+    },
+    "Outside": {
+      "name": "Outside",
+      "npcs": [],
+      "objects": [],
+      "transporters": [
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": 1,
+          "gridOffsetY": 2,
+          "targetRoom": "Osaka",
+          "targetX": null,
+          "targetY": null,
+          "targetOffsetX": 3,
+          "targetOffsetY": 2
+        }
+      ],
+      "floor": {
+        "0,0": "Stone_06",
+        "1,0": "Stone_06",
+        "2,0": "Stone_06",
+        "3,0": "Stone_06",
+        "4,0": "Stone_06",
+        "5,0": "Grass_08",
+        "6,0": "Stone_06",
+        "7,0": "Stone_06",
+        "8,0": "Stone_06",
+        "9,0": "Stone_06",
+        "10,0": "Stone_06",
+        "11,0": "Stone_06",
+        "11,1": "Grass_08",
+        "12,1": "Grass_08",
+        "13,1": "Grass_08",
+        "13,2": "Stone_06",
+        "12,2": "Stone_06",
+        "11,2": "Stone_06",
+        "10,3": "Grass_08",
+        "9,3": "Grass_08",
+        "8,3": "Stone_06",
+        "7,3": "Grass_08",
+        "6,3": "Stone_06",
+        "5,3": "Grass_08",
+        "4,2": "Stone_06",
+        "3,2": "Grass_08",
+        "2,1": "Grass_08",
+        "3,1": "Grass_08",
+        "4,1": "Stone_06",
+        "5,1": "Grass_08",
+        "6,1": "Stone_06",
+        "7,1": "Grass_08",
+        "8,1": "Grass_08",
+        "9,2": "Stone_06",
+        "10,2": "Stone_06",
+        "12,3": "Grass_08",
+        "8,2": "Stone_06",
+        "7,2": "Grass_08",
+        "6,2": "Stone_06",
+        "5,2": "Grass_08",
+        "6,4": "Stone_06",
+        "7,4": "Grass_08",
+        "8,5": "Grass_08",
+        "7,5": "Grass_08",
+        "6,6": "Grass_08",
+        "5,6": "Grass_08",
+        "4,6": "Grass_08",
+        "3,6": "Grass_08",
+        "2,6": "Grass_08",
+        "2,5": "Stone_06",
+        "2,4": "Grass_08",
+        "2,3": "Stone_06",
+        "2,2": "Stone_06",
+        "1,1": "Grass_08",
+        "1,2": "Stone_06",
+        "0,2": "Stone_06",
+        "0,3": "Stone_06",
+        "0,4": "Stone_06",
+        "1,4": "Grass_08",
+        "1,5": "Stone_06",
+        "5,4": "Grass_08",
+        "4,4": "Grass_08",
+        "3,4": "Grass_08",
+        "3,3": "Stone_06",
+        "0,1": "Grass_08",
+        "9,1": "Grass_08",
+        "10,1": "Grass_08",
+        "14,1": "Stone_06",
+        "14,0": "Stone_06",
+        "13,0": "Stone_06",
+        "12,0": "Stone_06",
+        "0,5": "Stone_06",
+        "8,4": "Stone_06",
+        "11,3": "Grass_08",
+        "13,3": "Grass_08",
+        "14,3": "Grass_08",
+        "4,3": "Stone_06",
+        "5,5": "Stone_06",
+        "4,5": "Stone_06",
+        "3,5": "Stone_06",
+        "9,4": "Stone_06",
+        "10,4": "Stone_06",
+        "11,4": "Stone_06",
+        "12,4": "Stone_06",
+        "13,4": "Stone_06",
+        "14,4": "Stone_06",
+        "14,5": "Stone_06",
+        "13,5": "Grass_08",
+        "12,5": "Grass_08",
+        "11,5": "Grass_08",
+        "10,5": "Grass_08",
+        "9,5": "Grass_08",
+        "6,5": "Stone_06",
+        "1,6": "Grass_08",
+        "0,6": "Grass_08",
+        "0,7": "Stone_06",
+        "0,8": "Stone_06",
+        "0,9": "Stone_06",
+        "1,9": "Stone_06",
+        "1,8": "Grass_08",
+        "1,7": "Stone_06",
+        "2,7": "Stone_06",
+        "2,8": "Grass_08",
+        "3,8": "Grass_08",
+        "2,9": "Stone_06",
+        "3,9": "Stone_06",
+        "4,9": "Stone_06",
+        "5,9": "Stone_06",
+        "6,8": "Grass_08",
+        "7,8": "Grass_08",
+        "8,8": "Grass_08",
+        "9,8": "Grass_08",
+        "10,8": "Stone_06",
+        "11,8": "Grass_08",
+        "12,8": "Stone_06",
+        "13,8": "Grass_08",
+        "13,7": "Grass_08",
+        "14,7": "Stone_06",
+        "13,6": "Grass_08",
+        "12,6": "Stone_06",
+        "11,6": "Stone_06",
+        "10,6": "Stone_06",
+        "4,7": "Stone_06",
+        "5,7": "Stone_06",
+        "6,7": "Stone_06",
+        "7,7": "Stone_06",
+        "8,7": "Stone_06",
+        "9,7": "Grass_08",
+        "10,7": "Stone_06",
+        "11,7": "Grass_08",
+        "14,8": "Stone_06",
+        "13,9": "Stone_06",
+        "12,9": "Stone_06",
+        "11,9": "Grass_08",
+        "10,9": "Stone_06",
+        "9,9": "Stone_06",
+        "8,9": "Stone_06",
+        "7,9": "Stone_06",
+        "6,9": "Stone_06",
+        "5,8": "Grass_08",
+        "12,7": "Stone_06",
+        "9,6": "Grass_08",
+        "8,6": "Grass_08",
+        "7,6": "Grass_08",
+        "14,9": "Stone_06",
+        "1,3": "Grass_08",
+        "3,7": "Stone_06",
+        "4,8": "Grass_08",
+        "14,2": "Stone_06",
+        "14,6": "Stone_06"
+      },
+      "boundary": [
+        [
+          0,
+          0
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          15,
+          0
+        ],
+        [
+          15,
+          3
+        ],
+        [
+          9,
+          3
+        ],
+        [
+          9,
+          4
+        ],
+        [
+          15,
+          4
+        ],
+        [
+          15,
+          10
+        ],
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          7
+        ],
+        [
+          11,
+          7
+        ],
+        [
+          11,
+          10
+        ],
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          7
+        ],
+        [
+          9,
+          7
+        ],
+        [
+          9,
+          8
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          1,
+          9
+        ],
+        [
+          10,
+          9
+        ],
+        [
+          10,
+          6
+        ],
+        [
+          13,
+          6
+        ],
+        [
+          13,
+          9
+        ],
+        [
+          14,
+          9
+        ],
+        [
+          14,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          14,
+          2
+        ],
+        [
+          14,
+          1
+        ],
+        [
+          7,
+          1
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ]
+    }
+  },
+  "objectTypes": {
+    "box": {
+      "id": "box",
+      "name": "Box",
+      "sprite": "object-tile",
+      "description": "A basic obstacle box"
     }
   },
   "spriteMetadata": {
@@ -599,6 +974,46 @@
       "frameRate": 10,
       "loop": true,
       "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "Grass_08": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 1,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "Stone_06": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 1,
       "isDirectional": false,
       "directions": {
         "up": null,

@@ -136,6 +136,15 @@ document.querySelectorAll('.tool-btn').forEach(btn => {
         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         gridEditor.setTool(btn.dataset.tool);
+
+        // Show/hide floor paint panel based on tool
+        const floorPaintPanel = document.getElementById('floor-paint-panel');
+        if (btn.dataset.tool === 'paint' || btn.dataset.tool === 'erase') {
+            floorPaintPanel.style.display = 'block';
+            updateFloorSpriteSelector();
+        } else {
+            floorPaintPanel.style.display = 'none';
+        }
     });
 });
 
@@ -195,7 +204,7 @@ document.querySelectorAll('.modal-close').forEach(btn => {
 
 // Config manager listeners
 configManager.addEventListener((event, data) => {
-    if (event.includes('added') || event.includes('updated') || event.includes('deleted')) {
+    if (event.includes('added') || event.includes('updated') || event.includes('deleted') || event.includes('floor')) {
         gridEditor.render();
     }
     if (event === 'room-added' || event === 'room-deleted') {
@@ -222,6 +231,7 @@ document.addEventListener('keydown', (e) => {
 // Tab navigation
 const spritesPage = new SpritesPage(configManager, gridEditor);
 const charactersPage = new CharactersPage(configManager, gridEditor);
+const objectTypesPage = new ObjectTypesPage(configManager, gridEditor);
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -246,7 +256,57 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         if (targetView === 'characters-view') {
             charactersPage.render();
         }
+
+        // Initialize object types page when switching to it
+        if (targetView === 'object-types-view') {
+            objectTypesPage.render();
+        }
     });
+});
+
+// Event listeners - Floor painting
+function updateFloorSpriteSelector() {
+    const select = document.getElementById('floor-tile-sprite');
+    const sprites = configManager.getAllSpriteMetadata();
+
+    select.innerHTML = '<option value="">-- Select Sprite --</option>';
+    sprites.forEach(({ key }) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = key;
+        if (key === gridEditor.currentFloorSprite) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+}
+
+document.getElementById('floor-tile-sprite')?.addEventListener('change', (e) => {
+    const spriteKey = e.target.value;
+    gridEditor.setFloorSprite(spriteKey);
+
+    // Update preview
+    const preview = document.getElementById('floor-tile-preview');
+    if (spriteKey) {
+        const spriteData = configManager.getSprite(spriteKey);
+        const metadata = configManager.getSpriteMetadata(spriteKey);
+        const frameData = spriteData || (metadata?.frames?.[0]);
+
+        if (frameData) {
+            preview.innerHTML = `<img src="${frameData}" style="max-width: 100%; max-height: 100%; image-rendering: pixelated;">`;
+        } else {
+            preview.innerHTML = '<span style="color: #666; font-size: 12px;">No sprite data</span>';
+        }
+    } else {
+        preview.innerHTML = '<span style="color: #666; font-size: 12px;">No sprite selected</span>';
+    }
+});
+
+document.getElementById('clear-floor')?.addEventListener('click', () => {
+    if (confirm('Clear all floor tiles in this room?')) {
+        configManager.clearFloorTiles(currentRoom);
+        gridEditor.render();
+    }
 });
 
 // Initialize on load

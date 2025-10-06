@@ -4,7 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Editor - devhou.se</title>
-    <link rel="stylesheet" href="editor.css">
+    <!-- Base styles -->
+    <link rel="stylesheet" href="styles/base.css">
+    <!-- Layout components -->
+    <link rel="stylesheet" href="styles/layout.css">
+    <!-- Reusable components -->
+    <link rel="stylesheet" href="styles/components.css">
+    <!-- Modals -->
+    <link rel="stylesheet" href="styles/modals.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="styles/sprites-page.css">
+    <link rel="stylesheet" href="styles/characters-page.css">
+    <link rel="stylesheet" href="styles/object-types-page.css">
+    <!-- Sprite editor components -->
+    <link rel="stylesheet" href="styles/sprite-editor.css">
 </head>
 <body>
     <div id="app">
@@ -23,6 +36,7 @@
             <button class="tab-btn active" data-view="editor-view">Editor</button>
             <button class="tab-btn" data-view="sprites-view">Sprites</button>
             <button class="tab-btn" data-view="characters-view">Characters</button>
+            <button class="tab-btn" data-view="object-types-view">Object Types</button>
         </div>
 
         <!-- Editor View -->
@@ -66,12 +80,28 @@
                     <h3>Tool</h3>
                     <div class="tool-buttons">
                         <button class="tool-btn active" data-tool="select">Select</button>
+                        <button class="tool-btn" data-tool="paint">Paint Floor</button>
+                        <button class="tool-btn" data-tool="erase">Erase Floor</button>
                         <button class="tool-btn" data-tool="npc">Add NPC</button>
                         <button class="tool-btn" data-tool="object">Add Object</button>
                         <button class="tool-btn" data-tool="transporter">Add Transporter</button>
                         <button class="tool-btn" data-tool="player">Set Player Start</button>
                         <button class="tool-btn" data-tool="boundary">Edit Boundary</button>
                     </div>
+                </div>
+
+                <div class="panel" id="floor-paint-panel" style="display: none;">
+                    <h3>Floor Tile</h3>
+                    <div class="form-group">
+                        <label>Sprite:</label>
+                        <select id="floor-tile-sprite" class="form-control">
+                            <option value="">-- Select Sprite --</option>
+                        </select>
+                    </div>
+                    <div id="floor-tile-preview" style="width: 100%; height: 64px; background: #1e1e1e; border: 1px solid #3d3d3d; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-top: 8px;">
+                        <span style="color: #666; font-size: 12px;">No sprite selected</span>
+                    </div>
+                    <button id="clear-floor" class="btn btn-danger" style="width: 100%; margin-top: 12px;">Clear All Floor Tiles</button>
                 </div>
 
                 <div class="panel" id="properties-panel">
@@ -114,6 +144,10 @@
         <div id="characters-view" class="view-container">
             <div id="characters-page-container"></div>
         </div><!-- End Characters View -->
+
+        <!-- Object Types View -->
+        <div id="object-types-view" class="view-container">
+        </div><!-- End Object Types View -->
 
         <!-- Modals -->
         <div id="dialogue-modal" class="modal" style="display:none">
@@ -186,6 +220,9 @@
     <!-- Character management modules -->
     <script src="CharacterEditor.js"></script>
     <script src="CharactersPage.js"></script>
+
+    <!-- Object type management modules -->
+    <script src="ObjectTypesPage.js"></script>
 
     <!-- Main editor -->
     <script src="editor.js"></script>

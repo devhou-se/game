@@ -77,6 +77,9 @@ class GameScene extends Phaser.Scene {
         // Store sprite metadata for later use
         this.spriteMetadata = this.config.spriteMetadata || {};
 
+        // Store object types for later use
+        this.objectTypes = this.config.objectTypes || {};
+
         // Apply player's directional sprites if defined
         if (this.config.player.directionalSprites) {
             const playerSpriteKey = this.config.player.sprite;
@@ -102,6 +105,7 @@ class GameScene extends Phaser.Scene {
         this.currentRoom = this.config.player.startRoom;
         this.transporterSprites = [];
         this.objectSprites = [];
+        this.floorSprites = [];
         this.isTransitioning = false;
 
         // Player can move to any cell in the world
@@ -116,6 +120,7 @@ class GameScene extends Phaser.Scene {
         // Add background - origin at top-left (0,0)
         const bg = this.add.image(0, 0, 'background');
         bg.setOrigin(0, 0);
+        bg.setDepth(-10); // Lowest depth - below floor tiles
 
         // Calculate center coordinates
         const centerGridX = Math.floor(this.WORLD_WIDTH / this.GRID_SIZE / 2);
@@ -145,6 +150,7 @@ class GameScene extends Phaser.Scene {
                 boundary: boundary,
                 npcs: [],
                 objects: roomConfig.objects.map(obj => ({
+                    type: obj.type || 'box', // Default to 'box' if no type specified
                     gridX: obj.gridX !== null ? obj.gridX : centerGridX + obj.gridOffsetX,
                     gridY: obj.gridY !== null ? obj.gridY : centerGridY + obj.gridOffsetY
                 })),
@@ -154,7 +160,8 @@ class GameScene extends Phaser.Scene {
                     targetRoom: trans.targetRoom,
                     targetX: trans.targetX !== null ? trans.targetX : centerGridX + trans.targetOffsetX,
                     targetY: trans.targetY !== null ? trans.targetY : centerGridY + trans.targetOffsetY
-                }))
+                })),
+                floor: roomConfig.floor || {} // Floor tiles
             };
         }
 
@@ -212,9 +219,10 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        // Load current room transporters and objects
+        // Load current room transporters, objects, and floor tiles
         this.loadRoomTransporters();
         this.loadRoomObjects();
+        this.loadRoomFloorTiles();
 
         // Set up NPC wandering timer from config
         this.time.addEvent({
@@ -377,14 +385,55 @@ class GameScene extends Phaser.Scene {
             room.objects.forEach(obj => {
                 const pixelX = obj.gridX * this.GRID_SIZE + this.GRID_SIZE / 2;
                 const pixelY = obj.gridY * this.GRID_SIZE + this.GRID_SIZE / 2;
-                const sprite = this.add.sprite(pixelX, pixelY, 'object-tile');
+
+                // Get sprite key from object type
+                const objType = this.objectTypes[obj.type];
+                const spriteKey = objType ? objType.sprite : 'object-tile';
+
+                const sprite = this.add.sprite(pixelX, pixelY, spriteKey);
                 sprite.setDepth(0); // Above background, below characters
                 this.objectSprites.push(sprite);
 
-                // Store grid position on sprite for collision detection
+                // Store grid position and type on sprite for collision detection
                 sprite.gridX = obj.gridX;
                 sprite.gridY = obj.gridY;
+                sprite.objectType = obj.type;
             });
+        }
+    }
+
+    loadRoomFloorTiles() {
+        // Clear existing floor sprites
+        this.floorSprites.forEach(sprite => sprite.destroy());
+        this.floorSprites = [];
+
+        // Create floor tile sprites for current room
+        const room = this.rooms[this.currentRoom];
+        if (room.floor) {
+            for (const [key, spriteKey] of Object.entries(room.floor)) {
+                const [gridX, gridY] = key.split(',').map(Number);
+                const pixelX = gridX * this.GRID_SIZE + this.GRID_SIZE / 2;
+                const pixelY = gridY * this.GRID_SIZE + this.GRID_SIZE / 2;
+
+                // Check if the sprite texture exists
+                if (!this.textures.exists(spriteKey)) {
+                    console.warn(`Floor sprite not found: ${spriteKey}, using fallback`);
+                    // Use a fallback sprite if the requested one doesn't exist
+                    const fallbackKey = this.textures.exists('object-tile') ? 'object-tile' : 'tile';
+                    if (this.textures.exists(fallbackKey)) {
+                        const sprite = this.add.sprite(pixelX, pixelY, fallbackKey);
+                        sprite.setDepth(-1);
+                        sprite.setAlpha(0.5);
+                        sprite.setTint(0x88ff88); // Green tint to indicate missing sprite
+                        this.floorSprites.push(sprite);
+                    }
+                    continue;
+                }
+
+                const sprite = this.add.sprite(pixelX, pixelY, spriteKey);
+                sprite.setDepth(-5); // Above background (-10), below objects (0)
+                this.floorSprites.push(sprite);
+            }
         }
     }
 
@@ -457,9 +506,10 @@ class GameScene extends Phaser.Scene {
                 if (npc.nameLabel) npc.nameLabel.setVisible(true);
             });
 
-            // Load new room transporters and objects
+            // Load new room transporters, objects, and floor tiles
             this.loadRoomTransporters();
             this.loadRoomObjects();
+            this.loadRoomFloorTiles();
 
             // Update HUD
             this.updateHUD();
