@@ -24,4 +24,3 @@ jobs:
           channelId: live
           projectId: devhouse-80936
           target: devhouse-game-canvas
-          entryPoint: ./gamev2
