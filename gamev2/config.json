@@ -79,7 +79,10 @@
           "gridY": null,
           "gridOffsetX": -4,
           "gridOffsetY": 0,
-          "dialogue": [],
+          "dialogue": [
+            "Hello! I'm Julia.",
+            "Wow these drawings are so life-like!"
+          ],
           "directionalSprites": {
             "up": "julia_back",
             "down": "julia_front",
@@ -98,7 +101,11 @@
           "gridY": null,
           "gridOffsetX": 1,
           "gridOffsetY": -3,
-          "dialogue": [],
+          "dialogue": [
+            "Hello! I'm Damian.",
+            "There's so many boxes here...",
+            "We just need more arrows!"
+          ],
           "directionalSprites": {
             "up": "damian_back",
             "down": "damian_front",
@@ -173,7 +180,10 @@
           "gridY": null,
           "gridOffsetX": -1,
           "gridOffsetY": -2,
-          "dialogue": [],
+          "dialogue": [
+            "Hello! I'm Dylan.",
+            "I bet this game would have been better if was built in Godot."
+          ],
           "directionalSprites": {
             "up": "dylan_back",
             "down": "dylan_front",
