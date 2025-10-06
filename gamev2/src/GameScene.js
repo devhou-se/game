@@ -85,8 +85,16 @@ class GameScene extends Phaser.Scene {
         // Array to hold all characters (NPCs will be added here later)
         this.characters = [this.player];
 
-        // Spawn Bailey NPC in Tokyo
-        const bailey = this.spawnNPC(centerGridX + 2, centerGridY + 1, 'npc-tile', 'Bailey');
+        // Spawn Bailey NPC in Tokyo with dialogue
+        const bailey = this.spawnNPC(centerGridX + 2, centerGridY + 1, 'npc-tile', 'Bailey', {
+            dialogue: [
+                "Hello! I'm Bailey.",
+                "Welcome to game.devhou.se!",
+                "This is a grid-based adventure game.",
+                "Try exploring the world and finding transporters!",
+                "Press ESC to open the menu."
+            ]
+        });
         this.rooms.Tokyo.npcs.push(bailey);
 
         // Load current room transporters and objects
@@ -112,6 +120,13 @@ class GameScene extends Phaser.Scene {
         this.shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
         this.escKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
         this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+        // WASD keys
+        this.wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
         // Track key states for press detection
         this.lastKeyState = {
@@ -120,13 +135,13 @@ class GameScene extends Phaser.Scene {
             up: false,
             down: false,
             esc: false,
-            enter: false
+            enter: false,
+            space: false
         };
 
-        // Menu state
-        this.menuVisible = false;
-        this.selectedMenuIndex = 0;
-        this.menuOptions = [];
+        // Create managers
+        this.menuManager = new MenuManager(this);
+        this.dialogueManager = new DialogueManager(this);
 
         // Create HUD
         this.createHUD();
@@ -180,165 +195,13 @@ class GameScene extends Phaser.Scene {
         this.menuButton.setDepth(1001);
         this.menuButton.setResolution(window.devicePixelRatio || 2);
         this.menuButton.setInteractive({ useHandCursor: true });
-        this.menuButton.on('pointerdown', () => this.toggleMenu());
-
-        // Create menu overlay (hidden initially)
-        this.createMenu();
+        this.menuButton.on('pointerdown', () => this.menuManager.toggle());
     }
 
     updateHUD() {
         const date = "October 6 2025";
         const hudText = `game.devhou.se | ${this.currentRoom} | ${date}`;
         this.hudText.setText(hudText);
-    }
-
-    createMenu() {
-        // Semi-transparent background overlay (separate from container to allow clicks through)
-        this.menuOverlay = this.add.graphics();
-        this.menuOverlay.fillStyle(0x000000, 0.85);
-        this.menuOverlay.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
-        this.menuOverlay.setScrollFactor(0);
-        this.menuOverlay.setDepth(2000);
-        this.menuOverlay.setInteractive(
-            new Phaser.Geom.Rectangle(0, 0, this.cameras.main.width, this.cameras.main.height),
-            Phaser.Geom.Rectangle.Contains
-        );
-        this.menuOverlay.on('pointerdown', () => this.hideMenu());
-
-        // Menu overlay container
-        this.menuContainer = this.add.container(0, 0);
-        this.menuContainer.setScrollFactor(0);
-        this.menuContainer.setDepth(2001);
-
-        // Menu panel
-        const panelWidth = 300;
-        const panelHeight = 250;
-        const panelX = (this.cameras.main.width - panelWidth) / 2;
-        const panelY = (this.cameras.main.height - panelHeight) / 2;
-
-        const panel = this.add.graphics();
-        panel.fillStyle(0x1a1a1a, 1);
-        panel.fillRect(panelX, panelY, panelWidth, panelHeight);
-        panel.lineStyle(2, 0x666666, 1);
-        panel.strokeRect(panelX, panelY, panelWidth, panelHeight);
-        this.menuContainer.add(panel);
-
-        // Menu title
-        this.menuTitle = this.add.text(
-            this.cameras.main.width / 2,
-            panelY + 30,
-            'MENU',
-            {
-                fontSize: '24px',
-                fill: '#ffffff',
-                fontFamily: 'monospace'
-            }
-        );
-        this.menuTitle.setOrigin(0.5, 0.5);
-        this.menuTitle.setResolution(window.devicePixelRatio || 2);
-        this.menuTitle.setScrollFactor(0);
-        this.menuTitle.setDepth(2002);
-        this.menuTitle.setVisible(false);
-
-        // Menu options
-        const options = [
-            { text: 'Achievements', action: () => this.showAchievements() },
-            { text: 'Map', action: () => this.showMap() },
-            { text: 'Credits', action: () => this.showCredits() }
-        ];
-
-        const startY = panelY + 80;
-        const spacing = 50;
-
-        this.menuOptions = []; // Reset menu options array
-
-        options.forEach((option, index) => {
-            const optionText = this.add.text(
-                this.cameras.main.width / 2,
-                startY + (index * spacing),
-                option.text,
-                {
-                    fontSize: '20px',
-                    fill: '#ffffff',
-                    fontFamily: 'monospace'
-                }
-            );
-            optionText.setOrigin(0.5, 0.5);
-            optionText.setResolution(window.devicePixelRatio || 2);
-            optionText.setScrollFactor(0);
-            optionText.setDepth(2002);
-            optionText.setInteractive({ useHandCursor: true });
-            optionText.setVisible(false);
-
-            // Store reference with action
-            this.menuOptions.push({
-                textObject: optionText,
-                action: option.action,
-                index: index
-            });
-
-            // Hover effects
-            optionText.on('pointerover', () => {
-                this.selectMenuOption(index);
-            });
-            optionText.on('pointerdown', () => {
-                this.activateMenuOption();
-            });
-        });
-
-        // Hide menu initially
-        this.menuContainer.setVisible(false);
-        this.menuOverlay.setVisible(false);
-    }
-
-    toggleMenu() {
-        if (this.menuVisible) {
-            this.hideMenu();
-        } else {
-            this.showMenu();
-        }
-    }
-
-    showMenu() {
-        this.menuVisible = true;
-        this.menuOverlay.setVisible(true);
-        this.menuContainer.setVisible(true);
-        this.menuTitle.setVisible(true);
-        this.menuOptions.forEach(option => option.textObject.setVisible(true));
-        this.selectedMenuIndex = 0;
-        this.updateMenuSelection();
-    }
-
-    hideMenu() {
-        this.menuVisible = false;
-        this.menuOverlay.setVisible(false);
-        this.menuContainer.setVisible(false);
-        this.menuTitle.setVisible(false);
-        this.menuOptions.forEach(option => option.textObject.setVisible(false));
-    }
-
-    selectMenuOption(index) {
-        this.selectedMenuIndex = index;
-        this.updateMenuSelection();
-    }
-
-    updateMenuSelection() {
-        // Update visual feedback for all menu options
-        this.menuOptions.forEach((option, index) => {
-            if (index === this.selectedMenuIndex) {
-                option.textObject.setFill('#ffff00');
-            } else {
-                option.textObject.setFill('#ffffff');
-            }
-        });
-    }
-
-    activateMenuOption() {
-        const selectedOption = this.menuOptions[this.selectedMenuIndex];
-        if (selectedOption) {
-            selectedOption.action();
-            this.hideMenu();
-        }
     }
 
     showAchievements() {
@@ -425,6 +288,27 @@ class GameScene extends Phaser.Scene {
         return false;
     }
 
+    checkNPCInteraction(targetGridX, targetGridY) {
+        // Don't interact if dialogue is already visible
+        if (this.dialogueManager.isVisible()) {
+            return;
+        }
+
+        // Get NPCs in current room
+        const currentRoomNPCs = this.rooms[this.currentRoom].npcs;
+
+        // Check if the target position has an NPC
+        for (let npc of currentRoomNPCs) {
+            if (npc.gridX === targetGridX && npc.gridY === targetGridY) {
+                // Found an NPC at the target position
+                if (npc.canInteract) {
+                    this.dialogueManager.show(npc);
+                }
+                return;
+            }
+        }
+    }
+
     switchRoom(newRoom, targetX, targetY) {
         // Block input during transition
         this.isTransitioning = true;
@@ -498,29 +382,48 @@ class GameScene extends Phaser.Scene {
     }
 
     handlePlayerInput() {
+        // If dialogue is visible, handle dialogue input
+        if (this.dialogueManager.isVisible()) {
+            const spacePressed = this.spaceKey.isDown && !this.lastKeyState.space;
+            const enterPressed = this.enterKey.isDown && !this.lastKeyState.enter;
+            const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
+
+            // ESC to close dialogue
+            if (escPressed) {
+                this.dialogueManager.close();
+            }
+            // Space or Enter to advance dialogue
+            else if (spacePressed || enterPressed) {
+                this.dialogueManager.advance();
+            }
+
+            this.lastKeyState.space = this.spaceKey.isDown;
+            this.lastKeyState.enter = this.enterKey.isDown;
+            this.lastKeyState.esc = this.escKey.isDown;
+            return; // Block other input
+        }
+
         // Handle ESC key for menu toggle
         if (this.escKey.isDown && !this.lastKeyState.esc) {
-            this.toggleMenu();
+            this.menuManager.toggle();
         }
         this.lastKeyState.esc = this.escKey.isDown;
 
         // If menu is visible, handle menu navigation
-        if (this.menuVisible) {
+        if (this.menuManager.isVisible()) {
             // Arrow up - previous option
             if (this.cursors.up.isDown && !this.lastKeyState.up) {
-                this.selectedMenuIndex = (this.selectedMenuIndex - 1 + this.menuOptions.length) % this.menuOptions.length;
-                this.updateMenuSelection();
+                this.menuManager.selectPrevious();
             }
 
             // Arrow down - next option
             if (this.cursors.down.isDown && !this.lastKeyState.down) {
-                this.selectedMenuIndex = (this.selectedMenuIndex + 1) % this.menuOptions.length;
-                this.updateMenuSelection();
+                this.menuManager.selectNext();
             }
 
             // Enter - activate selected option
             if (this.enterKey.isDown && !this.lastKeyState.enter) {
-                this.activateMenuOption();
+                this.menuManager.activate();
             }
 
             // Update key states for menu navigation
@@ -534,9 +437,11 @@ class GameScene extends Phaser.Scene {
         // If currently moving or transitioning, don't accept input
         if (this.player.isMoving || this.isTransitioning) return;
 
-        // Check if any directional keys are currently held
+        // Check if any directional keys are currently held (arrows or WASD)
         const anyKeyHeld = this.cursors.left.isDown || this.cursors.right.isDown ||
-                           this.cursors.up.isDown || this.cursors.down.isDown;
+                           this.cursors.up.isDown || this.cursors.down.isDown ||
+                           this.aKey.isDown || this.dKey.isDown ||
+                           this.wKey.isDown || this.sKey.isDown;
 
         // Update last key states
         this.lastKeyState.left = this.cursors.left.isDown;
@@ -549,10 +454,10 @@ class GameScene extends Phaser.Scene {
             let moveX = 0;
             let moveY = 0;
 
-            if (this.cursors.left.isDown) moveX -= 1;
-            if (this.cursors.right.isDown) moveX += 1;
-            if (this.cursors.up.isDown) moveY -= 1;
-            if (this.cursors.down.isDown) moveY += 1;
+            if (this.cursors.left.isDown || this.aKey.isDown) moveX -= 1;
+            if (this.cursors.right.isDown || this.dKey.isDown) moveX += 1;
+            if (this.cursors.up.isDown || this.wKey.isDown) moveY -= 1;
+            if (this.cursors.down.isDown || this.sKey.isDown) moveY += 1;
 
             const speedMultiplier = this.shiftKey.isDown ? 2 : 1;
 
@@ -563,7 +468,7 @@ class GameScene extends Phaser.Scene {
     }
 
     // Helper method to spawn NPCs
-    spawnNPC(gridX, gridY, spriteKey, name) {
+    spawnNPC(gridX, gridY, spriteKey, name, options = {}) {
         // NPCs can only move within a 5x5 box centered on their starting position
         const wanderRadius = 2; // 5x5 box = ±2 cells in each direction
         const npc = new Character(this, gridX, gridY, spriteKey, {
@@ -578,6 +483,14 @@ class GameScene extends Phaser.Scene {
             maxGridY: gridY + wanderRadius
         });
         this.characters.push(npc);
+
+        // Add dialogue if provided
+        if (options.dialogue && options.dialogue.length > 0) {
+            npc.dialogue = options.dialogue;
+            npc.canInteract = true;
+        } else {
+            npc.canInteract = false;
+        }
 
         // Add name label above NPC
         const pixelX = gridX * this.GRID_SIZE + this.GRID_SIZE / 2;
@@ -690,6 +603,11 @@ class GameScene extends Phaser.Scene {
         const currentRoomNPCs = this.rooms[this.currentRoom].npcs;
 
         currentRoomNPCs.forEach(npc => {
+            // Skip if this NPC is currently in dialogue
+            if (this.dialogueManager.isVisible() && this.dialogueManager.getCurrentNPC() === npc) {
+                return;
+            }
+
             // Only move if NPC is not currently moving
             if (!npc.isMoving) {
                 // Randomly pick a direction: 0 = stay, 1 = left, 2 = right, 3 = up, 4 = down

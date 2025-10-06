@@ -30,14 +30,28 @@ class Character {
         // Character properties
         this.isPlayer = config.isPlayer || false;
         this.name = config.name || 'Character';
+
+        // Facing direction (for player interaction detection)
+        this.facingX = 0;
+        this.facingY = 0;
     }
 
     startMovement(deltaX, deltaY, speedMultiplier = 1) {
         const targetGridX = this.gridX + deltaX;
         const targetGridY = this.gridY + deltaY;
 
+        // Update facing direction
+        if (deltaX !== 0 || deltaY !== 0) {
+            this.facingX = Math.sign(deltaX);
+            this.facingY = Math.sign(deltaY);
+        }
+
         // Check collision before moving
         if (!this.canMoveTo(targetGridX, targetGridY, this.gridX, this.gridY)) {
+            // If this is the player and collision happened, check for NPC interaction
+            if (this.isPlayer) {
+                this.scene.checkNPCInteraction(targetGridX, targetGridY);
+            }
             return; // Movement blocked
         }
 
