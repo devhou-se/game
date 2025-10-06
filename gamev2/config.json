@@ -10,6 +10,16 @@
     "npcWanderInterval": 5000,
     "npcWanderRadius": 2
   },
+  "credits": [
+    "devhou dot se",
+    "",
+    "Proprietor: Bailey",
+    "Graphics: Julia",
+    "Audio: Gloria",
+    "Box and Arrows: Damian",
+    "Devil's Advocate: Dylan",
+    "Slacker: Yashuk"
+  ],
   "player": {
     "startRoom": "Tokyo",
     "startX": 7,

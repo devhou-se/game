@@ -47,11 +47,11 @@ class MenuManager {
             {
                 fontSize: '24px',
                 fill: '#ffffff',
-                fontFamily: 'monospace'
+                fontFamily: 'PixelOperatorMonoBold'
             }
         );
         this.titleText.setOrigin(0.5, 0.5);
-        this.titleText.setResolution(window.devicePixelRatio || 2);
+        this.titleText.setResolution(1);
         this.titleText.setScrollFactor(0);
         this.titleText.setDepth(2002);
         this.titleText.setVisible(false);
@@ -74,13 +74,13 @@ class MenuManager {
                 startY + (index * spacing),
                 option.text,
                 {
-                    fontSize: '20px',
+                    fontSize: '24px',
                     fill: '#ffffff',
-                    fontFamily: 'monospace'
+                    fontFamily: 'PixelOperatorMono'
                 }
             );
             optionText.setOrigin(0.5, 0.5);
-            optionText.setResolution(window.devicePixelRatio || 2);
+            optionText.setResolution(1);
             optionText.setScrollFactor(0);
             optionText.setDepth(2002);
             optionText.setInteractive({ useHandCursor: true });
