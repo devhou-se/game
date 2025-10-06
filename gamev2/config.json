@@ -1,0 +1,129 @@
+{
+  "game": {
+    "title": "game.devhou.se",
+    "date": "October 6 2025",
+    "gridSize": 64,
+    "worldWidth": 960,
+    "worldHeight": 640,
+    "deadzoneCells": 4,
+    "moveDuration": 200,
+    "npcWanderInterval": 5000,
+    "npcWanderRadius": 2
+  },
+  "player": {
+    "startRoom": "Tokyo",
+    "startX": null,
+    "startY": null,
+    "sprite": "tile",
+    "name": "Player"
+  },
+  "rooms": {
+    "Tokyo": {
+      "name": "Tokyo",
+      "npcs": [
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": 2,
+          "gridOffsetY": 1,
+          "sprite": "npc-tile",
+          "name": "Bailey",
+          "dialogue": [
+            "Hello! I'm Bailey.",
+            "Welcome to game.devhou.se!",
+            "This is a grid-based adventure game.",
+            "Try exploring the world and finding transporters!",
+            "Press ESC to open the menu."
+          ]
+        }
+      ],
+      "objects": [
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -4,
+          "gridOffsetY": -3
+        },
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": 4,
+          "gridOffsetY": -2
+        },
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -3,
+          "gridOffsetY": 3
+        }
+      ],
+      "transporters": [
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -2,
+          "gridOffsetY": -2,
+          "targetRoom": "Osaka",
+          "targetX": null,
+          "targetY": null,
+          "targetOffsetX": 3,
+          "targetOffsetY": 2
+        }
+      ]
+    },
+    "Osaka": {
+      "name": "Osaka",
+      "npcs": [
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -1,
+          "gridOffsetY": -2,
+          "sprite": "npc-tile",
+          "name": "Dylan",
+          "dialogue": [
+            "Hey there! I'm Dylan.",
+            "Self-proclaimed world's best software engineer.",
+            "I can code in my sleep. Literally.",
+            "My commits are works of art.",
+            "Bug? What bug? I don't make bugs.",
+            "Welcome to Osaka!"
+          ]
+        }
+      ],
+      "objects": [
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": 1,
+          "gridOffsetY": 1
+        },
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -4,
+          "gridOffsetY": 2
+        },
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": 4,
+          "gridOffsetY": -3
+        }
+      ],
+      "transporters": [
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": 3,
+          "gridOffsetY": 2,
+          "targetRoom": "Tokyo",
+          "targetX": null,
+          "targetY": null,
+          "targetOffsetX": -2,
+          "targetOffsetY": -2
+        }
+      ]
+    }
+  }
+}

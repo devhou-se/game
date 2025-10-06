@@ -9,18 +9,23 @@ class GameScene extends Phaser.Scene {
         this.load.image("npc-tile", "assets/npc-tile.png");
         this.load.image("transporter", "assets/transporter.png");
         this.load.image("object-tile", "assets/object-tile.png");
+        this.load.json("config", "config.json");
     }
 
     create() {
-        this.GRID_SIZE = 64; // Each grid cell is 64x64 pixels
-        this.WORLD_WIDTH = 960; // 15 cells wide (15 * 64)
-        this.WORLD_HEIGHT = 640; // 10 cells tall (10 * 64)
-        this.DEADZONE_CELLS = 4; // 5x5 grid cells (4*64 + player cell = 5 cells)
+        // Load configuration from JSON
+        this.config = this.cache.json.get('config');
+
+        // Apply game settings from config
+        this.GRID_SIZE = this.config.game.gridSize;
+        this.WORLD_WIDTH = this.config.game.worldWidth;
+        this.WORLD_HEIGHT = this.config.game.worldHeight;
+        this.DEADZONE_CELLS = this.config.game.deadzoneCells;
         this.DEADZONE_SIZE = this.DEADZONE_CELLS * this.GRID_SIZE;
-        this.MOVE_DURATION = 200; // milliseconds for smooth movement
+        this.MOVE_DURATION = this.config.game.moveDuration;
 
         // Room system (will be initialized after centerGrid is calculated)
-        this.currentRoom = 'Tokyo';
+        this.currentRoom = this.config.player.startRoom;
         this.transporterSprites = [];
         this.objectSprites = [];
         this.isTransitioning = false;
@@ -38,44 +43,41 @@ class GameScene extends Phaser.Scene {
         const bg = this.add.image(0, 0, 'background');
         bg.setOrigin(0, 0);
 
-        // Create player character in center of world with restricted bounds
+        // Calculate center coordinates
         const centerGridX = Math.floor(this.WORLD_WIDTH / this.GRID_SIZE / 2);
         const centerGridY = Math.floor(this.WORLD_HEIGHT / this.GRID_SIZE / 2);
 
-        // Initialize rooms with center coordinates
-        this.rooms = {
-            Tokyo: {
-                name: 'Tokyo',
+        // Initialize rooms from config
+        this.rooms = {};
+        for (let roomKey in this.config.rooms) {
+            const roomConfig = this.config.rooms[roomKey];
+            this.rooms[roomKey] = {
+                name: roomConfig.name,
                 npcs: [],
-                objects: [
-                    { gridX: centerGridX - 4, gridY: centerGridY - 3 },
-                    { gridX: centerGridX + 4, gridY: centerGridY - 2 },
-                    { gridX: centerGridX - 3, gridY: centerGridY + 3 }
-                ],
-                transporters: [
-                    { gridX: centerGridX - 2, gridY: centerGridY - 2, targetRoom: 'Osaka', targetX: centerGridX + 3, targetY: centerGridY + 2 }
-                ]
-            },
-            Osaka: {
-                name: 'Osaka',
-                npcs: [],
-                objects: [
-                    { gridX: centerGridX + 1, gridY: centerGridY + 1 },
-                    { gridX: centerGridX - 4, gridY: centerGridY + 2 },
-                    { gridX: centerGridX + 4, gridY: centerGridY - 3 }
-                ],
-                transporters: [
-                    { gridX: centerGridX + 3, gridY: centerGridY + 2, targetRoom: 'Tokyo', targetX: centerGridX - 2, targetY: centerGridY - 2 }
-                ]
-            }
-        };
+                objects: roomConfig.objects.map(obj => ({
+                    gridX: obj.gridX !== null ? obj.gridX : centerGridX + obj.gridOffsetX,
+                    gridY: obj.gridY !== null ? obj.gridY : centerGridY + obj.gridOffsetY
+                })),
+                transporters: roomConfig.transporters.map(trans => ({
+                    gridX: trans.gridX !== null ? trans.gridX : centerGridX + trans.gridOffsetX,
+                    gridY: trans.gridY !== null ? trans.gridY : centerGridY + trans.gridOffsetY,
+                    targetRoom: trans.targetRoom,
+                    targetX: trans.targetX !== null ? trans.targetX : centerGridX + trans.targetOffsetX,
+                    targetY: trans.targetY !== null ? trans.targetY : centerGridY + trans.targetOffsetY
+                }))
+            };
+        }
 
-        this.player = new Character(this, centerGridX, centerGridY, 'tile', {
+        // Create player from config
+        const playerStartX = this.config.player.startX !== null ? this.config.player.startX : centerGridX;
+        const playerStartY = this.config.player.startY !== null ? this.config.player.startY : centerGridY;
+
+        this.player = new Character(this, playerStartX, playerStartY, this.config.player.sprite, {
             gridSize: this.GRID_SIZE,
-            worldSize: this.WORLD_WIDTH, // Use width for compatibility
+            worldSize: this.WORLD_WIDTH,
             moveDuration: this.MOVE_DURATION,
             isPlayer: true,
-            name: 'Player',
+            name: this.config.player.name,
             minGridX: minGridX,
             maxGridX: maxGridX,
             minGridY: minGridY,
@@ -85,25 +87,37 @@ class GameScene extends Phaser.Scene {
         // Array to hold all characters (NPCs will be added here later)
         this.characters = [this.player];
 
-        // Spawn Bailey NPC in Tokyo with dialogue
-        const bailey = this.spawnNPC(centerGridX + 2, centerGridY + 1, 'npc-tile', 'Bailey', {
-            dialogue: [
-                "Hello! I'm Bailey.",
-                "Welcome to game.devhou.se!",
-                "This is a grid-based adventure game.",
-                "Try exploring the world and finding transporters!",
-                "Press ESC to open the menu."
-            ]
-        });
-        this.rooms.Tokyo.npcs.push(bailey);
+        // Spawn NPCs from config
+        for (let roomKey in this.config.rooms) {
+            const roomConfig = this.config.rooms[roomKey];
+            roomConfig.npcs.forEach(npcConfig => {
+                const npcGridX = npcConfig.gridX !== null ? npcConfig.gridX : centerGridX + npcConfig.gridOffsetX;
+                const npcGridY = npcConfig.gridY !== null ? npcConfig.gridY : centerGridY + npcConfig.gridOffsetY;
+
+                const npc = this.spawnNPC(npcGridX, npcGridY, npcConfig.sprite, npcConfig.name, {
+                    dialogue: npcConfig.dialogue
+                });
+                this.rooms[roomKey].npcs.push(npc);
+            });
+        }
+
+        // Hide NPCs that are not in the current starting room
+        for (let roomKey in this.rooms) {
+            if (roomKey !== this.currentRoom) {
+                this.rooms[roomKey].npcs.forEach(npc => {
+                    npc.sprite.setVisible(false);
+                    if (npc.nameLabel) npc.nameLabel.setVisible(false);
+                });
+            }
+        }
 
         // Load current room transporters and objects
         this.loadRoomTransporters();
         this.loadRoomObjects();
 
-        // Set up NPC wandering timer (every 5 seconds)
+        // Set up NPC wandering timer from config
         this.time.addEvent({
-            delay: 5000,
+            delay: this.config.game.npcWanderInterval,
             callback: this.handleNPCWander,
             callbackScope: this,
             loop: true
@@ -160,8 +174,7 @@ class GameScene extends Phaser.Scene {
         this.hudBackground.setDepth(1000);
 
         // Game info (left aligned)
-        const date = "October 6 2025";
-        const hudText = `game.devhou.se | ${this.currentRoom} | ${date}`;
+        const hudText = `${this.config.game.title} | ${this.currentRoom} | ${this.config.game.date}`;
 
         // Create HUD text (left aligned)
         this.hudText = this.add.text(
@@ -199,8 +212,7 @@ class GameScene extends Phaser.Scene {
     }
 
     updateHUD() {
-        const date = "October 6 2025";
-        const hudText = `game.devhou.se | ${this.currentRoom} | ${date}`;
+        const hudText = `${this.config.game.title} | ${this.currentRoom} | ${this.config.game.date}`;
         this.hudText.setText(hudText);
     }
 
@@ -469,8 +481,8 @@ class GameScene extends Phaser.Scene {
 
     // Helper method to spawn NPCs
     spawnNPC(gridX, gridY, spriteKey, name, options = {}) {
-        // NPCs can only move within a 5x5 box centered on their starting position
-        const wanderRadius = 2; // 5x5 box = ±2 cells in each direction
+        // NPCs can only move within a box centered on their starting position
+        const wanderRadius = this.config.game.npcWanderRadius;
         const npc = new Character(this, gridX, gridY, spriteKey, {
             gridSize: this.GRID_SIZE,
             worldSize: this.WORLD_SIZE,
