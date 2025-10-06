@@ -28,17 +28,24 @@ Then navigate to `http://localhost:8000` in your browser.
 
 ### File Structure
 
-- `index.html` - Entry point, loads Phaser CDN and game scripts
-- `game.js` - Phaser game configuration (viewport: 800×600, physics setup)
-- `GameScene.js` - Main game scene (room system, HUD, input handling, collision)
-- `Character.js` - Character movement class with grid-based tweening
+- `index.html` - Entry point, loads Phaser CDN and game scripts from `src/`
+- `config.json` - JSON configuration file defining game constants, rooms, NPCs, and objects
+- `src/game.js` - Phaser game configuration (viewport: 1280×960, physics setup)
+- `src/GameScene.js` - Main game scene (room system, HUD, input handling, collision)
+- `src/Character.js` - Character movement class with grid-based tweening
+- `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
+- `src/MenuManager.js` - In-game menu system (ESC key toggle)
 
-### Core Constants (GameScene.js)
+### Core Constants (config.json)
 
-- `GRID_SIZE`: 64 pixels per cell
-- `WORLD_SIZE`: 1024 pixels (16×16 grid)
-- `DEADZONE_CELLS`: 4 (creates effective 5×5 cell camera deadzone)
-- `MOVE_DURATION`: 200ms per cell movement
+All game constants are loaded from `config.json` and applied in GameScene.create():
+- `gridSize`: 64 pixels per cell
+- `worldWidth`: 960 pixels (15 grid cells wide)
+- `worldHeight`: 640 pixels (10 grid cells tall)
+- `deadzoneCells`: 4 (creates effective 5×5 cell camera deadzone)
+- `moveDuration`: 200ms per cell movement
+- `npcWanderInterval`: 5000ms between NPC wander attempts
+- `npcWanderRadius`: 2 cells from NPC spawn point
 
 ### Grid-Based Movement System
 
@@ -51,31 +58,35 @@ Player movement bounds are calculated based on camera deadzone to prevent camera
 
 ### Room System
 
-Rooms are defined in `GameScene.rooms` with:
+Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room has:
 - `name`: Display name
-- `npcs`: Array of NPC character objects
-- `objects`: Array of static objects with `{gridX, gridY}` (no labels, block movement)
-- `transporters`: Array of transporter objects with `{gridX, gridY, targetRoom, targetX, targetY}`
+- `npcs`: Array of NPC definitions with position (absolute or offset from center), sprite, name, and dialogue
+- `objects`: Array of static obstacles with position (absolute or offset from center) that block movement
+- `transporters`: Array of teleport points with position, targetRoom, and target position
+
+Position system supports both absolute grid coordinates (`gridX`/`gridY`) or center-relative offsets (`gridOffsetX`/`gridOffsetY`).
 
 Room transitions use camera fade effects (250ms fade out, 250ms hold, 250ms fade in) and block input during transition via `isTransitioning` flag.
 
 ### HUD System
 
-Semi-transparent bar at top showing: `devhou.se | {currentRoom} | {date}`
+Semi-transparent bar at top showing: `{game.title} | {currentRoom} | {game.date}` with clickable menu button
+- Title and date loaded from `config.json`
 - Uses `window.devicePixelRatio` for retina display text rendering
 - Fixed to camera with `setScrollFactor(0)`
 - Depth 1000+ to render above game elements
+- Menu button (right-aligned) opens MenuManager on click
 
 ## Asset Generation
 
-Python scripts in root generate 64×64 PNG tiles:
-- `generate_tile.py` - Player tile (yellow border)
-- `generate_npc_tile.py` - NPC tile
-- `generate_transporter_tile.py` - Transporter tile (green border)
-- `generate_object_tile.py` - Object tile (black border)
-- `generate_grid.py` - Background grid
+Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/`:
+- `generate_tile.py` - Player tile (yellow border) → `assets/single-tile.png`
+- `generate_npc_tile.py` - NPC tile → `assets/npc-tile.png`
+- `generate_transporter_tile.py` - Transporter tile (green border) → `assets/transporter.png`
+- `generate_object_tile.py` - Object tile (black border) → `assets/object-tile.png`
+- `generate_grid.py` - Background grid → `assets/background-grid.png`
 
-Run with: `python3 generate_<type>.py`
+Run with: `python3 tools/generate_<type>.py`
 
 ## Key Implementation Details
 
@@ -90,4 +101,8 @@ All intermediate cells in movement path are checked for:
 Sprites are centered at: `gridPos * GRID_SIZE + GRID_SIZE/2`
 
 ### Input Handling
-Arrow keys move 1 cell, Shift doubles speed (not distance). Input blocked when `player.isMoving` or `isTransitioning`.
+- **Movement**: Arrow keys or WASD move 1 cell, Shift doubles speed (not distance)
+- **Menu**: ESC toggles menu, arrow keys navigate, Enter activates
+- **Dialogue**: Space/Enter advances, ESC closes
+- Input blocked when `player.isMoving` or `isTransitioning`
+- Supports diagonal movement with simultaneous key presses
