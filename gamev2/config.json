@@ -150,6 +150,20 @@
           "gridY": null,
           "gridOffsetX": -3,
           "gridOffsetY": 3
+        },
+        {
+          "type": "RedBox",
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -3,
+          "gridOffsetY": -3
+        },
+        {
+          "type": "box",
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -2,
+          "gridOffsetY": -3
         }
       ],
       "transporters": [
@@ -622,6 +636,12 @@
       "name": "Box",
       "sprite": "object-tile",
       "description": "A basic obstacle box"
+    },
+    "RedBox": {
+      "id": "RedBox",
+      "name": "RedBox",
+      "sprite": "npc-tile",
+      "description": ""
     }
   },
   "spriteMetadata": {
