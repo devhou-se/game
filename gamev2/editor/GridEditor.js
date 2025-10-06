@@ -23,6 +23,12 @@ class GridEditor {
         // Callbacks
         this.onSelectionChanged = null;
 
+        // Boundary editing
+        this.boundaryVertices = [];
+        this.selectedVertexIndex = null;
+        this.hoveredVertexIndex = null;
+        this.isDraggingVertex = false;
+
         this.setupCanvas();
         this.loadSprites().then(() => {
             this.spritesLoaded = true;
@@ -83,23 +89,65 @@ class GridEditor {
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
         this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
+        this.canvas.addEventListener('contextmenu', (e) => this.handleContextMenu(e));
+        document.addEventListener('keydown', (e) => this.handleKeyDown(e));
     }
 
     setTool(tool) {
         this.currentTool = tool;
         this.selectedItem = null;
+        if (tool === 'boundary') {
+            this.loadBoundary();
+        } else {
+            this.boundaryVertices = [];
+            this.selectedVertexIndex = null;
+        }
         if (this.onSelectionChanged) {
             this.onSelectionChanged();
         }
+        this.render();
     }
 
     setRoom(roomKey) {
         this.currentRoom = roomKey;
         this.selectedItem = null;
+        if (this.currentTool === 'boundary') {
+            this.loadBoundary();
+        }
         if (this.onSelectionChanged) {
             this.onSelectionChanged();
         }
         this.render();
+    }
+
+    loadBoundary() {
+        if (!this.currentRoom) {
+            this.boundaryVertices = [];
+            return;
+        }
+
+        const room = this.configManager.getRoom(this.currentRoom);
+        if (room.boundary && Array.isArray(room.boundary)) {
+            // Deep copy
+            this.boundaryVertices = room.boundary.map(v => [v[0], v[1]]);
+        } else {
+            // Create default boundary
+            const maxGridX = Math.floor(this.worldWidth / this.gridSize);
+            const maxGridY = Math.floor(this.worldHeight / this.gridSize);
+            this.boundaryVertices = [
+                [0, 0],
+                [maxGridX, 0],
+                [maxGridX, maxGridY],
+                [0, maxGridY]
+            ];
+        }
+    }
+
+    saveBoundary() {
+        if (!this.currentRoom) return;
+
+        const room = this.configManager.getRoom(this.currentRoom);
+        room.boundary = this.boundaryVertices.map(v => [v[0], v[1]]);
     }
 
     setSelectionCallback(callback) {
@@ -115,6 +163,15 @@ class GridEditor {
         return { gridX, gridY };
     }
 
+    getBoundaryGridPosition(clientX, clientY) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = (clientX - rect.left - this.offsetX) / this.scale;
+        const y = (clientY - rect.top - this.offsetY) / this.scale;
+        const gridX = Math.round(x / this.gridSize);
+        const gridY = Math.round(y / this.gridSize);
+        return { gridX, gridY };
+    }
+
     isValidGridPosition(gridX, gridY) {
         const maxGridX = Math.floor(this.worldWidth / this.gridSize) - 1;
         const maxGridY = Math.floor(this.worldHeight / this.gridSize) - 1;
@@ -122,8 +179,6 @@ class GridEditor {
     }
 
     handleMouseDown(e) {
-        const { gridX, gridY } = this.getGridPosition(e.clientX, e.clientY);
-
         if (e.button === 1 || e.shiftKey) {
             // Middle mouse or shift+click for panning
             this.isDragging = true;
@@ -131,6 +186,33 @@ class GridEditor {
             this.dragStartY = e.clientY - this.offsetY;
             return;
         }
+
+        if (this.currentTool === 'boundary') {
+            const { gridX, gridY } = this.getBoundaryGridPosition(e.clientX, e.clientY);
+
+            // Check if clicking on a vertex
+            const vertexRadius = 0.5; // In grid units
+            for (let i = 0; i < this.boundaryVertices.length; i++) {
+                const vertex = this.boundaryVertices[i];
+                const dist = Math.sqrt(
+                    Math.pow(gridX - vertex[0], 2) + Math.pow(gridY - vertex[1], 2)
+                );
+                if (dist < vertexRadius) {
+                    this.selectedVertexIndex = i;
+                    this.isDraggingVertex = true;
+                    this.render();
+                    return;
+                }
+            }
+
+            // Otherwise add a new vertex
+            this.boundaryVertices.push([gridX, gridY]);
+            this.saveBoundary();
+            this.render();
+            return;
+        }
+
+        const { gridX, gridY } = this.getGridPosition(e.clientX, e.clientY);
 
         if (!this.isValidGridPosition(gridX, gridY)) return;
 
@@ -149,14 +231,47 @@ class GridEditor {
     }
 
     handleMouseMove(e) {
-        const { gridX, gridY } = this.getGridPosition(e.clientX, e.clientY);
-
         if (this.isDragging) {
             this.offsetX = e.clientX - this.dragStartX;
             this.offsetY = e.clientY - this.dragStartY;
             this.render();
             return;
         }
+
+        if (this.isDraggingVertex && this.selectedVertexIndex !== null) {
+            const { gridX, gridY } = this.getBoundaryGridPosition(e.clientX, e.clientY);
+            this.boundaryVertices[this.selectedVertexIndex] = [gridX, gridY];
+            this.saveBoundary();
+            this.render();
+            return;
+        }
+
+        // Check for vertex hover when in boundary mode
+        if (this.currentTool === 'boundary' && !this.isDraggingVertex) {
+            const { gridX, gridY } = this.getBoundaryGridPosition(e.clientX, e.clientY);
+            const vertexRadius = 0.5;
+            let foundHover = false;
+            for (let i = 0; i < this.boundaryVertices.length; i++) {
+                const vertex = this.boundaryVertices[i];
+                const dist = Math.sqrt(
+                    Math.pow(gridX - vertex[0], 2) + Math.pow(gridY - vertex[1], 2)
+                );
+                if (dist < vertexRadius) {
+                    if (this.hoveredVertexIndex !== i) {
+                        this.hoveredVertexIndex = i;
+                        this.render();
+                    }
+                    foundHover = true;
+                    break;
+                }
+            }
+            if (!foundHover && this.hoveredVertexIndex !== null) {
+                this.hoveredVertexIndex = null;
+                this.render();
+            }
+        }
+
+        const { gridX, gridY } = this.getGridPosition(e.clientX, e.clientY);
 
         if (this.isDraggingItem && this.selectedItem) {
             // Only update if we've moved to a different grid cell
@@ -181,6 +296,40 @@ class GridEditor {
     handleMouseUp(e) {
         this.isDragging = false;
         this.isDraggingItem = false;
+        this.isDraggingVertex = false;
+    }
+
+    handleContextMenu(e) {
+        e.preventDefault();
+
+        if (this.currentTool === 'boundary' && this.hoveredVertexIndex !== null) {
+            // Delete the hovered vertex (must have at least 3 vertices for a polygon)
+            if (this.boundaryVertices.length > 3) {
+                this.boundaryVertices.splice(this.hoveredVertexIndex, 1);
+                this.hoveredVertexIndex = null;
+                this.selectedVertexIndex = null;
+                this.saveBoundary();
+                this.render();
+            }
+        }
+    }
+
+    handleKeyDown(e) {
+        if (this.currentTool === 'boundary') {
+            // Delete key to remove selected or hovered vertex
+            if ((e.key === 'Delete' || e.key === 'Backspace')) {
+                const indexToDelete = this.selectedVertexIndex !== null ?
+                    this.selectedVertexIndex : this.hoveredVertexIndex;
+
+                if (indexToDelete !== null && this.boundaryVertices.length > 3) {
+                    this.boundaryVertices.splice(indexToDelete, 1);
+                    this.hoveredVertexIndex = null;
+                    this.selectedVertexIndex = null;
+                    this.saveBoundary();
+                    this.render();
+                }
+            }
+        }
     }
 
     handleWheel(e) {
@@ -375,6 +524,11 @@ class GridEditor {
                 const spriteKey = config.player.sprite || 'tile';
                 this.drawSprite(x, y, spriteKey, isSelected, 'Player');
             }
+
+            // Draw boundary if in boundary tool mode
+            if (this.currentTool === 'boundary' && this.boundaryVertices.length > 0) {
+                this.drawBoundary();
+            }
         }
 
         ctx.restore();
@@ -442,6 +596,75 @@ class GridEditor {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(label, x, y - this.gridSize / 2 - 8);
+        }
+    }
+
+    drawBoundary() {
+        const ctx = this.ctx;
+
+        if (this.boundaryVertices.length < 2) return;
+
+        // Draw polygon lines
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        const firstVertex = this.boundaryVertices[0];
+        ctx.moveTo(firstVertex[0] * this.gridSize, firstVertex[1] * this.gridSize);
+
+        for (let i = 1; i < this.boundaryVertices.length; i++) {
+            const vertex = this.boundaryVertices[i];
+            ctx.lineTo(vertex[0] * this.gridSize, vertex[1] * this.gridSize);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        // Draw vertices
+        for (let i = 0; i < this.boundaryVertices.length; i++) {
+            const vertex = this.boundaryVertices[i];
+            const x = vertex[0] * this.gridSize;
+            const y = vertex[1] * this.gridSize;
+
+            // Determine vertex color and size based on state
+            let fillColor = '#00ff00'; // default green
+            let radius = 6;
+            let glowColor = null;
+
+            if (i === this.selectedVertexIndex) {
+                // Selected vertex - yellow with larger radius
+                fillColor = '#ffff00';
+                radius = 8;
+            } else if (i === this.hoveredVertexIndex) {
+                // Hovered vertex - cyan/light blue with glow
+                fillColor = '#00ffff';
+                radius = 7;
+                glowColor = 'rgba(0, 255, 255, 0.5)';
+            }
+
+            // Draw glow for hovered vertex
+            if (glowColor) {
+                ctx.fillStyle = glowColor;
+                ctx.beginPath();
+                ctx.arc(x, y, radius + 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Draw vertex circle
+            ctx.fillStyle = fillColor;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw vertex number
+            ctx.fillStyle = i === this.hoveredVertexIndex || i === this.selectedVertexIndex ? '#000000' : '#000000';
+            ctx.font = 'bold 10px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(i.toString(), x, y);
         }
     }
 
@@ -540,8 +763,8 @@ class GridEditor {
                 break;
         }
 
-        if (this.onSelectionChanged) {
-            this.onSelectionChanged();
-        }
+        // Don't call onSelectionChanged here - that should only fire when
+        // a different item is selected, not when the current item's data is updated
+        // Calling it here causes input fields to lose focus when editing properties
     }
 }

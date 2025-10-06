@@ -51,8 +51,24 @@ class GameScene extends Phaser.Scene {
         this.rooms = {};
         for (let roomKey in this.config.rooms) {
             const roomConfig = this.config.rooms[roomKey];
+
+            // Set up boundary polygon (default to world bounds if not specified)
+            let boundary;
+            if (roomConfig.boundary && roomConfig.boundary.length >= 3) {
+                boundary = roomConfig.boundary;
+            } else {
+                // Default rectangular boundary matching world bounds
+                boundary = [
+                    [0, 0],
+                    [maxGridX, 0],
+                    [maxGridX, maxGridY],
+                    [0, maxGridY]
+                ];
+            }
+
             this.rooms[roomKey] = {
                 name: roomConfig.name,
+                boundary: boundary,
                 npcs: [],
                 objects: roomConfig.objects.map(obj => ({
                     gridX: obj.gridX !== null ? obj.gridX : centerGridX + obj.gridOffsetX,
@@ -528,6 +544,34 @@ class GameScene extends Phaser.Scene {
         return npc;
     }
 
+    // Point-in-polygon test using ray casting algorithm
+    isPointInPolygon(x, y, polygon) {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const xi = polygon[i][0];
+            const yi = polygon[i][1];
+            const xj = polygon[j][0];
+            const yj = polygon[j][1];
+
+            const intersect = ((yi > y) !== (yj > y)) &&
+                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
+    }
+
+    // Check if position is within room boundary
+    checkBoundary(gridX, gridY) {
+        const room = this.rooms[this.currentRoom];
+        if (!room || !room.boundary) {
+            return true; // No boundary defined, allow movement
+        }
+
+        // Check if cell center is within polygon
+        // Cell center is at (gridX + 0.5, gridY + 0.5) in continuous grid coordinates
+        return this.isPointInPolygon(gridX + 0.5, gridY + 0.5, room.boundary);
+    }
+
     // Collision detection
     checkCollision(character, targetGridX, targetGridY, fromGridX, fromGridY) {
         const deltaX = targetGridX - fromGridX;
@@ -536,6 +580,11 @@ class GameScene extends Phaser.Scene {
 
         // Cells to check for collision
         const cellsToCheck = [{ x: targetGridX, y: targetGridY }];
+
+        // First check if target position is within room boundary
+        if (!this.checkBoundary(targetGridX, targetGridY)) {
+            return false; // Target is outside boundary
+        }
 
         // For diagonal movement, check all cells along the path
         if (isDiagonal) {
@@ -562,6 +611,13 @@ class GameScene extends Phaser.Scene {
 
             for (let i = 1; i < steps; i++) {
                 cellsToCheck.push({ x: fromGridX + (stepX * i), y: fromGridY + (stepY * i) });
+            }
+        }
+
+        // Check that all cells in path are within boundary
+        for (let cell of cellsToCheck) {
+            if (!this.checkBoundary(cell.x, cell.y)) {
+                return false; // Path crosses boundary
             }
         }
 

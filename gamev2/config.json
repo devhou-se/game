@@ -12,27 +12,43 @@
   },
   "player": {
     "startRoom": "Tokyo",
-    "startX": null,
-    "startY": null,
+    "startX": 7,
+    "startY": 5,
     "sprite": "tile",
     "name": "Player"
   },
   "rooms": {
     "Tokyo": {
       "name": "Tokyo",
+      "boundary": [
+        [
+          0,
+          0
+        ],
+        [
+          15,
+          0
+        ],
+        [
+          15,
+          10
+        ],
+        [
+          0,
+          10
+        ]
+      ],
       "npcs": [
         {
           "gridX": null,
           "gridY": null,
-          "gridOffsetX": 2,
+          "gridOffsetX": 3,
           "gridOffsetY": 1,
           "sprite": "npc-tile",
           "name": "Bailey",
           "dialogue": [
             "Hello! I'm Bailey.",
             "Welcome to game.devhou.se!",
-            "This is a grid-based adventure game.",
-            "Try exploring the world and finding transporters!",
             "Press ESC to open the menu."
           ]
         }
@@ -73,6 +89,24 @@
     },
     "Osaka": {
       "name": "Osaka",
+      "boundary": [
+        [
+          0,
+          0
+        ],
+        [
+          15,
+          0
+        ],
+        [
+          15,
+          10
+        ],
+        [
+          0,
+          10
+        ]
+      ],
       "npcs": [
         {
           "gridX": null,

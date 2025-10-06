@@ -38,6 +38,7 @@ The editor will automatically load your existing `config.json` from the parent d
   - **Add Object**: Click to place blocking obstacles
   - **Add Transporter**: Click to create room portals
   - **Set Player Start**: Click to set player spawn point
+  - **Edit Boundary**: Define custom room boundaries (polygons)
 - **Properties**: Edit selected item properties
 
 #### Center Canvas
@@ -51,7 +52,7 @@ The editor will automatically load your existing `config.json` from the parent d
   - Shift + drag: Pan the view
   - Mouse wheel: Zoom in/out
 - **Keyboard Shortcuts**:
-  - Delete/Backspace: Remove selected item
+  - Delete/Backspace: Remove selected item (or boundary vertex when in Edit Boundary mode)
 
 #### Right Sidebar
 - **Sprites**: View and upload sprite images
@@ -84,6 +85,37 @@ The editor will automatically load your existing `config.json` from the parent d
    - Click "Save Config" to download config.json
    - Replace the game's config.json with your new file
 
+## Boundary Editor
+
+The **Edit Boundary** tool allows you to create custom polygon-shaped boundaries for rooms, restricting where players can move.
+
+### How to Use
+
+1. Select the **Edit Boundary** tool from the left sidebar
+2. The current room's boundary will display as a green polygon with numbered vertices
+3. **Add vertices**: Click anywhere on the grid to add a new boundary point
+4. **Move vertices**: Click and drag green circles to reposition boundary points
+5. **Delete vertices**:
+   - **Right-click** on a vertex to delete it
+   - **Hover** over a vertex and press **Delete** or **Backspace**
+   - Hovered vertices turn **cyan/blue** so you know which one you're about to delete
+6. **Save**: Boundaries save automatically when you edit them
+
+### Visual Indicators
+
+- **Green circles**: Normal boundary vertices
+- **Cyan/blue circles with glow**: Hovered vertex (will be deleted if you right-click or press Delete)
+- **Yellow circles**: Currently selected/dragging vertex
+- **Numbers**: Vertex index (0, 1, 2, etc.)
+- **Green lines**: Boundary polygon edges
+
+### Notes
+
+- Polygons must have at least 3 vertices (triangles)
+- Players cannot move outside the boundary polygon
+- By default, rooms have rectangular boundaries matching the world size
+- Boundaries define valid movement areas - cells with centers inside the polygon are accessible
+
 ## Tips
 
 - **Drag-and-Drop**: Select an item and drag it to quickly reposition it on the grid
@@ -94,6 +126,7 @@ The editor will automatically load your existing `config.json` from the parent d
 - **Dialogue**: NPCs can have multiple dialogue lines - click "Edit Dialogue" to manage them
 - **Player Start**: Each room can be a player start location, but only one is active (set in config)
 - **Visual Feedback**: Selected items show a white border, making it easy to see what you're editing
+- **Boundary Editing**: Use custom boundaries to create interesting room shapes like L-shapes, hexagons, or irregular polygons
 
 ## Exporting Sprites
 
