@@ -64,12 +64,20 @@ class RenderEngine {
             const room = this.gridEditor.configManager.getRoom(this.gridEditor.currentRoom);
             const center = this.gridEditor.configManager.getCenterPosition();
 
+            // Draw floor tiles first (below everything)
+            this.drawFloorTiles();
+
             // Draw objects
             room.objects.forEach((obj, index) => {
                 const x = obj.gridX !== null ? obj.gridX : center.x + obj.gridOffsetX;
                 const y = obj.gridY !== null ? obj.gridY : center.y + obj.gridOffsetY;
                 const isSelected = this.gridEditor.selectedItem?.type === 'object' && this.gridEditor.selectedItem?.index === index;
-                this.drawSprite(x, y, 'object-tile', isSelected);
+
+                // Get sprite from object type
+                const objType = this.gridEditor.configManager.getObjectType(obj.type);
+                const spriteKey = objType ? objType.sprite : 'object-tile';
+
+                this.drawSprite(x, y, spriteKey, isSelected);
             });
 
             // Draw transporters
@@ -108,6 +116,24 @@ class RenderEngine {
     }
 
     // Draw background grid
+    drawFloorTiles() {
+        if (!this.gridEditor.currentRoom) return;
+
+        const floorTiles = this.gridEditor.configManager.getAllFloorTiles(this.gridEditor.currentRoom);
+        const tileCount = Object.keys(floorTiles).length;
+
+        // Debug: Log floor tiles being drawn
+        if (tileCount > 0 && !this._floorTilesLogged) {
+            console.log(`Drawing ${tileCount} floor tiles in room ${this.gridEditor.currentRoom}:`, floorTiles);
+            this._floorTilesLogged = true;
+        }
+
+        for (const [key, spriteKey] of Object.entries(floorTiles)) {
+            const [x, y] = key.split(',').map(Number);
+            this.drawSprite(x, y, spriteKey, false, null, 0.7); // Draw at 70% opacity to distinguish from objects
+        }
+    }
+
     drawBackground() {
         const ctx = this.gridEditor.ctx;
 
@@ -127,7 +153,7 @@ class RenderEngine {
     }
 
     // Draw a sprite at grid position
-    drawSprite(gridX, gridY, spriteKey, isSelected, label = null) {
+    drawSprite(gridX, gridY, spriteKey, isSelected, label = null, opacity = 1.0) {
         const ctx = this.gridEditor.ctx;
         const gridSize = this.gridEditor.gridSize;
         const x = gridX * gridSize + gridSize / 2;
@@ -148,8 +174,27 @@ class RenderEngine {
             spriteImage = this.spriteFrames[spriteKey][currentFrame];
         }
 
+        // If not found, try to load from ConfigManager
+        if (!spriteImage) {
+            const spriteData = this.gridEditor.configManager.getSprite(spriteKey);
+            const spriteMetadata = this.gridEditor.configManager.getSpriteMetadata(spriteKey);
+            const frameData = spriteData || (spriteMetadata?.frames?.[0]);
+
+            if (frameData && typeof frameData === 'string') {
+                // Create an image from the data URL and cache it
+                const img = new Image();
+                img.onload = () => {
+                    // Re-render once the image is loaded
+                    this.gridEditor.render();
+                };
+                img.src = frameData;
+                this.sprites[spriteKey] = img;
+                spriteImage = img;
+            }
+        }
+
         // Draw sprite if loaded, otherwise draw colored rectangle fallback
-        if (spriteImage) {
+        if (spriteImage && (spriteImage.complete || spriteImage.width > 0)) {
             // Calculate scaled size based on sprite's natural dimensions
             const scaledWidth = spriteImage.width * scale;
             const scaledHeight = spriteImage.height * scale;
@@ -160,6 +205,8 @@ class RenderEngine {
             const drawX = x - (scaledWidth * anchorX);
             const drawY = y - (scaledHeight * anchorY);
 
+            // Apply opacity
+            ctx.globalAlpha = opacity;
             ctx.drawImage(
                 spriteImage,
                 drawX,
@@ -167,6 +214,7 @@ class RenderEngine {
                 scaledWidth,
                 scaledHeight
             );
+            ctx.globalAlpha = 1.0; // Reset opacity
         } else {
             // Fallback: colored rectangle
             const fallbackColors = {

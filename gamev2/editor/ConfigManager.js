@@ -31,7 +31,16 @@ class ConfigManager {
                     name: "Room1",
                     npcs: [],
                     objects: [],
-                    transporters: []
+                    transporters: [],
+                    floor: {} // Floor tiles: { "x,y": "spriteKey" }
+                }
+            },
+            objectTypes: {
+                "box": {
+                    id: "box",
+                    name: "Box",
+                    sprite: "object-tile",
+                    description: "A basic obstacle box"
                 }
             }
         };
@@ -116,7 +125,8 @@ class ConfigManager {
             name: roomName,
             npcs: [],
             objects: [],
-            transporters: []
+            transporters: [],
+            floor: {}
         };
         this.notifyListeners('room-added', roomKey);
         return true;
@@ -198,6 +208,71 @@ class ConfigManager {
         if (!this.config.rooms[roomKey]) return false;
         this.config.rooms[roomKey].transporters.splice(index, 1);
         this.notifyListeners('transporter-deleted', { roomKey, index });
+        return true;
+    }
+
+    // Object type management methods
+    getAllObjectTypes() {
+        if (!this.config.objectTypes) {
+            this.config.objectTypes = {};
+        }
+        return Object.values(this.config.objectTypes);
+    }
+
+    getObjectType(id) {
+        if (!this.config.objectTypes) {
+            this.config.objectTypes = {};
+        }
+        return this.config.objectTypes[id];
+    }
+
+    addObjectType(id, data) {
+        if (!this.config.objectTypes) {
+            this.config.objectTypes = {};
+        }
+        if (this.config.objectTypes[id]) {
+            return false; // Type already exists
+        }
+        this.config.objectTypes[id] = {
+            id,
+            name: data.name || 'Unnamed',
+            sprite: data.sprite || 'object-tile',
+            description: data.description || ''
+        };
+        this.notifyListeners('object-type-added', { id, data });
+        return true;
+    }
+
+    updateObjectType(id, data) {
+        if (!this.config.objectTypes || !this.config.objectTypes[id]) {
+            return false;
+        }
+        this.config.objectTypes[id] = {
+            ...this.config.objectTypes[id],
+            ...data,
+            id // Ensure ID doesn't change
+        };
+        this.notifyListeners('object-type-updated', { id, data });
+        return true;
+    }
+
+    deleteObjectType(id) {
+        if (!this.config.objectTypes || !this.config.objectTypes[id]) {
+            return false;
+        }
+
+        // Check if any objects in rooms use this type
+        for (const roomKey in this.config.rooms) {
+            const room = this.config.rooms[roomKey];
+            const hasObjects = room.objects.some(obj => obj.type === id);
+            if (hasObjects) {
+                alert(`Cannot delete object type "${id}" because it is used in room "${roomKey}"`);
+                return false;
+            }
+        }
+
+        delete this.config.objectTypes[id];
+        this.notifyListeners('object-type-deleted', { id });
         return true;
     }
 
@@ -464,5 +539,43 @@ class ConfigManager {
             x: Math.floor(gridCols / 2),
             y: Math.floor(gridRows / 2)
         };
+    }
+
+    // Floor tile management methods
+    setFloorTile(roomKey, gridX, gridY, spriteKey) {
+        if (!this.config.rooms[roomKey]) return false;
+        if (!this.config.rooms[roomKey].floor) {
+            this.config.rooms[roomKey].floor = {};
+        }
+        const key = `${gridX},${gridY}`;
+        this.config.rooms[roomKey].floor[key] = spriteKey;
+        this.notifyListeners('floor-tile-set', { roomKey, gridX, gridY, spriteKey });
+        return true;
+    }
+
+    removeFloorTile(roomKey, gridX, gridY) {
+        if (!this.config.rooms[roomKey] || !this.config.rooms[roomKey].floor) return false;
+        const key = `${gridX},${gridY}`;
+        delete this.config.rooms[roomKey].floor[key];
+        this.notifyListeners('floor-tile-removed', { roomKey, gridX, gridY });
+        return true;
+    }
+
+    getFloorTile(roomKey, gridX, gridY) {
+        if (!this.config.rooms[roomKey] || !this.config.rooms[roomKey].floor) return null;
+        const key = `${gridX},${gridY}`;
+        return this.config.rooms[roomKey].floor[key] || null;
+    }
+
+    clearFloorTiles(roomKey) {
+        if (!this.config.rooms[roomKey]) return false;
+        this.config.rooms[roomKey].floor = {};
+        this.notifyListeners('floor-tiles-cleared', { roomKey });
+        return true;
+    }
+
+    getAllFloorTiles(roomKey) {
+        if (!this.config.rooms[roomKey]) return {};
+        return this.config.rooms[roomKey].floor || {};
     }
 }

@@ -6,7 +6,10 @@ class GridEditor {
         this.configManager = configManager;
         this.currentRoom = null;
         this.currentTool = 'select';
+        this.currentObjectType = 'box'; // Default object type to place
+        this.currentFloorSprite = null; // Current sprite for painting floor
         this.selectedItem = null;
+        this.isPainting = false; // Track if mouse is down for painting
         this.scale = 1;
         this.offsetX = 0;
         this.offsetY = 0;
@@ -127,6 +130,13 @@ class GridEditor {
 
         if (!this.isValidGridPosition(gridX, gridY)) return;
 
+        // Handle paint/erase tools
+        if (this.currentTool === 'paint' || this.currentTool === 'erase') {
+            this.isPainting = true;
+            this.handlePaint(gridX, gridY);
+            return;
+        }
+
         if (this.currentTool === 'select') {
             this.handleSelect(gridX, gridY);
 
@@ -158,6 +168,14 @@ class GridEditor {
 
         const { gridX, gridY } = this.getGridPosition(e.clientX, e.clientY);
 
+        // Handle painting while mouse is down
+        if (this.isPainting && (this.currentTool === 'paint' || this.currentTool === 'erase')) {
+            if (this.isValidGridPosition(gridX, gridY)) {
+                this.handlePaint(gridX, gridY);
+            }
+            return;
+        }
+
         if (this.isDraggingItem && this.selectedItem) {
             // Only update if we've moved to a different grid cell
             if (gridX !== this.dragStartGridX || gridY !== this.dragStartGridY) {
@@ -181,6 +199,7 @@ class GridEditor {
     handleMouseUp(e) {
         this.isDragging = false;
         this.isDraggingItem = false;
+        this.isPainting = false;
         if (this.currentTool === 'boundary') {
             this.boundaryEditor.handleMouseUp(e);
         }
@@ -306,7 +325,16 @@ class GridEditor {
                 break;
 
             case 'object':
+                // Get first available object type if current type doesn't exist
+                const objectTypes = this.configManager.getAllObjectTypes();
+                let typeToPlace = this.currentObjectType;
+                if (!this.configManager.getObjectType(typeToPlace) && objectTypes.length > 0) {
+                    typeToPlace = objectTypes[0].id;
+                    this.currentObjectType = typeToPlace;
+                }
+
                 this.configManager.addObject(this.currentRoom, {
+                    type: typeToPlace,
                     gridX: null,
                     gridY: null,
                     gridOffsetX: gridX - center.x,
@@ -444,5 +472,37 @@ class GridEditor {
         // Don't call onSelectionChanged here - that should only fire when
         // a different item is selected, not when the current item's data is updated
         // Calling it here causes input fields to lose focus when editing properties
+    }
+
+    setObjectType(typeId) {
+        this.currentObjectType = typeId;
+    }
+
+    getObjectType() {
+        return this.currentObjectType;
+    }
+
+    setFloorSprite(spriteKey) {
+        this.currentFloorSprite = spriteKey;
+    }
+
+    getFloorSprite() {
+        return this.currentFloorSprite;
+    }
+
+    handlePaint(gridX, gridY) {
+        if (!this.currentRoom) return;
+
+        if (this.currentTool === 'paint') {
+            if (!this.currentFloorSprite) {
+                console.warn('No floor sprite selected for painting');
+                return;
+            }
+            this.configManager.setFloorTile(this.currentRoom, gridX, gridY, this.currentFloorSprite);
+        } else if (this.currentTool === 'erase') {
+            this.configManager.removeFloorTile(this.currentRoom, gridX, gridY);
+        }
+
+        this.render();
     }
 }

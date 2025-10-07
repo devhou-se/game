@@ -58,13 +58,13 @@ class DialogueManager {
             {
                 fontSize: '24px', // 2x of world's 12px
                 fill: '#ffffff', // White like world labels
-                fontFamily: 'monospace',
+                fontFamily: 'PixelOperatorMonoBold',
                 backgroundColor: '#000000', // Black background like world
                 padding: { x: 8, y: 4 } // Add padding around text
             }
         );
         this.npcNameText.setOrigin(0.5, 1); // Bottom-center aligned like world labels
-        this.npcNameText.setResolution(window.devicePixelRatio || 2);
+        this.npcNameText.setResolution(1);
         this.npcNameText.setScrollFactor(0);
         this.npcNameText.setDepth(3002);
         this.npcNameText.setVisible(false);
@@ -75,13 +75,13 @@ class DialogueManager {
             this.panelY + 30,
             '',
             {
-                fontSize: '18px',
+                fontSize: '24px',
                 fill: '#ffffff',
-                fontFamily: 'monospace',
+                fontFamily: 'PixelOperatorMono',
                 wordWrap: { width: this.panelWidth - 60 }
             }
         );
-        this.dialogueText.setResolution(window.devicePixelRatio || 2);
+        this.dialogueText.setResolution(1);
         this.dialogueText.setScrollFactor(0);
         this.dialogueText.setDepth(3002);
         this.dialogueText.setVisible(false);
@@ -92,13 +92,13 @@ class DialogueManager {
             this.panelY + this.panelHeight - 30,
             'SPACE/ENTER: continue | ESC: close',
             {
-                fontSize: '14px',
+                fontSize: '16px',
                 fill: '#888888',
-                fontFamily: 'monospace'
+                fontFamily: 'PixelOperatorMonoBold'
             }
         );
         this.continuePrompt.setOrigin(0.5, 0.5);
-        this.continuePrompt.setResolution(window.devicePixelRatio || 2);
+        this.continuePrompt.setResolution(1);
         this.continuePrompt.setScrollFactor(0);
         this.continuePrompt.setDepth(3002);
         this.continuePrompt.setVisible(false);

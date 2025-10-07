@@ -4,7 +4,7 @@ const config = {
     height: 960,
     scene: GameScene,
     scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.NONE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: 1280,
         height: 960
@@ -24,3 +24,22 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+// Pixel-perfect integer scaling
+function resizeGame() {
+    const canvas = game.canvas;
+    const baseWidth = 1280;
+    const baseHeight = 960;
+
+    // Calculate maximum integer scale that fits
+    const scaleX = Math.floor(window.innerWidth / baseWidth);
+    const scaleY = Math.floor(window.innerHeight / baseHeight);
+    const scale = Math.max(1, Math.min(scaleX, scaleY));
+
+    // Apply integer scale
+    canvas.style.width = (baseWidth * scale) + 'px';
+    canvas.style.height = (baseHeight * scale) + 'px';
+}
+
+window.addEventListener('resize', resizeGame);
+resizeGame();

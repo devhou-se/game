@@ -81,9 +81,29 @@ class PropertiesPanel {
         const gridX = obj.gridX !== null ? obj.gridX : center.x + obj.gridOffsetX;
         const gridY = obj.gridY !== null ? obj.gridY : center.y + obj.gridOffsetY;
 
+        // Get object types for dropdown
+        const objectTypes = this.configManager.getAllObjectTypes();
+        const typeOptions = objectTypes.map(type =>
+            `<option value="${type.id}" ${type.id === obj.type ? 'selected' : ''}>${type.name}</option>`
+        ).join('');
+
+        // Get type info for display
+        const objType = this.configManager.getObjectType(obj.type);
+        const typeName = objType ? objType.name : 'Unknown';
+        const typeSprite = objType ? objType.sprite : 'object-tile';
+
         return `
             <div class="property-group">
                 <div class="property-label">Object</div>
+                <div class="form-group">
+                    <label>Type:</label>
+                    <select class="form-control" id="prop-obj-type">${typeOptions}</select>
+                </div>
+                <div class="form-group">
+                    <label>Sprite:</label>
+                    <input type="text" class="form-control" value="${typeSprite}" disabled style="background-color: #f0f0f0;">
+                    <small style="color: #666;">Sprite is defined in the object type</small>
+                </div>
                 <div class="form-group">
                     <label>Position:</label>
                     <div style="display: flex; gap: 8px;">
@@ -229,11 +249,13 @@ class PropertiesPanel {
 
         // Object properties
         if (selected.type === 'object') {
+            const typeSelect = document.getElementById('prop-obj-type');
             const xInput = document.getElementById('prop-obj-x');
             const yInput = document.getElementById('prop-obj-y');
 
             const updateObject = () => {
                 const updatedObj = { ...selected.data };
+                updatedObj.type = typeSelect.value;
                 const newX = parseInt(xInput.value);
                 const newY = parseInt(yInput.value);
                 updatedObj.gridOffsetX = newX - center.x;
@@ -242,6 +264,11 @@ class PropertiesPanel {
                 this.gridEditor.refreshSelectedItemData();
             };
 
+            typeSelect.addEventListener('change', () => {
+                updateObject();
+                // Refresh properties panel to show updated sprite info
+                this.update();
+            });
             xInput.addEventListener('change', updateObject);
             yInput.addEventListener('change', updateObject);
         }

@@ -4,6 +4,11 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        // Load pixel fonts
+        this.load.font('PressStart2P', 'fonts/PressStart2P-Regular.ttf');
+        this.load.font('PixelOperatorMono', 'fonts/PixelOperatorMono.ttf');
+        this.load.font('PixelOperatorMonoBold', 'fonts/PixelOperatorMono-Bold.ttf');
+
         // Load default sprites
         this.load.image("background", "assets/background-grid.png");
         this.load.image("tile", "assets/single-tile.png");
@@ -77,6 +82,9 @@ class GameScene extends Phaser.Scene {
         // Store sprite metadata for later use
         this.spriteMetadata = this.config.spriteMetadata || {};
 
+        // Store object types for later use
+        this.objectTypes = this.config.objectTypes || {};
+
         // Apply player's directional sprites if defined
         if (this.config.player.directionalSprites) {
             const playerSpriteKey = this.config.player.sprite;
@@ -102,7 +110,10 @@ class GameScene extends Phaser.Scene {
         this.currentRoom = this.config.player.startRoom;
         this.transporterSprites = [];
         this.objectSprites = [];
+        this.floorSprites = [];
         this.isTransitioning = false;
+        this.creditsVisible = false;
+        this.creditsCloseCallback = null;
 
         // Player can move to any cell in the world
         const minGridX = 0;
@@ -116,6 +127,7 @@ class GameScene extends Phaser.Scene {
         // Add background - origin at top-left (0,0)
         const bg = this.add.image(0, 0, 'background');
         bg.setOrigin(0, 0);
+        bg.setDepth(-10); // Lowest depth - below floor tiles
 
         // Calculate center coordinates
         const centerGridX = Math.floor(this.WORLD_WIDTH / this.GRID_SIZE / 2);
@@ -145,6 +157,7 @@ class GameScene extends Phaser.Scene {
                 boundary: boundary,
                 npcs: [],
                 objects: roomConfig.objects.map(obj => ({
+                    type: obj.type || 'box', // Default to 'box' if no type specified
                     gridX: obj.gridX !== null ? obj.gridX : centerGridX + obj.gridOffsetX,
                     gridY: obj.gridY !== null ? obj.gridY : centerGridY + obj.gridOffsetY
                 })),
@@ -154,7 +167,8 @@ class GameScene extends Phaser.Scene {
                     targetRoom: trans.targetRoom,
                     targetX: trans.targetX !== null ? trans.targetX : centerGridX + trans.targetOffsetX,
                     targetY: trans.targetY !== null ? trans.targetY : centerGridY + trans.targetOffsetY
-                }))
+                })),
+                floor: roomConfig.floor || {} // Floor tiles
             };
         }
 
@@ -212,9 +226,10 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        // Load current room transporters and objects
+        // Load current room transporters, objects, and floor tiles
         this.loadRoomTransporters();
         this.loadRoomObjects();
+        this.loadRoomFloorTiles();
 
         // Set up NPC wandering timer from config
         this.time.addEvent({
@@ -283,15 +298,15 @@ class GameScene extends Phaser.Scene {
             hudHeight / 2,
             hudText,
             {
-                fontSize: '18px',
+                fontSize: '16px',
                 fill: '#ffffff',
-                fontFamily: 'monospace'
+                fontFamily: 'PressStart2P'
             }
         );
         this.hudText.setOrigin(0, 0.5);
         this.hudText.setScrollFactor(0);
         this.hudText.setDepth(1001);
-        this.hudText.setResolution(window.devicePixelRatio || 2);
+        this.hudText.setResolution(1);
 
         // Menu button (right aligned)
         this.menuButton = this.add.text(
@@ -299,15 +314,15 @@ class GameScene extends Phaser.Scene {
             hudHeight / 2,
             'menu',
             {
-                fontSize: '18px',
+                fontSize: '16px',
                 fill: '#ffffff',
-                fontFamily: 'monospace'
+                fontFamily: 'PressStart2P'
             }
         );
         this.menuButton.setOrigin(1, 0.5);
         this.menuButton.setScrollFactor(0);
         this.menuButton.setDepth(1001);
-        this.menuButton.setResolution(window.devicePixelRatio || 2);
+        this.menuButton.setResolution(1);
         this.menuButton.setInteractive({ useHandCursor: true });
         this.menuButton.on('pointerdown', () => this.menuManager.toggle());
     }
@@ -326,7 +341,83 @@ class GameScene extends Phaser.Scene {
     }
 
     showCredits() {
-        console.log('Credits: Built with Phaser 3.90.0');
+        // Create overlay
+        const overlay = this.add.graphics();
+        overlay.fillStyle(0x000000, 0.85);
+        overlay.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+        overlay.setScrollFactor(0);
+        overlay.setDepth(2000);
+        overlay.setInteractive(
+            new Phaser.Geom.Rectangle(0, 0, this.cameras.main.width, this.cameras.main.height),
+            Phaser.Geom.Rectangle.Contains
+        );
+
+        // Create panel
+        const panelWidth = 400;
+        const panelHeight = 300;
+        const panelX = (this.cameras.main.width - panelWidth) / 2;
+        const panelY = (this.cameras.main.height - panelHeight) / 2;
+
+        const panel = this.add.graphics();
+        panel.fillStyle(0x1a1a1a, 1);
+        panel.fillRect(panelX, panelY, panelWidth, panelHeight);
+        panel.lineStyle(2, 0x666666, 1);
+        panel.strokeRect(panelX, panelY, panelWidth, panelHeight);
+        panel.setScrollFactor(0);
+        panel.setDepth(2001);
+
+        // Title
+        const title = this.add.text(
+            this.cameras.main.width / 2,
+            panelY + 30,
+            'CREDITS',
+            {
+                fontSize: '32px',
+                fill: '#ffffff',
+                fontFamily: 'PixelOperatorMonoBold'
+            }
+        );
+        title.setOrigin(0.5, 0.5);
+        title.setResolution(1);
+        title.setScrollFactor(0);
+        title.setDepth(2002);
+
+        // Credits content
+        const startY = panelY + 80;
+        const lineHeight = 24;
+
+        const creditsTexts = this.config.credits.map((line, index) => {
+            const text = this.add.text(
+                this.cameras.main.width / 2,
+                startY + (index * lineHeight),
+                line,
+                {
+                    fontSize: '24px',
+                    fill: '#ffffff',
+                    fontFamily: index === 0 ? 'PixelOperatorMono' : 'PixelOperatorMonoBold'
+                }
+            );
+            text.setOrigin(0.5, 0.5);
+            text.setResolution(1);
+            text.setScrollFactor(0);
+            text.setDepth(2002);
+            return text;
+        });
+
+        // Close on click or ESC
+        const closeCredits = () => {
+            this.creditsVisible = false;
+            this.creditsCloseCallback = null;
+            overlay.destroy();
+            panel.destroy();
+            title.destroy();
+            creditsTexts.forEach(text => text.destroy());
+        };
+
+        this.creditsVisible = true;
+        this.creditsCloseCallback = closeCredits;
+
+        overlay.on('pointerdown', closeCredits);
     }
 
     loadRoomTransporters() {
@@ -353,15 +444,15 @@ class GameScene extends Phaser.Scene {
                 pixelY - this.GRID_SIZE / 2 - 5,
                 `Goto ${trans.targetRoom}`,
                 {
-                    fontSize: '12px',
+                    fontSize: '16px',
                     fill: '#00ff00',
-                    fontFamily: 'monospace',
+                    fontFamily: 'PixelOperatorMonoBold',
                     backgroundColor: '#000000'
                 }
             );
             label.setOrigin(0.5, 1);
             label.setDepth(10);
-            label.setResolution(window.devicePixelRatio || 2);
+            label.setResolution(1);
             this.transporterLabels.push(label);
         });
     }
@@ -377,14 +468,55 @@ class GameScene extends Phaser.Scene {
             room.objects.forEach(obj => {
                 const pixelX = obj.gridX * this.GRID_SIZE + this.GRID_SIZE / 2;
                 const pixelY = obj.gridY * this.GRID_SIZE + this.GRID_SIZE / 2;
-                const sprite = this.add.sprite(pixelX, pixelY, 'object-tile');
+
+                // Get sprite key from object type
+                const objType = this.objectTypes[obj.type];
+                const spriteKey = objType ? objType.sprite : 'object-tile';
+
+                const sprite = this.add.sprite(pixelX, pixelY, spriteKey);
                 sprite.setDepth(0); // Above background, below characters
                 this.objectSprites.push(sprite);
 
-                // Store grid position on sprite for collision detection
+                // Store grid position and type on sprite for collision detection
                 sprite.gridX = obj.gridX;
                 sprite.gridY = obj.gridY;
+                sprite.objectType = obj.type;
             });
+        }
+    }
+
+    loadRoomFloorTiles() {
+        // Clear existing floor sprites
+        this.floorSprites.forEach(sprite => sprite.destroy());
+        this.floorSprites = [];
+
+        // Create floor tile sprites for current room
+        const room = this.rooms[this.currentRoom];
+        if (room.floor) {
+            for (const [key, spriteKey] of Object.entries(room.floor)) {
+                const [gridX, gridY] = key.split(',').map(Number);
+                const pixelX = gridX * this.GRID_SIZE + this.GRID_SIZE / 2;
+                const pixelY = gridY * this.GRID_SIZE + this.GRID_SIZE / 2;
+
+                // Check if the sprite texture exists
+                if (!this.textures.exists(spriteKey)) {
+                    console.warn(`Floor sprite not found: ${spriteKey}, using fallback`);
+                    // Use a fallback sprite if the requested one doesn't exist
+                    const fallbackKey = this.textures.exists('object-tile') ? 'object-tile' : 'tile';
+                    if (this.textures.exists(fallbackKey)) {
+                        const sprite = this.add.sprite(pixelX, pixelY, fallbackKey);
+                        sprite.setDepth(-1);
+                        sprite.setAlpha(0.5);
+                        sprite.setTint(0x88ff88); // Green tint to indicate missing sprite
+                        this.floorSprites.push(sprite);
+                    }
+                    continue;
+                }
+
+                const sprite = this.add.sprite(pixelX, pixelY, spriteKey);
+                sprite.setDepth(-5); // Above background (-10), below objects (0)
+                this.floorSprites.push(sprite);
+            }
         }
     }
 
@@ -457,9 +589,10 @@ class GameScene extends Phaser.Scene {
                 if (npc.nameLabel) npc.nameLabel.setVisible(true);
             });
 
-            // Load new room transporters and objects
+            // Load new room transporters, objects, and floor tiles
             this.loadRoomTransporters();
             this.loadRoomObjects();
+            this.loadRoomFloorTiles();
 
             // Update HUD
             this.updateHUD();
@@ -512,6 +645,16 @@ class GameScene extends Phaser.Scene {
 
             this.lastKeyState.space = this.spaceKey.isDown;
             this.lastKeyState.enter = this.enterKey.isDown;
+            this.lastKeyState.esc = this.escKey.isDown;
+            return; // Block other input
+        }
+
+        // If credits are visible, handle ESC to close
+        if (this.creditsVisible) {
+            const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
+            if (escPressed && this.creditsCloseCallback) {
+                this.creditsCloseCallback();
+            }
             this.lastKeyState.esc = this.escKey.isDown;
             return; // Block other input
         }
@@ -613,15 +756,15 @@ class GameScene extends Phaser.Scene {
             pixelY - this.GRID_SIZE / 2 - 5,
             name,
             {
-                fontSize: '12px',
+                fontSize: '16px',
                 fill: '#ffffff',
-                fontFamily: 'monospace',
+                fontFamily: 'PixelOperatorMonoBold',
                 backgroundColor: '#000000'
             }
         );
         label.setOrigin(0.5, 1);
         label.setDepth(10);
-        label.setResolution(window.devicePixelRatio || 2);
+        label.setResolution(1);
 
         // Store label reference on NPC
         npc.nameLabel = label;
