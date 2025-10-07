@@ -10,6 +10,16 @@
     "npcWanderInterval": 5000,
     "npcWanderRadius": 2
   },
+  "credits": [
+    "devhou dot se",
+    "",
+    "Proprietor: Bailey",
+    "Graphics: Julia",
+    "Audio: Gloria",
+    "Box and Arrows: Damian",
+    "Devil's Advocate: Dylan",
+    "Slacker: Yashuk"
+  ],
   "player": {
     "startRoom": "Tokyo",
     "startX": 7,
@@ -30,6 +40,158 @@
   "rooms": {
     "Tokyo": {
       "name": "Tokyo",
+      "floor": {
+        "0,9": "julia_front",
+        "1,9": "Grass_08",
+        "2,9": "julia_front",
+        "3,9": "Grass_08",
+        "4,9": "julia_front",
+        "5,9": "Grass_08",
+        "6,9": "julia_front",
+        "7,9": "Grass_08",
+        "8,9": "julia_front",
+        "9,9": "Grass_08",
+        "9,8": "julia_front",
+        "10,8": "Grass_08",
+        "10,9": "julia_front",
+        "11,9": "Grass_08",
+        "12,9": "julia_front",
+        "13,9": "Grass_08",
+        "13,8": "julia_front",
+        "14,8": "Grass_08",
+        "12,8": "Grass_08",
+        "11,8": "julia_front",
+        "14,9": "julia_front",
+        "14,7": "julia_front",
+        "14,6": "julia_front",
+        "14,5": "julia_front",
+        "14,4": "julia_front",
+        "14,3": "julia_front",
+        "14,2": "julia_front",
+        "14,1": "julia_front",
+        "13,1": "julia_front",
+        "14,0": "julia_front",
+        "13,0": "julia_front",
+        "12,0": "julia_front",
+        "12,1": "julia_front",
+        "13,2": "julia_front",
+        "12,3": "julia_front",
+        "13,3": "julia_front",
+        "12,2": "julia_front",
+        "12,4": "julia_front",
+        "13,4": "julia_front",
+        "13,5": "julia_front",
+        "13,6": "julia_front",
+        "12,5": "julia_front",
+        "12,7": "julia_front",
+        "12,6": "julia_front",
+        "13,7": "Grass_08",
+        "11,5": "julia_front",
+        "11,6": "julia_front",
+        "11,4": "julia_front",
+        "11,7": "Grass_08",
+        "10,7": "julia_front",
+        "10,6": "julia_front",
+        "10,5": "julia_front",
+        "10,4": "julia_front",
+        "10,3": "julia_front",
+        "10,2": "julia_front",
+        "11,2": "julia_front",
+        "11,3": "julia_front",
+        "11,1": "julia_front",
+        "11,0": "julia_front",
+        "10,0": "julia_front",
+        "10,1": "julia_front",
+        "9,0": "julia_front",
+        "9,1": "julia_front",
+        "9,2": "julia_front",
+        "9,3": "julia_front",
+        "9,4": "julia_front",
+        "9,5": "julia_front",
+        "9,6": "julia_front",
+        "9,7": "Grass_08",
+        "8,3": "julia_front",
+        "8,4": "julia_front",
+        "8,5": "julia_front",
+        "8,6": "julia_front",
+        "8,7": "julia_front",
+        "8,8": "Grass_08",
+        "7,4": "julia_front",
+        "7,3": "julia_front",
+        "7,2": "julia_front",
+        "7,5": "julia_front",
+        "7,6": "julia_front",
+        "6,2": "julia_front",
+        "6,1": "julia_front",
+        "6,3": "julia_front",
+        "6,5": "julia_front",
+        "6,7": "julia_front",
+        "6,8": "Grass_08",
+        "5,6": "julia_front",
+        "5,5": "julia_front",
+        "5,4": "julia_front",
+        "5,3": "julia_front",
+        "5,7": "Grass_08",
+        "5,8": "julia_front",
+        "4,5": "julia_front",
+        "4,7": "julia_front",
+        "4,8": "Grass_08",
+        "4,6": "julia_front",
+        "4,4": "julia_front",
+        "3,8": "julia_front",
+        "3,7": "Grass_08",
+        "3,6": "julia_front",
+        "3,5": "julia_front",
+        "3,4": "julia_front",
+        "3,3": "julia_front",
+        "2,3": "julia_front",
+        "2,4": "julia_front",
+        "2,6": "julia_front",
+        "2,7": "julia_front",
+        "2,8": "Grass_08",
+        "1,6": "julia_front",
+        "1,5": "julia_front",
+        "1,7": "Grass_08",
+        "1,8": "julia_front",
+        "0,5": "julia_front",
+        "0,6": "julia_front",
+        "0,7": "julia_front",
+        "0,8": "Grass_08",
+        "0,4": "julia_front",
+        "1,4": "julia_front",
+        "2,5": "julia_front",
+        "6,6": "julia_front",
+        "7,7": "Grass_08",
+        "7,8": "julia_front",
+        "6,4": "julia_front",
+        "4,3": "julia_front",
+        "7,1": "julia_front",
+        "8,1": "julia_front",
+        "4,1": "julia_front",
+        "3,1": "julia_front",
+        "2,1": "julia_front",
+        "1,1": "julia_front",
+        "4,2": "julia_front",
+        "5,2": "julia_front",
+        "5,1": "julia_front",
+        "3,2": "julia_front",
+        "2,2": "julia_front",
+        "1,3": "julia_front",
+        "1,2": "julia_front",
+        "0,3": "julia_front",
+        "0,2": "julia_front",
+        "0,1": "julia_front",
+        "0,0": "julia_front",
+        "1,0": "julia_front",
+        "3,0": "julia_front",
+        "4,0": "julia_front",
+        "5,0": "julia_front",
+        "6,0": "julia_front",
+        "7,0": "julia_front",
+        "8,0": "julia_front",
+        "2,0": "julia_front",
+        "8,2": "julia_front"
+      },
       "boundary": [
         [
           0,
@@ -79,7 +241,10 @@
           "gridY": null,
           "gridOffsetX": -4,
           "gridOffsetY": 0,
-          "dialogue": [],
+          "dialogue": [
+            "Hello! I'm Julia.",
+            "Wow these drawings are so life-like!"
+          ],
           "directionalSprites": {
             "up": "julia_back",
             "down": "julia_front",
@@ -98,7 +263,11 @@
           "gridY": null,
           "gridOffsetX": 1,
           "gridOffsetY": -3,
-          "dialogue": [],
+          "dialogue": [
+            "Hello! I'm Damian.",
+            "There's so many boxes here...",
+            "We just need more arrows!"
+          ],
           "directionalSprites": {
             "up": "damian_back",
             "down": "damian_front",
@@ -113,22 +282,39 @@
       ],
       "objects": [
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": -4,
           "gridOffsetY": -3
         },
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": 4,
           "gridOffsetY": -2
         },
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": -3,
           "gridOffsetY": 3
+        },
+        {
+          "type": "RedBox",
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -3,
+          "gridOffsetY": -3
+        },
+        {
+          "type": "box",
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -2,
+          "gridOffsetY": -3
         }
       ],
       "transporters": [
@@ -142,11 +328,23 @@
           "targetY": null,
           "targetOffsetX": 3,
           "targetOffsetY": 2
+        },
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": -1,
+          "gridOffsetY": 2,
+          "targetRoom": "Outside",
+          "targetX": null,
+          "targetY": null,
+          "targetOffsetX": -7,
+          "targetOffsetY": -5
         }
       ]
     },
     "Osaka": {
       "name": "Osaka",
+      "floor": {},
       "boundary": [
         [
           0,
@@ -173,7 +371,10 @@
           "gridY": null,
           "gridOffsetX": -1,
           "gridOffsetY": -2,
-          "dialogue": [],
+          "dialogue": [
+            "Hello! I'm Dylan.",
+            "I bet this game would have been better if was built in Godot."
+          ],
           "directionalSprites": {
             "up": "dylan_back",
             "down": "dylan_front",
@@ -188,18 +389,21 @@
       ],
       "objects": [
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": 1,
           "gridOffsetY": 1
         },
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": -4,
           "gridOffsetY": 2
         },
         {
+          "type": "box",
           "gridX": null,
           "gridY": null,
           "gridOffsetX": 4,
@@ -219,6 +423,376 @@
           "targetOffsetY": -2
         }
       ]
+    },
+    "Outside": {
+      "name": "Outside",
+      "npcs": [],
+      "objects": [],
+      "transporters": [
+        {
+          "gridX": null,
+          "gridY": null,
+          "gridOffsetX": 1,
+          "gridOffsetY": 1,
+          "targetRoom": "Osaka",
+          "targetX": null,
+          "targetY": null,
+          "targetOffsetX": 3,
+          "targetOffsetY": 2
+        }
+      ],
+      "floor": {
+        "0,0": "Stone_06",
+        "1,0": "Stone_06",
+        "2,0": "Stone_06",
+        "3,0": "Stone_06",
+        "4,0": "Stone_06",
+        "5,0": "Grass_08",
+        "6,0": "Stone_06",
+        "7,0": "Stone_06",
+        "8,0": "Stone_06",
+        "9,0": "Stone_06",
+        "10,0": "Stone_06",
+        "11,0": "Stone_06",
+        "11,1": "Grass_08",
+        "12,1": "Grass_08",
+        "13,1": "Grass_08",
+        "13,2": "Stone_06",
+        "12,2": "Stone_06",
+        "11,2": "Stone_06",
+        "10,3": "Grass_08",
+        "9,3": "Grass_08",
+        "8,3": "Stone_06",
+        "7,3": "Grass_08",
+        "6,3": "Stone_06",
+        "5,3": "Grass_08",
+        "4,2": "Stone_06",
+        "3,2": "Grass_08",
+        "2,1": "Grass_08",
+        "3,1": "Grass_08",
+        "4,1": "Stone_06",
+        "5,1": "Grass_08",
+        "6,1": "Stone_06",
+        "7,1": "Grass_08",
+        "8,1": "Grass_08",
+        "9,2": "Stone_06",
+        "10,2": "Stone_06",
+        "12,3": "Grass_08",
+        "8,2": "Stone_06",
+        "7,2": "Grass_08",
+        "6,2": "Stone_06",
+        "5,2": "Grass_08",
+        "6,4": "Stone_06",
+        "7,4": "Grass_08",
+        "8,5": "Grass_08",
+        "7,5": "Grass_08",
+        "6,6": "Grass_08",
+        "5,6": "Grass_08",
+        "4,6": "Grass_08",
+        "3,6": "Grass_08",
+        "2,6": "Grass_08",
+        "2,5": "Stone_06",
+        "2,4": "Grass_08",
+        "2,3": "Stone_06",
+        "2,2": "Stone_06",
+        "1,1": "Grass_08",
+        "1,2": "Stone_06",
+        "0,2": "Stone_06",
+        "0,3": "Stone_06",
+        "0,4": "Stone_06",
+        "1,4": "Grass_08",
+        "1,5": "Stone_06",
+        "5,4": "Grass_08",
+        "4,4": "Grass_08",
+        "3,4": "Grass_08",
+        "3,3": "Stone_06",
+        "0,1": "Grass_08",
+        "9,1": "Grass_08",
+        "10,1": "Grass_08",
+        "14,1": "Stone_06",
+        "14,0": "Stone_06",
+        "13,0": "Stone_06",
+        "12,0": "Stone_06",
+        "0,5": "Stone_06",
+        "8,4": "Stone_06",
+        "11,3": "Grass_08",
+        "13,3": "Grass_08",
+        "14,3": "Grass_08",
+        "4,3": "Stone_06",
+        "5,5": "Stone_06",
+        "4,5": "Stone_06",
+        "3,5": "Stone_06",
+        "9,4": "Stone_06",
+        "10,4": "Stone_06",
+        "11,4": "Stone_06",
+        "12,4": "Stone_06",
+        "13,4": "Stone_06",
+        "14,4": "Stone_06",
+        "14,5": "Stone_06",
+        "13,5": "Grass_08",
+        "12,5": "Grass_08",
+        "11,5": "Grass_08",
+        "10,5": "Grass_08",
+        "9,5": "Grass_08",
+        "6,5": "Stone_06",
+        "1,6": "Grass_08",
+        "0,6": "Grass_08",
+        "0,7": "Stone_06",
+        "0,8": "Stone_06",
+        "0,9": "Stone_06",
+        "1,9": "Stone_06",
+        "1,8": "Grass_08",
+        "1,7": "Stone_06",
+        "2,7": "Stone_06",
+        "2,8": "Grass_08",
+        "3,8": "Grass_08",
+        "2,9": "Stone_06",
+        "3,9": "Stone_06",
+        "4,9": "Stone_06",
+        "5,9": "Stone_06",
+        "6,8": "Grass_08",
+        "7,8": "Grass_08",
+        "8,8": "Grass_08",
+        "9,8": "Grass_08",
+        "10,8": "Stone_06",
+        "11,8": "Grass_08",
+        "12,8": "Stone_06",
+        "13,8": "Grass_08",
+        "13,7": "Grass_08",
+        "14,7": "Stone_06",
+        "13,6": "Grass_08",
+        "12,6": "Stone_06",
+        "11,6": "Stone_06",
+        "10,6": "Stone_06",
+        "4,7": "Stone_06",
+        "5,7": "Stone_06",
+        "6,7": "Stone_06",
+        "7,7": "Stone_06",
+        "8,7": "Stone_06",
+        "9,7": "Grass_08",
+        "10,7": "Stone_06",
+        "11,7": "Grass_08",
+        "14,8": "Stone_06",
+        "13,9": "Stone_06",
+        "12,9": "Stone_06",
+        "11,9": "Grass_08",
+        "10,9": "Stone_06",
+        "9,9": "Stone_06",
+        "8,9": "Stone_06",
+        "7,9": "Stone_06",
+        "6,9": "Stone_06",
+        "5,8": "Grass_08",
+        "12,7": "Stone_06",
+        "9,6": "Grass_08",
+        "8,6": "Stone_06",
+        "7,6": "Grass_08",
+        "14,9": "Stone_06",
+        "1,3": "Grass_08",
+        "3,7": "Stone_06",
+        "4,8": "Grass_08",
+        "14,2": "Stone_06",
+        "14,6": "Stone_06"
+      },
+      "boundary": [
+        [
+          0,
+          0
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          15,
+          0
+        ],
+        [
+          15,
+          3
+        ],
+        [
+          9,
+          3
+        ],
+        [
+          9,
+          4
+        ],
+        [
+          15,
+          4
+        ],
+        [
+          15,
+          10
+        ],
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          7
+        ],
+        [
+          11,
+          7
+        ],
+        [
+          11,
+          10
+        ],
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          7
+        ],
+        [
+          8,
+          7
+        ],
+        [
+          8,
+          6
+        ],
+        [
+          9,
+          6
+        ],
+        [
+          9,
+          8
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          1,
+          9
+        ],
+        [
+          10,
+          9
+        ],
+        [
+          10,
+          6
+        ],
+        [
+          13,
+          6
+        ],
+        [
+          13,
+          9
+        ],
+        [
+          14,
+          9
+        ],
+        [
+          14,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          14,
+          2
+        ],
+        [
+          14,
+          1
+        ],
+        [
+          7,
+          1
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ]
+    }
+  },
+  "objectTypes": {
+    "box": {
+      "id": "box",
+      "name": "Box",
+      "sprite": "object-tile",
+      "description": "A basic obstacle box"
+    },
+    "RedBox": {
+      "id": "RedBox",
+      "name": "RedBox",
+      "sprite": "npc-tile",
+      "description": ""
     }
   },
   "spriteMetadata": {
@@ -589,6 +1163,46 @@
       "frameRate": 10,
       "loop": true,
       "frameCount": 4,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "Grass_08": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 1,
+      "isDirectional": false,
+      "directions": {
+        "up": null,
+        "down": null,
+        "left": null,
+        "right": null
+      },
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down"
+    },
+    "Stone_06": {
+      "scale": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameRate": 10,
+      "loop": true,
+      "frameCount": 1,
       "isDirectional": false,
       "directions": {
         "up": null,
