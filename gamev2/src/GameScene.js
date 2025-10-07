@@ -19,6 +19,11 @@ class GameScene extends Phaser.Scene {
         // Load config first
         this.load.json("config", "config.json");
 
+        // Load tilemap assets for overworld rooms
+        this.load.image('overworld_tiles', 'assets/overworld_tileset.png');
+        this.load.tilemapTiledJSON('tokyo_tilemap', 'assets/tokyo_section_tiled.json');
+        this.load.tilemapTiledJSON('osaka_tilemap', 'assets/osaka_section_tiled.json');
+
         // When config loads, dynamically load sprite frames for animations
         this.load.once('filecomplete-json-config', (key, type, data) => {
             const spriteMetadata = data.spriteMetadata || {};
@@ -121,6 +126,9 @@ class GameScene extends Phaser.Scene {
         this.behaviors = Behaviors; // Reference to behaviors library
         this.currentMessage = null; // For temporary messages
 
+        // Initialize tilemap manager for overworld rooms
+        this.tilemapManager = new TilemapManager(this, this.GRID_SIZE);
+
         // Player can move to any cell in the world
         const minGridX = 0;
         const maxGridX = (this.WORLD_WIDTH / this.GRID_SIZE) - 1; // 0-14
@@ -144,17 +152,21 @@ class GameScene extends Phaser.Scene {
         for (let roomKey in this.config.rooms) {
             const roomConfig = this.config.rooms[roomKey];
 
-            // Set up boundary polygon (default to world bounds if not specified)
+            // Set up boundary polygon (default to room-specific bounds if not specified)
             let boundary;
             if (roomConfig.boundary && roomConfig.boundary.length >= 3) {
                 boundary = roomConfig.boundary;
             } else {
-                // Default rectangular boundary matching world bounds
+                // Default rectangular boundary matching room dimensions
+                const roomWidth = roomConfig.worldWidth || this.WORLD_WIDTH;
+                const roomHeight = roomConfig.worldHeight || this.WORLD_HEIGHT;
+                const roomMaxGridX = (roomWidth / this.GRID_SIZE) - 1;
+                const roomMaxGridY = (roomHeight / this.GRID_SIZE) - 1;
                 boundary = [
                     [0, 0],
-                    [maxGridX, 0],
-                    [maxGridX, maxGridY],
-                    [0, maxGridY]
+                    [roomMaxGridX, 0],
+                    [roomMaxGridX, roomMaxGridY],
+                    [0, roomMaxGridY]
                 ];
             }
 
@@ -174,7 +186,13 @@ class GameScene extends Phaser.Scene {
                     targetX: trans.targetX !== null ? trans.targetX : centerGridX + trans.targetOffsetX,
                     targetY: trans.targetY !== null ? trans.targetY : centerGridY + trans.targetOffsetY
                 })),
-                floor: roomConfig.floor || {} // Floor tiles
+                floor: roomConfig.floor || {}, // Floor tiles
+                // Tilemap support for overworld rooms
+                tilemap: roomConfig.tilemap || null,
+                tilesetName: roomConfig.tilesetName || null,
+                tilesetImage: roomConfig.tilesetImage || null,
+                worldWidth: roomConfig.worldWidth || this.WORLD_WIDTH,
+                worldHeight: roomConfig.worldHeight || this.WORLD_HEIGHT
             };
         }
 
@@ -521,6 +539,12 @@ class GameScene extends Phaser.Scene {
 
         // Create floor tile sprites for current room
         const room = this.rooms[this.currentRoom];
+
+        // Skip floor sprites if room uses tilemap
+        if (room.tilemap) {
+            return;
+        }
+
         if (room.floor) {
             for (const [key, spriteKey] of Object.entries(room.floor)) {
                 const [gridX, gridY] = key.split(',').map(Number);
@@ -603,8 +627,32 @@ class GameScene extends Phaser.Scene {
                 if (npc.nameLabel) npc.nameLabel.setVisible(false);
             });
 
+            // Clear old tilemap if exists
+            if (oldRoom.tilemap && this.tilemapManager) {
+                this.tilemapManager.clearRoomTilemap(this.currentRoom);
+            }
+
             // Update current room
             this.currentRoom = newRoom;
+            const room = this.rooms[this.currentRoom];
+
+            // Handle different world sizes for tilemap rooms
+            const roomWidth = room.worldWidth || this.WORLD_WIDTH;
+            const roomHeight = room.worldHeight || this.WORLD_HEIGHT;
+
+            // Update physics bounds for new room size
+            // NOTE: Don't set camera bounds - let camera pan freely to show black void
+            this.physics.world.setBounds(0, 0, roomWidth, roomHeight);
+
+            // Update player movement bounds for new room size
+            this.player.maxGridX = (roomWidth / this.GRID_SIZE) - 1;
+            this.player.maxGridY = (roomHeight / this.GRID_SIZE) - 1;
+
+            // Load new tilemap if room has one
+            if (room.tilemap && this.tilemapManager) {
+                this.tilemapManager.loadTilemapFromJSON(this.currentRoom, room.tilemap);
+                this.tilemapManager.switchToRoom(this.currentRoom);
+            }
 
             // Move player to target position
             this.player.gridX = targetX;
@@ -613,11 +661,10 @@ class GameScene extends Phaser.Scene {
             const pixelY = targetY * this.GRID_SIZE + this.GRID_SIZE / 2;
             this.player.sprite.setPosition(pixelX, pixelY);
 
-            // Center camera on player
+            // Center camera on player in new room
             this.cameras.main.centerOn(pixelX, pixelY);
 
             // Show new room NPCs and their labels
-            const room = this.rooms[this.currentRoom];
             room.npcs.forEach(npc => {
                 npc.sprite.setVisible(true);
                 if (npc.nameLabel) npc.nameLabel.setVisible(true);
@@ -897,6 +944,16 @@ class GameScene extends Phaser.Scene {
         for (let cell of cellsToCheck) {
             if (!this.checkBoundary(cell.x, cell.y)) {
                 return false; // Path crosses boundary
+            }
+        }
+
+        // Check tilemap collision if room has tilemap
+        const room = this.rooms[this.currentRoom];
+        if (room.tilemap && this.tilemapManager) {
+            for (let cell of cellsToCheck) {
+                if (this.tilemapManager.hasCollisionAt(cell.x, cell.y)) {
+                    return false; // Collision with tilemap
+                }
             }
         }
 

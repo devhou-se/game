@@ -28,6 +28,8 @@ const game = new Phaser.Game(config);
 // Pixel-perfect integer scaling
 function resizeGame() {
     const canvas = game.canvas;
+    if (!canvas) return; // Canvas not ready yet
+
     const baseWidth = 1280;
     const baseHeight = 960;
 
@@ -42,4 +44,4 @@ function resizeGame() {
 }
 
 window.addEventListener('resize', resizeGame);
-resizeGame();
+game.events.once('ready', resizeGame);
