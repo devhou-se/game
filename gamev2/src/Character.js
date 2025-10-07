@@ -65,6 +65,25 @@ class Character {
         this.currentDirection = spriteConfig.defaultDirection || 'down';
         this.baseSpriteKey = spriteKey;
         this.isDirectional = spriteConfig.isDirectional || false;
+
+        // Player stats (only used if isPlayer is true)
+        this.maxHealth = config.maxHealth || 100;
+        this.health = config.health || this.maxHealth;
+        this.maxEnergy = config.maxEnergy || 100;
+        this.energy = config.energy || this.maxEnergy;
+
+        // Inventory system
+        this.inventory = new Map(); // itemId -> quantity
+
+        // Speed boost system
+        this.baseSpeedMultiplier = 1;
+        this.speedBoostMultiplier = 1;
+        this.speedBoostEndTime = 0;
+
+        // Checkpoint save data
+        this.checkpointRoom = null;
+        this.checkpointX = null;
+        this.checkpointY = null;
     }
 
     updateDirectionSprite(deltaX, deltaY) {
@@ -192,8 +211,9 @@ class Character {
         const targetX = clampedGridX * this.gridSize + this.gridSize / 2;
         const targetY = clampedGridY * this.gridSize + this.gridSize / 2;
 
-        // Apply speed multiplier (higher multiplier = shorter duration = faster movement)
-        const duration = this.moveDuration / (this.speedMultiplier || 1);
+        // Apply speed multipliers (input speed + boost speed)
+        const totalSpeedMultiplier = (this.speedMultiplier || 1) * this.getEffectiveSpeedMultiplier();
+        const duration = this.moveDuration / totalSpeedMultiplier;
 
         this.currentTween = this.scene.tweens.add({
             targets: this.sprite,
@@ -241,5 +261,291 @@ class Character {
             this.currentTween.remove();
         }
         this.sprite.destroy();
+    }
+
+    // ========== INVENTORY SYSTEM ==========
+
+    /**
+     * Add item to inventory
+     */
+    addItem(itemId, quantity = 1) {
+        const current = this.inventory.get(itemId) || 0;
+        this.inventory.set(itemId, current + quantity);
+
+        if (this.scene.onInventoryChanged) {
+            this.scene.onInventoryChanged();
+        }
+    }
+
+    /**
+     * Remove item from inventory
+     */
+    removeItem(itemId, quantity = 1) {
+        const current = this.inventory.get(itemId) || 0;
+        const newAmount = Math.max(0, current - quantity);
+
+        if (newAmount === 0) {
+            this.inventory.delete(itemId);
+        } else {
+            this.inventory.set(itemId, newAmount);
+        }
+
+        if (this.scene.onInventoryChanged) {
+            this.scene.onInventoryChanged();
+        }
+    }
+
+    /**
+     * Check if player has item
+     */
+    hasItem(itemId, quantity = 1) {
+        const current = this.inventory.get(itemId) || 0;
+        return current >= quantity;
+    }
+
+    /**
+     * Get item quantity
+     */
+    getItemCount(itemId) {
+        return this.inventory.get(itemId) || 0;
+    }
+
+    // ========== HEALTH SYSTEM ==========
+
+    /**
+     * Heal player
+     * Returns actual amount healed
+     */
+    heal(amount) {
+        const oldHealth = this.health;
+        this.health = Math.min(this.maxHealth, this.health + amount);
+        const actualHealed = this.health - oldHealth;
+
+        if (actualHealed > 0 && this.scene.onHealthChanged) {
+            this.scene.onHealthChanged(this.health, this.maxHealth);
+        }
+
+        return actualHealed;
+    }
+
+    /**
+     * Damage player
+     */
+    takeDamage(amount) {
+        this.health = Math.max(0, this.health - amount);
+
+        if (this.scene.onHealthChanged) {
+            this.scene.onHealthChanged(this.health, this.maxHealth);
+        }
+
+        if (this.health <= 0 && this.scene.onPlayerDeath) {
+            this.scene.onPlayerDeath();
+        }
+    }
+
+    // ========== ENERGY SYSTEM ==========
+
+    /**
+     * Restore energy
+     * Returns actual amount restored
+     */
+    restoreEnergy(amount) {
+        const oldEnergy = this.energy;
+        this.energy = Math.min(this.maxEnergy, this.energy + amount);
+        const actualRestored = this.energy - oldEnergy;
+
+        if (actualRestored > 0 && this.scene.onEnergyChanged) {
+            this.scene.onEnergyChanged(this.energy, this.maxEnergy);
+        }
+
+        return actualRestored;
+    }
+
+    /**
+     * Consume energy
+     */
+    consumeEnergy(amount) {
+        this.energy = Math.max(0, this.energy - amount);
+
+        if (this.scene.onEnergyChanged) {
+            this.scene.onEnergyChanged(this.energy, this.maxEnergy);
+        }
+    }
+
+    // ========== SPEED BOOST SYSTEM ==========
+
+    /**
+     * Apply temporary speed boost
+     */
+    applySpeedBoost(multiplier, duration) {
+        this.speedBoostMultiplier = multiplier;
+        this.speedBoostEndTime = Date.now() + duration;
+
+        if (this.scene.onSpeedBoostChanged) {
+            this.scene.onSpeedBoostChanged(multiplier, duration);
+        }
+    }
+
+    /**
+     * Update speed boost state (call every frame)
+     */
+    updateSpeedBoost() {
+        if (this.speedBoostEndTime > 0 && Date.now() >= this.speedBoostEndTime) {
+            this.speedBoostMultiplier = 1;
+            this.speedBoostEndTime = 0;
+
+            if (this.scene.onSpeedBoostChanged) {
+                this.scene.onSpeedBoostChanged(1, 0);
+            }
+        }
+    }
+
+    /**
+     * Get effective speed multiplier
+     */
+    getEffectiveSpeedMultiplier() {
+        return this.baseSpeedMultiplier * this.speedBoostMultiplier;
+    }
+
+    // ========== MOVEMENT ENHANCEMENTS ==========
+
+    /**
+     * Set grid position instantly (for teleportation)
+     */
+    setGridPosition(gridX, gridY, instant = true) {
+        if (instant) {
+            // Stop any current movement
+            if (this.currentTween) {
+                this.currentTween.remove();
+                this.currentTween = null;
+            }
+
+            this.gridX = gridX;
+            this.gridY = gridY;
+            this.isMoving = false;
+
+            const pixelX = gridX * this.gridSize + this.gridSize / 2;
+            const pixelY = gridY * this.gridSize + this.gridSize / 2;
+            this.sprite.setPosition(pixelX, pixelY);
+        } else {
+            // Use normal movement
+            const deltaX = gridX - this.gridX;
+            const deltaY = gridY - this.gridY;
+            this.startMovement(deltaX, deltaY);
+        }
+    }
+
+    /**
+     * Knockback effect - push character away
+     */
+    knockback(deltaX, deltaY) {
+        // Calculate target position
+        const targetGridX = Math.max(
+            this.minGridX,
+            Math.min(this.maxGridX, this.gridX + deltaX)
+        );
+        const targetGridY = Math.max(
+            this.minGridY,
+            Math.min(this.maxGridY, this.gridY + deltaY)
+        );
+
+        // Check if target is valid (not blocked)
+        if (!this.canMoveTo(targetGridX, targetGridY, this.gridX, this.gridY)) {
+            // Try to find closest valid position
+            const steps = Math.abs(deltaX) + Math.abs(deltaY);
+            for (let i = steps; i > 0; i--) {
+                const fraction = i / steps;
+                const testX = Math.round(this.gridX + deltaX * fraction);
+                const testY = Math.round(this.gridY + deltaY * fraction);
+
+                if (this.canMoveTo(testX, testY, this.gridX, this.gridY)) {
+                    this.performKnockback(testX, testY);
+                    return;
+                }
+            }
+            // No valid position found, don't move
+            return;
+        }
+
+        this.performKnockback(targetGridX, targetGridY);
+    }
+
+    /**
+     * Execute knockback movement
+     */
+    performKnockback(targetGridX, targetGridY) {
+        // Stop any current movement
+        if (this.currentTween) {
+            this.currentTween.remove();
+        }
+
+        this.isMoving = true;
+        const targetX = targetGridX * this.gridSize + this.gridSize / 2;
+        const targetY = targetGridY * this.gridSize + this.gridSize / 2;
+
+        // Fast knockback animation
+        this.currentTween = this.scene.tweens.add({
+            targets: this.sprite,
+            x: targetX,
+            y: targetY,
+            duration: 150, // Fast knockback
+            ease: 'Cubic.easeOut',
+            onComplete: () => {
+                this.gridX = targetGridX;
+                this.gridY = targetGridY;
+                this.isMoving = false;
+                this.currentTween = null;
+            }
+        });
+    }
+
+    // ========== CHECKPOINT SYSTEM ==========
+
+    /**
+     * Save checkpoint
+     */
+    saveCheckpoint(room, gridX, gridY) {
+        this.checkpointRoom = room;
+        this.checkpointX = gridX;
+        this.checkpointY = gridY;
+
+        // Persist to localStorage
+        if (this.isPlayer) {
+            localStorage.setItem('checkpoint', JSON.stringify({
+                room: room,
+                x: gridX,
+                y: gridY,
+                health: this.health,
+                energy: this.energy,
+                inventory: Array.from(this.inventory.entries())
+            }));
+        }
+    }
+
+    /**
+     * Load checkpoint
+     */
+    loadCheckpoint() {
+        if (this.isPlayer) {
+            const saved = localStorage.getItem('checkpoint');
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.checkpointRoom = data.room;
+                this.checkpointX = data.x;
+                this.checkpointY = data.y;
+                this.health = data.health;
+                this.energy = data.energy;
+                this.inventory = new Map(data.inventory);
+                return data;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Update character state (call every frame)
+     */
+    update(time, delta) {
+        this.updateSpeedBoost();
     }
 }

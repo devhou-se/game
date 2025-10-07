@@ -110,10 +110,16 @@ class GameScene extends Phaser.Scene {
         this.currentRoom = this.config.player.startRoom;
         this.transporterSprites = [];
         this.objectSprites = [];
+        this.gameObjects = []; // New: GameObject instances
         this.floorSprites = [];
         this.isTransitioning = false;
         this.creditsVisible = false;
         this.creditsCloseCallback = null;
+
+        // Initialize game systems
+        this.floatingText = new FloatingText(this);
+        this.behaviors = Behaviors; // Reference to behaviors library
+        this.currentMessage = null; // For temporary messages
 
         // Player can move to any cell in the world
         const minGridX = 0;
@@ -458,29 +464,52 @@ class GameScene extends Phaser.Scene {
     }
 
     loadRoomObjects() {
-        // Clear existing object sprites
+        // Clear existing object sprites and game objects
         this.objectSprites.forEach(sprite => sprite.destroy());
         this.objectSprites = [];
+        this.gameObjects.forEach(obj => obj.destroy());
+        this.gameObjects = [];
 
-        // Create object sprites for current room
+        // Create game objects for current room
         const room = this.rooms[this.currentRoom];
         if (room.objects) {
-            room.objects.forEach(obj => {
-                const pixelX = obj.gridX * this.GRID_SIZE + this.GRID_SIZE / 2;
-                const pixelY = obj.gridY * this.GRID_SIZE + this.GRID_SIZE / 2;
+            room.objects.forEach(objData => {
+                // Get object type configuration
+                const objTypeConfig = this.objectTypes[objData.type];
+                if (!objTypeConfig) {
+                    console.warn(`Object type not found: ${objData.type}`);
+                    return;
+                }
 
-                // Get sprite key from object type
-                const objType = this.objectTypes[obj.type];
-                const spriteKey = objType ? objType.sprite : 'object-tile';
+                // Create GameObject instance
+                const gameObject = new GameObject({
+                    type: objData.type,
+                    gridX: objData.gridX,
+                    gridY: objData.gridY,
+                    sprite: objTypeConfig.sprite,
+                    properties: objTypeConfig.properties || {},
+                    behaviors: objTypeConfig.behaviors || [],
+                    initialState: objTypeConfig.initialState || {},
+                    interactionRange: objTypeConfig.interactionRange || 0
+                });
 
-                const sprite = this.add.sprite(pixelX, pixelY, spriteKey);
+                // Create sprite for visual representation
+                const pixelX = objData.gridX * this.GRID_SIZE + this.GRID_SIZE / 2;
+                const pixelY = objData.gridY * this.GRID_SIZE + this.GRID_SIZE / 2;
+                const sprite = this.add.sprite(pixelX, pixelY, gameObject.sprite);
                 sprite.setDepth(0); // Above background, below characters
-                this.objectSprites.push(sprite);
 
-                // Store grid position and type on sprite for collision detection
-                sprite.gridX = obj.gridX;
-                sprite.gridY = obj.gridY;
-                sprite.objectType = obj.type;
+                // Link sprite to game object
+                gameObject.spriteObject = sprite;
+                sprite.gameObject = gameObject;
+
+                // Store for backward compatibility
+                sprite.gridX = objData.gridX;
+                sprite.gridY = objData.gridY;
+                sprite.objectType = objData.type;
+
+                this.objectSprites.push(sprite);
+                this.gameObjects.push(gameObject);
             });
         }
     }
@@ -524,12 +553,17 @@ class GameScene extends Phaser.Scene {
         const room = this.rooms[this.currentRoom];
         const playerPos = this.player.getGridPosition();
 
+        // Check transporters
         for (let trans of room.transporters) {
             if (trans.gridX === playerPos.x && trans.gridY === playerPos.y) {
                 this.switchRoom(trans.targetRoom, trans.targetX, trans.targetY);
                 return true;
             }
         }
+
+        // Check for object collisions (automatic behaviors)
+        this.checkObjectCollisions();
+
         return false;
     }
 
@@ -609,9 +643,19 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    update() {
+    update(time, delta) {
         this.handlePlayerInput();
         this.updateNPCLabels();
+
+        // Update player state (speed boosts, etc.)
+        this.player.update(time, delta);
+
+        // Update game objects
+        for (let gameObject of this.gameObjects) {
+            if (gameObject.update) {
+                gameObject.update(time, delta);
+            }
+        }
     }
 
     updateNPCLabels() {
@@ -692,6 +736,13 @@ class GameScene extends Phaser.Scene {
 
         // If currently moving or transitioning, don't accept input
         if (this.player.isMoving || this.isTransitioning) return;
+
+        // Handle spacebar for object interactions
+        const spacePressed = this.spaceKey.isDown && !this.lastKeyState.space;
+        if (spacePressed) {
+            this.checkObjectInteractions();
+        }
+        this.lastKeyState.space = this.spaceKey.isDown;
 
         // Check if any directional keys are currently held (arrows or WASD)
         const anyKeyHeld = this.cursors.left.isDown || this.cursors.right.isDown ||
@@ -1076,6 +1127,256 @@ class GameScene extends Phaser.Scene {
                     });
                 }
             }
+        }
+    }
+
+    // ========== OBJECT INTERACTION SYSTEM ==========
+
+    /**
+     * Check for object collisions at player's current position
+     */
+    checkObjectCollisions() {
+        const playerPos = this.player.getGridPosition();
+
+        for (let gameObject of this.gameObjects) {
+            if (gameObject.isCollidingWith(this.player)) {
+                gameObject.onCollision(this.player, this);
+            }
+        }
+    }
+
+    /**
+     * Check for interactable objects near player
+     */
+    checkObjectInteractions() {
+        for (let gameObject of this.gameObjects) {
+            if (gameObject.canInteract(this.player)) {
+                gameObject.onInteract(this.player, this);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Spawn a new object (used by vending machines, etc.)
+     */
+    spawnObject(objectType, gridX, gridY) {
+        const objTypeConfig = this.objectTypes[objectType];
+        if (!objTypeConfig) {
+            console.warn(`Cannot spawn unknown object type: ${objectType}`);
+            return null;
+        }
+
+        // Create GameObject instance
+        const gameObject = new GameObject({
+            type: objectType,
+            gridX: gridX,
+            gridY: gridY,
+            sprite: objTypeConfig.sprite,
+            properties: objTypeConfig.properties || {},
+            behaviors: objTypeConfig.behaviors || [],
+            initialState: objTypeConfig.initialState || {},
+            interactionRange: objTypeConfig.interactionRange || 0
+        });
+
+        // Create sprite
+        const pixelX = gridX * this.GRID_SIZE + this.GRID_SIZE / 2;
+        const pixelY = gridY * this.GRID_SIZE + this.GRID_SIZE / 2;
+        const sprite = this.add.sprite(pixelX, pixelY, gameObject.sprite);
+        sprite.setDepth(0);
+
+        // Link
+        gameObject.spriteObject = sprite;
+        sprite.gameObject = gameObject;
+        sprite.gridX = gridX;
+        sprite.gridY = gridY;
+        sprite.objectType = objectType;
+
+        this.objectSprites.push(sprite);
+        this.gameObjects.push(gameObject);
+
+        return gameObject;
+    }
+
+    /**
+     * Remove an object from the game
+     */
+    removeObject(gameObject) {
+        // Remove from gameObjects array
+        const index = this.gameObjects.indexOf(gameObject);
+        if (index > -1) {
+            this.gameObjects.splice(index, 1);
+        }
+
+        // Remove sprite from objectSprites array
+        if (gameObject.spriteObject) {
+            const spriteIndex = this.objectSprites.indexOf(gameObject.spriteObject);
+            if (spriteIndex > -1) {
+                this.objectSprites.splice(spriteIndex, 1);
+            }
+        }
+
+        // Destroy the object
+        gameObject.destroy();
+    }
+
+    /**
+     * Get object by ID
+     */
+    getObjectById(id) {
+        return this.gameObjects.find(obj => obj.id === id);
+    }
+
+    /**
+     * Get behavior by name
+     */
+    getBehavior(behaviorName) {
+        return this.behaviors[behaviorName];
+    }
+
+    /**
+     * Update object sprite (used by switches, doors, etc.)
+     */
+    updateObjectSprite(gameObject, newSpriteKey) {
+        if (gameObject.spriteObject && this.textures.exists(newSpriteKey)) {
+            gameObject.spriteObject.setTexture(newSpriteKey);
+            gameObject.sprite = newSpriteKey;
+        }
+    }
+
+    /**
+     * Trigger callback when object state changes (used by switches)
+     */
+    onObjectTriggered(gameObject) {
+        // Handle conditional behavior
+        if (gameObject.behaviors.includes('conditional')) {
+            // Toggle sprite based on triggered state
+            const spriteKey = gameObject.state.triggered ?
+                (gameObject.properties.triggeredSprite || gameObject.sprite) :
+                (gameObject.properties.untriggeredSprite || gameObject.sprite);
+            this.updateObjectSprite(gameObject, spriteKey);
+        }
+    }
+
+    // ========== VISUAL & AUDIO FEEDBACK ==========
+
+    /**
+     * Show floating text
+     */
+    showFloatingText(text, gridX, gridY, color = '#ffffff') {
+        this.floatingText.show(text, gridX, gridY, color);
+    }
+
+    /**
+     * Show temporary message
+     */
+    showMessage(message, duration = 2000) {
+        // Remove existing message
+        if (this.currentMessage) {
+            this.currentMessage.destroy();
+        }
+
+        // Create message text
+        this.currentMessage = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height - 100,
+            message,
+            {
+                fontSize: '20px',
+                fontFamily: 'PixelOperatorMonoBold',
+                color: '#ffffff',
+                backgroundColor: '#000000',
+                padding: { x: 10, y: 5 }
+            }
+        );
+        this.currentMessage.setOrigin(0.5, 0.5);
+        this.currentMessage.setScrollFactor(0);
+        this.currentMessage.setDepth(1500);
+
+        // Auto-hide after duration
+        this.time.delayedCall(duration, () => {
+            if (this.currentMessage) {
+                this.currentMessage.destroy();
+                this.currentMessage = null;
+            }
+        });
+    }
+
+    /**
+     * Show dialogue (reuses DialogueManager)
+     */
+    showDialogue(message, title = "") {
+        this.dialogueManager.show([message], title);
+    }
+
+    /**
+     * Play sound effect (stub for now)
+     */
+    playSound(soundName) {
+        // Stub: actual sound playing would go here
+        console.log(`Sound: ${soundName}`);
+    }
+
+    // ========== ROOM TRANSITION HELPERS ==========
+
+    /**
+     * Change room (used by teleporters, doors, etc.)
+     */
+    changeRoom(targetRoom, targetX, targetY) {
+        if (this.rooms[targetRoom]) {
+            this.switchRoom(targetRoom, targetX, targetY);
+        } else {
+            console.warn(`Target room not found: ${targetRoom}`);
+        }
+    }
+
+    // ========== PLAYER EVENT CALLBACKS ==========
+
+    /**
+     * Called when inventory changes
+     */
+    onInventoryChanged() {
+        // Update inventory UI when implemented
+        console.log('Inventory updated:', this.player.inventory);
+    }
+
+    /**
+     * Called when health changes
+     */
+    onHealthChanged(health, maxHealth) {
+        // Update health bar when implemented
+        console.log(`Health: ${health}/${maxHealth}`);
+    }
+
+    /**
+     * Called when energy changes
+     */
+    onEnergyChanged(energy, maxEnergy) {
+        // Update energy bar when implemented
+        console.log(`Energy: ${energy}/${maxEnergy}`);
+    }
+
+    /**
+     * Called when speed boost changes
+     */
+    onSpeedBoostChanged(multiplier, duration) {
+        if (multiplier > 1) {
+            console.log(`Speed boost: ${multiplier}x for ${duration}ms`);
+        } else {
+            console.log('Speed boost ended');
+        }
+    }
+
+    /**
+     * Called when player dies
+     */
+    onPlayerDeath() {
+        console.log('Player died!');
+        // Respawn at checkpoint
+        const checkpoint = this.player.loadCheckpoint();
+        if (checkpoint) {
+            this.changeRoom(checkpoint.room, checkpoint.x, checkpoint.y);
         }
     }
 }
