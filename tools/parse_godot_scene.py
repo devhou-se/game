@@ -201,12 +201,9 @@ def convert_to_gamev2_format(tiles, grid_size=64, filter_tiles=None, max_width=N
         tiles = {pos: tid for pos, tid in tiles.items()
                 if crop_min_x <= pos[0] <= crop_max_x and crop_min_y <= pos[1] <= crop_max_y}
 
-        if tiles:
-            # Recalculate min based on actual tiles in cropped region
-            min_x = min(x for x, y in tiles.keys())
-            min_y = min(y for x, y in tiles.keys())
-        else:
-            min_x, min_y = crop_min_x, crop_min_y
+        # FIX: Use crop origin for normalization, not per-layer minimum
+        # This ensures all layers are normalized to the same coordinate system
+        min_x, min_y = crop_min_x, crop_min_y
 
     # Convert each tile
     for (x, y), tile_id in tiles.items():
