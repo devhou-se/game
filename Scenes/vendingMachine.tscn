@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://Scripts/DrinkCan.cs" type="Script" id=1]
 [ext_resource path="res://Assets/Tilemap/Tilemap.png" type="Texture" id=2]
@@ -20,5 +20,13 @@ shape = SubResource( 57 )
 texture = ExtResource( 2 )
 region_enabled = true
 region_rect = Rect2( 390, 70, 20, 40 )
+
+[node name="Light2D" type="Light2D" parent="."]
+enabled = true
+position = Vector2( 0, -5 )
+scale = Vector2( 1.2, 1.2 )
+color = Color( 0.8, 0.9, 1, 1 )
+energy = 1.0
+shadow_enabled = false
 
 [node name="Tween" type="Tween" parent="."]

@@ -13,30 +13,30 @@ public partial class HUD : CanvasLayer
 	public override void _Ready()
 	{
 		GD.Print("HUD._Ready() called - using HUD.cs script");
-		
+
 		// Get UI elements
-		if (HasNode("MarginContainer/HBoxContainer/Stamina"))
-			staminaBar = GetNode<ProgressBar>("MarginContainer/HBoxContainer/Stamina");
-			
-		if (HasNode("MarginContainer/HBoxContainer/Energy"))
-			energyBar = GetNode<ProgressBar>("MarginContainer/HBoxContainer/Energy");
-			
-		if (HasNode("MarginContainer/HBoxContainer/TimeLabel"))
+		if (HasNode("MarginContainer/CenterContainer/HBoxContainer/Stamina"))
+			staminaBar = GetNode<ProgressBar>("MarginContainer/CenterContainer/HBoxContainer/Stamina");
+
+		if (HasNode("MarginContainer/CenterContainer/HBoxContainer/Energy"))
+			energyBar = GetNode<ProgressBar>("MarginContainer/CenterContainer/HBoxContainer/Energy");
+
+		if (HasNode("MarginContainer/CenterContainer/HBoxContainer/InfoPanel/HBoxContainer2/TimeLabel"))
 		{
-			timeLabel = GetNode<Label>("MarginContainer/HBoxContainer/TimeLabel");
+			timeLabel = GetNode<Label>("MarginContainer/CenterContainer/HBoxContainer/InfoPanel/HBoxContainer2/TimeLabel");
 			GD.Print("Found TimeLabel");
 		}
-			
-		if (HasNode("MarginContainer/HBoxContainer/WeatherPanel/WeatherLabel"))
+
+		if (HasNode("MarginContainer/CenterContainer/HBoxContainer/InfoPanel/HBoxContainer2/WeatherLabel"))
 		{
-			weatherLabel = GetNode<Label>("MarginContainer/HBoxContainer/WeatherPanel/WeatherLabel");
+			weatherLabel = GetNode<Label>("MarginContainer/CenterContainer/HBoxContainer/InfoPanel/HBoxContainer2/WeatherLabel");
 			GD.Print($"Found WeatherLabel with text: {weatherLabel.Text}");
 		}
-		
+
 		// Check if LineEdit exists before trying to get it
-		if (HasNode("MarginContainer/HBoxContainer/LineEdit"))
+		if (HasNode("MarginContainer/CenterContainer/HBoxContainer/LineEdit"))
 		{
-			nameInput = GetNode<LineEdit>("MarginContainer/HBoxContainer/LineEdit");
+			nameInput = GetNode<LineEdit>("MarginContainer/CenterContainer/HBoxContainer/LineEdit");
 			nameInput.Connect("text_entered", this, nameof(OnNameEntered));
 		}
 		else if (HasNode("LineEdit"))
@@ -44,7 +44,7 @@ public partial class HUD : CanvasLayer
 			nameInput = GetNode<LineEdit>("LineEdit");
 			nameInput.Connect("text_entered", this, nameof(OnNameEntered));
 		}
-		
+
 		// Find player
 		CallDeferred(nameof(FindPlayer));
 	}

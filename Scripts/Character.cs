@@ -161,12 +161,12 @@ public partial class Character : KinematicBody2D
 		if (_shapeCast.IsColliding())
 		{
 			var c = _shapeCast.GetCollider(0);
-			
+
 			if (_shapeCast.GetCollider(0) is Bumper bumper)
 			{
-				bumper.Bump();
+				bumper.Bump(this);
 			}
-			
+
 			_bufferedVector = Vector2.Zero;
 			return;
 		}
@@ -198,5 +198,5 @@ public partial class Character : KinematicBody2D
 
 public interface Bumper
 {
-	public void Bump();
+	public void Bump(Character bumper);
 }

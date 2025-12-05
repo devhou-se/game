@@ -94,11 +94,6 @@ public class GameController : Node
 		dayNightController = new DayNightController();
 		dayNightController.Name = "DayNightController";
 		GetParent().CallDeferred("add_child", dayNightController);
-		
-		// Create time/weather HUD (use CallDeferred to avoid timing issues)
-		var hud = new TimeWeatherHUD();
-		hud.Name = "TimeWeatherHUD";
-		GetParent().CallDeferred("add_child", hud);
 	}
 	
 	private void SetupSceneDayNight(string sceneName)
