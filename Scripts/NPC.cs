@@ -66,19 +66,31 @@ public class NPC : Character, Bumper
 		base._PhysicsProcess(delta);
 	}
 	
-	public void Bump()
+	public void Bump(Character bumper)
 	{
+		// Only respond if bumped by a Player
+		if (!(bumper is Player))
+		{
+			return;
+		}
+
+		// Check global conversation cooldown
+		if (Global.ConversationCooldown > 0)
+		{
+			return;
+		}
+
 		if (_textTimeLeft > 0)
 		{
 			return;
 		}
-		
+
 		// Check if we should use full interaction screen
 		if (EnableFullInteraction && _interactionScreenScene != null)
 		{
 			// Create a new instance of the interaction screen
 			var interactionScreen = _interactionScreenScene.Instance<InteractionScreen>();
-			
+
 			// Find the UI CanvasLayer and add it there to ensure viewport-relative positioning
 			var uiLayer = GetNode<CanvasLayer>("/root/Main/UI");
 			if (uiLayer != null)
@@ -90,11 +102,20 @@ public class NPC : Character, Bumper
 				// Fallback to current scene if UI layer not found
 				GetTree().CurrentScene.AddChild(interactionScreen);
 			}
-			
+
 			// Show the interaction screen
 			interactionScreen.ShowInteraction(this);
+
+			// Connect to know when conversation ends
+			interactionScreen.Connect("tree_exiting", this, nameof(OnConversationEnded));
 			return;
 		}
+	}
+
+	private void OnConversationEnded()
+	{
+		// Set 1-second cooldown after conversation closes
+		Global.ConversationCooldown = 1.0f;
 	}
 	
 	private async void CheckIfBaileyButlerIsInTheOffice()
