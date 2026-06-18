@@ -29,6 +29,21 @@ class EditorApp {
                 if (type === 'down') { this.canvas.setSelection(cell); this.inspector.show(this.activeRoom, cell); }
             },
         });
+        // Collision: paint gk_blank on the Colliders layer (left = solid, right = erase).
+        this.registerTool({
+            id: 'collision', label: 'Collision',
+            onSelect: () => { this.canvas.setShowCollision(true); this.layerPanel.render(this.activeRoom); },
+            onCell: (cell, type, btn) => {
+                if (type !== 'down' && type !== 'drag') return;
+                const col = this._ensureColliders();
+                const k = `${cell.x},${cell.y}`;
+                if (btn === 2) delete col.tiles[k]; else col.tiles[k] = 'gk_blank';
+                this.config.markDirty();
+                this.canvas.render();
+                this.inspector.show(this.activeRoom, cell);
+                this._status(cell);
+            },
+        });
         this.tool = 'inspect';
 
         this.canvas.onCell = (cell, type, btn) => this._onCell(cell, type, btn);
@@ -44,6 +59,14 @@ class EditorApp {
 
     registerTool(t) { this.tools.push(t); }
     currentTool() { return this.tools.find(t => t.id === this.tool); }
+
+    /** The room's dedicated collision layer, created if missing. */
+    _ensureColliders() {
+        let c = this.config.colliders(this.activeRoom);
+        if (!c) { c = { name: 'Colliders', z: 5, collision: true, tiles: {} };
+                  this.config.room(this.activeRoom).layers.push(c); }
+        return c;
+    }
 
     setRoom(key) {
         this.activeRoom = key;
@@ -74,6 +97,8 @@ class EditorApp {
             `<button class="tool-btn ${t.id === this.tool ? 'active' : ''}" data-tool="${t.id}">${t.label}</button>`).join('');
         bar.querySelectorAll('.tool-btn').forEach(b => b.onclick = () => {
             this.tool = b.dataset.tool;
+            const t = this.currentTool();
+            if (t && t.onSelect) t.onSelect();
             this._renderToolbar();
         });
     }
