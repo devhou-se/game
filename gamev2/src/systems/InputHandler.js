@@ -64,6 +64,14 @@ class InputHandler {
             return;
         }
 
+        // Priority 2b: Achievements overlay — ESC closes it (not the menu)
+        if (this.scene.achievementsVisible) {
+            const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
+            if (escPressed && this.scene.achievementsCloseCallback) this.scene.achievementsCloseCallback();
+            this.lastKeyState.esc = this.escKey.isDown;
+            return;
+        }
+
         // Priority 3: Menu toggle
         this.handleMenuToggle();
 

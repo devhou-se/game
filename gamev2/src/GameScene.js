@@ -67,6 +67,8 @@ class GameScene extends Phaser.Scene {
             // Credits state
             this.creditsVisible = false;
             this.creditsCloseCallback = null;
+            this.achievementsVisible = false;
+            this.achievementsCloseCallback = null;
 
             // Calculate grid boundaries
             const minGridX = 0;
@@ -250,6 +252,7 @@ class GameScene extends Phaser.Scene {
      * Show the achievements overlay (first achievement: "Paint the Board").
      */
     showAchievements() {
+        if (this.achievementsVisible) return;   // only one overlay at a time
         const cam = this.cameras.main, W = cam.width, H = cam.height;
         const pw = 540, ph = 400, px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = [];
@@ -287,8 +290,14 @@ class GameScene extends Phaser.Scene {
             const r = p.perRoom[rk], done = r.total > 0 && r.painted >= r.total;
             text(cx, yy, `${rk}:  ${r.painted} / ${r.total}`, '14px', false, done ? '#ffd700' : '#ffffff'); yy += 22;
         }
-        text(cx, py + ph - 22, '(click anywhere to close)', '12px', false, '#888888');
-        const close = () => objs.forEach(o => o.destroy());
+        text(cx, py + ph - 22, '(click or ESC to close)', '12px', false, '#888888');
+        const close = () => {
+            this.achievementsVisible = false;
+            this.achievementsCloseCallback = null;
+            objs.forEach(o => o.destroy());
+        };
+        this.achievementsVisible = true;
+        this.achievementsCloseCallback = close;
         overlay.on('pointerdown', close);
     }
 
