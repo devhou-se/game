@@ -57,7 +57,7 @@ class NPCManager {
             }
         );
         label.setOrigin(0.5, 1);
-        label.setDepth(10);
+        label.setDepth(900); // above all Y-sorted world objects, below the HUD
         label.setResolution(1);
 
         npc.nameLabel = label;

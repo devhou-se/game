@@ -381,5 +381,19 @@ class GameScene extends Phaser.Scene {
     update() {
         this.inputHandler.handleInput();
         this.npcManager.updateLabels();
+        this.updateCharacterDepths();
+    }
+
+    /**
+     * Y-sort the player and NPCs by their feet position so they render in
+     * front of objects below them and behind objects above them. Matches the
+     * feet-based depth used for standing tiles in RoomManager.loadLayer.
+     */
+    updateCharacterDepths() {
+        const GS = this.GRID_SIZE;
+        const feetDepth = (sprite) => ((sprite.y + GS / 2) / GS) * 10 + 5;
+        if (this.player) this.player.sprite.setDepth(feetDepth(this.player.sprite));
+        const npcs = this.roomManager.rooms[this.roomManager.currentRoom].npcs;
+        npcs.forEach(npc => npc.sprite.setDepth(feetDepth(npc.sprite)));
     }
 }

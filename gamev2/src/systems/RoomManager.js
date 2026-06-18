@@ -98,7 +98,7 @@ class RoomManager {
                 }
             );
             label.setOrigin(0.5, 1);
-            label.setDepth(10);
+            label.setDepth(900); // above all Y-sorted world objects, below the HUD
             label.setResolution(1);
             this.transporterLabels.push(label);
         });
@@ -194,13 +194,23 @@ class RoomManager {
                 sprite.setScale(spriteConfig.scale);
             }
 
-            // Set depth based on layer z-index AND y-position.
-            // maxRows must cover the world height so the per-row Y-sort offset
-            // stays < the spacing between layers (otherwise layers bleed).
-            const baseDepth = this.calculateLayerDepth(layer.z);
-            const maxRows = (this.scene.WORLD_HEIGHT / this.scene.GRID_SIZE) || 30;
-            const yOffset = (gridY / maxRows) * 99;
-            const spriteDepth = baseDepth + yOffset;
+            // Depth: ground layers (z<2: floor/over-floor/water) render flat and
+            // below everything via fixed negative depths. Everything that
+            // "stands" (z>=2: trunks, walls, statues, buildings, canopies...)
+            // is Y-sorted by its FEET (bottom row) so objects and the player
+            // sort by position. Overhead parts (canopies/roofs on the Tops
+            // layer) get a small bias so they draw at ~their trunk's feet and
+            // over it — making each whole object sort as one unit.
+            let spriteDepth;
+            if (layer.z < 2) {
+                spriteDepth = this.calculateLayerDepth(layer.z);
+            } else {
+                const GS = this.scene.GRID_SIZE;
+                const heightCells = Math.max(1, Math.round(sprite.height / GS));
+                const feetRow = gridY + heightCells;
+                const overheadBias = layer.z >= 7 ? 11 : 0;
+                spriteDepth = feetRow * 10 + overheadBias;
+            }
             sprite.setDepth(spriteDepth);
 
             // Store collision info on sprite
