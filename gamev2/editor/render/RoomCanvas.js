@@ -22,7 +22,8 @@ class RoomCanvas {
         this.selection = null;                         // {x,y}
         this.qa = [];                                  // [{x,y,sev}] highlights
         this._drawList = [];
-        this._panning = false; this._panStart = null;
+        this._panning = false; this._panStart = null; this._panArm = null;
+        this.dragMode = 'pan';   // 'pan' = left-drag pans; 'paint' = left-drag paints (set per tool)
 
         this.onCell = null;        // (cell{x,y}, type 'down'|'drag'|'up'|'move', button)
         this._down = false; this._downButton = 0;
@@ -119,18 +120,24 @@ class RoomCanvas {
             this.render();
         }, { passive: false });
 
+        const beginPan = e => { this._panning = true; this._panArm = null;
+            this._panStart = { mx: e.clientX, my: e.clientY, cx: this.cam.x, cy: this.cam.y }; };
+
         c.addEventListener('mousedown', e => {
-            const rect = c.getBoundingClientRect();
-            // pan with middle button or shift+left
-            if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
-                this._panning = true;
-                this._panStart = { mx: e.clientX, my: e.clientY, cx: this.cam.x, cy: this.cam.y };
-                return;
-            }
+            // explicit pan: middle button, or shift+left
+            if (e.button === 1 || (e.button === 0 && e.shiftKey)) { beginPan(e); e.preventDefault(); return; }
             this._down = true; this._downButton = e.button;
+            // left-drag pans by default; only paint tools claim the drag to paint
+            this._panArm = (e.button === 0 && this.dragMode !== 'paint')
+                ? { mx: e.clientX, my: e.clientY, cx: this.cam.x, cy: this.cam.y } : null;
             if (this.onCell) this.onCell(this._evCell(e), 'down', e.button);
         });
         window.addEventListener('mousemove', e => {
+            // a left-drag with a non-paint tool turns into a pan once it actually moves
+            if (!this._panning && this._panArm) {
+                const dx = e.clientX - this._panArm.mx, dy = e.clientY - this._panArm.my;
+                if (Math.abs(dx) + Math.abs(dy) > 3) { this._panStart = this._panArm; this._panning = true; this._panArm = null; }
+            }
             if (this._panning) {
                 this.cam.x = this._panStart.cx - (e.clientX - this._panStart.mx) / this.cam.zoom;
                 this.cam.y = this._panStart.cy - (e.clientY - this._panStart.my) / this.cam.zoom;
@@ -140,12 +147,13 @@ class RoomCanvas {
             const cell = this._evCell(e);
             const changed = !this.hover || this.hover.x !== cell.x || this.hover.y !== cell.y;
             this.hover = cell;
-            if (this._down && this.onCell) this.onCell(cell, 'drag', this._downButton);
+            if (this._down && this.dragMode === 'paint' && this.onCell) this.onCell(cell, 'drag', this._downButton);
             else if (this.onCell) this.onCell(cell, 'move', -1);
             if (changed) this.render();
         });
         window.addEventListener('mouseup', e => {
-            if (this._panning) { this._panning = false; return; }
+            this._panArm = null;
+            if (this._panning) { this._panning = false; this._down = false; return; }
             if (this._down && this.onCell) this.onCell(this._evCell(e), 'up', this._downButton);
             this._down = false;
         });

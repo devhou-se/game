@@ -38,7 +38,7 @@ class EditorApp {
         });
         // Collision: paint gk_blank on the Colliders layer (left = solid, right = erase).
         this.registerTool({
-            id: 'collision', label: 'Collision',
+            id: 'collision', label: 'Collision', paints: true,
             onSelect: () => { this.canvas.setShowCollision(true); this.layerPanel.render(this.activeRoom); },
             onCell: (cell, type, btn) => {
                 if (type !== 'down' && type !== 'drag') return;
@@ -96,6 +96,8 @@ class EditorApp {
 
     registerTool(t) { this.tools.push(t); }
     currentTool() { return this.tools.find(t => t.id === this.tool); }
+    /** Paint tools claim left-drag to paint; everything else left-drags to pan. */
+    _applyDragMode() { this.canvas.dragMode = (this.currentTool() && this.currentTool().paints) ? 'paint' : 'pan'; }
 
     /** The room's dedicated collision layer, created if missing. */
     _ensureColliders() {
@@ -154,6 +156,7 @@ class EditorApp {
             this.tool = b.dataset.tool;
             const t = this.currentTool();
             if (t && t.onSelect) t.onSelect();
+            this._applyDragMode();
             this._renderToolbar();
         });
     }
