@@ -45,6 +45,8 @@ class RoomManager {
             this.rooms[roomKey] = {
                 name: roomConfig.name,
                 boundary: boundary,
+                worldWidth: roomConfig.worldWidth || this.scene.WORLD_WIDTH,
+                worldHeight: roomConfig.worldHeight || this.scene.WORLD_HEIGHT,
                 npcs: [],
                 objects: roomConfig.objects.map(obj => ({
                     type: obj.type || 'box',
@@ -56,7 +58,8 @@ class RoomManager {
                     gridY: trans.gridY !== null ? trans.gridY : centerGridY + trans.gridOffsetY,
                     targetRoom: trans.targetRoom,
                     targetX: trans.targetX !== null ? trans.targetX : centerGridX + trans.targetOffsetX,
-                    targetY: trans.targetY !== null ? trans.targetY : centerGridY + trans.targetOffsetY
+                    targetY: trans.targetY !== null ? trans.targetY : centerGridY + trans.targetOffsetY,
+                    hidden: !!trans.hidden   // hidden transporters still teleport, but draw no tile/label
                 })),
                 floor: roomConfig.floor || {},
                 layers: roomConfig.layers || []
@@ -79,6 +82,7 @@ class RoomManager {
         // Create transporter sprites for current room
         const room = this.rooms[this.currentRoom];
         room.transporters.forEach(trans => {
+            if (trans.hidden) return;   // invisible gateway (e.g. a shrine door) — no tile/label, still teleports
             const pixelX = trans.gridX * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
             const pixelY = trans.gridY * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
             const sprite = this.scene.add.sprite(pixelX, pixelY, 'transporter');
@@ -209,7 +213,9 @@ class RoomManager {
                 const heightCells = Math.max(1, Math.round(sprite.height / GS));
                 const feetRow = gridY + heightCells;
                 const overheadBias = layer.z >= 7 ? 11 : 0;
-                spriteDepth = feetRow * 10 + overheadBias;
+                // optional per-sprite depth nudge (e.g. a tall building lowered so the
+                // player stays visible on its steps and only disappears in the doorway)
+                spriteDepth = feetRow * 10 + overheadBias + (spriteConfig.depthBias || 0);
             }
             sprite.setDepth(spriteDepth);
 
@@ -276,6 +282,9 @@ class RoomManager {
 
             // Update current room
             this.currentRoom = newRoom;
+
+            // Resize camera/physics/player movement bounds to the new room
+            this.scene.applyRoomBounds(newRoom);
 
             // Move player to target position
             this.scene.player.gridX = targetX;

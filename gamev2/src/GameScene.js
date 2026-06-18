@@ -150,12 +150,16 @@ class GameScene extends Phaser.Scene {
             this.cameras.main.setDeadzone(this.DEADZONE_SIZE, this.DEADZONE_SIZE);
             this.cameras.main.setBackgroundColor(COLORS.CAMERA_BACKGROUND);
 
+            // Size camera/physics/player bounds to the starting room (rooms can differ in size)
+            this.applyRoomBounds(this.roomManager.currentRoom);
+
             // Set up input
             this.inputHandler.setupKeys();
 
             // Create managers
             this.menuManager = new MenuManager(this);
             this.dialogueManager = new DialogueManager(this);
+            this.debugManager = new DebugManager(this);
 
             // Create HUD
             this.createHUD();
@@ -169,6 +173,25 @@ class GameScene extends Phaser.Scene {
     /**
      * Create the HUD overlay
      */
+    /**
+     * Resize camera, physics, and player-movement bounds to a room's own size.
+     * Rooms can differ in dimensions, so this is applied on init and every switch.
+     */
+    applyRoomBounds(roomKey) {
+        const room = this.roomManager.rooms[roomKey];
+        if (!room) return;
+        const ww = room.worldWidth || this.WORLD_WIDTH;
+        const wh = room.worldHeight || this.WORLD_HEIGHT;
+        this.cameras.main.setBounds(0, 0, ww, wh);
+        this.physics.world.setBounds(0, 0, ww, wh);
+        if (this.player) {
+            this.player.minGridX = 0;
+            this.player.minGridY = 0;
+            this.player.maxGridX = (ww / this.GRID_SIZE) - 1;
+            this.player.maxGridY = (wh / this.GRID_SIZE) - 1;
+        }
+    }
+
     createHUD() {
         // Create semi-transparent background bar
         this.hudBackground = this.add.graphics();
@@ -382,6 +405,7 @@ class GameScene extends Phaser.Scene {
         this.inputHandler.handleInput();
         this.npcManager.updateLabels();
         this.updateCharacterDepths();
+        if (this.debugManager) this.debugManager.update();
     }
 
     /**

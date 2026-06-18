@@ -115,6 +115,7 @@ class SpriteSystem {
 
         return {
             scale: metadata?.scale || 1,
+            depthBias: metadata?.depthBias || 0,
             anchorX: metadata?.anchorX !== undefined ? metadata.anchorX : 0.5,
             anchorY: metadata?.anchorY !== undefined ? metadata.anchorY : 0.5,
             hasAnimation: metadata?.frameCount > 1,

@@ -23,21 +23,28 @@
     </style>
 </head>
 <body>
-    <!-- Constants and utilities -->
-    <script src="src/utils/Constants.js"></script>
-
-    <!-- Game systems -->
-    <script src="src/systems/RoomManager.js"></script>
-    <script src="src/systems/CollisionSystem.js"></script>
-    <script src="src/systems/NPCManager.js"></script>
-    <script src="src/systems/InputHandler.js"></script>
-    <script src="src/systems/SpriteSystem.js"></script>
-
-    <!-- Core game files -->
-    <script src="src/Character.js"></script>
-    <script src="src/DialogueManager.js"></script>
-    <script src="src/MenuManager.js"></script>
-    <script src="src/GameScene.js"></script>
-    <script src="src/game.js"></script>
+    <!-- Game scripts, loaded in order with a cache-buster so edits always apply -->
+    <script>
+        (function () {
+            var v = Date.now();
+            var files = [
+                'src/utils/Constants.js',
+                'src/systems/RoomManager.js',
+                'src/systems/CollisionSystem.js',
+                'src/systems/NPCManager.js',
+                'src/systems/InputHandler.js',
+                'src/systems/SpriteSystem.js',
+                'src/Character.js',
+                'src/DebugManager.js',
+                'src/DialogueManager.js',
+                'src/MenuManager.js',
+                'src/GameScene.js',
+                'src/game.js'
+            ];
+            files.forEach(function (f) {
+                document.write('<script src="' + f + '?v=' + v + '"><\/script>');
+            });
+        })();
+    </script>
 </body>
 </html>
