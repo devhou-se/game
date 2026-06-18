@@ -2,7 +2,7 @@ name: Deploy GameV2 Canvas
 
 on:
   push:
-    branches: [master]
+    branches: [master, gamev2-godot-garden-port]
     paths:
       - 'gamev2/**'
   workflow_dispatch:
