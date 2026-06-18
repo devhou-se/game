@@ -62,6 +62,7 @@ class GameScene extends Phaser.Scene {
             this.collisionSystem = new CollisionSystem(this);
             this.npcManager = new NPCManager(this);
             this.inputHandler = new InputHandler(this);
+            this.achievementManager = new AchievementManager(this);
 
             // Credits state
             this.creditsVisible = false;
@@ -246,10 +247,49 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Show achievements (placeholder)
+     * Show the achievements overlay (first achievement: "Paint the Board").
      */
     showAchievements() {
-        console.log('Achievements feature coming soon!');
+        const cam = this.cameras.main, W = cam.width, H = cam.height;
+        const pw = 540, ph = 400, px = (W - pw) / 2, py = (H - ph) / 2;
+        const objs = [];
+        const overlay = this.add.graphics();
+        overlay.fillStyle(0x000000, 0.85); overlay.fillRect(0, 0, W, H);
+        overlay.setScrollFactor(0); overlay.setDepth(2000);
+        overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, W, H), Phaser.Geom.Rectangle.Contains);
+        objs.push(overlay);
+        const panel = this.add.graphics();
+        panel.fillStyle(0x1a1a1a, 1); panel.fillRect(px, py, pw, ph);
+        panel.lineStyle(2, 0x666666, 1); panel.strokeRect(px, py, pw, ph);
+        panel.setScrollFactor(0); panel.setDepth(2001); objs.push(panel);
+        const text = (x, y, t, size, bold, color, origin) => {
+            const o = this.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
+                fontFamily: bold ? 'PixelOperatorMonoBold' : 'PixelOperatorMono' });
+            o.setOrigin(origin != null ? origin : 0.5, 0.5); o.setResolution(1);
+            o.setScrollFactor(0); o.setDepth(2002); objs.push(o); return o;
+        };
+        const cx = W / 2;
+        text(cx, py + 30, 'ACHIEVEMENTS', '28px', true);
+        const p = this.achievementManager.paintProgress();
+        text(cx, py + 78, (p.complete ? '★ ' : '') + 'Paint the Board', '22px', true, p.complete ? '#ffd700' : '#ffffff');
+        text(cx, py + 106, 'Step on every reachable tile in the world', '14px', false, '#bbbbbb');
+        const barW = pw - 80, barX = px + 40, barY = py + 130, barH = 24;
+        const bar = this.add.graphics(); bar.setScrollFactor(0); bar.setDepth(2002);
+        bar.fillStyle(0x333333, 1); bar.fillRect(barX, barY, barW, barH);
+        bar.fillStyle(p.complete ? 0xffd700 : 0x33cc66, 1);
+        bar.fillRect(barX, barY, barW * (p.total ? Math.min(1, p.painted / p.total) : 0), barH);
+        bar.lineStyle(2, 0x666666, 1); bar.strokeRect(barX, barY, barW, barH);
+        objs.push(bar);
+        text(cx, barY + barH + 20, `${p.painted} / ${p.total} tiles painted  (${p.percent}%)`, '16px', true);
+        let yy = barY + barH + 56;
+        text(cx, yy, 'By room', '14px', true, '#bbbbbb'); yy += 24;
+        for (const rk in p.perRoom) {
+            const r = p.perRoom[rk], done = r.total > 0 && r.painted >= r.total;
+            text(cx, yy, `${rk}:  ${r.painted} / ${r.total}`, '14px', false, done ? '#ffd700' : '#ffffff'); yy += 22;
+        }
+        text(cx, py + ph - 22, '(click anywhere to close)', '12px', false, '#888888');
+        const close = () => objs.forEach(o => o.destroy());
+        overlay.on('pointerdown', close);
     }
 
     /**
@@ -406,6 +446,14 @@ class GameScene extends Phaser.Scene {
         this.npcManager.updateLabels();
         this.updateCharacterDepths();
         if (this.debugManager) this.debugManager.update();
+        // Achievement "Paint the board": record the tile the player stands on.
+        if (this.player && this.achievementManager) {
+            const k = this.player.gridX + ',' + this.player.gridY;
+            if (this._paintCell !== k) {
+                this._paintCell = k;
+                this.achievementManager.markVisited(this.roomManager.currentRoom, this.player.gridX, this.player.gridY);
+            }
+        }
     }
 
     /**
