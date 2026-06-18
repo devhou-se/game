@@ -194,9 +194,11 @@ class RoomManager {
                 sprite.setScale(spriteConfig.scale);
             }
 
-            // Set depth based on layer z-index AND y-position
+            // Set depth based on layer z-index AND y-position.
+            // maxRows must cover the world height so the per-row Y-sort offset
+            // stays < the spacing between layers (otherwise layers bleed).
             const baseDepth = this.calculateLayerDepth(layer.z);
-            const maxRows = 30;
+            const maxRows = (this.scene.WORLD_HEIGHT / this.scene.GRID_SIZE) || 30;
             const yOffset = (gridY / maxRows) * 99;
             const spriteDepth = baseDepth + yOffset;
             sprite.setDepth(spriteDepth);

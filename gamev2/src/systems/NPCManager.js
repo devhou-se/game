@@ -23,7 +23,7 @@ class NPCManager {
         const wanderRadius = this.scene.config.game.npcWanderRadius;
         const npc = new Character(this.scene, gridX, gridY, spriteKey, {
             gridSize: this.scene.GRID_SIZE,
-            worldSize: this.scene.WORLD_SIZE,
+            worldSize: this.scene.WORLD_WIDTH,
             moveDuration: this.scene.MOVE_DURATION,
             isPlayer: false,
             name: name,

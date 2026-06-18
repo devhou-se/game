@@ -143,6 +143,9 @@ class GameScene extends Phaser.Scene {
             });
 
             // Set up camera
+            // Clamp the camera to the world so it never reveals the black void
+            // outside the map at the edges.
+            this.cameras.main.setBounds(0, 0, this.WORLD_WIDTH, this.WORLD_HEIGHT);
             this.cameras.main.startFollow(this.player.sprite);
             this.cameras.main.setDeadzone(this.DEADZONE_SIZE, this.DEADZONE_SIZE);
             this.cameras.main.setBackgroundColor(COLORS.CAMERA_BACKGROUND);

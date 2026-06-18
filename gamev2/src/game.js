@@ -26,21 +26,27 @@ const config = {
 const game = new Phaser.Game(config);
 window.game = game; // Expose for debugging
 
-// Pixel-perfect integer scaling
+// Pixel-perfect scaling: pick the largest scale that fits the window.
+// Uses crisp integer steps when there's room, and falls back to a fractional
+// scale on small windows so the whole game stays visible (no clipping).
 function resizeGame() {
     const canvas = game.canvas;
+    if (!canvas) return; // Phaser creates the canvas asynchronously after boot.
+
     const baseWidth = 1280;
     const baseHeight = 960;
 
-    // Calculate maximum integer scale that fits
-    const scaleX = Math.floor(window.innerWidth / baseWidth);
-    const scaleY = Math.floor(window.innerHeight / baseHeight);
-    const scale = Math.max(1, Math.min(scaleX, scaleY));
+    const fitScale = Math.min(
+        window.innerWidth / baseWidth,
+        window.innerHeight / baseHeight
+    );
+    const scale = fitScale >= 1 ? Math.floor(fitScale) : fitScale;
 
-    // Apply integer scale
     canvas.style.width = (baseWidth * scale) + 'px';
     canvas.style.height = (baseHeight * scale) + 'px';
 }
 
 window.addEventListener('resize', resizeGame);
+// Apply once the canvas exists, then keep it in sync with the window.
+game.events.once('ready', resizeGame);
 resizeGame();

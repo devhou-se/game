@@ -127,35 +127,25 @@ class DialogueManager {
 
         // Get the base sprite key and config
         const baseSpriteKey = npc.baseSpriteKey || npc.sprite.texture.key;
-        console.log('[DialogueManager] baseSpriteKey:', baseSpriteKey);
-
         const spriteConfig = this.scene.getSpriteConfig(baseSpriteKey);
-        console.log('[DialogueManager] spriteConfig:', spriteConfig);
 
         // Use the down/forward directional sprite if available
         let displaySpriteKey = baseSpriteKey;
         if (spriteConfig.isDirectional) {
             const downSpriteKey = this.scene.getDirectionalSpriteKey(baseSpriteKey, 'down');
-            console.log('[DialogueManager] downSpriteKey:', downSpriteKey);
             if (downSpriteKey) {
                 displaySpriteKey = downSpriteKey;
             }
         }
 
-        console.log('[DialogueManager] displaySpriteKey:', displaySpriteKey);
-
         // Get the config for the display sprite
         const displaySpriteConfig = this.scene.getSpriteConfig(displaySpriteKey);
-        console.log('[DialogueManager] displaySpriteConfig:', displaySpriteConfig);
 
         // Determine texture key - for multi-frame sprites, use frame_0
         let textureKey = displaySpriteKey;
         if (displaySpriteConfig.frameCount > 1 && !displaySpriteConfig.spriteSheet) {
             textureKey = `${displaySpriteKey}_frame_0`;
         }
-
-        console.log('[DialogueManager] textureKey:', textureKey);
-        console.log('[DialogueManager] Texture exists?', this.scene.textures.exists(textureKey));
 
         this.npcSprite = this.scene.add.sprite(
             this.scene.cameras.main.width / 2,

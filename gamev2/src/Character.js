@@ -18,9 +18,6 @@ class Character {
             scale: 1, anchorX: 0.5, anchorY: 0.5, hasAnimation: false
         };
 
-        // Debug: log sprite config
-        console.log(`Character ${spriteKey}:`, spriteConfig);
-
         // Create sprite
         const pixelX = this.gridX * this.gridSize + this.gridSize / 2;
         const pixelY = this.gridY * this.gridSize + this.gridSize / 2;
@@ -37,8 +34,6 @@ class Character {
         // Apply sprite configuration
         this.sprite.setScale(spriteConfig.scale);
         this.sprite.setOrigin(spriteConfig.anchorX, spriteConfig.anchorY);
-
-        console.log(`Applied scale ${spriteConfig.scale} to ${spriteKey}, actual scale:`, this.sprite.scale);
 
         // Play animation if available
         if (spriteConfig.hasAnimation && scene.anims.exists(spriteKey + '_anim')) {
