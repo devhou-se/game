@@ -17,9 +17,16 @@ class EditorApp {
         }
 
         this.canvas = new RoomCanvas($('#canvas'), this.config, this.textures);
-        this.roomPanel = new RoomPanel($('#room-panel'), this.config, k => this.setRoom(k));
+        this.roomPanel = new RoomPanel($('#room-panel'), this.config, {
+            onSelect: k => this.setRoom(k),
+            onResize: (w, h) => this._resizeRoom(w, h),
+        });
         this.layerPanel = new LayerPanel($('#layer-panel'), this.config, this.canvas, () => {});
         this.inspector = new InspectorPanel($('#inspector-panel'), this.config, this.textures);
+        this.props = new PropertiesPanel($('#properties-panel'), this.config, {
+            onChange: () => { this.config.markDirty(); this.canvas.render(); this._status(); },
+            onDelete: idx => this._deleteTransporter(idx),
+        });
 
         // Tool registry: { id, label, onCell(cell,type,button) }. Phase 1 = inspect.
         this.tools = [];
@@ -42,6 +49,36 @@ class EditorApp {
                 this.canvas.render();
                 this.inspector.show(this.activeRoom, cell);
                 this._status(cell);
+            },
+        });
+        // Transporter: click to place (targets the first other room); click an existing one to edit.
+        this.registerTool({
+            id: 'transporter', label: 'Transporter',
+            onCell: (cell, type) => {
+                if (type !== 'down') return;
+                const trs = this.config.room(this.activeRoom).transporters;
+                let idx = trs.findIndex(t => t.gridX === cell.x && t.gridY === cell.y);
+                if (idx < 0) {
+                    const other = this.config.roomKeys().find(r => r !== this.activeRoom) || this.activeRoom;
+                    const tc = this.config.roomCells(other);
+                    trs.push({ gridX: cell.x, gridY: cell.y, targetRoom: other,
+                               targetX: Math.floor(tc.w / 2), targetY: Math.floor(tc.h / 2), hidden: false });
+                    idx = trs.length - 1; this.config.markDirty();
+                }
+                this.canvas.setSelection(cell); this.canvas.render();
+                this.props.showTransporter(this.activeRoom, idx);
+                this._status(cell);
+            },
+        });
+        // Spawn: set the player start (and start room) to the clicked cell.
+        this.registerTool({
+            id: 'spawn', label: 'Spawn',
+            onCell: (cell, type) => {
+                if (type !== 'down') return;
+                const p = this.config.data.player;
+                p.startRoom = this.activeRoom; p.startX = cell.x; p.startY = cell.y;
+                this.config.markDirty(); this.canvas.setSelection(cell); this.canvas.render();
+                this.inspector.show(this.activeRoom, cell); this._status(cell);
             },
         });
         this.tool = 'inspect';
@@ -68,6 +105,23 @@ class EditorApp {
         return c;
     }
 
+    _resizeRoom(wCells, hCells) {
+        const GS = this.config.gridSize, r = this.config.room(this.activeRoom);
+        r.worldWidth = wCells * GS; r.worldHeight = hCells * GS;
+        r.boundary = [[0, 0], [wCells, 0], [wCells, hCells], [0, hCells]];
+        this.config.markDirty();
+        this.canvas.fitView();
+        this.roomPanel.render(this.activeRoom);
+        this._status();
+    }
+
+    _deleteTransporter(idx) {
+        this.config.room(this.activeRoom).transporters.splice(idx, 1);
+        this.config.markDirty();
+        this.canvas.setSelection(null); this.canvas.render();
+        this.props.clear(); this._status();
+    }
+
     setRoom(key) {
         this.activeRoom = key;
         this.canvas.setSelection(null);
@@ -76,6 +130,7 @@ class EditorApp {
         this.roomPanel.render(key);
         this.layerPanel.render(key);
         this.inspector.clear();
+        if (this.props) this.props.clear();
         this._status();
     }
 

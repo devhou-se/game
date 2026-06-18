@@ -55,3 +55,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .insp-row.coll { background: rgba(255,60,60,.10); }
 .insp-name { font-weight: 600; }
 .insp-meta { color: var(--muted); font-family: monospace; font-size: 11px; }
+
+.btn-danger { background: #3a1f24; color: #ff9a9a; border-color: #5c2a30; width: 100%; margin-top: 10px; }
+.btn-danger:hover { border-color: #ff5a5a; }
+.lbl { display: block; color: var(--muted); font-size: 11px; margin: 8px 0 3px; }
+.row2 { display: flex; gap: 8px; }
+.row2 > div { flex: 1; }
