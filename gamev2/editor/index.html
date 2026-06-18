@@ -3,228 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Editor - devhou.se</title>
-    <!-- Base styles -->
-    <link rel="stylesheet" href="styles/base.css">
-    <!-- Layout components -->
-    <link rel="stylesheet" href="styles/layout.css">
-    <!-- Reusable components -->
-    <link rel="stylesheet" href="styles/components.css">
-    <!-- Modals -->
-    <link rel="stylesheet" href="styles/modals.css">
-    <!-- Page-specific styles -->
-    <link rel="stylesheet" href="styles/sprites-page.css">
-    <link rel="stylesheet" href="styles/characters-page.css">
-    <link rel="stylesheet" href="styles/object-types-page.css">
-    <!-- Sprite editor components -->
-    <link rel="stylesheet" href="styles/sprite-editor.css">
+    <title>World Editor — devhou.se</title>
+    <link rel="stylesheet" href="styles/editor2.css">
 </head>
 <body>
     <div id="app">
-        <!-- Top toolbar -->
-        <div id="toolbar">
-            <h1>Game Editor</h1>
-            <div class="toolbar-actions">
-                <button id="load-config" class="btn btn-primary">Load Config</button>
-                <button id="save-config" class="btn btn-success">Save Config</button>
-                <button id="export-sprites" class="btn btn-secondary">Export Sprites</button>
-            </div>
-        </div>
+        <header id="topbar">
+            <h1>World&nbsp;Editor</h1>
+            <div class="spacer"></div>
+            <button id="btn-fit" class="btn">Fit</button>
+            <button id="btn-reload" class="btn">Reload config</button>
+            <button id="btn-save" class="btn btn-primary">Save config.json</button>
+        </header>
 
-        <!-- Tab Navigation -->
-        <div id="tab-navigation">
-            <button class="tab-btn active" data-view="editor-view">Editor</button>
-            <button class="tab-btn" data-view="sprites-view">Sprites</button>
-            <button class="tab-btn" data-view="characters-view">Characters</button>
-            <button class="tab-btn" data-view="object-types-view">Object Types</button>
-        </div>
-
-        <!-- Editor View -->
-        <div id="editor-view" class="view-container active">
-        <!-- Main content area -->
-        <div id="main-content">
-            <!-- Left sidebar - Tools and properties -->
-            <div id="sidebar">
-                <div class="panel">
-                    <h3>Game Settings</h3>
-                    <div class="form-group">
-                        <label>Title:</label>
-                        <input type="text" id="game-title" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>Date:</label>
-                        <input type="text" id="game-date" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>Grid Size:</label>
-                        <input type="number" id="game-gridsize" class="form-control" value="64">
-                    </div>
-                    <div class="form-group">
-                        <label>World Width:</label>
-                        <input type="number" id="game-width" class="form-control" value="960">
-                    </div>
-                    <div class="form-group">
-                        <label>World Height:</label>
-                        <input type="number" id="game-height" class="form-control" value="640">
-                    </div>
-                </div>
-
-                <div class="panel">
-                    <h3>Current Room</h3>
-                    <select id="room-select" class="form-control"></select>
-                    <button id="add-room" class="btn btn-small btn-primary">Add Room</button>
-                    <button id="delete-room" class="btn btn-small btn-danger">Delete Room</button>
-                </div>
-
+        <div id="body">
+            <aside id="left">
+                <div class="panel" id="room-panel"></div>
                 <div class="panel">
                     <h3>Tool</h3>
-                    <div class="tool-buttons">
-                        <button class="tool-btn active" data-tool="select">Select</button>
-                        <button class="tool-btn" data-tool="paint">Paint Floor</button>
-                        <button class="tool-btn" data-tool="erase">Erase Floor</button>
-                        <button class="tool-btn" data-tool="npc">Add NPC</button>
-                        <button class="tool-btn" data-tool="object">Add Object</button>
-                        <button class="tool-btn" data-tool="transporter">Add Transporter</button>
-                        <button class="tool-btn" data-tool="player">Set Player Start</button>
-                        <button class="tool-btn" data-tool="boundary">Edit Boundary</button>
-                    </div>
+                    <div id="toolbar-tools" class="tool-grid"></div>
+                    <div class="hint">wheel = zoom · shift/middle-drag = pan</div>
                 </div>
+                <div class="panel" id="layer-panel"></div>
+            </aside>
 
-                <div class="panel" id="floor-paint-panel" style="display: none;">
-                    <h3>Floor Tile</h3>
-                    <div class="form-group">
-                        <label>Sprite:</label>
-                        <select id="floor-tile-sprite" class="form-control">
-                            <option value="">-- Select Sprite --</option>
-                        </select>
-                    </div>
-                    <div id="floor-tile-preview" style="width: 100%; height: 64px; background: #1e1e1e; border: 1px solid #3d3d3d; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-top: 8px;">
-                        <span style="color: #666; font-size: 12px;">No sprite selected</span>
-                    </div>
-                    <button id="clear-floor" class="btn btn-danger" style="width: 100%; margin-top: 12px;">Clear All Floor Tiles</button>
-                </div>
+            <main id="center">
+                <div id="canvas-wrap"><canvas id="canvas"></canvas></div>
+                <div id="status">—</div>
+            </main>
 
-                <div class="panel" id="properties-panel">
-                    <h3>Properties</h3>
-                    <div id="properties-content">
-                        <p class="empty-state">Select an item to edit properties</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Center - Grid editor -->
-            <div id="editor-area">
-                <div id="canvas-container">
-                    <canvas id="grid-canvas"></canvas>
-                </div>
-                <div id="editor-info">
-                    <span id="cursor-info">Position: -</span>
-                    <span id="zoom-info">Zoom: 100%</span>
-                </div>
-            </div>
-
-            <!-- Right sidebar - Sprites and assets -->
-            <div id="assets-panel">
-                <h3>Sprites</h3>
-                <div id="sprite-upload">
-                    <input type="file" id="sprite-file" accept="image/png,image/jpg,image/jpeg" style="display:none">
-                    <button id="upload-sprite" class="btn btn-primary">Upload Sprite</button>
-                </div>
-                <div id="sprite-list"></div>
-            </div>
-        </div>
-        </div><!-- End Editor View -->
-
-        <!-- Sprites View -->
-        <div id="sprites-view" class="view-container">
-            <div id="sprites-page-container"></div>
-        </div><!-- End Sprites View -->
-
-        <!-- Characters View -->
-        <div id="characters-view" class="view-container">
-            <div id="characters-page-container"></div>
-        </div><!-- End Characters View -->
-
-        <!-- Object Types View -->
-        <div id="object-types-view" class="view-container">
-        </div><!-- End Object Types View -->
-
-        <!-- Modals -->
-        <div id="dialogue-modal" class="modal" style="display:none">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Edit Dialogue</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div id="dialogue-lines"></div>
-                    <button id="add-dialogue-line" class="btn btn-primary">Add Line</button>
-                </div>
-                <div class="modal-footer">
-                    <button id="save-dialogue" class="btn btn-success">Save</button>
-                    <button class="modal-close btn btn-secondary">Cancel</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="room-modal" class="modal" style="display:none">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Add Room</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Room Key:</label>
-                        <input type="text" id="new-room-key" class="form-control" placeholder="e.g., Tokyo">
-                    </div>
-                    <div class="form-group">
-                        <label>Room Name:</label>
-                        <input type="text" id="new-room-name" class="form-control" placeholder="e.g., Tokyo">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="create-room" class="btn btn-success">Create</button>
-                    <button class="modal-close btn btn-secondary">Cancel</button>
-                </div>
-            </div>
+            <aside id="right">
+                <div class="panel" id="inspector-panel"></div>
+            </aside>
         </div>
     </div>
 
-    <input type="file" id="config-file-input" accept=".json" style="display:none">
-
-    <!-- External libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-    <!-- Core modules -->
-    <script src="ConfigManager.js"></script>
-    <script src="SpriteManager.js"></script>
-
-    <!-- GridEditor modules -->
-    <script src="BoundaryEditor.js"></script>
-    <script src="RenderEngine.js"></script>
-    <script src="GridEditor.js"></script>
-
-    <!-- UI modules -->
-    <script src="UIManager.js"></script>
-    <script src="DialogueEditor.js"></script>
-    <script src="PropertiesPanel.js"></script>
-
-    <!-- Sprite management modules -->
-    <script src="AnimationPreview.js"></script>
-    <script src="FrameSelector.js"></script>
-    <script src="SpriteSheetEditor.js"></script>
-    <script src="DirectionalSpriteEditor.js"></script>
-    <script src="SpritesPage.js"></script>
-
-    <!-- Character management modules -->
-    <script src="CharacterEditor.js"></script>
-    <script src="CharactersPage.js"></script>
-
-    <!-- Object type management modules -->
-    <script src="ObjectTypesPage.js"></script>
-
-    <!-- Main editor -->
-    <script src="editor.js"></script>
+    <!-- Modules, cache-busted so edits always apply on reload -->
+    <script>
+        (function () {
+            var v = Date.now();
+            [
+                'core/Depth.js',
+                'core/Config.js',
+                'core/Textures.js',
+                'render/RoomCanvas.js',
+                'panels/RoomPanel.js',
+                'panels/LayerPanel.js',
+                'panels/InspectorPanel.js',
+                'app.js'
+            ].forEach(function (f) { document.write('<script src="' + f + '?v=' + v + '"><\/script>'); });
+        })();
+    </script>
 </body>
 </html>
