@@ -49,6 +49,8 @@ class ConfigManager {
     loadConfig(configData) {
         try {
             this.config = JSON.parse(JSON.stringify(configData));
+            // Expand v2 tile-palette format to "x,y" -> tileKey for editing
+            if (typeof decodeConfig === 'function') decodeConfig(this.config);
 
             // Load sprite metadata from config if it exists
             if (configData.spriteMetadata) {

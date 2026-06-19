@@ -41,8 +41,9 @@ class GameScene extends Phaser.Scene {
 
     create() {
         try {
-            // Load configuration
-            this.config = this.cache.json.get('config');
+            // Load configuration (expand the v2 tile-palette format to the
+            // runtime "x,y" -> tileKey shape before anything reads it)
+            this.config = decodeConfig(this.cache.json.get('config'));
 
             // Apply game settings from config
             this.GRID_SIZE = this.config.game.gridSize;
