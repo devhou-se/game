@@ -5,7 +5,7 @@ class_name Character extends CharacterBody2D
 const GRID_SIZE := 16.0
 const SPEED := 48.0
 const BUFFER_TIME_MAX := 0.05
-const ANIMATION_SPEED := 0.8 * SPEED / GRID_SIZE
+const ANIMATION_SPEED := 0.4 * SPEED / GRID_SIZE
 
 var _speed_multiplier := 1.0
 var _speed_duration_remaining := 0.0
