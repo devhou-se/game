@@ -6,14 +6,14 @@ on:
   workflow_dispatch:
 
 env:
-  GODOT_VERSION: 3.6
+  GODOT_VERSION: 4.7
 
 jobs:
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
-    container: barichello/godot-ci:mono-3.6
-    
+    container: barichello/godot-ci:4.7
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,54 +21,21 @@ jobs:
           lfs: true
           fetch-depth: 0
 
-      - name: Setup Dependencies
+      - name: Install export templates
         run: |
-          # Fix Debian Buster archived repositories
-          sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
-          sed -i 's|security.debian.org|archive.debian.org/debian-security|g' /etc/apt/sources.list
-          sed -i '/stretch-updates/d' /etc/apt/sources.list
-          sed -i '/buster-updates/d' /etc/apt/sources.list
-
-          apt-get update
-          apt-get install -y wget curl unzip
-          
-          wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-          dpkg -i packages-microsoft-prod.deb
-          apt-get update
-          apt-get install -y dotnet-sdk-7.0
-          
-          curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-          apt-get install -y nodejs
-
-      - name: Build Project
-        run: |
-          mkdir -v -p public
-          
-          # Download and install Godot export templates from GitHub releases
-          echo "Installing Godot 3.6 export templates..."
-          mkdir -p ~/.local/share/godot/templates/3.6.stable.mono
-          curl -L -o templates.tpz https://github.com/godotengine/godot/releases/download/3.6-stable/Godot_v3.6-stable_mono_export_templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.7.stable
+          curl -L -o templates.tpz https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_export_templates.tpz
           unzip -q templates.tpz -d /tmp/
-          cp -r /tmp/templates/* ~/.local/share/godot/templates/3.6.stable.mono/
-          ls -la ~/.local/share/godot/templates/3.6.stable.mono/
-          
-          # Initialize project
-          godot --headless --verbose --editor --quit
-          
-          # Build C# project
-          dotnet build game.sln
+          cp -r /tmp/templates/* ~/.local/share/godot/export_templates/4.7.stable/
 
-      - name: Export Web Build
+      - name: Import & export Web build (GDScript, no Mono)
         run: |
-          timeout 300 godot --headless --verbose --export "HTML5" ./public/index.html || echo "Export attempt completed"
+          mkdir -p public
+          godot --headless --import --path . || true
+          godot --headless --path . --export-release "Web" ./public/index.html
           ls -la public/
-          if [ ! -f "public/index.html" ]; then
-            echo "Export failed - no files generated in public/"
-            exit 1
-          fi
-          echo "Export successful - files generated:"
-          ls -la public/*.html public/*.js public/*.wasm public/*.pck || true
-          
+          test -f public/index.html
+
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
