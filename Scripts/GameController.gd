@@ -17,10 +17,6 @@ func _ready():
 	_player = load("res://Scenes/Player.tscn").instantiate()
 	_initialize_day_night_system()
 	goto("World")
-	call_deferred("_place_bailey_at_vending_machine")
-
-func _place_bailey_at_vending_machine():
-	NPCLocationManager.place_npc(_level, "Bailey", "World", "vending machine")
 
 func _process(delta):
 	if _cool_down > 0.0:
