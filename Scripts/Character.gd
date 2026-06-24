@@ -74,7 +74,9 @@ func _physics_process(delta):
 	_process_move(delta)
 	_update_animation()
 	_process_input(delta)
-	_animated_sprite.animation = _current_animation + _current_direction
+	var anim_name := _current_animation + _current_direction
+	if _animated_sprite.animation != anim_name or not _animated_sprite.is_playing():
+		_animated_sprite.play(anim_name)
 	_animated_sprite.speed_scale = ANIMATION_SPEED * _speed_multiplier * _shift_multiplier
 	_animated_sprite.flip_h = _current_flip
 
