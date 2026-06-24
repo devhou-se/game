@@ -29,10 +29,6 @@ tile_map_data = PackedByteArray(0, 0, 251, 255, 249, 255, 0, 0, 25, 0, 7, 0, 0, 
 position = Vector2( 0, -137 )
 destination = "Room"
 
-[node name="vendingMachine" parent="Objects" instance=ExtResource( 3 )]
-position = Vector2( 0, -24 )
-speed_boost_duration = 5.0
-
 [node name="Characters" type="Node2D" parent="."]
 
 [node name="Bailey" parent="Characters" instance=ExtResource( 1 )]
