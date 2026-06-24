@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a browser-based 2D grid game built with Phaser 3.90.0. It features grid-based movement, a room/teleportation system, and Python-generated sprite tiles.
+This is a browser-based 2D grid game built with Phaser 4.2.0. It features grid-based movement, a room/teleportation system, and Python-generated sprite tiles.
 
 ## Technology Stack
 
-- **Engine**: Phaser 3.90.0 (loaded via CDN)
+- **Engine**: Phaser 4.2.0 (loaded via CDN — jsdelivr, since cdnjs does not yet host 4.x)
 - **Languages**: JavaScript (ES6+ classes)
 - **Asset Generation**: Python 3 with PIL/Pillow
 - **No Build Process**: Direct HTML file execution
