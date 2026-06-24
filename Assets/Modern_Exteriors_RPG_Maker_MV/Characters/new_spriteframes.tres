@@ -1,6 +1,6 @@
 [gd_resource type="SpriteFrames" load_steps=5 format=2]
 
-[ext_resource path="res://Assets/Modern_Exteriors_RPG_Maker_MV/Characters/MV_Graveyard_Zombies_Skeleton.png" type="Texture" id=1]
+[ext_resource path="res://Assets/Modern_Exteriors_RPG_Maker_MV/Characters/MV_Graveyard_Zombies_Skeleton.png" type="Texture2D" id=1]
 
 [sub_resource type="AtlasTexture" id=1]
 flags = 4

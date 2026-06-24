@@ -16,8 +16,8 @@ var _interaction_area: Area2D
 var _prompt_label: Label
 
 func _ready():
-	if has_node("AnimatedSprite"):
-		_animated_sprite = get_node("AnimatedSprite")
+	if has_node("AnimatedSprite2D"):
+		_animated_sprite = get_node("AnimatedSprite2D")
 	_create_interaction_area()
 	_create_prompt_label()
 	if drink_can_scene == null:

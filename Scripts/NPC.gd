@@ -1,4 +1,4 @@
-extends Character
+class_name NPC extends Character
 # Wandering NPC with name label, dialogue, and bump-to-talk. Ported from NPC.cs.
 
 @export var cares_about_bailey_butler_being_in_the_office: bool = false

@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://Scripts/DrinkCan.cs" type="Script" id=1]
-[ext_resource path="res://Assets/Tilemap/Tilemap.png" type="Texture" id=2]
+[ext_resource path="res://Scripts/DrinkCan.gd" type="Script" id=1]
+[ext_resource path="res://Assets/Tilemap/Tilemap.png" type="Texture2D" id=2]
 
 [sub_resource type="RectangleShape2D" id=57]
 extents = Vector2( 5, 7 )
@@ -9,24 +9,22 @@ extents = Vector2( 5, 7 )
 [node name="vendingMachine" type="Area2D"]
 position = Vector2( -32, 48 )
 script = ExtResource( 1 )
-SpeedBoostMultiplier = 4.0
-SpeedBoostDuration = 20.0
+speed_boost_multiplier = 4.0
+speed_boost_duration = 20.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 scale = Vector2( 2, 2 )
 shape = SubResource( 57 )
 
-[node name="Sprite" type="Sprite" parent="."]
+[node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource( 2 )
 region_enabled = true
 region_rect = Rect2( 390, 70, 20, 40 )
 
-[node name="Light2D" type="Light2D" parent="."]
+[node name="PointLight2D" type="PointLight2D" parent="."]
 enabled = true
 position = Vector2( 0, -5 )
 scale = Vector2( 1.2, 1.2 )
 color = Color( 0.8, 0.9, 1, 1 )
 energy = 1.0
 shadow_enabled = false
-
-[node name="Tween" type="Tween" parent="."]

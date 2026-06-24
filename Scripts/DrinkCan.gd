@@ -11,9 +11,9 @@ var _current_time_of_day: int = GameController.TimeOfDay.DAY
 
 func _ready():
 	body_entered.connect(_on_body_entered)
-	_sprite = get_node("Sprite")
-	if has_node("Light2D"):
-		_light = get_node("Light2D")
+	_sprite = get_node("Sprite2D")
+	if has_node("PointLight2D"):
+		_light = get_node("PointLight2D")
 		if _light is PointLight2D:
 			_light.texture = _create_radial_gradient_texture(128)
 		_light.visible = false

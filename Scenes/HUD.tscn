@@ -1,27 +1,6 @@
 [gd_scene load_steps=5 format=2]
 
-[sub_resource type="CSharpScript" id=4]
-script/source = "using Godot;
-using System;
-
-public class HUD : CanvasLayer
-{
-	private LineEdit nameInput;
-
-	public override void _Ready()
-	{
-		nameInput = GetNode<LineEdit>(\"LineEdit\");
-		nameInput.Connect(\"text_entered\", this, nameof(OnNameEntered));
-	}
-
-	private void OnNameEntered(string text)
-	{
-		GD.Print(\"User entered name: \" + text);
-		// Store the entered name in the Global singleton
-		Global.PlayerName = text;
-	}
-}
-"
+[ext_resource path="res://Scripts/HUD.gd" type="Script" id=4]
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0.141176, 0.741176, 0.290196, 1 )
@@ -45,66 +24,66 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [node name="HUD" type="CanvasLayer"]
-script = SubResource( 4 )
+script = ExtResource( 4 )
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 anchor_right = 1.0
-margin_top = 10.0
-margin_bottom = 50.0
+offset_top = 10.0
+offset_bottom = 50.0
 
 [node name="CenterContainer" type="CenterContainer" parent="MarginContainer"]
-margin_right = 1280.0
-margin_bottom = 40.0
+offset_right = 1280.0
+offset_bottom = 40.0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/CenterContainer"]
-margin_left = 310.0
-margin_top = 6.0
-margin_right = 970.0
-margin_bottom = 34.0
-custom_constants/separation = 20
+offset_left = 310.0
+offset_top = 6.0
+offset_right = 970.0
+offset_bottom = 34.0
+theme_override_constants/separation = 20
 
 [node name="Stamina" type="ProgressBar" parent="MarginContainer/CenterContainer/HBoxContainer"]
-margin_right = 200.0
-margin_bottom = 20.0
-rect_min_size = Vector2( 200, 20 )
-custom_styles/fg = SubResource( 1 )
-custom_styles/bg = SubResource( 2 )
+offset_right = 200.0
+offset_bottom = 20.0
+custom_minimum_size = Vector2( 200, 20 )
+theme_override_styles/fill = SubResource( 1 )
+theme_override_styles/background = SubResource( 2 )
 value = 100.0
 
 [node name="InfoPanel" type="PanelContainer" parent="MarginContainer/CenterContainer/HBoxContainer"]
-margin_left = 220.0
-margin_right = 440.0
-margin_bottom = 28.0
-rect_min_size = Vector2( 220, 20 )
+offset_left = 220.0
+offset_right = 440.0
+offset_bottom = 28.0
+custom_minimum_size = Vector2( 220, 20 )
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/CenterContainer/HBoxContainer/InfoPanel"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 213.0
-margin_bottom = 21.0
-custom_constants/separation = 10
+offset_left = 7.0
+offset_top = 7.0
+offset_right = 213.0
+offset_bottom = 21.0
+theme_override_constants/separation = 10
 
 [node name="TimeLabel" type="Label" parent="MarginContainer/CenterContainer/HBoxContainer/InfoPanel/HBoxContainer2"]
-margin_right = 98.0
-margin_bottom = 14.0
+offset_right = 98.0
+offset_bottom = 14.0
 size_flags_horizontal = 3
 text = "12:00 PM"
-valign = 1
+vertical_alignment = 1
 
 [node name="WeatherLabel" type="Label" parent="MarginContainer/CenterContainer/HBoxContainer/InfoPanel/HBoxContainer2"]
-margin_left = 108.0
-margin_right = 206.0
-margin_bottom = 14.0
+offset_left = 108.0
+offset_right = 206.0
+offset_bottom = 14.0
 size_flags_horizontal = 3
 text = "Sunny :)"
-align = 2
-valign = 1
+horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="Energy" type="ProgressBar" parent="MarginContainer/CenterContainer/HBoxContainer"]
-margin_left = 460.0
-margin_right = 660.0
-margin_bottom = 20.0
-rect_min_size = Vector2( 200, 20 )
-custom_styles/fg = SubResource( 3 )
-custom_styles/bg = SubResource( 2 )
+offset_left = 460.0
+offset_right = 660.0
+offset_bottom = 20.0
+custom_minimum_size = Vector2( 200, 20 )
+theme_override_styles/fill = SubResource( 3 )
+theme_override_styles/background = SubResource( 2 )
 value = 100.0

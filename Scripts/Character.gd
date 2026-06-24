@@ -39,7 +39,7 @@ const DIRECTION_FLIP := {
 
 func _ready():
 	_shape_cast = get_node("ShapeCast2D")
-	_animated_sprite = get_node("AnimatedSprite")
+	_animated_sprite = get_node("AnimatedSprite2D")
 	_collider = get_node("CollisionShape2D")
 	_animated_sprite.speed_scale = ANIMATION_SPEED
 	_target_position = position

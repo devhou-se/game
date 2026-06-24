@@ -1,4 +1,4 @@
-extends Character
+class_name Player extends Character
 # Player input → buffered grid movement. Ported from Player.cs.
 
 func _physics_process(delta):
