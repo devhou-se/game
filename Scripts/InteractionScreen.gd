@@ -7,6 +7,7 @@ var _dialogue_text: RichTextLabel
 var _name_label: Label
 var _continue_button: Button
 var _click_indicator: Label
+var _avatar: AnimatedSprite2D
 
 var _dialogue_lines: Array = []
 var _current_line_index := 0
@@ -17,6 +18,7 @@ func _ready():
 	_name_label = get_node("CharacterDisplay/NameLabel")
 	_continue_button = get_node("DialogueBox/ContinueButton")
 	_click_indicator = get_node("DialogueBox/ClickIndicator")
+	_avatar = get_node_or_null("CharacterDisplay/AnimatedSprite2D")
 	_dialogue_text.bbcode_enabled = true
 	_continue_button.pressed.connect(_on_continue_pressed)
 	set_process_input(true)
@@ -36,6 +38,12 @@ func show_interaction(npc, _last_scene := ""):
 	_dialogue_lines = Array(npc.dialogue_lines)
 	_current_line_index = 0
 	_name_label.text = _npc_name
+	# Match the avatar to the NPC you're talking to.
+	if _avatar:
+		var npc_sprite = npc.get_node_or_null("AnimatedSprite2D")
+		if npc_sprite and npc_sprite.sprite_frames:
+			_avatar.sprite_frames = npc_sprite.sprite_frames
+			_avatar.play("idle")
 	_show_current_line()
 	visible = true
 	get_tree().paused = true

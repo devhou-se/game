@@ -38,7 +38,7 @@ offset_bottom = 200.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterDisplay"]
 position = Vector2( 100, 100 )
-scale = Vector2( 5, 5 )
+scale = Vector2( 1.6, 1.6 )
 frames = ExtResource( 1 )
 animation = "idle"
 playing = true
