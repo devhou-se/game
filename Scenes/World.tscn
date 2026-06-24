@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Scenes/NPC.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Assets/Tilemap/Tilemap.tres" type="TileSet" id=2]
@@ -11,6 +11,9 @@ size = Vector2(400, 16)
 
 [sub_resource type="RectangleShape2D" id=2]
 size = Vector2(16, 272)
+
+[sub_resource type="RectangleShape2D" id=3]
+size = Vector2(184, 16)
 
 [node name="World" type="Node2D"]
 
@@ -50,11 +53,17 @@ dialogue_lines = PackedStringArray( "Hi, I\'m Julia!", "Hope you enjoy it here."
 
 [node name="Walls" type="Node2D" parent="."]
 
-[node name="WallTop" type="StaticBody2D" parent="Walls"]
-position = Vector2(0, -136)
+[node name="WallTopLeft" type="StaticBody2D" parent="Walls"]
+position = Vector2(-116, -136)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/WallTop"]
-shape = SubResource( 1 )
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/WallTopLeft"]
+shape = SubResource( 3 )
+
+[node name="WallTopRight" type="StaticBody2D" parent="Walls"]
+position = Vector2(116, -136)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/WallTopRight"]
+shape = SubResource( 3 )
 
 [node name="WallBottom" type="StaticBody2D" parent="Walls"]
 position = Vector2(0, 136)

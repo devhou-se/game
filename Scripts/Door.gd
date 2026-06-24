@@ -8,4 +8,6 @@ func _ready():
 
 func _on_body_entered(body):
 	if body is Player:
-		Global.controller.goto(destination)
+		# Defer: this fires during a physics flush, and goto() frees/adds nodes
+		# (changing physics state), which errors if done mid-flush.
+		Global.controller.call_deferred("goto", destination)
