@@ -32,11 +32,6 @@ cares_about_bailey_butler_being_in_the_office = true
 npc_name = "Bailey"
 dialogue_lines = PackedStringArray( "Hey there! I\'m Bailey.", "I run the development house around here.", "Always happy to chat about game development!", "Feel free to ask me anything!" )
 
-[node name="Dylan" parent="Characters" instance=ExtResource( 1 )]
-position = Vector2( 48, -16 )
-npc_name = "Dylan"
-dialogue_lines = PackedStringArray( "Hi! I\'m Dylan, nice to meet you!", "I love working on creative projects.", "Have you seen any cool games lately\?", "Let\'s build something awesome together!" )
-
 [node name="Damian" parent="Characters" instance=ExtResource( 1 )]
 position = Vector2( 0, 48 )
 npc_name = "Damian"
@@ -46,11 +41,6 @@ dialogue_lines = PackedStringArray( "Hey, I\'m Damian!", "I\'m passionate about 
 position = Vector2( -96, 16 )
 npc_name = "Julia"
 dialogue_lines = PackedStringArray( "Hello! I\'m Julia.", "I specialize in UI/UX design.", "Making games beautiful and intuitive is my passion!", "Have you tried the interaction system\? I helped design it!" )
-
-[node name="Yashuk" parent="Characters" instance=ExtResource( 1 )]
-position = Vector2( 96, 16 )
-npc_name = "Yashuk"
-dialogue_lines = PackedStringArray( "Greetings! I\'m Yashuk.", "I love working on AI and game logic.", "Have you noticed how the NPCs move around\?", "There\'s always something new to discover here!" )
 
 [node name="InteractionScreen" parent="." instance=ExtResource( 5 )]
 process_mode = 3
