@@ -162,11 +162,18 @@ class InputHandler {
             return;
         }
 
-        // Check if any directional keys are currently held (arrows or WASD)
-        const anyKeyHeld = this.cursors.left.isDown || this.cursors.right.isDown ||
-                           this.cursors.up.isDown || this.cursors.down.isDown ||
-                           this.aKey.isDown || this.dKey.isDown ||
-                           this.wKey.isDown || this.sKey.isDown;
+        // On-screen touch d-pad state (empty object on non-touch devices), so a
+        // held d-pad direction reads exactly like a held arrow/WASD key.
+        const t = (this.scene.touchControls && this.scene.touchControls.enabled)
+            ? this.scene.touchControls.state : null;
+
+        const leftHeld  = this.cursors.left.isDown  || this.aKey.isDown || (t && t.left);
+        const rightHeld = this.cursors.right.isDown || this.dKey.isDown || (t && t.right);
+        const upHeld    = this.cursors.up.isDown    || this.wKey.isDown || (t && t.up);
+        const downHeld  = this.cursors.down.isDown  || this.sKey.isDown || (t && t.down);
+
+        // Check if any directional input is currently held (arrows, WASD, or touch)
+        const anyKeyHeld = leftHeld || rightHeld || upHeld || downHeld;
 
         // Update last key states
         this.lastKeyState.left = this.cursors.left.isDown;
@@ -174,17 +181,17 @@ class InputHandler {
         this.lastKeyState.up = this.cursors.up.isDown;
         this.lastKeyState.down = this.cursors.down.isDown;
 
-        // If any directional key is held, move based on ALL currently held keys
+        // If any directional input is held, move based on ALL currently held dirs
         if (anyKeyHeld) {
             let moveX = 0;
             let moveY = 0;
 
-            if (this.cursors.left.isDown || this.aKey.isDown) moveX -= 1;
-            if (this.cursors.right.isDown || this.dKey.isDown) moveX += 1;
-            if (this.cursors.up.isDown || this.wKey.isDown) moveY -= 1;
-            if (this.cursors.down.isDown || this.sKey.isDown) moveY += 1;
+            if (leftHeld)  moveX -= 1;
+            if (rightHeld) moveX += 1;
+            if (upHeld)    moveY -= 1;
+            if (downHeld)  moveY += 1;
 
-            const speedMultiplier = this.shiftKey.isDown ? 2 : 1;
+            const speedMultiplier = (this.shiftKey.isDown || (t && t.sprint)) ? 2 : 1;
 
             if (moveX !== 0 || moveY !== 0) {
                 this.scene.player.startMovement(moveX, moveY, speedMultiplier);

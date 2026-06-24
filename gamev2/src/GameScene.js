@@ -164,6 +164,7 @@ class GameScene extends Phaser.Scene {
             this.menuManager = new MenuManager(this);
             this.dialogueManager = new DialogueManager(this);
             this.debugManager = new DebugManager(this);
+            this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
 
             // Create HUD
             this.createHUD();
