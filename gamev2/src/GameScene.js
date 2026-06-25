@@ -22,6 +22,10 @@ class GameScene extends Phaser.Scene {
         // Load config with cache-busting
         this.load.json("config", `config.json?t=${Date.now()}`);
 
+        // PoC: optionally load a room authored as a Tiled .tmj  (?tiled=<room>)
+        const _tiledRoom = new URLSearchParams(location.search).get('tiled');
+        if (_tiledRoom) this.load.json('tiledRoom', `tiled/${_tiledRoom.toLowerCase()}.tmj?t=${Date.now()}`);
+
         // Dynamically load sprite frames for animations when config loads
         this.load.once('filecomplete-json-config', (key, type, data) => {
             const spriteMetadata = data.spriteMetadata || {};
@@ -44,6 +48,25 @@ class GameScene extends Phaser.Scene {
             // Load configuration (expand the v2 tile-palette format to the
             // runtime "x,y" -> tileKey shape before anything reads it)
             this.config = decodeConfig(this.cache.json.get('config'));
+
+            // PoC: if ?tiled=<room>, replace that room's data with the Tiled .tmj
+            // (TiledAdapter outputs the exact room shape RoomManager renders, so
+            // the whole existing renderer + Y-sort is reused unchanged).
+            const _tiledRoom = new URLSearchParams(location.search).get('tiled');
+            if (_tiledRoom && this.cache.json.exists('tiledRoom')) {
+                const key = Object.keys(this.config.rooms).find(r => r.toLowerCase() === _tiledRoom.toLowerCase());
+                if (key) {
+                    const built = TiledAdapter.toRoom(this.cache.json.get('tiledRoom'));
+                    const r = this.config.rooms[key];
+                    r.layers = built.layers;
+                    if (built.transporters.length) r.transporters = built.transporters;
+                    if (built.worldWidth) r.worldWidth = built.worldWidth;
+                    if (built.worldHeight) r.worldHeight = built.worldHeight;
+                    if (built.boundary) r.boundary = built.boundary;
+                    this.config.player.startRoom = key;
+                    console.log(`[tiled] room "${key}" loaded from .tmj — ${built.layers.length} layers, ${built.transporters.length} transporters`);
+                }
+            }
 
             // Apply game settings from config
             this.GRID_SIZE = this.config.game.gridSize;
