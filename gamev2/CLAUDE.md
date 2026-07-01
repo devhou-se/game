@@ -30,6 +30,8 @@ Then navigate to `http://localhost:8000` in your browser.
 
 - `index.html` - Entry point, loads Phaser CDN and game scripts from `src/`
 - `config.json` - JSON configuration file defining game constants, rooms, NPCs, and objects
+- `tiled/*.tmj` - Room maps, authored in the Tiled editor (the map source of truth at
+  runtime — see `tiled/README.md`; config.json's room layers are only a fallback)
 - `src/game.js` - Phaser game configuration (viewport: 1280×960, physics setup)
 - `src/GameScene.js` - Main game scene (room system, HUD, input handling, collision)
 - `src/Character.js` - Character movement class with grid-based tweening

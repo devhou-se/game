@@ -22,12 +22,17 @@ class GameScene extends Phaser.Scene {
         // Load config with cache-busting
         this.load.json("config", `config.json?t=${Date.now()}`);
 
-        // PoC: optionally load a room authored as a Tiled .tmj  (?tiled=<room>)
-        const _tiledRoom = new URLSearchParams(location.search).get('tiled');
-        if (_tiledRoom) this.load.json('tiledRoom', `tiled/${_tiledRoom.toLowerCase()}.tmj?t=${Date.now()}`);
-
         // Dynamically load sprite frames for animations when config loads
         this.load.once('filecomplete-json-config', (key, type, data) => {
+            // Maps are authored in Tiled: enqueue every room's .tmj (files added
+            // during a load event join the same preload pass). ?maps=config skips
+            // this and renders the rooms baked into config.json instead.
+            if (new URLSearchParams(location.search).get('maps') !== 'config') {
+                for (const roomKey of Object.keys(data.rooms || {})) {
+                    this.load.json(`tiled-${roomKey}`, `tiled/${roomKey.toLowerCase()}.tmj?t=${Date.now()}`);
+                }
+            }
+
             const spriteMetadata = data.spriteMetadata || {};
 
             // Initialize sprite system early for asset loading
@@ -49,23 +54,22 @@ class GameScene extends Phaser.Scene {
             // runtime "x,y" -> tileKey shape before anything reads it)
             this.config = decodeConfig(this.cache.json.get('config'));
 
-            // PoC: if ?tiled=<room>, replace that room's data with the Tiled .tmj
-            // (TiledAdapter outputs the exact room shape RoomManager renders, so
-            // the whole existing renderer + Y-sort is reused unchanged).
-            const _tiledRoom = new URLSearchParams(location.search).get('tiled');
-            if (_tiledRoom && this.cache.json.exists('tiledRoom')) {
-                const key = Object.keys(this.config.rooms).find(r => r.toLowerCase() === _tiledRoom.toLowerCase());
-                if (key) {
-                    const built = TiledAdapter.toRoom(this.cache.json.get('tiledRoom'));
-                    const r = this.config.rooms[key];
-                    r.layers = built.layers;
-                    if (built.transporters.length) r.transporters = built.transporters;
-                    if (built.worldWidth) r.worldWidth = built.worldWidth;
-                    if (built.worldHeight) r.worldHeight = built.worldHeight;
-                    if (built.boundary) r.boundary = built.boundary;
-                    this.config.player.startRoom = key;
-                    console.log(`[tiled] room "${key}" loaded from .tmj — ${built.layers.length} layers, ${built.transporters.length} transporters`);
-                }
+            // Rooms are authored in Tiled (tiled/*.tmj is the map source of truth).
+            // TiledAdapter outputs the exact room shape RoomManager renders, so the
+            // whole existing renderer + Y-sort + collision is reused unchanged.
+            // config.json still owns game settings, NPCs, sprite metadata and
+            // achievements, and is the map fallback (?maps=config, or any room
+            // whose .tmj failed to load).
+            for (const key of Object.keys(this.config.rooms)) {
+                if (!this.cache.json.exists(`tiled-${key}`)) continue;
+                const built = TiledAdapter.toRoom(this.cache.json.get(`tiled-${key}`));
+                const r = this.config.rooms[key];
+                r.layers = built.layers;
+                if (built.transporters.length) r.transporters = built.transporters;
+                if (built.worldWidth) r.worldWidth = built.worldWidth;
+                if (built.worldHeight) r.worldHeight = built.worldHeight;
+                if (built.boundary) r.boundary = built.boundary;
+                console.log(`[tiled] room "${key}" loaded from tiled/${key.toLowerCase()}.tmj — ${built.layers.length} layers, ${built.transporters.length} transporters`);
             }
 
             // Apply game settings from config
