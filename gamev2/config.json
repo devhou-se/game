@@ -13515,7 +13515,74 @@
         }
       ],
       "name": "Tokyo",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hey, I'm Bailey.",
+            "Glad you made it. Have a look around!"
+          ],
+          "directionalSprites": {
+            "down": "bailey_front",
+            "left": "",
+            "right": "bailey_side",
+            "up": "bailey_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 27,
+          "gridY": 36,
+          "name": "Bailey",
+          "sprite": "bailey_front"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Damian here.",
+            "Good to see you around."
+          ],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 31,
+          "gridY": 36,
+          "name": "Damian",
+          "sprite": "damian_front"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hi, I'm Julia!",
+            "Hope you enjoy it here."
+          ],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 29,
+          "gridY": 35,
+          "name": "Julia",
+          "sprite": "julia_front"
+        }
+      ],
       "objects": [],
       "transporters": [
         {
