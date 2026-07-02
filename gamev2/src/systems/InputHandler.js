@@ -52,6 +52,9 @@ class InputHandler {
      * Main input update - called every frame
      */
     handleInput() {
+        // Priority 0: no input at all while riding the train
+        if (this.scene.trainTravel && this.scene.trainTravel.riding) return;
+
         // Priority 1: Dialogue input
         if (this.scene.dialogueManager.isVisible()) {
             this.handleDialogueInput();
@@ -77,6 +80,12 @@ class InputHandler {
             const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
             if (escPressed && this.scene.mapCloseCallback) this.scene.mapCloseCallback();
             this.lastKeyState.esc = this.escKey.isDown;
+            return;
+        }
+
+        // Priority 2b3: Station departures board owns all input while open
+        if (this.scene.stationPicker && this.scene.stationPicker.isVisible()) {
+            this.scene.stationPicker.handleInput();
             return;
         }
 

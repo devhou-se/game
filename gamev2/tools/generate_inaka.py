@@ -42,7 +42,7 @@ for y in (3, 4, 5):                      # cap the corridor ends
 b.autotile('light-concrete-autotile', rect(12, 6, 27, 8))
 b.stamp('lamp-blue', 13, 7); b.stamp('lamp-blue', 26, 7)
 b.stamp('vending-white', 20, 6); b.stamp('vending-red', 22, 6)
-b.stamp('house-black', 28, 6)            # the station house
+station_door = b.stamp('house-black', 28, 6, seal=False)[0]   # the station house — door leads inside
 for i, px in enumerate((14, 18, 24)):
     b.paver(px, 8, i)
 
@@ -81,17 +81,12 @@ for i in range(12):
        and rg._pal[b.L['Floor'][f'{sx},{sy}']].startswith('grass'):
         b.plants(sx, sy, i)
 
-# ---- wiring: the train --------------------------------------------------------
-# Inaka platform -> Palace (arrive beside the boarding cells, not on them)
+# ---- wiring: the station house door leads into the InakaStation interior ------
+# (the actual train ride happens inside the station — see generate_stations.py)
 cfg['rooms']['Inaka'] = b.room('Inaka', transporters=[
-    rg.transporter(15, 7, 'Palace', 3, 6),
-    rg.transporter(16, 7, 'Palace', 4, 6),
+    {'gridX': station_door[0], 'gridY': station_door[1],
+     'targetRoom': 'InakaStation', 'targetX': 11, 'targetY': 11, 'hidden': True},
 ])
 
-pal_t = cfg['rooms']['Palace']['transporters']
-if not any(t.get('targetRoom') == 'Inaka' for t in pal_t):
-    pal_t.append(rg.transporter(3, 5, 'Inaka', 15, 8))
-    pal_t.append(rg.transporter(4, 5, 'Inaka', 16, 8))
-
 rg.save_config(cfg)
-print(f'Inaka {W}x{H}; board at Palace (3,5)/(4,5) <-> Inaka platform (15,7)/(16,7)')
+print(f'Inaka {W}x{H}; station house door at {station_door} -> InakaStation')

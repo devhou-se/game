@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 11,
- "nextobjectid": 11,
+ "nextobjectid": 10,
  "properties": [
   {
    "name": "gv2room",
@@ -9341,7 +9341,7 @@
     15,
     15,
     15,
-    15,
+    0,
     15,
     15,
     15,
@@ -10151,8 +10151,8 @@
      "id": 8,
      "name": "transporter",
      "point": true,
-     "x": 224.0,
-     "y": 352.0,
+     "x": 1760.0,
+     "y": 608.0,
      "width": 0,
      "height": 0,
      "visible": true,
@@ -10165,64 +10165,27 @@
       {
        "name": "targetRoom",
        "type": "string",
-       "value": "Inaka"
+       "value": "TokyoStation"
       },
       {
        "name": "targetX",
        "type": "int",
-       "value": 15
+       "value": 11
       },
       {
        "name": "targetY",
        "type": "int",
-       "value": 8
+       "value": 11
       },
       {
        "name": "hidden",
        "type": "bool",
-       "value": false
+       "value": true
       }
      ]
     },
     {
      "id": 9,
-     "name": "transporter",
-     "point": true,
-     "x": 288.0,
-     "y": 352.0,
-     "width": 0,
-     "height": 0,
-     "visible": true,
-     "properties": [
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "transporter"
-      },
-      {
-       "name": "targetRoom",
-       "type": "string",
-       "value": "Inaka"
-      },
-      {
-       "name": "targetX",
-       "type": "int",
-       "value": 16
-      },
-      {
-       "name": "targetY",
-       "type": "int",
-       "value": 8
-      },
-      {
-       "name": "hidden",
-       "type": "bool",
-       "value": false
-      }
-     ]
-    },
-    {
-     "id": 10,
      "name": "boundary",
      "x": 0,
      "y": 0,

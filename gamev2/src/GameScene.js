@@ -205,6 +205,9 @@ class GameScene extends Phaser.Scene {
             // Create managers
             this.menuManager = new MenuManager(this);
             this.datePicker = new DatePicker(this);
+            this.stationPicker = new StationPicker(this);
+            this.trainTravel = new TrainTravel(this);
+            this.trainTravel.onRoomChange(this.roomManager.currentRoom);
             this.dialogueManager = new DialogueManager(this);
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
@@ -629,7 +632,14 @@ class GameScene extends Phaser.Scene {
      */
     checkTransporter() {
         const playerPos = this.player.getGridPosition();
-        return this.roomManager.checkTransporter(playerPos);
+        if (this.roomManager.checkTransporter(playerPos)) return true;
+        // walking up to the train (a board cell in a station) opens departures
+        const st = (this.config.stations || {})[this.roomManager.currentRoom];
+        if (st && this.stationPicker &&
+            st.board.some(([bx, by]) => bx === playerPos.x && by === playerPos.y)) {
+            this.stationPicker.show(this.roomManager.currentRoom);
+        }
+        return false;
     }
 
     /**

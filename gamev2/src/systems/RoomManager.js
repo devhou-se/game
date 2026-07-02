@@ -311,6 +311,9 @@ class RoomManager {
             // Update HUD
             this.scene.updateHUD();
 
+            // Park (or hide) the station train for the new room
+            if (this.scene.trainTravel) this.scene.trainTravel.onRoomChange(newRoom);
+
             // Wait 0.25 seconds on black, then fade in
             this.scene.time.delayedCall(250, () => {
                 this.scene.cameras.main.fadeIn(250, 0, 0, 0);
