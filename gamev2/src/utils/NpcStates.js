@@ -39,7 +39,49 @@ function resolveNpc(npcConfig, date) {
     return merged;
 }
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** "2026-07-02" -> "July 2 2026" (the HUD display format). */
+function formatGameDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return `${MONTHS[m - 1]} ${d} ${y}`;
+}
+
+/** Navigate to the given game date (today -> clean URL, no param). */
+function setGameDate(iso) {
+    const params = new URLSearchParams(location.search);
+    const d = new Date();
+    const todayIso = d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    if (!iso || iso === todayIso) params.delete('date'); else params.set('date', iso);
+    const qs = params.toString();
+    location.href = location.pathname + (qs ? '?' + qs : '');
+}
+
+/** Open a native date picker seeded with the current game date; picking a
+ *  date reloads the game at that date (NPC states re-resolve). */
+function pickGameDate() {
+    let input = document.getElementById('gv2-date-picker');
+    if (!input) {
+        input = document.createElement('input');
+        input.type = 'date';
+        input.id = 'gv2-date-picker';
+        // keep it focusable/clickable but visually out of the way (top-left,
+        // under the HUD) — showPicker() anchors the browser UI to it
+        input.style.cssText = 'position:fixed;top:4px;left:4px;width:1px;height:1px;opacity:0.01;border:0;padding:0;';
+        input.addEventListener('change', () => setGameDate(input.value));
+        document.body.appendChild(input);
+    }
+    input.value = gameDate();
+    try { input.showPicker(); } catch (e) { input.focus(); input.click(); }
+}
+
 if (typeof window !== 'undefined') {
     window.gameDate = gameDate;
     window.resolveNpc = resolveNpc;
+    window.formatGameDate = formatGameDate;
+    window.setGameDate = setGameDate;
+    window.pickGameDate = pickGameDate;
 }

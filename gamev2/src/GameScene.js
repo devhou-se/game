@@ -237,8 +237,10 @@ class GameScene extends Phaser.Scene {
         this.hudBackground.setScrollFactor(0);
         this.hudBackground.setDepth(DEPTH.HUD_BACKGROUND);
 
-        // Game info text
-        const hudText = `${this.config.game.title} | ${this.roomManager.currentRoom} | ${this.config.game.date}`;
+        // Game info text; the date segment is the LIVE game date (today, or
+        // ?date=YYYY-MM-DD) and clicking it opens a date picker — NPC states
+        // re-resolve to the picked date on reload.
+        const hudText = `${this.config.game.title} | ${this.roomManager.currentRoom} | `;
 
         this.hudText = this.add.text(
             UI.HUD_PADDING,
@@ -254,6 +256,23 @@ class GameScene extends Phaser.Scene {
         this.hudText.setScrollFactor(0);
         this.hudText.setDepth(DEPTH.HUD_TEXT);
         this.hudText.setResolution(1);
+
+        this.hudDateText = this.add.text(
+            UI.HUD_PADDING + this.hudText.width,
+            UI.HUD_HEIGHT / 2,
+            formatGameDate(gameDate()),
+            {
+                fontSize: FONTS.HUD_SIZE,
+                fill: COLORS.HUD_TEXT,
+                fontFamily: FONTS.HUD
+            }
+        );
+        this.hudDateText.setOrigin(0, 0.5);
+        this.hudDateText.setScrollFactor(0);
+        this.hudDateText.setDepth(DEPTH.HUD_TEXT);
+        this.hudDateText.setResolution(1);
+        this.hudDateText.setInteractive({ useHandCursor: true });
+        this.hudDateText.on('pointerdown', () => pickGameDate());
 
         // Menu button (right aligned)
         this.menuButton = this.add.text(
@@ -278,8 +297,10 @@ class GameScene extends Phaser.Scene {
      * Update HUD text
      */
     updateHUD() {
-        const hudText = `${this.config.game.title} | ${this.roomManager.currentRoom} | ${this.config.game.date}`;
+        const hudText = `${this.config.game.title} | ${this.roomManager.currentRoom} | `;
         this.hudText.setText(hudText);
+        this.hudDateText.setText(formatGameDate(gameDate()));
+        this.hudDateText.setX(UI.HUD_PADDING + this.hudText.width);
     }
 
     /**
