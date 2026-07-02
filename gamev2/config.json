@@ -16298,7 +16298,7 @@
           },
           "dialogue": [
             "Hey, I'm Bailey.",
-            "Glad you made it. Have a look around!"
+            "We're camped down here by the road for now."
           ],
           "directionalSprites": {
             "down": "bailey_front",
@@ -16314,6 +16314,10 @@
           "sprite": "bailey_front",
           "states": {
             "2026-05-10": {
+              "dialogue": [
+                "Hey, I'm Bailey.",
+                "Moving day! Welcome to our new spot in the garden."
+              ],
               "gridX": 27,
               "gridY": 36
             },
@@ -16340,7 +16344,7 @@
           },
           "dialogue": [
             "Damian here.",
-            "Good to see you around."
+            "One day we'll live up in that garden. You watch."
           ],
           "directionalSprites": {
             "down": "damian_front",
@@ -16356,8 +16360,18 @@
           "sprite": "damian_front",
           "states": {
             "2026-05-10": {
+              "dialogue": [
+                "Damian here.",
+                "Moving day! We finally got the spot up by the statues."
+              ],
               "gridX": 31,
               "gridY": 36
+            },
+            "2026-07-02": {
+              "dialogue": [
+                "Damian here.",
+                "Bailey won't stop going on about some new town out west."
+              ]
             }
           }
         },
@@ -16368,7 +16382,7 @@
           },
           "dialogue": [
             "Hi, I'm Julia!",
-            "Hope you enjoy it here."
+            "I've been sketching that big tower across town."
           ],
           "directionalSprites": {
             "down": "julia_front",
@@ -16384,8 +16398,18 @@
           "sprite": "julia_front",
           "states": {
             "2026-05-10": {
+              "dialogue": [
+                "Hi, I'm Julia!",
+                "We moved up to the temple garden today. So much nicer than the roadside."
+              ],
               "gridX": 29,
               "gridY": 35
+            },
+            "2026-07-02": {
+              "dialogue": [
+                "Hi, I'm Julia!",
+                "They put my Tokyo Tower drawing in the new town. Go see it!"
+              ]
             }
           }
         }
