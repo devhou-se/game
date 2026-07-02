@@ -3,6 +3,16 @@
  "height": 924,
  "image": "assets/map/world-map.png",
  "rooms": {
+  "Inaka": {
+   "cells": [
+    40,
+    26
+   ],
+   "h": 220.6,
+   "w": 339.4,
+   "x": 449.7,
+   "y": 483.6
+  },
   "Machi": {
    "cells": [
     48,

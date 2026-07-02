@@ -34,6 +34,13 @@
       "y": 1408,
       "width": 3072,
       "height": 2176
+    },
+    {
+      "fileName": "gamev2/tiled/inaka.tmj",
+      "x": 320,
+      "y": 3648,
+      "width": 2560,
+      "height": 1664
     }
   ],
   "onlyShowAdjacentMaps": false,
