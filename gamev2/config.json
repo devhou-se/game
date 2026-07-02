@@ -16311,7 +16311,23 @@
           "gridX": 27,
           "gridY": 36,
           "name": "Bailey",
-          "sprite": "bailey_front"
+          "sprite": "bailey_front",
+          "states": {
+            "2026-06-30": {
+              "dialogue": [
+                "Hey, I'm Bailey.",
+                "Busy week \u2014 we squashed all the branches into one."
+              ]
+            },
+            "2026-07-02": {
+              "dialogue": [
+                "We opened a whole new town today!",
+                "Walk west along the road and visit Machi."
+              ],
+              "gridX": 26,
+              "gridY": 34
+            }
+          }
         },
         {
           "autoFlip": {

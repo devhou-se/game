@@ -161,14 +161,19 @@ class Builder:
                 'npcs': npcs or [], 'objects': [], 'transporters': transporters or []}
 
 
-def make_npc(name, sprite_base, x, y, dialogue):
+def make_npc(name, sprite_base, x, y, dialogue, states=None):
     """NPC dict for Builder.room(); sprite_base e.g. 'dylan' (needs
-    <base>_front/_back/_side sprites in spriteMetadata)."""
-    return {'name': name, 'sprite': f'{sprite_base}_front', 'gridX': x, 'gridY': y,
-            'gridOffsetX': 0, 'gridOffsetY': 0, 'dialogue': dialogue,
-            'directionalSprites': {'up': f'{sprite_base}_back', 'down': f'{sprite_base}_front',
-                                   'left': '', 'right': f'{sprite_base}_side'},
-            'autoFlip': {'horizontal': True, 'vertical': False}}
+    <base>_front/_back/_side sprites in spriteMetadata). states is an optional
+    {'YYYY-MM-DD': {field updates...}} history — the game applies every state
+    dated on-or-before the current game date, in order (tools/npc_state.py
+    manages these from the CLI)."""
+    npc = {'name': name, 'sprite': f'{sprite_base}_front', 'gridX': x, 'gridY': y,
+           'gridOffsetX': 0, 'gridOffsetY': 0, 'dialogue': dialogue,
+           'directionalSprites': {'up': f'{sprite_base}_back', 'down': f'{sprite_base}_front',
+                                  'left': '', 'right': f'{sprite_base}_side'},
+           'autoFlip': {'horizontal': True, 'vertical': False}}
+    if states: npc['states'] = states
+    return npc
 
 
 def transporter(x, y, target_room, tx, ty, hidden=False):

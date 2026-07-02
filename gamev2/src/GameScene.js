@@ -136,10 +136,15 @@ class GameScene extends Phaser.Scene {
                 maxGridY: maxGridY
             });
 
-            // Spawn NPCs
+            // Spawn NPCs, resolved to their dated state (states on-or-before
+            // the game date apply in order; ?date=YYYY-MM-DD time-travels,
+            // default today — see src/utils/NpcStates.js)
+            const npcDate = gameDate();
             for (let roomKey in this.config.rooms) {
                 const roomConfig = this.config.rooms[roomKey];
-                roomConfig.npcs.forEach(npcConfig => {
+                roomConfig.npcs.forEach(rawNpcConfig => {
+                    const npcConfig = resolveNpc(rawNpcConfig, npcDate);
+                    if (!npcConfig) return;   // "present": false on this date
                     const npcGridX = npcConfig.gridX !== null ? npcConfig.gridX : centerGridX + npcConfig.gridOffsetX;
                     const npcGridY = npcConfig.gridY !== null ? npcConfig.gridY : centerGridY + npcConfig.gridOffsetY;
 

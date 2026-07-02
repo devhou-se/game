@@ -88,7 +88,13 @@ Player movement bounds are calculated based on camera deadzone to prevent camera
 Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room has:
 - `name`: Display name
 - `boundary`: Array of [x, y] points defining a polygon boundary (optional, defaults to rectangular world bounds)
-- `npcs`: Array of NPC definitions with position (absolute or offset from center), sprite, name, and dialogue
+- `npcs`: Array of NPC definitions with position (absolute or offset from center), sprite, name, and dialogue.
+  An NPC may also carry dated state updates under `states` (`{"YYYY-MM-DD": {fields}}`): at load, every
+  state dated on-or-before the game date is applied over the base definition in chronological order —
+  so viewing July 27 shows the July 26 update if the next one is July 28. The game date defaults to
+  today and can be overridden with `?date=YYYY-MM-DD`; a state of `{"present": false}` removes the NPC
+  from that date. Author states with `python3 tools/npc_state.py <Room> <Npc> <date> --dialogue ... --pos X,Y`
+  (see `src/utils/NpcStates.js`)
 - `objects`: Array of static obstacles with position (absolute or offset from center) that block movement
 - `transporters`: Array of teleport points with position, targetRoom, and target position
 
