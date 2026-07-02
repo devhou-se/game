@@ -16,16 +16,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # The runner's OAuth token fetch to googleapis.com intermittently dies
-      # with "Premature close" before the deploy starts (transient network
-      # flake, ~daily). First attempt is allowed to fail; the retry step below
-      # re-runs the identical deploy only when needed.
+      # firebase-tools exit codes are unreliable (2026-07-02): 15.22.0 hard-
+      # fails authenticating ('Premature close' fetching the OAuth token) and
+      # 15.22.4 ('latest') authenticates fine but double-fires the release
+      # call and exits non-zero AFTER the deploy has landed. So: deploy with
+      # latest, allow failure, and let the VERIFY steps decide — the run is
+      # green iff the live site actually serves the commit's index.html.
       - name: Deploy to Firebase
         id: deploy
         continue-on-error: true
         env:
-          # googleapis token fetch dies with 'Premature close' on the runner's
-          # IPv6 path — prefer IPv4 (this cured the dense flake on 2026-07-02)
           NODE_OPTIONS: --dns-result-order=ipv4first
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -34,14 +34,18 @@ jobs:
           channelId: live
           projectId: devhouse-80936
           target: devhouse-game-canvas
-          # firebase-tools 15.22.4 ("latest") double-fires the release call after a
-          # dropped connection and the retry 400s with "is the current active
-          # version" — the deploy actually lands but the run goes red. 15.22.0 is
-          # the last version this workflow ran green on.
-          firebaseToolsVersion: 15.22.0
 
-      - name: Retry deploy (transient auth flake)
-        if: steps.deploy.outcome == 'failure'
+      - name: Verify live content
+        id: verify
+        continue-on-error: true
+        run: |
+          sleep 5
+          curl -sf --max-time 20 https://game.devhou.se/index.html -o /tmp/live.html
+          cmp /tmp/live.html gamev2/index.html
+
+      - name: Retry deploy (only if the live site doesn't match)
+        if: steps.verify.outcome == 'failure'
+        continue-on-error: true
         env:
           NODE_OPTIONS: --dns-result-order=ipv4first
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -51,4 +55,10 @@ jobs:
           channelId: live
           projectId: devhouse-80936
           target: devhouse-game-canvas
-          firebaseToolsVersion: 15.22.0
+
+      - name: Verify live content (authoritative)
+        run: |
+          sleep 5
+          curl -sf --max-time 20 https://game.devhou.se/index.html -o /tmp/live.html
+          cmp /tmp/live.html gamev2/index.html
+          echo "live site matches the commit"
