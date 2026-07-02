@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 14,
- "nextobjectid": 346,
+ "nextobjectid": 348,
  "properties": [
   {
    "name": "gv2room",
@@ -24200,6 +24200,80 @@
     },
     {
      "id": 345,
+     "name": "transporter",
+     "point": true,
+     "x": 96.0,
+     "y": 2656.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Machi"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 45
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 20
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": false
+      }
+     ]
+    },
+    {
+     "id": 346,
+     "name": "transporter",
+     "point": true,
+     "x": 96.0,
+     "y": 2720.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Machi"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 45
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 21
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": false
+      }
+     ]
+    },
+    {
+     "id": 347,
      "name": "boundary",
      "x": 0,
      "y": 0,

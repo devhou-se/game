@@ -27,6 +27,13 @@
       "y": 4160,
       "width": 3776,
       "height": 2816
+    },
+    {
+      "fileName": "gamev2/tiled/machi.tmj",
+      "x": -3072,
+      "y": 1408,
+      "width": 3072,
+      "height": 2176
     }
   ],
   "onlyShowAdjacentMaps": false,
