@@ -24,3 +24,8 @@ jobs:
           channelId: live
           projectId: devhouse-80936
           target: devhouse-game-canvas
+          # firebase-tools 15.22.4 ("latest") double-fires the release call after a
+          # dropped connection and the retry 400s with "is the current active
+          # version" — the deploy actually lands but the run goes red. 15.22.0 is
+          # the last version this workflow ran green on.
+          firebaseToolsVersion: 15.22.0
