@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 11,
- "nextobjectid": 78,
+ "nextobjectid": 79,
  "properties": [
   {
    "name": "gv2room",
@@ -219,7 +219,7 @@
     },
     {
      "id": 29,
-     "image": "../assets/sprites/gk_blank.png",
+     "image": "../assets/sprites/collider-marker.png",
      "imagewidth": 64,
      "imageheight": 64
     },
@@ -8085,8 +8085,8 @@
     },
     {
      "id": 22,
-     "gid": 7,
-     "name": "building-entrance-3_0_0",
+     "gid": 5,
+     "name": "building-entrance-1_0_0",
      "x": 2752,
      "y": 896,
      "width": 192,
@@ -12676,7 +12676,7 @@
     0,
     30,
     30,
-    30,
+    0,
     30,
     0,
     0,
@@ -13733,6 +13733,43 @@
     },
     {
      "id": 77,
+     "name": "transporter",
+     "point": true,
+     "x": 544.0,
+     "y": 928.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Konbini"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 13
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 78,
      "name": "boundary",
      "x": 0,
      "y": 0,

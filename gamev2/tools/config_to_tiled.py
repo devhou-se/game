@@ -54,7 +54,11 @@ def main():
         'firstgid': FIRST, 'name': 'gamev2', 'tilewidth': GS, 'tileheight': GS,
         'tilecount': len(keys), 'columns': 0, 'objectalignment': 'topleft',
         'grid': {'orientation': 'orthogonal', 'width': GS, 'height': GS},
-        'tiles': [{'id': kid[k], 'image': f'../assets/sprites/{k}.png',
+        'tiles': [{'id': kid[k],
+                   # show the invisible gk_blank collider as the visible
+                   # collider-marker so collision is paintable in Tiled
+                   # (TiledAdapter maps it back to gk_blank at load)
+                   'image': f'../assets/sprites/{"collider-marker" if k == "gk_blank" else k}.png',
                    'imagewidth': sizes[k][0], 'imageheight': sizes[k][1]} for k in keys],
     }
 

@@ -297,7 +297,7 @@
     },
     {
      "id": 42,
-     "image": "../assets/sprites/gk_blank.png",
+     "image": "../assets/sprites/collider-marker.png",
      "imagewidth": 64,
      "imageheight": 64
     },

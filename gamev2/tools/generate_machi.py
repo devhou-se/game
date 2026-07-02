@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
-"""generate_machi.py — generate the "Machi" room (a quaint Japanese town)
-entirely from the existing gamev2 tile vocabulary.
+"""generate_machi.py — generate the "Machi" room (a quaint Japanese town) and
+the "Konbini" shop interior behind its 7-Eleven door.
 
-Deterministic and idempotent: rebuilds rooms.Machi from scratch on every run,
-leaves all other rooms alone, and (once) adds the Tokyo road transporters.
-Layer/collider conventions are copied from how each prefab is used in the
-ported rooms (canopy on Tops + solid trunk, lantern head on Tops + solid post,
-torii top overhead + post-only feet, water = Water layer + gk_blank colliders,
-buildings = walk-behind roof + solid body, vending top solid / bottom open).
+Objects come from the Tiled-authored prefab library (tiled/prefabs/*.tmj —
+edit them in the Tiled app; see tools/make_prefabs.py for the initial seed).
+Each prefab carries its sprites, its collision (the visible collider-marker
+tile) and `door` points; stamping a prefab with seal_doors=False leaves the
+doorway open so a hidden transporter can be wired to it — that's how the
+7-Eleven's door leads into the Konbini room.
+
+Deterministic and idempotent: rebuilds rooms.Machi and rooms.Konbini from
+scratch on every run, leaves all other rooms alone, and (once) adds the Tokyo
+road transporters.
 
 Run from gamev2/:  python3 tools/generate_machi.py
-Then:              python3 tools/qa_port.py --room Machi
-                   python3 tools/config_to_tiled.py Machi
+Then:              python3 tools/qa_port.py --room Machi   (and --room Konbini)
+                   python3 tools/config_to_tiled.py Machi  (and Konbini, Tokyo)
 """
-import json, random, sys, os
-
-W, H = 48, 34
-ROOM = 'Machi'
-rng = random.Random(7)
+import json, random, os
+import prefab as _prefab
 
 cfg = json.load(open('config.json'))
 pal = cfg['tilePalette']
@@ -27,278 +28,245 @@ def pidx(k):
         pal.append(k); IDX[k] = len(pal) - 1
     return IDX[k]
 
-L = {name: {} for name in
-     ['Floor', 'Over Floor', 'Water', 'Non-Collidables', 'Collidables', 'Other', 'Tops', 'Colliders']}
+LAYER_NAMES = ['Floor', 'Over Floor', 'Water', 'Non-Collidables', 'Collidables', 'Other', 'Tops', 'Colliders']
+_PF = {}
 
-def put(layer, x, y, key):
-    assert 0 <= x < W and 0 <= y < H, (layer, x, y, key)
-    L[layer][f'{x},{y}'] = pidx(key)
+class Builder:
+    def __init__(self, w, h):
+        self.W, self.H = w, h
+        self.L = {n: {} for n in LAYER_NAMES}
 
-def solid(x, y): put('Colliders', x, y, 'gk_blank')
+    def put(self, layer, x, y, key):
+        assert 0 <= x < self.W and 0 <= y < self.H, (layer, x, y, key)
+        self.L[layer][f'{x},{y}'] = pidx(key)
 
-# ---------------- floors (autotiled terrains over a full grass base) --------
-def autotile(fam, cells, roles_available):
-    cells = set(cells)
-    for (x, y) in cells:
-        n, e, s, w = (x, y-1) in cells, (x+1, y) in cells, (x, y+1) in cells, (x-1, y) in cells
-        role = 'center'
-        if not n and not w and e and s: role = 'corner-nw'
-        elif not n and not e and w and s: role = 'corner-ne'
-        elif not s and not w and e and n: role = 'corner-sw'
-        elif not s and not e and w and n: role = 'corner-se'
-        elif not n and e and w and s: role = 'edge-n'
-        elif not s and e and w and n: role = 'edge-s'
-        elif not w and n and s and e: role = 'edge-w'
-        elif not e and n and s and w: role = 'edge-e'
-        if role not in roles_available: role = 'center'
-        put('Floor', x, y, f'{fam}_{role}')
+    def solid(self, x, y): self.put('Colliders', x, y, 'gk_blank')
 
-FULL9 = {'center','edge-n','edge-e','edge-s','edge-w','corner-nw','corner-ne','corner-sw','corner-se'}
-def rect(x0, y0, x1, y1): return [(x, y) for x in range(x0, x1+1) for y in range(y0, y1+1)]
+    def stamp(self, name, x, y, seal=True):
+        if name not in _PF: _PF[name] = _prefab.load_prefab(name)
+        return _prefab.stamp(_PF[name], x, y, self.put, self.solid, seal_doors=seal)
 
-# base grass everywhere
+    def autotile(self, fam, cells, roles=None):
+        roles = roles or {'center','edge-n','edge-e','edge-s','edge-w','corner-nw','corner-ne','corner-sw','corner-se'}
+        cells = set(cells)
+        for (x, y) in cells:
+            n, e, s, w = (x, y-1) in cells, (x+1, y) in cells, (x, y+1) in cells, (x-1, y) in cells
+            role = 'center'
+            if not n and not w and e and s: role = 'corner-nw'
+            elif not n and not e and w and s: role = 'corner-ne'
+            elif not s and not w and e and n: role = 'corner-sw'
+            elif not s and not e and w and n: role = 'corner-se'
+            elif not n and e and w and s: role = 'edge-n'
+            elif not s and e and w and n: role = 'edge-s'
+            elif not w and n and s and e: role = 'edge-w'
+            elif not e and n and s and w: role = 'edge-e'
+            if role not in roles: role = 'center'
+            self.put('Floor', x, y, f'{fam}_{role}')
+
+    def plants(self, x, y, v=0):
+        self.put('Over Floor', x, y, f'ground-plants-1_{["0_0","0_1","1_0","1_1"][v % 4]}')
+
+    def paver(self, x, y, v=0):
+        self.put('Over Floor', x, y, ['pavers_1_0','pavers_2_0','pavers_1_2','pavers_2_1','pavers_0_2','pavers_2_2'][v % 6])
+
+    def fence(self, x, y, v=0):
+        self.put('Collidables', x, y, ['fence-barriers_2_0','fence-barriers_0_2','fence-barriers_1_2','fence-barriers_0_3'][v % 4])
+        self.solid(x, y)
+
+    def room(self, name, npcs, transporters):
+        return {'name': name, 'worldWidth': self.W * 64, 'worldHeight': self.H * 64,
+                'boundary': [[0, 0], [self.W, 0], [self.W, self.H], [0, self.H]],
+                'layers': [
+                    {'name': 'Floor', 'z': 0, 'collision': False, 'tiles': self.L['Floor']},
+                    {'name': 'Over Floor', 'z': 1, 'collision': False, 'tiles': self.L['Over Floor']},
+                    {'name': 'Water', 'z': 1, 'collision': False, 'tiles': self.L['Water']},
+                    {'name': 'Non-Collidables', 'z': 4, 'collision': False, 'tiles': self.L['Non-Collidables']},
+                    {'name': 'Collidables', 'z': 5, 'collision': False, 'tiles': self.L['Collidables']},
+                    {'name': 'Other', 'z': 6, 'collision': False, 'tiles': self.L['Other']},
+                    {'name': 'Tops', 'z': 7, 'collision': False, 'tiles': self.L['Tops']},
+                    {'name': 'Colliders', 'z': 5, 'collision': True, 'tiles': self.L['Colliders']},
+                ],
+                'npcs': npcs, 'objects': [], 'transporters': transporters}
+
+# =============================== MACHI =======================================
+W, H = 48, 34
+b = Builder(W, H)
+rng = random.Random(7)
+rect = lambda x0, y0, x1, y1: [(x, y) for x in range(x0, x1+1) for y in range(y0, y1+1)]
+
 for x in range(W):
     for y in range(H):
-        put('Floor', x, y, 'grass-autotile_center')
+        b.put('Floor', x, y, 'grass-autotile_center')
 
-# shrine plaza (top centre) + approach path down to the street
 plaza_shrine = rect(20, 2, 29, 8)
 approach = rect(22, 9, 25, 14)
-# main street east-west
 street = rect(3, 15, 45, 16)
-# market lane continues south from approach into the south plaza
 plaza_south = rect(19, 18, 30, 24)
 lane = rect(23, 17, 24, 17)
-# east road out to Tokyo (rows 20-21) + west garden path into the plaza
 road_east = rect(31, 20, 47, 21)
 path_garden = rect(4, 22, 18, 23)
 
-autotile('flat-grey-brick-autotile', plaza_shrine + approach + lane, FULL9)
-autotile('grey-brick-autotile', street, FULL9)
-autotile('light-concrete-autotile', plaza_south, FULL9)
-autotile('gravel-autotile', road_east + path_garden, FULL9)
+b.autotile('flat-grey-brick-autotile', plaza_shrine + approach + lane)
+b.autotile('grey-brick-autotile', street)
+b.autotile('light-concrete-autotile', plaza_south)
+b.autotile('gravel-autotile', road_east + path_garden)
 
-# flower patches (only the 4 corner pieces exist -> 2x2 patches)
 for (fx, fy) in [(14, 6), (43, 8), (5, 26), (15, 26), (34, 25)]:
-    put('Floor', fx, fy, 'flowering-grass-autotile_corner-nw')
-    put('Floor', fx+1, fy, 'flowering-grass-autotile_corner-ne')
-    put('Floor', fx, fy+1, 'flowering-grass-autotile_corner-sw')
-    put('Floor', fx+1, fy+1, 'flowering-grass-autotile_corner-se')
+    b.put('Floor', fx, fy, 'flowering-grass-autotile_corner-nw')
+    b.put('Floor', fx+1, fy, 'flowering-grass-autotile_corner-ne')
+    b.put('Floor', fx, fy+1, 'flowering-grass-autotile_corner-sw')
+    b.put('Floor', fx+1, fy+1, 'flowering-grass-autotile_corner-se')
 
-# ---------------- water ------------------------------------------------------
 def pond(x0, y0, x1):  # two rows tall (the pond set has no edge-w piece)
     top = [('corner-nw', x0)] + [('edge-n', x) for x in range(x0+1, x1)] + [('corner-ne', x1)]
     bot = [('corner-sw', x0)] + [('edge-s', x) for x in range(x0+1, x1)] + [('corner-se', x1)]
-    for role, x in top: put('Water', x, y0, f'pond-autotile_{role}'); solid(x, y0)
-    for role, x in bot: put('Water', x, y0+1, f'pond-autotile_{role}'); solid(x, y0+1)
+    for role, x in top: b.put('Water', x, y0, f'pond-autotile_{role}'); b.solid(x, y0)
+    for role, x in bot: b.put('Water', x, y0+1, f'pond-autotile_{role}'); b.solid(x, y0+1)
 
-pond(5, 7, 10)     # sakura park pond
-pond(36, 6, 41)    # east garden pond
+pond(5, 7, 10)
+pond(36, 6, 41)
 
-# ---------------- prefabs ----------------------------------------------------
-def sakura_large(x, y):           # canopy 3x2 on Tops, 1x1 trunk below centre
-    put('Tops', x, y, 'sakura-large-top_0_0')
-    put('Collidables', x+1, y+2, 'sakura-large-base_0_0'); solid(x+1, y+2)
-
-def sakura_small(x, y):           # whole 1x2 tree, bottom cell solid
-    put('Tops', x, y, 'sakura-small_0_0'); solid(x, y+1)
-
-def tree3(x, y):                  # 2x2 canopy + 2x1 trunk
-    put('Tops', x, y, 'tree-3-top_0_0')
-    put('Collidables', x, y+2, 'tree-3-base-shadow_0_0'); solid(x, y+2); solid(x+1, y+2)
-
-def shrub_large(x, y):
-    put('Collidables', x, y, 'shrub-large-circle_0_0')
-    for dx in (0, 1):
-        for dy in (0, 1): solid(x+dx, y+dy)
-
-def shrub_small(x, y):
-    put('Collidables', x, y, 'shrub-small-circle_0_0'); solid(x, y)
-
-def lantern(x, y):                # head on Tops, solid post below
-    put('Tops', x, y, 'red-lanterns_6_3')
-    put('Collidables', x, y+1, 'red-lanterns_4_1'); solid(x, y+1)
-
-def lamp(x, y):
-    put('Collidables', x, y, 'blue-lamp-post_0_0'); solid(x, y)
-
-def fox(x, y):                    # 1x2 statue, feet solid
-    put('Collidables', x, y, 'fox-statue-base-1_0_0'); solid(x, y+1)
-
-def vending(x, y, colour='white'):
-    put('Other', x, y, f'{colour}-vending-machine-top_0_0')
-    put('Other', x, y+1, f'{colour}-vending-machine-bottom_0_0')
-    solid(x, y)
-
-def bell(x, y):                   # blue bell: overhead tip + solid base row
-    put('Tops', x, y-2, 'blue-bell-top_0_0')
-    put('Collidables', x, y, 'bell-blue-baseless_0_0'); solid(x, y); solid(x+1, y)
-
-def torii(x, y):                  # 6x3 top overhead; 4x2 feet, posts solid
-    put('Tops', x, y, 'torii-red-top_0_0')
-    put('Collidables', x+1, y+3, 'torii-red-feet_0_0')
-    for dy in (3, 4): solid(x+1, y+dy); solid(x+4, y+dy)
-
-def shrine(x, y):                 # 3x6 building, solid except the bottom step row
-    put('Collidables', x, y, 'shrine-building_0_0')
-    for dx in range(3):
-        for dy in range(5): solid(x+dx, y+dy)
-
-def house(x, y, colour, entrance):  # 3x3 roof overhead + 3x1 facade, body solid
-    put('Tops', x, y, f'building-roof-{colour}_0_0')
-    put('Collidables', x, y+3, f'building-entrance-{entrance}_0_0')
-    for dx in range(3):
-        for dy in (1, 2, 3): solid(x+dx, y+dy)
-
-def seven_eleven(x, y):           # 3x4 store, fully solid, sign to the right
-    put('Collidables', x, y, 'seven-eleven_0_0')
-    for dx in range(3):
-        for dy in range(4): solid(x+dx, y+dy)
-    put('Tops', x+3, y+1, '7-11-sign-left_0_0'); solid(x+3, y+2)
-
-def stairs(x, y):
-    put('Over Floor', x, y, 'castle-stairs_0_0')
-
-def plants(x, y, v=0):
-    put('Over Floor', x, y, f'ground-plants-1_{["0_0","0_1","1_0","1_1"][v % 4]}')
-
-def paver(x, y, v=0):
-    put('Over Floor', x, y, ['pavers_1_0','pavers_2_0','pavers_1_2','pavers_2_1','pavers_0_2','pavers_2_2'][v % 6])
-
-def fence(x, y, v=0):
-    put('Collidables', x, y, ['fence-barriers_2_0','fence-barriers_0_2','fence-barriers_1_2','fence-barriers_0_3'][v % 4])
-    solid(x, y)
-
-# ---------------- composition ------------------------------------------------
-# north border: sakura line left+right of the shrine
-for x in (2, 7, 12): sakura_large(x, 0)
-for x in (33, 38, 43): sakura_large(x, 0)
-# south border: sakura canopies with trunks on row 32
-for x in (3, 8, 13, 18, 23, 28, 33, 38, 43): sakura_large(x, 30)
-# west border shrubs; east border shrubs except the road gap (rows 20-21)
+# borders
+for x in (2, 7, 12, 33, 38, 43): b.stamp('sakura-large', x, 0)
+for x in (3, 8, 13, 18, 23, 28, 33, 38, 43): b.stamp('sakura-large', x, 30)
+for y in range(2, 29, 3): b.stamp('shrub-large', 0, y)
 for y in range(2, 29, 3):
-    shrub_large(0, y)
-for y in range(2, 29, 3):
-    if not (18 <= y <= 21): shrub_large(46, y)
-shrub_small(46, 19); shrub_small(46, 22)
+    if not (18 <= y <= 21): b.stamp('shrub-large', 46, y)
+b.stamp('shrub-small', 46, 19); b.stamp('shrub-small', 46, 22)
 
 # shrine precinct
-shrine(23, 1)
-fox(21, 4); fox(27, 4)
-bell(29, 3)
-lantern(20, 6); lantern(28, 6)
-lantern(21, 10); lantern(26, 10)
-stairs(23, 9); stairs(24, 9)
-torii(21, 11)
-plants(19, 8, 1); plants(30, 8, 2)
+b.stamp('shrine', 23, 1)
+b.stamp('fox-statue', 21, 4); b.stamp('fox-statue', 27, 4)
+b.stamp('bell-blue', 29, 1)
+b.stamp('lantern-red', 20, 6); b.stamp('lantern-red', 28, 6)
+b.stamp('lantern-red', 21, 10); b.stamp('lantern-red', 26, 10)
+b.put('Over Floor', 23, 9, 'castle-stairs_0_0'); b.put('Over Floor', 24, 9, 'castle-stairs_0_0')
+b.stamp('torii-red', 21, 11)
+b.plants(19, 8, 1); b.plants(30, 8, 2)
 
 # sakura park (top-left)
-sakura_large(4, 2); sakura_large(9, 3); sakura_large(13, 2)
-sakura_small(3, 6); sakura_small(15, 4)
-shrub_small(12, 8); plants(4, 6, 0); plants(11, 5, 3); plants(13, 9, 2)
+b.stamp('sakura-large', 4, 2); b.stamp('sakura-large', 9, 3); b.stamp('sakura-large', 13, 2)
+b.stamp('sakura-small', 3, 6); b.stamp('sakura-small', 15, 4)
+b.stamp('shrub-small', 12, 8); b.plants(4, 6, 0); b.plants(11, 5, 3); b.plants(13, 9, 2)
 
 # east garden (top-right)
-tree3(34, 2); tree3(41, 2); tree3(37, 9)
-sakura_small(44, 4); shrub_small(35, 8); plants(42, 9, 1); plants(33, 5, 0)
+b.stamp('tree-green', 34, 2); b.stamp('tree-green', 41, 2); b.stamp('tree-green', 37, 9)
+b.stamp('sakura-small', 44, 4); b.stamp('shrub-small', 35, 8); b.plants(42, 9, 1); b.plants(33, 5, 0)
 
-# main street lamps (kept clear of the shop fronts and house footprints)
-for x in (6, 34): lamp(x, 14)
-for x in (9, 15, 27, 37, 43): lamp(x, 17)
+# street lamps (kept clear of the shop fronts and house footprints)
+for x in (6, 34): b.stamp('lamp-blue', x, 14)
+for x in (9, 15, 27, 37, 43): b.stamp('lamp-blue', x, 17)
 
-# shop row north of the street (west side)
-seven_eleven(7, 11)
-vending(12, 13, 'white'); vending(14, 13, 'red'); vending(16, 13, 'white')
-sakura_small(18, 12)
+# shop row: the 7-Eleven's door stays OPEN and leads into the Konbini room
+konbini_door = b.stamp('seven-eleven', 7, 11, seal=False)[0]
+b.stamp('sign-7-11', 10, 12)
+b.stamp('vending-white', 12, 13); b.stamp('vending-red', 14, 13); b.stamp('vending-white', 16, 13)
+b.stamp('sakura-small', 18, 12)
 
-# houses north of the street (east side)
-house(28, 11, 'blue', 1)
-house(33, 10, 'black', 2)
-house(38, 11, 'red', 3)
-house(43, 11, 'blue', 3)
+# houses (doors sealed — no interiors for these yet)
+b.stamp('house-blue', 28, 11)
+b.stamp('house-black', 33, 10)
+b.stamp('house-red', 38, 11)
+b.stamp('house-blue', 43, 11)
 for hx in (29, 34, 39, 44):
-    put('Over Floor', hx, 15, 'tile-brick-path_2_1')
+    b.put('Over Floor', hx, 15, 'tile-brick-path_2_1')
 
-# south plaza: mini pagoda centrepiece, paver walk, lantern corners, vending
-put('Tops', 24, 20, 'red-pagoda-small-top_0_0')
-put('Collidables', 24, 19, 'red-pagoda-small-base_0_0')
-for dy in range(19, 23): solid(24, dy); solid(25, dy)
+# south plaza
+b.stamp('pagoda-small', 24, 19)
 for i, (px, py) in enumerate([(21, 19), (28, 19), (21, 23), (28, 23),
                               (22, 21), (27, 21), (23, 24), (26, 24)]):
-    paver(px, py, i)
-vending(30, 18, 'red'); vending(19, 18, 'white')
-lantern(20, 16); lantern(29, 16)
-lantern(20, 24); lantern(29, 24)
-plants(22, 18, 0); plants(27, 18, 3); plants(20, 21, 2); plants(29, 22, 1)
+    b.paver(px, py, i)
+b.stamp('vending-red', 30, 18); b.stamp('vending-white', 19, 18)
+b.stamp('lantern-red', 20, 16); b.stamp('lantern-red', 29, 16)
+b.stamp('lantern-red', 20, 24); b.stamp('lantern-red', 29, 24)
+b.plants(22, 18, 0); b.plants(27, 18, 3); b.plants(20, 21, 2); b.plants(29, 22, 1)
 
 # orchard + garden (south-west)
 for ox in (5, 8, 11, 14):
     for oy in (20, 24):
-        sakura_small(ox, oy)
-plants(6, 22, 0); plants(9, 23, 1); plants(12, 22, 2); plants(15, 23, 3); plants(7, 26, 1)
+        b.stamp('sakura-small', ox, oy)
+b.plants(6, 22, 0); b.plants(9, 23, 1); b.plants(12, 22, 2); b.plants(15, 23, 3); b.plants(7, 26, 1)
 
-# east road lanterns + a little green south of the houses
-lantern(44, 18); lantern(44, 22)
-sakura_small(34, 17); sakura_small(40, 17)
-shrub_small(37, 18); shrub_small(42, 18); plants(35, 18, 1); plants(38, 17, 2)
+# east road lanterns + greenery south of the houses
+b.stamp('lantern-red', 44, 18); b.stamp('lantern-red', 44, 22)
+b.stamp('sakura-small', 34, 17); b.stamp('sakura-small', 40, 17)
+b.stamp('shrub-small', 37, 18); b.stamp('shrub-small', 42, 18); b.plants(35, 18, 1); b.plants(38, 17, 2)
 
 # south fence line
 for i, x in enumerate(range(3, 45)):
     if x in (23, 24): continue
-    fence(x, 28, i)
+    b.fence(x, 28, i)
 
-# scattered plants for texture
+# scattered plants
 for i in range(14):
     sx, sy = rng.randrange(3, 45), rng.randrange(17, 27)
-    if f'{sx},{sy}' not in L['Collidables'] and f'{sx},{sy}' not in L['Colliders'] \
-       and f'{sx},{sy}' not in L['Over Floor'] and f'{sx},{sy}' not in L['Other'] \
-       and pal[L['Floor'][f'{sx},{sy}']].startswith('grass'):
-        plants(sx, sy, i)
+    if all(f'{sx},{sy}' not in b.L[n] for n in ('Collidables', 'Colliders', 'Over Floor', 'Other')) \
+       and pal[b.L['Floor'][f'{sx},{sy}']].startswith('grass'):
+        b.plants(sx, sy, i)
 
-# ---------------- room + wiring ---------------------------------------------
-room = {
-    'name': ROOM,
-    'worldWidth': W * 64, 'worldHeight': H * 64,
-    'boundary': [[0, 0], [W, 0], [W, H], [0, H]],
-    'layers': [
-        {'name': 'Floor', 'z': 0, 'collision': False, 'tiles': L['Floor']},
-        {'name': 'Over Floor', 'z': 1, 'collision': False, 'tiles': L['Over Floor']},
-        {'name': 'Water', 'z': 1, 'collision': False, 'tiles': L['Water']},
-        {'name': 'Non-Collidables', 'z': 4, 'collision': False, 'tiles': L['Non-Collidables']},
-        {'name': 'Collidables', 'z': 5, 'collision': False, 'tiles': L['Collidables']},
-        {'name': 'Other', 'z': 6, 'collision': False, 'tiles': L['Other']},
-        {'name': 'Tops', 'z': 7, 'collision': False, 'tiles': L['Tops']},
-        {'name': 'Colliders', 'z': 5, 'collision': True, 'tiles': L['Colliders']},
+dylan = {
+    'name': 'Dylan', 'sprite': 'dylan_front',
+    'gridX': 27, 'gridY': 22, 'gridOffsetX': 0, 'gridOffsetY': 0,
+    'dialogue': [
+        "Hello! I'm Dylan.",
+        "A whole town, generated by one script.",
+        "...I still bet it would've been better in Godot."
     ],
-    'npcs': [{
-        'name': 'Dylan', 'sprite': 'dylan_front',
-        'gridX': 27, 'gridY': 22, 'gridOffsetX': 0, 'gridOffsetY': 0,
-        'dialogue': [
-            "Hello! I'm Dylan.",
-            "A whole town, generated by one script.",
-            "...I still bet it would've been better in Godot."
-        ],
-        'directionalSprites': {'up': 'dylan_back', 'down': 'dylan_front', 'left': '', 'right': 'dylan_side'},
-        'autoFlip': {'horizontal': True, 'vertical': False},
-    }],
-    'objects': [],
-    'transporters': [
-        {'gridX': 47, 'gridY': 20, 'targetRoom': 'Tokyo', 'targetX': 3, 'targetY': 41, 'hidden': False},
-        {'gridX': 47, 'gridY': 21, 'targetRoom': 'Tokyo', 'targetX': 3, 'targetY': 42, 'hidden': False},
-    ],
+    'directionalSprites': {'up': 'dylan_back', 'down': 'dylan_front', 'left': '', 'right': 'dylan_side'},
+    'autoFlip': {'horizontal': True, 'vertical': False},
 }
-cfg['rooms'][ROOM] = room
+machi_transporters = [
+    {'gridX': 47, 'gridY': 20, 'targetRoom': 'Tokyo', 'targetX': 3, 'targetY': 41, 'hidden': False},
+    {'gridX': 47, 'gridY': 21, 'targetRoom': 'Tokyo', 'targetX': 3, 'targetY': 42, 'hidden': False},
+    # the 7-Eleven doorway (prefab door point, left open by seal=False)
+    {'gridX': konbini_door[0], 'gridY': konbini_door[1],
+     'targetRoom': 'Konbini', 'targetX': 9, 'targetY': 13, 'hidden': True},
+]
+cfg['rooms']['Machi'] = b.room('Machi', [dylan], machi_transporters)
 
-# Tokyo -> Machi (west road edge), added once
+# =============================== KONBINI =====================================
+kb = Builder(20, 15)
+kb.autotile('light-concrete-autotile', rect(0, 0, 19, 14))
+# warm brick runner from the door up to the counter
+for rx in (9, 10):
+    for ry in range(7, 14):
+        kb.put('Over Floor', rx, ry, 'tile-brick-path_2_1')
+
+# walls: stone across the top and bottom (door gap), panelled sides
+for x in range(20):
+    kb.put('Collidables', x, 0, 'castle-wall-siding_0_0'); kb.solid(x, 0); kb.solid(x, 1)
+for y in (2, 4, 6, 8, 10, 12):
+    for x in (0, 19):
+        kb.put('Collidables', x, y, 'blue-wall-short_0_0'); kb.solid(x, y); kb.solid(x, y + 1)
+for x in range(1, 19):
+    if x in (9, 10): continue
+    kb.put('Collidables', x, 13, 'castle-wall-siding_0_0'); kb.solid(x, 13); kb.solid(x, 14)
+
+# aisles: vending "coolers" against the back wall, a stone counter, lanterns
+for x in (3, 4, 5): kb.stamp('vending-white', x, 2)
+for x in (14, 15, 16): kb.stamp('vending-red', x, 2)
+kb.put('Collidables', 9, 5, 'blue-shrine-platform-base_0_0')
+for dx in (0, 1):
+    for dy in (0, 1): kb.solid(9 + dx, 5 + dy)
+kb.stamp('lantern-red', 1, 11); kb.stamp('lantern-red', 18, 11)
+kb.paver(9, 14, 0); kb.paver(10, 14, 1)   # door mat
+
+outside = (konbini_door[0], konbini_door[1] + 1)   # cell in front of the 7-Eleven door
+konbini_transporters = [
+    {'gridX': 9, 'gridY': 14, 'targetRoom': 'Machi', 'targetX': outside[0], 'targetY': outside[1], 'hidden': True},
+    {'gridX': 10, 'gridY': 14, 'targetRoom': 'Machi', 'targetX': outside[0], 'targetY': outside[1], 'hidden': True},
+]
+cfg['rooms']['Konbini'] = kb.room('Konbini', [], konbini_transporters)
+
+# =============================== WIRING ======================================
 tok = cfg['rooms']['Tokyo']['transporters']
-if not any(t.get('targetRoom') == ROOM for t in tok):
-    tok.append({'gridX': 1, 'gridY': 41, 'targetRoom': ROOM, 'targetX': 45, 'targetY': 20, 'hidden': False})
-    tok.append({'gridX': 1, 'gridY': 42, 'targetRoom': ROOM, 'targetX': 45, 'targetY': 21, 'hidden': False})
+if not any(t.get('targetRoom') == 'Machi' for t in tok):
+    tok.append({'gridX': 1, 'gridY': 41, 'targetRoom': 'Machi', 'targetX': 45, 'targetY': 20, 'hidden': False})
+    tok.append({'gridX': 1, 'gridY': 42, 'targetRoom': 'Machi', 'targetX': 45, 'targetY': 21, 'hidden': False})
 
-# sanity: every referenced sprite exists on disk
-missing = [pal[i] for lay in L.values() for i in lay.values()
+missing = [pal[i] for bb in (b, kb) for lay in bb.L.values() for i in lay.values()
            if not os.path.exists(f'assets/sprites/{pal[i]}.png')]
 assert not missing, f'missing sprites: {sorted(set(missing))[:8]}'
 
 open('config.json', 'w').write(json.dumps(cfg, indent=2, sort_keys=True))
-print(f'{ROOM}: {W}x{H} cells; tiles per layer:',
-      {k: len(v) for k, v in L.items() if v})
+print(f"Machi {b.W}x{b.H} + Konbini {kb.W}x{kb.H}; 7-Eleven door at {konbini_door} -> Konbini")

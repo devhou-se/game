@@ -23,10 +23,16 @@ const TiledAdapter = {
         const W = tmj.width;
         const FLIP = 0x1FFFFFFF; // strip Tiled's flip flags from the high bits of a gid
 
-        // gid -> sprite key, via the tileset's per-tile image filename
+        // gid -> sprite key, via the tileset's per-tile image filename.
+        // The visible collider-marker tile (used so collision is paintable in
+        // Tiled) maps back to the game's invisible gk_blank collider.
         const ts = tmj.tilesets[0];
         const idToKey = {};
-        for (const t of ts.tiles) idToKey[t.id] = t.image.split('/').pop().replace(/\.png$/, '');
+        for (const t of ts.tiles) {
+            let key = t.image.split('/').pop().replace(/\.png$/, '');
+            if (key === 'collider-marker') key = 'gk_blank';
+            idToKey[t.id] = key;
+        }
         const keyOf = (gid) => idToKey[(gid & FLIP) - ts.firstgid];
 
         const prop = (o, n, d) => {

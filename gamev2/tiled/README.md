@@ -51,6 +51,29 @@ The `.tmj` files themselves must stay in `gamev2/tiled/` — Firebase deploys th
 - Map custom properties `gv2room`, `gv2worldWidth`, `gv2worldHeight` carry the
   room name and pixel size.
 
+## Prefabs — build objects in Tiled, place them procedurally
+
+`tiled/prefabs/*.tmj` is the object library: each prefab (house, pagoda,
+lantern, torii, shrine, vending machine, ...) is a small ordinary Tiled map you
+edit in the Tiled app. A prefab carries:
+
+- its **sprites** on object layers tagged with the room layer they belong to
+  (`gv2layer` = Collidables / Tops / Other / Over Floor);
+- its **collision** painted with the translucent red `collider-marker` tile on
+  a `Colliders` layer (converted to the game's invisible collider on stamp —
+  room maps show the same marker, so collision is visible and paintable
+  everywhere in Tiled);
+- its **doors** as `kind=door` point objects on a `Meta` layer — the default
+  transporter location. Generators leave a wired door open and attach a hidden
+  transporter to it (the Machi 7-Eleven's door leads into the `Konbini`
+  interior room this way); unwired doors are sealed solid automatically.
+
+`tools/prefab.py` loads and stamps prefabs; `tools/make_prefabs.py` re-seeds
+the initial library; `tools/generate_machi.py` shows the full pattern — it
+builds the whole Machi town and the Konbini shop interior from prefabs +
+autotiled floors. Same recipe works for interiors: make `shelf` / `counter`
+prefabs and let a generator lay out the room.
+
 ## Adding a new room
 
 1. Copy an existing `.tmj` (or seed one from a config room with

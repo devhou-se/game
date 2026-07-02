@@ -1,0 +1,215 @@
+{
+ "type": "map",
+ "version": "1.10",
+ "tiledversion": "1.11.0",
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "width": 3,
+ "height": 4,
+ "tilewidth": 64,
+ "tileheight": 64,
+ "infinite": false,
+ "nextlayerid": 5,
+ "nextobjectid": 5,
+ "properties": [
+  {
+   "name": "gv2prefab",
+   "type": "string",
+   "value": "house-red"
+  }
+ ],
+ "tilesets": [
+  {
+   "firstgid": 1,
+   "name": "gamev2",
+   "tilewidth": 64,
+   "tileheight": 64,
+   "tilecount": 3,
+   "columns": 0,
+   "objectalignment": "topleft",
+   "grid": {
+    "orientation": "orthogonal",
+    "width": 64,
+    "height": 64
+   },
+   "tiles": [
+    {
+     "id": 0,
+     "image": "../../assets/sprites/building-entrance-3_0_0.png",
+     "imagewidth": 192,
+     "imageheight": 64
+    },
+    {
+     "id": 1,
+     "image": "../../assets/sprites/building-roof-red_0_0.png",
+     "imagewidth": 192,
+     "imageheight": 192
+    },
+    {
+     "id": 2,
+     "image": "../../assets/sprites/collider-marker.png",
+     "imagewidth": 64,
+     "imageheight": 64
+    }
+   ]
+  }
+ ],
+ "layers": [
+  {
+   "type": "objectgroup",
+   "id": 1,
+   "name": "Collidables \u00b7obj",
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "draworder": "index",
+   "objects": [
+    {
+     "id": 1,
+     "gid": 1,
+     "name": "building-entrance-3_0_0",
+     "x": 0,
+     "y": 192,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    }
+   ],
+   "properties": [
+    {
+     "name": "gv2layer",
+     "type": "string",
+     "value": "Collidables"
+    },
+    {
+     "name": "z",
+     "type": "int",
+     "value": 5
+    },
+    {
+     "name": "collision",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "type": "objectgroup",
+   "id": 2,
+   "name": "Tops \u00b7obj",
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "draworder": "index",
+   "objects": [
+    {
+     "id": 2,
+     "gid": 2,
+     "name": "building-roof-red_0_0",
+     "x": 0,
+     "y": 0,
+     "width": 192,
+     "height": 192,
+     "visible": true
+    }
+   ],
+   "properties": [
+    {
+     "name": "gv2layer",
+     "type": "string",
+     "value": "Tops"
+    },
+    {
+     "name": "z",
+     "type": "int",
+     "value": 7
+    },
+    {
+     "name": "collision",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "type": "tilelayer",
+   "id": 3,
+   "name": "Colliders",
+   "width": 3,
+   "height": 4,
+   "x": 0,
+   "y": 0,
+   "opacity": 0.6,
+   "visible": true,
+   "data": [
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    0,
+    3
+   ],
+   "properties": [
+    {
+     "name": "gv2layer",
+     "type": "string",
+     "value": "Colliders"
+    },
+    {
+     "name": "z",
+     "type": "int",
+     "value": 5
+    },
+    {
+     "name": "collision",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "type": "objectgroup",
+   "id": 4,
+   "name": "Meta",
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "draworder": "index",
+   "objects": [
+    {
+     "id": 3,
+     "name": "door",
+     "point": true,
+     "x": 96.0,
+     "y": 224.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      }
+     ]
+    }
+   ],
+   "properties": [
+    {
+     "name": "gv2meta",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  }
+ ]
+}
