@@ -59,6 +59,7 @@ class MenuManager {
         // Menu options
         const menuOptions = [
             { text: 'Achievements', action: () => this.scene.showAchievements() },
+            { text: 'Time Travel', action: () => this.scene.datePicker.show() },
             { text: 'Map', action: () => this.scene.showMap() },
             { text: 'Credits', action: () => this.scene.showCredits() }
         ];

@@ -194,6 +194,7 @@ class GameScene extends Phaser.Scene {
 
             // Create managers
             this.menuManager = new MenuManager(this);
+            this.datePicker = new DatePicker(this);
             this.dialogueManager = new DialogueManager(this);
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
@@ -272,7 +273,7 @@ class GameScene extends Phaser.Scene {
         this.hudDateText.setDepth(DEPTH.HUD_TEXT);
         this.hudDateText.setResolution(1);
         this.hudDateText.setInteractive({ useHandCursor: true });
-        this.hudDateText.on('pointerdown', () => pickGameDate());
+        this.hudDateText.on('pointerdown', () => this.datePicker.show());
 
         // Menu button (right aligned)
         this.menuButton = this.add.text(

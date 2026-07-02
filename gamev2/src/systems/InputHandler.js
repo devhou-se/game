@@ -72,12 +72,24 @@ class InputHandler {
             return;
         }
 
+        // Priority 2c: Date picker overlay owns all input while open
+        if (this.scene.datePicker && this.scene.datePicker.isVisible()) {
+            this.scene.datePicker.handleInput();
+            return;
+        }
+
         // Priority 3: Menu toggle
         this.handleMenuToggle();
 
         // Priority 4: Menu navigation
         if (this.scene.menuManager.isVisible()) {
             this.handleMenuInput();
+            return;
+        }
+
+        // Priority 4.5: T opens the time-travel date picker
+        if (this.scene.datePicker && Phaser.Input.Keyboard.JustDown(this.scene.datePicker.keys.t)) {
+            this.scene.datePicker.show();
             return;
         }
 
