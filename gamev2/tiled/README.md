@@ -49,7 +49,18 @@ are only a fallback (`?maps=config`, or any room whose `.tmj` fails to load).
 
 ## Porting more Godot .tscn maps
 
-The old pipeline still exists for seeding: `tools/parse_godot_scene.py` and
-friends (repo root `tools/`) go `.tscn → config room`, then
-`tools/config_to_tiled.py` goes `config room → .tmj`. Once seeded, Tiled is
-the editor — don't hand-edit the generated `.tmj` back into config.
+The pipeline that produced all four rooms is committed in `tools/`:
+
+1. `tools/render_rect.py RX0 RX1 RY0 RY1 out.png` — render a candidate rect
+   of the Godot overworld (`Scenes/tokyo/tokyo_outside.tscn`) to pick a
+   district's bounds.
+2. `PORT_ROOM=<Name> PORT_RECT="RX0,RX1,RY0,RY1" python3 tools/doport.py` —
+   port that rect `.tscn → config.json` room (slices atlas tiles into
+   `assets/sprites/`, builds layers/collision/Y-sort data, merges into the
+   existing config preserving other rooms and hand-added transporters).
+3. `python3 tools/qa_port.py` — QA gate; fix any ERRORs before shipping.
+4. `python3 tools/config_to_tiled.py <Name>` — seed `tiled/<name>.tmj`.
+
+Once seeded, Tiled is the editor — don't hand-edit the generated `.tmj` back
+into config. (The repo-root `tools/parse_godot_scene.py` scripts are an older
+stale v1 pipeline; prefer `doport.py`.)
