@@ -13701,47 +13701,47 @@
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "brown-brick-autotile_0_0": {
+    "brown-brick-autotile_center": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "brown-brick-autotile_0_1": {
+    "brown-brick-autotile_corner-ne": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "brown-brick-autotile_0_2": {
+    "brown-brick-autotile_corner-nw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "brown-brick-autotile_1_0": {
+    "brown-brick-autotile_corner-se": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "brown-brick-autotile_1_1": {
+    "brown-brick-autotile_corner-sw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "brown-brick-autotile_1_2": {
+    "brown-brick-autotile_edge-e": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "brown-brick-autotile_2_0": {
+    "brown-brick-autotile_edge-n": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "brown-brick-autotile_2_1": {
+    "brown-brick-autotile_edge-s": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "brown-brick-autotile_2_2": {
+    "brown-brick-autotile_edge-w": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
@@ -13921,47 +13921,47 @@
       "loop": true,
       "scale": 1
     },
-    "dirt-outside-autotile_0_0": {
+    "dirt-outside-autotile_center": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "dirt-outside-autotile_0_1": {
+    "dirt-outside-autotile_corner-ne": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "dirt-outside-autotile_0_2": {
+    "dirt-outside-autotile_corner-nw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "dirt-outside-autotile_1_0": {
+    "dirt-outside-autotile_corner-se": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "dirt-outside-autotile_1_1": {
+    "dirt-outside-autotile_corner-sw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "dirt-outside-autotile_1_2": {
+    "dirt-outside-autotile_edge-e": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "dirt-outside-autotile_2_0": {
+    "dirt-outside-autotile_edge-n": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "dirt-outside-autotile_2_1": {
+    "dirt-outside-autotile_edge-s": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "dirt-outside-autotile_2_2": {
+    "dirt-outside-autotile_edge-w": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
@@ -14086,67 +14086,67 @@
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flat-grey-brick-autotile_0_0": {
+    "flat-grey-brick-autotile_center": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flat-grey-brick-autotile_0_1": {
+    "flat-grey-brick-autotile_corner-ne": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flat-grey-brick-autotile_0_2": {
+    "flat-grey-brick-autotile_corner-nw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flat-grey-brick-autotile_1_0": {
+    "flat-grey-brick-autotile_corner-se": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flat-grey-brick-autotile_1_1": {
+    "flat-grey-brick-autotile_corner-sw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flat-grey-brick-autotile_1_2": {
+    "flat-grey-brick-autotile_edge-e": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flat-grey-brick-autotile_2_0": {
+    "flat-grey-brick-autotile_edge-n": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flat-grey-brick-autotile_2_1": {
+    "flat-grey-brick-autotile_edge-s": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flat-grey-brick-autotile_2_2": {
+    "flat-grey-brick-autotile_edge-w": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flowering-grass-autotile_0_0": {
+    "flowering-grass-autotile_corner-ne": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flowering-grass-autotile_0_2": {
+    "flowering-grass-autotile_corner-nw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flowering-grass-autotile_2_0": {
+    "flowering-grass-autotile_corner-se": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "flowering-grass-autotile_2_2": {
+    "flowering-grass-autotile_corner-sw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
@@ -14164,137 +14164,137 @@
     "gk_blank": {
       "frameCount": 1
     },
-    "grass-autotile_0_0": {
+    "grass-autotile_center": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grass-autotile_0_1": {
+    "grass-autotile_corner-ne": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grass-autotile_0_2": {
+    "grass-autotile_corner-nw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grass-autotile_1_0": {
+    "grass-autotile_corner-se": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grass-autotile_1_1": {
+    "grass-autotile_corner-sw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grass-autotile_1_2": {
+    "grass-autotile_edge-e": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grass-autotile_2_0": {
+    "grass-autotile_edge-n": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grass-autotile_2_1": {
+    "grass-autotile_edge-s": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grass-autotile_2_2": {
+    "grass-autotile_edge-w": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gravel-autotile_0_0": {
+    "gravel-autotile_center": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gravel-autotile_0_1": {
+    "gravel-autotile_corner-ne": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gravel-autotile_0_2": {
+    "gravel-autotile_corner-nw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gravel-autotile_1_0": {
+    "gravel-autotile_corner-se": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gravel-autotile_1_1": {
+    "gravel-autotile_corner-sw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gravel-autotile_1_2": {
+    "gravel-autotile_edge-e": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gravel-autotile_2_0": {
+    "gravel-autotile_edge-n": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gravel-autotile_2_1": {
+    "gravel-autotile_edge-s": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gravel-autotile_2_2": {
+    "gravel-autotile_edge-w": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grey-brick-autotile_0_0": {
+    "grey-brick-autotile_center": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grey-brick-autotile_0_1": {
+    "grey-brick-autotile_corner-ne": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grey-brick-autotile_0_2": {
+    "grey-brick-autotile_corner-nw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grey-brick-autotile_1_0": {
+    "grey-brick-autotile_corner-se": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grey-brick-autotile_1_1": {
+    "grey-brick-autotile_corner-sw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grey-brick-autotile_1_2": {
+    "grey-brick-autotile_edge-e": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grey-brick-autotile_2_0": {
+    "grey-brick-autotile_edge-n": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grey-brick-autotile_2_1": {
+    "grey-brick-autotile_edge-s": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "grey-brick-autotile_2_2": {
+    "grey-brick-autotile_edge-w": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
@@ -14549,47 +14549,47 @@
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "light-concrete-autotile_0_0": {
+    "light-concrete-autotile_center": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "light-concrete-autotile_0_1": {
+    "light-concrete-autotile_corner-ne": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "light-concrete-autotile_0_2": {
+    "light-concrete-autotile_corner-nw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "light-concrete-autotile_1_0": {
+    "light-concrete-autotile_corner-se": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "light-concrete-autotile_1_1": {
+    "light-concrete-autotile_corner-sw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "light-concrete-autotile_1_2": {
+    "light-concrete-autotile_edge-e": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "light-concrete-autotile_2_0": {
+    "light-concrete-autotile_edge-n": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "light-concrete-autotile_2_1": {
+    "light-concrete-autotile_edge-s": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "light-concrete-autotile_2_2": {
+    "light-concrete-autotile_edge-w": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
@@ -14734,42 +14734,42 @@
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "pond-autotile_0_0": {
+    "pond-autotile_center": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "pond-autotile_0_2": {
+    "pond-autotile_corner-ne": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "pond-autotile_1_0": {
+    "pond-autotile_corner-nw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "pond-autotile_1_1": {
+    "pond-autotile_corner-se": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "pond-autotile_1_2": {
+    "pond-autotile_corner-sw": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "pond-autotile_2_0": {
+    "pond-autotile_edge-e": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "pond-autotile_2_1": {
+    "pond-autotile_edge-n": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "pond-autotile_2_2": {
+    "pond-autotile_edge-s": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
@@ -15401,15 +15401,15 @@
     "blue-wall-gate_0_0": "blue-wall-gate",
     "blue-wall-short_0_0": "blue-wall-short",
     "blue-wall-wet-side-roof_0_0": "blue-wall-wet-side-roof",
-    "brown-brick-autotile_0_0": "brown-brick-autotile",
-    "brown-brick-autotile_0_1": "brown-brick-autotile",
-    "brown-brick-autotile_0_2": "brown-brick-autotile",
-    "brown-brick-autotile_1_0": "brown-brick-autotile",
-    "brown-brick-autotile_1_1": "brown-brick-autotile",
-    "brown-brick-autotile_1_2": "brown-brick-autotile",
-    "brown-brick-autotile_2_0": "brown-brick-autotile",
-    "brown-brick-autotile_2_1": "brown-brick-autotile",
-    "brown-brick-autotile_2_2": "brown-brick-autotile",
+    "brown-brick-autotile_center": "brown-brick-autotile",
+    "brown-brick-autotile_corner-ne": "brown-brick-autotile",
+    "brown-brick-autotile_corner-nw": "brown-brick-autotile",
+    "brown-brick-autotile_corner-se": "brown-brick-autotile",
+    "brown-brick-autotile_corner-sw": "brown-brick-autotile",
+    "brown-brick-autotile_edge-e": "brown-brick-autotile",
+    "brown-brick-autotile_edge-n": "brown-brick-autotile",
+    "brown-brick-autotile_edge-s": "brown-brick-autotile",
+    "brown-brick-autotile_edge-w": "brown-brick-autotile",
     "brown-brick-floor-tiles_11_3": "brown-brick-floor-tiles",
     "brown-brick-floor-tiles_15_3": "brown-brick-floor-tiles",
     "brown-brick-floor-tiles_1_2": "brown-brick-floor-tiles",
@@ -15433,15 +15433,15 @@
     "castle-wall-southeast-corner_0_0": "castle-wall-southeast-corner",
     "castle-wall-southwest-corner_0_0": "castle-wall-southwest-corner",
     "centred-lamp-top-unlit_0_0": "centred-lamp-top-unlit",
-    "dirt-outside-autotile_0_0": "dirt-outside-autotile",
-    "dirt-outside-autotile_0_1": "dirt-outside-autotile",
-    "dirt-outside-autotile_0_2": "dirt-outside-autotile",
-    "dirt-outside-autotile_1_0": "dirt-outside-autotile",
-    "dirt-outside-autotile_1_1": "dirt-outside-autotile",
-    "dirt-outside-autotile_1_2": "dirt-outside-autotile",
-    "dirt-outside-autotile_2_0": "dirt-outside-autotile",
-    "dirt-outside-autotile_2_1": "dirt-outside-autotile",
-    "dirt-outside-autotile_2_2": "dirt-outside-autotile",
+    "dirt-outside-autotile_center": "dirt-outside-autotile",
+    "dirt-outside-autotile_corner-ne": "dirt-outside-autotile",
+    "dirt-outside-autotile_corner-nw": "dirt-outside-autotile",
+    "dirt-outside-autotile_corner-se": "dirt-outside-autotile",
+    "dirt-outside-autotile_corner-sw": "dirt-outside-autotile",
+    "dirt-outside-autotile_edge-e": "dirt-outside-autotile",
+    "dirt-outside-autotile_edge-n": "dirt-outside-autotile",
+    "dirt-outside-autotile_edge-s": "dirt-outside-autotile",
+    "dirt-outside-autotile_edge-w": "dirt-outside-autotile",
     "fence-barriers_0_2": "fence-barriers",
     "fence-barriers_0_3": "fence-barriers",
     "fence-barriers_1_2": "fence-barriers",
@@ -15454,48 +15454,48 @@
     "fence-garden-outside_4_5": "fence-garden-outside",
     "fence-garden-outside_6_3": "fence-garden-outside",
     "fence-garden-outside_8_3": "fence-garden-outside",
-    "flat-grey-brick-autotile_0_0": "flat-grey-brick-autotile",
-    "flat-grey-brick-autotile_0_1": "flat-grey-brick-autotile",
-    "flat-grey-brick-autotile_0_2": "flat-grey-brick-autotile",
-    "flat-grey-brick-autotile_1_0": "flat-grey-brick-autotile",
-    "flat-grey-brick-autotile_1_1": "flat-grey-brick-autotile",
-    "flat-grey-brick-autotile_1_2": "flat-grey-brick-autotile",
-    "flat-grey-brick-autotile_2_0": "flat-grey-brick-autotile",
-    "flat-grey-brick-autotile_2_1": "flat-grey-brick-autotile",
-    "flat-grey-brick-autotile_2_2": "flat-grey-brick-autotile",
-    "flowering-grass-autotile_0_0": "flowering-grass-autotile",
-    "flowering-grass-autotile_0_2": "flowering-grass-autotile",
-    "flowering-grass-autotile_2_0": "flowering-grass-autotile",
-    "flowering-grass-autotile_2_2": "flowering-grass-autotile",
+    "flat-grey-brick-autotile_center": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_corner-ne": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_corner-nw": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_corner-se": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_corner-sw": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_edge-e": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_edge-n": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_edge-s": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_edge-w": "flat-grey-brick-autotile",
+    "flowering-grass-autotile_corner-ne": "flowering-grass-autotile",
+    "flowering-grass-autotile_corner-nw": "flowering-grass-autotile",
+    "flowering-grass-autotile_corner-se": "flowering-grass-autotile",
+    "flowering-grass-autotile_corner-sw": "flowering-grass-autotile",
     "fox-statue-base-1_0_0": "fox-statue-base-1",
     "fox-statue-base-2_0_0": "fox-statue-base-2",
-    "grass-autotile_0_0": "grass-autotile",
-    "grass-autotile_0_1": "grass-autotile",
-    "grass-autotile_0_2": "grass-autotile",
-    "grass-autotile_1_0": "grass-autotile",
-    "grass-autotile_1_1": "grass-autotile",
-    "grass-autotile_1_2": "grass-autotile",
-    "grass-autotile_2_0": "grass-autotile",
-    "grass-autotile_2_1": "grass-autotile",
-    "grass-autotile_2_2": "grass-autotile",
-    "gravel-autotile_0_0": "gravel_autotile",
-    "gravel-autotile_0_1": "gravel_autotile",
-    "gravel-autotile_0_2": "gravel_autotile",
-    "gravel-autotile_1_0": "gravel_autotile",
-    "gravel-autotile_1_1": "gravel_autotile",
-    "gravel-autotile_1_2": "gravel_autotile",
-    "gravel-autotile_2_0": "gravel_autotile",
-    "gravel-autotile_2_1": "gravel_autotile",
-    "gravel-autotile_2_2": "gravel_autotile",
-    "grey-brick-autotile_0_0": "grey-brick-autotile",
-    "grey-brick-autotile_0_1": "grey-brick-autotile",
-    "grey-brick-autotile_0_2": "grey-brick-autotile",
-    "grey-brick-autotile_1_0": "grey-brick-autotile",
-    "grey-brick-autotile_1_1": "grey-brick-autotile",
-    "grey-brick-autotile_1_2": "grey-brick-autotile",
-    "grey-brick-autotile_2_0": "grey-brick-autotile",
-    "grey-brick-autotile_2_1": "grey-brick-autotile",
-    "grey-brick-autotile_2_2": "grey-brick-autotile",
+    "grass-autotile_center": "grass-autotile",
+    "grass-autotile_corner-ne": "grass-autotile",
+    "grass-autotile_corner-nw": "grass-autotile",
+    "grass-autotile_corner-se": "grass-autotile",
+    "grass-autotile_corner-sw": "grass-autotile",
+    "grass-autotile_edge-e": "grass-autotile",
+    "grass-autotile_edge-n": "grass-autotile",
+    "grass-autotile_edge-s": "grass-autotile",
+    "grass-autotile_edge-w": "grass-autotile",
+    "gravel-autotile_center": "gravel_autotile",
+    "gravel-autotile_corner-ne": "gravel_autotile",
+    "gravel-autotile_corner-nw": "gravel_autotile",
+    "gravel-autotile_corner-se": "gravel_autotile",
+    "gravel-autotile_corner-sw": "gravel_autotile",
+    "gravel-autotile_edge-e": "gravel_autotile",
+    "gravel-autotile_edge-n": "gravel_autotile",
+    "gravel-autotile_edge-s": "gravel_autotile",
+    "gravel-autotile_edge-w": "gravel_autotile",
+    "grey-brick-autotile_center": "grey-brick-autotile",
+    "grey-brick-autotile_corner-ne": "grey-brick-autotile",
+    "grey-brick-autotile_corner-nw": "grey-brick-autotile",
+    "grey-brick-autotile_corner-se": "grey-brick-autotile",
+    "grey-brick-autotile_corner-sw": "grey-brick-autotile",
+    "grey-brick-autotile_edge-e": "grey-brick-autotile",
+    "grey-brick-autotile_edge-n": "grey-brick-autotile",
+    "grey-brick-autotile_edge-s": "grey-brick-autotile",
+    "grey-brick-autotile_edge-w": "grey-brick-autotile",
     "grey-brick-floor-tiles_10_0": "grey-brick-floor-tiles",
     "grey-brick-floor-tiles_10_1": "grey-brick-floor-tiles",
     "grey-brick-floor-tiles_11_0": "grey-brick-floor-tiles",
@@ -15522,15 +15522,15 @@
     "kirin-statue-2-bottom_0_0": "kirin-statue-2-bottom",
     "kirin-statue-2-top_0_0": "kirin-statue-2-top",
     "lamp-base_0_0": "lamp-base",
-    "light-concrete-autotile_0_0": "light-concrete-autotile",
-    "light-concrete-autotile_0_1": "light-concrete-autotile",
-    "light-concrete-autotile_0_2": "light-concrete-autotile",
-    "light-concrete-autotile_1_0": "light-concrete-autotile",
-    "light-concrete-autotile_1_1": "light-concrete-autotile",
-    "light-concrete-autotile_1_2": "light-concrete-autotile",
-    "light-concrete-autotile_2_0": "light-concrete-autotile",
-    "light-concrete-autotile_2_1": "light-concrete-autotile",
-    "light-concrete-autotile_2_2": "light-concrete-autotile",
+    "light-concrete-autotile_center": "light-concrete-autotile",
+    "light-concrete-autotile_corner-ne": "light-concrete-autotile",
+    "light-concrete-autotile_corner-nw": "light-concrete-autotile",
+    "light-concrete-autotile_corner-se": "light-concrete-autotile",
+    "light-concrete-autotile_corner-sw": "light-concrete-autotile",
+    "light-concrete-autotile_edge-e": "light-concrete-autotile",
+    "light-concrete-autotile_edge-n": "light-concrete-autotile",
+    "light-concrete-autotile_edge-s": "light-concrete-autotile",
+    "light-concrete-autotile_edge-w": "light-concrete-autotile",
     "moat-east-rocks_0_0": "moat-east-rocks",
     "moat-east_0_0": "moat-east",
     "moat-north-east-corner_0_0": "moat-north-east-corner",
@@ -15551,14 +15551,14 @@
     "pavers_2_0": "pavers",
     "pavers_2_1": "pavers",
     "pavers_2_2": "pavers",
-    "pond-autotile_0_0": "pond-autotile",
-    "pond-autotile_0_2": "pond-autotile",
-    "pond-autotile_1_0": "pond-autotile",
-    "pond-autotile_1_1": "pond-autotile",
-    "pond-autotile_1_2": "pond-autotile",
-    "pond-autotile_2_0": "pond-autotile",
-    "pond-autotile_2_1": "pond-autotile",
-    "pond-autotile_2_2": "pond-autotile",
+    "pond-autotile_center": "pond-autotile",
+    "pond-autotile_corner-ne": "pond-autotile",
+    "pond-autotile_corner-nw": "pond-autotile",
+    "pond-autotile_corner-se": "pond-autotile",
+    "pond-autotile_corner-sw": "pond-autotile",
+    "pond-autotile_edge-e": "pond-autotile",
+    "pond-autotile_edge-n": "pond-autotile",
+    "pond-autotile_edge-s": "pond-autotile",
     "pond-leaf_0_0": "pond-leaf",
     "red-centre-roof_0_0": "red-centre-roof",
     "red-lanterns_3_1": "red-lanterns",
@@ -15674,24 +15674,24 @@
     "yellow-vending-machine-top_0_0": "yellow-vending-machine-top"
   },
   "tilePalette": [
-    "grey-brick-autotile_0_0",
-    "grey-brick-autotile_0_1",
-    "grey-brick-autotile_0_2",
-    "grey-brick-autotile_1_0",
-    "grey-brick-autotile_1_1",
-    "grey-brick-autotile_1_2",
-    "grey-brick-autotile_2_0",
-    "grey-brick-autotile_2_1",
-    "grey-brick-autotile_2_2",
-    "brown-brick-autotile_0_0",
-    "brown-brick-autotile_0_1",
-    "brown-brick-autotile_0_2",
-    "brown-brick-autotile_1_0",
-    "brown-brick-autotile_1_1",
-    "brown-brick-autotile_1_2",
-    "brown-brick-autotile_2_0",
-    "brown-brick-autotile_2_1",
-    "brown-brick-autotile_2_2",
+    "grey-brick-autotile_corner-nw",
+    "grey-brick-autotile_edge-w",
+    "grey-brick-autotile_corner-sw",
+    "grey-brick-autotile_edge-n",
+    "grey-brick-autotile_center",
+    "grey-brick-autotile_edge-s",
+    "grey-brick-autotile_corner-ne",
+    "grey-brick-autotile_edge-e",
+    "grey-brick-autotile_corner-se",
+    "brown-brick-autotile_corner-nw",
+    "brown-brick-autotile_edge-w",
+    "brown-brick-autotile_corner-sw",
+    "brown-brick-autotile_edge-n",
+    "brown-brick-autotile_center",
+    "brown-brick-autotile_edge-s",
+    "brown-brick-autotile_corner-ne",
+    "brown-brick-autotile_edge-e",
+    "brown-brick-autotile_corner-se",
     "red-pagoda-roofs_0_0",
     "red-pagoda-roofs_0_1",
     "red-pagoda-roofs_0_2",
@@ -15738,15 +15738,15 @@
     "red-shrine-top-parts_4_5",
     "red-shrine-top-parts_4_7",
     "red-shrine-top-parts_4_8",
-    "grass-autotile_0_0",
-    "grass-autotile_0_1",
-    "grass-autotile_0_2",
-    "grass-autotile_1_0",
-    "grass-autotile_1_1",
-    "grass-autotile_1_2",
-    "grass-autotile_2_0",
-    "grass-autotile_2_1",
-    "grass-autotile_2_2",
+    "grass-autotile_corner-nw",
+    "grass-autotile_edge-w",
+    "grass-autotile_corner-sw",
+    "grass-autotile_edge-n",
+    "grass-autotile_center",
+    "grass-autotile_edge-s",
+    "grass-autotile_corner-ne",
+    "grass-autotile_edge-e",
+    "grass-autotile_corner-se",
     "red-small-pagoda-top_2_0",
     "red-small-pagoda-top_2_1",
     "red-pagoda-spacing_0_0",
@@ -15797,24 +15797,24 @@
     "building-roof-blue_0_0",
     "building-roof-red_0_0",
     "moat-west_0_0",
-    "gravel-autotile_0_0",
-    "gravel-autotile_0_1",
-    "gravel-autotile_0_2",
-    "gravel-autotile_1_0",
-    "gravel-autotile_1_1",
-    "gravel-autotile_1_2",
-    "gravel-autotile_2_0",
-    "gravel-autotile_2_1",
-    "gravel-autotile_2_2",
-    "light-concrete-autotile_0_0",
-    "light-concrete-autotile_0_1",
-    "light-concrete-autotile_0_2",
-    "light-concrete-autotile_1_0",
-    "light-concrete-autotile_1_1",
-    "light-concrete-autotile_1_2",
-    "light-concrete-autotile_2_0",
-    "light-concrete-autotile_2_1",
-    "light-concrete-autotile_2_2",
+    "gravel-autotile_corner-nw",
+    "gravel-autotile_edge-w",
+    "gravel-autotile_corner-sw",
+    "gravel-autotile_edge-n",
+    "gravel-autotile_center",
+    "gravel-autotile_edge-s",
+    "gravel-autotile_corner-ne",
+    "gravel-autotile_edge-e",
+    "gravel-autotile_corner-se",
+    "light-concrete-autotile_corner-nw",
+    "light-concrete-autotile_edge-w",
+    "light-concrete-autotile_corner-sw",
+    "light-concrete-autotile_edge-n",
+    "light-concrete-autotile_center",
+    "light-concrete-autotile_edge-s",
+    "light-concrete-autotile_corner-ne",
+    "light-concrete-autotile_edge-e",
+    "light-concrete-autotile_corner-se",
     "red-pagoda-small-base_0_0",
     "red-pagoda-small-top_0_0",
     "moat-north_0_0",
@@ -15822,15 +15822,15 @@
     "white-vending-machine-bottom_0_0",
     "red-vending-machine-top_0_0",
     "white-vending-machine-top_0_0",
-    "flat-grey-brick-autotile_0_0",
-    "flat-grey-brick-autotile_0_1",
-    "flat-grey-brick-autotile_0_2",
-    "flat-grey-brick-autotile_1_0",
-    "flat-grey-brick-autotile_1_1",
-    "flat-grey-brick-autotile_1_2",
-    "flat-grey-brick-autotile_2_0",
-    "flat-grey-brick-autotile_2_1",
-    "flat-grey-brick-autotile_2_2",
+    "flat-grey-brick-autotile_corner-nw",
+    "flat-grey-brick-autotile_edge-w",
+    "flat-grey-brick-autotile_corner-sw",
+    "flat-grey-brick-autotile_edge-n",
+    "flat-grey-brick-autotile_center",
+    "flat-grey-brick-autotile_edge-s",
+    "flat-grey-brick-autotile_corner-ne",
+    "flat-grey-brick-autotile_edge-e",
+    "flat-grey-brick-autotile_corner-se",
     "moat-south_0_0",
     "train-track_0_0",
     "fence-barriers_0_2",
@@ -15868,15 +15868,15 @@
     "moat-north-east-corner_0_0",
     "moat-south-west-corner_0_0",
     "moat-sourth-east-corner_0_0",
-    "dirt-outside-autotile_0_0",
-    "dirt-outside-autotile_0_1",
-    "dirt-outside-autotile_0_2",
-    "dirt-outside-autotile_1_0",
-    "dirt-outside-autotile_1_1",
-    "dirt-outside-autotile_1_2",
-    "dirt-outside-autotile_2_0",
-    "dirt-outside-autotile_2_1",
-    "dirt-outside-autotile_2_2",
+    "dirt-outside-autotile_corner-nw",
+    "dirt-outside-autotile_edge-w",
+    "dirt-outside-autotile_corner-sw",
+    "dirt-outside-autotile_edge-n",
+    "dirt-outside-autotile_center",
+    "dirt-outside-autotile_edge-s",
+    "dirt-outside-autotile_corner-ne",
+    "dirt-outside-autotile_edge-e",
+    "dirt-outside-autotile_corner-se",
     "road-edge-top_0_0",
     "temple-hallway_0_0",
     "castle-wall-siding_0_0",
@@ -15899,21 +15899,21 @@
     "tile-brick-path_2_1",
     "tile-brick-path_3_1",
     "tile-brick-path_4_0",
-    "flowering-grass-autotile_0_0",
-    "flowering-grass-autotile_0_2",
-    "flowering-grass-autotile_2_0",
-    "flowering-grass-autotile_2_2",
+    "flowering-grass-autotile_corner-nw",
+    "flowering-grass-autotile_corner-sw",
+    "flowering-grass-autotile_corner-ne",
+    "flowering-grass-autotile_corner-se",
     "shrub-large-circle_0_0",
     "shrub-small-circle_0_0",
     "pond-leaf_0_0",
-    "pond-autotile_0_0",
-    "pond-autotile_0_2",
-    "pond-autotile_1_0",
-    "pond-autotile_1_1",
-    "pond-autotile_1_2",
-    "pond-autotile_2_0",
-    "pond-autotile_2_1",
-    "pond-autotile_2_2",
+    "pond-autotile_corner-nw",
+    "pond-autotile_corner-sw",
+    "pond-autotile_edge-n",
+    "pond-autotile_center",
+    "pond-autotile_edge-s",
+    "pond-autotile_corner-ne",
+    "pond-autotile_edge-e",
+    "pond-autotile_corner-se",
     "bell-blue-baseless_0_0",
     "blue-lanterns_4_1",
     "blue-lanterns_5_0",

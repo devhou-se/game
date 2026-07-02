@@ -29,7 +29,13 @@ The `.tmj` files themselves must stay in `gamev2/tiled/` — Firebase deploys th
   sprite key (`../assets/sprites/<key>.png`). To use a new sprite, add its PNG
   to `assets/sprites/` and add it to the tileset in Tiled.
 - **Tile layers** hold flat 1×1 ground (floor/path/water/colliders) — paint
-  freely.
+  freely. **For floors, use the Terrain Brush** (View → Toolbars, or press
+  `T`): every autotile family (gravel, grass, pond, the brick floors…) is a
+  wang set in the tileset, so painting "grass" places the right edge/corner
+  pieces automatically — same feel as Godot's autotile. The individual pieces
+  are also named by role (`gravel-autotile_edge-n`, `_corner-nw`, `_center`)
+  if you ever need to place one by hand. The roles come from the Godot
+  autotile bitmasks (`tools/autotile.py` converts both ways).
 - **Object layers** named `<layer> ·obj` hold multi-cell sprites
   (trees/statues/buildings) as tile-objects. The tileset is
   `objectalignment=topleft`, so an object's position is its top-left cell —

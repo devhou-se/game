@@ -19,7 +19,8 @@ so the whole existing renderer (feet-based Y-sort included) is reused untouched.
 
 Usage:  python3 tools/config_to_tiled.py [RoomName]   (default: Tokyo)
 """
-import json, struct, os, sys
+import json, struct, os, sys, re, hashlib
+import autotile
 
 GS = 64
 
@@ -56,6 +57,24 @@ def main():
         'tiles': [{'id': kid[k], 'image': f'../assets/sprites/{k}.png',
                    'imagewidth': sizes[k][0], 'imageheight': sizes[k][1]} for k in keys],
     }
+
+    # Terrain painting: the autotile pieces carry their role in the key
+    # (gravel-autotile_edge-n, ..._center, ..._corner-nw — from the Godot
+    # bitmasks via doport). Invert the roles into one Tiled wang set per
+    # family so the Terrain Brush places edges/corners automatically.
+    ROLE_RE = re.compile(r'^(.+)_((?:center|single|edge|corner|inner|end)(?:-[a-z0-9]+)*)$')
+    fams = {}
+    for k in keys:
+        m = ROLE_RE.match(k)
+        wid = m and autotile.role_to_wangid(m.group(2))
+        if wid: fams.setdefault(m.group(1), []).append((kid[k], wid))
+    if fams:
+        tileset['wangsets'] = [{
+            'name': fam, 'type': 'mixed', 'tile': -1,
+            'colors': [{'name': fam, 'tile': -1, 'probability': 1,
+                        'color': '#' + hashlib.md5(fam.encode()).hexdigest()[:6]}],
+            'wangtiles': [{'tileid': t, 'wangid': w} for t, w in sorted(tiles)],
+        } for fam, tiles in sorted(fams.items())]
 
     layers = []
     lid = 1

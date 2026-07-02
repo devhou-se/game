@@ -81,17 +81,32 @@ byl={n:(t,c) for n,t,c in layers}
 regtiles={}  # key -> (PIL, anchorX, anchorY)
 KEYNAMES={}     # key -> human tile name (filled by regkey, consumed by the tileNames union)
 _NAME_OWNER={}  # slug -> first (tsid,tid) that claimed it
+import autotile as _at
+_BM={}      # tsid -> {tid: {(cx,cy): mask}} from the tileset's autotile bitmasks
+_ROLES={}   # (tsid,tid) -> {(cx,cy): role}
+def _subrole(tsid,tid,cx,cy):
+    if tsid not in _BM:
+        p=tsmap.get(tsid)
+        _BM[tsid]=_at.parse_bitmasks(p) if p else {}
+    flags=_BM[tsid].get(tid)
+    if not flags or (cx,cy) not in flags: return None
+    if (tsid,tid) not in _ROLES: _ROLES[(tsid,tid)]=_at.subtile_roles(flags)
+    return _ROLES[(tsid,tid)].get((cx,cy))
 def regkey(tsid,tid,cx,cy,fh,fv):
-    # Semantic sprite keys: <godot-tile-name-slug>_<cx>_<cy>[_h][_v], so the
-    # PNG filename says what the tile IS (sakura-large-top_1_0.png, not
-    # gk1_33_1_0.png). Unnamed tiles fall back to the old gk scheme; a name
-    # reused by a different tile id gets a deterministic -<tsid>-<tid> suffix.
+    # Semantic sprite keys, so the PNG filename says what the tile IS:
+    #   fixed tiles:      <godot-tile-name-slug>_<cx>_<cy>   (sakura-large-top_1_0)
+    #   autotile pieces:  <slug>_<role>                       (gravel-autotile_edge-n)
+    # where role comes from the Godot autotile bitmask (center / edge-* /
+    # corner-* / inner-* ...). Unnamed tiles fall back to the old gk scheme; a
+    # name reused by a different tile id gets a deterministic -<tsid>-<tid>
+    # suffix. config_to_tiled.py inverts the role names into Tiled wang sets.
     nm=(tilesets.get(tsid,{}).get(tid,{}).get('name') or '').strip()
     base=re.sub(r'[^a-z0-9]+','-',nm.lower()).strip('-') if nm else f"gk{tsid}_{tid}"
     if nm:
         owner=_NAME_OWNER.setdefault(base,(tsid,tid))
         if owner!=(tsid,tid): base=f"{base}-{tsid}-{tid}"
-    key=f"{base}_{cx}_{cy}{'_h' if fh else ''}{'_v' if fv else ''}"
+    suffix=_subrole(tsid,tid,cx,cy) or f"{cx}_{cy}"
+    key=f"{base}_{suffix}{'_h' if fh else ''}{'_v' if fv else ''}"
     if nm: KEYNAMES[key]=nm
     return key
 
