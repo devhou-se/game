@@ -1,0 +1,34 @@
+{
+  "maps": [
+    {
+      "fileName": "gamev2/tiled/tokyo.tmj",
+      "x": 0,
+      "y": 64,
+      "width": 3776,
+      "height": 2944
+    },
+    {
+      "fileName": "gamev2/tiled/market.tmj",
+      "x": 3712,
+      "y": 0,
+      "width": 3776,
+      "height": 3072
+    },
+    {
+      "fileName": "gamev2/tiled/palace.tmj",
+      "x": 3712,
+      "y": 3008,
+      "width": 3776,
+      "height": 1408
+    },
+    {
+      "fileName": "gamev2/tiled/park.tmj",
+      "x": 3712,
+      "y": 4160,
+      "width": 3776,
+      "height": 2816
+    }
+  ],
+  "onlyShowAdjacentMaps": false,
+  "type": "world"
+}

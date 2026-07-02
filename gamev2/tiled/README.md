@@ -12,9 +12,16 @@ are only a fallback (`?maps=config`, or any room whose `.tmj` fails to load).
 
 ## Workflow
 
-1. Open the room's `.tmj` in Tiled (e.g. `tiled/tokyo.tmj`).
+1. Open **`devhouse.world` at the repo root** (`open -a Tiled devhouse.world`) —
+   it shows all four rooms in one view, laid out in their true overworld
+   positions (roads line up across the map seams). Click a room to edit it.
+   Individual maps also open directly (e.g. `tiled/tokyo.tmj`), and
+   `devhouse.tiled-project` at the root gives a project sidebar.
 2. Edit and save (keep the JSON `.tmj` format).
 3. Refresh the browser — maps are fetched cache-busted, no build step.
+
+The `.tmj` files themselves must stay in `gamev2/tiled/` — Firebase deploys the
+`gamev2/` folder and the tileset references sprites by relative path.
 
 ## Map conventions (what the adapter expects)
 
