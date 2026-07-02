@@ -22,6 +22,14 @@ class GameScene extends Phaser.Scene {
         // Load config with cache-busting
         this.load.json("config", `config.json?t=${Date.now()}`);
 
+        // Map screen: world-map.json is the contract (a replaceable overworld
+        // image + per-room rects) — regenerate with tools/make_worldmap.py, or
+        // ship hand-drawn art and set "custom": true
+        this.load.json('worldMap', `assets/map/world-map.json?t=${Date.now()}`);
+        this.load.once('filecomplete-json-worldMap', (key, type, data) => {
+            if (data.image) this.load.image('world-map', `${data.image}?t=${Date.now()}`);
+        });
+
         // Dynamically load sprite frames for animations when config loads
         this.load.once('filecomplete-json-config', (key, type, data) => {
             // Maps are authored in Tiled: enqueue every room's .tmj (files added
@@ -97,6 +105,8 @@ class GameScene extends Phaser.Scene {
             this.creditsCloseCallback = null;
             this.achievementsVisible = false;
             this.achievementsCloseCallback = null;
+            this.mapVisible = false;
+            this.mapCloseCallback = null;
 
             // Calculate grid boundaries
             const minGridX = 0;
@@ -361,7 +371,122 @@ class GameScene extends Phaser.Scene {
      * Show map (placeholder)
      */
     showMap() {
-        console.log('Map feature coming soon!');
+        if (this.mapVisible) return;   // only one overlay at a time
+        const meta = this.cache.json.get('worldMap');
+        if (!meta || !meta.rooms || !this.textures.exists('world-map')) {
+            console.warn('world map assets missing — run tools/make_worldmap.py');
+            return;
+        }
+        const cam = this.cameras.main, W = cam.width, H = cam.height;
+        const objs = [];
+
+        const overlay = this.add.graphics();
+        overlay.fillStyle(0x000000, 0.85); overlay.fillRect(0, 0, W, H);
+        overlay.setScrollFactor(0); overlay.setDepth(2000);
+        overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, W, H), Phaser.Geom.Rectangle.Contains);
+        objs.push(overlay);
+
+        // fit the overworld into the viewport (never upscale past 1:1)
+        const s = Math.min((W - 120) / meta.width, (H - 170) / meta.height, 1);
+        const dw = meta.width * s, dh = meta.height * s;
+        const px = (W - dw) / 2, py = (H - dh) / 2 + 14;
+
+        const img = this.add.image(px, py, 'world-map');
+        img.setOrigin(0, 0); img.setDisplaySize(dw, dh);
+        img.setScrollFactor(0); img.setDepth(2001); objs.push(img);
+        const frame = this.add.graphics();
+        frame.lineStyle(2, 0x666666, 1); frame.strokeRect(px, py, dw, dh);
+        frame.setScrollFactor(0); frame.setDepth(2002); objs.push(frame);
+
+        const text = (x, y, t, size, bold, color, bg) => {
+            const o = this.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
+                fontFamily: bold ? 'PixelOperatorMonoBold' : 'PixelOperatorMono',
+                backgroundColor: bg });
+            o.setOrigin(0.5, 0.5); o.setResolution(1);
+            o.setScrollFactor(0); o.setDepth(2003); objs.push(o); return o;
+        };
+        text(W / 2, py - 24, 'MAP', '26px', true);
+
+        // labels dodge each other: try offsets around the anchor until the
+        // label's bounds don't intersect anything already placed
+        const placed = [];
+        const placeLabel = (x, y, t, size, bold, color) => {
+            const o = text(x, y, t, size, bold, color, 'rgba(0,0,0,0.65)');
+            const tries = [[0, 0], [0, -16], [0, 16], [22, 0], [-22, 0],
+                           [0, -32], [0, 32], [26, -16], [-26, -16], [26, 16], [-26, 16]];
+            for (const [dx, dy] of tries) {
+                o.setPosition(x + dx, y + dy);
+                const b = o.getBounds();
+                if (!placed.some(p => Phaser.Geom.Rectangle.Overlaps(p, b))) break;
+            }
+            placed.push(o.getBounds());
+            return o;
+        };
+
+        // grid cell -> screen, through the room's OWN rect (so replacement
+        // map art doesn't need to be to scale — each room maps independently)
+        const cellToMap = (r, gx, gy) => [
+            px + (r.x + (gx + 0.5) * (r.w / r.cells[0])) * s,
+            py + (r.y + (gy + 0.5) * (r.h / r.cells[1])) * s,
+        ];
+        const mkDot = (mx, my, color, radius) => {
+            const dot = this.add.graphics();
+            dot.fillStyle(color, 1); dot.fillCircle(0, 0, radius);
+            dot.lineStyle(2, 0x000000, 1); dot.strokeCircle(0, 0, radius);
+            dot.setPosition(mx, my); dot.setScrollFactor(0); dot.setDepth(2004);
+            objs.push(dot); return dot;
+        };
+
+        // an interior isn't ON the map — the player is marked at its entrance
+        // (where the interior's exit transporter lands in the overworld)
+        const here = this.roomManager.currentRoom;
+        let markRoom = meta.rooms[here] && here;
+        let markX = this.player.gridX, markY = this.player.gridY;
+        if (!markRoom) {
+            const exit = (this.config.rooms[here].transporters || [])
+                .find(t => meta.rooms[t.targetRoom]);
+            if (exit) { markRoom = exit.targetRoom; markX = exit.targetX; markY = exit.targetY; }
+        }
+
+        // room labels (current/containing room in gold)
+        for (const name in meta.rooms) {
+            const r = meta.rooms[name];
+            placeLabel(px + (r.x + r.w / 2) * s, py + (r.y + r.h / 2) * s,
+                       name, '18px', true, name === markRoom ? '#ffd700' : '#ffffff');
+        }
+
+        // every NPC in overworld rooms, at their live (dated, wandering) position
+        for (const roomName in meta.rooms) {
+            const rRoom = this.roomManager.rooms[roomName];
+            if (!rRoom) continue;
+            for (const npc of rRoom.npcs) {
+                const [mx, my] = cellToMap(meta.rooms[roomName], npc.gridX, npc.gridY);
+                mkDot(mx, my, 0x66bbff, 4);
+                placeLabel(mx, my - 15, npc.name, '14px', false, '#aaddff');
+            }
+        }
+
+        // "you are here" — gold pulsing dot
+        let footer = `you are here: ${here}`;
+        if (markRoom) {
+            const [mx, my] = cellToMap(meta.rooms[markRoom], markX, markY);
+            const dot = mkDot(mx, my, 0xffd700, 6);
+            placeLabel(mx, my - 16, 'You', '14px', true, '#ffd700');
+            const pulse = this.tweens.add({ targets: dot, scale: 1.6, duration: 500,
+                                            yoyo: true, repeat: -1 });
+            objs.push({ destroy: () => pulse.stop() });
+            if (markRoom !== here) footer = `you are here: ${here} (in ${markRoom})`;
+        }
+        text(W / 2, py + dh + 20, `${footer}   ·   click or ESC to close`, '13px', false, '#bbbbbb');
+
+        const close = () => {
+            this.mapVisible = false;
+            this.mapCloseCallback = null;
+            objs.forEach(o => o.destroy());
+        };
+        this.mapVisible = true;
+        this.mapCloseCallback = close;
+        overlay.on('pointerdown', close);
     }
 
     /**

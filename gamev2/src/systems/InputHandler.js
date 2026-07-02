@@ -72,6 +72,14 @@ class InputHandler {
             return;
         }
 
+        // Priority 2b2: Map overlay — ESC closes it (not the menu)
+        if (this.scene.mapVisible) {
+            const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
+            if (escPressed && this.scene.mapCloseCallback) this.scene.mapCloseCallback();
+            this.lastKeyState.esc = this.escKey.isDown;
+            return;
+        }
+
         // Priority 2c: Date picker overlay owns all input while open
         if (this.scene.datePicker && this.scene.datePicker.isVisible()) {
             this.scene.datePicker.handleInput();
