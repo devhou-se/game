@@ -7,6 +7,9 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        // Drive the HTML loading screen (index.html) with real progress
+        this.load.on('progress', (v) => { if (window.updateLoader) window.updateLoader(v); });
+
         // Load pixel fonts
         this.load.font('PressStart2P', 'fonts/PressStart2P-Regular.ttf');
         this.load.font('PixelOperatorMono', 'fonts/PixelOperatorMono.ttf');
@@ -215,8 +218,12 @@ class GameScene extends Phaser.Scene {
             // Create HUD
             this.createHUD();
 
+            // playable — drop the loading screen
+            if (window.hideLoader) window.hideLoader();
+
         } catch (error) {
             console.error('Error creating game scene:', error);
+            if (window.failLoader) window.failLoader();
             throw error;
         }
     }

@@ -24,6 +24,51 @@
     </style>
 </head>
 <body>
+    <!-- Loading screen: visible instantly, progress driven by Phaser's loader
+         (GameScene.preload), dismissed at the end of create() when the game
+         is actually playable. -->
+    <div id="loader">
+        <div id="loader-title">game.devhou.se</div>
+        <div id="loader-bar-outer"><div id="loader-bar"></div></div>
+        <div id="loader-status">starting&hellip;</div>
+    </div>
+    <style>
+        #loader {
+            position: fixed; inset: 0; z-index: 10000; background: #0a0a12;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Courier New', monospace; color: #fff;
+            transition: opacity .35s ease;
+        }
+        #loader-title { font-size: 26px; font-weight: bold; letter-spacing: 3px; margin-bottom: 26px; }
+        #loader-bar-outer { width: 320px; height: 18px; border: 2px solid #666; background: #1a1a1a; }
+        #loader-bar { height: 100%; width: 0%; background: #33cc66; transition: width .15s linear; }
+        #loader-status { margin-top: 14px; font-size: 13px; color: #999; letter-spacing: 1px; }
+    </style>
+    <script>
+        // Progress can regress when the loader enqueues more files mid-load
+        // (sprites + room maps are added once config.json arrives) — clamp to
+        // the high-water mark so the bar only ever fills.
+        window.__loaderMax = 0;
+        window.updateLoader = function (v) {
+            v = Math.max(window.__loaderMax, Math.min(1, v));
+            window.__loaderMax = v;
+            var bar = document.getElementById('loader-bar');
+            var st = document.getElementById('loader-status');
+            if (bar) bar.style.width = Math.round(v * 100) + '%';
+            if (st) st.textContent = 'loading assets… ' + Math.round(v * 100) + '%';
+        };
+        window.hideLoader = function () {
+            var el = document.getElementById('loader');
+            if (!el) return;
+            el.style.opacity = '0';
+            setTimeout(function () { el.remove(); }, 380);
+        };
+        window.failLoader = function () {
+            var st = document.getElementById('loader-status');
+            if (st) { st.textContent = 'failed to start — see console'; st.style.color = '#ff6666'; }
+        };
+    </script>
+
     <!-- Game scripts, loaded in order with a cache-buster so edits always apply -->
     <script>
         (function () {
