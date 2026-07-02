@@ -23,6 +23,10 @@ jobs:
       - name: Deploy to Firebase
         id: deploy
         continue-on-error: true
+        env:
+          # googleapis token fetch dies with 'Premature close' on the runner's
+          # IPv6 path — prefer IPv4 (this cured the dense flake on 2026-07-02)
+          NODE_OPTIONS: --dns-result-order=ipv4first
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -38,6 +42,8 @@ jobs:
 
       - name: Retry deploy (transient auth flake)
         if: steps.deploy.outcome == 'failure'
+        env:
+          NODE_OPTIONS: --dns-result-order=ipv4first
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
