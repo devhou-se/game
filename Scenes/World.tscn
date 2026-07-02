@@ -30,6 +30,7 @@ position = Vector2( 0, -137 )
 destination = "Room"
 
 [node name="Characters" type="Node2D" parent="."]
+y_sort_enabled = true
 
 [node name="Bailey" parent="Characters" instance=ExtResource( 1 )]
 position = Vector2( -48, -16 )

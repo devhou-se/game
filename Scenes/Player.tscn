@@ -19,6 +19,6 @@ visible = false
 [node name="Camera2D" type="Camera2D" parent="." index="3"]
 visible = false
 current = true
-zoom = Vector2( 3, 3 )
+zoom = Vector2( 4, 4 )
 position_smoothing_enabled = true
 position_smoothing_speed = 7.0

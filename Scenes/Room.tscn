@@ -38,3 +38,4 @@ position = Vector2( 0, 136 )
 destination = "tokyo/tokyo_outside"
 
 [node name="Characters" type="Node2D" parent="."]
+y_sort_enabled = true

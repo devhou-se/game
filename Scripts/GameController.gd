@@ -40,7 +40,46 @@ func goto(scene: String):
 		_current_player = _player
 	y_sort.add_child(_player)
 	_player.teleport(Vector2.ZERO)
+	_apply_scene_scale(_level)
 	_setup_scene_day_night(scene)
+
+func _apply_scene_scale(level: Node) -> void:
+	# Match gamev2's pixel scale: each grid cell renders at 64 screen px and the
+	# character is one cell tall, whatever the scene's tile resolution (16 or 32).
+	var tile_size := 16.0
+	var tml := _find_tilemap_layer(level)
+	if tml and tml.tile_set:
+		tile_size = float(tml.tile_set.tile_size.x)
+	var zoom := 64.0 / tile_size
+	var char_scale := tile_size / 64.0
+	var cam: Camera2D = _player.get_node_or_null("Camera2D")
+	if cam:
+		cam.zoom = Vector2(zoom, zoom)
+	var chars := level.get_node_or_null("Characters")
+	if chars:
+		for c in chars.get_children():
+			_scale_character(c, char_scale)
+
+func _scale_character(c: Node, s: float) -> void:
+	var spr = c.get_node_or_null("AnimatedSprite2D")
+	if spr:
+		spr.scale = Vector2(s, s)
+		# Centre the sprite on its cell, matching gamev2's anchorY 0.5.
+		spr.position.y = 0.0
+	var tag = c.get_node_or_null("NameTag")
+	if tag:
+		# Tuck the badge just above the head (head top sits at -24*s).
+		tag.position.y = -40.0 * s
+		tag.scale = Vector2(s, s)
+
+func _find_tilemap_layer(node: Node) -> TileMapLayer:
+	if node is TileMapLayer:
+		return node
+	for ch in node.get_children():
+		var r := _find_tilemap_layer(ch)
+		if r:
+			return r
+	return null
 
 func get_time() -> int:
 	return _time_of_day

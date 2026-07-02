@@ -29,7 +29,7 @@ animations = [
 }],
 "loop": true,
 "name": &"idle",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -46,7 +46,7 @@ animations = [
 }],
 "loop": true,
 "name": &"walk",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -63,7 +63,7 @@ animations = [
 }],
 "loop": true,
 "name": &"idle_back",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -80,7 +80,7 @@ animations = [
 }],
 "loop": true,
 "name": &"walk_back",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -91,7 +91,7 @@ animations = [
 }],
 "loop": true,
 "name": &"idle_side",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -102,6 +102,6 @@ animations = [
 }],
 "loop": true,
 "name": &"walk_side",
-"speed": 5.0
+"speed": 10.0
 }
 ]

@@ -11,11 +11,11 @@ extents = Vector2( 7, 7 )
 [node name="Character" type="CharacterBody2D"]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2( 0, -8 )
-scale = Vector2( 0.35, 0.35 )
+position = Vector2( 0, 0 )
+scale = Vector2( 0.25, 0.25 )
 frames = ExtResource( 1 )
 animation = "idle"
-speed_scale = 1.8
+speed_scale = 1.0
 playing = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

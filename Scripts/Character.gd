@@ -5,7 +5,9 @@ class_name Character extends CharacterBody2D
 const GRID_SIZE := 16.0
 const SPEED := 48.0
 const BUFFER_TIME_MAX := 0.05
-const ANIMATION_SPEED := 0.4 * SPEED / GRID_SIZE
+# Walk/idle cycles play at the SpriteFrames' own fps (10, matching gamev2).
+# Kept constant on purpose: movement boost/shift speeds the character up,
+# but never the animation playback.
 
 var _speed_multiplier := 1.0
 var _speed_duration_remaining := 0.0
@@ -41,7 +43,7 @@ func _ready():
 	_shape_cast = get_node("ShapeCast2D")
 	_animated_sprite = get_node("AnimatedSprite2D")
 	_collider = get_node("CollisionShape2D")
-	_animated_sprite.speed_scale = ANIMATION_SPEED
+	_animated_sprite.speed_scale = 1.0
 	_target_position = position
 
 func teleport(pos: Vector2) -> void:
@@ -77,7 +79,6 @@ func _physics_process(delta):
 	var anim_name := _current_animation + _current_direction
 	if _animated_sprite.animation != anim_name or not _animated_sprite.is_playing():
 		_animated_sprite.play(anim_name)
-	_animated_sprite.speed_scale = ANIMATION_SPEED * _speed_multiplier * _shift_multiplier
 	_animated_sprite.flip_h = _current_flip
 
 func _process_move(delta: float):

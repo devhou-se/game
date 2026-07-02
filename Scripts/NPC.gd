@@ -24,7 +24,7 @@ func _ready():
 	super._ready()
 	_control = get_node("Control")
 	_interaction_screen_scene = load("res://Scenes/InteractionScreen.tscn")
-	var name_label: Label = get_node("Title")
+	var name_label: Label = get_node("NameTag/Title")
 	name_label.text = npc_name
 	# Use this person's sprite if one exists (Assets/people/<name>.tres).
 	var sf_path := "res://Assets/people/%s.tres" % npc_name.to_lower()
