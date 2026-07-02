@@ -16,7 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # The runner's OAuth token fetch to googleapis.com intermittently dies
+      # with "Premature close" before the deploy starts (transient network
+      # flake, ~daily). First attempt is allowed to fail; the retry step below
+      # re-runs the identical deploy only when needed.
       - name: Deploy to Firebase
+        id: deploy
+        continue-on-error: true
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -28,4 +34,15 @@ jobs:
           # dropped connection and the retry 400s with "is the current active
           # version" — the deploy actually lands but the run goes red. 15.22.0 is
           # the last version this workflow ran green on.
+          firebaseToolsVersion: 15.22.0
+
+      - name: Retry deploy (transient auth flake)
+        if: steps.deploy.outcome == 'failure'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEVHOUSE_80936 }}
+          channelId: live
+          projectId: devhouse-80936
+          target: devhouse-game-canvas
           firebaseToolsVersion: 15.22.0
