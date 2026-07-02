@@ -13506,6 +13506,16 @@
     }
   },
   "spriteMetadata": {
+    "7-11-sign-left_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "7-11-sign-right_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
     "Grass_08": {
       "anchorX": 0.5,
       "anchorY": 0.5,
@@ -13606,6 +13616,251 @@
       "loop": true,
       "scale": 1
     },
+    "bell-blue-baseless_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "bell-closed-red-baseless_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "bell-red-top_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "block_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "blue-bell-top_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "blue-lamp-post_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "blue-lanterns_4_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "blue-lanterns_5_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "blue-short-wall-back-east_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "blue-short-wall-back-west_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "blue-shrine-platform-base_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "blue-wall-east-side-roof_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "blue-wall-front-east-corner_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "blue-wall-front-west-corner_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "blue-wall-gate_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "blue-wall-short_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "blue-wall-wet-side-roof_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-autotile_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-autotile_0_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-autotile_0_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-autotile_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-autotile_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-autotile_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-autotile_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-autotile_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-autotile_2_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-floor-tiles_11_3": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-floor-tiles_15_3": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-floor-tiles_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-floor-tiles_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-floor-tiles_4_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-floor-tiles_5_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-floor-tiles_7_3": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "brown-brick-floor-tiles_9_3": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "building-entrance-1_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "building-entrance-2_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "building-entrance-3_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "building-rafter-blue_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "building-roof-black_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "building-roof-blue_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "building-roof-red_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "building-tier-black_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "building-tier-blue_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "building-tier-red_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "castle-stairs_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "castle-wall-siding_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "castle-wall-southeast-corner_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "castle-wall-southwest-corner_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "centred-lamp-top-unlit_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
     "damian_back": {
       "anchorX": 0.5,
       "anchorY": 0.5,
@@ -13665,6 +13920,51 @@
       "isDirectional": false,
       "loop": true,
       "scale": 1
+    },
+    "dirt-outside-autotile_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "dirt-outside-autotile_0_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "dirt-outside-autotile_0_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "dirt-outside-autotile_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "dirt-outside-autotile_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "dirt-outside-autotile_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "dirt-outside-autotile_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "dirt-outside-autotile_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "dirt-outside-autotile_2_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
     },
     "dylan_back": {
       "anchorX": 0.5,
@@ -13726,1458 +14026,382 @@
       "loop": true,
       "scale": 1
     },
-    "gk1_100_0_0": {
+    "fence-barriers_0_2": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_100_0_1": {
+    "fence-barriers_0_3": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_100_0_2": {
+    "fence-barriers_1_2": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_100_1_0": {
+    "fence-barriers_2_0": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_100_1_1": {
+    "fence-garden-outside_0_3": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_100_1_2": {
+    "fence-garden-outside_2_1": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_100_2_0": {
+    "fence-garden-outside_2_5": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_100_2_1": {
+    "fence-garden-outside_3_5": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_100_2_2": {
+    "fence-garden-outside_4_1": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_101_0_0": {
+    "fence-garden-outside_4_5": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_101_0_1": {
+    "fence-garden-outside_6_3": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_101_0_2": {
+    "fence-garden-outside_8_3": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_101_1_0": {
+    "flat-grey-brick-autotile_0_0": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_101_1_1": {
+    "flat-grey-brick-autotile_0_1": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_101_1_2": {
+    "flat-grey-brick-autotile_0_2": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_101_2_0": {
+    "flat-grey-brick-autotile_1_0": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_101_2_1": {
+    "flat-grey-brick-autotile_1_1": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_101_2_2": {
+    "flat-grey-brick-autotile_1_2": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_102_0_0": {
+    "flat-grey-brick-autotile_2_0": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_102_0_1": {
+    "flat-grey-brick-autotile_2_1": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_102_0_2": {
+    "flat-grey-brick-autotile_2_2": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_102_0_3": {
+    "flowering-grass-autotile_0_0": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_102_0_4": {
+    "flowering-grass-autotile_0_2": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_102_0_5": {
+    "flowering-grass-autotile_2_0": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_102_1_0": {
+    "flowering-grass-autotile_2_2": {
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
     },
-    "gk1_102_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_102_1_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_102_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_102_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_102_2_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_102_2_4": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_102_2_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_103_0_0": {
-      "anchorX": 0.125,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_104_0_0": {
-      "anchorX": 0.0833,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_105_0_0": {
-      "anchorX": 0.0833,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_106_2_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_3_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_4_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_4_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_4_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_6_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_6_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_6_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_7_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_7_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_106_7_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_107_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_0_4": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_0_6": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_0_7": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_0_8": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_1_4": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_1_6": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_2_7": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_3_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_3_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_3_4": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_3_6": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_4_4": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_4_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_4_7": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_108_4_8": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_10_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_10_0_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_10_0_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_10_1_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_10_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_10_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_10_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_10_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_10_2_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_110_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_110_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_111_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.125,
-      "frameCount": 1
-    },
-    "gk1_112_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_113_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_114_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_115_11_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_115_15_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_115_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_115_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_115_4_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_115_5_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_115_7_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_115_9_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_10_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_10_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_11_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_11_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_11_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_14_4": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_15_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_3_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_5_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_7_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_7_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_7_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_8_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_8_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_116_9_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_117_0_0": {
-      "anchorX": 0.1,
-      "anchorY": 0.0833,
-      "frameCount": 1
-    },
-    "gk1_118_3_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_118_4_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_118_6_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_120_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_121_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_124_0_0": {
+    "fox-statue-base-1_0_0": {
       "anchorX": 0.5,
       "anchorY": 0.25,
       "frameCount": 1
     },
-    "gk1_126_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_127_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_128_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_129_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_12_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_130_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_131_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_133_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_135_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_136_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_137_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_13_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_146_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_146_0_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_146_0_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_146_1_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_146_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_146_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_146_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_146_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_146_2_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_147_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_147_0_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_147_0_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_147_1_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_147_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_147_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_147_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_147_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_147_2_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_148_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_149_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_14_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_150_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_151_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_152_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_153_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_157_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_157_0_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_157_0_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_157_1_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_157_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_157_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_157_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_157_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_157_2_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_15_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_163_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_164_0_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_164_0_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_164_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_164_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_165_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_166_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_167_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_168_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_169_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_170_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_171_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_172_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_173_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_174_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_175_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_176_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_17_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.0833,
-      "depthBias": -10,
-      "frameCount": 1
-    },
-    "gk1_18_0_0": {
-      "anchorX": 0.1,
-      "anchorY": 0.1,
-      "frameCount": 1
-    },
-    "gk1_19_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_1_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_20_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.1,
-      "frameCount": 1
-    },
-    "gk1_21_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_22_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_23_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_24_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_25_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_26_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_2_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_30_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_31_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_32_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_33_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_34_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_35_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_36_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_37_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_38_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_38_0_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_38_0_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_38_1_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_38_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_38_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_38_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_38_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_38_2_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_3_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_44_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_45_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_46_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_47_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_48_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_4_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_50_0_0": {
-      "anchorX": 0.125,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_59_0_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_59_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_59_2_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_59_3_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_59_4_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_59_4_5": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_59_6_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_59_8_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_60_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_60_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_60_1_3": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_60_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_60_3_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_60_4_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_61_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_61_0_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_61_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_61_2_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_62_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_63_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_64_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk1_65_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_65_0_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_65_1_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_65_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_65_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_65_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_65_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_65_2_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_66_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_67_4_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_67_5_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_68_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_69_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_69_0_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_69_1_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_69_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_69_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_69_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_69_3_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_6_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_70_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_79_0_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_79_1_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_79_1_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_79_2_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_79_2_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_79_2_2": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_7_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_80_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_81_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_82_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_83_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_84_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_85_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_86_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_87_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_88_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_89_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_89_0_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_89_1_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_89_1_1": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_8_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_91_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_92_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_93_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_94_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_95_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_96_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_97_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk1_98_0_0": {
-      "anchorX": 0.25,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
-    "gk1_99_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk2_0_0_0": {
-      "anchorX": 0.0122,
-      "anchorY": 0.0625,
-      "frameCount": 1
-    },
-    "gk2_1_0_0": {
-      "anchorX": 0.1667,
-      "anchorY": 0.125,
-      "frameCount": 1
-    },
-    "gk2_2_0_0": {
-      "anchorX": 0.0625,
-      "anchorY": 0.0333,
-      "frameCount": 1
-    },
-    "gk2_2_feet": {
-      "anchorX": 0.0625,
-      "anchorY": 0.1667,
-      "frameCount": 1
-    },
-    "gk2_4_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.25,
-      "frameCount": 1
-    },
-    "gk2_5_0_0": {
+    "fox-statue-base-2_0_0": {
       "anchorX": 0.5,
       "anchorY": 0.25,
       "frameCount": 1
     },
     "gk_blank": {
+      "frameCount": 1
+    },
+    "grass-autotile_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grass-autotile_0_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grass-autotile_0_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grass-autotile_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grass-autotile_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grass-autotile_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grass-autotile_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grass-autotile_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grass-autotile_2_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "gravel-autotile_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "gravel-autotile_0_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "gravel-autotile_0_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "gravel-autotile_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "gravel-autotile_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "gravel-autotile_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "gravel-autotile_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "gravel-autotile_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "gravel-autotile_2_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-autotile_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-autotile_0_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-autotile_0_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-autotile_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-autotile_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-autotile_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-autotile_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-autotile_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-autotile_2_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_10_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_10_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_11_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_11_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_11_5": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_14_4": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_15_3": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_3_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_5_5": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_7_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_7_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_7_5": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_8_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_8_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "grey-brick-floor-tiles_9_5": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "ground-plants-1_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "ground-plants-1_0_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "ground-plants-1_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "ground-plants-1_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
       "frameCount": 1
     },
     "james_back": {
@@ -15300,6 +14524,136 @@
       "loop": true,
       "scale": 1
     },
+    "kirin-statue-1-bottom_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "kirin-statue-1-top_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "kirin-statue-2-bottom_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "kirin-statue-2-top_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "lamp-base_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "light-concrete-autotile_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "light-concrete-autotile_0_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "light-concrete-autotile_0_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "light-concrete-autotile_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "light-concrete-autotile_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "light-concrete-autotile_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "light-concrete-autotile_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "light-concrete-autotile_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "light-concrete-autotile_2_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "moat-east-rocks_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "moat-east_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "moat-north-east-corner_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "moat-north-rocks_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "moat-north-west-corner_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "moat-north_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "moat-sourth-east-corner_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "moat-south-rocks_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "moat-south-west-corner_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "moat-south_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "moat-west-rocks_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "moat-west_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
     "npc-tile": {
       "anchorX": 0.5,
       "anchorY": 0.5,
@@ -15340,6 +14694,512 @@
       "loop": true,
       "scale": 1
     },
+    "pagoda-floor_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "pagoda-roof_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.1,
+      "frameCount": 1
+    },
+    "pavers_0_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pavers_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pavers_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pavers_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pavers_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pavers_2_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pond-autotile_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pond-autotile_0_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pond-autotile_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pond-autotile_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pond-autotile_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pond-autotile_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pond-autotile_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pond-autotile_2_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "pond-leaf_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "red-centre-roof_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-lanterns_3_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-lanterns_4_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-lanterns_6_3": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roof_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_0_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_0_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_0_3": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_0_4": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_0_5": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_1_5": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_2_3": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_2_4": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-roofs_2_5": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-pagoda-small-base_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "red-pagoda-small-top_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "red-pagoda-spacing_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.125,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_0_4": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_0_6": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_0_7": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_0_8": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_1_4": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_1_6": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_2_7": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_3_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_3_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_3_4": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_3_6": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_4_4": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_4_5": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_4_7": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top-parts_4_8": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-shrine-top_0_0": {
+      "anchorX": 0.1,
+      "anchorY": 0.0833,
+      "frameCount": 1
+    },
+    "red-small-pagoda-top_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-small-pagoda-top_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-vending-machine-base-2_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-vending-machine-base-3_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-vending-machine-bottom_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-vending-machine-top-2_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "red-vending-machine-top-3_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "red-vending-machine-top_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "road-2-tile-vertical_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "road-div-horizontal_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "road-div-vertical_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "road-edge-bottom_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "road-edge-left_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "road-edge-right_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "road-edge-top_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "sakura-large-base_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "sakura-large-top_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "sakura-small-base_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "sakura-small-top_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "sakura-small_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "seven-eleven_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.125,
+      "frameCount": 1
+    },
+    "shrine-building_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.0833,
+      "depthBias": -10,
+      "frameCount": 1
+    },
+    "shrine-top_0_0": {
+      "anchorX": 0.1,
+      "anchorY": 0.1,
+      "frameCount": 1
+    },
+    "shrine-walls_2_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_3_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_4_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_4_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_4_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_6_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_6_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_6_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_7_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_7_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrine-walls_7_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrub-large-circle_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "shrub-small-circle_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrubs-1_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrubs-1_0_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrubs-1_1_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrubs-1_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrubs-1_2_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrubs-1_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "shrubs-1_3_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "temple-hallway_0_0": {
+      "anchorX": 0.1667,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
     "tile": {
       "anchorX": 0.5,
       "anchorY": 0.5,
@@ -15360,6 +15220,76 @@
       "loop": true,
       "scale": 1
     },
+    "tile-brick-path_1_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "tile-brick-path_1_2": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "tile-brick-path_1_3": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "tile-brick-path_2_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "tile-brick-path_3_1": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "tile-brick-path_4_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "tokyo-station_0_0": {
+      "anchorX": 0.0122,
+      "anchorY": 0.0625,
+      "frameCount": 1
+    },
+    "tokyo-tower-feet": {
+      "anchorX": 0.0625,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "tokyo-tower_0_0": {
+      "anchorX": 0.0625,
+      "anchorY": 0.0333,
+      "frameCount": 1
+    },
+    "torii-blue-feet_0_0": {
+      "anchorX": 0.125,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "torii-blue-top_0_0": {
+      "anchorX": 0.0833,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "torii-red-feet_0_0": {
+      "anchorX": 0.125,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "torii-red-top_0_0": {
+      "anchorX": 0.0833,
+      "anchorY": 0.1667,
+      "frameCount": 1
+    },
+    "train-track_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
     "transporter": {
       "anchorX": 0.5,
       "anchorY": 0.5,
@@ -15379,592 +15309,662 @@
       "isDirectional": false,
       "loop": true,
       "scale": 1
+    },
+    "tree-1-base-shadow_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "tree-1-top_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "tree-2-base-shadow_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "tree-2-top_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "tree-3-base-shadow_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "tree-3-top_0_0": {
+      "anchorX": 0.25,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "white-vending-machine-base-2_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "white-vending-machine-base-3_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "white-vending-machine-bottom_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "white-vending-machine-top-2_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "white-vending-machine-top-3_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
+    },
+    "white-vending-machine-top_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "yellow-vending-machine-base_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "frameCount": 1
+    },
+    "yellow-vending-machine-top_0_0": {
+      "anchorX": 0.5,
+      "anchorY": 0.25,
+      "frameCount": 1
     }
   },
   "tileNames": {
-    "gk1_100_0_0": "grey-brick-autotile",
-    "gk1_100_0_1": "grey-brick-autotile",
-    "gk1_100_0_2": "grey-brick-autotile",
-    "gk1_100_1_0": "grey-brick-autotile",
-    "gk1_100_1_1": "grey-brick-autotile",
-    "gk1_100_1_2": "grey-brick-autotile",
-    "gk1_100_2_0": "grey-brick-autotile",
-    "gk1_100_2_1": "grey-brick-autotile",
-    "gk1_100_2_2": "grey-brick-autotile",
-    "gk1_101_0_0": "brown-brick-autotile",
-    "gk1_101_0_1": "brown-brick-autotile",
-    "gk1_101_0_2": "brown-brick-autotile",
-    "gk1_101_1_0": "brown-brick-autotile",
-    "gk1_101_1_1": "brown-brick-autotile",
-    "gk1_101_1_2": "brown-brick-autotile",
-    "gk1_101_2_0": "brown-brick-autotile",
-    "gk1_101_2_1": "brown-brick-autotile",
-    "gk1_101_2_2": "brown-brick-autotile",
-    "gk1_102_0_0": "red-pagoda-roofs",
-    "gk1_102_0_1": "red-pagoda-roofs",
-    "gk1_102_0_2": "red-pagoda-roofs",
-    "gk1_102_0_3": "red-pagoda-roofs",
-    "gk1_102_0_4": "red-pagoda-roofs",
-    "gk1_102_0_5": "red-pagoda-roofs",
-    "gk1_102_1_0": "red-pagoda-roofs",
-    "gk1_102_1_2": "red-pagoda-roofs",
-    "gk1_102_1_5": "red-pagoda-roofs",
-    "gk1_102_2_0": "red-pagoda-roofs",
-    "gk1_102_2_1": "red-pagoda-roofs",
-    "gk1_102_2_3": "red-pagoda-roofs",
-    "gk1_102_2_4": "red-pagoda-roofs",
-    "gk1_102_2_5": "red-pagoda-roofs",
-    "gk1_103_0_0": "torii-red-feet",
-    "gk1_104_0_0": "torii-red-top",
-    "gk1_105_0_0": "torii-blue-top",
-    "gk1_106_2_2": "shrine-walls",
-    "gk1_106_3_1": "shrine-walls",
-    "gk1_106_4_0": "shrine-walls",
-    "gk1_106_4_1": "shrine-walls",
-    "gk1_106_4_2": "shrine-walls",
-    "gk1_106_6_0": "shrine-walls",
-    "gk1_106_6_1": "shrine-walls",
-    "gk1_106_6_2": "shrine-walls",
-    "gk1_106_7_0": "shrine-walls",
-    "gk1_106_7_1": "shrine-walls",
-    "gk1_106_7_2": "shrine-walls",
-    "gk1_107_0_0": "red-centre-roof",
-    "gk1_108_0_4": "red-shrine-top-parts",
-    "gk1_108_0_6": "red-shrine-top-parts",
-    "gk1_108_0_7": "red-shrine-top-parts",
-    "gk1_108_0_8": "red-shrine-top-parts",
-    "gk1_108_1_1": "red-shrine-top-parts",
-    "gk1_108_1_2": "red-shrine-top-parts",
-    "gk1_108_1_4": "red-shrine-top-parts",
-    "gk1_108_1_6": "red-shrine-top-parts",
-    "gk1_108_2_7": "red-shrine-top-parts",
-    "gk1_108_3_1": "red-shrine-top-parts",
-    "gk1_108_3_2": "red-shrine-top-parts",
-    "gk1_108_3_4": "red-shrine-top-parts",
-    "gk1_108_3_6": "red-shrine-top-parts",
-    "gk1_108_4_4": "red-shrine-top-parts",
-    "gk1_108_4_5": "red-shrine-top-parts",
-    "gk1_108_4_7": "red-shrine-top-parts",
-    "gk1_108_4_8": "red-shrine-top-parts",
-    "gk1_10_0_0": "grass-autotile",
-    "gk1_10_0_1": "grass-autotile",
-    "gk1_10_0_2": "grass-autotile",
-    "gk1_10_1_0": "grass-autotile",
-    "gk1_10_1_1": "grass-autotile",
-    "gk1_10_1_2": "grass-autotile",
-    "gk1_10_2_0": "grass-autotile",
-    "gk1_10_2_1": "grass-autotile",
-    "gk1_10_2_2": "grass-autotile",
-    "gk1_110_2_0": "red-small-pagoda-top",
-    "gk1_110_2_1": "red-small-pagoda-top",
-    "gk1_111_0_0": "red-pagoda-spacing",
-    "gk1_112_0_0": "red-pagoda-roof",
-    "gk1_113_0_0": "blue-short-wall-back-east",
-    "gk1_114_0_0": "blue-short-wall-back-west",
-    "gk1_115_11_3": "brown-brick-floor-tiles",
-    "gk1_115_15_3": "brown-brick-floor-tiles",
-    "gk1_115_1_2": "brown-brick-floor-tiles",
-    "gk1_115_2_1": "brown-brick-floor-tiles",
-    "gk1_115_4_1": "brown-brick-floor-tiles",
-    "gk1_115_5_1": "brown-brick-floor-tiles",
-    "gk1_115_7_3": "brown-brick-floor-tiles",
-    "gk1_115_9_3": "brown-brick-floor-tiles",
-    "gk1_116_10_0": "grey-brick-floor-tiles",
-    "gk1_116_10_1": "grey-brick-floor-tiles",
-    "gk1_116_11_0": "grey-brick-floor-tiles",
-    "gk1_116_11_1": "grey-brick-floor-tiles",
-    "gk1_116_11_5": "grey-brick-floor-tiles",
-    "gk1_116_14_4": "grey-brick-floor-tiles",
-    "gk1_116_15_3": "grey-brick-floor-tiles",
-    "gk1_116_1_2": "grey-brick-floor-tiles",
-    "gk1_116_2_1": "grey-brick-floor-tiles",
-    "gk1_116_3_1": "grey-brick-floor-tiles",
-    "gk1_116_5_5": "grey-brick-floor-tiles",
-    "gk1_116_7_0": "grey-brick-floor-tiles",
-    "gk1_116_7_1": "grey-brick-floor-tiles",
-    "gk1_116_7_5": "grey-brick-floor-tiles",
-    "gk1_116_8_0": "grey-brick-floor-tiles",
-    "gk1_116_8_1": "grey-brick-floor-tiles",
-    "gk1_116_9_5": "grey-brick-floor-tiles",
-    "gk1_117_0_0": "red-shrine-top",
-    "gk1_118_3_1": "red-lanterns",
-    "gk1_118_4_1": "red-lanterns",
-    "gk1_118_6_3": "red-lanterns",
-    "gk1_120_0_0": "bell-closed-red-baseless",
-    "gk1_121_0_0": "bell-red-top",
-    "gk1_124_0_0": "road-2-tile-vertical",
-    "gk1_126_0_0": "building-entrance-1",
-    "gk1_127_0_0": "building-entrance-2",
-    "gk1_128_0_0": "building-entrance-3",
-    "gk1_129_0_0": "building-tier-black",
-    "gk1_12_0_0": "moat-east",
-    "gk1_130_0_0": "building-tier-blue",
-    "gk1_131_0_0": "building-tier-red",
-    "gk1_133_0_0": "building-rafter-blue",
-    "gk1_135_0_0": "building-roof-black",
-    "gk1_136_0_0": "building-roof-blue",
-    "gk1_137_0_0": "building-roof-red",
-    "gk1_13_0_0": "moat-west",
-    "gk1_146_0_0": "gravel_autotile",
-    "gk1_146_0_1": "gravel_autotile",
-    "gk1_146_0_2": "gravel_autotile",
-    "gk1_146_1_0": "gravel_autotile",
-    "gk1_146_1_1": "gravel_autotile",
-    "gk1_146_1_2": "gravel_autotile",
-    "gk1_146_2_0": "gravel_autotile",
-    "gk1_146_2_1": "gravel_autotile",
-    "gk1_146_2_2": "gravel_autotile",
-    "gk1_147_0_0": "light-concrete-autotile",
-    "gk1_147_0_1": "light-concrete-autotile",
-    "gk1_147_0_2": "light-concrete-autotile",
-    "gk1_147_1_0": "light-concrete-autotile",
-    "gk1_147_1_1": "light-concrete-autotile",
-    "gk1_147_1_2": "light-concrete-autotile",
-    "gk1_147_2_0": "light-concrete-autotile",
-    "gk1_147_2_1": "light-concrete-autotile",
-    "gk1_147_2_2": "light-concrete-autotile",
-    "gk1_148_0_0": "red-pagoda-small-base",
-    "gk1_149_0_0": "red-pagoda-small-top",
-    "gk1_14_0_0": "moat-north",
-    "gk1_150_0_0": "red-vending-machine-bottom",
-    "gk1_151_0_0": "white-vending-machine-bottom",
-    "gk1_152_0_0": "red-vending-machine-top",
-    "gk1_153_0_0": "white-vending-machine-top",
-    "gk1_157_0_0": "flat-grey-brick-autotile",
-    "gk1_157_0_1": "flat-grey-brick-autotile",
-    "gk1_157_0_2": "flat-grey-brick-autotile",
-    "gk1_157_1_0": "flat-grey-brick-autotile",
-    "gk1_157_1_1": "flat-grey-brick-autotile",
-    "gk1_157_1_2": "flat-grey-brick-autotile",
-    "gk1_157_2_0": "flat-grey-brick-autotile",
-    "gk1_157_2_1": "flat-grey-brick-autotile",
-    "gk1_157_2_2": "flat-grey-brick-autotile",
-    "gk1_15_0_0": "moat-south",
-    "gk1_163_0_0": "train-track",
-    "gk1_164_0_2": "fence-barriers",
-    "gk1_164_0_3": "fence-barriers",
-    "gk1_164_1_2": "fence-barriers",
-    "gk1_164_2_0": "fence-barriers",
-    "gk1_165_0_0": "lamp-base",
-    "gk1_166_0_0": "centred-lamp-top-unlit",
-    "gk1_167_0_0": "red-vending-machine-base-2",
-    "gk1_168_0_0": "red-vending-machine-top-2",
-    "gk1_169_0_0": "white-vending-machine-top-2",
-    "gk1_170_0_0": "white-vending-machine-base-2",
-    "gk1_171_0_0": "red-vending-machine-base-3",
-    "gk1_172_0_0": "white-vending-machine-base-3",
-    "gk1_173_0_0": "red-vending-machine-top-3",
-    "gk1_174_0_0": "white-vending-machine-top-3",
-    "gk1_175_0_0": "yellow-vending-machine-base",
-    "gk1_176_0_0": "yellow-vending-machine-top",
-    "gk1_17_0_0": "shrine-building",
-    "gk1_18_0_0": "shrine-top",
-    "gk1_19_0_0": "pagoda-floor",
-    "gk1_1_0_0": "road-edge-left",
-    "gk1_20_0_0": "pagoda-roof",
-    "gk1_21_0_0": "blue-wall-east-side-roof",
-    "gk1_22_0_0": "blue-wall-front-east-corner",
-    "gk1_23_0_0": "blue-wall-front-west-corner",
-    "gk1_24_0_0": "blue-wall-wet-side-roof",
-    "gk1_25_0_0": "blue-wall-gate",
-    "gk1_26_0_0": "blue-wall-short",
-    "gk1_2_0_0": "road-edge-right",
-    "gk1_30_0_0": "sakura-small-base",
-    "gk1_31_0_0": "sakura-small-top",
-    "gk1_32_0_0": "sakura-large-base",
-    "gk1_33_0_0": "sakura-large-top",
-    "gk1_34_0_0": "moat-north-west-corner",
-    "gk1_35_0_0": "moat-north-east-corner",
-    "gk1_36_0_0": "moat-south-west-corner",
-    "gk1_37_0_0": "moat-sourth-east-corner",
-    "gk1_38_0_0": "dirt-outside-autotile",
-    "gk1_38_0_1": "dirt-outside-autotile",
-    "gk1_38_0_2": "dirt-outside-autotile",
-    "gk1_38_1_0": "dirt-outside-autotile",
-    "gk1_38_1_1": "dirt-outside-autotile",
-    "gk1_38_1_2": "dirt-outside-autotile",
-    "gk1_38_2_0": "dirt-outside-autotile",
-    "gk1_38_2_1": "dirt-outside-autotile",
-    "gk1_38_2_2": "dirt-outside-autotile",
-    "gk1_3_0_0": "road-edge-top",
-    "gk1_44_0_0": "temple-hallway",
-    "gk1_45_0_0": "castle-wall-siding",
-    "gk1_46_0_0": "castle-wall-southwest-corner",
-    "gk1_47_0_0": "castle-wall-southeast-corner",
-    "gk1_48_0_0": "castle-stairs",
-    "gk1_4_0_0": "road-edge-bottom",
-    "gk1_50_0_0": "torii-blue-feet",
-    "gk1_59_0_3": "fence-garden-outside",
-    "gk1_59_2_1": "fence-garden-outside",
-    "gk1_59_2_5": "fence-garden-outside",
-    "gk1_59_3_5": "fence-garden-outside",
-    "gk1_59_4_1": "fence-garden-outside",
-    "gk1_59_4_5": "fence-garden-outside",
-    "gk1_59_6_3": "fence-garden-outside",
-    "gk1_59_8_3": "fence-garden-outside",
-    "gk1_60_1_1": "tile-brick-path",
-    "gk1_60_1_2": "tile-brick-path",
-    "gk1_60_1_3": "tile-brick-path",
-    "gk1_60_2_1": "tile-brick-path",
-    "gk1_60_3_1": "tile-brick-path",
-    "gk1_60_4_0": "tile-brick-path",
-    "gk1_61_0_0": "flowering-grass-autotile",
-    "gk1_61_0_2": "flowering-grass-autotile",
-    "gk1_61_2_0": "flowering-grass-autotile",
-    "gk1_61_2_2": "flowering-grass-autotile",
-    "gk1_62_0_0": "shrub-large-circle",
-    "gk1_63_0_0": "shrub-small-circle",
-    "gk1_64_0_0": "pond-leaf",
-    "gk1_65_0_0": "pond-autotile",
-    "gk1_65_0_2": "pond-autotile",
-    "gk1_65_1_0": "pond-autotile",
-    "gk1_65_1_1": "pond-autotile",
-    "gk1_65_1_2": "pond-autotile",
-    "gk1_65_2_0": "pond-autotile",
-    "gk1_65_2_1": "pond-autotile",
-    "gk1_65_2_2": "pond-autotile",
-    "gk1_66_0_0": "bell-blue-baseless",
-    "gk1_67_4_1": "blue-lanterns",
-    "gk1_67_5_0": "blue-lanterns",
-    "gk1_68_0_0": "blue-bell-top",
-    "gk1_69_0_0": "shrubs-1",
-    "gk1_69_0_1": "shrubs-1",
-    "gk1_69_1_0": "shrubs-1",
-    "gk1_69_1_1": "shrubs-1",
-    "gk1_69_2_0": "shrubs-1",
-    "gk1_69_2_1": "shrubs-1",
-    "gk1_69_3_1": "shrubs-1",
-    "gk1_6_0_0": "road-div-horizontal",
-    "gk1_70_0_0": "blue-lamp-post",
-    "gk1_79_0_2": "pavers",
-    "gk1_79_1_0": "pavers",
-    "gk1_79_1_2": "pavers",
-    "gk1_79_2_0": "pavers",
-    "gk1_79_2_1": "pavers",
-    "gk1_79_2_2": "pavers",
-    "gk1_7_0_0": "road-div-vertical",
-    "gk1_80_0_0": "blue-shrine-platform-base",
-    "gk1_81_0_0": "fox-statue-base-1",
-    "gk1_82_0_0": "fox-statue-base-2",
-    "gk1_83_0_0": "tree-1-base-shadow",
-    "gk1_84_0_0": "tree-2-base-shadow",
-    "gk1_85_0_0": "tree-3-base-shadow",
-    "gk1_86_0_0": "tree-3-top",
-    "gk1_87_0_0": "tree-2-top",
-    "gk1_88_0_0": "tree-1-top",
-    "gk1_89_0_0": "ground-plants-1",
-    "gk1_89_0_1": "ground-plants-1",
-    "gk1_89_1_0": "ground-plants-1",
-    "gk1_89_1_1": "ground-plants-1",
-    "gk1_8_0_0": "block",
-    "gk1_91_0_0": "sakura-small",
-    "gk1_92_0_0": "kirin-statue-1-bottom",
-    "gk1_93_0_0": "kirin-statue-2-bottom",
-    "gk1_94_0_0": "kirin-statue-1-top",
-    "gk1_95_0_0": "kirin-statue-2-top",
-    "gk1_96_0_0": "moat-east-rocks",
-    "gk1_97_0_0": "moat-south-rocks",
-    "gk1_98_0_0": "moat-west-rocks",
-    "gk1_99_0_0": "moat-north-rocks",
-    "gk2_0_0_0": "tokyo-station",
-    "gk2_1_0_0": "seven-eleven",
-    "gk2_2_0_0": "tokyo-tower",
-    "gk2_2_feet": "tokyo-tower-feet",
-    "gk2_4_0_0": "7-11-sign-left",
-    "gk2_5_0_0": "7-11-sign-right"
+    "7-11-sign-left_0_0": "7-11-sign-left",
+    "7-11-sign-right_0_0": "7-11-sign-right",
+    "bell-blue-baseless_0_0": "bell-blue-baseless",
+    "bell-closed-red-baseless_0_0": "bell-closed-red-baseless",
+    "bell-red-top_0_0": "bell-red-top",
+    "block_0_0": "block",
+    "blue-bell-top_0_0": "blue-bell-top",
+    "blue-lamp-post_0_0": "blue-lamp-post",
+    "blue-lanterns_4_1": "blue-lanterns",
+    "blue-lanterns_5_0": "blue-lanterns",
+    "blue-short-wall-back-east_0_0": "blue-short-wall-back-east",
+    "blue-short-wall-back-west_0_0": "blue-short-wall-back-west",
+    "blue-shrine-platform-base_0_0": "blue-shrine-platform-base",
+    "blue-wall-east-side-roof_0_0": "blue-wall-east-side-roof",
+    "blue-wall-front-east-corner_0_0": "blue-wall-front-east-corner",
+    "blue-wall-front-west-corner_0_0": "blue-wall-front-west-corner",
+    "blue-wall-gate_0_0": "blue-wall-gate",
+    "blue-wall-short_0_0": "blue-wall-short",
+    "blue-wall-wet-side-roof_0_0": "blue-wall-wet-side-roof",
+    "brown-brick-autotile_0_0": "brown-brick-autotile",
+    "brown-brick-autotile_0_1": "brown-brick-autotile",
+    "brown-brick-autotile_0_2": "brown-brick-autotile",
+    "brown-brick-autotile_1_0": "brown-brick-autotile",
+    "brown-brick-autotile_1_1": "brown-brick-autotile",
+    "brown-brick-autotile_1_2": "brown-brick-autotile",
+    "brown-brick-autotile_2_0": "brown-brick-autotile",
+    "brown-brick-autotile_2_1": "brown-brick-autotile",
+    "brown-brick-autotile_2_2": "brown-brick-autotile",
+    "brown-brick-floor-tiles_11_3": "brown-brick-floor-tiles",
+    "brown-brick-floor-tiles_15_3": "brown-brick-floor-tiles",
+    "brown-brick-floor-tiles_1_2": "brown-brick-floor-tiles",
+    "brown-brick-floor-tiles_2_1": "brown-brick-floor-tiles",
+    "brown-brick-floor-tiles_4_1": "brown-brick-floor-tiles",
+    "brown-brick-floor-tiles_5_1": "brown-brick-floor-tiles",
+    "brown-brick-floor-tiles_7_3": "brown-brick-floor-tiles",
+    "brown-brick-floor-tiles_9_3": "brown-brick-floor-tiles",
+    "building-entrance-1_0_0": "building-entrance-1",
+    "building-entrance-2_0_0": "building-entrance-2",
+    "building-entrance-3_0_0": "building-entrance-3",
+    "building-rafter-blue_0_0": "building-rafter-blue",
+    "building-roof-black_0_0": "building-roof-black",
+    "building-roof-blue_0_0": "building-roof-blue",
+    "building-roof-red_0_0": "building-roof-red",
+    "building-tier-black_0_0": "building-tier-black",
+    "building-tier-blue_0_0": "building-tier-blue",
+    "building-tier-red_0_0": "building-tier-red",
+    "castle-stairs_0_0": "castle-stairs",
+    "castle-wall-siding_0_0": "castle-wall-siding",
+    "castle-wall-southeast-corner_0_0": "castle-wall-southeast-corner",
+    "castle-wall-southwest-corner_0_0": "castle-wall-southwest-corner",
+    "centred-lamp-top-unlit_0_0": "centred-lamp-top-unlit",
+    "dirt-outside-autotile_0_0": "dirt-outside-autotile",
+    "dirt-outside-autotile_0_1": "dirt-outside-autotile",
+    "dirt-outside-autotile_0_2": "dirt-outside-autotile",
+    "dirt-outside-autotile_1_0": "dirt-outside-autotile",
+    "dirt-outside-autotile_1_1": "dirt-outside-autotile",
+    "dirt-outside-autotile_1_2": "dirt-outside-autotile",
+    "dirt-outside-autotile_2_0": "dirt-outside-autotile",
+    "dirt-outside-autotile_2_1": "dirt-outside-autotile",
+    "dirt-outside-autotile_2_2": "dirt-outside-autotile",
+    "fence-barriers_0_2": "fence-barriers",
+    "fence-barriers_0_3": "fence-barriers",
+    "fence-barriers_1_2": "fence-barriers",
+    "fence-barriers_2_0": "fence-barriers",
+    "fence-garden-outside_0_3": "fence-garden-outside",
+    "fence-garden-outside_2_1": "fence-garden-outside",
+    "fence-garden-outside_2_5": "fence-garden-outside",
+    "fence-garden-outside_3_5": "fence-garden-outside",
+    "fence-garden-outside_4_1": "fence-garden-outside",
+    "fence-garden-outside_4_5": "fence-garden-outside",
+    "fence-garden-outside_6_3": "fence-garden-outside",
+    "fence-garden-outside_8_3": "fence-garden-outside",
+    "flat-grey-brick-autotile_0_0": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_0_1": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_0_2": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_1_0": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_1_1": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_1_2": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_2_0": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_2_1": "flat-grey-brick-autotile",
+    "flat-grey-brick-autotile_2_2": "flat-grey-brick-autotile",
+    "flowering-grass-autotile_0_0": "flowering-grass-autotile",
+    "flowering-grass-autotile_0_2": "flowering-grass-autotile",
+    "flowering-grass-autotile_2_0": "flowering-grass-autotile",
+    "flowering-grass-autotile_2_2": "flowering-grass-autotile",
+    "fox-statue-base-1_0_0": "fox-statue-base-1",
+    "fox-statue-base-2_0_0": "fox-statue-base-2",
+    "grass-autotile_0_0": "grass-autotile",
+    "grass-autotile_0_1": "grass-autotile",
+    "grass-autotile_0_2": "grass-autotile",
+    "grass-autotile_1_0": "grass-autotile",
+    "grass-autotile_1_1": "grass-autotile",
+    "grass-autotile_1_2": "grass-autotile",
+    "grass-autotile_2_0": "grass-autotile",
+    "grass-autotile_2_1": "grass-autotile",
+    "grass-autotile_2_2": "grass-autotile",
+    "gravel-autotile_0_0": "gravel_autotile",
+    "gravel-autotile_0_1": "gravel_autotile",
+    "gravel-autotile_0_2": "gravel_autotile",
+    "gravel-autotile_1_0": "gravel_autotile",
+    "gravel-autotile_1_1": "gravel_autotile",
+    "gravel-autotile_1_2": "gravel_autotile",
+    "gravel-autotile_2_0": "gravel_autotile",
+    "gravel-autotile_2_1": "gravel_autotile",
+    "gravel-autotile_2_2": "gravel_autotile",
+    "grey-brick-autotile_0_0": "grey-brick-autotile",
+    "grey-brick-autotile_0_1": "grey-brick-autotile",
+    "grey-brick-autotile_0_2": "grey-brick-autotile",
+    "grey-brick-autotile_1_0": "grey-brick-autotile",
+    "grey-brick-autotile_1_1": "grey-brick-autotile",
+    "grey-brick-autotile_1_2": "grey-brick-autotile",
+    "grey-brick-autotile_2_0": "grey-brick-autotile",
+    "grey-brick-autotile_2_1": "grey-brick-autotile",
+    "grey-brick-autotile_2_2": "grey-brick-autotile",
+    "grey-brick-floor-tiles_10_0": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_10_1": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_11_0": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_11_1": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_11_5": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_14_4": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_15_3": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_1_2": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_2_1": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_3_1": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_5_5": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_7_0": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_7_1": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_7_5": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_8_0": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_8_1": "grey-brick-floor-tiles",
+    "grey-brick-floor-tiles_9_5": "grey-brick-floor-tiles",
+    "ground-plants-1_0_0": "ground-plants-1",
+    "ground-plants-1_0_1": "ground-plants-1",
+    "ground-plants-1_1_0": "ground-plants-1",
+    "ground-plants-1_1_1": "ground-plants-1",
+    "kirin-statue-1-bottom_0_0": "kirin-statue-1-bottom",
+    "kirin-statue-1-top_0_0": "kirin-statue-1-top",
+    "kirin-statue-2-bottom_0_0": "kirin-statue-2-bottom",
+    "kirin-statue-2-top_0_0": "kirin-statue-2-top",
+    "lamp-base_0_0": "lamp-base",
+    "light-concrete-autotile_0_0": "light-concrete-autotile",
+    "light-concrete-autotile_0_1": "light-concrete-autotile",
+    "light-concrete-autotile_0_2": "light-concrete-autotile",
+    "light-concrete-autotile_1_0": "light-concrete-autotile",
+    "light-concrete-autotile_1_1": "light-concrete-autotile",
+    "light-concrete-autotile_1_2": "light-concrete-autotile",
+    "light-concrete-autotile_2_0": "light-concrete-autotile",
+    "light-concrete-autotile_2_1": "light-concrete-autotile",
+    "light-concrete-autotile_2_2": "light-concrete-autotile",
+    "moat-east-rocks_0_0": "moat-east-rocks",
+    "moat-east_0_0": "moat-east",
+    "moat-north-east-corner_0_0": "moat-north-east-corner",
+    "moat-north-rocks_0_0": "moat-north-rocks",
+    "moat-north-west-corner_0_0": "moat-north-west-corner",
+    "moat-north_0_0": "moat-north",
+    "moat-sourth-east-corner_0_0": "moat-sourth-east-corner",
+    "moat-south-rocks_0_0": "moat-south-rocks",
+    "moat-south-west-corner_0_0": "moat-south-west-corner",
+    "moat-south_0_0": "moat-south",
+    "moat-west-rocks_0_0": "moat-west-rocks",
+    "moat-west_0_0": "moat-west",
+    "pagoda-floor_0_0": "pagoda-floor",
+    "pagoda-roof_0_0": "pagoda-roof",
+    "pavers_0_2": "pavers",
+    "pavers_1_0": "pavers",
+    "pavers_1_2": "pavers",
+    "pavers_2_0": "pavers",
+    "pavers_2_1": "pavers",
+    "pavers_2_2": "pavers",
+    "pond-autotile_0_0": "pond-autotile",
+    "pond-autotile_0_2": "pond-autotile",
+    "pond-autotile_1_0": "pond-autotile",
+    "pond-autotile_1_1": "pond-autotile",
+    "pond-autotile_1_2": "pond-autotile",
+    "pond-autotile_2_0": "pond-autotile",
+    "pond-autotile_2_1": "pond-autotile",
+    "pond-autotile_2_2": "pond-autotile",
+    "pond-leaf_0_0": "pond-leaf",
+    "red-centre-roof_0_0": "red-centre-roof",
+    "red-lanterns_3_1": "red-lanterns",
+    "red-lanterns_4_1": "red-lanterns",
+    "red-lanterns_6_3": "red-lanterns",
+    "red-pagoda-roof_0_0": "red-pagoda-roof",
+    "red-pagoda-roofs_0_0": "red-pagoda-roofs",
+    "red-pagoda-roofs_0_1": "red-pagoda-roofs",
+    "red-pagoda-roofs_0_2": "red-pagoda-roofs",
+    "red-pagoda-roofs_0_3": "red-pagoda-roofs",
+    "red-pagoda-roofs_0_4": "red-pagoda-roofs",
+    "red-pagoda-roofs_0_5": "red-pagoda-roofs",
+    "red-pagoda-roofs_1_0": "red-pagoda-roofs",
+    "red-pagoda-roofs_1_2": "red-pagoda-roofs",
+    "red-pagoda-roofs_1_5": "red-pagoda-roofs",
+    "red-pagoda-roofs_2_0": "red-pagoda-roofs",
+    "red-pagoda-roofs_2_1": "red-pagoda-roofs",
+    "red-pagoda-roofs_2_3": "red-pagoda-roofs",
+    "red-pagoda-roofs_2_4": "red-pagoda-roofs",
+    "red-pagoda-roofs_2_5": "red-pagoda-roofs",
+    "red-pagoda-small-base_0_0": "red-pagoda-small-base",
+    "red-pagoda-small-top_0_0": "red-pagoda-small-top",
+    "red-pagoda-spacing_0_0": "red-pagoda-spacing",
+    "red-shrine-top-parts_0_4": "red-shrine-top-parts",
+    "red-shrine-top-parts_0_6": "red-shrine-top-parts",
+    "red-shrine-top-parts_0_7": "red-shrine-top-parts",
+    "red-shrine-top-parts_0_8": "red-shrine-top-parts",
+    "red-shrine-top-parts_1_1": "red-shrine-top-parts",
+    "red-shrine-top-parts_1_2": "red-shrine-top-parts",
+    "red-shrine-top-parts_1_4": "red-shrine-top-parts",
+    "red-shrine-top-parts_1_6": "red-shrine-top-parts",
+    "red-shrine-top-parts_2_7": "red-shrine-top-parts",
+    "red-shrine-top-parts_3_1": "red-shrine-top-parts",
+    "red-shrine-top-parts_3_2": "red-shrine-top-parts",
+    "red-shrine-top-parts_3_4": "red-shrine-top-parts",
+    "red-shrine-top-parts_3_6": "red-shrine-top-parts",
+    "red-shrine-top-parts_4_4": "red-shrine-top-parts",
+    "red-shrine-top-parts_4_5": "red-shrine-top-parts",
+    "red-shrine-top-parts_4_7": "red-shrine-top-parts",
+    "red-shrine-top-parts_4_8": "red-shrine-top-parts",
+    "red-shrine-top_0_0": "red-shrine-top",
+    "red-small-pagoda-top_2_0": "red-small-pagoda-top",
+    "red-small-pagoda-top_2_1": "red-small-pagoda-top",
+    "red-vending-machine-base-2_0_0": "red-vending-machine-base-2",
+    "red-vending-machine-base-3_0_0": "red-vending-machine-base-3",
+    "red-vending-machine-bottom_0_0": "red-vending-machine-bottom",
+    "red-vending-machine-top-2_0_0": "red-vending-machine-top-2",
+    "red-vending-machine-top-3_0_0": "red-vending-machine-top-3",
+    "red-vending-machine-top_0_0": "red-vending-machine-top",
+    "road-2-tile-vertical_0_0": "road-2-tile-vertical",
+    "road-div-horizontal_0_0": "road-div-horizontal",
+    "road-div-vertical_0_0": "road-div-vertical",
+    "road-edge-bottom_0_0": "road-edge-bottom",
+    "road-edge-left_0_0": "road-edge-left",
+    "road-edge-right_0_0": "road-edge-right",
+    "road-edge-top_0_0": "road-edge-top",
+    "sakura-large-base_0_0": "sakura-large-base",
+    "sakura-large-top_0_0": "sakura-large-top",
+    "sakura-small-base_0_0": "sakura-small-base",
+    "sakura-small-top_0_0": "sakura-small-top",
+    "sakura-small_0_0": "sakura-small",
+    "seven-eleven_0_0": "seven-eleven",
+    "shrine-building_0_0": "shrine-building",
+    "shrine-top_0_0": "shrine-top",
+    "shrine-walls_2_2": "shrine-walls",
+    "shrine-walls_3_1": "shrine-walls",
+    "shrine-walls_4_0": "shrine-walls",
+    "shrine-walls_4_1": "shrine-walls",
+    "shrine-walls_4_2": "shrine-walls",
+    "shrine-walls_6_0": "shrine-walls",
+    "shrine-walls_6_1": "shrine-walls",
+    "shrine-walls_6_2": "shrine-walls",
+    "shrine-walls_7_0": "shrine-walls",
+    "shrine-walls_7_1": "shrine-walls",
+    "shrine-walls_7_2": "shrine-walls",
+    "shrub-large-circle_0_0": "shrub-large-circle",
+    "shrub-small-circle_0_0": "shrub-small-circle",
+    "shrubs-1_0_0": "shrubs-1",
+    "shrubs-1_0_1": "shrubs-1",
+    "shrubs-1_1_0": "shrubs-1",
+    "shrubs-1_1_1": "shrubs-1",
+    "shrubs-1_2_0": "shrubs-1",
+    "shrubs-1_2_1": "shrubs-1",
+    "shrubs-1_3_1": "shrubs-1",
+    "temple-hallway_0_0": "temple-hallway",
+    "tile-brick-path_1_1": "tile-brick-path",
+    "tile-brick-path_1_2": "tile-brick-path",
+    "tile-brick-path_1_3": "tile-brick-path",
+    "tile-brick-path_2_1": "tile-brick-path",
+    "tile-brick-path_3_1": "tile-brick-path",
+    "tile-brick-path_4_0": "tile-brick-path",
+    "tokyo-station_0_0": "tokyo-station",
+    "tokyo-tower-feet": "tokyo-tower-feet",
+    "tokyo-tower_0_0": "tokyo-tower",
+    "torii-blue-feet_0_0": "torii-blue-feet",
+    "torii-blue-top_0_0": "torii-blue-top",
+    "torii-red-feet_0_0": "torii-red-feet",
+    "torii-red-top_0_0": "torii-red-top",
+    "train-track_0_0": "train-track",
+    "tree-1-base-shadow_0_0": "tree-1-base-shadow",
+    "tree-1-top_0_0": "tree-1-top",
+    "tree-2-base-shadow_0_0": "tree-2-base-shadow",
+    "tree-2-top_0_0": "tree-2-top",
+    "tree-3-base-shadow_0_0": "tree-3-base-shadow",
+    "tree-3-top_0_0": "tree-3-top",
+    "white-vending-machine-base-2_0_0": "white-vending-machine-base-2",
+    "white-vending-machine-base-3_0_0": "white-vending-machine-base-3",
+    "white-vending-machine-bottom_0_0": "white-vending-machine-bottom",
+    "white-vending-machine-top-2_0_0": "white-vending-machine-top-2",
+    "white-vending-machine-top-3_0_0": "white-vending-machine-top-3",
+    "white-vending-machine-top_0_0": "white-vending-machine-top",
+    "yellow-vending-machine-base_0_0": "yellow-vending-machine-base",
+    "yellow-vending-machine-top_0_0": "yellow-vending-machine-top"
   },
   "tilePalette": [
-    "gk1_100_0_0",
-    "gk1_100_0_1",
-    "gk1_100_0_2",
-    "gk1_100_1_0",
-    "gk1_100_1_1",
-    "gk1_100_1_2",
-    "gk1_100_2_0",
-    "gk1_100_2_1",
-    "gk1_100_2_2",
-    "gk1_101_0_0",
-    "gk1_101_0_1",
-    "gk1_101_0_2",
-    "gk1_101_1_0",
-    "gk1_101_1_1",
-    "gk1_101_1_2",
-    "gk1_101_2_0",
-    "gk1_101_2_1",
-    "gk1_101_2_2",
-    "gk1_102_0_0",
-    "gk1_102_0_1",
-    "gk1_102_0_2",
-    "gk1_102_0_3",
-    "gk1_102_0_4",
-    "gk1_102_0_5",
-    "gk1_102_1_0",
-    "gk1_102_1_2",
-    "gk1_102_1_5",
-    "gk1_102_2_0",
-    "gk1_102_2_1",
-    "gk1_102_2_3",
-    "gk1_102_2_4",
-    "gk1_102_2_5",
-    "gk1_103_0_0",
-    "gk1_104_0_0",
-    "gk1_105_0_0",
-    "gk1_106_2_2",
-    "gk1_106_3_1",
-    "gk1_106_4_0",
-    "gk1_106_4_1",
-    "gk1_106_4_2",
-    "gk1_106_6_0",
-    "gk1_106_6_1",
-    "gk1_106_6_2",
-    "gk1_106_7_0",
-    "gk1_106_7_1",
-    "gk1_106_7_2",
-    "gk1_107_0_0",
-    "gk1_108_0_4",
-    "gk1_108_0_6",
-    "gk1_108_0_7",
-    "gk1_108_0_8",
-    "gk1_108_1_1",
-    "gk1_108_1_2",
-    "gk1_108_1_4",
-    "gk1_108_1_6",
-    "gk1_108_2_7",
-    "gk1_108_3_1",
-    "gk1_108_3_2",
-    "gk1_108_3_4",
-    "gk1_108_3_6",
-    "gk1_108_4_4",
-    "gk1_108_4_5",
-    "gk1_108_4_7",
-    "gk1_108_4_8",
-    "gk1_10_0_0",
-    "gk1_10_0_1",
-    "gk1_10_0_2",
-    "gk1_10_1_0",
-    "gk1_10_1_1",
-    "gk1_10_1_2",
-    "gk1_10_2_0",
-    "gk1_10_2_1",
-    "gk1_10_2_2",
-    "gk1_110_2_0",
-    "gk1_110_2_1",
-    "gk1_111_0_0",
-    "gk1_112_0_0",
-    "gk1_113_0_0",
-    "gk1_114_0_0",
-    "gk1_115_11_3",
-    "gk1_115_15_3",
-    "gk1_115_1_2",
-    "gk1_115_2_1",
-    "gk1_115_4_1",
-    "gk1_115_5_1",
-    "gk1_115_7_3",
-    "gk1_115_9_3",
-    "gk1_116_10_0",
-    "gk1_116_10_1",
-    "gk1_116_11_0",
-    "gk1_116_11_1",
-    "gk1_116_11_5",
-    "gk1_116_14_4",
-    "gk1_116_15_3",
-    "gk1_116_1_2",
-    "gk1_116_2_1",
-    "gk1_116_3_1",
-    "gk1_116_5_5",
-    "gk1_116_7_0",
-    "gk1_116_7_1",
-    "gk1_116_7_5",
-    "gk1_116_8_0",
-    "gk1_116_8_1",
-    "gk1_116_9_5",
-    "gk1_117_0_0",
-    "gk1_118_3_1",
-    "gk1_118_4_1",
-    "gk1_118_6_3",
-    "gk1_120_0_0",
-    "gk1_121_0_0",
-    "gk1_124_0_0",
-    "gk1_126_0_0",
-    "gk1_127_0_0",
-    "gk1_128_0_0",
-    "gk1_129_0_0",
-    "gk1_12_0_0",
-    "gk1_130_0_0",
-    "gk1_131_0_0",
-    "gk1_133_0_0",
-    "gk1_135_0_0",
-    "gk1_136_0_0",
-    "gk1_137_0_0",
-    "gk1_13_0_0",
-    "gk1_146_0_0",
-    "gk1_146_0_1",
-    "gk1_146_0_2",
-    "gk1_146_1_0",
-    "gk1_146_1_1",
-    "gk1_146_1_2",
-    "gk1_146_2_0",
-    "gk1_146_2_1",
-    "gk1_146_2_2",
-    "gk1_147_0_0",
-    "gk1_147_0_1",
-    "gk1_147_0_2",
-    "gk1_147_1_0",
-    "gk1_147_1_1",
-    "gk1_147_1_2",
-    "gk1_147_2_0",
-    "gk1_147_2_1",
-    "gk1_147_2_2",
-    "gk1_148_0_0",
-    "gk1_149_0_0",
-    "gk1_14_0_0",
-    "gk1_150_0_0",
-    "gk1_151_0_0",
-    "gk1_152_0_0",
-    "gk1_153_0_0",
-    "gk1_157_0_0",
-    "gk1_157_0_1",
-    "gk1_157_0_2",
-    "gk1_157_1_0",
-    "gk1_157_1_1",
-    "gk1_157_1_2",
-    "gk1_157_2_0",
-    "gk1_157_2_1",
-    "gk1_157_2_2",
-    "gk1_15_0_0",
-    "gk1_163_0_0",
-    "gk1_164_0_2",
-    "gk1_164_0_3",
-    "gk1_164_1_2",
-    "gk1_164_2_0",
-    "gk1_165_0_0",
-    "gk1_166_0_0",
-    "gk1_167_0_0",
-    "gk1_169_0_0",
-    "gk1_170_0_0",
-    "gk1_171_0_0",
-    "gk1_172_0_0",
-    "gk1_173_0_0",
-    "gk1_174_0_0",
-    "gk1_175_0_0",
-    "gk1_176_0_0",
-    "gk1_17_0_0",
-    "gk1_18_0_0",
-    "gk1_19_0_0",
-    "gk1_1_0_0",
-    "gk1_20_0_0",
-    "gk1_21_0_0",
-    "gk1_22_0_0",
-    "gk1_23_0_0",
-    "gk1_24_0_0",
-    "gk1_25_0_0",
-    "gk1_26_0_0",
-    "gk1_2_0_0",
-    "gk1_30_0_0",
-    "gk1_31_0_0",
-    "gk1_32_0_0",
-    "gk1_33_0_0",
-    "gk1_34_0_0",
-    "gk1_35_0_0",
-    "gk1_36_0_0",
-    "gk1_37_0_0",
-    "gk1_38_0_0",
-    "gk1_38_0_1",
-    "gk1_38_0_2",
-    "gk1_38_1_0",
-    "gk1_38_1_1",
-    "gk1_38_1_2",
-    "gk1_38_2_0",
-    "gk1_38_2_1",
-    "gk1_38_2_2",
-    "gk1_3_0_0",
-    "gk1_44_0_0",
-    "gk1_45_0_0",
-    "gk1_46_0_0",
-    "gk1_47_0_0",
-    "gk1_48_0_0",
-    "gk1_4_0_0",
-    "gk1_50_0_0",
-    "gk1_59_0_3",
-    "gk1_59_2_1",
-    "gk1_59_2_5",
-    "gk1_59_3_5",
-    "gk1_59_4_1",
-    "gk1_59_4_5",
-    "gk1_59_6_3",
-    "gk1_59_8_3",
-    "gk1_60_1_1",
-    "gk1_60_1_2",
-    "gk1_60_1_3",
-    "gk1_60_2_1",
-    "gk1_60_3_1",
-    "gk1_60_4_0",
-    "gk1_61_0_0",
-    "gk1_61_0_2",
-    "gk1_61_2_0",
-    "gk1_61_2_2",
-    "gk1_62_0_0",
-    "gk1_63_0_0",
-    "gk1_64_0_0",
-    "gk1_65_0_0",
-    "gk1_65_0_2",
-    "gk1_65_1_0",
-    "gk1_65_1_1",
-    "gk1_65_1_2",
-    "gk1_65_2_0",
-    "gk1_65_2_1",
-    "gk1_65_2_2",
-    "gk1_66_0_0",
-    "gk1_67_4_1",
-    "gk1_67_5_0",
-    "gk1_68_0_0",
-    "gk1_69_0_0",
-    "gk1_69_0_1",
-    "gk1_69_1_0",
-    "gk1_69_1_1",
-    "gk1_69_2_0",
-    "gk1_69_2_1",
-    "gk1_69_3_1",
-    "gk1_6_0_0",
-    "gk1_70_0_0",
-    "gk1_79_0_2",
-    "gk1_79_1_0",
-    "gk1_79_1_2",
-    "gk1_79_2_0",
-    "gk1_79_2_1",
-    "gk1_79_2_2",
-    "gk1_7_0_0",
-    "gk1_80_0_0",
-    "gk1_81_0_0",
-    "gk1_82_0_0",
-    "gk1_83_0_0",
-    "gk1_84_0_0",
-    "gk1_85_0_0",
-    "gk1_86_0_0",
-    "gk1_87_0_0",
-    "gk1_88_0_0",
-    "gk1_89_0_0",
-    "gk1_89_0_1",
-    "gk1_89_1_0",
-    "gk1_89_1_1",
-    "gk1_8_0_0",
-    "gk1_91_0_0",
-    "gk1_92_0_0",
-    "gk1_93_0_0",
-    "gk1_94_0_0",
-    "gk1_95_0_0",
-    "gk1_96_0_0",
-    "gk1_97_0_0",
-    "gk1_98_0_0",
-    "gk1_99_0_0",
-    "gk2_0_0_0",
-    "gk2_1_0_0",
-    "gk2_2_0_0",
-    "gk2_4_0_0",
-    "gk2_5_0_0",
+    "grey-brick-autotile_0_0",
+    "grey-brick-autotile_0_1",
+    "grey-brick-autotile_0_2",
+    "grey-brick-autotile_1_0",
+    "grey-brick-autotile_1_1",
+    "grey-brick-autotile_1_2",
+    "grey-brick-autotile_2_0",
+    "grey-brick-autotile_2_1",
+    "grey-brick-autotile_2_2",
+    "brown-brick-autotile_0_0",
+    "brown-brick-autotile_0_1",
+    "brown-brick-autotile_0_2",
+    "brown-brick-autotile_1_0",
+    "brown-brick-autotile_1_1",
+    "brown-brick-autotile_1_2",
+    "brown-brick-autotile_2_0",
+    "brown-brick-autotile_2_1",
+    "brown-brick-autotile_2_2",
+    "red-pagoda-roofs_0_0",
+    "red-pagoda-roofs_0_1",
+    "red-pagoda-roofs_0_2",
+    "red-pagoda-roofs_0_3",
+    "red-pagoda-roofs_0_4",
+    "red-pagoda-roofs_0_5",
+    "red-pagoda-roofs_1_0",
+    "red-pagoda-roofs_1_2",
+    "red-pagoda-roofs_1_5",
+    "red-pagoda-roofs_2_0",
+    "red-pagoda-roofs_2_1",
+    "red-pagoda-roofs_2_3",
+    "red-pagoda-roofs_2_4",
+    "red-pagoda-roofs_2_5",
+    "torii-red-feet_0_0",
+    "torii-red-top_0_0",
+    "torii-blue-top_0_0",
+    "shrine-walls_2_2",
+    "shrine-walls_3_1",
+    "shrine-walls_4_0",
+    "shrine-walls_4_1",
+    "shrine-walls_4_2",
+    "shrine-walls_6_0",
+    "shrine-walls_6_1",
+    "shrine-walls_6_2",
+    "shrine-walls_7_0",
+    "shrine-walls_7_1",
+    "shrine-walls_7_2",
+    "red-centre-roof_0_0",
+    "red-shrine-top-parts_0_4",
+    "red-shrine-top-parts_0_6",
+    "red-shrine-top-parts_0_7",
+    "red-shrine-top-parts_0_8",
+    "red-shrine-top-parts_1_1",
+    "red-shrine-top-parts_1_2",
+    "red-shrine-top-parts_1_4",
+    "red-shrine-top-parts_1_6",
+    "red-shrine-top-parts_2_7",
+    "red-shrine-top-parts_3_1",
+    "red-shrine-top-parts_3_2",
+    "red-shrine-top-parts_3_4",
+    "red-shrine-top-parts_3_6",
+    "red-shrine-top-parts_4_4",
+    "red-shrine-top-parts_4_5",
+    "red-shrine-top-parts_4_7",
+    "red-shrine-top-parts_4_8",
+    "grass-autotile_0_0",
+    "grass-autotile_0_1",
+    "grass-autotile_0_2",
+    "grass-autotile_1_0",
+    "grass-autotile_1_1",
+    "grass-autotile_1_2",
+    "grass-autotile_2_0",
+    "grass-autotile_2_1",
+    "grass-autotile_2_2",
+    "red-small-pagoda-top_2_0",
+    "red-small-pagoda-top_2_1",
+    "red-pagoda-spacing_0_0",
+    "red-pagoda-roof_0_0",
+    "blue-short-wall-back-east_0_0",
+    "blue-short-wall-back-west_0_0",
+    "brown-brick-floor-tiles_11_3",
+    "brown-brick-floor-tiles_15_3",
+    "brown-brick-floor-tiles_1_2",
+    "brown-brick-floor-tiles_2_1",
+    "brown-brick-floor-tiles_4_1",
+    "brown-brick-floor-tiles_5_1",
+    "brown-brick-floor-tiles_7_3",
+    "brown-brick-floor-tiles_9_3",
+    "grey-brick-floor-tiles_10_0",
+    "grey-brick-floor-tiles_10_1",
+    "grey-brick-floor-tiles_11_0",
+    "grey-brick-floor-tiles_11_1",
+    "grey-brick-floor-tiles_11_5",
+    "grey-brick-floor-tiles_14_4",
+    "grey-brick-floor-tiles_15_3",
+    "grey-brick-floor-tiles_1_2",
+    "grey-brick-floor-tiles_2_1",
+    "grey-brick-floor-tiles_3_1",
+    "grey-brick-floor-tiles_5_5",
+    "grey-brick-floor-tiles_7_0",
+    "grey-brick-floor-tiles_7_1",
+    "grey-brick-floor-tiles_7_5",
+    "grey-brick-floor-tiles_8_0",
+    "grey-brick-floor-tiles_8_1",
+    "grey-brick-floor-tiles_9_5",
+    "red-shrine-top_0_0",
+    "red-lanterns_3_1",
+    "red-lanterns_4_1",
+    "red-lanterns_6_3",
+    "bell-closed-red-baseless_0_0",
+    "bell-red-top_0_0",
+    "road-2-tile-vertical_0_0",
+    "building-entrance-1_0_0",
+    "building-entrance-2_0_0",
+    "building-entrance-3_0_0",
+    "building-tier-black_0_0",
+    "moat-east_0_0",
+    "building-tier-blue_0_0",
+    "building-tier-red_0_0",
+    "building-rafter-blue_0_0",
+    "building-roof-black_0_0",
+    "building-roof-blue_0_0",
+    "building-roof-red_0_0",
+    "moat-west_0_0",
+    "gravel-autotile_0_0",
+    "gravel-autotile_0_1",
+    "gravel-autotile_0_2",
+    "gravel-autotile_1_0",
+    "gravel-autotile_1_1",
+    "gravel-autotile_1_2",
+    "gravel-autotile_2_0",
+    "gravel-autotile_2_1",
+    "gravel-autotile_2_2",
+    "light-concrete-autotile_0_0",
+    "light-concrete-autotile_0_1",
+    "light-concrete-autotile_0_2",
+    "light-concrete-autotile_1_0",
+    "light-concrete-autotile_1_1",
+    "light-concrete-autotile_1_2",
+    "light-concrete-autotile_2_0",
+    "light-concrete-autotile_2_1",
+    "light-concrete-autotile_2_2",
+    "red-pagoda-small-base_0_0",
+    "red-pagoda-small-top_0_0",
+    "moat-north_0_0",
+    "red-vending-machine-bottom_0_0",
+    "white-vending-machine-bottom_0_0",
+    "red-vending-machine-top_0_0",
+    "white-vending-machine-top_0_0",
+    "flat-grey-brick-autotile_0_0",
+    "flat-grey-brick-autotile_0_1",
+    "flat-grey-brick-autotile_0_2",
+    "flat-grey-brick-autotile_1_0",
+    "flat-grey-brick-autotile_1_1",
+    "flat-grey-brick-autotile_1_2",
+    "flat-grey-brick-autotile_2_0",
+    "flat-grey-brick-autotile_2_1",
+    "flat-grey-brick-autotile_2_2",
+    "moat-south_0_0",
+    "train-track_0_0",
+    "fence-barriers_0_2",
+    "fence-barriers_0_3",
+    "fence-barriers_1_2",
+    "fence-barriers_2_0",
+    "lamp-base_0_0",
+    "centred-lamp-top-unlit_0_0",
+    "red-vending-machine-base-2_0_0",
+    "white-vending-machine-top-2_0_0",
+    "white-vending-machine-base-2_0_0",
+    "red-vending-machine-base-3_0_0",
+    "white-vending-machine-base-3_0_0",
+    "red-vending-machine-top-3_0_0",
+    "white-vending-machine-top-3_0_0",
+    "yellow-vending-machine-base_0_0",
+    "yellow-vending-machine-top_0_0",
+    "shrine-building_0_0",
+    "shrine-top_0_0",
+    "pagoda-floor_0_0",
+    "road-edge-left_0_0",
+    "pagoda-roof_0_0",
+    "blue-wall-east-side-roof_0_0",
+    "blue-wall-front-east-corner_0_0",
+    "blue-wall-front-west-corner_0_0",
+    "blue-wall-wet-side-roof_0_0",
+    "blue-wall-gate_0_0",
+    "blue-wall-short_0_0",
+    "road-edge-right_0_0",
+    "sakura-small-base_0_0",
+    "sakura-small-top_0_0",
+    "sakura-large-base_0_0",
+    "sakura-large-top_0_0",
+    "moat-north-west-corner_0_0",
+    "moat-north-east-corner_0_0",
+    "moat-south-west-corner_0_0",
+    "moat-sourth-east-corner_0_0",
+    "dirt-outside-autotile_0_0",
+    "dirt-outside-autotile_0_1",
+    "dirt-outside-autotile_0_2",
+    "dirt-outside-autotile_1_0",
+    "dirt-outside-autotile_1_1",
+    "dirt-outside-autotile_1_2",
+    "dirt-outside-autotile_2_0",
+    "dirt-outside-autotile_2_1",
+    "dirt-outside-autotile_2_2",
+    "road-edge-top_0_0",
+    "temple-hallway_0_0",
+    "castle-wall-siding_0_0",
+    "castle-wall-southwest-corner_0_0",
+    "castle-wall-southeast-corner_0_0",
+    "castle-stairs_0_0",
+    "road-edge-bottom_0_0",
+    "torii-blue-feet_0_0",
+    "fence-garden-outside_0_3",
+    "fence-garden-outside_2_1",
+    "fence-garden-outside_2_5",
+    "fence-garden-outside_3_5",
+    "fence-garden-outside_4_1",
+    "fence-garden-outside_4_5",
+    "fence-garden-outside_6_3",
+    "fence-garden-outside_8_3",
+    "tile-brick-path_1_1",
+    "tile-brick-path_1_2",
+    "tile-brick-path_1_3",
+    "tile-brick-path_2_1",
+    "tile-brick-path_3_1",
+    "tile-brick-path_4_0",
+    "flowering-grass-autotile_0_0",
+    "flowering-grass-autotile_0_2",
+    "flowering-grass-autotile_2_0",
+    "flowering-grass-autotile_2_2",
+    "shrub-large-circle_0_0",
+    "shrub-small-circle_0_0",
+    "pond-leaf_0_0",
+    "pond-autotile_0_0",
+    "pond-autotile_0_2",
+    "pond-autotile_1_0",
+    "pond-autotile_1_1",
+    "pond-autotile_1_2",
+    "pond-autotile_2_0",
+    "pond-autotile_2_1",
+    "pond-autotile_2_2",
+    "bell-blue-baseless_0_0",
+    "blue-lanterns_4_1",
+    "blue-lanterns_5_0",
+    "blue-bell-top_0_0",
+    "shrubs-1_0_0",
+    "shrubs-1_0_1",
+    "shrubs-1_1_0",
+    "shrubs-1_1_1",
+    "shrubs-1_2_0",
+    "shrubs-1_2_1",
+    "shrubs-1_3_1",
+    "road-div-horizontal_0_0",
+    "blue-lamp-post_0_0",
+    "pavers_0_2",
+    "pavers_1_0",
+    "pavers_1_2",
+    "pavers_2_0",
+    "pavers_2_1",
+    "pavers_2_2",
+    "road-div-vertical_0_0",
+    "blue-shrine-platform-base_0_0",
+    "fox-statue-base-1_0_0",
+    "fox-statue-base-2_0_0",
+    "tree-1-base-shadow_0_0",
+    "tree-2-base-shadow_0_0",
+    "tree-3-base-shadow_0_0",
+    "tree-3-top_0_0",
+    "tree-2-top_0_0",
+    "tree-1-top_0_0",
+    "ground-plants-1_0_0",
+    "ground-plants-1_0_1",
+    "ground-plants-1_1_0",
+    "ground-plants-1_1_1",
+    "block_0_0",
+    "sakura-small_0_0",
+    "kirin-statue-1-bottom_0_0",
+    "kirin-statue-2-bottom_0_0",
+    "kirin-statue-1-top_0_0",
+    "kirin-statue-2-top_0_0",
+    "moat-east-rocks_0_0",
+    "moat-south-rocks_0_0",
+    "moat-west-rocks_0_0",
+    "moat-north-rocks_0_0",
+    "tokyo-station_0_0",
+    "seven-eleven_0_0",
+    "tokyo-tower_0_0",
+    "7-11-sign-left_0_0",
+    "7-11-sign-right_0_0",
     "gk_blank",
-    "gk1_168_0_0",
-    "gk2_2_feet"
+    "red-vending-machine-top-2_0_0",
+    "tokyo-tower-feet"
   ],
   "version": 2
 }

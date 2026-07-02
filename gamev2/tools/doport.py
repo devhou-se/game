@@ -79,8 +79,21 @@ tilesets={i:parse_tileset(p) for i,p in tsmap.items()}
 byl={n:(t,c) for n,t,c in layers}
 
 regtiles={}  # key -> (PIL, anchorX, anchorY)
+KEYNAMES={}     # key -> human tile name (filled by regkey, consumed by the tileNames union)
+_NAME_OWNER={}  # slug -> first (tsid,tid) that claimed it
 def regkey(tsid,tid,cx,cy,fh,fv):
-    return f"gk{tsid}_{tid}_{cx}_{cy}{'_h' if fh else ''}{'_v' if fv else ''}"
+    # Semantic sprite keys: <godot-tile-name-slug>_<cx>_<cy>[_h][_v], so the
+    # PNG filename says what the tile IS (sakura-large-top_1_0.png, not
+    # gk1_33_1_0.png). Unnamed tiles fall back to the old gk scheme; a name
+    # reused by a different tile id gets a deterministic -<tsid>-<tid> suffix.
+    nm=(tilesets.get(tsid,{}).get(tid,{}).get('name') or '').strip()
+    base=re.sub(r'[^a-z0-9]+','-',nm.lower()).strip('-') if nm else f"gk{tsid}_{tid}"
+    if nm:
+        owner=_NAME_OWNER.setdefault(base,(tsid,tid))
+        if owner!=(tsid,tid): base=f"{base}-{tsid}-{tid}"
+    key=f"{base}_{cx}_{cy}{'_h' if fh else ''}{'_v' if fv else ''}"
+    if nm: KEYNAMES[key]=nm
+    return key
 
 GVDEF={'Floor':(0,False),'Over Floor':(1,False),'Water':(1,True),'Non-Collidables':(4,False),'Julia':(4,False),'Collidables':(5,True),'Other':(6,False),'Tops':(7,False)}
 
@@ -378,10 +391,8 @@ cfg['spriteMetadata']=newmeta
 # Human-readable source name per sliced tile, for the debug inspector (union).
 tileNames=dict(cfg.get('tileNames',{}))
 for key in regtiles:
-    m=re.match(r'gk(\d+)_(\d+)_',key)
-    if m:
-        nm=tilesets.get(int(m.group(1)),{}).get(int(m.group(2)),{}).get('name')
-        if nm: tileNames[key]=nm
+    nm=KEYNAMES.get(key)
+    if nm: tileNames[key]=nm
 cfg['tileNames']=tileNames
 # Tall buildings: lower render depth ~1 row so the player stays visible climbing
 # the steps/stairs and only disappears IN the doorway (shrine = a walk-in gateway).
