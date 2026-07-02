@@ -16308,11 +16308,15 @@
           },
           "gridOffsetX": 0,
           "gridOffsetY": 0,
-          "gridX": 27,
-          "gridY": 36,
+          "gridX": 20,
+          "gridY": 42,
           "name": "Bailey",
           "sprite": "bailey_front",
           "states": {
+            "2026-05-10": {
+              "gridX": 27,
+              "gridY": 36
+            },
             "2026-06-30": {
               "dialogue": [
                 "Hey, I'm Bailey.",
@@ -16346,10 +16350,16 @@
           },
           "gridOffsetX": 0,
           "gridOffsetY": 0,
-          "gridX": 31,
-          "gridY": 36,
+          "gridX": 24,
+          "gridY": 42,
           "name": "Damian",
-          "sprite": "damian_front"
+          "sprite": "damian_front",
+          "states": {
+            "2026-05-10": {
+              "gridX": 31,
+              "gridY": 36
+            }
+          }
         },
         {
           "autoFlip": {
@@ -16368,10 +16378,16 @@
           },
           "gridOffsetX": 0,
           "gridOffsetY": 0,
-          "gridX": 29,
-          "gridY": 35,
+          "gridX": 28,
+          "gridY": 42,
           "name": "Julia",
-          "sprite": "julia_front"
+          "sprite": "julia_front",
+          "states": {
+            "2026-05-10": {
+              "gridX": 29,
+              "gridY": 35
+            }
+          }
         }
       ],
       "objects": [],
