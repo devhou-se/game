@@ -273,46 +273,7 @@ class RoomManager {
         this.scene.cameras.main.fadeOut(250, 0, 0, 0);
 
         this.scene.cameras.main.once('camerafadeoutcomplete', () => {
-            // Hide current room NPCs and their labels
-            const oldRoom = this.rooms[this.currentRoom];
-            oldRoom.npcs.forEach(npc => {
-                npc.sprite.setVisible(false);
-                if (npc.nameLabel) npc.nameLabel.setVisible(false);
-            });
-
-            // Update current room
-            this.currentRoom = newRoom;
-
-            // Resize camera/physics/player movement bounds to the new room
-            this.scene.applyRoomBounds(newRoom);
-
-            // Move player to target position
-            this.scene.player.gridX = targetX;
-            this.scene.player.gridY = targetY;
-            const pixelX = targetX * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
-            const pixelY = targetY * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
-            this.scene.player.sprite.setPosition(pixelX, pixelY);
-
-            // Center camera on player
-            this.scene.cameras.main.centerOn(pixelX, pixelY);
-
-            // Show new room NPCs and their labels
-            const room = this.rooms[this.currentRoom];
-            room.npcs.forEach(npc => {
-                npc.sprite.setVisible(true);
-                if (npc.nameLabel) npc.nameLabel.setVisible(true);
-            });
-
-            // Load new room content
-            this.loadTransporters();
-            this.loadObjects();
-            this.loadFloorTiles();
-
-            // Update HUD
-            this.scene.updateHUD();
-
-            // Park (or hide) the station train for the new room
-            if (this.scene.trainTravel) this.scene.trainTravel.onRoomChange(newRoom);
+            this.applyRoomSwap(newRoom, targetX, targetY);
 
             // Wait 0.25 seconds on black, then fade in
             this.scene.time.delayedCall(250, () => {
@@ -324,6 +285,60 @@ class RoomManager {
                 });
             });
         });
+    }
+
+    /**
+     * Swap the room's contents (NPCs, player position, camera, tiles, HUD, train)
+     * with no fade of its own. `switchRoom` calls this on black between its camera
+     * fades; the train ride (TrainTravel) calls it directly under its own curtain
+     * so the room can change invisibly and the train never flashes on the platform.
+     */
+    applyRoomSwap(newRoom, targetX, targetY) {
+        // Hide current room NPCs and their labels
+        const oldRoom = this.rooms[this.currentRoom];
+        oldRoom.npcs.forEach(npc => {
+            npc.sprite.setVisible(false);
+            if (npc.nameLabel) npc.nameLabel.setVisible(false);
+        });
+
+        // Update current room
+        this.currentRoom = newRoom;
+
+        // Resize camera/physics/player movement bounds to the new room
+        this.scene.applyRoomBounds(newRoom);
+
+        // Move player to target position
+        this.scene.player.gridX = targetX;
+        this.scene.player.gridY = targetY;
+        const pixelX = targetX * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
+        const pixelY = targetY * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
+        this.scene.player.sprite.setPosition(pixelX, pixelY);
+
+        // Center camera on player
+        this.scene.cameras.main.centerOn(pixelX, pixelY);
+
+        // Show new room NPCs and their labels
+        const room = this.rooms[this.currentRoom];
+        room.npcs.forEach(npc => {
+            npc.sprite.setVisible(true);
+            if (npc.nameLabel) npc.nameLabel.setVisible(true);
+        });
+
+        // Load new room content
+        this.loadTransporters();
+        this.loadObjects();
+        this.loadFloorTiles();
+
+        // Update HUD
+        this.scene.updateHUD();
+
+        // Park (or hide) the station train for the new room
+        if (this.scene.trainTravel) this.scene.trainTravel.onRoomChange(newRoom);
+    }
+
+    /** Swap rooms immediately, no camera fade (used under the train-ride curtain). */
+    switchRoomInstant(newRoom, targetX, targetY) {
+        this.applyRoomSwap(newRoom, targetX, targetY);
     }
 
     /**

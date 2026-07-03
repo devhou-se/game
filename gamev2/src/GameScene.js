@@ -640,9 +640,10 @@ class GameScene extends Phaser.Scene {
     checkTransporter() {
         const playerPos = this.player.getGridPosition();
         if (this.roomManager.checkTransporter(playerPos)) return true;
-        // walking up to the train (a board cell in a station) opens departures
+        // walking up to the train (a board cell in a station) opens departures —
+        // but never mid-ride (e.g. while the player is stepping off at arrival)
         const st = (this.config.stations || {})[this.roomManager.currentRoom];
-        if (st && this.stationPicker &&
+        if (st && this.stationPicker && !(this.trainTravel && this.trainTravel.riding) &&
             st.board.some(([bx, by]) => bx === playerPos.x && by === playerPos.y)) {
             this.stationPicker.show(this.roomManager.currentRoom);
         }
