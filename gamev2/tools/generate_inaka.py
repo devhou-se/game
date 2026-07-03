@@ -57,7 +57,7 @@ for x in range(6, 11):
 
 b.pond(5, 10, 10)
 b.stamp('house-red', 12, 12)
-b.stamp('house-blue', 25, 17)
+b.stamp('house-blue', 25, 16)
 
 # orchard (east) + loose trees
 for (ox, oy) in [(33, 10), (36, 12), (33, 15), (36, 17)]:

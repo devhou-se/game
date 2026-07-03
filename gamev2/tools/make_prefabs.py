@@ -43,8 +43,10 @@ PREFABS = {
                          colliders=[(x, y) for x in range(3) for y in range(5) if (x, y) != (1, 4)], doors=[(1, 4)]),
     # roof(3) + a wall tier + entrance(1): without the tier the gable sits straight
     # on the door and grass shows through the "missing middle" of the facade.
-    'house-blue':   dict(w=3, h=5, sprites=[('Tops', 0, 0, 'building-roof-blue_0_0'), ('Collidables', 0, 3, 'building-tier-blue_0_0'), ('Collidables', 0, 4, 'building-entrance-1_0_0')],
-                         colliders=[(x, y) for x in range(3) for y in (2, 3, 4) if (x, y) != (1, 4)], doors=[(1, 4)]),
+    # house-blue's entrance-1 is a full 2-cell sliding door (192x128), so this
+    # house is a row taller than the others and its door sits on the bottom row.
+    'house-blue':   dict(w=3, h=6, sprites=[('Tops', 0, 0, 'building-roof-blue_0_0'), ('Collidables', 0, 3, 'building-tier-blue_0_0'), ('Collidables', 0, 4, 'building-entrance-1_0_0')],
+                         colliders=[(x, y) for x in range(3) for y in (3, 4, 5) if (x, y) != (1, 5)], doors=[(1, 5)]),
     'house-red':    dict(w=3, h=5, sprites=[('Tops', 0, 0, 'building-roof-red_0_0'), ('Collidables', 0, 3, 'building-tier-red_0_0'), ('Collidables', 0, 4, 'building-entrance-3_0_0')],
                          colliders=[(x, y) for x in range(3) for y in (2, 3, 4) if (x, y) != (1, 4)], doors=[(1, 4)]),
     'house-black':  dict(w=3, h=5, sprites=[('Tops', 0, 0, 'building-roof-black_0_0'), ('Collidables', 0, 3, 'building-tier-black_0_0'), ('Collidables', 0, 4, 'building-entrance-2_0_0')],

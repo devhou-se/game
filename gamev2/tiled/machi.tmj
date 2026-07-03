@@ -8036,7 +8036,7 @@
      "gid": 5,
      "name": "building-entrance-1_0_0",
      "x": 1792,
-     "y": 896,
+     "y": 832,
      "width": 192,
      "height": 64,
      "visible": true
@@ -8106,7 +8106,7 @@
      "gid": 5,
      "name": "building-entrance-1_0_0",
      "x": 2752,
-     "y": 896,
+     "y": 832,
      "width": 192,
      "height": 64,
      "visible": true
@@ -8206,7 +8206,7 @@
      "gid": 89,
      "name": "building-tier-blue_0_0",
      "x": 1792,
-     "y": 832,
+     "y": 768,
      "width": 192,
      "height": 64,
      "visible": true
@@ -8236,7 +8236,7 @@
      "gid": 89,
      "name": "building-tier-blue_0_0",
      "x": 2752,
-     "y": 832,
+     "y": 768,
      "width": 192,
      "height": 64,
      "visible": true
@@ -11749,7 +11749,7 @@
      "gid": 9,
      "name": "building-roof-blue_0_0",
      "x": 1792,
-     "y": 640,
+     "y": 576,
      "width": 192,
      "height": 192,
      "visible": true
@@ -11929,7 +11929,7 @@
      "gid": 9,
      "name": "building-roof-blue_0_0",
      "x": 2752,
-     "y": 640,
+     "y": 576,
      "width": 192,
      "height": 192,
      "visible": true

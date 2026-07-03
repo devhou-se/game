@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 15,
- "nextobjectid": 103,
+ "nextobjectid": 99,
  "properties": [
   {
    "name": "gv2room",
@@ -13459,46 +13459,6 @@
      "width": 192,
      "height": 64,
      "visible": true
-    },
-    {
-     "id": 99,
-     "gid": 28,
-     "name": "building-tier-blue_0_0",
-     "x": 704,
-     "y": 2112,
-     "width": 192,
-     "height": 64,
-     "visible": true
-    },
-    {
-     "id": 100,
-     "gid": 28,
-     "name": "building-tier-blue_0_0",
-     "x": 2368,
-     "y": 2176,
-     "width": 192,
-     "height": 64,
-     "visible": true
-    },
-    {
-     "id": 101,
-     "gid": 27,
-     "name": "building-tier-black_0_0",
-     "x": 2688,
-     "y": 2176,
-     "width": 192,
-     "height": 64,
-     "visible": true
-    },
-    {
-     "id": 102,
-     "gid": 29,
-     "name": "building-tier-red_0_0",
-     "x": 384,
-     "y": 2240,
-     "width": 192,
-     "height": 64,
-     "visible": true
     }
    ],
    "properties": [
@@ -19347,7 +19307,7 @@
      "gid": 25,
      "name": "building-roof-blue_0_0",
      "x": 704,
-     "y": 1920,
+     "y": 1984,
      "width": 192,
      "height": 192,
      "visible": true
@@ -19717,7 +19677,7 @@
      "gid": 25,
      "name": "building-roof-blue_0_0",
      "x": 2368,
-     "y": 1984,
+     "y": 2048,
      "width": 192,
      "height": 192,
      "visible": true
@@ -19737,7 +19697,7 @@
      "gid": 24,
      "name": "building-roof-black_0_0",
      "x": 2688,
-     "y": 1984,
+     "y": 2048,
      "width": 192,
      "height": 192,
      "visible": true
@@ -19837,7 +19797,7 @@
      "gid": 26,
      "name": "building-roof-red_0_0",
      "x": 384,
-     "y": 2048,
+     "y": 2112,
      "width": 192,
      "height": 192,
      "visible": true

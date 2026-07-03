@@ -5426,7 +5426,7 @@
      "gid": 2,
      "name": "building-entrance-1_0_0",
      "x": 1600,
-     "y": 1344,
+     "y": 1280,
      "width": 192,
      "height": 64,
      "visible": true
@@ -5526,7 +5526,7 @@
      "gid": 72,
      "name": "building-tier-blue_0_0",
      "x": 1600,
-     "y": 1280,
+     "y": 1216,
      "width": 192,
      "height": 64,
      "visible": true
@@ -6695,7 +6695,7 @@
      "gid": 6,
      "name": "building-roof-blue_0_0",
      "x": 1600,
-     "y": 1088,
+     "y": 1024,
      "width": 192,
      "height": 192,
      "visible": true
