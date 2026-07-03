@@ -79,13 +79,14 @@ class TrainTravel {
         // dark surround behind/around the car
         c.add(scene.add.rectangle(0, 0, W, H, 0x05060a).setOrigin(0, 0));
 
-        // the car interior, matched to the livery. Scaled to fill the screen
-        // height so it sits at the world's 4x pixel scale — the player then rides
-        // at his native in-game size and stays in proportion. The car is longer
-        // than the screen, so we frame the middle of it.
+        // the car interior, matched to the livery, at 2x. That keeps it in
+        // proportion with the world: the exterior train's doors render ~108px
+        // tall, and the interior's doors at 2x are ~112px — so the character
+        // (unchanged size) reads as person-height inside the car instead of
+        // ankle-height under 4x furniture. The car is wider than the screen,
+        // so we frame the middle of it against the dark surround.
         const interior = scene.add.image(W / 2, H / 2, this.interiorKeyFor(trainKey)).setOrigin(0.5, 0.5);
-        const S = H / interior.height;
-        interior.setScale(S);
+        interior.setScale(2);
         c.add(interior);
         const carTop = H / 2 - interior.displayHeight / 2, carH = interior.displayHeight;
 
@@ -104,8 +105,15 @@ class TrainTravel {
             }));
         }
 
-        // the player, standing in the aisle (feet on the floor), facing the camera
-        const rider = scene.add.image(W / 2, carTop + carH * 0.70, scene.player.sprite.texture.key)
+        // the player, standing in the aisle (feet on the floor), facing the
+        // camera. Pinned to the front-facing STANDING frame (frame 0 of the
+        // 'down' sprite) — the live sprite's texture could be any mid-walk
+        // frame of whatever way he last moved.
+        const downKey = scene.getDirectionalSpriteKey(scene.player.baseSpriteKey, 'down')
+            || scene.player.baseSpriteKey;
+        const standKey = scene.textures.exists(`${downKey}_frame_0`)
+            ? `${downKey}_frame_0` : downKey;
+        const rider = scene.add.image(W / 2, carTop + carH * 0.70, standKey)
             .setOrigin(0.5, 1).setScale(1.5);
         c.add(rider);
 
