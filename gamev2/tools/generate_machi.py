@@ -80,13 +80,12 @@ b.stamp('sign-7-11', 10, 12)
 b.stamp('vending-white', 12, 13); b.stamp('vending-red', 14, 13); b.stamp('vending-white', 16, 13)
 b.stamp('sakura-small', 18, 12)
 
-# houses (doors sealed — no interiors for these yet)
-b.stamp('house-blue', 28, 11)
-b.stamp('house-black', 33, 10)
-b.stamp('house-red', 38, 11)
-b.stamp('house-blue', 43, 11)
-for hx in (29, 34, 39, 44):
-    b.put('Over Floor', hx, 15, 'tile-brick-path_2_1')
+# houses (doors sealed — no interiors for these yet). Stamped a row higher than
+# the door row now that the prefab carries a wall tier above the entrance.
+b.stamp('house-blue', 28, 10)
+b.stamp('house-black', 33, 9)
+b.stamp('house-red', 38, 10)
+b.stamp('house-blue', 43, 10)
 
 # south plaza
 b.stamp('pagoda-small', 24, 19)

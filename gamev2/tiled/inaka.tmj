@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 10,
- "nextobjectid": 34,
+ "nextobjectid": 37,
  "properties": [
   {
    "name": "gv2room",
@@ -34,7 +34,7 @@
    "name": "gamev2",
    "tilewidth": 64,
    "tileheight": 64,
-   "tilecount": 70,
+   "tilecount": 73,
    "columns": 0,
    "objectalignment": "topleft",
    "grid": {
@@ -461,6 +461,24 @@
      "id": 69,
      "image": "../assets/sprites/white-vending-machine-top_0_0.png",
      "imagewidth": 64,
+     "imageheight": 64
+    },
+    {
+     "id": 70,
+     "image": "../../assets/sprites/building-tier-red_0_0.png",
+     "imagewidth": 192,
+     "imageheight": 64
+    },
+    {
+     "id": 71,
+     "image": "../../assets/sprites/building-tier-blue_0_0.png",
+     "imagewidth": 192,
+     "imageheight": 64
+    },
+    {
+     "id": 72,
+     "image": "../../assets/sprites/building-tier-black_0_0.png",
+     "imagewidth": 192,
      "imageheight": 64
     }
    ],
@@ -2827,7 +2845,7 @@
     0,
     0,
     0,
-    65,
+    0,
     0,
     0,
     0,
@@ -3040,7 +3058,7 @@
     0,
     0,
     0,
-    65,
+    0,
     0,
     0,
     0,
@@ -5492,6 +5510,36 @@
      "width": 128,
      "height": 64,
      "visible": true
+    },
+    {
+     "id": 34,
+     "gid": 71,
+     "name": "building-tier-red_0_0",
+     "x": 768,
+     "y": 960,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    },
+    {
+     "id": 35,
+     "gid": 72,
+     "name": "building-tier-blue_0_0",
+     "x": 1600,
+     "y": 1280,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    },
+    {
+     "id": 36,
+     "gid": 73,
+     "name": "building-tier-black_0_0",
+     "x": 1792,
+     "y": 512,
+     "width": 192,
+     "height": 64,
+     "visible": true
     }
    ],
    "properties": [
@@ -6597,7 +6645,7 @@
      "gid": 7,
      "name": "building-roof-red_0_0",
      "x": 768,
-     "y": 832,
+     "y": 768,
      "width": 192,
      "height": 192,
      "visible": true
@@ -6647,7 +6695,7 @@
      "gid": 6,
      "name": "building-roof-blue_0_0",
      "x": 1600,
-     "y": 1152,
+     "y": 1088,
      "width": 192,
      "height": 192,
      "visible": true
@@ -6667,7 +6715,7 @@
      "gid": 5,
      "name": "building-roof-black_0_0",
      "x": 1792,
-     "y": 384,
+     "y": 320,
      "width": 192,
      "height": 192,
      "visible": true

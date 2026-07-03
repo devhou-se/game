@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 11,
- "nextobjectid": 79,
+ "nextobjectid": 83,
  "properties": [
   {
    "name": "gv2room",
@@ -34,7 +34,7 @@
    "name": "gamev2",
    "tilewidth": 64,
    "tileheight": 64,
-   "tilecount": 88,
+   "tilecount": 91,
    "columns": 0,
    "objectalignment": "topleft",
    "grid": {
@@ -569,6 +569,24 @@
      "id": 87,
      "image": "../assets/sprites/white-vending-machine-top_0_0.png",
      "imagewidth": 64,
+     "imageheight": 64
+    },
+    {
+     "id": 88,
+     "image": "../../assets/sprites/building-tier-blue_0_0.png",
+     "imagewidth": 192,
+     "imageheight": 64
+    },
+    {
+     "id": 89,
+     "image": "../../assets/sprites/building-tier-black_0_0.png",
+     "imagewidth": 192,
+     "imageheight": 64
+    },
+    {
+     "id": 90,
+     "image": "../../assets/sprites/building-tier-red_0_0.png",
+     "imagewidth": 192,
      "imageheight": 64
     }
    ],
@@ -3637,22 +3655,22 @@
     0,
     0,
     0,
-    82,
     0,
     0,
     0,
     0,
-    82,
     0,
     0,
     0,
     0,
-    82,
     0,
     0,
     0,
     0,
-    82,
+    0,
+    0,
+    0,
+    0,
     0,
     0,
     0,
@@ -8182,6 +8200,46 @@
      "width": 192,
      "height": 256,
      "visible": true
+    },
+    {
+     "id": 79,
+     "gid": 89,
+     "name": "building-tier-blue_0_0",
+     "x": 1792,
+     "y": 832,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    },
+    {
+     "id": 80,
+     "gid": 90,
+     "name": "building-tier-black_0_0",
+     "x": 2112,
+     "y": 768,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    },
+    {
+     "id": 81,
+     "gid": 91,
+     "name": "building-tier-red_0_0",
+     "x": 2432,
+     "y": 832,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    },
+    {
+     "id": 82,
+     "gid": 89,
+     "name": "building-tier-blue_0_0",
+     "x": 2752,
+     "y": 832,
+     "width": 192,
+     "height": 64,
+     "visible": true
     }
    ],
    "properties": [
@@ -11691,7 +11749,7 @@
      "gid": 9,
      "name": "building-roof-blue_0_0",
      "x": 1792,
-     "y": 704,
+     "y": 640,
      "width": 192,
      "height": 192,
      "visible": true
@@ -11751,7 +11809,7 @@
      "gid": 8,
      "name": "building-roof-black_0_0",
      "x": 2112,
-     "y": 640,
+     "y": 576,
      "width": 192,
      "height": 192,
      "visible": true
@@ -11811,7 +11869,7 @@
      "gid": 10,
      "name": "building-roof-red_0_0",
      "x": 2432,
-     "y": 704,
+     "y": 640,
      "width": 192,
      "height": 192,
      "visible": true
@@ -11871,7 +11929,7 @@
      "gid": 9,
      "name": "building-roof-blue_0_0",
      "x": 2752,
-     "y": 704,
+     "y": 640,
      "width": 192,
      "height": 192,
      "visible": true

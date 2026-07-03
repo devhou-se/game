@@ -5,12 +5,12 @@
  "orientation": "orthogonal",
  "renderorder": "right-down",
  "width": 3,
- "height": 4,
+ "height": 5,
  "tilewidth": 64,
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 5,
- "nextobjectid": 5,
+ "nextobjectid": 6,
  "properties": [
   {
    "name": "gv2prefab",
@@ -24,7 +24,7 @@
    "name": "gamev2",
    "tilewidth": 64,
    "tileheight": 64,
-   "tilecount": 3,
+   "tilecount": 4,
    "columns": 0,
    "objectalignment": "topleft",
    "grid": {
@@ -47,6 +47,12 @@
     },
     {
      "id": 2,
+     "image": "../../assets/sprites/building-tier-blue_0_0.png",
+     "imagewidth": 192,
+     "imageheight": 64
+    },
+    {
+     "id": 3,
      "image": "../../assets/sprites/collider-marker.png",
      "imagewidth": 64,
      "imageheight": 64
@@ -67,10 +73,20 @@
    "objects": [
     {
      "id": 1,
+     "gid": 3,
+     "name": "building-tier-blue_0_0",
+     "x": 0,
+     "y": 192,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    },
+    {
+     "id": 2,
      "gid": 1,
      "name": "building-entrance-1_0_0",
      "x": 0,
-     "y": 192,
+     "y": 256,
      "width": 192,
      "height": 64,
      "visible": true
@@ -105,7 +121,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 2,
+     "id": 3,
      "gid": 2,
      "name": "building-roof-blue_0_0",
      "x": 0,
@@ -138,7 +154,7 @@
    "id": 3,
    "name": "Colliders",
    "width": 3,
-   "height": 4,
+   "height": 5,
    "x": 0,
    "y": 0,
    "opacity": 0.6,
@@ -147,15 +163,18 @@
     0,
     0,
     0,
-    3,
-    3,
-    3,
-    3,
-    3,
-    3,
-    3,
     0,
-    3
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0,
+    4
    ],
    "properties": [
     {
@@ -186,11 +205,11 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 3,
+     "id": 4,
      "name": "door",
      "point": true,
      "x": 96.0,
-     "y": 224.0,
+     "y": 288.0,
      "width": 0,
      "height": 0,
      "visible": true,

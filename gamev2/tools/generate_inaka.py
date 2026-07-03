@@ -42,7 +42,7 @@ for y in (3, 4, 5):                      # cap the corridor ends
 b.autotile('light-concrete-autotile', rect(12, 6, 27, 8))
 b.stamp('lamp-blue', 13, 7); b.stamp('lamp-blue', 26, 7)
 b.stamp('vending-white', 20, 6); b.stamp('vending-red', 22, 6)
-station_door = b.stamp('house-black', 28, 6, seal=False)[0]   # the station house — door leads inside
+station_door = b.stamp('house-black', 28, 5, seal=False)[0]   # the station house — door leads inside
 for i, px in enumerate((14, 18, 24)):
     b.paver(px, 8, i)
 
@@ -56,10 +56,8 @@ for x in range(6, 11):
     b.plants(x, 18, x)
 
 b.pond(5, 10, 10)
-b.stamp('house-red', 12, 13)
-b.stamp('house-blue', 25, 18)
-b.put('Over Floor', 13, 17, 'tile-brick-path_2_1')
-b.put('Over Floor', 26, 22, 'tile-brick-path_2_1')
+b.stamp('house-red', 12, 12)
+b.stamp('house-blue', 25, 17)
 
 # orchard (east) + loose trees
 for (ox, oy) in [(33, 10), (36, 12), (33, 15), (36, 17)]:
