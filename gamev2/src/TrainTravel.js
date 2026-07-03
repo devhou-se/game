@@ -63,42 +63,55 @@ class TrainTravel {
         this.sprite.setVisible(true);
     }
 
-    /** The riding cutscene: dark world rushing past, player in a window. */
+    /** Interior art that matches the livery you're riding. */
+    interiorKeyFor(trainKey) {
+        return trainKey === 'train-green' ? 'train-interior-wood' : 'train-interior-metro';
+    }
+
+    /** The riding cutscene: the inside of the car (GuttyKreum Train Interiors),
+     *  the player riding in the aisle, scenery streaking past the windows. */
     buildCutscene(trainKey, dir) {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
         const c = scene.add.container(0, 0);
         c.setDepth(3000);
         c.setScrollFactor(0);
 
-        const bg = scene.add.rectangle(0, 0, W, H, 0x0a0a12).setOrigin(0, 0);
-        c.add(bg);
+        // dark surround behind/around the car
+        c.add(scene.add.rectangle(0, 0, W, H, 0x05060a).setOrigin(0, 0));
+
+        // the car interior, matched to the livery. Scaled to fill the screen
+        // height so it sits at the world's 4x pixel scale — the player then rides
+        // at his native in-game size and stays in proportion. The car is longer
+        // than the screen, so we frame the middle of it.
+        const interior = scene.add.image(W / 2, H / 2, this.interiorKeyFor(trainKey)).setOrigin(0.5, 0.5);
+        const S = H / interior.height;
+        interior.setScale(S);
+        c.add(interior);
+        const carTop = H / 2 - interior.displayHeight / 2, carH = interior.displayHeight;
 
         this._cutTweens = [];
-        for (let i = 0; i < 7; i++) {
-            const y = H * 0.18 + (i * 97) % Math.round(H * 0.64);
-            const streak = scene.add.rectangle(W + (i * 233) % 900, y, 130, 4, 0x445566).setOrigin(0, 0.5);
-            if (dir < 0) streak.setX(-((i * 233) % 900) - 130);
+        // scenery whipping past the windows (the top band of the car)
+        const bandTop = carTop + carH * 0.03, bandH = carH * 0.10;
+        for (let i = 0; i < 6; i++) {
+            const y = bandTop + (i / 5) * bandH;
+            const streak = scene.add.rectangle(0, y, 120, 3, 0xcfe4ff, 0.45).setOrigin(0, 0.5);
+            streak.setX(dir > 0 ? -140 : W + 140);
             c.add(streak);
             this._cutTweens.push(scene.tweens.add({
-                targets: streak, x: dir > 0 ? -160 : W + 160,
-                duration: 420 + (i % 3) * 140, repeat: -1,
-                onRepeat: () => streak.setX(dir > 0 ? W + 60 : -190),
+                targets: streak, x: dir > 0 ? W + 140 : -140,
+                duration: 260 + (i % 3) * 110, repeat: -1, delay: i * 70,
+                onRepeat: () => streak.setX(dir > 0 ? -140 : W + 140),
             }));
         }
 
-        const train = scene.add.image(W / 2, H / 2, trainKey).setScale(1.7);
-        c.add(train);
-
-        // the player, seated at a window (upper body only). The window band
-        // sits a little below the sprite's vertical centre.
-        const rider = scene.add.image(W / 2 + 30, H / 2 + train.displayHeight * 0.15, scene.player.sprite.texture.key);
-        rider.setScale(1.7);
-        rider.setOrigin(0.5, 0.5);
-        rider.setCrop(14, 8, 36, 26);   // head + shoulders in the window
+        // the player, standing in the aisle (feet on the floor), facing the camera
+        const rider = scene.add.image(W / 2, carTop + carH * 0.70, scene.player.sprite.texture.key)
+            .setOrigin(0.5, 1).setScale(1.5);
         c.add(rider);
 
+        // gentle rumble of the whole car
         this._cutTweens.push(scene.tweens.add({
-            targets: [train, rider], y: '+=3', duration: 130, yoyo: true, repeat: -1,
+            targets: [interior, rider], y: '+=3', duration: 130, yoyo: true, repeat: -1,
         }));
 
         c.setAlpha(0);

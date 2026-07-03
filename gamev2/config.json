@@ -21259,6 +21259,21 @@
       "anchorX": 0.5,
       "anchorY": 0.25,
       "frameCount": 1
+    },
+    "train-interior-metro": {
+      "frameCount": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5
+    },
+    "train-interior-wood": {
+      "frameCount": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5
+    },
+    "train-interior-express": {
+      "frameCount": 1,
+      "anchorX": 0.5,
+      "anchorY": 0.5
     }
   },
   "stations": {
