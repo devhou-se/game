@@ -41,16 +41,15 @@ PREFABS = {
                          colliders=[(1, 3), (4, 3), (1, 4), (4, 4)], doors=[]),
     'shrine':       dict(w=3, h=6, sprites=[('Collidables', 0, 0, 'shrine-building_0_0')],
                          colliders=[(x, y) for x in range(3) for y in range(5) if (x, y) != (1, 4)], doors=[(1, 4)]),
-    # roof(3) + a wall tier + entrance(1): without the tier the gable sits straight
-    # on the door and grass shows through the "missing middle" of the facade.
-    # house-blue's entrance-1 is a full 2-cell sliding door (192x128), so this
-    # house is a row taller than the others and its door sits on the bottom row.
-    'house-blue':   dict(w=3, h=6, sprites=[('Tops', 0, 0, 'building-roof-blue_0_0'), ('Collidables', 0, 3, 'building-tier-blue_0_0'), ('Collidables', 0, 4, 'building-entrance-1_0_0')],
+    # A GuttyKreum townhouse, top to bottom (matching the pack's promo):
+    #   roof (3, with the eaves) + rafter (the window wall) + tier (the tiled
+    #   awning band) + entrance (the ground-floor door). 6 cells tall.
+    'house-blue':   dict(w=3, h=6, sprites=[('Tops', 0, 0, 'building-roof-blue_0_0'), ('Collidables', 0, 3, 'building-rafter-blue_0_0'), ('Collidables', 0, 4, 'building-tier-blue_0_0'), ('Collidables', 0, 5, 'building-entrance-1_0_0')],
                          colliders=[(x, y) for x in range(3) for y in (3, 4, 5) if (x, y) != (1, 5)], doors=[(1, 5)]),
-    'house-red':    dict(w=3, h=5, sprites=[('Tops', 0, 0, 'building-roof-red_0_0'), ('Collidables', 0, 3, 'building-tier-red_0_0'), ('Collidables', 0, 4, 'building-entrance-3_0_0')],
-                         colliders=[(x, y) for x in range(3) for y in (2, 3, 4) if (x, y) != (1, 4)], doors=[(1, 4)]),
-    'house-black':  dict(w=3, h=5, sprites=[('Tops', 0, 0, 'building-roof-black_0_0'), ('Collidables', 0, 3, 'building-tier-black_0_0'), ('Collidables', 0, 4, 'building-entrance-2_0_0')],
-                         colliders=[(x, y) for x in range(3) for y in (2, 3, 4) if (x, y) != (1, 4)], doors=[(1, 4)]),
+    'house-red':    dict(w=3, h=6, sprites=[('Tops', 0, 0, 'building-roof-red_0_0'), ('Collidables', 0, 3, 'building-rafter-red_0_0'), ('Collidables', 0, 4, 'building-tier-red_0_0'), ('Collidables', 0, 5, 'building-entrance-3_0_0')],
+                         colliders=[(x, y) for x in range(3) for y in (3, 4, 5) if (x, y) != (1, 5)], doors=[(1, 5)]),
+    'house-black':  dict(w=3, h=6, sprites=[('Tops', 0, 0, 'building-roof-black_0_0'), ('Collidables', 0, 3, 'building-rafter-black_0_0'), ('Collidables', 0, 4, 'building-tier-black_0_0'), ('Collidables', 0, 5, 'building-entrance-2_0_0')],
+                         colliders=[(x, y) for x in range(3) for y in (3, 4, 5) if (x, y) != (1, 5)], doors=[(1, 5)]),
     'seven-eleven': dict(w=3, h=4, sprites=[('Collidables', 0, 0, 'seven-eleven_0_0')],
                          colliders=[(x, y) for x in range(3) for y in range(4) if (x, y) != (1, 3)], doors=[(1, 3)]),
     'sign-7-11':    dict(w=1, h=2, sprites=[('Tops', 0, 0, '7-11-sign-left_0_0')], colliders=[(0, 1)], doors=[]),

@@ -83,8 +83,8 @@ b.stamp('sakura-small', 18, 12)
 # houses (doors sealed — no interiors for these yet). Stamped a row higher than
 # the door row now that the prefab carries a wall tier above the entrance.
 b.stamp('house-blue', 28, 9)
-b.stamp('house-black', 33, 9)
-b.stamp('house-red', 38, 10)
+b.stamp('house-black', 33, 8)
+b.stamp('house-red', 38, 9)
 b.stamp('house-blue', 43, 9)
 
 # south plaza
