@@ -112,26 +112,31 @@ class TrainTravel {
         c.destroy(true);
     }
 
-    /** The player steps out of the train once it has stopped: appear at the
-     *  train door and walk down onto the platform to the arrival cell. Driven by
-     *  a plain tween (not grid movement) so the boarding trigger can't re-fire;
-     *  the player's looping walk animation reads as walking. */
-    stepOff(to) {
+    /** The player steps off the train once it has stopped: appear on the train's
+     *  bottom row — in the same doorway he boarded from (enterX) — facing down so
+     *  we see his face, then take a single step down onto the platform, as if
+     *  stepping off. Rendered above the train (depth) so he's visible standing in
+     *  the door; the depth sort is suspended while `riding` so it doesn't sink him
+     *  behind the train. A plain tween (not grid movement) so the boarding trigger
+     *  can't re-fire; the looping walk animation reads as walking. */
+    stepOff(to, enterX) {
         const scene = this.scene, player = scene.player, GS = scene.GRID_SIZE;
-        const doorX = to.arrive[0], doorY = to.trainCell[1];   // the train's door row
-        const arrX = to.arrive[0], arrY = to.arrive[1];        // out on the platform
-        player.gridX = doorX; player.gridY = doorY;
-        player.sprite.setPosition(doorX * GS + GS / 2, doorY * GS + GS / 2);
+        const onTrainY = to.trainCell[1] - 1;   // the train's bottom row (the doorway)
+        const platformY = to.trainCell[1];      // one step down, onto the platform
+        player.gridX = enterX; player.gridY = onTrainY;
+        player.sprite.setPosition(enterX * GS + GS / 2, onTrainY * GS + GS / 2);
+        player.sprite.setDepth(60);            // over the train (depth 48) — in the door
+        player.updateDirectionSprite(0, 1);    // face down before he's revealed
         player.sprite.setVisible(true);
         if (player.nameLabel) player.nameLabel.setVisible(true);
         scene.tweens.add({
             targets: player.sprite,
-            y: arrY * GS + GS / 2,
-            duration: Math.max(1, arrY - doorY) * scene.MOVE_DURATION,
+            y: platformY * GS + GS / 2,
+            duration: scene.MOVE_DURATION,
             ease: 'Linear',
             onComplete: () => {
-                player.gridX = arrX; player.gridY = arrY;
-                this.riding = false;
+                player.gridX = enterX; player.gridY = platformY;
+                this.riding = false;   // depth sort resumes now he's off the train
                 scene.roomManager.isTransitioning = false;
             },
         });
@@ -151,6 +156,12 @@ class TrainTravel {
             player.sprite.setVisible(v);
             if (player.nameLabel) player.nameLabel.setVisible(v);
         };
+
+        // the door the player boarded from — he steps back out of the same one
+        const enterX = player.getGridPosition().x;
+        // face down now (while hidden), so he faces the camera both in the ride
+        // cutscene window and when he steps off — not moon-walking on his back
+        player.updateDirectionSprite(0, 1);
 
         // board: the player steps out of sight, the train pulls away toward the
         // destination (east -> right, west -> left)
@@ -179,7 +190,7 @@ class TrainTravel {
                 // camera fade is skipped). onRoomChange parks the dest train at
                 // the platform; move it off-screen immediately so it's not in
                 // frame when the curtain lifts — it arrives by pulling in.
-                scene.roomManager.switchRoomInstant(toKey, to.arrive[0], to.arrive[1]);
+                scene.roomManager.switchRoomInstant(toKey, enterX, to.trainCell[1]);
                 setPlayerVisible(false);              // stay aboard until we arrive
                 this.sprite.setX(this.parkedX(to) - offset);   // waiting off-screen
                 this.sprite.setVisible(true);
@@ -206,7 +217,7 @@ class TrainTravel {
                                         targets: this.sprite, x: this.parkedX(to),
                                         duration: 1100, ease: 'Cubic.easeOut',
                                         // PHASE 6 — the player steps off the train.
-                                        onComplete: () => this.stepOff(to),
+                                        onComplete: () => this.stepOff(to, enterX),
                                     });
                                 },
                             });

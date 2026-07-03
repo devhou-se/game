@@ -23,22 +23,33 @@ from roomgen import rect
 cfg = rg.load_config()
 
 W, H = 24, 15
-BOARD = [[x, 4] for x in range(8, 17)]     # platform edge in front of the train
-ARRIVE = [11, 8]                           # step off the train here
+# You board only at the train's actual doors: the two columns that line up with
+# a door on BOTH liveries (orange + green), so boarding — and stepping back off
+# at the same X — always lands on a door and never a window. See
+# tools/extract_train.py for the sprite geometry.
+DOOR_COLS = [8, 15]
+# The door cells sit on the train's bottom row (row 3): you walk *into* the train
+# to board, and step off *from* the train. So those two cells are carved out of
+# the otherwise-solid track bed (below), and the board cells live there.
+BOARD = [[c, 3] for c in DOOR_COLS]
+ARRIVE = [11, 8]                           # (legacy) platform reference cell
 DOOR_MATS = [[11, 14], [12, 14]]           # exit door at the bottom
 
 
 def station_interior(train_sprite):
     b = rg.Builder(W, H)
     b.autotile('light-concrete-autotile', rect(0, 0, W - 1, H - 1))
-    # back wall + double track bed (solid — the train parks over it)
+    # back wall + double track bed (solid — the train parks over it), except the
+    # door cells on the bottom track row, which you walk through to board
     for x in range(W):
         b.wall_stone(x, 0)
     b.autotile('gravel-autotile', rect(0, 2, W - 1, 3))
     for x in range(W):
         b.put('Over Floor', x, 2, 'train-track_0_0')
         b.put('Over Floor', x, 3, 'train-track_0_0')
-        b.solid(x, 2); b.solid(x, 3)
+        b.solid(x, 2)
+        if x not in DOOR_COLS:
+            b.solid(x, 3)
     # platform furniture
     b.stamp('lamp-blue', 4, 4); b.stamp('lamp-blue', 19, 4)
     b.stamp('vending-white', 2, 6); b.stamp('vending-red', 21, 6)

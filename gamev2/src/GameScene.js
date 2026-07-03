@@ -718,7 +718,10 @@ class GameScene extends Phaser.Scene {
     updateCharacterDepths() {
         const GS = this.GRID_SIZE;
         const feetDepth = (sprite) => ((sprite.y + GS / 2) / GS) * 10 + 5;
-        if (this.player) this.player.sprite.setDepth(feetDepth(this.player.sprite));
+        // While riding, TrainTravel owns the player's depth (it renders him in the
+        // train doorway, above the train, as he steps off) — don't sink him back.
+        if (this.player && !(this.trainTravel && this.trainTravel.riding))
+            this.player.sprite.setDepth(feetDepth(this.player.sprite));
         const npcs = this.roomManager.rooms[this.roomManager.currentRoom].npcs;
         npcs.forEach(npc => npc.sprite.setDepth(feetDepth(npc.sprite)));
     }
