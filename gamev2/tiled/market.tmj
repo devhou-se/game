@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 15,
- "nextobjectid": 99,
+ "nextobjectid": 105,
  "properties": [
   {
    "name": "gv2room",
@@ -21247,7 +21247,7 @@
     51,
     0,
     51,
-    51,
+    0,
     51,
     0,
     0,
@@ -21279,8 +21279,8 @@
     0,
     0,
     0,
-    51,
     51,
+    0,
     51,
     0,
     0,
@@ -21547,7 +21547,7 @@
     0,
     0,
     51,
-    51,
+    0,
     51,
     0,
     0,
@@ -21570,7 +21570,7 @@
     0,
     0,
     51,
-    51,
+    0,
     51,
     0,
     0,
@@ -21874,8 +21874,8 @@
     51,
     0,
     0,
-    51,
     51,
+    0,
     51,
     0,
     51,
@@ -21906,7 +21906,7 @@
     0,
     0,
     51,
-    51,
+    0,
     51,
     0,
     0,
@@ -22826,6 +22826,228 @@
     },
     {
      "id": 98,
+     "name": "transporter",
+     "point": true,
+     "x": 2464.0,
+     "y": 1504.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "KonbiniMarket1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 14
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 99,
+     "name": "transporter",
+     "point": true,
+     "x": 800.0,
+     "y": 1568.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "KonbiniMarket2"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 11
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 14
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 100,
+     "name": "transporter",
+     "point": true,
+     "x": 2784.0,
+     "y": 1824.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "KonbiniMarket3"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 14
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 101,
+     "name": "transporter",
+     "point": true,
+     "x": 480.0,
+     "y": 1888.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "KonbiniMarket4"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 11
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 13
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 102,
+     "name": "transporter",
+     "point": true,
+     "x": 1120.0,
+     "y": 2208.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "KonbiniMarket5"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 13
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 103,
+     "name": "transporter",
+     "point": true,
+     "x": 3104.0,
+     "y": 2208.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "KonbiniMarket6"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 11
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 13
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 104,
      "name": "boundary",
      "x": 0,
      "y": 0,

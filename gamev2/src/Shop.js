@@ -84,7 +84,7 @@ class Shop {
             const key = (layer.tiles || {})[xy];
             if (!key) continue;
             if (/vending-machine/.test(key)) return this.showShop('vending');
-            if (interior && /^blue-shrine-platform-base/.test(key)) return this.showShop('counter');
+            if (interior && /^(blue-shrine-platform-base|office-counter)/.test(key)) return this.showShop('counter');
         }
     }
 

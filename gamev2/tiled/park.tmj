@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 9,
- "nextobjectid": 69,
+ "nextobjectid": 71,
  "properties": [
   {
    "name": "gv2room",
@@ -12850,7 +12850,7 @@
     0,
     0,
     22,
-    22,
+    0,
     22,
     0,
     0,
@@ -13862,7 +13862,7 @@
     0,
     0,
     22,
-    22,
+    0,
     22,
     0,
     0,
@@ -15113,6 +15113,80 @@
     },
     {
      "id": 68,
+     "name": "transporter",
+     "point": true,
+     "x": 1632.0,
+     "y": 480.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "KonbiniPark1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 14
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 69,
+     "name": "transporter",
+     "point": true,
+     "x": 2208.0,
+     "y": 1568.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "KonbiniPark2"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 11
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 14
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 70,
      "name": "boundary",
      "x": 0,
      "y": 0,
