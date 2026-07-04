@@ -195,6 +195,7 @@ class GameScene extends Phaser.Scene {
             this.ambientTrains = new AmbientTrains(this);
             this.dialogueManager = new DialogueManager(this);
             this.shop = new Shop(this);
+            this.fishing = new Fishing(this);
             this.characterSelect = new CharacterSelect(this);
             this.dayNight = new DayNight(this);
             this.debugManager = new DebugManager(this);
@@ -684,6 +685,10 @@ class GameScene extends Phaser.Scene {
         // bumping a vending machine / konbini counter opens its store
         if (this.shop && !this.dialogueManager.isVisible()) {
             this.shop.checkShopInteraction(targetGridX, targetGridY);
+        }
+        // bumping pond water casts a line (the fishing mini game)
+        if (this.fishing && !this.dialogueManager.isVisible() && !this.shop.isVisible()) {
+            this.fishing.checkStart(targetGridX, targetGridY);
         }
         // bumping a wall clock or calendar opens the time-travel picker
         if (!this.dialogueManager.isVisible() && !this.shop.isVisible() &&

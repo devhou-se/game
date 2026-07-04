@@ -112,6 +112,7 @@ class Shop {
         if (!this.items[id]) return;
         const item = this.itemById(id);
         if (!item) return;
+        if (item.permanent) return this.toast(`${item.name}: ${item.desc}`);
         this.items[id]--;
         if (!this.items[id]) delete this.items[id];
         if (item.effect) {
@@ -158,6 +159,7 @@ class Shop {
     buy() {
         const item = this.stock[this.selected];
         if (!item) return;
+        if (item.permanent && this.items[item.id]) return this.toast('you already have one');
         if (this.money < item.price) return this.toast('not enough yen...');
         this.money -= item.price;
         this.items[item.id] = (this.items[item.id] || 0) + 1;
@@ -310,6 +312,8 @@ Shop.DEFAULT_ITEMS = [
       desc: 'tuna mayo. restores the will to keep walking.' },
     { id: 'melon-pan',     name: 'Melon Pan',     price: 250, where: 'counter',
       desc: 'neither melon nor pan. perfect.' },
+    { id: 'fishing-rod',   name: 'Fishing Rod',   price: 1200, where: 'counter',
+      desc: 'bump into any pond to cast. reusable forever.', permanent: true },
 ];
 
 if (typeof window !== 'undefined') window.Shop = Shop;

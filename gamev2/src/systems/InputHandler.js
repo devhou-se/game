@@ -101,6 +101,12 @@ class InputHandler {
             return;
         }
 
+        // Priority 2b6: a line in the water owns SPACE/ESC (no walking off mid-cast)
+        if (this.scene.fishing && this.scene.fishing.isActive()) {
+            this.scene.fishing.handleInput();
+            return;
+        }
+
         // Priority 2c: Date picker overlay owns all input while open
         if (this.scene.datePicker && this.scene.datePicker.isVisible()) {
             this.scene.datePicker.handleInput();
