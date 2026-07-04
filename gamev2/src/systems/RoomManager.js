@@ -335,6 +335,9 @@ class RoomManager {
         // Park (or hide) the station train for the new room
         if (this.scene.trainTravel) this.scene.trainTravel.onRoomChange(newRoom);
 
+        // Restart (or stop) the ambient passing trains for the new room
+        if (this.scene.ambientTrains) this.scene.ambientTrains.onRoomChange(newRoom);
+
         // Re-grade day/night for the new room (interiors are never graded)
         if (this.scene.dayNight) this.scene.dayNight.onRoomChange();
     }
