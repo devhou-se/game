@@ -28,6 +28,26 @@ class Shop {
         this.keys = scene.input.keyboard.addKeys({ up: K.UP, down: K.DOWN, enter: K.ENTER, esc: K.ESC });
 
         this.load();
+
+        // active-effect chip in the HUD (left of the menu button), with a
+        // live countdown while a drink is working
+        this.effectText = scene.add.text(scene.cameras.main.width - 100, 20, '', {
+            fontSize: '14px', fill: '#66ff88', fontFamily: 'PressStart2P',
+        });
+        this.effectText.setOrigin(1, 0.5);
+        this.effectText.setScrollFactor(0);
+        this.effectText.setDepth(1001);
+        this.effectText.setResolution(1);
+        this.effectText.setVisible(false);
+        scene.time.addEvent({ delay: 250, loop: true, callback: () => this.updateEffectChip() });
+    }
+
+    updateEffectChip() {
+        const fx = this.movementModifier();
+        if (!fx) { this.effectText.setVisible(false); return; }
+        const secs = Math.max(0, Math.ceil((fx.until - Date.now()) / 1000));
+        this.effectText.setText(`${fx.name} ${secs}s`);
+        this.effectText.setVisible(true);
     }
 
     // ---------------- state ----------------
@@ -84,15 +104,25 @@ class Shop {
         if (!this.items[id]) delete this.items[id];
         if (item.effect) {
             this.effect = {
+                name: item.name,
                 speed: item.effect.speed || 1,
                 scramble: item.effect.scramble || 0,
                 until: Date.now() + (item.effect.secs || 0) * 1000,
             };
-            this.toast(`${item.name}: ${item.desc}`);
-        } else {
-            this.toast(`${item.name}: ${item.desc}`);
+            this.updateEffectChip();
         }
+        this.toast(`${item.name}: ${item.desc}`);
         this.save();
+
+        // a little "gulp": the player pops and glows for a beat
+        const p = this.scene.player.sprite;
+        const baseScale = p.scale;
+        p.setTint(0xaaffcc);
+        this.scene.tweens.add({
+            targets: p, scale: { from: baseScale * 1.35, to: baseScale },
+            duration: 280, ease: 'Back.easeOut',
+            onComplete: () => p.clearTint(),
+        });
     }
 
     // ---------------- buy overlay ----------------
@@ -140,11 +170,10 @@ class Shop {
     useSelected() {
         const item = this.stock[this.selected];
         if (!item) return;
+        // using an item drops you straight back into the game — no menu
+        // layers left to unwind (the use-flash + toast show it worked)
+        this.hide();
         this.use(item.id);
-        // re-list (the stack may be gone) and keep the overlay up
-        this.stock = Object.keys(this.items).map(id => this.itemById(id)).filter(Boolean);
-        this.selected = Math.min(this.selected, Math.max(0, this.stock.length - 1));
-        this.repaint();
     }
 
     // ---------------- shared overlay plumbing ----------------
