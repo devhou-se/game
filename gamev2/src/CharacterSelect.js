@@ -88,6 +88,10 @@ class CharacterSelect {
         p.isDirectional = true;
         p.currentDirection = 'none';        // force the texture swap below
         p.updateDirectionSprite(0, 1);      // face the camera as the new character
+
+        // you can't meet yourself: despawn the new character's NPC and bring
+        // back the one you stopped being
+        scene.syncNpcPresence();
     }
 
     handleInput() {

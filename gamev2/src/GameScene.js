@@ -155,32 +155,9 @@ class GameScene extends Phaser.Scene {
 
             // Spawn NPCs, resolved to their dated state (states on-or-before
             // the game date apply in order; ?date=YYYY-MM-DD time-travels,
-            // default today — see src/utils/NpcStates.js)
-            const npcDate = gameDate();
-            for (let roomKey in this.config.rooms) {
-                const roomConfig = this.config.rooms[roomKey];
-                roomConfig.npcs.forEach(rawNpcConfig => {
-                    const npcConfig = resolveNpc(rawNpcConfig, npcDate);
-                    if (!npcConfig) return;   // "present": false on this date
-                    const npcGridX = npcConfig.gridX !== null ? npcConfig.gridX : centerGridX + npcConfig.gridOffsetX;
-                    const npcGridY = npcConfig.gridY !== null ? npcConfig.gridY : centerGridY + npcConfig.gridOffsetY;
-
-                    const npc = this.npcManager.spawnNPC(npcGridX, npcGridY, npcConfig.sprite, npcConfig.name, {
-                        dialogue: npcConfig.dialogue
-                    });
-                    this.roomManager.rooms[roomKey].npcs.push(npc);
-                });
-            }
-
-            // Hide NPCs not in starting room
-            for (let roomKey in this.roomManager.rooms) {
-                if (roomKey !== this.roomManager.currentRoom) {
-                    this.roomManager.rooms[roomKey].npcs.forEach(npc => {
-                        npc.sprite.setVisible(false);
-                        if (npc.nameLabel) npc.nameLabel.setVisible(false);
-                    });
-                }
-            }
+            // default today — see src/utils/NpcStates.js). Also excludes the
+            // character the player is playing as.
+            this.syncNpcPresence();
 
             // Load current room content
             this.roomManager.loadTransporters();
@@ -255,6 +232,48 @@ class GameScene extends Phaser.Scene {
             this.player.minGridY = 0;
             this.player.maxGridX = (ww / this.GRID_SIZE) - 1;
             this.player.maxGridY = (wh / this.GRID_SIZE) - 1;
+        }
+    }
+
+    /**
+     * Spawn/despawn NPCs so the world cast matches the game date AND the
+     * player's chosen character: playing as Bailey removes the Bailey NPC
+     * entirely — no sprite, no wandering, no collision, no map dot.
+     * Idempotent; runs at boot and again after a character switch.
+     */
+    syncNpcPresence() {
+        const npcDate = gameDate();
+        const baseOf = (key) => (key || '').replace(/_(front|back|side)$/, '');
+        const played = baseOf(this.player.baseSpriteKey);
+        const centerGridX = Math.floor(this.WORLD_WIDTH / this.GRID_SIZE / 2);
+        const centerGridY = Math.floor(this.WORLD_HEIGHT / this.GRID_SIZE / 2);
+
+        for (const roomKey in this.config.rooms) {
+            const room = this.roomManager.rooms[roomKey];
+            for (const raw of this.config.rooms[roomKey].npcs) {
+                const resolved = resolveNpc(raw, npcDate);
+                const shouldExist = !!resolved && baseOf(resolved.sprite) !== played;
+                const idx = room.npcs.findIndex(n => n.name === raw.name);
+
+                if (shouldExist && idx === -1) {
+                    const gx = resolved.gridX !== null ? resolved.gridX : centerGridX + resolved.gridOffsetX;
+                    const gy = resolved.gridY !== null ? resolved.gridY : centerGridY + resolved.gridOffsetY;
+                    const npc = this.npcManager.spawnNPC(gx, gy, resolved.sprite, resolved.name, {
+                        dialogue: resolved.dialogue
+                    });
+                    const here = roomKey === this.roomManager.currentRoom;
+                    npc.sprite.setVisible(here);
+                    if (npc.nameLabel) npc.nameLabel.setVisible(here);
+                    room.npcs.push(npc);
+                } else if (!shouldExist && idx !== -1) {
+                    const npc = room.npcs[idx];
+                    room.npcs.splice(idx, 1);
+                    const ci = this.npcManager.characters.indexOf(npc);
+                    if (ci !== -1) this.npcManager.characters.splice(ci, 1);
+                    if (npc.nameLabel) npc.nameLabel.destroy();
+                    npc.destroy();
+                }
+            }
         }
     }
 
