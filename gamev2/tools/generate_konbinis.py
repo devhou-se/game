@@ -73,17 +73,12 @@ def find_stores():
                 if rg._pal[idx] == SEVEN:
                     x, y = map(int, xy.split(','))
                     cells.append((y, x))
-        # only the hand-made 'Konbini' room counts as pre-wired; doors wired to
-        # generated rooms are rebuilt, so re-running regenerates cleanly
-        wired = {(t['gridX'], t['gridY']) for t in room.get('transporters', [])
-                 if t.get('targetRoom') == 'Konbini'}
         for n, (y, x) in enumerate(sorted(cells), start=1):
             door = (x + DOOR_DX, y + DOOR_DY)
             stores.append({
                 'host': host, 'ordinal': n, 'door': door,
                 'front': (door[0], door[1] + 1),
                 'key': f'Konbini{host}{n}',
-                'wired': door in wired,
             })
     return stores
 
@@ -192,11 +187,10 @@ def build_interior(store):
 
 register_metadata()
 stores = find_stores()
+# the original hand-made Machi interior is replaced by a generated one
+cfg['rooms'].pop('Konbini', None)
 new_rooms = []
 for store in stores:
-    if store['wired']:
-        print(f"skip   {store['host']} #{store['ordinal']} at {store['door']} (already wired)")
-        continue
     room, arrive = build_interior(store)
     cfg['rooms'][store['key']] = room
 
