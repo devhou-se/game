@@ -1,8 +1,9 @@
-name: Deploy Godot Game
+name: Deploy Godot Game (retired)
 
+# Retired: gamev2 (deployed by firebase-hosting-gamev2.yml to game.devhou.se)
+# is the web game now, so building the Godot HTML5 export on every push is
+# redundant. Kept as manual-dispatch-only in case the old build is ever needed.
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
 
 env:
