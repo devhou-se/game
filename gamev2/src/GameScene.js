@@ -83,6 +83,10 @@ class GameScene extends Phaser.Scene {
                 console.log(`[tiled] room "${key}" loaded from tiled/${key.toLowerCase()}.tmj — ${built.layers.length} layers, ${built.transporters.length} transporters`);
             }
 
+            // A saved character choice replaces the default player sprite
+            // (must happen before SpriteSystem reads config.player)
+            CharacterSelect.applySaved(this.config);
+
             // Apply game settings from config
             this.GRID_SIZE = this.config.game.gridSize;
             this.WORLD_WIDTH = this.config.game.worldWidth;
@@ -214,6 +218,7 @@ class GameScene extends Phaser.Scene {
             this.ambientTrains = new AmbientTrains(this);
             this.dialogueManager = new DialogueManager(this);
             this.shop = new Shop(this);
+            this.characterSelect = new CharacterSelect(this);
             this.dayNight = new DayNight(this);
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)

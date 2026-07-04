@@ -95,6 +95,12 @@ class InputHandler {
             return;
         }
 
+        // Priority 2b5: Character selector owns all input while open
+        if (this.scene.characterSelect && this.scene.characterSelect.isVisible()) {
+            this.scene.characterSelect.handleInput();
+            return;
+        }
+
         // Priority 2c: Date picker overlay owns all input while open
         if (this.scene.datePicker && this.scene.datePicker.isVisible()) {
             this.scene.datePicker.handleInput();
