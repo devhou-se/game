@@ -2258,6 +2258,7 @@
       "worldWidth": 1536
     },
     "Konbini": {
+      "interior": true,
       "boundary": [
         [
           0,

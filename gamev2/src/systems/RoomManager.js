@@ -334,6 +334,9 @@ class RoomManager {
 
         // Park (or hide) the station train for the new room
         if (this.scene.trainTravel) this.scene.trainTravel.onRoomChange(newRoom);
+
+        // Re-grade day/night for the new room (interiors are never graded)
+        if (this.scene.dayNight) this.scene.dayNight.onRoomChange();
     }
 
     /** Swap rooms immediately, no camera fade (used under the train-ride curtain). */

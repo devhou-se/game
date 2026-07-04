@@ -212,6 +212,7 @@ class GameScene extends Phaser.Scene {
             this.trainTravel = new TrainTravel(this);
             this.trainTravel.onRoomChange(this.roomManager.currentRoom);
             this.dialogueManager = new DialogueManager(this);
+            this.dayNight = new DayNight(this);
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
 
