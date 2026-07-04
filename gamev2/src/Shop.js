@@ -32,7 +32,7 @@ class Shop {
         // active-effect chip in the HUD (left of the menu button), with a
         // live countdown while a drink is working
         this.effectText = scene.add.text(scene.cameras.main.width - 100, 20, '', {
-            fontSize: '14px', fill: '#66ff88', fontFamily: 'PressStart2P',
+            fontSize: '16px', fill: '#66ff88', fontFamily: 'PressStart2P',
         });
         this.effectText.setOrigin(1, 0.5);
         this.effectText.setScrollFactor(0);
@@ -72,19 +72,31 @@ class Shop {
 
     /**
      * The player bumped a blocked cell — if it's a vending machine (anywhere)
-     * or a counter (konbini interiors), open the matching store.
+     * or a counter (konbini interiors), open the matching store. Matching is
+     * footprint-aware: a multi-cell sprite (the 3-wide counter, a machine
+     * whose art extends past its anchor cell) opens from ANY of its cells,
+     * so every side of the desk works.
      */
     checkShopInteraction(gridX, gridY) {
         if (this.visible || this.invVisible) return;
         const roomKey = this.scene.roomManager.currentRoom;
         const room = this.scene.roomManager.rooms[roomKey];
         const interior = !!(this.scene.config.rooms[roomKey] || {}).interior;
-        const xy = `${gridX},${gridY}`;
         for (const layer of (room.layers || [])) {
-            const key = (layer.tiles || {})[xy];
-            if (!key) continue;
-            if (/vending-machine/.test(key)) return this.showShop('vending');
-            if (interior && /^(blue-shrine-platform-base|office-counter)/.test(key)) return this.showShop('counter');
+            for (const xy in (layer.tiles || {})) {
+                const key = layer.tiles[xy];
+                const vending = /vending-machine/.test(key);
+                const counter = interior && /^(blue-shrine-platform-base|office-counter)/.test(key);
+                if (!vending && !counter) continue;
+                const [tx, ty] = xy.split(',').map(Number);
+                const tex = this.scene.textures.exists(key)
+                    ? this.scene.textures.get(key).getSourceImage() : null;
+                const w = tex ? Math.max(1, Math.round(tex.width / 64)) : 1;
+                const h = tex ? Math.max(1, Math.round(tex.height / 64)) : 1;
+                if (gridX >= tx && gridX < tx + w && gridY >= ty && gridY < ty + h) {
+                    return this.showShop(vending ? 'vending' : 'counter');
+                }
+            }
         }
     }
 
@@ -213,7 +225,7 @@ class Shop {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
         const inv = this.invVisible;
         const n = Math.max(1, this.stock.length);
-        const pw = 520, ph = 190 + n * 36;
+        const pw = 600, ph = 210 + n * 44;
         const px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = this.objs;
 
@@ -239,20 +251,20 @@ class Shop {
         };
 
         const title = inv ? 'ITEMS' : (this.kind === 'vending' ? 'VENDING MACHINE' : 'KONBINI');
-        text(W / 2, py + 32, title, '26px', true);
-        text(px + pw - 18, py + 32, this.fmt(this.money), '18px', true, '#ffd700', 1);
+        text(W / 2, py + 34, title, '32px', true);
+        text(px + pw - 18, py + 34, this.fmt(this.money), '24px', true, '#ffd700', 1);
 
         if (!this.stock.length) {
-            text(W / 2, py + 100, 'nothing yet — find a vending machine', '16px', false, '#888888');
+            text(W / 2, py + 108, 'nothing yet — find a vending machine', '20px', false, '#888888');
         }
 
         this.rows = this.stock.map((item, i) => {
-            const y = py + 84 + i * 36;
+            const y = py + 92 + i * 44;
             const label = inv
                 ? `${item.name}  ×${this.items[item.id] || 0}`
                 : `${item.name}`;
-            const row = text(px + 30, y, label, '18px', true, '#ffffff', 0);
-            if (!inv) text(px + pw - 30, y, this.fmt(item.price), '18px', false,
+            const row = text(px + 30, y, label, '24px', true, '#ffffff', 0);
+            if (!inv) text(px + pw - 30, y, this.fmt(item.price), '24px', false,
                            this.money >= item.price ? '#ffffff' : '#886666', 1);
             row.setInteractive({ useHandCursor: true });
             row.on('pointerover', () => { this.selected = i; this.paint(); });
@@ -260,11 +272,11 @@ class Shop {
             return row;
         });
 
-        this.descText = text(W / 2, py + ph - 56, '', '14px', false, '#9999aa');
+        this.descText = text(W / 2, py + ph - 62, '', '18px', false, '#9999aa');
         this.paint();
         const hint = inv ? '↑/↓ + ENTER: use · ESC: close'
                          : '↑/↓ + ENTER: buy · ESC: step away';
-        text(W / 2, py + ph - 26, hint, '12px', false, '#888888');
+        text(W / 2, py + ph - 28, hint, '16px', false, '#888888');
     }
 
     // ---------------- toast ----------------
@@ -273,7 +285,7 @@ class Shop {
         if (this._toast) this._toast.destroy();
         const cam = this.scene.cameras.main;
         const o = this.scene.add.text(cam.width / 2, cam.height - 80, msg, {
-            fontSize: '16px', fill: '#ffffff', fontFamily: 'PixelOperatorMonoBold',
+            fontSize: '20px', fill: '#ffffff', fontFamily: 'PixelOperatorMonoBold',
             backgroundColor: 'rgba(0,0,0,0.75)', padding: { x: 10, y: 6 },
         });
         o.setOrigin(0.5, 0.5); o.setResolution(1);

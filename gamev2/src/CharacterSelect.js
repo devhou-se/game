@@ -113,7 +113,7 @@ class CharacterSelect {
 
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
-        const pw = 420, ph = 200 + this.chars.length * 40;
+        const pw = 480, ph = 210 + this.chars.length * 46;
         const px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = this.objs;
 
@@ -137,7 +137,7 @@ class CharacterSelect {
             o.setOrigin(0.5, 0.5); o.setResolution(1);
             o.setScrollFactor(0); o.setDepth(2002); objs.push(o); return o;
         };
-        text(W / 2, py + 32, 'CHARACTER', '26px', true);
+        text(W / 2, py + 34, 'CHARACTER', '32px', true);
 
         // live preview of the selected character, front-facing at 2x
         this.preview = scene.add.image(W / 2, py + 92, 'tile');
@@ -147,14 +147,14 @@ class CharacterSelect {
         this.rows = this.chars.map((name, i) => {
             const current = name === this.currentName() ? '  (you)' : '';
             const label = name.charAt(0).toUpperCase() + name.slice(1) + current;
-            const row = text(W / 2, py + 160 + i * 40, label, '20px', true);
+            const row = text(W / 2, py + 166 + i * 46, label, '24px', true);
             row.setInteractive({ useHandCursor: true });
             row.on('pointerover', () => { this.selected = i; this.paint(); });
             row.on('pointerdown', () => { this.selected = i; this.confirm(); });
             return row;
         });
         this.paint();
-        text(W / 2, py + ph - 24, '↑/↓ + ENTER: become · ESC: stay yourself', '12px', false, '#888888');
+        text(W / 2, py + ph - 26, '↑/↓ + ENTER: become · ESC: stay yourself', '16px', false, '#888888');
     }
 }
 

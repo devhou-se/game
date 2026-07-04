@@ -27,8 +27,8 @@ class MenuManager {
         this.container.setDepth(2001);
 
         // Menu panel
-        const panelWidth = 300;
-        const panelHeight = 370;
+        const panelWidth = 360;
+        const panelHeight = 410;
         const panelX = (this.scene.cameras.main.width - panelWidth) / 2;
         const panelY = (this.scene.cameras.main.height - panelHeight) / 2;
 
@@ -45,7 +45,7 @@ class MenuManager {
             panelY + 30,
             'MENU',
             {
-                fontSize: '24px',
+                fontSize: '32px',
                 fill: '#ffffff',
                 fontFamily: 'PixelOperatorMonoBold'
             }
@@ -77,7 +77,7 @@ class MenuManager {
                 startY + (index * spacing),
                 option.text,
                 {
-                    fontSize: '24px',
+                    fontSize: '32px',
                     fill: '#ffffff',
                     fontFamily: 'PixelOperatorMono'
                 }

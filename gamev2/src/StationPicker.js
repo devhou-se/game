@@ -59,7 +59,7 @@ class StationPicker {
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
         const stations = scene.config.stations;
-        const ph = 150 + this.dests.length * 40, pw = 460;
+        const ph = 165 + this.dests.length * 46, pw = 540;
         const px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = this.objs;
 
@@ -83,16 +83,16 @@ class StationPicker {
             o.setOrigin(0.5, 0.5); o.setResolution(1);
             o.setScrollFactor(0); o.setDepth(2002); objs.push(o); return o;
         };
-        text(W / 2, py + 32, 'DEPARTURES', '26px', true);
-        text(W / 2, py + 62, `from ${stations[this.fromKey].label}`, '14px', false, '#888888');
+        text(W / 2, py + 34, 'DEPARTURES', '32px', true);
+        text(W / 2, py + 66, `from ${stations[this.fromKey].label}`, '16px', false, '#888888');
 
         this.rows = this.dests.map((key, i) => {
-            const row = text(W / 2, py + 100 + i * 40, `▶ ${stations[key].label}`, '20px', true);
+            const row = text(W / 2, py + 108 + i * 46, `▶ ${stations[key].label}`, '24px', true);
             row.setInteractive({ useHandCursor: true });
             row.on('pointerdown', () => { this.selected = i; this.confirm(); });
             return row;
         });
         this.paint();
-        text(W / 2, py + ph - 24, '↑/↓ + ENTER: board · ESC: step back', '12px', false, '#888888');
+        text(W / 2, py + ph - 26, '↑/↓ + ENTER: board · ESC: step back', '16px', false, '#888888');
     }
 }

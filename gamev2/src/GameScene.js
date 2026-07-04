@@ -685,6 +685,19 @@ class GameScene extends Phaser.Scene {
         if (this.shop && !this.dialogueManager.isVisible()) {
             this.shop.checkShopInteraction(targetGridX, targetGridY);
         }
+        // bumping a wall clock or calendar opens the time-travel picker
+        if (!this.dialogueManager.isVisible() && !this.shop.isVisible() &&
+            this.datePicker && !this.datePicker.isVisible()) {
+            const room = this.roomManager.rooms[this.roomManager.currentRoom];
+            const xy = `${targetGridX},${targetGridY}`;
+            for (const layer of (room.layers || [])) {
+                const key = (layer.tiles || {})[xy];
+                if (key && /^(office-clock|office-poster-menu)/.test(key)) {
+                    this.datePicker.show();
+                    break;
+                }
+            }
+        }
     }
 
     /**

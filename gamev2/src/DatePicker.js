@@ -92,7 +92,7 @@ class DatePicker {
 
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
-        const pw = 460, ph = 420, px = (W - pw) / 2, py = (H - ph) / 2;
+        const pw = 480, ph = 470, px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = this.objs;
 
         const overlay = scene.add.graphics();
@@ -118,13 +118,13 @@ class DatePicker {
         };
 
         const cx = W / 2;
-        text(cx, py + 28, 'TIME TRAVEL', '26px', true);
+        text(cx, py + 30, 'TIME TRAVEL', '32px', true);
 
         // month header with clickable arrows
         const monthName = this.sel.toLocaleString('en', { month: 'long' });
-        text(cx, py + 68, `${monthName} ${this.sel.getFullYear()}`, '20px', true);
+        text(cx, py + 72, `${monthName} ${this.sel.getFullYear()}`, '24px', true);
         const mkArrow = (x, label, n) => {
-            const a = text(x, py + 68, label, '22px', true, '#88ccff');
+            const a = text(x, py + 72, label, '26px', true, '#88ccff');
             a.setInteractive({ useHandCursor: true });
             a.on('pointerdown', () => this.moveMonth(n));
         };
@@ -132,9 +132,9 @@ class DatePicker {
         mkArrow(px + pw - 60, '>', 1);
 
         // weekday header
-        const gridX = px + 34, gridY = py + 100, cw = 56, ch = 40;
+        const gridX = px + 44, gridY = py + 108, cw = 56, ch = 42;
         ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].forEach((wd, i) =>
-            text(gridX + i * cw + cw / 2, gridY, wd, '14px', true, '#bbbbbb'));
+            text(gridX + i * cw + cw / 2, gridY, wd, '16px', true, '#bbbbbb'));
 
         // day grid
         const year = this.sel.getFullYear(), month = this.sel.getMonth();
@@ -159,14 +159,14 @@ class DatePicker {
             let color = '#ffffff';
             if (dIso === todayIso) color = '#ffd700';
             else if (dIso === liveIso) color = '#88ccff';
-            const t = text(cxp, cyp, String(day), '16px', dIso === todayIso, color);
+            const t = text(cxp, cyp, String(day), '18px', dIso === todayIso, color);
             t.setInteractive({ useHandCursor: true });
             t.on('pointerdown', () => { this.sel = new Date(year, month, day); this.confirm(); });
             this.dayCells.push(t);
         }
 
-        text(cx, py + ph - 74, `viewing: ${formatGameDate(selIso)}`, '15px', true, '#33cc66');
-        text(cx, py + ph - 48, 'gold = today · arrows: day/week · , . : month', '12px', false, '#888888');
-        text(cx, py + ph - 28, 'ENTER/click: travel · T: today · ESC: close', '12px', false, '#888888');
+        text(cx, py + ph - 78, `viewing: ${formatGameDate(selIso)}`, '18px', true, '#33cc66');
+        text(cx, py + ph - 50, 'gold = today · arrows: day/week · , . : month', '16px', false, '#888888');
+        text(cx, py + ph - 26, 'ENTER/click: travel · T: today · ESC: close', '16px', false, '#888888');
     }
 }
