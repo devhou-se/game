@@ -28,7 +28,7 @@ class MenuManager {
 
         // Menu panel
         const panelWidth = 300;
-        const panelHeight = 250;
+        const panelHeight = 320;
         const panelX = (this.scene.cameras.main.width - panelWidth) / 2;
         const panelY = (this.scene.cameras.main.height - panelHeight) / 2;
 
@@ -58,6 +58,7 @@ class MenuManager {
 
         // Menu options
         const menuOptions = [
+            { text: 'Items', action: () => this.scene.shop.showInventory() },
             { text: 'Achievements', action: () => this.scene.showAchievements() },
             { text: 'Time Travel', action: () => this.scene.datePicker.show() },
             { text: 'Map', action: () => this.scene.showMap() },

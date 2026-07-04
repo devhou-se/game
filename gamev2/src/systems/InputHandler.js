@@ -89,6 +89,12 @@ class InputHandler {
             return;
         }
 
+        // Priority 2b4: Shop / items overlay owns all input while open
+        if (this.scene.shop && this.scene.shop.isVisible()) {
+            this.scene.shop.handleInput();
+            return;
+        }
+
         // Priority 2c: Date picker overlay owns all input while open
         if (this.scene.datePicker && this.scene.datePicker.isVisible()) {
             this.scene.datePicker.handleInput();
@@ -220,7 +226,18 @@ class InputHandler {
             if (upHeld)    moveY -= 1;
             if (downHeld)  moveY += 1;
 
-            const speedMultiplier = (this.shiftKey.isDown || (t && t.sprint)) ? 2 : 1;
+            let speedMultiplier = (this.shiftKey.isDown || (t && t.sprint)) ? 2 : 1;
+
+            // Drink effects (issue #12): temporary speed boost, and the
+            // vodka-redbull chance of stepping somewhere you didn't ask to
+            const fx = this.scene.shop ? this.scene.shop.movementModifier() : null;
+            if (fx) {
+                speedMultiplier *= fx.speed;
+                if (fx.scramble && Math.random() < fx.scramble) {
+                    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+                    [moveX, moveY] = dirs[Math.floor(Math.random() * dirs.length)];
+                }
+            }
 
             if (moveX !== 0 || moveY !== 0) {
                 this.scene.player.startMovement(moveX, moveY, speedMultiplier);

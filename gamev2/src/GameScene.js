@@ -213,6 +213,7 @@ class GameScene extends Phaser.Scene {
             this.trainTravel.onRoomChange(this.roomManager.currentRoom);
             this.ambientTrains = new AmbientTrains(this);
             this.dialogueManager = new DialogueManager(this);
+            this.shop = new Shop(this);
             this.dayNight = new DayNight(this);
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
@@ -297,6 +298,24 @@ class GameScene extends Phaser.Scene {
         this.hudDateText.setInteractive({ useHandCursor: true });
         this.hudDateText.on('pointerdown', () => this.datePicker.show());
 
+        // Wallet (issue #12) — gold, after the date; clicking it opens the items screen
+        this.hudMoneyText = this.add.text(
+            UI.HUD_PADDING + this.hudText.width + this.hudDateText.width,
+            UI.HUD_HEIGHT / 2,
+            ` | ${this.shop.fmt(this.shop.money)}`,
+            {
+                fontSize: FONTS.HUD_SIZE,
+                fill: '#ffd700',
+                fontFamily: FONTS.HUD
+            }
+        );
+        this.hudMoneyText.setOrigin(0, 0.5);
+        this.hudMoneyText.setScrollFactor(0);
+        this.hudMoneyText.setDepth(DEPTH.HUD_TEXT);
+        this.hudMoneyText.setResolution(1);
+        this.hudMoneyText.setInteractive({ useHandCursor: true });
+        this.hudMoneyText.on('pointerdown', () => this.shop.showInventory());
+
         // Menu button (right aligned)
         this.menuButton = this.add.text(
             this.cameras.main.width - UI.HUD_PADDING,
@@ -324,6 +343,10 @@ class GameScene extends Phaser.Scene {
         this.hudText.setText(hudText);
         this.hudDateText.setText(formatGameDate(gameDate()));
         this.hudDateText.setX(UI.HUD_PADDING + this.hudText.width);
+        if (this.hudMoneyText) {
+            this.hudMoneyText.setText(` | ${this.shop.fmt(this.shop.money)}`);
+            this.hudMoneyText.setX(UI.HUD_PADDING + this.hudText.width + this.hudDateText.width);
+        }
     }
 
     /**
@@ -634,6 +657,10 @@ class GameScene extends Phaser.Scene {
      */
     checkNPCInteraction(targetGridX, targetGridY) {
         this.npcManager.checkInteraction(targetGridX, targetGridY);
+        // bumping a vending machine / konbini counter opens its store
+        if (this.shop && !this.dialogueManager.isVisible()) {
+            this.shop.checkShopInteraction(targetGridX, targetGridY);
+        }
     }
 
     /**
