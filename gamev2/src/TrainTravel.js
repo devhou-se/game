@@ -105,16 +105,18 @@ class TrainTravel {
             }));
         }
 
-        // the player, standing in the aisle (feet on the floor), facing the
-        // camera. Pinned to the front-facing STANDING frame (frame 0 of the
-        // 'down' sprite) — the live sprite's texture could be any mid-walk
-        // frame of whatever way he last moved.
+        // the player, riding seated: raised so his lower body lines up with
+        // the car's bench seats instead of standing in the aisle. Pinned to
+        // the front-facing STANDING frame (frame 0 of the 'down' sprite) —
+        // the live sprite's texture could be any mid-walk frame.
         const downKey = scene.getDirectionalSpriteKey(scene.player.baseSpriteKey, 'down')
             || scene.player.baseSpriteKey;
         const standKey = scene.textures.exists(`${downKey}_frame_0`)
             ? `${downKey}_frame_0` : downKey;
-        const rider = scene.add.image(W / 2, carTop + carH * 0.70, standKey)
+        const rider = scene.add.image(W / 2, carTop + carH * 0.52, standKey)
             .setOrigin(0.5, 1).setScale(1.5);
+        // legs cropped away below the bench line — reads as sitting on the seat
+        rider.setCrop(0, 0, rider.frame.width, rider.frame.height * 0.72);
         c.add(rider);
 
         // gentle rumble of the whole car
