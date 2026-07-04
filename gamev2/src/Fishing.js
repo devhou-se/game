@@ -15,7 +15,7 @@ class Fishing {
         this.objs = [];
         this.timer = null;
         const K = Phaser.Input.Keyboard.KeyCodes;
-        this.keys = scene.input.keyboard.addKeys({ space: K.SPACE, esc: K.ESC });
+        this.keys = scene.input.keyboard.addKeys({ space: K.SPACE, enter: K.ENTER, esc: K.ESC });
     }
 
     isActive() { return this.state !== 'idle'; }
@@ -38,7 +38,7 @@ class Fishing {
 
         // swallow the keys that got us here
         const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.space); JD(this.keys.esc);
+        JD(this.keys.space); JD(this.keys.enter); JD(this.keys.esc);
 
         this.state = 'waiting';
         const GS = this.scene.GRID_SIZE;
@@ -75,7 +75,7 @@ class Fishing {
         this.alert.setOrigin(0.5, 1); this.alert.setResolution(1); this.alert.setDepth(901);
         this.objs.push(this.alert);
         this.scene.tweens.add({ targets: this.bobber, y: '+=5', duration: 90, yoyo: true, repeat: 3 });
-        this.timer = this.scene.time.delayedCall(700, () => this.finish(false, 'too slow — it got away...'));
+        this.timer = this.scene.time.delayedCall(1100, () => this.finish(false, 'too slow — it got away...'));
     }
 
     /** SPACE during the strike window lands whatever bit. */
@@ -119,7 +119,7 @@ class Fishing {
     handleInput() {
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
         if (JD(k.esc)) { this.scene.shop.toast('reeled in'); return this.clear(true); }
-        if (JD(k.space)) return this.strike();
+        if (JD(k.space) || JD(k.enter)) return this.strike();
     }
 }
 

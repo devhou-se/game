@@ -150,6 +150,7 @@ class TrainTravel {
         player.sprite.setPosition(enterX * GS + GS / 2, onTrainY * GS + GS / 2);
         player.sprite.setDepth(60);            // over the train (depth 48) — in the door
         player.updateDirectionSprite(0, 1);    // face down before he's revealed
+        player.playWalkAnim();                 // the step-off reads as walking
         player.sprite.setVisible(true);
         if (player.nameLabel) player.nameLabel.setVisible(true);
         scene.tweens.add({
@@ -159,6 +160,7 @@ class TrainTravel {
             ease: 'Linear',
             onComplete: () => {
                 player.gridX = enterX; player.gridY = platformY;
+                player.setIdleFrame();
                 this.riding = false;   // depth sort resumes now he's off the train
                 scene.roomManager.isTransitioning = false;
             },

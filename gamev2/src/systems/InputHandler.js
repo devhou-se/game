@@ -83,33 +83,21 @@ class InputHandler {
             return;
         }
 
-        // Priority 2b3: Station departures board owns all input while open
-        if (this.scene.stationPicker && this.scene.stationPicker.isVisible()) {
-            this.scene.stationPicker.handleInput();
-            return;
-        }
-
-        // Priority 2b4: Shop / items overlay owns all input while open
-        if (this.scene.shop && this.scene.shop.isVisible()) {
-            this.scene.shop.handleInput();
-            return;
-        }
-
-        // Priority 2b5: Character selector owns all input while open
-        if (this.scene.characterSelect && this.scene.characterSelect.isVisible()) {
-            this.scene.characterSelect.handleInput();
-            return;
-        }
-
-        // Priority 2b6: a line in the water owns SPACE/ESC (no walking off mid-cast)
-        if (this.scene.fishing && this.scene.fishing.isActive()) {
-            this.scene.fishing.handleInput();
-            return;
-        }
-
-        // Priority 2c: Date picker overlay owns all input while open
-        if (this.scene.datePicker && this.scene.datePicker.isVisible()) {
-            this.scene.datePicker.handleInput();
+        // Priorities 2b3-2c: one overlay at a time owns all input while open.
+        // Each branch also syncs lastKeyState.esc — the ESC that closed the
+        // overlay must not read as a fresh press and pop the main menu open
+        // on the very next frame.
+        const overlays = [
+            this.scene.stationPicker && this.scene.stationPicker.isVisible() && this.scene.stationPicker,
+            this.scene.shop && this.scene.shop.isVisible() && this.scene.shop,
+            this.scene.characterSelect && this.scene.characterSelect.isVisible() && this.scene.characterSelect,
+            this.scene.fishing && this.scene.fishing.isActive() && this.scene.fishing,
+            this.scene.datePicker && this.scene.datePicker.isVisible() && this.scene.datePicker,
+        ];
+        const overlay = overlays.find(Boolean);
+        if (overlay) {
+            overlay.handleInput();
+            this.lastKeyState.esc = this.escKey.isDown;
             return;
         }
 

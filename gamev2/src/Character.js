@@ -35,10 +35,8 @@ class Character {
         this.sprite.setScale(spriteConfig.scale);
         this.sprite.setOrigin(spriteConfig.anchorX, spriteConfig.anchorY);
 
-        // Play animation if available
-        if (spriteConfig.hasAnimation && scene.anims.exists(spriteKey + '_anim')) {
-            this.sprite.play(spriteKey + '_anim');
-        }
+        // Characters spawn idle on their standing frame; the walk cycle only
+        // plays while actually moving (see playWalkAnim/setIdleFrame).
 
         // Movement state
         this.isMoving = false;
@@ -105,13 +103,34 @@ class Character {
                     this.sprite.setFlipY(flipInfo.flipY);
                 }
 
-                // Update animation if it exists
-                const animKey = directionSpriteKey + '_anim';
-                if (this.scene.anims.exists(animKey)) {
-                    this.sprite.play(animKey);
-                }
+                // keep the walk cycle running only if we're actually walking
+                // (turning on the spot — e.g. bumping into a wall — stays idle)
+                if (this.isMoving) this.playWalkAnim();
             }
         }
+    }
+
+    /** The directional sprite key for the way we currently face. */
+    currentDirKey() {
+        if (!this.isDirectional || !this.scene.getDirectionalSpriteKey) return this.baseSpriteKey;
+        return this.scene.getDirectionalSpriteKey(this.baseSpriteKey, this.currentDirection) || this.baseSpriteKey;
+    }
+
+    /** Loop the walk cycle (used while a movement tween is running). */
+    playWalkAnim() {
+        const animKey = this.currentDirKey() + '_anim';
+        if (this.scene.anims && this.scene.anims.exists(animKey)) {
+            this.sprite.play(animKey, true);
+        }
+    }
+
+    /** Stop on the standing frame — characters don't jog on the spot. */
+    setIdleFrame() {
+        if (this.sprite.anims) this.sprite.anims.stop();
+        const dirKey = this.currentDirKey();
+        const frameKey = `${dirKey}_frame_0`;
+        if (this.scene.textures.exists(frameKey)) this.sprite.setTexture(frameKey);
+        else if (this.scene.textures.exists(dirKey)) this.sprite.setTexture(dirKey);
     }
 
     startMovement(deltaX, deltaY, speedMultiplier = 1) {
@@ -142,6 +161,7 @@ class Character {
         this.targetDeltaX = deltaX;
         this.targetDeltaY = deltaY;
         this.speedMultiplier = speedMultiplier;
+        this.playWalkAnim();
         this.executeMovement();
     }
 
@@ -204,6 +224,7 @@ class Character {
                 this.targetDeltaX = 0;
                 this.targetDeltaY = 0;
                 this.speedMultiplier = 1;
+                this.setIdleFrame();
 
                 // Check for transporter if this is the player
                 if (this.isPlayer) {
