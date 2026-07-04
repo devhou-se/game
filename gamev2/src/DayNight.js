@@ -86,7 +86,7 @@ class DayNight {
             const g = this.scene.add.graphics();
             // stepped radial falloff — reads as a soft halo in the pixel look
             for (let i = 6; i >= 1; i--) {
-                g.fillStyle(0xffb366, 0.055 * (7 - i));
+                g.fillStyle(0xffb366, 0.028 * (7 - i));
                 g.fillCircle(0, 0, (GS * 1.6 * i) / 6);
             }
             g.setPosition(gx * GS + GS / 2, gy * GS + GS / 2 - GS * 0.15);
