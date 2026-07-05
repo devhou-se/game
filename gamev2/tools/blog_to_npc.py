@@ -166,14 +166,22 @@ def generate(post, npc_name, spot_ids, mock=False):
     # small max_tokens matters beyond cost: the rate limiter reserves
     # max_tokens against the per-minute output ceiling, and the JSON we
     # want is tiny. Thinking off for the same reason.
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=3000,
-        thinking={'type': 'disabled'},
-        system=system,
-        messages=[{'role': 'user', 'content': user}],
-        output_config={'format': {'type': 'json_schema', 'schema': schema}},
-    )
+    try:
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=3000,
+            thinking={'type': 'disabled'},
+            system=system,
+            messages=[{'role': 'user', 'content': user}],
+            output_config={'format': {'type': 'json_schema', 'schema': schema}},
+        )
+    except anthropic.RateLimitError as e:
+        # surface the provisioned limits — tells apart "account limits not
+        # active yet" (all zeros/absent) from "genuinely out of throughput"
+        for k, v in e.response.headers.items():
+            if 'ratelimit' in k.lower() or k.lower() == 'retry-after':
+                print(f'  {k}: {v}')
+        raise
     text = next(b.text for b in response.content if b.type == 'text')
     return json.loads(text)
 
