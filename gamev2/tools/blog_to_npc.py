@@ -127,7 +127,8 @@ def generate(post, npc_name, spot_ids, mock=False):
         ]}
 
     import anthropic
-    client = anthropic.Anthropic()
+    # generous retries: fresh/low-tier accounts have small per-minute limits
+    client = anthropic.Anthropic(max_retries=5)
 
     schema = {
         'type': 'object',
@@ -162,9 +163,13 @@ def generate(post, npc_name, spot_ids, mock=False):
         f"Available spots:\n" + '\n'.join(f'- {s}' for s in spot_ids)
     )
 
+    # small max_tokens matters beyond cost: the rate limiter reserves
+    # max_tokens against the per-minute output ceiling, and the JSON we
+    # want is tiny. Thinking off for the same reason.
     response = client.messages.create(
         model=MODEL,
-        max_tokens=16000,
+        max_tokens=3000,
+        thinking={'type': 'disabled'},
         system=system,
         messages=[{'role': 'user', 'content': user}],
         output_config={'format': {'type': 'json_schema', 'schema': schema}},
