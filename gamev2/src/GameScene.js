@@ -380,7 +380,7 @@ class GameScene extends Phaser.Scene {
     showAchievements() {
         if (this.achievementsVisible) return;   // only one overlay at a time
         const cam = this.cameras.main, W = cam.width, H = cam.height;
-        const pw = 540, ph = 400, px = (W - pw) / 2, py = (H - ph) / 2;
+        const pw = 560, ph = 260, px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = [];
         const overlay = this.add.graphics();
         overlay.fillStyle(0x000000, 0.85); overlay.fillRect(0, 0, W, H);
@@ -398,25 +398,19 @@ class GameScene extends Phaser.Scene {
             o.setScrollFactor(0); o.setDepth(2002); objs.push(o); return o;
         };
         const cx = W / 2;
-        text(cx, py + 30, 'ACHIEVEMENTS', '28px', true);
+        text(cx, py + 34, 'ACHIEVEMENTS', '32px', true);
         const p = this.achievementManager.paintProgress();
-        text(cx, py + 78, (p.complete ? '★ ' : '') + 'Paint the Board', '22px', true, p.complete ? '#ffd700' : '#ffffff');
-        text(cx, py + 106, 'Step on every reachable tile in the world', '14px', false, '#bbbbbb');
-        const barW = pw - 80, barX = px + 40, barY = py + 130, barH = 24;
+        text(cx, py + 88, (p.complete ? '★ ' : '') + 'Paint the Board', '24px', true, p.complete ? '#ffd700' : '#ffffff');
+        text(cx, py + 118, 'Step on every reachable tile in the world', '18px', false, '#bbbbbb');
+        const barW = pw - 80, barX = px + 40, barY = py + 142, barH = 26;
         const bar = this.add.graphics(); bar.setScrollFactor(0); bar.setDepth(2002);
         bar.fillStyle(0x333333, 1); bar.fillRect(barX, barY, barW, barH);
         bar.fillStyle(p.complete ? 0xffd700 : 0x33cc66, 1);
         bar.fillRect(barX, barY, barW * (p.total ? Math.min(1, p.painted / p.total) : 0), barH);
         bar.lineStyle(2, 0x666666, 1); bar.strokeRect(barX, barY, barW, barH);
         objs.push(bar);
-        text(cx, barY + barH + 20, `${p.painted} / ${p.total} tiles painted  (${p.percent}%)`, '16px', true);
-        let yy = barY + barH + 56;
-        text(cx, yy, 'By room', '14px', true, '#bbbbbb'); yy += 24;
-        for (const rk in p.perRoom) {
-            const r = p.perRoom[rk], done = r.total > 0 && r.painted >= r.total;
-            text(cx, yy, `${rk}:  ${r.painted} / ${r.total}`, '14px', false, done ? '#ffd700' : '#ffffff'); yy += 22;
-        }
-        text(cx, py + ph - 22, '(click or ESC to close)', '12px', false, '#888888');
+        text(cx, barY + barH + 22, `${p.percent}% painted`, '20px', true);
+        text(cx, py + ph - 26, '(click or ESC to close)', '16px', false, '#888888');
         const close = () => {
             this.achievementsVisible = false;
             this.achievementsCloseCallback = null;
