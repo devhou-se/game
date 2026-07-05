@@ -176,12 +176,22 @@ def generate(post, npc_name, spot_ids, mock=False):
             output_config={'format': {'type': 'json_schema', 'schema': schema}},
         )
     except anthropic.RateLimitError as e:
-        # surface the provisioned limits — tells apart "account limits not
-        # active yet" (all zeros/absent) from "genuinely out of throughput"
-        for k, v in e.response.headers.items():
-            if 'ratelimit' in k.lower() or k.lower() == 'retry-after':
-                print(f'  {k}: {v}')
-        raise
+        # A throughput 429 carries anthropic-ratelimit-* / retry-after headers
+        # and is worth retrying. A 429 with NEITHER is a spend/usage cap or a
+        # workspace restriction — retrying won't help; say so.
+        hdrs = dict(e.response.headers)
+        rl = {k: v for k, v in hdrs.items()
+              if 'ratelimit' in k.lower() or k.lower() == 'retry-after'}
+        if rl:
+            print('  rate-limit headers:', json.dumps(rl))
+            raise
+        print('  no rate-limit headers on this 429 — this is a spend/usage cap '
+              'or workspace restriction, not throughput.')
+        print('  Check the Anthropic Console: Settings -> Limits (workspace '
+              'spend limit) and Billing (usage limit). Topping up the credit '
+              'balance does not raise a spend limit.')
+        print(f'  request_id: {getattr(e, "request_id", None)}')
+        raise SystemExit(2)
     text = next(b.text for b in response.content if b.type == 'text')
     return json.loads(text)
 
