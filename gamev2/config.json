@@ -1558,7 +1558,268 @@
         }
       ],
       "name": "Inaka",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "bailey_front",
+            "left": "",
+            "right": "bailey_side",
+            "up": "bailey_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 4,
+          "gridY": 9,
+          "name": "Bailey",
+          "present": false,
+          "sprite": "bailey_front",
+          "states": {
+            "2025-10-27": {
+              "dialogue": [
+                "Finally slept off the travel and made it to Matsushima for a ferry round the bay.",
+                "They narrated every little island, even stopped for one with a weird rock ball on top. Bold choice, there were clearly better islands.",
+                "Seafood lunch, then Zuihoden in Sendai, then a themed dinner nearby to round it out.",
+                "Ended the night on Strong Zeroes watching claw machine videos, truly cultural immersion. Bye for now!"
+              ],
+              "gridX": 4,
+              "gridY": 9,
+              "present": true
+            },
+            "2025-10-29": {
+              "present": false
+            },
+            "2025-10-30": {
+              "present": false
+            },
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            },
+            "2025-11-16": {
+              "present": false
+            },
+            "2025-11-18": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "dylan_front",
+            "left": "",
+            "right": "dylan_side",
+            "up": "dylan_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 4,
+          "gridY": 9,
+          "name": "Dylan",
+          "present": false,
+          "sprite": "dylan_front",
+          "states": {
+            "2025-11-03": {
+              "dialogue": [
+                "Started today with a puncture, rain, and a dream where my other tyre died too. Rough omen.",
+                "Then the wind at Lake Biwa tried to kill me, watched a couple literally get blown into a railing.",
+                "But I ditched the scenic route for an inland detour and found these plains and hills, just stunning, totally changed my mood.",
+                "Ended the day flying downhill with the wind at my back, sleeping in a container tonight. Worth it."
+              ],
+              "gridX": 4,
+              "gridY": 9,
+              "present": true
+            },
+            "2025-11-04": {
+              "dialogue": [
+                "Farms, mountains, a whole lake beside me, and two fresh inner tubes in my bag - peak serenity.",
+                "Detoured into Hikone Castle just for the views, legs screamed the whole climb but it was worth every pedal.",
+                "Rode a 10-minute round trip to a 7-Eleven before bed just in case my guesthouse locked me out. Didn't need to.",
+                "Tomorrow's a shorter ride through parks and green spaces - the countryside's swallowing civilisation and I love it."
+              ],
+              "gridX": 4,
+              "gridY": 9,
+              "present": true
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-07": {
+              "dialogue": [
+                "Five days circling Lake Biwa and today I finally closed the loop back in Otsu.",
+                "Rest day in Takashima first though, my legs were toast and I burned through spare tubes after those flats.",
+                "This morning the fog was so thick I couldn't even see across the lake, felt endless. Then suddenly, done.",
+                "Checked into the hotel, demolished some ramen and gyoza, and just sat with the surreal feeling of it all."
+              ],
+              "gridX": 4,
+              "gridY": 9,
+              "present": true
+            },
+            "2025-11-08": {
+              "dialogue": [
+                "Final day of the cycle trip: parkrun at Sunshine Beach in Otsu, then straight onto the bike. Bold choice, past me.",
+                "Every hill today I just... walked. Legs were toast after the run, no shame in it.",
+                "Some guy at the konbini thought my rented bike was mine and was very impressed. I let him believe it.",
+                "Made it back to Osaka, dropped the bike, ran to Fukuoka to stop everyone resetting the drinks counter. Priorities."
+              ],
+              "gridX": 4,
+              "gridY": 9,
+              "present": true
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 4,
+          "gridY": 10,
+          "name": "Damian",
+          "present": false,
+          "sprite": "damian_front",
+          "states": {
+            "2025-11-03": {
+              "dialogue": [
+                "Took the early bus from Toyama out to Shirakawa-go today, McDonald's breakfast and all.",
+                "That village is unreasonably pretty, I walked around taking way too many photos of the gassho-zukuri houses.",
+                "Crossed a genuinely scary bridge to see the folk village, ate pork tonkatsu and later some incredible Shirakawa-go beef at the ryokan.",
+                "Oh, and there was a terrifying stuffed animal in one of the houses. Tomorrow: onsen. Jaa ne!"
+              ],
+              "gridX": 4,
+              "gridY": 10,
+              "present": true
+            },
+            "2025-11-05": {
+              "dialogue": [
+                "Started the day with a ryokan breakfast and an onsen wrapped in Shirakawa-go morning fog. Gorgeous, quiet, worth the early wake-up.",
+                "Bus to Kanazawa was quick, then 850 yen for a massive katsu udon at a shokudo. Absolute steal.",
+                "Waited for Yashuk and Bailey at the Airbnb, then yakitori with Julia and Bailey since Yashuk was feeling rough. Seven cups deep, Dylan's tally didn't survive.",
+                "Whiskey bar nightcap, exploring Kanazawa tomorrow. Cheers!"
+              ],
+              "gridX": 4,
+              "gridY": 10,
+              "present": true
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-11": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            },
+            "2025-11-13": {
+              "present": false
+            },
+            "2025-11-14": {
+              "present": false
+            },
+            "2025-11-15": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 4,
+          "gridY": 11,
+          "name": "Julia",
+          "present": false,
+          "sprite": "julia_front",
+          "states": {
+            "2025-11-05": {
+              "dialogue": [
+                "Shirakawa-go was like stepping into a postcard, mountains all rainbow with autumn leaves and even some snow!",
+                "Crossed a long wobbly stone bridge twice, both times convinced it was going to be my final act.",
+                "Our host lady fed us butter-soft beef and then taught us to hunt stink bugs with tape like it was a martial art.",
+                "Also apparently bears attacked here a month ago, so no night walks for us, thanks!"
+              ],
+              "gridX": 4,
+              "gridY": 11,
+              "present": true
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            }
+          }
+        }
+      ],
       "objects": [],
       "transporters": [
         {
@@ -2272,7 +2533,64 @@
         }
       ],
       "name": "InakaStation",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "dylan_front",
+            "left": "",
+            "right": "dylan_side",
+            "up": "dylan_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 1,
+          "gridY": 5,
+          "name": "Dylan",
+          "present": false,
+          "sprite": "dylan_front",
+          "states": {
+            "2025-11-02": {
+              "dialogue": [
+                "Day one of biking Lake Biwa, and I already forgot to download offline maps. Classic me.",
+                "Followed the Yodogawa river, ended up on the wrong side of the lake, decided to just vibe it instead of panicking.",
+                "Then came the hills. Biggest climb of my life, Strava gave me an award and everything, my legs gave me nothing.",
+                "Downhill after that though, straight into \u014ctsu. Grabbing a drink here before day two destroys me again."
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "dialogue": [
+                "Started the day flying through Nagahama farmland, ended it limping into Takashima with two dead spares.",
+                "Tunnel views over the lake, monkeys chasing me down the road, and then pop, pop, flat tyre twice in two minutes.",
+                "Wrong size tube was the villain all along, so now I'm plotting a train raid on a Kyoto bike shop.",
+                "Not stranded, just... rerouted. That's my story and I'm sticking to it."
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            }
+          }
+        }
+      ],
       "objects": [],
       "transporters": [
         {
@@ -9314,7 +9632,403 @@
           "gridX": 27,
           "gridY": 22,
           "name": "Dylan",
-          "sprite": "dylan_front"
+          "sprite": "dylan_front",
+          "states": {
+            "2025-10-20": {
+              "present": false
+            },
+            "2025-10-26": {
+              "present": false
+            },
+            "2025-10-27": {
+              "dialogue": [
+                "Woke up to sun in my face after a rough day, so obviously the move was iced coffee from the conbini and a train to Matsushima.",
+                "The station was mossy and half-deserted but had real charm, then the bay cruise gave us sea breeze and weird little islands for days.",
+                "Sushi, a lemon sour, then back to Sendai for karaage and gyoza through a doorway half as tall as us, worth the leap of faith.",
+                "Ended the night on strong zeroes back at the airbnb, ten out of ten day honestly."
+              ],
+              "gridX": 35,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "bailey_front",
+            "left": "",
+            "right": "bailey_side",
+            "up": "bailey_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 11,
+          "gridY": 12,
+          "name": "Bailey",
+          "present": false,
+          "sprite": "bailey_front",
+          "states": {
+            "2025-10-02": {
+              "dialogue": [
+                "Oh hey, didn't see you there. I just hit publish on my very first post!",
+                "It literally just says 'this is a new post' but hey, everyone starts somewhere, right?",
+                "Think of it like this vending machine's blinking light. Not much yet, but it's on.",
+                "More words coming soon, I promise. Probably. Catch you around!"
+              ],
+              "gridX": 11,
+              "gridY": 12,
+              "present": true
+            },
+            "2025-10-03": {
+              "dialogue": [
+                "Wrote another post today. Title's real creative: 'another post.'",
+                "Just me saying hello world again, like the first time didn't stick.",
+                "Sometimes you don't need a big idea, just gotta press publish.",
+                "Anyway, hi. That's the whole update."
+              ],
+              "gridX": 11,
+              "gridY": 12,
+              "present": true
+            },
+            "2025-10-20": {
+              "present": false
+            },
+            "2025-10-26": {
+              "present": false
+            },
+            "2025-10-27": {
+              "present": false
+            },
+            "2025-10-29": {
+              "dialogue": [
+                "Climbed up to Aoba Castle ruins today, only Sendai's old fortress overlooking the whole skyline.",
+                "Found a scale layout of the great hall and absolutely strutted through it like a warlord plotting revenge on my opps.",
+                "Later at HUB some guy in full Fukuoka Eagles gear with a mascot gold chain became our whole personality for the night.",
+                "Cheap beer, borrowed team spirit, and ancient floor plans - not a bad Tuesday. Bye for now!"
+              ],
+              "gridX": 23,
+              "gridY": 18,
+              "present": true
+            },
+            "2025-10-30": {
+              "dialogue": [
+                "Missed the 7am train to Nikka, so I scrolled Instagram reels instead. No regrets.",
+                "Wandered this exact kind of sleepy town after our first train terminated early. So calm, so suburban.",
+                "Nikka itself was gorgeous, wooden station, red and orange trees, whiskey I don't even like but drank anyway since it was free.",
+                "Then 17 plates of sushi train and 30 beers happened. Bye for now, Bailey."
+              ],
+              "gridX": 6,
+              "gridY": 10,
+              "present": true
+            },
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "dialogue": [
+                "Wandered the old samurai houses today, some had air conditioning already installed. Ahead of their time, honestly.",
+                "Kanazawa castle grounds were huge, gardens and lakes everywhere, even if it felt a bit staged since the main building's still under renovation.",
+                "Had tonkatsu for lunch and it weirdly reminded me of that capybara from a few days back, don't ask.",
+                "Ended the night on the floor at a restaurant with unlimited beers, chipping away at Dylan's drinking counter. Bye for now!"
+              ],
+              "gridX": 35,
+              "gridY": 6,
+              "present": true
+            },
+            "2025-11-09": {
+              "dialogue": [
+                "Kanazawa's tea district, gold leaf shops, then this forest full of shrines - perfect napping spots, honestly.",
+                "Maybe I'll try it back in Melbourne instead of here, less judgmental locals probably.",
+                "We also found a phonograph museum and I felt like I got teleported to the 40s, vinyl and all.",
+                "Then shabu shabu, a confused waiter who only ever brought me one beer, and off to Fukuoka for street ramen. Bye for now!"
+              ],
+              "gridX": 22,
+              "gridY": 0,
+              "present": true
+            },
+            "2025-11-12": {
+              "present": false
+            },
+            "2025-11-16": {
+              "present": false
+            },
+            "2025-11-18": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 11,
+          "gridY": 13,
+          "name": "Damian",
+          "present": false,
+          "sprite": "damian_front",
+          "states": {
+            "2025-10-03": {
+              "dialogue": [
+                "So I wrote a post called 'Test'. Real gripping stuff, I know.",
+                "Just needed to make sure the buttons work before I say anything important.",
+                "Kind of like poking a vending machine to see if it's plugged in.",
+                "Anyway, carry on, nothing to see here yet."
+              ],
+              "gridX": 11,
+              "gridY": 13,
+              "present": true
+            },
+            "2025-10-07": {
+              "present": false
+            },
+            "2025-10-20": {
+              "present": false
+            },
+            "2025-10-26": {
+              "present": false
+            },
+            "2025-10-27": {
+              "dialogue": [
+                "First real day in Japan and we went straight for Matsushima Bay \u2014 took a boat past all those little pine islands.",
+                "Grabbed sushi with fish caught right there after we docked, absolutely worth it.",
+                "Then trained back to Sendai for Zuihoden, Date Masamune's memorial \u2014 the original burned down in 1945 so this one's a rebuild, but still striking.",
+                "Capped it off with izakaya dinner. Tomorrow: Nikka whisky and Yamadera. Mata ne!"
+              ],
+              "gridX": 23,
+              "gridY": 18,
+              "present": true
+            },
+            "2025-10-28": {
+              "present": false
+            },
+            "2025-10-29": {
+              "dialogue": [
+                "Two hours on the train from Shiogama just to climb up to Yamadera, but that mountain temple view was worth every stop.",
+                "Had soba for lunch, way too much konnyaku though, never liked that stuff.",
+                "Met up with the devhou.se crew afterward for Nikka whisky in Sakunami, the place looked like Scotland somehow.",
+                "Then Sushiro, Berry ate eighteen plates, and now we're bullet-training to Tokyo tomorrow. Kanpai!"
+              ],
+              "gridX": 23,
+              "gridY": 19,
+              "present": true
+            },
+            "2025-10-30": {
+              "present": false
+            },
+            "2025-10-31": {
+              "present": false
+            },
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "dialogue": [
+                "Started today with a tiny 600\u5186 breakfast. Absolutely a steal.",
+                "Wandered Higashi Chaya, all those old teahouse buildings, then had matcha and wagashi like a proper tourist.",
+                "Climbed a hill in Teramachi hunting for a good view, then hit up a gramophone museum of all things.",
+                "Ran out of steam before dinner even finished, shabu-shabu and straight to bed. Fukuoka tomorrow, wish me luck."
+              ],
+              "gridX": 29,
+              "gridY": 1,
+              "present": true
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "dialogue": [
+                "Slept in again, then it started raining, so plans got shuffled fast.",
+                "Yanagibashi market was closed, so I ended up at Canal City watching an idol live during lunch instead.",
+                "Came here to see Kushida Shrine, got rained out again, hid in a cafe with coffee and cake, then hit Tocho-ji and Shofuku-ji before we all crashed.",
+                "Teamlab tomorrow, everyone's exhausted but happy - mata!"
+              ],
+              "gridX": 22,
+              "gridY": 1,
+              "present": true
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-11": {
+              "dialogue": [
+                "Everyone overslept, so I snuck off early to Dazaifu Tenmangu by myself.",
+                "Place was packed, half under construction, but the inner grounds were so quiet, roof and all.",
+                "Then Hakata happened fast - ramen, a sumo shrine, coffee, yakitori, a pub for sumo, a bar with the kindest bartenders.",
+                "Last devhou.se night ended with a group photo. Tomorrow: Okayama. Ja ne!"
+              ],
+              "gridX": 22,
+              "gridY": 1,
+              "present": true
+            },
+            "2025-11-12": {
+              "present": false
+            },
+            "2025-11-13": {
+              "present": false
+            },
+            "2025-11-14": {
+              "dialogue": [
+                "Nara today with Yashuk\u2014Bailey bailed, but the deer did not.",
+                "The train there was already deer-themed, and then it was just deer everywhere. They bow for crackers!",
+                "Saw a shrine with a whole room of lanterns, so cool, plus a temple with a killer view and the giant Buddha at Todai-ji.",
+                "Back in Osaka now: cheap cocktails, takoyaki in Dotonbori, and Blazing Saddles on the laptop. No plans tomorrow, living the dream."
+              ],
+              "gridX": 21,
+              "gridY": 4,
+              "present": true
+            },
+            "2025-11-15": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 6,
+          "gridY": 10,
+          "name": "Julia",
+          "present": false,
+          "sprite": "julia_front",
+          "states": {
+            "2025-10-28": {
+              "dialogue": [
+                "Day started right: two minute walk here for coffee and bananas. Coffee is good for the soul, no debate.",
+                "Then a boat cruise around the islands got so choppy I thought we'd capsize, followed by seafood lunch to recover.",
+                "Climbed a million stairs to the founder's mausoleum in Sendai, spectacular views, legs less spectacular after.",
+                "Ended at an izakaya where Yashuk kept getting handed chopsticks for some reason, still laughing. Bye bye!"
+              ],
+              "gridX": 6,
+              "gridY": 10,
+              "present": true
+            },
+            "2025-10-29": {
+              "present": false
+            },
+            "2025-10-30": {
+              "present": false
+            },
+            "2025-10-31": {
+              "present": false
+            },
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "dialogue": [
+                "Started the day calm as this pond, honestly, thanks to an onsen overlooking the river and a miso breakfast with bamboo and yoghurt.",
+                "Then Kanazawa happened: current udon with chain-smoking salary men in an 80s time capsule, then 90 minutes all-you-can-drink for $18. Seven rounds. The wagyu ma",
+                "Ended up at a whiskey bar where I tried to ask for cigars and the poor bartender thought I wanted cigarettes and offered me her own pack. I still feel guilty.",
+                "Going back for that atmosphere alone, cigars in hand this time!"
+              ],
+              "gridX": 35,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "dialogue": [
+                "Fukuoka has temples and shrines EVERYWHERE, some over 1000 years old, plus the biggest wooden Buddha in Japan.",
+                "Before that it was Canal City, a water show, mid okonomiyaki, and a surprise girl band performance.",
+                "Dinner was an izakaya with chicken sashimi we were too scared to touch, but we did buy cigarettes and felt very elite.",
+                "Clean clothes, good friends, questionable bravery. Bye!"
+              ],
+              "gridX": 29,
+              "gridY": 1,
+              "present": true
+            },
+            "2025-11-12": {
+              "present": false
+            }
+          }
         }
       ],
       "objects": [],
@@ -13259,7 +13973,217 @@
         }
       ],
       "name": "Market",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 10,
+          "gridY": 20,
+          "name": "Julia",
+          "present": false,
+          "sprite": "julia_front",
+          "states": {
+            "2025-10-29": {
+              "dialogue": [
+                "Missed the whiskey distillery train, so plans changed \u2014 castle ruins in Sendai instead, great view of the city.",
+                "Chicken ramen for lunch, couldn't finish it, Damian happily cleaned up the rest.",
+                "Then a random old train in the park, kiwi drinks at the sports bar till 11 watching baseball, and famichiki after.",
+                "Seriously though, how does famichiki taste THAT good? I want a hundred more."
+              ],
+              "gridX": 10,
+              "gridY": 20,
+              "present": true
+            },
+            "2025-10-30": {
+              "dialogue": [
+                "Woke up at 10:30 and bolted straight for a train to the Nikka whiskey distillery, mountains and all.",
+                "Tasting was great, Yashuk's shark jerky was not, ask him about it if you dare.",
+                "Then Sushiro in Sendai for my first meal of the day, stacked our drink plates into a tower and won extra ones for eating so much!",
+                "Finished with a $14 all-you-can-drink and about 30 rounds later, sorry to that poor staff. Cheers to weird YouTube nights."
+              ],
+              "gridX": 10,
+              "gridY": 20,
+              "present": true
+            },
+            "2025-10-31": {
+              "present": false
+            },
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-04": {
+              "dialogue": [
+                "Rainy day in Toyama, heaters on full blast, half-convinced we'd come home to ashes.",
+                "Found a tiny 7-seat restaurant serving black ramen so salty I think it'd take years off your life.",
+                "Wandered an old brewery house, then queued forever for sushi train and it was worth every soggy minute.",
+                "Grabbed desserts for the airbnb after - rain or not, gotta treat yourself."
+              ],
+              "gridX": 10,
+              "gridY": 20,
+              "present": true
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "dialogue": [
+                "Second soy latte down, then a berry smoothie from here because my body was begging for actual fruit.",
+                "Tea district with the whole gang, burgers with a very chatty American couple, then a bear-adjacent mountain hike.",
+                "Phonograph museum was weirdly the highlight, 100 year old records! Then all-you-can-eat wagyu shabu shabu, best meal of the trip.",
+                "Cigar lounge snubbed us so we went back to our faithful whiskey bar, gonna miss that place so much."
+              ],
+              "gridX": 10,
+              "gridY": 20,
+              "present": true
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 10,
+          "gridY": 20,
+          "name": "Damian",
+          "present": false,
+          "sprite": "damian_front",
+          "states": {
+            "2025-11-03": {
+              "dialogue": [
+                "Rainy day in Toyama, so I went hunting for breakfast and coffee near the station instead of cooking.",
+                "Found black ramen after that search - so salty, so much soy sauce, worth every slurp.",
+                "Iwase beach, an old brew pub for a beer, then a lookout tower for a ton of kite watching.",
+                "Ended it quiet with sushi and dessert beers back at the Airbnb - Shirakawa-go tomorrow, wish me luck!"
+              ],
+              "gridX": 10,
+              "gridY": 20,
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-11": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            },
+            "2025-11-13": {
+              "present": false
+            },
+            "2025-11-14": {
+              "present": false
+            },
+            "2025-11-15": {
+              "dialogue": [
+                "Lined up early for that famous Osaka ramen \u2014 worth every minute, honestly so good.",
+                "Went shopping after but somehow bought nothing, just wandered around answering emails instead. Oops.",
+                "Did sneak in a hotcake though, and later met everyone at Mosburger before heading to a festival full of lanterns.",
+                "Capped it off with Austin Powers at the movies. Back to Tokyo tomorrow \u2014 shaa!"
+              ],
+              "gridX": 10,
+              "gridY": 21,
+              "present": true
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "bailey_front",
+            "left": "",
+            "right": "bailey_side",
+            "up": "bailey_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 10,
+          "gridY": 20,
+          "name": "Bailey",
+          "present": false,
+          "sprite": "bailey_front",
+          "states": {
+            "2025-11-12": {
+              "dialogue": [
+                "Fukuoka didn't have a ton of sights, but the vibe was so relaxed I didn't mind at all.",
+                "Highlight was the ramen, thick flavourful broth, we had it like four times and I still wanted more.",
+                "Almost swiped a Simon and Garfunkel vinyl from our place but added it to my to-buy list instead, very noble of me.",
+                "Dylan might actually go race floats at Hakata Gion Yamakasa next year, bye for now, Bailey."
+              ],
+              "gridX": 10,
+              "gridY": 20,
+              "present": true
+            },
+            "2025-11-16": {
+              "present": false
+            },
+            "2025-11-18": {
+              "present": false
+            }
+          }
+        }
+      ],
       "objects": [],
       "transporters": [
         {
@@ -15188,7 +16112,121 @@
         }
       ],
       "name": "Palace",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 21,
+          "gridY": 13,
+          "name": "Damian",
+          "present": false,
+          "sprite": "damian_front",
+          "states": {
+            "2025-11-06": {
+              "dialogue": [
+                "Started the day in Nagamachi, the old samurai district, walls and all.",
+                "Then Kanazawa Castle... which has no castle. No castle! I was shocked.",
+                "Made up for it with wagashi and matcha, very civilized recovery.",
+                "Tonight's dinner had all-you-can-drink so Dylan's tab is rough. Higashi Chaya tomorrow, wish us luck!"
+              ],
+              "gridX": 21,
+              "gridY": 13,
+              "present": true
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-11": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            },
+            "2025-11-13": {
+              "dialogue": [
+                "Woke up early, shinkansen from Okayama to Himeji, Bailey even got a Hello Kitty ticket!",
+                "Himeji Castle in real life is unreal, still the actual original building, so beautiful.",
+                "Walked the grounds, wandered Kokoen garden after, total highlight of the whole trip honestly.",
+                "Then Osaka, dinner, an aquarium bar, and a movie called Flying High, off to Nara next, jaa ne!"
+              ],
+              "gridX": 21,
+              "gridY": 13,
+              "present": true
+            },
+            "2025-11-14": {
+              "present": false
+            },
+            "2025-11-15": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 21,
+          "gridY": 13,
+          "name": "Julia",
+          "present": false,
+          "sprite": "julia_front",
+          "states": {
+            "2025-11-07": {
+              "dialogue": [
+                "Started the day with self-roasted coffee, then wandered right through actual samurai houses in Kanazawa!",
+                "Tempura set for lunch, then two hours looping Kanazawa Castle's gardens - every building rebuilt after 'great fires', somehow still huge.",
+                "Tried to hunt down local crab and a cigar lounge, struck out on both, but the whisky bar owner hooked us up with free dessert.",
+                "Some nights the plan fails and it's still perfect. Kanpai to that."
+              ],
+              "gridX": 21,
+              "gridY": 13,
+              "present": true
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            }
+          }
+        }
+      ],
       "objects": [],
       "transporters": [
         {
@@ -18368,7 +19406,176 @@
         }
       ],
       "name": "Park",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 23,
+          "gridY": 3,
+          "name": "Damian",
+          "present": false,
+          "sprite": "damian_front",
+          "states": {
+            "2025-10-28": {
+              "dialogue": [
+                "\u8a08\u753b\u306f\u5fc5\u305a\u3057\u3082\u601d\u3044\u901a\u308a\u306b\u3044\u304b\u306a\u3044\u3001\u306d\u3002\u30cb\u30c3\u30ab\u30a6\u30a4\u30b9\u30ad\u30fc\u307e\u30672\u6642\u9593\u3082\u304b\u304b\u308b\u3063\u3066\u77e5\u3089\u306a\u304b\u3063\u305f\u3088\u3002",
+                "\u4ee3\u308f\u308a\u306b\u9752\u8449\u57ce\u8de1\u306b\u884c\u3063\u305f\u3051\u3069\u3001\u6b63\u76f4\u4f55\u3082\u898b\u308b\u3082\u306e\u304c\u306a\u304b\u3063\u305f\u3002\u307e\u3042\u305d\u308c\u3082\u3044\u3044\u7d4c\u9a13\u3002",
+                "\u3067\u3082\u305d\u3070\u306f\u7f8e\u5473\u3057\u304b\u3063\u305f\u3057\u3001\u516c\u5712\u3067\u30b3\u30f3\u30d3\u30cb\u30d3\u30fc\u30eb\u98f2\u307f\u306a\u304c\u3089\u306e\u3093\u3073\u308a\u3057\u305f\u3057\u3001\u30d1\u30d6\u3067\u30d5\u30fc\u30ba\u30fb\u30aa\u30f3\u30fb\u30d5\u30a1\u30fc\u30b9\u30c8\u3082\u6700\u9ad8\u306b\u697d\u3057\u304b\u3063\u305f\uff01",
+                "\u30bd\u30d5\u30c8\u30d0\u30f3\u30af\u30db\u30fc\u30af\u30b9\u3001\u30d5\u30a1\u30a4\u30c8\uff01\u3058\u3083\u3042\u3001\u307e\u305f\uff01"
+              ],
+              "gridX": 23,
+              "gridY": 3,
+              "present": true
+            },
+            "2025-10-29": {
+              "present": false
+            },
+            "2025-10-30": {
+              "present": false
+            },
+            "2025-10-31": {
+              "dialogue": [
+                "Slight hangover, early wake-up, but Edo-Tokyo Open Air Museum was non-negotiable \u2014 my whole reason for coming.",
+                "Old buildings everywhere, wandered for three hours, and the park was full of tiny costumed kids since it was Halloween. So cute!",
+                "Refueled with cold udon after, then met up with housemates for a foreigner pub crawl and just barely caught the last train.",
+                "Tomorrow: Karuizawa. Tonight: recovering. See you around!"
+              ],
+              "gridX": 33,
+              "gridY": 10,
+              "present": true
+            },
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "dialogue": [
+                "Went to teamLab Forest this morning, all hyped up... and honestly? Nothing much there.",
+                "Rushed through lunch instead and headed to Fukuoka Tower \u2014 the view totally made up for it!",
+                "Took a little stroll around Ohori Park after, then hit the game center but nothing caught my eye.",
+                "Yashuku and I called it a night after dinner. Dazaifu tomorrow, wish me luck!"
+              ],
+              "gridX": 33,
+              "gridY": 10,
+              "present": true
+            },
+            "2025-11-11": {
+              "present": false
+            },
+            "2025-11-12": {
+              "dialogue": [
+                "Rode the shinkansen from Hakata all the way to Okayama today, said bye to Julia at the station.",
+                "Korakuen garden was so quiet and pretty, smelled amazing too. Then the castle... turned out to be a museum inside, kind of a letdown honestly.",
+                "Outside was still great though, and I made up for it with Bizen ware, pub beers, and kushikatsu, plus a bar with unreal cocktails.",
+                "Tomorrow's Himeji Castle, hope the inside's the real deal this time. Ja, mata!"
+              ],
+              "gridX": 33,
+              "gridY": 10,
+              "present": true
+            },
+            "2025-11-13": {
+              "present": false
+            },
+            "2025-11-14": {
+              "present": false
+            },
+            "2025-11-15": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 33,
+          "gridY": 10,
+          "name": "Julia",
+          "present": false,
+          "sprite": "julia_front",
+          "states": {
+            "2025-11-02": {
+              "dialogue": [
+                "Dealers Choice week started, so I let Damian plan everything and we ended up in Karuizawa.",
+                "Shiraito waterfall was smaller than I expected, but the water just shoots out of the hillside, so mysterious.",
+                "Every restaurant in this town closes at 5pm apparently, we got rejected four times before Banri saved us with ramen and gyoza.",
+                "Then a cocktail lounge sold us cigars instead, don't ask, corn from a bus stop vendor was the real MVP of the day!"
+              ],
+              "gridX": 33,
+              "gridY": 10,
+              "present": true
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            }
+          }
+        }
+      ],
       "objects": [],
       "transporters": [
         {
@@ -22821,34 +24028,84 @@
           "name": "Bailey",
           "sprite": "bailey_front",
           "states": {
+            "2025-10-02": {
+              "present": false
+            },
+            "2025-10-03": {
+              "present": false
+            },
             "2025-10-20": {
+              "present": false
+            },
+            "2025-10-26": {
+              "present": false
+            },
+            "2025-10-27": {
+              "present": false
+            },
+            "2025-10-29": {
+              "present": false
+            },
+            "2025-10-30": {
+              "present": false
+            },
+            "2025-11-01": {
+              "dialogue": [
+                "Senso-ji was packed today, mid-service and all, but the market walk up still gets me every time.",
+                "Spent way too long hunting coin lockers before caving and paying 3500 yen for luggage storage. Lesson learned.",
+                "Detour highlight: Neko-en, basically just a room of rescue cats. Zero regrets, ten out of ten cats.",
+                "Fell asleep during Cool Runnings but woke up refreshed for Barbie's very not-Indian Indian parrot. Bye for now!"
+              ],
+              "gridX": 28,
+              "gridY": 24,
+              "present": true
+            },
+            "2025-11-02": {
+              "dialogue": [
+                "Meiji Jingu, first time ever! The scale of these gates just about knocked me over.",
+                "We just missed some ceremony there, typical timing honestly.",
+                "Before that I spilled a Vietnamese salted coffee all over myself right before Shibuya Sky, had to hide it with my bag.",
+                "Worth it though, saw Mt. Fuji from up there. Bye for now!"
+              ],
+              "gridX": 28,
+              "gridY": 15,
+              "present": true
+            },
+            "2025-11-04": {
+              "dialogue": [
+                "I sat by this lake for two hours watching swan boats crash into each other, very meditative.",
+                "Also today: fed a capybara named Tonkatsu, got bitten by a hedgehog I chose not to launch into a wall.",
+                "Curry House CoCo humbled me with a level 6 spicy I could not finish, no regrets except all the regrets.",
+                "Anyway, glad you're all here at devhouse with me. Bye for now."
+              ],
+              "gridX": 32,
+              "gridY": 21,
+              "present": true
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-12": {
               "present": false
             },
             "2025-11-16": {
               "present": false
             },
-            "2026-05-10": {
+            "2025-11-18": {
               "dialogue": [
-                "Hey, I'm Bailey.",
-                "Moving day! Welcome to our new spot in the garden."
+                "Three weeks, zero work on my mind, more Japan than ever. Being unemployed really should happen more often.",
+                "No code from me this trip, but Yashuk kept the blog alive and Dylan built a drink tracker. I just... blogged. It felt good.",
+                "New city rankings: Fukuoka, Osaka, Kanazawa, Tokyo, Kyoto, Sendai. Fukuoka's pace and ramen got me, no notes.",
+                "Looking forward to devhouse 3 already. Bye for now, Bailey."
               ],
-              "gridX": 27,
-              "gridY": 36,
-              "present": true
-            },
-            "2026-06-30": {
-              "dialogue": [
-                "Hey, I'm Bailey.",
-                "Busy week \u2014 we squashed all the branches into one."
-              ]
-            },
-            "2026-07-02": {
-              "dialogue": [
-                "We opened a whole new town today!",
-                "Walk west along the road and visit Machi."
-              ],
-              "gridX": 26,
-              "gridY": 34,
+              "gridX": 32,
+              "gridY": 21,
               "present": true
             }
           }
@@ -22875,19 +24132,74 @@
           "name": "Damian",
           "sprite": "damian_front",
           "states": {
-            "2026-05-10": {
-              "dialogue": [
-                "Damian here.",
-                "Moving day! We finally got the spot up by the statues."
-              ],
-              "gridX": 31,
-              "gridY": 36
+            "2025-10-03": {
+              "present": false
             },
-            "2026-07-02": {
-              "dialogue": [
-                "Damian here.",
-                "Bailey won't stop going on about some new town out west."
-              ]
+            "2025-10-07": {
+              "present": false
+            },
+            "2025-10-20": {
+              "present": false
+            },
+            "2025-10-26": {
+              "present": false
+            },
+            "2025-10-27": {
+              "present": false
+            },
+            "2025-10-28": {
+              "present": false
+            },
+            "2025-10-29": {
+              "present": false
+            },
+            "2025-10-30": {
+              "present": false
+            },
+            "2025-10-31": {
+              "present": false
+            },
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-11": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            },
+            "2025-11-13": {
+              "present": false
+            },
+            "2025-11-14": {
+              "present": false
+            },
+            "2025-11-15": {
+              "present": false
             }
           }
         },
@@ -22913,19 +24225,61 @@
           "name": "Julia",
           "sprite": "julia_front",
           "states": {
-            "2026-05-10": {
-              "dialogue": [
-                "Hi, I'm Julia!",
-                "We moved up to the temple garden today. So much nicer than the roadside."
-              ],
-              "gridX": 29,
-              "gridY": 35
+            "2025-10-27": {
+              "present": false
             },
-            "2026-07-02": {
+            "2025-10-28": {
+              "present": false
+            },
+            "2025-10-29": {
+              "present": false
+            },
+            "2025-10-30": {
+              "present": false
+            },
+            "2025-10-31": {
+              "present": false
+            },
+            "2025-11-01": {
               "dialogue": [
-                "Hi, I'm Julia!",
-                "They put my Tokyo Tower drawing in the new town. Go see it!"
-              ]
+                "Last day in Tokyo and we spent it chasing bald caps through four Don Quijotes for a Pitbull group costume.",
+                "Only found four caps, so half of us became cops instead. Damian just showed up as Chainsaw Man, no notes.",
+                "Pub crawl got wild, poor Vyv tapped out early, but we powered through to the last train and grabbed konbini food.",
+                "Honestly a 680 yen set meal and a rainy umbrella walk might've been the highlight. Sayonara, Tokyo!"
+              ],
+              "gridX": 35,
+              "gridY": 37,
+              "present": true
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
             }
           }
         }
@@ -23667,6 +25021,150 @@
           },
           "dialogue": [],
           "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 1,
+          "gridY": 5,
+          "name": "Damian",
+          "present": false,
+          "sprite": "damian_front",
+          "states": {
+            "2025-10-07": {
+              "dialogue": [
+                "Found a nasty bug on mobile: expand the post list, try to scroll, and the whole thing just collapses on you.",
+                "Finger gesture from bottom to top, and poof, the list folds like it got stage fright.",
+                "Should keep scrolling smooth, instead it snaps shut. Filed it with a video and everything.",
+                "Debugging this one vending machine at a time, honestly."
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-10-20": {
+              "dialogue": [
+                "Devhouse 2! We're back in Japan, baby, exactly like six months ago.",
+                "Last time was so much fun I just had to pitch Japan again, and everyone agreed instantly.",
+                "Been studying Japanese every day since April, so my nihongo's a little less embarrassing now.",
+                "Check the calendar for everyone's arrival dates, ja mata ne!"
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-10-26": {
+              "dialogue": [
+                "No sleep, an Uber at dawn, then Melbourne to Narita with Dylan and Bailey in tow.",
+                "Customs line ate an hour, but the Welcome Suica made up for it instantly.",
+                "Bought a Shinkansen ticket to Sendai, got it wrong, bought it again \u2014 success eventually!",
+                "Made it to Julia and Jaisukh, traded stories over a Strong Zero, and passed out. New adventure, go."
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-10-27": {
+              "present": false
+            },
+            "2025-10-28": {
+              "present": false
+            },
+            "2025-10-29": {
+              "present": false
+            },
+            "2025-10-30": {
+              "dialogue": [
+                "Said goodbye to Sendai this morning, checked out, caught the shinkansen down to Tokyo.",
+                "Took a tram from Oji station to the new Airbnb, met up with Viv and Gloria over coffee at this slick little cafe.",
+                "Dinner was pricey but we made up for it with way too much sake, then karaoke because of course.",
+                "Stumbling back to the Airbnb now, buzzing, happy. Tokyo, be gentle with my head tomorrow."
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-10-31": {
+              "present": false
+            },
+            "2025-11-01": {
+              "dialogue": [
+                "Dealer's choice day! Julia and I overslept, crammed the suitcases, and bolted for Tokyo Station.",
+                "Ate a heated bento on the shinkansen to Karuizawa, then hiked out to Shiraito Falls \u2014 pretty, if a little small.",
+                "Wandered the old Karuizawa Ginza shopping street, had ramen, then found a bar with cigars and whiskey. Perfect combo.",
+                "Toyama's next on the list \u2014 catch you on the rails!"
+              ],
+              "gridX": 1,
+              "gridY": 7,
+              "present": true
+            },
+            "2025-11-02": {
+              "dialogue": [
+                "Checked out of Karuizawa this morning, grabbed an apple pie from a tiny boulangerie before everything else opened.",
+                "Shinkansen to Toyama, then 45 minutes walking through rain because the marathon closed half the roads. Rough one.",
+                "The glass art museum was gorgeous but no photos allowed inside, so you'll just have to trust me on that.",
+                "Staying in an old Japanese house tonight, bad weather again tomorrow, plans are shaky. Mata ne!"
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "dialogue": [
+                "Overslept, caught a train and bus to the airport, then a flight to Fukuoka \u2014 classic travel day.",
+                "Went straight to see the Fukuoka Gundam. Absolutely massive, had to just stand there and stare.",
+                "Grabbed some Porygon2 merch at the Pokemon Center, then met up with Dylan at a pub near the Christmas trees by the station.",
+                "Ended the night with ramen at a Nakasu food stall with Bailey. Perfect way to close it out \u2014 \u3058\u3083\u3042\u3001\u307e\u305f."
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-11": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            },
+            "2025-11-13": {
+              "present": false
+            },
+            "2025-11-14": {
+              "present": false
+            },
+            "2025-11-15": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
             "down": "bailey_front",
             "left": "",
             "right": "bailey_side",
@@ -23675,36 +25173,278 @@
           "gridOffsetX": 0,
           "gridOffsetY": 0,
           "gridX": 1,
-          "gridY": 5,
+          "gridY": 6,
           "name": "Bailey",
           "present": false,
           "sprite": "bailey_front",
           "states": {
             "2025-10-20": {
               "dialogue": [
-                "\u30c7\u30d9\u30cf\u30a6\u30b9 2, baby! Less than a week out and I'm already tasting the ramen and Strong Zero.",
-                "Quit my job two days before the flight, so this whole trip is pure bliss with zero obligations.",
-                "Been heads down on the devhou.se projects too \u2014 new logo, the calendar as our source of truth, and this very game.",
-                "Goal is to ship the game by the end of the trip. Gotta put the dev in \u30c7\u30d9\u30cf\u30a6\u30b9, right?",
-                "Accommodation's locked in, plans are loose. See you out there!"
-              ],
-              "gridX": 1,
-              "gridY": 5,
-              "present": true
-            },
-            "2025-11-16": {
-              "dialogue": [
-                "Okayama castle was a bit meh, but Himeji lived up to the hype - I basically held the whole castle in my hand for a photo.",
-                "Wandered Umeda solo after catching the wrong train, ended up just sitting by the Tosahori River instead, honestly not mad about it.",
-                "Yashuk tried to exchange money at a sexy panty gacha machine in Shinsekai, still not sure what he thought was happening there.",
-                "Bought myself a proper chef's knife in Kappabashi as a reward - big purchase, zero regrets, mostly. Bye for now!"
+                "Deveho-se 2! Deveho-se 2! Less than a week out and my job wraps 2 days before we fly, blissful timing.",
+                "Accommodation's locked in, no real plan yet, but I'm with Damiante for most of it so something will happen. Yas is with me the whole trip, lucky them.",
+                "Been grinding on the blog, the calendar, and the game too, gotta put the dev into devhou.se somehow.",
+                "Ramen and Strong Zero are basically calling my name already. Bye for now!"
               ],
               "gridX": 1,
               "gridY": 6,
               "present": true
             },
-            "2026-05-10": {
+            "2025-10-26": {
+              "dialogue": [
+                "Melbourne to Tokyo, then almost two hours just taxiing through immigration and customs. My legs are staging a protest.",
+                "Those ticket machines act translated but somehow still a total riddle. We guessed our way onto the Narita to Tokyo leg, then flailed on Tokyo to Sendai.",
+                "Right now I'm on the shinkansen, still haven't sorted the final taxi to our place, but honestly, I'm just dreaming of a 7-Eleven meal and a pillow.",
+                "Bye for now, arriving eventually, Bailey."
+              ],
+              "gridX": 1,
+              "gridY": 6,
+              "present": true
+            },
+            "2025-10-27": {
               "present": false
+            },
+            "2025-10-29": {
+              "present": false
+            },
+            "2025-10-30": {
+              "present": false
+            },
+            "2025-11-01": {
+              "dialogue": [
+                "Left Sendai early, snapped one last pic of that crossing where Damian jaywalked on day one.",
+                "Tram ride to our Tokyo place beat, though I'll never admit it reminded me of Melbourne's tram - inferior, obviously.",
+                "Sushi that wasn't a train this time, mediocre omurice, a Roppongi pub crawl, and a lovely cafe owner with wild DJ stories.",
+                "Only two days of devhouse proper before dealer's choice kicks in - I could really use a nap. Bye for now."
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "dialogue": [
+                "Said bye to Vyv over one last oat latte and BLT at Sol's, then dragged Yashuk to the ticket desk. Twice.",
+                "Turns out I did not, in fact, book the right shinkansen tickets, but the staff just rebooked us with zero fuss.",
+                "Sat next to a stranger eating gyudon on the train and spotted a whole mall along the tracks, very jealous of Japanese parking efficiency.",
+                "Made it to Kanazawa for BBQ, whiskey, and putting a dent in Dylan's drinking chart with the crew, worth the ticket chaos."
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-09": {
+              "present": false
+            },
+            "2025-11-12": {
+              "present": false
+            },
+            "2025-11-16": {
+              "dialogue": [
+                "Okayama castle was fine, Himeji castle was the real poster child, I get it now.",
+                "I sat by Tosabori River alone in Umeda after catching the wrong train, honestly a highlight.",
+                "Yashuk tried to exchange money at a sexy panty gacha machine in Shinsekai. No further comment.",
+                "Bought myself a proper chef's knife in Kappabashi as a reward, don't @ me, bye for now!"
+              ],
+              "gridX": 1,
+              "gridY": 6,
+              "present": true
+            },
+            "2025-11-18": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "dylan_front",
+            "left": "",
+            "right": "dylan_side",
+            "up": "dylan_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 1,
+          "gridY": 7,
+          "name": "Dylan",
+          "present": false,
+          "sprite": "dylan_front",
+          "states": {
+            "2025-10-20": {
+              "dialogue": [
+                "Devhouse 2 starts this Sunday and I am STILL packing my bags!",
+                "After Sunday everyone scatters for their own adventures, which honestly is the best part.",
+                "Mine's a 7 day loop by bike, Osaka up around Lake Biwa to the north shore and back. Been training, hope it's enough.",
+                "Grabbing one more drink before the chaos begins, see you out there!"
+              ],
+              "gridX": 1,
+              "gridY": 7,
+              "present": true
+            },
+            "2025-10-26": {
+              "dialogue": [
+                "20 hours of travel, three lounge beers, and a near-miss with my own passport. Classic start.",
+                "Immigration line was an hour long, then I butchered buying Shinkansen tickets like a tourist. Which, fair, I am one.",
+                "Barely caught the last train to Sendai, then a taxi ride fueled by pure desperation for a Strong Zero.",
+                "Julia and Yasuhak had snacks and drinks waiting though, so honestly? Worth it. Now where's that vending machine."
+              ],
+              "gridX": 1,
+              "gridY": 7,
+              "present": true
+            },
+            "2025-10-27": {
+              "present": false
+            },
+            "2025-11-01": {
+              "dialogue": [
+                "Two days in Tokyo, one izakaya near Sumago, and approximately infinite lemon sours. No regrets.",
+                "We led ourselves home from karaoke like champions, I just left out the part where my maps app did the leading.",
+                "Four donkis, three cities, one mega donki, all for costumes that turned into girls-dressed-as-cops. Worth it.",
+                "Now it's just me, a bike, and Lake Biwa waiting. Wish my legs luck."
+              ],
+              "gridX": 1,
+              "gridY": 6,
+              "present": true
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-03": {
+              "present": false
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 2,
+          "gridY": 5,
+          "name": "Julia",
+          "present": false,
+          "sprite": "julia_front",
+          "states": {
+            "2025-10-27": {
+              "dialogue": [
+                "Three hour hair treatment, then straight to Tokyo Station for a THREE HOUR train to Sendai. My legs, my hair, everything hurts.",
+                "Rain, a 30 minute wait for a taxi, and a supermarket haul because I was solo for hours before anyone else showed up.",
+                "Then a pub with zero music and an audience of five silent locals every time I fumbled my Japanese ordering beer.",
+                "Worth it though, Yashuk showed up, everyone flew in from Australia exhausted, and we chatted till 2am. Except Damian, he tapped out early!"
+              ],
+              "gridX": 2,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-10-28": {
+              "present": false
+            },
+            "2025-10-29": {
+              "present": false
+            },
+            "2025-10-30": {
+              "present": false
+            },
+            "2025-10-31": {
+              "dialogue": [
+                "Caught the 12:30 Shinkansen after some karaage for lunch, so tasty!",
+                "Whole gang finally together at the cafe, plus a tram ride and a karaoke machine in the basement!",
+                "Sushi, drinks, karaoke till 4am... then locked outside for 40 minutes till Damian saved us.",
+                "Best night of the trip, worst lock box of my life. Worth it!"
+              ],
+              "gridX": 1,
+              "gridY": 6,
+              "present": true
+            },
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-03": {
+              "dialogue": [
+                "Worst coffee of my life this morning, but redemption came in the form of Karuizawa apple pie. Two kinds, both incredible.",
+                "Then our Shinkansen to Toyama ran 35 minutes late - apparently that CAN happen here, who knew!",
+                "Arrived to torrential rain and a marathon blocking half the city, glass museum by tram, brewery to hide from the storm, then hamburg steak.",
+                "Taxi home through that downpour was the real MVP. That's all, goodbye!"
+              ],
+              "gridX": 1,
+              "gridY": 6,
+              "present": true
+            },
+            "2025-11-04": {
+              "present": false
+            },
+            "2025-11-05": {
+              "present": false
+            },
+            "2025-11-06": {
+              "present": false
+            },
+            "2025-11-07": {
+              "present": false
+            },
+            "2025-11-08": {
+              "present": false
+            },
+            "2025-11-09": {
+              "dialogue": [
+                "Propeller plane to Fukuoka, some guy in my seat, a whole seating shuffle - turns out allocated seating is a suggestion apparently.",
+                "Landed, saw a giant gundam, then hit the Hakata Pok\u00e9mon centre and a Christmas market with a $10 hot chocolate scam that came with a free mug.",
+                "Fake British pub, happy hour cocktails, tiny river-side food carts with Dylan - somehow undid a whole week of Dylan's sobriety efforts in one night.",
+                "Ended with McDonalds dessert and Bailey pulling out cigarettes like a plot twist. Went to bed way too full, zero regrets!"
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2025-11-10": {
+              "present": false
+            },
+            "2025-11-12": {
+              "dialogue": [
+                "Last day in Fukuoka started rough, too many drinks the night before, but Hakata ramen fixed that fast.",
+                "We found a sumo bar, watched a bout, then got yakitori and somehow ended up at a pool hall talking festival floats.",
+                "A guy there turned out to be an organizer of that huge float festival and gave us his card for next June!",
+                "Tomorrow I split off to Kyoto while everyone scatters to Okayama, bittersweet way to end our Devhouse run together."
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
             }
           }
         }
