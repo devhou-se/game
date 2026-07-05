@@ -37,6 +37,12 @@ PREFABS = {
     'shrub-large':  dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'shrub-large-circle_0_0')],
                          colliders=[(0, 0), (0, 1), (1, 0), (1, 1)], doors=[]),
     'shrub-small':  dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'shrub-small-circle_0_0')], colliders=[(0, 0)], doors=[]),
+    # snow-dusted variants (recoloured by tools/make_snow_tiles.py) for Yukimura
+    'tree-snow':    dict(w=2, h=3, sprites=[('Tops', 0, 0, 'tree-3-top-snow_0_0'), ('Collidables', 0, 2, 'tree-3-base-shadow-snow_0_0')],
+                         colliders=[(0, 2), (1, 2)], doors=[]),
+    'shrub-large-snow': dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'shrub-large-circle-snow_0_0')],
+                             colliders=[(0, 0), (0, 1), (1, 0), (1, 1)], doors=[]),
+    'shrub-small-snow': dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'shrub-small-circle-snow_0_0')], colliders=[(0, 0)], doors=[]),
     'torii-red':    dict(w=6, h=5, sprites=[('Tops', 0, 0, 'torii-red-top_0_0'), ('Collidables', 1, 3, 'torii-red-feet_0_0')],
                          colliders=[(1, 3), (4, 3), (1, 4), (4, 4)], doors=[]),
     'shrine':       dict(w=3, h=6, sprites=[('Collidables', 0, 0, 'shrine-building_0_0')],

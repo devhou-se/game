@@ -66,12 +66,15 @@ def station_interior(train_sprite):
 
 
 STATIONS = {
-    'TokyoStation': {'label': 'Tokyo Station', 'town': 'Palace', 'train': 'train-orange'},
-    'InakaStation': {'label': 'Inaka',         'town': 'Inaka',  'train': 'train-green'},
+    'TokyoStation':    {'label': 'Tokyo Station', 'town': 'Palace',   'train': 'train-orange'},
+    'InakaStation':    {'label': 'Inaka',         'town': 'Inaka',    'train': 'train-green'},
+    # Yukimura — the snowy village, on the same branch line as Inaka (green).
+    'YukimuraStation': {'label': 'Yukimura',      'town': 'Yukimura', 'train': 'train-green'},
 }
 TOWN_DOORS = {          # townRoom: (hidden door cell into the station, exit cell outside)
-    'TokyoStation': {'door': [27, 9], 'exit': [27, 10]},
-    'InakaStation': {'door': [29, 9], 'exit': [29, 10]},
+    'TokyoStation':    {'door': [27, 9], 'exit': [27, 10]},
+    'InakaStation':    {'door': [29, 9], 'exit': [29, 10]},
+    'YukimuraStation': {'door': [29, 9], 'exit': [29, 10]},
 }
 
 for key, st in STATIONS.items():

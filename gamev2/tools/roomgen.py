@@ -97,13 +97,14 @@ class Builder:
             if role not in roles: role = 'center'
             self.put('Floor', x, y, f'{fam}_{role}')
 
-    def pond(self, x0, y0, x1):
+    def pond(self, x0, y0, x1, fam='pond-autotile'):
         """A pond exactly two rows tall (the pond set has no edge-w piece).
-        Solid water, rock-rimmed."""
+        Solid water, rock-rimmed. Pass fam='ice-pond-autotile' for a frozen
+        pond (same geometry, recoloured — see tools/make_snow_tiles.py)."""
         top = [('corner-nw', x0)] + [('edge-n', x) for x in range(x0+1, x1)] + [('corner-ne', x1)]
         bot = [('corner-sw', x0)] + [('edge-s', x) for x in range(x0+1, x1)] + [('corner-se', x1)]
-        for role, x in top: self.put('Water', x, y0, f'pond-autotile_{role}'); self.solid(x, y0)
-        for role, x in bot: self.put('Water', x, y0+1, f'pond-autotile_{role}'); self.solid(x, y0+1)
+        for role, x in top: self.put('Water', x, y0, f'{fam}_{role}'); self.solid(x, y0)
+        for role, x in bot: self.put('Water', x, y0+1, f'{fam}_{role}'); self.solid(x, y0+1)
 
     def flowers(self, x, y):
         """2x2 flowering-grass patch (only the 4 corner pieces exist)."""

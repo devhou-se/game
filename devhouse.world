@@ -41,6 +41,13 @@
       "y": 3648,
       "width": 2560,
       "height": 1664
+    },
+    {
+      "fileName": "gamev2/tiled/yukimura.tmj",
+      "x": -3072,
+      "y": -680,
+      "width": 2688,
+      "height": 1792
     }
   ],
   "onlyShowAdjacentMaps": false,
