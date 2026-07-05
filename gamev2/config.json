@@ -22824,6 +22824,9 @@
             "2025-10-20": {
               "present": false
             },
+            "2025-11-16": {
+              "present": false
+            },
             "2026-05-10": {
               "dialogue": [
                 "Hey, I'm Bailey.",
@@ -23687,6 +23690,17 @@
               ],
               "gridX": 1,
               "gridY": 5,
+              "present": true
+            },
+            "2025-11-16": {
+              "dialogue": [
+                "Okayama castle was a bit meh, but Himeji lived up to the hype - I basically held the whole castle in my hand for a photo.",
+                "Wandered Umeda solo after catching the wrong train, ended up just sitting by the Tosahori River instead, honestly not mad about it.",
+                "Yashuk tried to exchange money at a sexy panty gacha machine in Shinsekai, still not sure what he thought was happening there.",
+                "Bought myself a proper chef's knife in Kappabashi as a reward - big purchase, zero regrets, mostly. Bye for now!"
+              ],
+              "gridX": 1,
+              "gridY": 6,
               "present": true
             },
             "2026-05-10": {
