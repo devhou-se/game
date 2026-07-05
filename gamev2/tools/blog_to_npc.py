@@ -405,13 +405,16 @@ def main():
 
     placed = 0
     tot_in = tot_out = 0
-    for post in posts:
+    for i, post in enumerate(posts):
+        if i and not args.mock:
+            import time
+            time.sleep(1.2)   # gentle spacing so a big backfill stays under RPM
         try:
             ok, usage = process_post(cfg, post, spots, spot_ids, mock=args.mock)
         except SystemExit:
             raise
         except Exception as e:
-            # one bad post shouldn't sink a 50-post backfill; report and move on
+            # one bad post shouldn't sink a 60-post backfill; report and move on
             print(f'#{post.get("post_id")}: ERROR {type(e).__name__}: {e} — skipped')
             continue
         placed += 1 if ok else 0
