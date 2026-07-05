@@ -30,7 +30,7 @@ DOOR_DX, DOOR_DY = 1, 3      # door cell relative to the building's top-left
 OFFICE_KEYS = [
     'office-shelf-snacks_0_0', 'office-shelf-drinks_0_0', 'office-shelf-glass_0_0',
     'office-freezer_0_0', 'office-cabinet_0_0', 'office-watercooler_0_0',
-    'office-clock_0_0', 'office-fridge_0_0', 'office-bin_0_0', 'office-counter_0_0',
+    'office-clock_0_0', 'office-fridge_0_0', 'office-bin_0_0', 'office-counter2_0_0',
     'office-register_0_0', 'office-poster-chart_0_0', 'office-poster-menu_0_0',
     'office-poster-photo_0_0', 'office-plant-a_0_0', 'office-plant-b_0_0',
     'office-boxes-large_0_0', 'office-boxes-small_0_0', 'office-wall-white_0_0',
@@ -120,16 +120,17 @@ def furnish(b, rng, x0, y0, bw, bh):
         for x in range(left + 1, right):
             put_solid(theme if rng.random() > 0.25 else rng.choice(SHELVES), x, y)
 
-    # exactly one counter (3 wide) on the front row, register on top
+    # exactly one counter (2 wide, fills its tiles exactly) on the front row,
+    # register on the inner tile
     side = rng.choice(['left', 'right'])
     cy = bottom
-    cx = left if side == 'left' else right - 2
-    put_solid('office-counter_0_0', cx, cy)
-    b.put('Tops', cx + 1, cy, 'office-register_0_0')
+    cx = left if side == 'left' else right - 1
+    put_solid('office-counter2_0_0', cx, cy)
+    b.put('Tops', cx + 1 if side == 'left' else cx, cy, 'office-register_0_0')
 
     # 0-2 bins in the free corners, a plant opposite the counter
     spots = [(right, top + 1) if side == 'left' else (left, top + 1),
-             (cx + 3, cy) if side == 'left' else (cx - 1, cy)]
+             (cx + 2, cy) if side == 'left' else (cx - 1, cy)]
     for x, y in rng.sample(spots, k=rng.randint(0, 2)):
         put_solid('office-bin_0_0', x, y)
     put_solid(rng.choice(PLANTS), right if side == 'left' else left, cy)
@@ -151,20 +152,16 @@ def build_interior(store):
         for y in range(y0 + 2, y0 + bh - 2):
             b.put('Floor', x, y, f'{floor}_center')
 
-    # walls: 2-row band on top, sides, bottom with a 2-cell door gap; the
-    # row below the bottom wall is the threshold (exit transporters)
+    # walls: only the back wall (2-row band on top) is drawn, aligned to the
+    # floor width. The sides and front have no wall at all — the lit floor is
+    # framed by the surrounding void, and the room boundary (set below) keeps
+    # the player on the floor, so no invisible side/front colliders are needed.
+    # Door is a 2-cell gap in the front; the row below it is the threshold.
     midx = x0 + bw // 2
     gapx = (midx - 1, midx)
-    for x in range(x0, x0 + bw):
+    for x in range(x0 + 1, x0 + bw - 1):
         for y in (y0, y0 + 1):
             b.put('Collidables', x, y, 'office-wall-white_0_0'); b.solid(x, y)
-    for y in range(y0 + 2, y0 + bh - 2):
-        for x in (x0, x0 + bw - 1):
-            b.put('Collidables', x, y, 'office-wall-white_0_0'); b.solid(x, y)
-    for x in range(x0, x0 + bw):
-        if x in gapx:
-            continue
-        b.put('Collidables', x, y0 + bh - 2, 'office-wall-white_0_0'); b.solid(x, y0 + bh - 2)
 
     furnish(b, rng, x0, y0, bw, bh)
 
@@ -179,8 +176,15 @@ def build_interior(store):
         rg.transporter(gapx[0], y0 + bh - 1, store['host'], fx, fy, hidden=True),
         rg.transporter(gapx[1], y0 + bh - 1, store['host'], fx, fy, hidden=True),
     ])
-    # confine movement to the store box — the void around it isn't walkable
-    room['boundary'] = [[x0, y0], [x0 + bw, y0], [x0 + bw, y0 + bh], [x0, y0 + bh]]
+    # confine movement to the lit floor plus the door notch — the surrounding
+    # void isn't walkable, so the missing side/front walls need no colliders.
+    room['boundary'] = [
+        [x0 + 1, y0 + 2], [x0 + bw - 1, y0 + 2],
+        [x0 + bw - 1, y0 + bh - 2],
+        [gapx[1] + 1, y0 + bh - 2], [gapx[1] + 1, y0 + bh],
+        [gapx[0], y0 + bh], [gapx[0], y0 + bh - 2],
+        [x0 + 1, y0 + bh - 2],
+    ]
     room['interior'] = True          # day/night grading never applies inside
     return room, (gapx[0], y0 + bh - 2)   # arrival: standing in the door gap
 
