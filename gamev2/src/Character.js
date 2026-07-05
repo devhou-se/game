@@ -128,7 +128,10 @@ class Character {
     setIdleFrame() {
         if (this.sprite.anims) this.sprite.anims.stop();
         const dirKey = this.currentDirKey();
-        const frameKey = `${dirKey}_frame_0`;
+        // side sheets are [mid-stride, feet-together]; front/back sheets
+        // start on the standing pose — idle on the feet-together frame
+        const idle = /_side$/.test(dirKey) ? 1 : 0;
+        const frameKey = `${dirKey}_frame_${idle}`;
         if (this.scene.textures.exists(frameKey)) this.sprite.setTexture(frameKey);
         else if (this.scene.textures.exists(dirKey)) this.sprite.setTexture(dirKey);
     }
