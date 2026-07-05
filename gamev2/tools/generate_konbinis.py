@@ -152,41 +152,41 @@ def build_interior(store):
         for y in range(y0 + 2, y0 + bh - 2):
             b.put('Floor', x, y, f'{floor}_center')
 
-    # walls: only the back wall (2-row band on top) is drawn, aligned to the
-    # floor width. The sides and front have no wall at all — the lit floor is
-    # framed by the surrounding void, and the room boundary (set below) keeps
-    # the player on the floor, so no invisible side/front colliders are needed.
-    # Door is a 2-cell gap in the front; the row below it is the threshold.
+    # walls: only the back wall is drawn — a single 1-tile-tall row directly
+    # above the floor, aligned to the floor width. The sides and front have no
+    # wall at all; the lit floor is framed by the surrounding void, and the room
+    # boundary (set below) keeps the player on the floor, so no invisible
+    # side/front colliders are needed. Door is a 2-cell gap in the front.
     midx = x0 + bw // 2
     gapx = (midx - 1, midx)
     for x in range(x0 + 1, x0 + bw - 1):
-        for y in (y0, y0 + 1):
-            b.put('Collidables', x, y, 'office-wall-white_0_0'); b.solid(x, y)
+        b.put('Collidables', x, y0 + 1, 'office-wall-white_0_0'); b.solid(x, y0 + 1)
 
     furnish(b, rng, x0, y0, bw, bh)
 
-    # lit doorway: floor through the wall gap and onto the threshold, mat on top
+    # lit doorway: a single mat row (1 deep) sticking out below the floor; the
+    # exit transporters sit on the mat, the player arrives one cell inside it.
     for i, x in enumerate(gapx):
         b.put('Floor', x, y0 + bh - 2, f'{floor}_center')
-        b.put('Floor', x, y0 + bh - 1, f'{floor}_center')
-        b.paver(x, y0 + bh - 1, i)
+        b.paver(x, y0 + bh - 2, i)
 
     fx, fy = store['front']
     room = b.room(store['key'], transporters=[
-        rg.transporter(gapx[0], y0 + bh - 1, store['host'], fx, fy, hidden=True),
-        rg.transporter(gapx[1], y0 + bh - 1, store['host'], fx, fy, hidden=True),
+        rg.transporter(gapx[0], y0 + bh - 2, store['host'], fx, fy, hidden=True),
+        rg.transporter(gapx[1], y0 + bh - 2, store['host'], fx, fy, hidden=True),
     ])
-    # confine movement to the lit floor plus the door notch — the surrounding
-    # void isn't walkable, so the missing side/front walls need no colliders.
+    # confine movement to the lit floor plus the 1-deep door mat — the
+    # surrounding void isn't walkable, so the missing side/front walls need no
+    # colliders.
     room['boundary'] = [
         [x0 + 1, y0 + 2], [x0 + bw - 1, y0 + 2],
         [x0 + bw - 1, y0 + bh - 2],
-        [gapx[1] + 1, y0 + bh - 2], [gapx[1] + 1, y0 + bh],
-        [gapx[0], y0 + bh], [gapx[0], y0 + bh - 2],
+        [gapx[1] + 1, y0 + bh - 2], [gapx[1] + 1, y0 + bh - 1],
+        [gapx[0], y0 + bh - 1], [gapx[0], y0 + bh - 2],
         [x0 + 1, y0 + bh - 2],
     ]
     room['interior'] = True          # day/night grading never applies inside
-    return room, (gapx[0], y0 + bh - 2)   # arrival: standing in the door gap
+    return room, (gapx[0], y0 + bh - 3)   # arrival: just inside the door mat
 
 
 register_metadata()
