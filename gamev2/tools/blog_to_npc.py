@@ -48,8 +48,13 @@ LANDMARKS = [
 ]
 
 MODEL = 'claude-sonnet-5'
-MAX_DIALOGUE_LINES = 5
+MAX_DIALOGUE_LINES = 4
 MAX_LINE_CHARS = 160
+
+# claude-sonnet-5 list price, USD per million tokens (standard, not the intro
+# rate — keeps the per-post projection conservative once intro pricing ends)
+PRICE_IN_PER_M = 3.00
+PRICE_OUT_PER_M = 15.00
 
 
 def load_config():
@@ -119,12 +124,13 @@ def walkable_near(cfg, room_key, gx, gy):
 
 
 def generate(post, npc_name, spot_ids, mock=False):
-    """Claude Sonnet turns the post into {spot, dialogue}."""
+    """Claude Sonnet turns the post into ({spot, dialogue}, usage). usage is
+    None for --mock, else the response.usage token counts."""
     if mock:
         return {'spot': spot_ids[0], 'dialogue': [
             f"I just wrote about {post['title']}!",
             'Come read it on the blog.',
-        ]}
+        ]}, None
 
     import anthropic
     # generous retries: fresh/low-tier accounts have small per-minute limits
@@ -146,7 +152,7 @@ def generate(post, npc_name, spot_ids, mock=False):
         'where in the game world its author should be found, and write the '
         'short dialogue they say when the player walks up to them.\n\n'
         'Dialogue rules: first person, in the voice of the author riffing on '
-        'their own post; 3-5 lines; each line under 140 characters; playful '
+        'their own post; 3-4 lines; each line under 140 characters; playful '
         'and specific to the post (mention real details from it); no markdown, '
         'no URLs, no @mentions. The last line should be a small sign-off or '
         'quip.\n\n'
@@ -193,7 +199,7 @@ def generate(post, npc_name, spot_ids, mock=False):
         print(f'  request_id: {getattr(e, "request_id", None)}')
         raise SystemExit(2)
     text = next(b.text for b in response.content if b.type == 'text')
-    return json.loads(text)
+    return json.loads(text), response.usage
 
 
 def npc_in_room(room, name):
@@ -268,6 +274,25 @@ def repair_presence(cfg, npc_name, from_date, active_room):
     return changes
 
 
+def report_usage(usage):
+    """Per-post token counts and a projected cost, for planning at scale."""
+    if usage is None:
+        print('usage: (mock — no LLM call)')
+        return
+    ci = getattr(usage, 'cache_creation_input_tokens', 0) or 0
+    cr = getattr(usage, 'cache_read_input_tokens', 0) or 0
+    inp, out = usage.input_tokens, usage.output_tokens
+    # cache writes bill ~1.25x, reads ~0.1x; this pipeline doesn't cache, but
+    # count them so the projection stays honest if that changes
+    cost = ((inp + 1.25 * ci + 0.1 * cr) * PRICE_IN_PER_M
+            + out * PRICE_OUT_PER_M) / 1_000_000
+    print(f'usage: {inp} in + {out} out'
+          + (f' ({ci} cache-write, {cr} cache-read)' if ci or cr else '')
+          + f'  ≈ ${cost:.4f}/post'
+          + f'  ×100 posts ≈ ${cost * 100:.2f}'
+          + f'  ({MODEL} @ ${PRICE_IN_PER_M:g}/${PRICE_OUT_PER_M:g} per M)')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--payload', required=True, help='blog post payload JSON file')
@@ -294,7 +319,8 @@ def main():
     print(f'{len(spot_ids)} candidate spots across '
           f'{len(overworld_rooms(cfg))} overworld rooms')
 
-    result = generate(post, npc_name, spot_ids, mock=args.mock)
+    result, usage = generate(post, npc_name, spot_ids, mock=args.mock)
+    report_usage(usage)
     spot_id = result['spot']
     dialogue = [line.strip()[:MAX_LINE_CHARS]
                 for line in result['dialogue'] if line.strip()][:MAX_DIALOGUE_LINES]
