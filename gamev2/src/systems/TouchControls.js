@@ -71,6 +71,73 @@ class TouchControls {
         return b;
     }
 
+    /**
+     * The d-pad surface: track one pointer from down through move to up,
+     * mapping its position around the pad centre to a held direction set
+     * (8 sectors — the four diagonals hold two arrow keys at once). Each
+     * change fires the matching synthetic keydown/keyup immediately;
+     * movement is isDown-polled so no minimum hold is needed.
+     */
+    _bindPad(pad, arrows) {
+        const KEYDEFS = {
+            up: { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 },
+            down: { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
+            left: { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
+            right: { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 },
+        };
+        const fire = (type, d) => window.dispatchEvent(new KeyboardEvent(type, {
+            key: KEYDEFS[d].key, code: KEYDEFS[d].code,
+            keyCode: KEYDEFS[d].keyCode, which: KEYDEFS[d].keyCode, bubbles: true,
+        }));
+
+        let active = new Set();
+        let pointerId = null;
+
+        const apply = (next) => {
+            for (const d of ['up', 'down', 'left', 'right']) {
+                const was = active.has(d), is = next.has(d);
+                if (is === was) continue;
+                this.state[d] = is;
+                arrows[d].classList.toggle('tc-pressed', is);
+                fire(is ? 'keydown' : 'keyup', d);
+            }
+            active = next;
+        };
+
+        const dirsAt = (e) => {
+            const r = pad.getBoundingClientRect();
+            const dx = e.clientX - (r.left + r.width / 2);
+            const dy = e.clientY - (r.top + r.height / 2);
+            if (Math.hypot(dx, dy) < 16) return new Set();   // centre dead zone
+            const a = Math.atan2(dy, dx) * 180 / Math.PI;    // 0° = east
+            const s = new Set();
+            if (a > -67.5 && a < 67.5) s.add('right');
+            if (a > 112.5 || a < -112.5) s.add('left');
+            if (a > 22.5 && a < 157.5) s.add('down');
+            if (a < -22.5 && a > -157.5) s.add('up');
+            return s;
+        };
+
+        pad.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (pointerId !== null) return;
+            pointerId = e.pointerId;
+            try { pad.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointers */ }
+            apply(dirsAt(e));
+        });
+        pad.addEventListener('pointermove', (e) => {
+            if (e.pointerId !== pointerId) return;
+            apply(dirsAt(e));
+        });
+        const end = (e) => {
+            if (e.pointerId !== pointerId) return;
+            pointerId = null;
+            apply(new Set());
+        };
+        pad.addEventListener('pointerup', end);
+        pad.addEventListener('pointercancel', end);
+    }
+
     _build() {
         const style = document.createElement('style');
         style.textContent = `
@@ -90,6 +157,10 @@ class TouchControls {
                 transform:scale(0.92); }
             #touch-controls .tc-pad { width:58px; height:58px; font-size:24px;
                 border-radius:12px; }
+            #touch-controls .tc-padzone { position:absolute; width:174px; height:174px;
+                pointer-events:auto; touch-action:none; border-radius:24px;
+                background:rgba(12,12,18,0.22);
+                -webkit-tap-highlight-color:transparent; }
             #touch-controls .tc-a { width:76px; height:76px; border-radius:50%;
                 font-size:30px; font-weight:bold;
                 border-color:rgba(255,215,0,0.55); color:#ffd700; }
@@ -104,21 +175,23 @@ class TouchControls {
         const root = document.createElement('div');
         root.id = 'touch-controls';
 
-        // D-pad, bottom-left (two adjacent buttons held = diagonals)
+        // D-pad, bottom-left: ONE touch surface, not four buttons. The thumb
+        // is tracked continuously (pointer capture), so direction changes
+        // without lifting, and the corners between two arrows hold both keys
+        // — a diagonal. The arrows are just visuals that light up.
         const pad = document.createElement('div');
+        pad.className = 'tc-padzone';
         pad.style.cssText =
-            'position:absolute;width:174px;height:174px;' +
             'left:max(16px,env(safe-area-inset-left));' +
             'bottom:max(16px,env(safe-area-inset-bottom));';
-        const up = this._btn('▲', 'tc-pad', 'left:58px;top:0;');
-        const left = this._btn('◀', 'tc-pad', 'left:0;top:58px;');
-        const right = this._btn('▶', 'tc-pad', 'left:116px;top:58px;');
-        const down = this._btn('▼', 'tc-pad', 'left:58px;top:116px;');
-        this._bind(up, 'up', { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 });
-        this._bind(left, 'left', { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 });
-        this._bind(right, 'right', { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 });
-        this._bind(down, 'down', { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 });
-        pad.append(up, left, right, down);
+        const arrows = {
+            up: this._btn('▲', 'tc-pad', 'left:58px;top:0;'),
+            left: this._btn('◀', 'tc-pad', 'left:0;top:58px;'),
+            right: this._btn('▶', 'tc-pad', 'left:116px;top:58px;'),
+            down: this._btn('▼', 'tc-pad', 'left:58px;top:116px;'),
+        };
+        Object.values(arrows).forEach(b => { b.style.pointerEvents = 'none'; pad.appendChild(b); });
+        this._bindPad(pad, arrows);
 
         // A / B cluster, bottom-right (A above-right, B below-left, GB-style)
         const a = this._btn('A', 'tc-a',
