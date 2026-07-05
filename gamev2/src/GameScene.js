@@ -768,6 +768,12 @@ class GameScene extends Phaser.Scene {
      */
     update() {
         this.inputHandler.handleInput();
+        // stop walk cycles on characters that didn't chain another step this
+        // frame (player's own depth/anim are left to TrainTravel while riding)
+        if (this.player && !(this.trainTravel && this.trainTravel.riding)) {
+            this.player.settleIdle();
+        }
+        this.roomManager.rooms[this.roomManager.currentRoom].npcs.forEach(npc => npc.settleIdle());
         this.npcManager.updateLabels();
         this.updateCharacterDepths();
         if (this.debugManager) this.debugManager.update();

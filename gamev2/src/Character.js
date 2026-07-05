@@ -116,11 +116,22 @@ class Character {
         return this.scene.getDirectionalSpriteKey(this.baseSpriteKey, this.currentDirection) || this.baseSpriteKey;
     }
 
-    /** Loop the walk cycle (used while a movement tween is running). */
+    /** Loop the walk cycle (used while a movement tween is running).
+     *  ignoreIfPlaying keeps chained steps from restarting the cycle — a
+     *  restart every step would snap back to frame 0 and walk on one leg. */
     playWalkAnim() {
         const animKey = this.currentDirKey() + '_anim';
         if (this.scene.anims && this.scene.anims.exists(animKey)) {
             this.sprite.play(animKey, true);
+        }
+    }
+
+    /** Stop the walk cycle IF the character is standing still this frame.
+     *  Called from the scene update after input had its chance to chain the
+     *  next step, so held movement never flickers to the idle frame. */
+    settleIdle() {
+        if (!this.isMoving && this.sprite.anims && this.sprite.anims.isPlaying) {
+            this.setIdleFrame();
         }
     }
 
@@ -227,7 +238,10 @@ class Character {
                 this.targetDeltaX = 0;
                 this.targetDeltaY = 0;
                 this.speedMultiplier = 1;
-                this.setIdleFrame();
+                // NOTE: the walk cycle is NOT stopped here — chained steps
+                // (held key, sprint) must keep the loop running so the legs
+                // keep alternating. settleIdle() (GameScene.update) stops it
+                // on the first frame with no follow-up movement.
 
                 // Check for transporter if this is the player
                 if (this.isPlayer) {
