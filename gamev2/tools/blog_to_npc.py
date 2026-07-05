@@ -339,17 +339,18 @@ def reset_states(cfg):
 
 
 def process_post(cfg, post, spots, spot_ids, mock=False):
-    """Generate + place one post into cfg. Returns (placed: bool, usage)."""
+    """Generate + place one post into cfg. Returns (record | None, usage).
+    record describes the placement for the issue comment: npc, room, spot."""
     author = (post.get('author') or '').lower()
     npc_name = AUTHOR_NPCS.get(author)
     if not npc_name:
         print(f'#{post.get("post_id")}: no NPC for {author!r} — skipped')
-        return False, None
+        return None, None
 
     date = str(post.get('date', ''))[:10]
     if len(date) != 10:
         print(f'#{post.get("post_id")}: bad date {post.get("date")!r} — skipped')
-        return False, None
+        return None, None
 
     result, usage = generate(post, npc_name, spot_ids, mock=mock)
     spot_id = result.get('spot')
@@ -358,21 +359,28 @@ def process_post(cfg, post, spots, spot_ids, mock=False):
     if spot_id not in spots or not dialogue:
         print(f'#{post.get("post_id")}: unusable content (spot={spot_id!r}, '
               f'{len(dialogue)} lines) — skipped')
-        return False, usage
+        return None, usage
 
     room_key, ax, ay = spots[spot_id]
     occ = occupied_cells(cfg, room_key, date, npc_name)
     cell = walkable_near(cfg, room_key, ax, ay, occ)
     if cell is None:
         print(f'#{post.get("post_id")}: no walkable cell near {spot_id} — skipped')
-        return False, usage
+        return None, usage
 
     print(f'#{post.get("post_id")} {date} {author} -> {npc_name} @ {spot_id} {cell}')
     for line in dialogue:
         print(f'  » {line}')
     for c in apply(cfg, npc_name, date, room_key, cell[0], cell[1], dialogue):
         print(f'  {c}')
-    return True, usage
+    record = {
+        'post_id': post.get('post_id'),
+        'npc': npc_name,
+        'room': cfg['rooms'][room_key].get('name', room_key),
+        'spot': spot_id.split(' · ', 1)[-1],   # "the vending machines"
+        'date': date,
+    }
+    return record, usage
 
 
 def main():
@@ -383,6 +391,7 @@ def main():
     ap.add_argument('--reset', action='store_true', help='clear all NPC states + hidden defs before placing (backfill)')
     ap.add_argument('--dry-run', action='store_true', help='generate + place, but do not write config')
     ap.add_argument('--mock', action='store_true', help='skip the LLM (canned response)')
+    ap.add_argument('--summary-out', help='write a JSON summary of placements (for the issue comment)')
     args = ap.parse_args()
 
     if args.payload:
@@ -403,30 +412,35 @@ def main():
     print(f'{len(spot_ids)} candidate spots across '
           f'{len(overworld_rooms(cfg))} overworld rooms')
 
-    placed = 0
+    records = []
     tot_in = tot_out = 0
     for post in posts:
         try:
-            ok, usage = process_post(cfg, post, spots, spot_ids, mock=args.mock)
+            record, usage = process_post(cfg, post, spots, spot_ids, mock=args.mock)
         except SystemExit:
             raise
         except Exception as e:
             # one bad post shouldn't sink a 60-post backfill; report and move on
             print(f'#{post.get("post_id")}: ERROR {type(e).__name__}: {e} — skipped')
             continue
-        placed += 1 if ok else 0
+        if record:
+            records.append(record)
         if usage is not None:
             tot_in += usage.input_tokens
             tot_out += usage.output_tokens
 
     if len(posts) > 1 or tot_in:
         cost = (tot_in * PRICE_IN_PER_M + tot_out * PRICE_OUT_PER_M) / 1_000_000
-        print(f'placed {placed}/{len(posts)} posts · usage {tot_in} in + {tot_out} out '
+        print(f'placed {len(records)}/{len(posts)} posts · usage {tot_in} in + {tot_out} out '
               f'≈ ${cost:.4f} total ({MODEL} @ ${PRICE_IN_PER_M:g}/${PRICE_OUT_PER_M:g} per M)')
+
+    # summary for the workflow: only placements (empty list -> no comment)
+    if args.summary_out:
+        json.dump({'placed': records}, open(args.summary_out, 'w'))
 
     if args.dry_run:
         print('dry run — config.json not written')
-    elif placed or args.reset:
+    elif records or args.reset:
         save_config(cfg)
         print('config.json updated')
     return 0
