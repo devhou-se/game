@@ -22821,13 +22821,17 @@
           "name": "Bailey",
           "sprite": "bailey_front",
           "states": {
+            "2025-10-20": {
+              "present": false
+            },
             "2026-05-10": {
               "dialogue": [
                 "Hey, I'm Bailey.",
                 "Moving day! Welcome to our new spot in the garden."
               ],
               "gridX": 27,
-              "gridY": 36
+              "gridY": 36,
+              "present": true
             },
             "2026-06-30": {
               "dialogue": [
@@ -22841,7 +22845,8 @@
                 "Walk west along the road and visit Machi."
               ],
               "gridX": 26,
-              "gridY": 34
+              "gridY": 34,
+              "present": true
             }
           }
         },
@@ -23651,7 +23656,45 @@
         }
       ],
       "name": "TokyoStation",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "bailey_front",
+            "left": "",
+            "right": "bailey_side",
+            "up": "bailey_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 1,
+          "gridY": 5,
+          "name": "Bailey",
+          "present": false,
+          "sprite": "bailey_front",
+          "states": {
+            "2025-10-20": {
+              "dialogue": [
+                "\u30c7\u30d9\u30cf\u30a6\u30b9 2, baby! Less than a week out and I'm already tasting the ramen and Strong Zero.",
+                "Quit my job two days before the flight, so this whole trip is pure bliss with zero obligations.",
+                "Been heads down on the devhou.se projects too \u2014 new logo, the calendar as our source of truth, and this very game.",
+                "Goal is to ship the game by the end of the trip. Gotta put the dev in \u30c7\u30d9\u30cf\u30a6\u30b9, right?",
+                "Accommodation's locked in, plans are loose. See you out there!"
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "present": true
+            },
+            "2026-05-10": {
+              "present": false
+            }
+          }
+        }
+      ],
       "objects": [],
       "transporters": [
         {
