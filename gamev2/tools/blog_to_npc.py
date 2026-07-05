@@ -405,10 +405,7 @@ def main():
 
     placed = 0
     tot_in = tot_out = 0
-    for i, post in enumerate(posts):
-        if i and not args.mock:
-            import time
-            time.sleep(1.2)   # gentle spacing so a big backfill stays under RPM
+    for post in posts:
         try:
             ok, usage = process_post(cfg, post, spots, spot_ids, mock=args.mock)
         except SystemExit:
