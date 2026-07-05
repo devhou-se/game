@@ -33,6 +33,12 @@ substitute the closest available prefab rather than inventing sprites.
   `wall_stone` / `wall_panel` (1x2 solid wall segments, for interiors),
   `counter`. New composite objects belong in the prefab library: add a spec to
   `tools/make_prefabs.py`, rerun it, and the object is editable in Tiled.
+- **Two helpers are broken-as-generated and REQUIRE a post-pass (see §5) — a
+  recurring bug when skipped:** `b.fence()` lays disconnected crowd-barrier art
+  (fix with `tools/fix_fences.py <Room>` → real pickets), and `train-track`
+  tiles (rail corridors) are *walkable* as laid (fix with `tools/seal_tracks.py`
+  → solid, station board cells kept open). If your room has a fence or a
+  railway, you are not done until both passes have run.
 
 ## 3. Write the generator script
 
@@ -79,10 +85,23 @@ Composition principles that make rooms read well:
 
 ```
 python3 tools/generate_<slug>.py
+# --- MANDATORY post-passes (edit config.json, so run BEFORE config_to_tiled) ---
+python3 tools/fix_fences.py <Name>            # ONLY if the room calls b.fence():
+                                              # broken barriers -> real pickets
+python3 tools/seal_tracks.py                  # ONLY if the room has train-track
+                                              # tiles: makes the rail solid
+# ------------------------------------------------------------------------------
 python3 tools/qa_port.py --room <Name>        # must reach 0 errors; fix warnings
-python3 tools/config_to_tiled.py <Name>       # + every room whose transporters changed
+python3 tools/config_to_tiled.py <Name>       # + every room fix_fences/seal_tracks
+                                              #   or a transporter edit touched
 /Applications/Tiled.app/Contents/MacOS/tmxrasterizer tiled/<name>.tmj /tmp/<name>.png
 ```
+`fix_fences.py`/`seal_tracks.py` are not optional polish — a fence or railway
+that skips them ships **broken art** or a **walkable railway** (this has bitten
+us before). They edit `config.json`, so they must run before `config_to_tiled`.
+Re-running the generator re-breaks both, so re-run these passes (then
+`config_to_tiled`) after ANY regeneration.
+
 LOOK at the render. Fix what reads badly (empty slabs, floating objects,
 disconnected paths, banding floors). Known traps: `pagoda-floor` is a blue
 ROOF texture; repeated single slab variants (brown/grey-brick-floor-tiles_*)
@@ -104,7 +123,10 @@ Serve `gamev2/` (a server is usually already on :8000, else
 - walk in through the real portal using held-key events (synthetic taps get
   swallowed: dispatch keydown, wait ~400ms/cell, keyup);
 - collision probes via `!scene.collisionSystem.checkTileCollision([{x,y}])`
-  on visually-solid and visually-open cells;
+  on visually-solid and visually-open cells (`checkTileCollision` returns
+  `false` when a cell is blocked, so `!` = "is solid"). If the room has a
+  railway or fences, EXPLICITLY probe a `train-track` cell and a fence cell —
+  both must be solid — to catch a forgotten `seal_tracks`/`fix_fences`;
 - screenshot the room's key vistas and actually look at them.
 
 ## 7. Ship

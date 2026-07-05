@@ -2,14 +2,19 @@
 """fix_fences.py — swap the broken fence art for real picket fence runs.
 
 The fence-barriers_* tiles are crowd-barrier/bench pieces; cycling them
-(roomgen's old fence()) produced disconnected junk. This rewrites every
+(roomgen's fence()) produces disconnected junk. This rewrites every
 horizontal run of fence-barriers tiles into the fence-garden-outside picket
 set: left end, middle pieces, right end. Colliders are untouched (the cells
-were already solid).
+were already solid). MANDATORY post-pass for any generated room that calls
+b.fence() (see the /generate-room skill).
 
-Run from gamev2/:  python3 tools/fix_fences.py
+Run from gamev2/ (defaults to the pre-existing generated rooms; pass room
+names to fix others, e.g. a freshly generated one):
+    python3 tools/fix_fences.py                # Inaka Machi
+    python3 tools/fix_fences.py Yukimura       # a specific room
 Then qa_port + config_to_tiled for the printed rooms.
 """
+import sys
 import roomgen as rg
 
 cfg = rg.load_config()
@@ -18,9 +23,10 @@ LEFT, MID, RIGHT = ('fence-garden-outside_2_5',
                     'fence-garden-outside_3_5',
                     'fence-garden-outside_4_5')
 
-# Only the rooms whose fences came from roomgen's broken fence() cycle.
-# Tokyo/Market/Park use fence-barriers as ported road barriers — intentional.
-ROOMS = ['Inaka', 'Machi']
+# Default to the rooms whose fences came from roomgen's broken fence() cycle.
+# Tokyo/Market/Park use fence-barriers as ported road barriers — intentional,
+# so they are NOT defaulted. CLI args override (any generated room can be fixed).
+ROOMS = sys.argv[1:] or ['Inaka', 'Machi']
 
 changed = []
 for room_key in ROOMS:
