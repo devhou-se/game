@@ -92,9 +92,11 @@ def find_spots(cfg):
     return spots
 
 
-def walkable_near(cfg, room_key, gx, gy):
-    """Nearest walkable cell (floored, uncollided, not a transporter, not
-    another NPC's spot) — a python port of GameScene.findWalkableNear."""
+def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
+    """Nearest walkable cell (floored, uncollided, not a transporter, not an
+    occupied cell) — a python port of GameScene.findWalkableNear. `occupied`
+    is (x,y) tuples already taken by other NPCs (resolved positions, not base
+    defs — see occupied_cells)."""
     room = cfg['rooms'][room_key]
     gs = cfg['game']['gridSize']
     cells_w = round(room.get('worldWidth', cfg['game']['worldWidth']) / gs)
@@ -106,12 +108,11 @@ def walkable_near(cfg, room_key, gx, gy):
         if target is not None:
             target.update(tiles)
     portals = {f"{t['gridX']},{t['gridY']}" for t in room.get('transporters', [])}
-    npcs = {f"{n['gridX']},{n['gridY']}" for n in room.get('npcs', [])}
 
     def ok(x, y):
         key = f'{x},{y}'
         return (0 <= x < cells_w and 0 <= y < cells_h and key in floored
-                and key not in blocked and key not in portals and key not in npcs)
+                and key not in blocked and key not in portals and (x, y) not in occupied)
 
     for rad in range(0, 12):
         for dx in range(-rad, rad + 1):
@@ -206,6 +207,31 @@ def npc_in_room(room, name):
     return next((n for n in room.get('npcs', []) if n['name'].lower() == name.lower()), None)
 
 
+def resolve_pos(npc, date):
+    """(present, gridX, gridY) for an NPC as of date — base overlaid by every
+    state dated on-or-before, in order (mirrors resolveNpc in the game)."""
+    present = npc.get('present') is not False
+    x, y = npc.get('gridX'), npc.get('gridY')
+    for d in sorted(npc.get('states', {})):
+        if d <= date:
+            st = npc['states'][d]
+            present = st.get('present', present)
+            x, y = st.get('gridX', x), st.get('gridY', y)
+    return present, x, y
+
+
+def occupied_cells(cfg, room_key, date, exclude_name):
+    """Cells taken by other NPCs present in room_key as of date."""
+    occ = set()
+    for n in cfg['rooms'][room_key].get('npcs', []):
+        if n['name'].lower() == exclude_name.lower():
+            continue
+        present, x, y = resolve_pos(n, date)
+        if present and x is not None:
+            occ.add((x, y))
+    return occ
+
+
 def hidden_base_def(name, x, y):
     """An NPC definition that doesn't exist until a dated state says so."""
     base = name.lower()
@@ -293,59 +319,114 @@ def report_usage(usage):
           + f'  ({MODEL} @ ${PRICE_IN_PER_M:g}/${PRICE_OUT_PER_M:g} per M)')
 
 
+def reset_states(cfg):
+    """Wipe pipeline/demo history back to the canonical base cast: strip every
+    NPC's dated `states`, and drop the hidden base defs the pipeline added in
+    non-home rooms (a base with `present: false`). Leaves the real NPCs and
+    their base position/dialogue untouched — those are the pre-first-post
+    fallback."""
+    removed = 0
+    for room in overworld_rooms(cfg).values():
+        kept = []
+        for npc in room.get('npcs', []):
+            npc.pop('states', None)
+            if npc.get('present') is False:
+                removed += 1
+            else:
+                kept.append(npc)
+        room['npcs'] = kept
+    print(f'reset: cleared all NPC states, removed {removed} hidden base defs')
+
+
+def process_post(cfg, post, spots, spot_ids, mock=False):
+    """Generate + place one post into cfg. Returns (placed: bool, usage)."""
+    author = (post.get('author') or '').lower()
+    npc_name = AUTHOR_NPCS.get(author)
+    if not npc_name:
+        print(f'#{post.get("post_id")}: no NPC for {author!r} — skipped')
+        return False, None
+
+    date = str(post.get('date', ''))[:10]
+    if len(date) != 10:
+        print(f'#{post.get("post_id")}: bad date {post.get("date")!r} — skipped')
+        return False, None
+
+    result, usage = generate(post, npc_name, spot_ids, mock=mock)
+    spot_id = result.get('spot')
+    dialogue = [line.strip()[:MAX_LINE_CHARS]
+                for line in result.get('dialogue', []) if line.strip()][:MAX_DIALOGUE_LINES]
+    if spot_id not in spots or not dialogue:
+        print(f'#{post.get("post_id")}: unusable content (spot={spot_id!r}, '
+              f'{len(dialogue)} lines) — skipped')
+        return False, usage
+
+    room_key, ax, ay = spots[spot_id]
+    occ = occupied_cells(cfg, room_key, date, npc_name)
+    cell = walkable_near(cfg, room_key, ax, ay, occ)
+    if cell is None:
+        print(f'#{post.get("post_id")}: no walkable cell near {spot_id} — skipped')
+        return False, usage
+
+    print(f'#{post.get("post_id")} {date} {author} -> {npc_name} @ {spot_id} {cell}')
+    for line in dialogue:
+        print(f'  » {line}')
+    for c in apply(cfg, npc_name, date, room_key, cell[0], cell[1], dialogue):
+        print(f'  {c}')
+    return True, usage
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--payload', required=True, help='blog post payload JSON file')
+    src = ap.add_mutually_exclusive_group(required=True)
+    src.add_argument('--payload', help='single blog post payload JSON file')
+    src.add_argument('--payloads-dir', help='directory of payload JSONs — processed in date order (backfill)')
+    ap.add_argument('--reset', action='store_true', help='clear all NPC states + hidden defs before placing (backfill)')
     ap.add_argument('--dry-run', action='store_true', help='generate + place, but do not write config')
     ap.add_argument('--mock', action='store_true', help='skip the LLM (canned response)')
     args = ap.parse_args()
 
-    post = json.load(open(args.payload))
-    author = (post.get('author') or '').lower()
-    npc_name = AUTHOR_NPCS.get(author)
-    if not npc_name:
-        print(f'no NPC mapped for author {author!r} — nothing to do '
-              f'(known: {sorted(AUTHOR_NPCS)})')
-        return 0
-
-    date = str(post.get('date', ''))[:10]
-    if len(date) != 10:
-        print(f'bad post date {post.get("date")!r}')
-        return 1
+    if args.payload:
+        posts = [json.load(open(args.payload))]
+    else:
+        import glob
+        posts = [json.load(open(p)) for p in glob.glob(os.path.join(args.payloads_dir, '*.json'))]
+        # chronological: earlier posts placed first so history builds forward
+        posts.sort(key=lambda p: str(p.get('date', '')))
+    print(f'{len(posts)} post(s) to process')
 
     cfg = load_config()
+    if args.reset:
+        reset_states(cfg)
+
     spots = find_spots(cfg)
     spot_ids = sorted(spots)
     print(f'{len(spot_ids)} candidate spots across '
           f'{len(overworld_rooms(cfg))} overworld rooms')
 
-    result, usage = generate(post, npc_name, spot_ids, mock=args.mock)
-    report_usage(usage)
-    spot_id = result['spot']
-    dialogue = [line.strip()[:MAX_LINE_CHARS]
-                for line in result['dialogue'] if line.strip()][:MAX_DIALOGUE_LINES]
-    if spot_id not in spots or not dialogue:
-        print(f'model returned unusable content: spot={spot_id!r}, {len(dialogue)} lines')
-        return 1
+    placed = 0
+    tot_in = tot_out = 0
+    for post in posts:
+        try:
+            ok, usage = process_post(cfg, post, spots, spot_ids, mock=args.mock)
+        except SystemExit:
+            raise
+        except Exception as e:
+            # one bad post shouldn't sink a 50-post backfill; report and move on
+            print(f'#{post.get("post_id")}: ERROR {type(e).__name__}: {e} — skipped')
+            continue
+        placed += 1 if ok else 0
+        if usage is not None:
+            tot_in += usage.input_tokens
+            tot_out += usage.output_tokens
 
-    room_key, ax, ay = spots[spot_id]
-    cell = walkable_near(cfg, room_key, ax, ay)
-    if cell is None:
-        print(f'no walkable cell near {spot_id} ({ax},{ay})')
-        return 1
-
-    print(f'post #{post.get("post_id")} by {author} -> {npc_name} at '
-          f'{spot_id} cell {cell} on {date}')
-    for line in dialogue:
-        print(f'  » {line}')
-
-    changes = apply(cfg, npc_name, date, room_key, cell[0], cell[1], dialogue)
-    for c in changes:
-        print(f'  {c}')
+    if len(posts) > 1 or tot_in:
+        cost = (tot_in * PRICE_IN_PER_M + tot_out * PRICE_OUT_PER_M) / 1_000_000
+        print(f'placed {placed}/{len(posts)} posts · usage {tot_in} in + {tot_out} out '
+              f'≈ ${cost:.4f} total ({MODEL} @ ${PRICE_IN_PER_M:g}/${PRICE_OUT_PER_M:g} per M)')
 
     if args.dry_run:
         print('dry run — config.json not written')
-    else:
+    elif placed or args.reset:
         save_config(cfg)
         print('config.json updated')
     return 0
