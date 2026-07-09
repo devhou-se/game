@@ -34,6 +34,7 @@ class DatePicker {
         JD(this.keys.enter); JD(this.keys.t); JD(this.keys.esc);
         const [y, m, d] = gameDate().split('-').map(Number);
         this.sel = new Date(y, m - 1, d);
+        this.contentDates = contentChangeDates(this.scene.config);
         this.visible = true;
         this.render();
     }
@@ -156,6 +157,10 @@ class DatePicker {
                 marks.lineStyle(2, 0x33cc66, 1);
                 marks.strokeRect(cxp - cw / 2 + 3, cyp - ch / 2 + 3, cw - 6, ch - 6);
             }
+            if (this.contentDates.has(dIso)) {
+                marks.fillStyle(0x33cc66, 1);
+                marks.fillRect(cxp - 2, cyp + 13, 4, 4);
+            }
             let color = '#ffffff';
             if (dIso === todayIso) color = '#ffd700';
             else if (dIso === liveIso) color = '#88ccff';
@@ -166,7 +171,7 @@ class DatePicker {
         }
 
         text(cx, py + ph - 78, `viewing: ${formatGameDate(selIso)}`, '18px', true, '#33cc66');
-        text(cx, py + ph - 50, 'gold = today · arrows: day/week · , . : month', '16px', false, '#888888');
+        text(cx, py + ph - 50, 'dot = blog post · gold = today · arrows: day/week', '16px', false, '#888888');
         text(cx, py + ph - 26, 'ENTER/click: travel · T: today · ESC: close', '16px', false, '#888888');
     }
 }

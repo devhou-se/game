@@ -39,6 +39,23 @@ function resolveNpc(npcConfig, date) {
     return merged;
 }
 
+/**
+ * Dates on which NPC content changes. The blog pipeline records each accepted
+ * post as one or more dated NPC states, so de-duplicating their keys gives the
+ * calendar the days that have associated blog content.
+ */
+function contentChangeDates(config) {
+    const dates = new Set();
+    for (const room of Object.values((config && config.rooms) || {})) {
+        for (const npc of room.npcs || []) {
+            for (const date of Object.keys(npc.states || {})) {
+                if (/^\d{4}-\d{2}-\d{2}$/.test(date)) dates.add(date);
+            }
+        }
+    }
+    return dates;
+}
+
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -63,6 +80,7 @@ function setGameDate(iso) {
 if (typeof window !== 'undefined') {
     window.gameDate = gameDate;
     window.resolveNpc = resolveNpc;
+    window.contentChangeDates = contentChangeDates;
     window.formatGameDate = formatGameDate;
     window.setGameDate = setGameDate;
 }
