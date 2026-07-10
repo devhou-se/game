@@ -35,6 +35,20 @@ class DrinkingGame {
         return name.charAt(0).toUpperCase() + name.slice(1);
     }
 
+    prizeLabel(amount = DrinkingGame.PRIZE) {
+        return this.scene.shop ? this.scene.shop.fmt(amount) : `¥${amount}`;
+    }
+
+    /** Apply a result to the persistent wallet and return the actual delta. */
+    adjustWallet(delta) {
+        if (!this.scene.shop) return 0;
+        const before = this.scene.shop.money;
+        this.scene.shop.money = Math.max(0, before + delta);
+        this.scene.shop.save();
+        this.scene.updateHUD();
+        return this.scene.shop.money - before;
+    }
+
     isActive() { return this.state !== 'idle'; }
 
     /** Open the game only when the player bumps a configured trigger cell. */
@@ -57,16 +71,19 @@ class DrinkingGame {
 
     resetScores() {
         this.playerScore = 0;
-        this.opponentScore = this.opponent === 'bailey' ? 10 : 0;
+        this.opponentScore = 0;
+        this.baileyBonus = 0;
     }
 
     begin() {
         this.clearTimers();
         this.resetScores();
         this.state = 'playing';
-        this.deadline = this.scene.time.now + this.durationMs;
+        this.startedAt = this.scene.time.now;
+        this.deadline = this.startedAt + this.durationMs;
         this.statusText.setText('MASH SPACE!');
         this.hintText.setText('SPACE: drink · ESC: give up');
+        this.prizeText.setText(`PRIZE POOL: ${this.prizeLabel()}`);
         this.updateClock();
         this.paintScores();
 
@@ -77,6 +94,7 @@ class DrinkingGame {
         });
         this.finishEvent = this.scene.time.delayedCall(this.durationMs, () => this.finish());
         if (this.opponent === 'damian') this.scheduleDamianPress();
+        else if (this.opponent === 'bailey') this.scheduleBaileyBonus();
     }
 
     /** Damian's varied but deterministic cadence averages about 5 presses/s. */
@@ -92,6 +110,19 @@ class DrinkingGame {
         });
     }
 
+    /** Bailey mirrors every player press and earns up to ten timed bonuses. */
+    scheduleBaileyBonus() {
+        if (this.state !== 'playing' || this.opponent !== 'bailey' ||
+            this.baileyBonus >= DrinkingGame.BAILEY_MAX_BONUS) return;
+        this.opponentEvent = this.scene.time.delayedCall(DrinkingGame.BAILEY_BONUS_MS, () => {
+            if (this.state !== 'playing') return;
+            this.baileyBonus++;
+            this.opponentScore++;
+            this.paintScores();
+            this.scheduleBaileyBonus();
+        });
+    }
+
     updateClock() {
         if (this.state !== 'playing') return;
         const remainingMs = Math.max(0, this.deadline - this.scene.time.now);
@@ -101,28 +132,48 @@ class DrinkingGame {
     press() {
         if (this.state !== 'playing') return;
         this.playerScore++;
-        if (this.opponent === 'bailey') this.opponentScore = this.playerScore + 10;
+        if (this.opponent === 'bailey') this.opponentScore++;
         this.paintScores();
     }
 
     finish() {
         if (this.state !== 'playing') return;
-        if (this.opponent === 'bailey') this.opponentScore = this.playerScore + 10;
+        if (this.opponent === 'bailey') {
+            // The finish event is registered before Bailey's final timed bonus.
+            // Reconcile bonuses earned by elapsed time so a 15-second round
+            // reliably awards the tenth bonus at the buzzer.
+            const elapsed = this.scene.time.now >= this.deadline
+                ? this.durationMs
+                : Math.max(0, this.scene.time.now - this.startedAt);
+            const earned = Math.min(DrinkingGame.BAILEY_MAX_BONUS,
+                Math.floor(elapsed / DrinkingGame.BAILEY_BONUS_MS));
+            const missing = Math.max(0, earned - this.baileyBonus);
+            this.baileyBonus += missing;
+            this.opponentScore += missing;
+        }
         this.clearTimers();
         this.state = 'result';
         this.timerText.setText('TIME!');
+        this.rulesText.setText('FINAL SCORES · THE ROUND IS OVER');
         this.paintScores();
 
         if (this.playerScore > this.opponentScore) {
             this.statusText.setText(`YOU WIN BY ${this.playerScore - this.opponentScore}!`);
+            const won = this.adjustWallet(DrinkingGame.PRIZE);
+            this.prizeText.setText(`PRIZE WON  +${this.prizeLabel(won)}`);
         } else if (this.playerScore === this.opponentScore) {
             this.statusText.setText('A DRAW — KANPAI!');
+            this.prizeText.setText(`DRAW  NO WALLET CHANGE`);
         } else if (this.opponent === 'bailey') {
             this.statusText.setText('BAILEY SOMEHOW FINDS TEN MORE.');
+            const lost = Math.abs(this.adjustWallet(-DrinkingGame.PRIZE));
+            this.prizeText.setText(`PRIZE LOST  -${this.prizeLabel(lost)}`);
         } else {
             this.statusText.setText(`${this.displayName(this.opponent).toUpperCase()} WINS BY ${this.opponentScore - this.playerScore}.`);
+            const lost = Math.abs(this.adjustWallet(-DrinkingGame.PRIZE));
+            this.prizeText.setText(`PRIZE LOST  -${this.prizeLabel(lost)}`);
         }
-        this.hintText.setText('SPACE/ENTER: rematch · ESC: leave');
+        this.hintText.setText('ENTER/ESC: leave · SPACE: no effect');
     }
 
     clearTimers() {
@@ -150,7 +201,7 @@ class DrinkingGame {
         const enter = JD(k.enter);
         if (this.state === 'ready' && (space || enter)) return this.begin();
         if (this.state === 'playing' && space) return this.press();
-        if (this.state === 'result' && (space || enter)) return this.begin();
+        if (this.state === 'result' && enter) return this.hide();
     }
 
     render() {
@@ -183,7 +234,8 @@ class DrinkingGame {
         };
 
         text(W / 2, py + 38, 'NOMIKAI SHOWDOWN', '32px', true, '#ffd27f');
-        this.timerText = text(W / 2, py + 88, '60.0s', '30px', true, '#ffffff');
+        this.timerText = text(W / 2, py + 88,
+            `${(this.durationMs / 1000).toFixed(1)}s`, '30px', true, '#ffffff');
 
         const leftX = px + 205, rightX = px + pw - 205;
         text(leftX, py + 142, this.displayName(this.currentPlayer()), '24px', true, '#66ddff');
@@ -208,9 +260,11 @@ class DrinkingGame {
         }
         this.barGeometry = { leftX, rightX, y: barY, width: barW, height: barH };
 
-        this.statusText = text(W / 2, py + 334, 'PRESS SPACE TO START', '26px', true, '#ffd27f');
-        text(W / 2, py + 374, 'Press SPACE as many times as you can in 60 seconds.', '18px', false, '#dddddd');
-        this.hintText = text(W / 2, py + 412, 'SPACE/ENTER: start · ESC: leave', '16px', false, '#999999');
+        this.statusText = text(W / 2, py + 326, 'PRESS SPACE TO START', '26px', true, '#ffd27f');
+        this.rulesText = text(W / 2, py + 360,
+            'Press SPACE as many times as you can before time runs out.', '18px', false, '#dddddd');
+        this.prizeText = text(W / 2, py + 390, `PRIZE POOL: ${this.prizeLabel()}`, '18px', true, '#ffd700');
+        this.hintText = text(W / 2, py + 418, 'SPACE/ENTER: start · ESC: leave', '16px', false, '#999999');
         this.paintScores();
     }
 
@@ -234,6 +288,9 @@ class DrinkingGame {
 }
 
 DrinkingGame.ROUND_MS = 60_000;
+DrinkingGame.PRIZE = 500;
+DrinkingGame.BAILEY_BONUS_MS = 1_500;
+DrinkingGame.BAILEY_MAX_BONUS = 10;
 DrinkingGame.DAMIAN_PRESS_PATTERN = [170, 230, 150, 210, 185, 255, 145, 200];
 
 if (typeof window !== 'undefined') window.DrinkingGame = DrinkingGame;

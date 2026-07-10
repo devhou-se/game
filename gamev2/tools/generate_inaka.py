@@ -118,8 +118,8 @@ def solid_furniture(builder, key, x, y, w=1, h=1):
 # Back wall, menu and clock.
 for x in range(2, 18):
     solid_furniture(ib, 'office-wall-white_0_0', x, 2)
-ib.put('Other', 5, 3, 'office-poster-menu_0_0')
-ib.put('Other', 9, 3, 'office-clock_0_0')
+ib.put('Other', 5, 2, 'office-poster-menu_0_0')
+ib.put('Other', 9, 2, 'office-clock_0_0')
 
 # Bar: bottle/glass shelves behind a six-cell counter, with a register.
 for x, key in zip(range(11, 17), [
@@ -136,28 +136,28 @@ for x in (11, 13, 15):
 # Red lanterns frame the dining room.
 ib.stamp('lantern-red', 2, 3)
 ib.stamp('lantern-red', 17, 3)
-solid_furniture(ib, 'office-plant-a_0_0', 2, 11)
-solid_furniture(ib, 'office-plant-b_0_0', 17, 11)
+solid_furniture(ib, 'office-plant-a_0_0', 2, 12)
+solid_furniture(ib, 'office-plant-b_0_0', 17, 12)
 
-# Communal tables. The counters are convincing table placeholders; the small
-# brown cabinets are temporary stools. Keep the centre seat lanes open so each
-# table remains reachable from above and below.
-TABLES = [(4, 7), (4, 10), (11, 9)]
+# Communal tables. The sprite canvas is three cells wide but its visible table
+# and usable footprint are two, so only those two cells are solid/interactive.
+# Compact bin sprites stand in for stools, placed diagonally to leave a direct
+# approach on both long sides instead of turning the dining area into a maze.
+TABLES = [(4, 7), (4, 11), (12, 10)]
 for tx, ty in TABLES:
-    solid_furniture(ib, 'office-counter_0_0', tx, ty, 3)
-    for sx, sy in ((tx, ty - 1), (tx + 2, ty - 1),
-                   (tx, ty + 1), (tx + 2, ty + 1)):
-        solid_furniture(ib, 'office-cabinet_0_0', sx, sy)
+    solid_furniture(ib, 'office-counter_0_0', tx, ty, 2)
+    for sx, sy in ((tx, ty - 1), (tx, ty + 1)):
+        solid_furniture(ib, 'office-bin_0_0', sx, sy)
 
 # Clear doorway mats at the bottom. Arrival is one row inside, never on an
 # exit transporter, so entering cannot bounce the player straight back out.
 for x in (9, 10):
     ib.put('Floor', x, 13, 'office-warm-autotile_center')
 
-damian = rg.make_npc('Damian', 'damian', 7, 7, [
+damian = rg.make_npc('Damian', 'damian', 6, 7, [
     'Bump the table when you are ready. Sixty seconds. No excuses.',
 ])
-bailey = rg.make_npc('Bailey', 'bailey', 7, 7, [
+bailey = rg.make_npc('Bailey', 'bailey', 6, 7, [
     'Want a drinking game? I only need a ten-point head start.',
 ])
 for opponent in (damian, bailey):
@@ -176,7 +176,7 @@ izakaya['boundary'] = [
 izakaya['interior'] = True
 izakaya['shopEnabled'] = False
 izakaya['drinkingGame'] = {
-    'triggerCells': [[4, 7], [5, 7], [6, 7]],
+    'triggerCells': [[4, 7], [5, 7]],
     'durationMs': 60_000,
 }
 cfg['rooms']['Izakaya'] = izakaya
