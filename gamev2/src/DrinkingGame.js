@@ -1,5 +1,5 @@
 /**
- * DrinkingGame — 60-second space-bar mash at the Izakaya table.
+ * DrinkingGame — 15-second space-bar mash at the Izakaya table.
  *
  * Bump the configured table to open the challenge, then press SPACE as many
  * times as possible before the clock reaches zero. Damian plays at a steady
@@ -287,7 +287,7 @@ class DrinkingGame {
     }
 }
 
-DrinkingGame.ROUND_MS = 60_000;
+DrinkingGame.ROUND_MS = 15_000;
 DrinkingGame.PRIZE = 500;
 DrinkingGame.BAILEY_BONUS_MS = 1_500;
 DrinkingGame.BAILEY_MAX_BONUS = 10;

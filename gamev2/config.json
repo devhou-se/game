@@ -2550,7 +2550,7 @@
         ]
       ],
       "drinkingGame": {
-        "durationMs": 60000,
+        "durationMs": 15000,
         "triggerCells": [
           [
             4,
@@ -3013,7 +3013,7 @@
             "vertical": false
           },
           "dialogue": [
-            "Bump the table when you are ready. Sixty seconds. No excuses."
+            "Bump the table when you are ready. Fifteen seconds. No excuses."
           ],
           "directionalSprites": {
             "down": "damian_front",

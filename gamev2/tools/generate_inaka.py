@@ -155,7 +155,7 @@ for x in (9, 10):
     ib.put('Floor', x, 13, 'office-warm-autotile_center')
 
 damian = rg.make_npc('Damian', 'damian', 6, 7, [
-    'Bump the table when you are ready. Sixty seconds. No excuses.',
+    'Bump the table when you are ready. Fifteen seconds. No excuses.',
 ])
 bailey = rg.make_npc('Bailey', 'bailey', 6, 7, [
     'Want a drinking game? I only need a ten-point head start.',
@@ -177,7 +177,7 @@ izakaya['interior'] = True
 izakaya['shopEnabled'] = False
 izakaya['drinkingGame'] = {
     'triggerCells': [[4, 7], [5, 7]],
-    'durationMs': 60_000,
+    'durationMs': 15_000,
 }
 cfg['rooms']['Izakaya'] = izakaya
 
