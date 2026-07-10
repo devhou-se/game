@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 10,
- "nextobjectid": 40,
+ "nextobjectid": 41,
  "properties": [
   {
    "name": "gv2room",
@@ -7519,7 +7519,7 @@
     0,
     0,
     30,
-    30,
+    0,
     30,
     0,
     0,
@@ -7974,6 +7974,43 @@
     },
     {
      "id": 39,
+     "name": "transporter",
+     "point": true,
+     "x": 864.0,
+     "y": 1056.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Izakaya"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 12
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 40,
      "name": "boundary",
      "x": 0,
      "y": 0,

@@ -32,6 +32,7 @@ class NPCManager {
             minGridY: gridY - wanderRadius,
             maxGridY: gridY + wanderRadius
         });
+        npc.stationary = !!options.stationary;
         this.characters.push(npc);
 
         // Add dialogue if provided
@@ -98,6 +99,7 @@ class NPCManager {
         const currentRoomNPCs = this.scene.roomManager.rooms[this.scene.roomManager.currentRoom].npcs;
 
         currentRoomNPCs.forEach(npc => {
+            if (npc.stationary) return;
             // Skip if this NPC is currently in dialogue
             if (this.scene.dialogueManager.isVisible() && this.scene.dialogueManager.getCurrentNPC() === npc) {
                 return;

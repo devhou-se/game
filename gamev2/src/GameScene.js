@@ -196,6 +196,7 @@ class GameScene extends Phaser.Scene {
             this.dialogueManager = new DialogueManager(this);
             this.shop = new Shop(this);
             this.fishing = new Fishing(this);
+            this.drinkingGame = new DrinkingGame(this);
             this.characterSelect = new CharacterSelect(this);
             this.dayNight = new DayNight(this);
             this.debugManager = new DebugManager(this);
@@ -246,6 +247,7 @@ class GameScene extends Phaser.Scene {
         const npcDate = gameDate();
         const baseOf = (key) => (key || '').replace(/_(front|back|side)$/, '');
         const played = baseOf(this.player.baseSpriteKey);
+        const drinkingOpponent = DrinkingGame.opponentFor(played);
         const centerGridX = Math.floor(this.WORLD_WIDTH / this.GRID_SIZE / 2);
         const centerGridY = Math.floor(this.WORLD_HEIGHT / this.GRID_SIZE / 2);
 
@@ -253,14 +255,16 @@ class GameScene extends Phaser.Scene {
             const room = this.roomManager.rooms[roomKey];
             for (const raw of this.config.rooms[roomKey].npcs) {
                 const resolved = resolveNpc(raw, npcDate);
-                const shouldExist = !!resolved && baseOf(resolved.sprite) !== played;
+                const shouldExist = !!resolved && baseOf(resolved.sprite) !== played &&
+                    (!resolved.drinkingGameOpponent || baseOf(resolved.sprite) === drinkingOpponent);
                 const idx = room.npcs.findIndex(n => n.name === raw.name);
 
                 if (shouldExist && idx === -1) {
                     const gx = resolved.gridX !== null ? resolved.gridX : centerGridX + resolved.gridOffsetX;
                     const gy = resolved.gridY !== null ? resolved.gridY : centerGridY + resolved.gridOffsetY;
                     const npc = this.npcManager.spawnNPC(gx, gy, resolved.sprite, resolved.name, {
-                        dialogue: resolved.dialogue
+                        dialogue: resolved.dialogue,
+                        stationary: resolved.stationary,
                     });
                     const here = roomKey === this.roomManager.currentRoom;
                     npc.sprite.setVisible(here);
@@ -675,6 +679,10 @@ class GameScene extends Phaser.Scene {
      * @param {number} targetGridY - Target grid Y position
      */
     checkNPCInteraction(targetGridX, targetGridY) {
+        // The Izakaya's configured table owns the bump before generic
+        // counter/shop detection sees its placeholder furniture.
+        if (this.drinkingGame && !this.dialogueManager.isVisible() &&
+            this.drinkingGame.checkStart(targetGridX, targetGridY)) return;
         this.npcManager.checkInteraction(targetGridX, targetGridY);
         // bumping a vending machine / konbini counter opens its store
         if (this.shop && !this.dialogueManager.isVisible()) {

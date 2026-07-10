@@ -81,12 +81,14 @@ class Shop {
         if (this.visible || this.invVisible) return;
         const roomKey = this.scene.roomManager.currentRoom;
         const room = this.scene.roomManager.rooms[roomKey];
-        const interior = !!(this.scene.config.rooms[roomKey] || {}).interior;
+        const roomConfig = this.scene.config.rooms[roomKey] || {};
+        const interior = !!roomConfig.interior;
         for (const layer of (room.layers || [])) {
             for (const xy in (layer.tiles || {})) {
                 const key = layer.tiles[xy];
                 const vending = /vending-machine/.test(key);
-                const counter = interior && /^(blue-shrine-platform-base|office-counter)/.test(key);
+                const counter = interior && roomConfig.shopEnabled !== false &&
+                    /^(blue-shrine-platform-base|office-counter)/.test(key);
                 if (!vending && !counter) continue;
                 const [tx, ty] = xy.split(',').map(Number);
                 const tex = this.scene.textures.exists(key)
