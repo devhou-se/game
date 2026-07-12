@@ -1,0 +1,5 @@
+# Photo import for the blog -> NPC pipeline (tools/photo_pixelize.py).
+# opencv-contrib (not plain opencv) is required for cv2.saliency.
+numpy>=2,<3
+opencv-contrib-python-headless>=4.10,<5
+Pillow>=11,<13

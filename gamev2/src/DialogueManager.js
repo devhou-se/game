@@ -124,6 +124,13 @@ class DialogueManager {
         if (this.npcSprite) {
             this.npcSprite.destroy();
         }
+        this.destroyPhoto();
+
+        // Blog-post photo (dated NPC state "photo") hangs in a frame beside
+        // the author; shift the author left to make room for it
+        const photoKey = npc.photo ? `photo-${npc.photo}` : null;
+        const hasPhoto = !!(photoKey && this.scene.textures.exists(photoKey));
+        const spriteX = this.scene.cameras.main.width / 2 - (hasPhoto ? 180 : 0);
 
         // Get the base sprite key and config
         const baseSpriteKey = npc.baseSpriteKey || npc.sprite.texture.key;
@@ -148,7 +155,7 @@ class DialogueManager {
         }
 
         this.npcSprite = this.scene.add.sprite(
-            this.scene.cameras.main.width / 2,
+            spriteX,
             this.npcSpriteY,
             textureKey
         );
@@ -170,6 +177,11 @@ class DialogueManager {
         // Enable pixel-perfect rendering (no anti-aliasing)
         this.npcSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
 
+        if (hasPhoto) {
+            this.showPhoto(photoKey);
+        }
+        this.npcNameText.setX(spriteX);
+
         // Show overlay elements
         this.overlay.setVisible(true);
         this.panel.setVisible(true);
@@ -182,6 +194,56 @@ class DialogueManager {
 
         // Display first dialogue line
         this.updateText();
+    }
+
+    /**
+     * Hang the blog-post photo in a chunky wooden pixel frame beside the
+     * author, right-aligned with the dialogue panel. Photos are 160×144
+     * pixel-art prints (tools/photo_pixelize.py) shown at 2x.
+     */
+    showPhoto(photoKey) {
+        const photoW = 160 * 2;
+        const photoH = 144 * 2;
+        const border = 20;   // 4px outline + 12px wood + 4px inner inset
+        const frameW = photoW + border * 2;
+        const frameH = photoH + border * 2;
+        const frameX = this.panelX + this.panelWidth - frameW;
+        const frameY = this.panelY - 12 - frameH;
+
+        const g = this.scene.add.graphics();
+        g.fillStyle(0x1f1410, 1);   // outline
+        g.fillRect(frameX, frameY, frameW, frameH);
+        g.fillStyle(0x9c6b3f, 1);   // wood
+        g.fillRect(frameX + 4, frameY + 4, frameW - 8, frameH - 8);
+        g.fillStyle(0xc99a62, 1);   // bevel highlight (top + left)
+        g.fillRect(frameX + 4, frameY + 4, frameW - 8, 4);
+        g.fillRect(frameX + 4, frameY + 4, 4, frameH - 8);
+        g.fillStyle(0x6e4526, 1);   // bevel shadow (bottom + right)
+        g.fillRect(frameX + 4, frameY + frameH - 8, frameW - 8, 4);
+        g.fillRect(frameX + frameW - 8, frameY + 4, 4, frameH - 8);
+        g.fillStyle(0x2a1c10, 1);   // inner inset around the print
+        g.fillRect(frameX + 16, frameY + 16, photoW + 8, photoH + 8);
+        g.setScrollFactor(0);
+        g.setDepth(3002);
+        this.photoFrame = g;
+
+        this.photoImage = this.scene.add.image(frameX + border, frameY + border, photoKey);
+        this.photoImage.setOrigin(0, 0);
+        this.photoImage.setScale(2);
+        this.photoImage.setScrollFactor(0);
+        this.photoImage.setDepth(3002);
+        this.photoImage.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    }
+
+    destroyPhoto() {
+        if (this.photoFrame) {
+            this.photoFrame.destroy();
+            this.photoFrame = null;
+        }
+        if (this.photoImage) {
+            this.photoImage.destroy();
+            this.photoImage = null;
+        }
     }
 
     updateText() {
@@ -218,6 +280,7 @@ class DialogueManager {
             this.npcSprite.destroy();
             this.npcSprite = null;
         }
+        this.destroyPhoto();
 
         // Hide overlay elements
         this.overlay.setVisible(false);

@@ -33,6 +33,7 @@ class NPCManager {
             maxGridY: gridY + wanderRadius
         });
         npc.stationary = !!options.stationary;
+        npc.photo = options.photo || null;   // blog-post photo id (assets/photos/<id>.png)
         this.characters.push(npc);
 
         // Add dialogue if provided

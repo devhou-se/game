@@ -52,6 +52,22 @@ class GameScene extends Phaser.Scene {
                 }
             }
 
+            // Blog-post photos: dated NPC states may carry "photo": <post id>
+            // (written by tools/blog_to_npc.py alongside assets/photos/<id>.png);
+            // the dialogue box hangs the photo in a frame next to the author
+            const photoIds = new Set();
+            for (const room of Object.values(data.rooms || {})) {
+                for (const npc of room.npcs || []) {
+                    if (npc.photo) photoIds.add(npc.photo);
+                    for (const st of Object.values(npc.states || {})) {
+                        if (st.photo) photoIds.add(st.photo);
+                    }
+                }
+            }
+            for (const id of photoIds) {
+                this.load.image(`photo-${id}`, `assets/photos/${id}.png`);
+            }
+
             const spriteMetadata = data.spriteMetadata || {};
 
             // Initialize sprite system early for asset loading
@@ -275,6 +291,7 @@ class GameScene extends Phaser.Scene {
                     const npc = this.npcManager.spawnNPC(gx, gy, resolved.sprite, resolved.name, {
                         dialogue: resolved.dialogue,
                         stationary: resolved.stationary,
+                        photo: resolved.photo,
                     });
                     const here = roomKey === this.roomManager.currentRoom;
                     npc.sprite.setVisible(here);

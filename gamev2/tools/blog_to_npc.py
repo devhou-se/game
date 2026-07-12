@@ -8,6 +8,11 @@ src/utils/NpcStates.js): the author appears at the chosen spot with the new
 dialogue from the post's date, and disappears from wherever they were before.
 Time travel (the in-game date picker) replays history faithfully.
 
+If the post embeds a photo, the first one is imported as a 160×144 pixel-art
+print (tools/post_photos.py) and the dated state carries "photo": <post_id>,
+which the dialogue box hangs in a frame next to the author. Photo import is
+best-effort — a failed photo never blocks the placement.
+
 Run from gamev2/ (normally by the www-jp game-npc-pipeline workflow):
 
   python3 tools/blog_to_npc.py --payload post.json [--dry-run] [--mock]
@@ -24,6 +29,8 @@ import argparse
 import json
 import os
 import sys
+
+from post_photos import import_post_photo
 
 # GitHub login -> NPC name (must exist in config, or be creatable from
 # <name>_front/_back/_side sprites)
@@ -248,8 +255,10 @@ def hidden_base_def(name, x, y):
     }
 
 
-def apply(cfg, npc_name, date, target_room, x, y, dialogue):
-    """Dated states: appear at the spot in the target room, vanish elsewhere."""
+def apply(cfg, npc_name, date, target_room, x, y, dialogue, photo=None):
+    """Dated states: appear at the spot in the target room, vanish elsewhere.
+    `photo` is always written (null when the post had none) so state merging
+    never carries an older post's photo forward into a photo-less post."""
     changes = []
     for room_key, room in overworld_rooms(cfg).items():
         npc = npc_in_room(room, npc_name)
@@ -259,8 +268,10 @@ def apply(cfg, npc_name, date, target_room, x, y, dialogue):
                 room.setdefault('npcs', []).append(npc)
                 changes.append(f'{room_key}: added hidden base def')
             st = npc.setdefault('states', {}).setdefault(date, {})
-            st.update({'present': True, 'gridX': x, 'gridY': y, 'dialogue': dialogue})
-            changes.append(f'{room_key}: present at ({x},{y}) from {date}')
+            st.update({'present': True, 'gridX': x, 'gridY': y,
+                       'dialogue': dialogue, 'photo': photo})
+            changes.append(f'{room_key}: present at ({x},{y}) from {date}'
+                           + (f' with photo {photo}' if photo else ''))
         elif npc is not None:
             st = npc.setdefault('states', {}).setdefault(date, {})
             st['present'] = False
@@ -338,7 +349,7 @@ def reset_states(cfg):
     print(f'reset: cleared all NPC states, removed {removed} hidden base defs')
 
 
-def process_post(cfg, post, spots, spot_ids, mock=False):
+def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
     """Generate + place one post into cfg. Returns (record | None, usage).
     record describes the placement for the issue comment: npc, room, spot."""
     author = (post.get('author') or '').lower()
@@ -371,7 +382,8 @@ def process_post(cfg, post, spots, spot_ids, mock=False):
     print(f'#{post.get("post_id")} {date} {author} -> {npc_name} @ {spot_id} {cell}')
     for line in dialogue:
         print(f'  » {line}')
-    for c in apply(cfg, npc_name, date, room_key, cell[0], cell[1], dialogue):
+    photo = import_post_photo(post, dry_run=dry_run)
+    for c in apply(cfg, npc_name, date, room_key, cell[0], cell[1], dialogue, photo):
         print(f'  {c}')
     record = {
         'post_id': post.get('post_id'),
@@ -379,6 +391,7 @@ def process_post(cfg, post, spots, spot_ids, mock=False):
         'room': cfg['rooms'][room_key].get('name', room_key),
         'spot': spot_id.split(' · ', 1)[-1],   # "the vending machines"
         'date': date,
+        'photo': bool(photo),
     }
     return record, usage
 
@@ -416,7 +429,8 @@ def main():
     tot_in = tot_out = 0
     for post in posts:
         try:
-            record, usage = process_post(cfg, post, spots, spot_ids, mock=args.mock)
+            record, usage = process_post(cfg, post, spots, spot_ids,
+                                         mock=args.mock, dry_run=args.dry_run)
         except SystemExit:
             raise
         except Exception as e:

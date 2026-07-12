@@ -17,6 +17,11 @@
  * The game date defaults to today (device local time) and can be overridden
  * with ?date=YYYY-MM-DD for time travel. A state of {"present": false}
  * removes the NPC from that date until a later state sets it back.
+ *
+ * A state may also carry "photo": <post id> — a blog-post photo imported to
+ * assets/photos/<id>.png by tools/blog_to_npc.py, hung in a frame beside the
+ * author in the dialogue box. The pipeline writes photo on every placement
+ * (null when the post had none) so an older photo never bleeds forward.
  */
 function gameDate() {
     const p = new URLSearchParams(location.search).get('date');
