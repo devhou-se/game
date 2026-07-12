@@ -127,8 +127,8 @@ dylan = rg.make_npc('Dylan', 'dylan', 27, 22, [
     "...I still bet it would've been better in Godot."
 ])
 cfg['rooms']['Machi'] = b.room('Machi', npcs=[dylan], transporters=[
-    rg.transporter(47, 20, 'Tokyo', 3, 41),
-    rg.transporter(47, 21, 'Tokyo', 3, 42),
+    rg.transporter(47, 20, 'Tokyo', 3, 41, hidden=True),
+    rg.transporter(47, 21, 'Tokyo', 3, 42, hidden=True),
     # the 7-Eleven doorway (prefab door point, left open by seal=False)
     rg.transporter(konbini_door[0], konbini_door[1], 'Konbini', 9, 13, hidden=True),
 ])
@@ -166,8 +166,8 @@ cfg['rooms']['Konbini'] = kb.room('Konbini', transporters=[
 # =============================== WIRING ======================================
 tok = cfg['rooms']['Tokyo']['transporters']
 if not any(t.get('targetRoom') == 'Machi' for t in tok):
-    tok.append(rg.transporter(1, 41, 'Machi', 45, 20))
-    tok.append(rg.transporter(1, 42, 'Machi', 45, 21))
+    tok.append(rg.transporter(1, 41, 'Machi', 45, 20, hidden=True))
+    tok.append(rg.transporter(1, 42, 'Machi', 45, 21, hidden=True))
 
 rg.save_config(cfg)
 print(f"Machi {b.W}x{b.H} + Konbini {kb.W}x{kb.H}; 7-Eleven door at {konbini_door} -> Konbini")

@@ -13794,7 +13794,7 @@
       {
        "name": "hidden",
        "type": "bool",
-       "value": false
+       "value": true
       }
      ]
     },
@@ -13831,7 +13831,7 @@
       {
        "name": "hidden",
        "type": "bool",
-       "value": false
+       "value": true
       }
      ]
     },
