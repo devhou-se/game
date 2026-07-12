@@ -26,9 +26,20 @@ class MenuManager {
         this.container.setScrollFactor(0);
         this.container.setDepth(2001);
 
-        // Menu panel
+        // Menu options
+        const menuOptions = [
+            { text: 'Items', action: () => this.scene.shop.showInventory() },
+            { text: 'Character', action: () => this.scene.characterSelect.show() },
+            { text: 'Achievements', action: () => this.scene.showAchievements() },
+            { text: 'Time Travel', action: () => this.scene.datePicker.show() },
+            { text: 'Map', action: () => this.scene.showMap() },
+            { text: 'Controls', action: () => this.scene.showControls() },
+            { text: 'Credits', action: () => this.scene.showCredits() }
+        ];
+
+        // Menu panel (sized to fit however many options exist)
         const panelWidth = 360;
-        const panelHeight = 410;
+        const panelHeight = 110 + menuOptions.length * 50;
         const panelX = (this.scene.cameras.main.width - panelWidth) / 2;
         const panelY = (this.scene.cameras.main.height - panelHeight) / 2;
 
@@ -55,16 +66,6 @@ class MenuManager {
         this.titleText.setScrollFactor(0);
         this.titleText.setDepth(2002);
         this.titleText.setVisible(false);
-
-        // Menu options
-        const menuOptions = [
-            { text: 'Items', action: () => this.scene.shop.showInventory() },
-            { text: 'Character', action: () => this.scene.characterSelect.show() },
-            { text: 'Achievements', action: () => this.scene.showAchievements() },
-            { text: 'Time Travel', action: () => this.scene.datePicker.show() },
-            { text: 'Map', action: () => this.scene.showMap() },
-            { text: 'Credits', action: () => this.scene.showCredits() }
-        ];
 
         const startY = panelY + 80;
         const spacing = 50;

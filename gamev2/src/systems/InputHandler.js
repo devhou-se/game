@@ -83,6 +83,14 @@ class InputHandler {
             return;
         }
 
+        // Priority 2b2b: Controls overlay — ESC closes it (not the menu)
+        if (this.scene.controlsVisible) {
+            const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
+            if (escPressed && this.scene.controlsCloseCallback) this.scene.controlsCloseCallback();
+            this.lastKeyState.esc = this.escKey.isDown;
+            return;
+        }
+
         // Priorities 2b3-2c: one overlay at a time owns all input while open.
         // Each branch also syncs lastKeyState.esc — the ESC that closed the
         // overlay must not read as a fresh press and pop the main menu open
