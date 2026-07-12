@@ -87,8 +87,9 @@ b.stamp('house-black', 33, 8)
 b.stamp('house-red', 38, 9)
 b.stamp('house-blue', 43, 9)
 
-# south plaza
-b.stamp('pagoda-small', 24, 19)
+# south plaza (pagoda anchored so its feet stay on row 22 now that the fixed
+# prefab is 6 tall — the paver ring frames it and fronts the door)
+b.stamp('pagoda-small', 24, 17)
 for i, (px, py) in enumerate([(21, 19), (28, 19), (21, 23), (28, 23),
                               (22, 21), (27, 21), (23, 24), (26, 24)]):
     b.paver(px, py, i)

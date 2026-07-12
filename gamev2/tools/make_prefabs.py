@@ -66,8 +66,12 @@ PREFABS = {
     'bell-blue':    dict(w=2, h=4, sprites=[('Tops', 0, 0, 'blue-bell-top_0_0'), ('Collidables', 0, 2, 'bell-blue-baseless_0_0')],
                          colliders=[(0, 2), (1, 2)], doors=[]),
     'fox-statue':   dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'fox-statue-base-1_0_0')], colliders=[(0, 1)], doors=[]),
-    'pagoda-small': dict(w=2, h=4, sprites=[('Collidables', 0, 0, 'red-pagoda-small-base_0_0'), ('Tops', 0, 1, 'red-pagoda-small-top_0_0')],
-                         colliders=[(x, y) for x in (0, 1) for y in range(4)], doors=[]),
+    # The GuttyKreum small pagoda, two 2x3 pieces stacked flush: spire + hip
+    # roof + balcony on top, pent roof + walls + door below. 6 cells tall,
+    # house convention: overhead art on Tops, only the wall storey collides.
+    # (Born inverted and overlapping — the spire rendered mid-structure.)
+    'pagoda-small': dict(w=2, h=6, sprites=[('Tops', 0, 0, 'red-pagoda-small-top_0_0'), ('Collidables', 0, 3, 'red-pagoda-small-base_0_0')],
+                         colliders=[(x, y) for x in (0, 1) for y in (3, 4, 5)], doors=[]),
 }
 
 
