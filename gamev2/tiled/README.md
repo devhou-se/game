@@ -100,3 +100,26 @@ The pipeline that produced all four rooms is committed in `tools/`:
 Once seeded, Tiled is the editor — don't hand-edit the generated `.tmj` back
 into config. (The repo-root `tools/parse_godot_scene.py` scripts are an older
 stale v1 pipeline; prefer `doport.py`.)
+
+## Gotcha ledger
+
+- **`generate_machi.py` is out of sync with the live config** — Machi has
+  accumulated hand/pipeline edits the generator doesn't know about (blog-NPC
+  dated states, ad signage, hidden seam transporters as data). Re-running it
+  wholesale WIPES those and resurrects the legacy `Konbini` room. Until the
+  generator learns them, make Machi changes surgically (config edit +
+  `config_to_tiled.py Machi`) and mirror the intent in the generator source.
+- **World seams are road-aligned by design** (`devhouse.world`): every
+  adjacent room pair draws the same connecting road on both sides of the
+  seam. A crossing is just hidden transporters on the edge cells of that road
+  (arrive one cell inside the twin's trigger) plus dressing — lantern pairs,
+  or a torii straddling the road (legs collide, top on Tops). Never build a
+  crossing as a door-band "building"; transit must continue in the walking
+  direction.
+- **Track rows in ported rooms are sealed cell-by-cell** (`gk_blank` under
+  the `train-track` Over Floor sprite). A road crossing the tracks needs its
+  two cells unsealed — that's a level crossing, precedent exists.
+- **`tmxrasterizer` draws collider markers and Meta pins** — red boxes/pins
+  in renders are debug art, not in-game visuals.
+- A probe that prints `?` for "any sprite" hides colliders stacked under
+  sprites — check per-layer before assuming a cell is walkable.

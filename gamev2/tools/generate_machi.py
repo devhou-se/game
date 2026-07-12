@@ -166,8 +166,8 @@ cfg['rooms']['Konbini'] = kb.room('Konbini', transporters=[
 # =============================== WIRING ======================================
 tok = cfg['rooms']['Tokyo']['transporters']
 if not any(t.get('targetRoom') == 'Machi' for t in tok):
-    tok.append(rg.transporter(1, 41, 'Machi', 45, 20, hidden=True))
-    tok.append(rg.transporter(1, 42, 'Machi', 45, 21, hidden=True))
+    tok.append(rg.transporter(0, 41, 'Machi', 45, 20, hidden=True))
+    tok.append(rg.transporter(0, 42, 'Machi', 45, 21, hidden=True))
 
 rg.save_config(cfg)
 print(f"Machi {b.W}x{b.H} + Konbini {kb.W}x{kb.H}; 7-Eleven door at {konbini_door} -> Konbini")
