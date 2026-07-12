@@ -33,6 +33,14 @@ class GameScene extends Phaser.Scene {
             if (data.image) this.load.image('world-map', `${data.image}?t=${Date.now()}`);
         });
 
+        // Advertisement signage (issue #26): the generated ad pool that
+        // RoomManager.placeSignage mounts on building walls — regenerate
+        // with tools/generate_ads.py
+        this.load.json('adsManifest', `assets/ads/manifest.json?t=${Date.now()}`);
+        this.load.once('filecomplete-json-adsManifest', (key, type, data) => {
+            for (const ad of (data.ads || [])) this.load.image(ad.key, `assets/ads/${ad.file}`);
+        });
+
         // Dynamically load sprite frames for animations when config loads
         this.load.once('filecomplete-json-config', (key, type, data) => {
             // Maps are authored in Tiled: enqueue every room's .tmj (files added

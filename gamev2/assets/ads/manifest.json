@@ -1,0 +1,312 @@
+{
+ "ads": [
+  {
+   "key": "ad-square-01",
+   "file": "square-01.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-02",
+   "file": "square-02.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-03",
+   "file": "square-03.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-04",
+   "file": "square-04.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-05",
+   "file": "square-05.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-06",
+   "file": "square-06.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-07",
+   "file": "square-07.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-08",
+   "file": "square-08.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-09",
+   "file": "square-09.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-10",
+   "file": "square-10.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-11",
+   "file": "square-11.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-square-12",
+   "file": "square-12.png",
+   "shape": "square",
+   "w": 1,
+   "h": 1
+  },
+  {
+   "key": "ad-tall-01",
+   "file": "tall-01.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-02",
+   "file": "tall-02.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-03",
+   "file": "tall-03.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-04",
+   "file": "tall-04.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-05",
+   "file": "tall-05.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-06",
+   "file": "tall-06.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-07",
+   "file": "tall-07.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-08",
+   "file": "tall-08.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-09",
+   "file": "tall-09.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-10",
+   "file": "tall-10.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-11",
+   "file": "tall-11.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-tall-12",
+   "file": "tall-12.png",
+   "shape": "tall",
+   "w": 1,
+   "h": 2
+  },
+  {
+   "key": "ad-wide-01",
+   "file": "wide-01.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-02",
+   "file": "wide-02.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-03",
+   "file": "wide-03.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-04",
+   "file": "wide-04.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-05",
+   "file": "wide-05.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-06",
+   "file": "wide-06.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-07",
+   "file": "wide-07.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-08",
+   "file": "wide-08.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-09",
+   "file": "wide-09.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-10",
+   "file": "wide-10.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-11",
+   "file": "wide-11.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-12",
+   "file": "wide-12.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-13",
+   "file": "wide-13.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-wide-14",
+   "file": "wide-14.png",
+   "shape": "wide",
+   "w": 2,
+   "h": 1
+  },
+  {
+   "key": "ad-big-01",
+   "file": "big-01.png",
+   "shape": "big",
+   "w": 2,
+   "h": 2
+  },
+  {
+   "key": "ad-big-02",
+   "file": "big-02.png",
+   "shape": "big",
+   "w": 2,
+   "h": 2
+  },
+  {
+   "key": "ad-big-03",
+   "file": "big-03.png",
+   "shape": "big",
+   "w": 2,
+   "h": 2
+  },
+  {
+   "key": "ad-big-04",
+   "file": "big-04.png",
+   "shape": "big",
+   "w": 2,
+   "h": 2
+  },
+  {
+   "key": "ad-big-05",
+   "file": "big-05.png",
+   "shape": "big",
+   "w": 2,
+   "h": 2
+  },
+  {
+   "key": "ad-big-06",
+   "file": "big-06.png",
+   "shape": "big",
+   "w": 2,
+   "h": 2
+  }
+ ]
+}

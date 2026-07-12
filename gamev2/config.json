@@ -10007,6 +10007,48 @@
         }
       ],
       "objects": [],
+      "signage": [
+        {
+          "gridX": 28,
+          "gridY": 13,
+          "shape": "square"
+        },
+        {
+          "gridX": 30,
+          "gridY": 13,
+          "shape": "square"
+        },
+        {
+          "gridX": 33,
+          "gridY": 12,
+          "shape": "wide"
+        },
+        {
+          "gridX": 35,
+          "gridY": 11,
+          "shape": "tall"
+        },
+        {
+          "gridX": 38,
+          "gridY": 13,
+          "shape": "wide"
+        },
+        {
+          "gridX": 40,
+          "gridY": 13,
+          "shape": "square"
+        },
+        {
+          "gridX": 43,
+          "gridY": 12,
+          "shape": "tall"
+        },
+        {
+          "gridX": 45,
+          "gridY": 13,
+          "shape": "square"
+        }
+      ],
       "transporters": [
         {
           "gridX": 47,
@@ -14160,6 +14202,58 @@
         }
       ],
       "objects": [],
+      "signage": [
+        {
+          "gridX": 6,
+          "gridY": 36,
+          "shape": "wide"
+        },
+        {
+          "gridX": 8,
+          "gridY": 36,
+          "shape": "square"
+        },
+        {
+          "gridX": 11,
+          "gridY": 34,
+          "shape": "tall"
+        },
+        {
+          "gridX": 12,
+          "gridY": 34,
+          "shape": "big"
+        },
+        {
+          "gridX": 11,
+          "gridY": 36,
+          "shape": "wide"
+        },
+        {
+          "gridX": 13,
+          "gridY": 36,
+          "shape": "square"
+        },
+        {
+          "gridX": 37,
+          "gridY": 35,
+          "shape": "wide"
+        },
+        {
+          "gridX": 39,
+          "gridY": 35,
+          "shape": "tall"
+        },
+        {
+          "gridX": 42,
+          "gridY": 35,
+          "shape": "big"
+        },
+        {
+          "gridX": 44,
+          "gridY": 35,
+          "shape": "tall"
+        }
+      ],
       "transporters": [
         {
           "gridX": 29,

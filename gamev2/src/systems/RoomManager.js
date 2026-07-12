@@ -62,7 +62,8 @@ class RoomManager {
                     hidden: !!trans.hidden   // hidden transporters still teleport, but draw no tile/label
                 })),
                 floor: roomConfig.floor || {},
-                layers: roomConfig.layers || []
+                layers: roomConfig.layers || [],
+                signage: roomConfig.signage || []
             };
         }
     }
@@ -164,6 +165,32 @@ class RoomManager {
             this.loadLayer(legacyLayer);
         } else {
             console.warn(`Room ${this.currentRoom} has no floor or layers data`);
+        }
+
+        this.placeSignage(room);
+    }
+
+    /**
+     * Advertisement signage (issue #26): each configured wall spot gets a
+     * random ad of its shape from the generated pool (assets/ads — see
+     * tools/generate_ads.py), so the street reads a little different on
+     * every visit. Signs join floorSprites and are cleaned up with the room.
+     */
+    placeSignage(room) {
+        const manifest = this.scene.cache.json.get('adsManifest');
+        if (!manifest || !room.signage || !room.signage.length) return;
+        const GS = this.scene.GRID_SIZE;
+        for (const spot of room.signage) {
+            const pool = manifest.ads.filter(ad =>
+                ad.shape === spot.shape && this.scene.textures.exists(ad.key));
+            if (!pool.length) continue;
+            const ad = pool[Math.floor(Math.random() * pool.length)];
+            const img = this.scene.add.image(spot.gridX * GS, spot.gridY * GS, ad.key);
+            img.setOrigin(0, 0);
+            // mounted on a wall band: feet-based depth of the sign's bottom
+            // row, +1 so it draws just over the band it hangs on
+            img.setDepth((spot.gridY + ad.h) * 10 + 1);
+            this.floorSprites.push(img);
         }
     }
 
