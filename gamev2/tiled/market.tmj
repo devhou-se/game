@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 15,
- "nextobjectid": 110,
+ "nextobjectid": 106,
  "properties": [
   {
    "name": "gv2room",
@@ -13192,6 +13192,16 @@
    "objects": [
     {
      "id": 10,
+     "gid": 22,
+     "name": "building-entrance-3_0_0",
+     "x": 0,
+     "y": 1472,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    },
+    {
+     "id": 11,
      "gid": 87,
      "name": "pagoda-floor_0_0",
      "x": 640,
@@ -13201,7 +13211,7 @@
      "visible": true
     },
     {
-     "id": 11,
+     "id": 12,
      "gid": 142,
      "name": "seven-eleven_0_0",
      "x": 704,
@@ -13211,7 +13221,7 @@
      "visible": true
     },
     {
-     "id": 12,
+     "id": 13,
      "gid": 28,
      "name": "building-tier-blue_0_0",
      "x": 704,
@@ -13221,7 +13231,7 @@
      "visible": true
     },
     {
-     "id": 13,
+     "id": 14,
      "gid": 23,
      "name": "building-rafter-blue_0_0",
      "x": 704,
@@ -13231,7 +13241,7 @@
      "visible": true
     },
     {
-     "id": 14,
+     "id": 15,
      "gid": 28,
      "name": "building-tier-blue_0_0",
      "x": 704,
@@ -13241,7 +13251,7 @@
      "visible": true
     },
     {
-     "id": 15,
+     "id": 16,
      "gid": 20,
      "name": "building-entrance-1_0_0",
      "x": 704,
@@ -13251,7 +13261,7 @@
      "visible": true
     },
     {
-     "id": 16,
+     "id": 17,
      "gid": 142,
      "name": "seven-eleven_0_0",
      "x": 1024,
@@ -13261,7 +13271,7 @@
      "visible": true
     },
     {
-     "id": 17,
+     "id": 18,
      "gid": 156,
      "name": "torii-red-feet_0_0",
      "x": 1664,
@@ -13271,47 +13281,17 @@
      "visible": true
     },
     {
-     "id": 18,
-     "gid": 29,
-     "name": "building-tier-red_0_0",
-     "x": 1792,
-     "y": 2880,
-     "width": 192,
-     "height": 64,
-     "visible": true
-    },
-    {
      "id": 19,
-     "gid": 22,
-     "name": "building-entrance-3_0_0",
-     "x": 1792,
-     "y": 2944,
+     "gid": 20,
+     "name": "building-entrance-1_0_0",
+     "x": 2176,
+     "y": 3008,
      "width": 192,
      "height": 64,
      "visible": true
     },
     {
      "id": 20,
-     "gid": 28,
-     "name": "building-tier-blue_0_0",
-     "x": 2176,
-     "y": 2880,
-     "width": 192,
-     "height": 64,
-     "visible": true
-    },
-    {
-     "id": 21,
-     "gid": 20,
-     "name": "building-entrance-1_0_0",
-     "x": 2176,
-     "y": 2944,
-     "width": 192,
-     "height": 64,
-     "visible": true
-    },
-    {
-     "id": 22,
      "gid": 50,
      "name": "fox-statue-base-2_0_0",
      "x": 2304,
@@ -13321,7 +13301,7 @@
      "visible": true
     },
     {
-     "id": 23,
+     "id": 21,
      "gid": 50,
      "name": "fox-statue-base-2_0_0",
      "x": 2304,
@@ -13331,7 +13311,7 @@
      "visible": true
     },
     {
-     "id": 24,
+     "id": 22,
      "gid": 50,
      "name": "fox-statue-base-2_0_0",
      "x": 2304,
@@ -13341,7 +13321,7 @@
      "visible": true
     },
     {
-     "id": 25,
+     "id": 23,
      "gid": 142,
      "name": "seven-eleven_0_0",
      "x": 2368,
@@ -13351,7 +13331,7 @@
      "visible": true
     },
     {
-     "id": 26,
+     "id": 24,
      "gid": 28,
      "name": "building-tier-blue_0_0",
      "x": 2368,
@@ -13361,7 +13341,7 @@
      "visible": true
     },
     {
-     "id": 27,
+     "id": 25,
      "gid": 23,
      "name": "building-rafter-blue_0_0",
      "x": 2368,
@@ -13371,7 +13351,7 @@
      "visible": true
     },
     {
-     "id": 28,
+     "id": 26,
      "gid": 21,
      "name": "building-entrance-2_0_0",
      "x": 2368,
@@ -13381,7 +13361,7 @@
      "visible": true
     },
     {
-     "id": 29,
+     "id": 27,
      "gid": 49,
      "name": "fox-statue-base-1_0_0",
      "x": 2432,
@@ -13391,7 +13371,7 @@
      "visible": true
     },
     {
-     "id": 30,
+     "id": 28,
      "gid": 49,
      "name": "fox-statue-base-1_0_0",
      "x": 2432,
@@ -13401,7 +13381,7 @@
      "visible": true
     },
     {
-     "id": 31,
+     "id": 29,
      "gid": 49,
      "name": "fox-statue-base-1_0_0",
      "x": 2432,
@@ -13411,7 +13391,7 @@
      "visible": true
     },
     {
-     "id": 32,
+     "id": 30,
      "gid": 142,
      "name": "seven-eleven_0_0",
      "x": 2688,
@@ -13421,7 +13401,7 @@
      "visible": true
     },
     {
-     "id": 33,
+     "id": 31,
      "gid": 27,
      "name": "building-tier-black_0_0",
      "x": 2688,
@@ -13431,7 +13411,7 @@
      "visible": true
     },
     {
-     "id": 34,
+     "id": 32,
      "gid": 27,
      "name": "building-tier-black_0_0",
      "x": 2688,
@@ -13441,7 +13421,7 @@
      "visible": true
     },
     {
-     "id": 35,
+     "id": 33,
      "gid": 22,
      "name": "building-entrance-3_0_0",
      "x": 2688,
@@ -13451,7 +13431,7 @@
      "visible": true
     },
     {
-     "id": 36,
+     "id": 34,
      "gid": 143,
      "name": "shrine-building_0_0",
      "x": 2752,
@@ -13461,7 +13441,7 @@
      "visible": true
     },
     {
-     "id": 37,
+     "id": 35,
      "gid": 142,
      "name": "seven-eleven_0_0",
      "x": 3008,
@@ -13471,7 +13451,7 @@
      "visible": true
     },
     {
-     "id": 38,
+     "id": 36,
      "gid": 142,
      "name": "seven-eleven_0_0",
      "x": 384,
@@ -13481,7 +13461,7 @@
      "visible": true
     },
     {
-     "id": 39,
+     "id": 37,
      "gid": 29,
      "name": "building-tier-red_0_0",
      "x": 384,
@@ -13491,7 +13471,7 @@
      "visible": true
     },
     {
-     "id": 40,
+     "id": 38,
      "gid": 22,
      "name": "building-entrance-3_0_0",
      "x": 384,
@@ -16392,7 +16372,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 41,
+     "id": 39,
      "gid": 129,
      "name": "red-vending-machine-top-3_0_0",
      "x": 832,
@@ -16402,7 +16382,7 @@
      "visible": true
     },
     {
-     "id": 42,
+     "id": 40,
      "gid": 163,
      "name": "yellow-vending-machine-top_0_0",
      "x": 1472,
@@ -16412,7 +16392,7 @@
      "visible": true
     },
     {
-     "id": 43,
+     "id": 41,
      "gid": 163,
      "name": "yellow-vending-machine-top_0_0",
      "x": 2368,
@@ -16422,7 +16402,7 @@
      "visible": true
     },
     {
-     "id": 44,
+     "id": 42,
      "gid": 163,
      "name": "yellow-vending-machine-top_0_0",
      "x": 3264,
@@ -19323,7 +19303,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 45,
+     "id": 43,
      "gid": 93,
      "name": "red-pagoda-roof_0_0",
      "x": 640,
@@ -19333,7 +19313,7 @@
      "visible": true
     },
     {
-     "id": 46,
+     "id": 44,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 704,
@@ -19343,7 +19323,7 @@
      "visible": true
     },
     {
-     "id": 47,
+     "id": 45,
      "gid": 25,
      "name": "building-roof-blue_0_0",
      "x": 704,
@@ -19353,7 +19333,7 @@
      "visible": true
     },
     {
-     "id": 48,
+     "id": 46,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 896,
@@ -19363,7 +19343,7 @@
      "visible": true
     },
     {
-     "id": 49,
+     "id": 47,
      "gid": 1,
      "name": "7-11-sign-left_0_0",
      "x": 896,
@@ -19373,7 +19353,7 @@
      "visible": true
     },
     {
-     "id": 50,
+     "id": 48,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 1024,
@@ -19383,7 +19363,7 @@
      "visible": true
     },
     {
-     "id": 51,
+     "id": 49,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 1024,
@@ -19393,7 +19373,7 @@
      "visible": true
     },
     {
-     "id": 52,
+     "id": 50,
      "gid": 141,
      "name": "sakura-small-top_0_0",
      "x": 1088,
@@ -19403,7 +19383,7 @@
      "visible": true
     },
     {
-     "id": 53,
+     "id": 51,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 1344,
@@ -19413,11 +19393,31 @@
      "visible": true
     },
     {
-     "id": 54,
+     "id": 52,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1344,
      "y": 1792,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    },
+    {
+     "id": 53,
+     "gid": 89,
+     "name": "red-centre-roof_0_0",
+     "x": 1344,
+     "y": 1856,
+     "width": 192,
+     "height": 64,
+     "visible": true
+    },
+    {
+     "id": 54,
+     "gid": 89,
+     "name": "red-centre-roof_0_0",
+     "x": 1344,
+     "y": 1920,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19427,7 +19427,7 @@
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1344,
-     "y": 1856,
+     "y": 1984,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19437,7 +19437,7 @@
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1344,
-     "y": 1920,
+     "y": 2048,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19447,7 +19447,7 @@
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1344,
-     "y": 1984,
+     "y": 2112,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19457,7 +19457,7 @@
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1344,
-     "y": 2048,
+     "y": 2176,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19467,7 +19467,7 @@
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1344,
-     "y": 2112,
+     "y": 2240,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19476,8 +19476,8 @@
      "id": 60,
      "gid": 89,
      "name": "red-centre-roof_0_0",
-     "x": 1344,
-     "y": 2176,
+     "x": 1472,
+     "y": 640,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19486,8 +19486,8 @@
      "id": 61,
      "gid": 89,
      "name": "red-centre-roof_0_0",
-     "x": 1344,
-     "y": 2240,
+     "x": 1472,
+     "y": 704,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19497,7 +19497,7 @@
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1472,
-     "y": 640,
+     "y": 768,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19507,7 +19507,7 @@
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1472,
-     "y": 704,
+     "y": 832,
      "width": 192,
      "height": 64,
      "visible": true
@@ -19517,33 +19517,13 @@
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1472,
-     "y": 768,
-     "width": 192,
-     "height": 64,
-     "visible": true
-    },
-    {
-     "id": 65,
-     "gid": 89,
-     "name": "red-centre-roof_0_0",
-     "x": 1472,
-     "y": 832,
-     "width": 192,
-     "height": 64,
-     "visible": true
-    },
-    {
-     "id": 66,
-     "gid": 89,
-     "name": "red-centre-roof_0_0",
-     "x": 1472,
      "y": 576,
      "width": 192,
      "height": 64,
      "visible": true
     },
     {
-     "id": 67,
+     "id": 65,
      "gid": 157,
      "name": "torii-red-top_0_0",
      "x": 1600,
@@ -19553,7 +19533,7 @@
      "visible": true
     },
     {
-     "id": 68,
+     "id": 66,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1920,
@@ -19563,7 +19543,7 @@
      "visible": true
     },
     {
-     "id": 69,
+     "id": 67,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1920,
@@ -19573,7 +19553,7 @@
      "visible": true
     },
     {
-     "id": 70,
+     "id": 68,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1920,
@@ -19583,7 +19563,7 @@
      "visible": true
     },
     {
-     "id": 71,
+     "id": 69,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1920,
@@ -19593,7 +19573,7 @@
      "visible": true
     },
     {
-     "id": 72,
+     "id": 70,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 1920,
@@ -19603,7 +19583,7 @@
      "visible": true
     },
     {
-     "id": 73,
+     "id": 71,
      "gid": 141,
      "name": "sakura-small-top_0_0",
      "x": 2048,
@@ -19613,7 +19593,7 @@
      "visible": true
     },
     {
-     "id": 74,
+     "id": 72,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 2048,
@@ -19623,7 +19603,7 @@
      "visible": true
     },
     {
-     "id": 75,
+     "id": 73,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 2048,
@@ -19633,7 +19613,7 @@
      "visible": true
     },
     {
-     "id": 76,
+     "id": 74,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 2048,
@@ -19643,7 +19623,7 @@
      "visible": true
     },
     {
-     "id": 77,
+     "id": 75,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 2048,
@@ -19653,7 +19633,7 @@
      "visible": true
     },
     {
-     "id": 78,
+     "id": 76,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 2048,
@@ -19663,7 +19643,7 @@
      "visible": true
     },
     {
-     "id": 79,
+     "id": 77,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 2048,
@@ -19673,7 +19653,7 @@
      "visible": true
     },
     {
-     "id": 80,
+     "id": 78,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 2048,
@@ -19683,7 +19663,7 @@
      "visible": true
     },
     {
-     "id": 81,
+     "id": 79,
      "gid": 89,
      "name": "red-centre-roof_0_0",
      "x": 2048,
@@ -19693,7 +19673,7 @@
      "visible": true
     },
     {
-     "id": 82,
+     "id": 80,
      "gid": 2,
      "name": "7-11-sign-right_0_0",
      "x": 2304,
@@ -19703,7 +19683,7 @@
      "visible": true
     },
     {
-     "id": 83,
+     "id": 81,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 2368,
@@ -19713,7 +19693,7 @@
      "visible": true
     },
     {
-     "id": 84,
+     "id": 82,
      "gid": 25,
      "name": "building-roof-blue_0_0",
      "x": 2368,
@@ -19723,7 +19703,7 @@
      "visible": true
     },
     {
-     "id": 85,
+     "id": 83,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 2624,
@@ -19733,7 +19713,7 @@
      "visible": true
     },
     {
-     "id": 86,
+     "id": 84,
      "gid": 24,
      "name": "building-roof-black_0_0",
      "x": 2688,
@@ -19743,7 +19723,7 @@
      "visible": true
     },
     {
-     "id": 87,
+     "id": 85,
      "gid": 124,
      "name": "red-shrine-top_0_0",
      "x": 2688,
@@ -19753,7 +19733,7 @@
      "visible": true
     },
     {
-     "id": 88,
+     "id": 86,
      "gid": 1,
      "name": "7-11-sign-left_0_0",
      "x": 2880,
@@ -19763,7 +19743,7 @@
      "visible": true
     },
     {
-     "id": 89,
+     "id": 87,
      "gid": 141,
      "name": "sakura-small-top_0_0",
      "x": 2944,
@@ -19773,7 +19753,7 @@
      "visible": true
     },
     {
-     "id": 90,
+     "id": 88,
      "gid": 141,
      "name": "sakura-small-top_0_0",
      "x": 3008,
@@ -19783,10 +19763,30 @@
      "visible": true
     },
     {
-     "id": 91,
+     "id": 89,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 3072,
+     "y": 832,
+     "width": 192,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 90,
+     "gid": 139,
+     "name": "sakura-large-top_0_0",
+     "x": 3072,
+     "y": 576,
+     "width": 192,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 91,
+     "gid": 141,
+     "name": "sakura-small-top_0_0",
+     "x": 320,
      "y": 832,
      "width": 192,
      "height": 128,
@@ -19794,9 +19794,9 @@
     },
     {
      "id": 92,
-     "gid": 139,
-     "name": "sakura-large-top_0_0",
-     "x": 3072,
+     "gid": 141,
+     "name": "sakura-small-top_0_0",
+     "x": 320,
      "y": 576,
      "width": 192,
      "height": 128,
@@ -19804,26 +19804,6 @@
     },
     {
      "id": 93,
-     "gid": 141,
-     "name": "sakura-small-top_0_0",
-     "x": 320,
-     "y": 832,
-     "width": 192,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 94,
-     "gid": 141,
-     "name": "sakura-small-top_0_0",
-     "x": 320,
-     "y": 576,
-     "width": 192,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 95,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 384,
@@ -19833,7 +19813,7 @@
      "visible": true
     },
     {
-     "id": 96,
+     "id": 94,
      "gid": 26,
      "name": "building-roof-red_0_0",
      "x": 384,
@@ -19843,7 +19823,7 @@
      "visible": true
     },
     {
-     "id": 97,
+     "id": 95,
      "gid": 139,
      "name": "sakura-large-top_0_0",
      "x": 448,
@@ -19853,7 +19833,7 @@
      "visible": true
     },
     {
-     "id": 98,
+     "id": 96,
      "gid": 1,
      "name": "7-11-sign-left_0_0",
      "x": 576,
@@ -20804,12 +20784,12 @@
     51,
     51,
     51,
-    0,
-    0,
+    51,
     51,
     51,
     51,
     51,
+    51,
     0,
     0,
     51,
@@ -21230,7 +21210,6 @@
     51,
     51,
     51,
-    0,
     0,
     0,
     0,
@@ -21250,8 +21229,9 @@
     0,
     0,
     0,
-    0,
+    51,
     0,
+    51,
     0,
     0,
     0,
@@ -22575,15 +22555,9 @@
     0,
     0,
     0,
-    51,
-    51,
-    51,
     0,
     0,
     0,
-    51,
-    51,
-    51,
     0,
     0,
     0,
@@ -22634,15 +22608,14 @@
     0,
     0,
     0,
-    51,
     0,
-    51,
     0,
     0,
     0,
-    51,
     0,
-    51,
+    0,
+    0,
+    0,
     0,
     0,
     0,
@@ -22702,6 +22675,13 @@
     0,
     0,
     0,
+    0,
+    0,
+    0,
+    0,
+    51,
+    0,
+    51,
     0,
     0,
     0,
@@ -22754,118 +22734,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 99,
-     "name": "transporter",
-     "point": true,
-     "x": 1888.0,
-     "y": 2976.0,
-     "width": 0,
-     "height": 0,
-     "visible": true,
-     "properties": [
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "transporter"
-      },
-      {
-       "name": "targetRoom",
-       "type": "string",
-       "value": "Tokyo"
-      },
-      {
-       "name": "targetX",
-       "type": "int",
-       "value": 30
-      },
-      {
-       "name": "targetY",
-       "type": "int",
-       "value": 21
-      },
-      {
-       "name": "hidden",
-       "type": "bool",
-       "value": true
-      }
-     ]
-    },
-    {
-     "id": 100,
-     "name": "transporter",
-     "point": true,
-     "x": 1760.0,
-     "y": 992.0,
-     "width": 0,
-     "height": 0,
-     "visible": true,
-     "properties": [
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "transporter"
-      },
-      {
-       "name": "targetRoom",
-       "type": "string",
-       "value": "Park"
-      },
-      {
-       "name": "targetX",
-       "type": "int",
-       "value": 28
-      },
-      {
-       "name": "targetY",
-       "type": "int",
-       "value": 3
-      },
-      {
-       "name": "hidden",
-       "type": "bool",
-       "value": true
-      }
-     ]
-    },
-    {
-     "id": 101,
-     "name": "transporter",
-     "point": true,
-     "x": 1824.0,
-     "y": 992.0,
-     "width": 0,
-     "height": 0,
-     "visible": true,
-     "properties": [
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "transporter"
-      },
-      {
-       "name": "targetRoom",
-       "type": "string",
-       "value": "Park"
-      },
-      {
-       "name": "targetX",
-       "type": "int",
-       "value": 28
-      },
-      {
-       "name": "targetY",
-       "type": "int",
-       "value": 3
-      },
-      {
-       "name": "hidden",
-       "type": "bool",
-       "value": true
-      }
-     ]
-    },
-    {
-     "id": 102,
+     "id": 97,
      "name": "transporter",
      "point": true,
      "x": 2464.0,
@@ -22902,7 +22771,7 @@
      ]
     },
     {
-     "id": 103,
+     "id": 98,
      "name": "transporter",
      "point": true,
      "x": 800.0,
@@ -22939,7 +22808,7 @@
      ]
     },
     {
-     "id": 104,
+     "id": 99,
      "name": "transporter",
      "point": true,
      "x": 2784.0,
@@ -22976,7 +22845,7 @@
      ]
     },
     {
-     "id": 105,
+     "id": 100,
      "name": "transporter",
      "point": true,
      "x": 480.0,
@@ -23013,7 +22882,7 @@
      ]
     },
     {
-     "id": 106,
+     "id": 101,
      "name": "transporter",
      "point": true,
      "x": 1120.0,
@@ -23050,7 +22919,7 @@
      ]
     },
     {
-     "id": 107,
+     "id": 102,
      "name": "transporter",
      "point": true,
      "x": 3104.0,
@@ -23087,11 +22956,11 @@
      ]
     },
     {
-     "id": 108,
+     "id": 103,
      "name": "transporter",
      "point": true,
      "x": 2272.0,
-     "y": 2976.0,
+     "y": 3040.0,
      "width": 0,
      "height": 0,
      "visible": true,
@@ -23124,7 +22993,44 @@
      ]
     },
     {
-     "id": 109,
+     "id": 104,
+     "name": "transporter",
+     "point": true,
+     "x": 96.0,
+     "y": 1504.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Tokyo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 57
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 23
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 105,
      "name": "boundary",
      "x": 0,
      "y": 0,
