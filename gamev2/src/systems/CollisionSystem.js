@@ -62,6 +62,13 @@ class CollisionSystem {
             }
         }
 
+        // Debug noclip (hidden ``` menu): the player ignores tiles, objects
+        // and characters, but the room boundary above still applies
+        if (character.isPlayer && this.scene.debugManager &&
+            this.scene.debugManager.settings.noclip) {
+            return true;
+        }
+
         // Check collision with layer tiles
         if (!this.checkTileCollision(cellsToCheck)) {
             return false;

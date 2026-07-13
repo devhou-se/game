@@ -150,9 +150,11 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC).
 - **Movement**: WASD or arrows move 1 cell, Shift doubles speed (not distance)
 - **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
 - **Dialogue**: SPACE/ENTER advances, ESC closes
-- **Hidden debug menu**: triple-press backtick (``` within a second) — toggles for
-  the grid view/inspector, the N/E/X flag keys, and map-click travel (all default
-  off, persisted in localStorage). Deliberately absent from the Controls overlay.
-  Map-click travel on the menu's Map overlay only works when its toggle is on.
+- **Hidden debug menu**: triple-press backtick (``` within a second) — rows for
+  the grid view/inspector, the N/E/X flag keys, map-click travel, a time-of-day
+  pin (AUTO/day/dusk/night/dawn, same effect as `?tod=`), exact wallet amount
+  (prompt), and noclip (all default off, persisted in localStorage). Deliberately
+  absent from the Controls overlay. Map-click travel on the menu's Map overlay
+  only works when its toggle is on.
 - Input blocked when `player.isMoving` or `isTransitioning`
 - Supports diagonal movement with simultaneous key presses

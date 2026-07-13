@@ -12,6 +12,11 @@
  *    all flags as CSV, X to clear them
  *  - map click travel: clicking the menu's Map overlay teleports to the
  *    nearest walkable cell (off by default — the map is a viewer otherwise)
+ *  - time of day: pin the day/night cycle to day/dusk/night/dawn (same as
+ *    the ?tod= URL override, which wins on load), or AUTO for the real clock
+ *  - wallet: set the shop wallet to an exact yen amount (prompt)
+ *  - noclip: the player walks through tiles/objects/NPCs (room bounds still
+ *    apply); bump interactions can't fire while it's on
  */
 class DebugManager {
     constructor(scene) {
@@ -62,6 +67,13 @@ class DebugManager {
         scene.input.on('pointerdown', (pointer) => {
             if (this.visible && !this.menuVisible) this.inspect(pointer);
         });
+
+        // re-apply a persisted time-of-day pin (an explicit ?tod= URL
+        // override wins for this load; DayNight is created just before us)
+        if (this.settings.tod && scene.dayNight && !scene.dayNight.forced) {
+            scene.dayNight.forced = this.settings.tod;
+            scene.dayNight.apply();
+        }
     }
 
     flagKeysActive() {
@@ -83,7 +95,8 @@ class DebugManager {
 
     // ---- settings persistence ----
     loadSettings() {
-        const defaults = { grid: false, flagKeys: false, mapTravel: false };
+        const defaults = { grid: false, flagKeys: false, mapTravel: false,
+                           tod: null, noclip: false };
         try {
             return Object.assign(defaults,
                 JSON.parse(localStorage.getItem('gamev2_debug_settings') || '{}'));
@@ -106,17 +119,61 @@ class DebugManager {
     }
 
     menuItems() {
+        const onOff = (v) => v ? 'ON' : 'OFF';
+        const flip = (key) => () => { this.settings[key] = !this.settings[key]; this.saveSettings(); };
         return [
             { label: 'grid view + inspector',
-              get: () => this.settings.grid,
-              set: (v) => this.setGrid(v) },
+              value: () => onOff(this.settings.grid),
+              lit: () => this.settings.grid,
+              activate: () => this.setGrid(!this.settings.grid) },
             { label: 'flag keys N/E/X',
-              get: () => this.settings.flagKeys,
-              set: (v) => { this.settings.flagKeys = v; this.saveSettings(); } },
+              value: () => onOff(this.settings.flagKeys),
+              lit: () => this.settings.flagKeys,
+              activate: flip('flagKeys') },
             { label: 'map click travel',
-              get: () => this.settings.mapTravel,
-              set: (v) => { this.settings.mapTravel = v; this.saveSettings(); } },
+              value: () => onOff(this.settings.mapTravel),
+              lit: () => this.settings.mapTravel,
+              activate: flip('mapTravel') },
+            { label: 'time of day',
+              value: () => (this.settings.tod || 'auto').toUpperCase(),
+              lit: () => !!this.settings.tod,
+              activate: () => this.cycleTod() },
+            { label: 'wallet',
+              value: () => this.scene.shop ? this.scene.shop.fmt(this.scene.shop.money) : '-',
+              lit: () => false,
+              activate: () => this.setWallet() },
+            { label: 'noclip',
+              value: () => onOff(this.settings.noclip),
+              lit: () => this.settings.noclip,
+              activate: flip('noclip') },
         ];
+    }
+
+    /** AUTO (real Tokyo clock) -> day -> dusk -> night -> dawn -> AUTO. */
+    cycleTod() {
+        const order = [null, 'day', 'dusk', 'night', 'dawn'];
+        const next = order[(order.indexOf(this.settings.tod || null) + 1) % order.length];
+        this.settings.tod = next;
+        this.saveSettings();
+        if (this.scene.dayNight) {
+            this.scene.dayNight.forced = next;
+            this.scene.dayNight.apply();
+        }
+    }
+
+    /** Set the shop wallet to an exact amount via prompt. */
+    setWallet() {
+        const shop = this.scene.shop;
+        if (!shop) return;
+        const raw = window.prompt('Set wallet (¥):', shop.money);
+        // the blocking prompt can swallow keyup events — unstick everything
+        if (this.scene.input.keyboard.resetKeys) this.scene.input.keyboard.resetKeys();
+        if (raw === null) return;
+        const amount = parseInt(String(raw).replace(/[^\d]/g, ''), 10);
+        if (isNaN(amount)) return;
+        shop.money = Math.max(0, amount);
+        shop.save();
+        this.scene.updateHUD();
     }
 
     openMenu() {
@@ -157,12 +214,12 @@ class DebugManager {
             row.on('pointerover', () => { this.menuIndex = i; this.paintMenu(); });
             row.on('pointerdown', () => {
                 this.menuIndex = i;
-                item.set(!item.get());
+                item.activate();
                 this.paintMenu();
             });
             return row;
         });
-        text(px + 24, py + ph - 28, 'W/S select · SPACE toggle · ESC close', '14px', '#888888');
+        text(px + 24, py + ph - 28, 'W/S select · SPACE change · ESC close', '14px', '#888888');
         this.paintMenu();
     }
 
@@ -176,10 +233,10 @@ class DebugManager {
     paintMenu() {
         const items = this.menuItems();
         this.menuRows.forEach((row, i) => {
-            const on = items[i].get();
+            const it = items[i];
             const sel = i === this.menuIndex;
-            row.setText(`${sel ? '>' : ' '} ${items[i].label.padEnd(24)} [${on ? 'ON' : 'OFF'}]`);
-            row.setFill(sel ? '#ffff00' : (on ? '#00ff66' : '#dddddd'));
+            row.setText(`${sel ? '>' : ' '} ${it.label.padEnd(24)} [${it.value()}]`);
+            row.setFill(sel ? '#ffff00' : (it.lit() ? '#00ff66' : '#dddddd'));
         });
     }
 
@@ -189,8 +246,7 @@ class DebugManager {
         const items = this.menuItems();
         if (JD(k.esc)) return this.closeMenu();
         if (JD(k.confirm) || JD(k.confirm2)) {
-            const item = items[this.menuIndex];
-            item.set(!item.get());
+            items[this.menuIndex].activate();
             return this.paintMenu();
         }
         if (JD(k.up) || JD(k.up2)) { this.menuIndex = (this.menuIndex - 1 + items.length) % items.length; this.paintMenu(); }
