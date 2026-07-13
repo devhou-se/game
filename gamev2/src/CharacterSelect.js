@@ -18,7 +18,8 @@ class CharacterSelect {
         this.rows = [];
         this.selected = 0;
         const K = Phaser.Input.Keyboard.KeyCodes;
-        this.keys = scene.input.keyboard.addKeys({ up: K.UP, down: K.DOWN, enter: K.ENTER, esc: K.ESC });
+        this.keys = scene.input.keyboard.addKeys({ up: K.UP, down: K.DOWN, w: K.W, s: K.S,
+            enter: K.ENTER, space: K.SPACE, esc: K.ESC });
         this.chars = CharacterSelect.available(scene.config);
     }
 
@@ -50,7 +51,7 @@ class CharacterSelect {
         if (this.visible) return;
         this.selected = Math.max(0, this.chars.indexOf(this.currentName()));
         const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.esc);
+        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
         this.visible = true;
         this.render();
     }
@@ -97,9 +98,9 @@ class CharacterSelect {
     handleInput() {
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
         if (JD(k.esc)) return this.hide();
-        if (JD(k.enter)) return this.confirm();
-        if (JD(k.up)) { this.selected = (this.selected - 1 + this.chars.length) % this.chars.length; this.paint(); }
-        if (JD(k.down)) { this.selected = (this.selected + 1) % this.chars.length; this.paint(); }
+        if (JD(k.enter) || JD(k.space)) return this.confirm();
+        if (JD(k.up) || JD(k.w)) { this.selected = (this.selected - 1 + this.chars.length) % this.chars.length; this.paint(); }
+        if (JD(k.down) || JD(k.s)) { this.selected = (this.selected + 1) % this.chars.length; this.paint(); }
     }
 
     paint() {

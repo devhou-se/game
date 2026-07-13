@@ -460,12 +460,11 @@ class GameScene extends Phaser.Scene {
         if (this.controlsVisible) return;   // only one overlay at a time
         const cam = this.cameras.main, W = cam.width, H = cam.height;
         const rows = [
-            ['MOVE', 'Arrow keys / WASD — diagonals work'],
+            ['MOVE', 'WASD / arrows — diagonals work'],
             ['SPRINT', 'hold SHIFT while moving'],
             ['INTERACT', 'walk into people and things'],
             ['DIALOGUE', 'SPACE / ENTER next line · ESC close'],
             ['MENU', 'ESC'],
-            ['TIME TRAVEL', 'T'],
             ['ON TOUCH', 'd-pad to move · slide for diagonals'],
         ];
         const pw = 620, ph = 150 + rows.length * 40, px = (W - pw) / 2, py = (H - ph) / 2;
@@ -560,23 +559,28 @@ class GameScene extends Phaser.Scene {
         frame.lineStyle(2, 0x666666, 1); frame.strokeRect(px, py, dw, dh);
         frame.setScrollFactor(0); frame.setDepth(2002); objs.push(frame);
 
-        // click a spot on the map to travel there (nearest walkable cell)
-        img.setInteractive({ useHandCursor: true });
-        img.on('pointerdown', (pointer) => {
-            const ix = (pointer.x - px) / s, iy = (pointer.y - py) / s;  // image px
-            for (const name in meta.rooms) {
-                const r = meta.rooms[name];
-                if (ix < r.x || ix >= r.x + r.w || iy < r.y || iy >= r.y + r.h) continue;
-                const gx = Math.floor((ix - r.x) / (r.w / r.cells[0]));
-                const gy = Math.floor((iy - r.y) / (r.h / r.cells[1]));
-                const cell = this.findWalkableNear(name, gx, gy);
-                if (cell) {
-                    close();
-                    this.roomManager.switchRoom(name, cell[0], cell[1]);
+        // click a spot on the map to travel there (nearest walkable cell) —
+        // debug-only: off unless enabled in the hidden ``` debug menu, so the
+        // map is normally just a viewer
+        const mapTravel = this.debugManager && this.debugManager.settings.mapTravel;
+        if (mapTravel) {
+            img.setInteractive({ useHandCursor: true });
+            img.on('pointerdown', (pointer) => {
+                const ix = (pointer.x - px) / s, iy = (pointer.y - py) / s;  // image px
+                for (const name in meta.rooms) {
+                    const r = meta.rooms[name];
+                    if (ix < r.x || ix >= r.x + r.w || iy < r.y || iy >= r.y + r.h) continue;
+                    const gx = Math.floor((ix - r.x) / (r.w / r.cells[0]));
+                    const gy = Math.floor((iy - r.y) / (r.h / r.cells[1]));
+                    const cell = this.findWalkableNear(name, gx, gy);
+                    if (cell) {
+                        close();
+                        this.roomManager.switchRoom(name, cell[0], cell[1]);
+                    }
+                    return;  // clicked inside a room (even if no landing found)
                 }
-                return;  // clicked inside a room (even if no landing found)
-            }
-        });
+            });
+        }
 
         const text = (x, y, t, size, bold, color, bg) => {
             const o = this.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
@@ -657,7 +661,8 @@ class GameScene extends Phaser.Scene {
             objs.push({ destroy: () => pulse.stop() });
             if (markRoom !== here) footer = `you are here: ${here} (in ${markRoom})`;
         }
-        text(W / 2, py + dh + 20, `${footer}   ·   click a spot to travel there   ·   ESC to close`, '13px', false, '#bbbbbb');
+        const travelHint = mapTravel ? '   ·   click a spot to travel there' : '';
+        text(W / 2, py + dh + 20, `${footer}${travelHint}   ·   ESC to close`, '13px', false, '#bbbbbb');
 
         const close = () => {
             this.mapVisible = false;

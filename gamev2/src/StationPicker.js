@@ -2,7 +2,7 @@
  * StationPicker — the destination board. Opens when the player walks up to
  * the train (a board cell in a station room, see config `stations`); pick a
  * station and TrainTravel runs the ride. Same overlay idiom as the menu /
- * date picker: arrows + ENTER, ESC steps away, rows are clickable.
+ * date picker: arrows/WASD + ENTER/SPACE, ESC steps away, rows are clickable.
  */
 class StationPicker {
     constructor(scene) {
@@ -12,7 +12,8 @@ class StationPicker {
         this.rows = [];
         this.selected = 0;
         const K = Phaser.Input.Keyboard.KeyCodes;
-        this.keys = scene.input.keyboard.addKeys({ up: K.UP, down: K.DOWN, enter: K.ENTER, esc: K.ESC });
+        this.keys = scene.input.keyboard.addKeys({ up: K.UP, down: K.DOWN, w: K.W, s: K.S,
+            enter: K.ENTER, space: K.SPACE, esc: K.ESC });
     }
 
     isVisible() { return this.visible; }
@@ -26,7 +27,7 @@ class StationPicker {
         this.selected = 0;
         // swallow the keypress that got us here
         const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.esc);
+        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
         this.visible = true;
         this.render();
     }
@@ -47,9 +48,9 @@ class StationPicker {
     handleInput() {
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
         if (JD(k.esc)) return this.hide();
-        if (JD(k.enter)) return this.confirm();
-        if (JD(k.up)) { this.selected = (this.selected - 1 + this.dests.length) % this.dests.length; this.paint(); }
-        if (JD(k.down)) { this.selected = (this.selected + 1) % this.dests.length; this.paint(); }
+        if (JD(k.enter) || JD(k.space)) return this.confirm();
+        if (JD(k.up) || JD(k.w)) { this.selected = (this.selected - 1 + this.dests.length) % this.dests.length; this.paint(); }
+        if (JD(k.down) || JD(k.s)) { this.selected = (this.selected + 1) % this.dests.length; this.paint(); }
     }
 
     paint() {

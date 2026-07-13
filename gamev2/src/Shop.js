@@ -6,8 +6,8 @@
  * menu; bumping the counter inside a konbini opens the full store. Bought
  * items live in the inventory (menu → Items, or click the ¥ in the HUD) and
  * are used from there — drinks give temporary movement effects, food is
- * flavour. Same overlay idiom as the station picker: arrows + ENTER, ESC,
- * rows clickable.
+ * flavour. Same overlay idiom as the station picker: arrows/WASD + ENTER/SPACE,
+ * ESC, rows clickable.
  */
 class Shop {
     constructor(scene) {
@@ -25,7 +25,8 @@ class Shop {
         this.startingMoney = cfg.startingMoney != null ? cfg.startingMoney : 5000;
 
         const K = Phaser.Input.Keyboard.KeyCodes;
-        this.keys = scene.input.keyboard.addKeys({ up: K.UP, down: K.DOWN, enter: K.ENTER, esc: K.ESC });
+        this.keys = scene.input.keyboard.addKeys({ up: K.UP, down: K.DOWN, w: K.W, s: K.S,
+            enter: K.ENTER, space: K.SPACE, esc: K.ESC });
 
         this.load();
 
@@ -153,7 +154,7 @@ class Shop {
         if (!this.stock.length) return;
         this.selected = 0;
         const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.esc);   // swallow the bump keypress
+        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);   // swallow the bump keypress
         this.visible = true;
         this.render();
     }
@@ -178,7 +179,7 @@ class Shop {
         this.stock = Object.keys(this.items).map(id => this.itemById(id)).filter(Boolean);
         this.selected = 0;
         const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.esc);
+        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
         this.invVisible = true;
         this.render();
     }
@@ -205,10 +206,10 @@ class Shop {
     handleInput() {
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
         if (JD(k.esc)) return this.hide();
-        if (JD(k.enter)) return this.visible ? this.buy() : this.useSelected();
+        if (JD(k.enter) || JD(k.space)) return this.visible ? this.buy() : this.useSelected();
         if (!this.stock.length) return;
-        if (JD(k.up)) { this.selected = (this.selected - 1 + this.stock.length) % this.stock.length; this.paint(); }
-        if (JD(k.down)) { this.selected = (this.selected + 1) % this.stock.length; this.paint(); }
+        if (JD(k.up) || JD(k.w)) { this.selected = (this.selected - 1 + this.stock.length) % this.stock.length; this.paint(); }
+        if (JD(k.down) || JD(k.s)) { this.selected = (this.selected + 1) % this.stock.length; this.paint(); }
     }
 
     repaint() {

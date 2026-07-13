@@ -3,12 +3,13 @@
  *
  * The world renders as of a chosen date (NPC dated states — see
  * src/utils/NpcStates.js). This overlay lets the player pick that date
- * without leaving the game: open it from the menu ("Time Travel"), the T key,
- * or by clicking the HUD date. Picking a day reloads at ?date=YYYY-MM-DD
+ * without leaving the game: open it from the menu ("Time Travel") or by
+ * clicking the HUD date. Picking a day reloads at ?date=YYYY-MM-DD
  * (picking today returns to the clean live URL).
  *
- * Keys while open: arrows move a day/week, , / . change month, T jumps to
- * today, ENTER travels, ESC closes. Everything is also clickable.
+ * Keys while open: arrows/WASD move a day (left-right) or a week (up-down),
+ * ENTER/SPACE travels, ESC closes. Everything is also clickable (day cells,
+ * month arrows).
  */
 class DatePicker {
     constructor(scene) {
@@ -19,8 +20,8 @@ class DatePicker {
         const K = Phaser.Input.Keyboard.KeyCodes;
         this.keys = scene.input.keyboard.addKeys({
             left: K.LEFT, right: K.RIGHT, up: K.UP, down: K.DOWN,
-            enter: K.ENTER, esc: K.ESC, t: K.T,
-            prevMonth: K.COMMA, nextMonth: K.PERIOD,
+            a: K.A, d: K.D, w: K.W, s: K.S,
+            enter: K.ENTER, space: K.SPACE, esc: K.ESC,
         });
     }
 
@@ -28,10 +29,10 @@ class DatePicker {
 
     show() {
         if (this.visible || this.scene.isTransitioning) return;
-        // swallow the keypress that opened us (menu ENTER / gameplay T) so it
-        // doesn't immediately confirm or jump inside the picker
+        // swallow the keypress that opened us (menu ENTER/SPACE) so it
+        // doesn't immediately confirm inside the picker
         const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.t); JD(this.keys.esc);
+        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
         const [y, m, d] = gameDate().split('-').map(Number);
         this.sel = new Date(y, m - 1, d);
         this.contentDates = contentChangeDates(this.scene.config);
@@ -81,14 +82,11 @@ class DatePicker {
     handleInput() {
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
         if (JD(k.esc)) return this.hide();
-        if (JD(k.enter)) return this.confirm();
-        if (JD(k.t)) { this.sel = new Date(); this.rerender(); return; }
-        if (JD(k.left)) return this.moveDays(-1);
-        if (JD(k.right)) return this.moveDays(1);
-        if (JD(k.up)) return this.moveDays(-7);
-        if (JD(k.down)) return this.moveDays(7);
-        if (JD(k.prevMonth)) return this.moveMonth(-1);
-        if (JD(k.nextMonth)) return this.moveMonth(1);
+        if (JD(k.enter) || JD(k.space)) return this.confirm();
+        if (JD(k.left) || JD(k.a)) return this.moveDays(-1);
+        if (JD(k.right) || JD(k.d)) return this.moveDays(1);
+        if (JD(k.up) || JD(k.w)) return this.moveDays(-7);
+        if (JD(k.down) || JD(k.s)) return this.moveDays(7);
     }
 
     render() {
@@ -172,6 +170,6 @@ class DatePicker {
 
         text(cx, py + ph - 78, `viewing: ${formatGameDate(selIso)}`, '18px', true, '#33cc66');
         text(cx, py + ph - 50, 'dot = blog post · gold = today · arrows: day/week', '16px', false, '#888888');
-        text(cx, py + ph - 26, 'ENTER/click: travel · T: today · ESC: close', '16px', false, '#888888');
+        text(cx, py + ph - 26, 'ENTER/click: travel · ESC: close', '16px', false, '#888888');
     }
 }

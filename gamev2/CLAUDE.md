@@ -144,8 +144,15 @@ All intermediate cells in movement path are checked for:
 Sprites are centered at: `gridPos * GRID_SIZE + GRID_SIZE/2`
 
 ### Input Handling
-- **Movement**: Arrow keys or WASD move 1 cell, Shift doubles speed (not distance)
-- **Menu**: ESC toggles menu, arrow keys navigate, Enter activates
-- **Dialogue**: Space/Enter advances, ESC closes
+The whole game runs on WASD/arrows + SPACE/ENTER + SHIFT, with ESC as the single
+system key — no other bindings (no T shortcut, no ,/. month keys). Touch controls
+synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC).
+- **Movement**: WASD or arrows move 1 cell, Shift doubles speed (not distance)
+- **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
+- **Dialogue**: SPACE/ENTER advances, ESC closes
+- **Hidden debug menu**: triple-press backtick (``` within a second) — toggles for
+  the grid view/inspector, the N/E/X flag keys, and map-click travel (all default
+  off, persisted in localStorage). Deliberately absent from the Controls overlay.
+  Map-click travel on the menu's Map overlay only works when its toggle is on.
 - Input blocked when `player.isMoving` or `isTransitioning`
 - Supports diagonal movement with simultaneous key presses

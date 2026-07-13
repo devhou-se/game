@@ -10,8 +10,6 @@ class InputHandler {
 
         // Track key states for press detection
         this.lastKeyState = {
-            left: false,
-            right: false,
             up: false,
             down: false,
             esc: false,
@@ -32,7 +30,9 @@ class InputHandler {
     }
 
     /**
-     * Set up keyboard input bindings
+     * Set up keyboard input bindings.
+     * The whole game runs on WASD/arrows + SPACE/ENTER + SHIFT, with ESC as
+     * the one system key (menu / close). No other bindings.
      */
     setupKeys() {
         this.cursors = this.scene.input.keyboard.createCursorKeys();
@@ -54,6 +54,14 @@ class InputHandler {
     handleInput() {
         // Priority 0: no input at all while riding the train
         if (this.scene.trainTravel && this.scene.trainTravel.riding) return;
+
+        // Priority 0.5: the hidden debug menu owns input while open (sync ESC
+        // so the press that closed it doesn't pop the main menu next frame)
+        if (this.scene.debugManager && this.scene.debugManager.menuVisible) {
+            this.scene.debugManager.handleMenuInput();
+            this.lastKeyState.esc = this.escKey.isDown;
+            return;
+        }
 
         // Priority 1: Dialogue input
         if (this.scene.dialogueManager.isVisible()) {
@@ -119,12 +127,6 @@ class InputHandler {
             return;
         }
 
-        // Priority 4.5: T opens the time-travel date picker
-        if (this.scene.datePicker && Phaser.Input.Keyboard.JustDown(this.scene.datePicker.keys.t)) {
-            this.scene.datePicker.show();
-            return;
-        }
-
         // Priority 5: Player movement
         this.handlePlayerMovement();
     }
@@ -176,25 +178,29 @@ class InputHandler {
      * Handle menu navigation input
      */
     handleMenuInput() {
-        // Arrow up - previous option
-        if (this.cursors.up.isDown && !this.lastKeyState.up) {
+        const upHeld = this.wKey.isDown || this.cursors.up.isDown;
+        const downHeld = this.sKey.isDown || this.cursors.down.isDown;
+        const confirmHeld = this.spaceKey.isDown || this.enterKey.isDown;
+
+        // W / up - previous option
+        if (upHeld && !this.lastKeyState.up) {
             this.scene.menuManager.selectPrevious();
         }
 
-        // Arrow down - next option
-        if (this.cursors.down.isDown && !this.lastKeyState.down) {
+        // S / down - next option
+        if (downHeld && !this.lastKeyState.down) {
             this.scene.menuManager.selectNext();
         }
 
-        // Enter - activate selected option
-        if (this.enterKey.isDown && !this.lastKeyState.enter) {
+        // SPACE / ENTER - activate selected option
+        if (confirmHeld && !this.lastKeyState.space) {
             this.scene.menuManager.activate();
         }
 
         // Update key states for menu navigation
-        this.lastKeyState.up = this.cursors.up.isDown;
-        this.lastKeyState.down = this.cursors.down.isDown;
-        this.lastKeyState.enter = this.enterKey.isDown;
+        this.lastKeyState.up = upHeld;
+        this.lastKeyState.down = downHeld;
+        this.lastKeyState.space = confirmHeld;
     }
 
     /**
@@ -220,10 +226,8 @@ class InputHandler {
         const anyKeyHeld = leftHeld || rightHeld || upHeld || downHeld;
 
         // Update last key states
-        this.lastKeyState.left = this.cursors.left.isDown;
-        this.lastKeyState.right = this.cursors.right.isDown;
-        this.lastKeyState.up = this.cursors.up.isDown;
-        this.lastKeyState.down = this.cursors.down.isDown;
+        this.lastKeyState.up = upHeld;
+        this.lastKeyState.down = downHeld;
 
         // If any directional input is held, move based on ALL currently held dirs
         if (anyKeyHeld) {

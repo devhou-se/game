@@ -1,21 +1,23 @@
 /**
- * DebugManager - in-game debug overlay + issue flagging.
+ * DebugManager - hidden debug menu + in-game debug overlay + issue flagging.
  *
- * Toggle with the backtick key ( ` ). When on:
- *  - a stats panel shows FPS, player cell + depth, camera and current room
- *  - collidable cells are tinted red (the actual collision map)
- *  - clicking any cell lists every tile there (key / layer z / depth / collision)
- *
- * Flagging issues (debug mode only):
- *  - click a cell, then press  N  to add/edit a note for it (it becomes a flag)
- *  - flagged cells are tinted yellow with their note; flags persist across reloads
- *  - press  E  to export ALL flags as a CSV (room, cell, note + full tile dump)
- *  - press  X  to clear all flags
+ * Everything here is deliberately undocumented in the controls overlay.
+ * Triple-press the backtick key ( ``` within a second ) to open the debug
+ * menu: W/S select, SPACE toggles, ESC closes. Toggles (persisted in
+ * localStorage, so they survive the frequent date-travel reloads):
+ *  - grid view + inspector: stats panel (FPS, player cell + depth, room),
+ *    collidable cells tinted red, clicking any cell lists every tile there
+ *  - flag keys N/E/X: with the grid view on, click a cell then press N to
+ *    add/edit a note (flagged cells tint yellow and persist), E to export
+ *    all flags as CSV, X to clear them
+ *  - map click travel: clicking the menu's Map overlay teleports to the
+ *    nearest walkable cell (off by default — the map is a viewer otherwise)
  */
 class DebugManager {
     constructor(scene) {
         this.scene = scene;
-        this.visible = false;
+        this.settings = this.loadSettings();  // { grid, flagKeys, mapTravel }
+        this.visible = !!this.settings.grid;
         this.info = '(click a tile to inspect)';
         this.lastCell = null;                 // {x, y, room, tiles:[...]}
         this.flags = this.loadFlags();        // [{room, x, y, note, tiles:[...]}]
@@ -39,19 +41,37 @@ class DebugManager {
         this.text.setScrollFactor(0);
         this.text.setDepth(4001);
         this.text.setResolution(1);
-        this.text.setVisible(false);
+        this.text.setVisible(this.visible);
 
-        scene.input.keyboard.on('keydown-BACKTICK', () => this.toggle());
-        scene.input.keyboard.on('keydown-N', () => { if (this.visible) this.addNote(); });
-        scene.input.keyboard.on('keydown-E', () => { if (this.visible) this.exportCSV(); });
-        scene.input.keyboard.on('keydown-X', () => { if (this.visible) this.clearFlags(); });
+        // Hidden debug menu state
+        this.menuVisible = false;
+        this.menuObjs = [];
+        this.menuRows = [];
+        this.menuIndex = 0;
+        this._backtickTimes = [];
+        const K = Phaser.Input.Keyboard.KeyCodes;
+        this.menuKeys = scene.input.keyboard.addKeys({
+            up: K.W, down: K.S, up2: K.UP, down2: K.DOWN,
+            confirm: K.SPACE, confirm2: K.ENTER, esc: K.ESC,
+        });
+
+        scene.input.keyboard.on('keydown-BACKTICK', () => this.onBacktick());
+        scene.input.keyboard.on('keydown-N', () => { if (this.flagKeysActive()) this.addNote(); });
+        scene.input.keyboard.on('keydown-E', () => { if (this.flagKeysActive()) this.exportCSV(); });
+        scene.input.keyboard.on('keydown-X', () => { if (this.flagKeysActive()) this.clearFlags(); });
         scene.input.on('pointerdown', (pointer) => {
-            if (this.visible) this.inspect(pointer);
+            if (this.visible && !this.menuVisible) this.inspect(pointer);
         });
     }
 
-    toggle() {
-        this.visible = !this.visible;
+    flagKeysActive() {
+        return this.visible && this.settings.flagKeys && !this.menuVisible;
+    }
+
+    setGrid(on) {
+        this.settings.grid = !!on;
+        this.saveSettings();
+        this.visible = this.settings.grid;
         this.text.setVisible(this.visible);
         this.labelsDirty = true;
         if (!this.visible) {
@@ -59,6 +79,122 @@ class DebugManager {
             this.flagLabels.forEach(l => l.destroy());
             this.flagLabels = [];
         }
+    }
+
+    // ---- settings persistence ----
+    loadSettings() {
+        const defaults = { grid: false, flagKeys: false, mapTravel: false };
+        try {
+            return Object.assign(defaults,
+                JSON.parse(localStorage.getItem('gamev2_debug_settings') || '{}'));
+        } catch (e) { return defaults; }
+    }
+    saveSettings() {
+        try { localStorage.setItem('gamev2_debug_settings', JSON.stringify(this.settings)); }
+        catch (e) { /* ignore quota/availability */ }
+    }
+
+    // ---- the hidden debug menu (triple-backtick) ----
+    onBacktick() {
+        const now = Date.now();
+        this._backtickTimes = this._backtickTimes.filter(t => now - t < 900);
+        this._backtickTimes.push(now);
+        if (this._backtickTimes.length >= 3) {
+            this._backtickTimes = [];
+            this.menuVisible ? this.closeMenu() : this.openMenu();
+        }
+    }
+
+    menuItems() {
+        return [
+            { label: 'grid view + inspector',
+              get: () => this.settings.grid,
+              set: (v) => this.setGrid(v) },
+            { label: 'flag keys N/E/X',
+              get: () => this.settings.flagKeys,
+              set: (v) => { this.settings.flagKeys = v; this.saveSettings(); } },
+            { label: 'map click travel',
+              get: () => this.settings.mapTravel,
+              set: (v) => { this.settings.mapTravel = v; this.saveSettings(); } },
+        ];
+    }
+
+    openMenu() {
+        if (this.menuVisible) return;
+        this.menuVisible = true;
+        this.menuIndex = 0;
+        const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
+        const items = this.menuItems();
+        const pw = 480, ph = 132 + items.length * 40, px = (W - pw) / 2, py = (H - ph) / 2;
+        const objs = this.menuObjs;
+
+        const overlay = scene.add.graphics();
+        overlay.fillStyle(0x000000, 0.75); overlay.fillRect(0, 0, W, H);
+        overlay.setScrollFactor(0); overlay.setDepth(4100);
+        overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, W, H), Phaser.Geom.Rectangle.Contains);
+        overlay.on('pointerdown', () => this.closeMenu());
+        objs.push(overlay);
+
+        const panel = scene.add.graphics();
+        panel.fillStyle(0x101418, 1); panel.fillRect(px, py, pw, ph);
+        panel.lineStyle(2, 0x00ff66, 0.8); panel.strokeRect(px, py, pw, ph);
+        panel.setScrollFactor(0); panel.setDepth(4101);
+        panel.setInteractive(new Phaser.Geom.Rectangle(px, py, pw, ph), Phaser.Geom.Rectangle.Contains);
+        objs.push(panel);
+
+        const text = (x, y, t, size, color) => {
+            const o = scene.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
+                fontFamily: 'monospace' });
+            o.setOrigin(0, 0.5); o.setResolution(1);
+            o.setScrollFactor(0); o.setDepth(4102); objs.push(o); return o;
+        };
+        const title = text(px + 24, py + 30, 'DEBUG MENU', '22px', '#00ff66');
+        title.setFontStyle('bold');
+
+        this.menuRows = items.map((item, i) => {
+            const row = text(px + 24, py + 76 + i * 40, '', '18px');
+            row.setInteractive({ useHandCursor: true });
+            row.on('pointerover', () => { this.menuIndex = i; this.paintMenu(); });
+            row.on('pointerdown', () => {
+                this.menuIndex = i;
+                item.set(!item.get());
+                this.paintMenu();
+            });
+            return row;
+        });
+        text(px + 24, py + ph - 28, 'W/S select · SPACE toggle · ESC close', '14px', '#888888');
+        this.paintMenu();
+    }
+
+    closeMenu() {
+        this.menuVisible = false;
+        this.menuObjs.forEach(o => o.destroy());
+        this.menuObjs = [];
+        this.menuRows = [];
+    }
+
+    paintMenu() {
+        const items = this.menuItems();
+        this.menuRows.forEach((row, i) => {
+            const on = items[i].get();
+            const sel = i === this.menuIndex;
+            row.setText(`${sel ? '>' : ' '} ${items[i].label.padEnd(24)} [${on ? 'ON' : 'OFF'}]`);
+            row.setFill(sel ? '#ffff00' : (on ? '#00ff66' : '#dddddd'));
+        });
+    }
+
+    /** Polled by InputHandler while the menu is open — it owns all input. */
+    handleMenuInput() {
+        const JD = Phaser.Input.Keyboard.JustDown, k = this.menuKeys;
+        const items = this.menuItems();
+        if (JD(k.esc)) return this.closeMenu();
+        if (JD(k.confirm) || JD(k.confirm2)) {
+            const item = items[this.menuIndex];
+            item.set(!item.get());
+            return this.paintMenu();
+        }
+        if (JD(k.up) || JD(k.up2)) { this.menuIndex = (this.menuIndex - 1 + items.length) % items.length; this.paintMenu(); }
+        if (JD(k.down) || JD(k.down2)) { this.menuIndex = (this.menuIndex + 1) % items.length; this.paintMenu(); }
     }
 
     // ---- flag persistence (localStorage so flags survive the frequent reloads) ----
@@ -179,8 +315,9 @@ class DebugManager {
         const roomFlags = this.flags.filter(f => f.room === room).length;
         const recent = this.flags.slice(-4).map(f => `  ${f.room} ${f.x},${f.y}: ${f.note || '(flag)'}`).join('\n');
         this.text.setText([
-            'DEBUG  ( ` toggle | click = inspect )',
-            'N add/edit note   E export CSV   X clear',
+            'DEBUG  ( ``` = menu | click = inspect )',
+            this.settings.flagKeys ? 'N add/edit note   E export CSV   X clear'
+                                   : '(flag keys off — enable in ``` menu)',
             `fps ${Math.round(s.game.loop.actualFps)}   room ${room}`,
             `player ${p.gridX},${p.gridY}  depth ${Math.round(p.sprite.depth)}`,
             `flags ${this.flags.length} total (${roomFlags} here)`,

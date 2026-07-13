@@ -6,8 +6,8 @@
  * press, keyup on release), so the entire game is playable without a
  * keyboard and without tapping the world:
  *
- *   d-pad  -> arrow keys   (walk, and navigate every menu/overlay)
- *   A      -> ENTER        (talk/advance, select, buy, strike a fish, board)
+ *   d-pad  -> WASD         (walk, and navigate every menu/overlay)
+ *   A      -> SPACE        (talk/advance, select, buy, strike a fish, board)
  *   B      -> ESC          (close any overlay; opens the menu in the world)
  *   sprint -> SHIFT        (hold to run)
  *
@@ -74,16 +74,16 @@ class TouchControls {
     /**
      * The d-pad surface: track one pointer from down through move to up,
      * mapping its position around the pad centre to a held direction set
-     * (8 sectors — the four diagonals hold two arrow keys at once). Each
+     * (8 sectors — the four diagonals hold two WASD keys at once). Each
      * change fires the matching synthetic keydown/keyup immediately;
      * movement is isDown-polled so no minimum hold is needed.
      */
     _bindPad(pad, arrows) {
         const KEYDEFS = {
-            up: { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 },
-            down: { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
-            left: { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
-            right: { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 },
+            up: { key: 'w', code: 'KeyW', keyCode: 87 },
+            down: { key: 's', code: 'KeyS', keyCode: 83 },
+            left: { key: 'a', code: 'KeyA', keyCode: 65 },
+            right: { key: 'd', code: 'KeyD', keyCode: 68 },
         };
         const fire = (type, d) => window.dispatchEvent(new KeyboardEvent(type, {
             key: KEYDEFS[d].key, code: KEYDEFS[d].code,
@@ -198,7 +198,7 @@ class TouchControls {
             'right:max(20px,env(safe-area-inset-right));bottom:calc(max(16px,env(safe-area-inset-bottom)) + 74px);');
         const b = this._btn('B', 'tc-b',
             'right:calc(max(20px,env(safe-area-inset-right)) + 88px);bottom:max(16px,env(safe-area-inset-bottom));');
-        this._bind(a, null, { key: 'Enter', code: 'Enter', keyCode: 13 });
+        this._bind(a, null, { key: ' ', code: 'Space', keyCode: 32 });
         this._bind(b, null, { key: 'Escape', code: 'Escape', keyCode: 27 });
 
         // sprint pill above the cluster (hold to run)
