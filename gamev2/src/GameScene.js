@@ -561,26 +561,28 @@ class GameScene extends Phaser.Scene {
 
         // click a spot on the map to travel there (nearest walkable cell) —
         // debug-only: off unless enabled in the hidden ``` debug menu, so the
-        // map is normally just a viewer
+        // map is normally just a viewer. The image always swallows its clicks
+        // so clicking the map never falls through to the close-overlay:
+        // closing is the dark surround, ESC, or actually travelling.
         const mapTravel = this.debugManager && this.debugManager.settings.mapTravel;
-        if (mapTravel) {
-            img.setInteractive({ useHandCursor: true });
-            img.on('pointerdown', (pointer) => {
-                const ix = (pointer.x - px) / s, iy = (pointer.y - py) / s;  // image px
-                for (const name in meta.rooms) {
-                    const r = meta.rooms[name];
-                    if (ix < r.x || ix >= r.x + r.w || iy < r.y || iy >= r.y + r.h) continue;
-                    const gx = Math.floor((ix - r.x) / (r.w / r.cells[0]));
-                    const gy = Math.floor((iy - r.y) / (r.h / r.cells[1]));
-                    const cell = this.findWalkableNear(name, gx, gy);
-                    if (cell) {
-                        close();
-                        this.roomManager.switchRoom(name, cell[0], cell[1]);
-                    }
-                    return;  // clicked inside a room (even if no landing found)
+        img.setInteractive(mapTravel ? { useHandCursor: true } : undefined);
+        img.on('pointerdown', (pointer, localX, localY, event) => {
+            if (event) event.stopPropagation();
+            if (!mapTravel) return;
+            const ix = (pointer.x - px) / s, iy = (pointer.y - py) / s;  // image px
+            for (const name in meta.rooms) {
+                const r = meta.rooms[name];
+                if (ix < r.x || ix >= r.x + r.w || iy < r.y || iy >= r.y + r.h) continue;
+                const gx = Math.floor((ix - r.x) / (r.w / r.cells[0]));
+                const gy = Math.floor((iy - r.y) / (r.h / r.cells[1]));
+                const cell = this.findWalkableNear(name, gx, gy);
+                if (cell) {
+                    close();
+                    this.roomManager.switchRoom(name, cell[0], cell[1]);
                 }
-            });
-        }
+                return;  // clicked inside a room (even if no landing found)
+            }
+        });
 
         const text = (x, y, t, size, bold, color, bg) => {
             const o = this.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
