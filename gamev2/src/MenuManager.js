@@ -30,6 +30,7 @@ class MenuManager {
         const menuOptions = [
             { text: 'Items', action: () => this.scene.shop.showInventory() },
             { text: 'Character', action: () => this.scene.characterSelect.show() },
+            { text: 'Create Character', action: () => this.scene.characterCreator.show() },
             { text: 'Achievements', action: () => this.scene.showAchievements() },
             { text: 'Time Travel', action: () => this.scene.datePicker.show() },
             { text: 'Map', action: () => this.scene.showMap() },

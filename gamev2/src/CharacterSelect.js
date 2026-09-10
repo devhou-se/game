@@ -29,7 +29,9 @@ class CharacterSelect {
         return Object.keys(sm)
             .filter(k => k.endsWith('_front'))
             .map(k => k.slice(0, -'_front'.length))
-            .filter(n => sm[`${n}_back`] && sm[`${n}_side`])
+            // 'custom' is the CharacterCreator's synthetic sprite set, not a
+            // cast member — it gets its own roster entry when a creation exists
+            .filter(n => n !== 'custom' && sm[`${n}_back`] && sm[`${n}_side`])
             .sort((a, b) => (a === 'james' ? -1 : b === 'james' ? 1 : a.localeCompare(b)));
     }
 
@@ -49,6 +51,10 @@ class CharacterSelect {
 
     show() {
         if (this.visible) return;
+        // refresh the roster: a created character (CharacterCreator) joins the
+        // cast as the 'custom' entry once it exists
+        this.chars = CharacterSelect.available(this.scene.config);
+        if (window.CharacterCreator && CharacterCreator.load()) this.chars.push('custom');
         this.selected = Math.max(0, this.chars.indexOf(this.currentName()));
         const JD = Phaser.Input.Keyboard.JustDown;
         JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
@@ -72,6 +78,15 @@ class CharacterSelect {
         const name = this.chars[this.selected];
         this.hide();
         if (!name || name === this.currentName()) return;
+        if (name === 'custom') {
+            // the created character: rebuild its textures and swap to it
+            // (CharacterCreator.save/applyToPlayer own the persistence)
+            const data = CharacterCreator.load();
+            if (!data) return;
+            try { localStorage.setItem('gamev2_character', 'custom'); } catch (e) { /* play on */ }
+            CharacterCreator.applyToPlayer(this.scene, data);
+            return;
+        }
         try { localStorage.setItem('gamev2_character', name); } catch (e) { /* play on */ }
 
         const scene = this.scene, key = `${name}_front`;
@@ -93,6 +108,7 @@ class CharacterSelect {
         // you can't meet yourself: despawn the new character's NPC and bring
         // back the one you stopped being
         scene.syncNpcPresence();
+        if (scene.syncPlayerNameLabel) scene.syncPlayerNameLabel();
     }
 
     handleInput() {
@@ -106,7 +122,10 @@ class CharacterSelect {
     paint() {
         this.rows.forEach((r, i) => r.setFill(i === this.selected ? '#ffff00' : '#ffffff'));
         if (this.preview) {
-            const key = `${this.chars[this.selected]}_front`;
+            const name = this.chars[this.selected];
+            // the created character's frames are built on demand
+            if (name === 'custom' && window.CharacterCreator) CharacterCreator.ensureTextures(this.scene);
+            const key = `${name}_front`;
             const tex = this.scene.textures.exists(`${key}_frame_0`) ? `${key}_frame_0` : key;
             this.preview.setTexture(tex);
         }
@@ -147,7 +166,10 @@ class CharacterSelect {
 
         this.rows = this.chars.map((name, i) => {
             const current = name === this.currentName() ? '  (you)' : '';
-            const label = name.charAt(0).toUpperCase() + name.slice(1) + current;
+            const display = name === 'custom'
+                ? `${(CharacterCreator.load() || {}).name || 'Custom'} ✦`
+                : name.charAt(0).toUpperCase() + name.slice(1);
+            const label = display + current;
             const row = text(W / 2, py + 166 + i * 46, label, '24px', true);
             row.setInteractive({ useHandCursor: true });
             row.on('pointerover', () => { this.selected = i; this.paint(); });

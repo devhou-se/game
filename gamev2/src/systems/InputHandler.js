@@ -107,6 +107,7 @@ class InputHandler {
             this.scene.stationPicker && this.scene.stationPicker.isVisible() && this.scene.stationPicker,
             this.scene.shop && this.scene.shop.isVisible() && this.scene.shop,
             this.scene.characterSelect && this.scene.characterSelect.isVisible() && this.scene.characterSelect,
+            this.scene.characterCreator && this.scene.characterCreator.isVisible() && this.scene.characterCreator,
             this.scene.fishing && this.scene.fishing.isActive() && this.scene.fishing,
             this.scene.drinkingGame && this.scene.drinkingGame.isActive() && this.scene.drinkingGame,
             this.scene.datePicker && this.scene.datePicker.isVisible() && this.scene.datePicker,

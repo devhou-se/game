@@ -110,6 +110,7 @@ class GameScene extends Phaser.Scene {
             // A saved character choice replaces the default player sprite
             // (must happen before SpriteSystem reads config.player)
             CharacterSelect.applySaved(this.config);
+            CharacterCreator.applySaved(this.config);
 
             // Apply game settings from config
             this.GRID_SIZE = this.config.game.gridSize;
@@ -123,6 +124,9 @@ class GameScene extends Phaser.Scene {
             // Initialize systems
             this.spriteSystem = new SpriteSystem(this);
             this.spriteSystem.initialize(this.config);
+            // a saved custom character's recoloured frames must exist before
+            // createAnimations builds the custom walk cycles from them
+            CharacterCreator.buildSavedTextures(this);
             this.spriteSystem.createAnimations();
 
             this.roomManager = new RoomManager(this);
@@ -224,6 +228,7 @@ class GameScene extends Phaser.Scene {
             this.fishing = new Fishing(this);
             this.drinkingGame = new DrinkingGame(this);
             this.characterSelect = new CharacterSelect(this);
+            this.characterCreator = new CharacterCreator(this);
             this.dayNight = new DayNight(this);
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
@@ -231,8 +236,17 @@ class GameScene extends Phaser.Scene {
             // Create HUD
             this.createHUD();
 
+            // custom characters wear their chosen name above their head
+            this.playerNameLabel = null;
+            this.syncPlayerNameLabel();
+
             // playable — drop the loading screen
             if (window.hideLoader) window.hideLoader();
+
+            // first ever visit: make your own character before you set off
+            if (CharacterCreator.shouldAutoShow()) {
+                this.characterCreator.show({ firstRun: true });
+            }
 
         } catch (error) {
             console.error('Error creating game scene:', error);
@@ -307,6 +321,31 @@ class GameScene extends Phaser.Scene {
                 }
             }
         }
+    }
+
+    /**
+     * A player using a created character shows their chosen name above their
+     * head (NPC-label style). Cast characters stay unlabelled, as before.
+     * Idempotent; runs at boot and after every character switch.
+     */
+    syncPlayerNameLabel() {
+        const isCustom = (this.player.baseSpriteKey || '').startsWith('custom_');
+        const name = isCustom ? (this.config.player.name || '') : '';
+        if (name && !this.playerNameLabel) {
+            this.playerNameLabel = this.add.text(0, 0, name, {
+                fontSize: '16px',
+                fill: '#ffe97f',
+                fontFamily: 'PixelOperatorMonoBold',
+                backgroundColor: '#000000'
+            });
+            this.playerNameLabel.setOrigin(0.5, 1);
+            this.playerNameLabel.setDepth(900);
+            this.playerNameLabel.setResolution(1);
+        } else if (!name && this.playerNameLabel) {
+            this.playerNameLabel.destroy();
+            this.playerNameLabel = null;
+        }
+        if (this.playerNameLabel) this.playerNameLabel.setText(name);
     }
 
     createHUD() {
@@ -860,6 +899,13 @@ class GameScene extends Phaser.Scene {
         }
         this.roomManager.rooms[this.roomManager.currentRoom].npcs.forEach(npc => npc.settleIdle());
         this.npcManager.updateLabels();
+        if (this.playerNameLabel && this.player) {
+            this.playerNameLabel.setPosition(
+                this.player.sprite.x,
+                this.player.sprite.y - this.GRID_SIZE / 2 - 5
+            );
+            this.playerNameLabel.setVisible(this.player.sprite.visible);
+        }
         this.updateCharacterDepths();
         if (this.debugManager) this.debugManager.update();
         // Achievement "Paint the board": record the tile the player stands on.
