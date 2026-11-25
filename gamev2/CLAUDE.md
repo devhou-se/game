@@ -37,6 +37,8 @@ Then navigate to `http://localhost:8000` in your browser.
 - `src/Character.js` - Character movement class with grid-based tweening
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
+- `src/TitleScreen.js` - Title / splash screen shown at boot (cast line-up, press SPACE / tap to start)
+- `assets/portraits/` - Optional hand-drawn character portraits (`manifest.json` + `<name>.png`, see its README)
 - `src/Voice.js` - Spoken NPC dialogue (lazy per-line audio clips) and the shared mute setting
 - `editor/` - Visual editor for editing game configuration
   - `editor/index.html` - Entry point for the visual editor (access at `/editor/`)
@@ -120,6 +122,40 @@ Semi-transparent bar at top showing: `{game.title} | {currentRoom} | {game.date}
 - Depth 1000+ to render above game elements
 - Menu button (right-aligned) opens MenuManager on click
 
+### Title Screen and Character Portraits (issue #9)
+
+**Title screen** (`src/TitleScreen.js`, `scene.titleScreen`): shown on every page load, after
+`window.hideLoader()` and BEFORE the first-run character creator — `GameScene.create()` passes the rest of
+the boot flow (the `CharacterCreator.shouldAutoShow()` check) as the `show(onStart)` callback. It draws the
+game title (`config.game.title`), the cast (`CharacterSelect.available()`) lined up at 5x with a small hop
+travelling along the line, and a blinking start prompt, at depth 9000 on an opaque backdrop the colour of
+the HTML loader.
+- SPACE / ENTER / ESC (so touch A and B too) or a tap/click anywhere dismisses it. While it is up it is
+  **priority 0 in `InputHandler.handleInput()`**: no movement, menu or overlay input reaches the game.
+  The triple-backtick debug chord is ignored too (`DebugManager.onBacktick` checks `titleScreen.isVisible()`).
+- **`?notitle=1` skips it** — use it in tests and dev URLs that drive input straight after boot
+  (the loader contract is unchanged: `#loader` is removed as before and the scene is live underneath).
+- **In-game reloads skip it once**: `setGameDate()` (Time Travel / the HUD date) navigates with a full page
+  load, so it sets the one-shot `sessionStorage` flag `gamev2_skip_title` first and `TitleScreen.shouldShow()`
+  consumes it — a date hop lands straight back in the world, while a manual refresh of that URL shows the
+  title again. Any future in-game action that reloads the page should set the same flag.
+
+**Dialogue portrait** (`DialogueManager.showPortrait`): the speaker is shown dating-sim style as a large
+bust in the same wooden frame as the blog photo (`drawFrame`, shared by both), standing on the panel's
+top-left corner with the name plate bridging frame and panel. The blog-photo frame keeps the top-right;
+the two never overlap (20px gap) and share a bottom edge (`panelY - 12`). The bust is the head-and-shoulders band of `<name>_front_frame_0`
+(`DialogueManager.BUST`, a 48x40 crop) at 5x in a 240x200 window. A speaker whose sprite is not a
+directional `<name>_front` 64px character sprite falls back to the old look (`showFullSprite`: whole sprite
+at 2x centred above the panel, name above it).
+
+**Real art drop-in, no code change**: put `assets/portraits/<name>.png` in place and add `<name>` to
+`assets/portraits/manifest.json` (`{"portraits": ["bailey", ...]}`, shipped empty). `preload()` loads only
+the listed names as textures `portrait-<name>` (so a character without art never 404s; a malformed
+manifest is treated as empty; a listed name with no PNG logs one 404 and falls back to the sprite), and both the dialogue
+frame and the title line-up use that texture instead of the sprite when it exists. Size/format rules are in
+`assets/portraits/README.md` (240x200 window, 6:5; 240x200, 120x100 or 48x40 PNGs scale cleanly).
+No hand-drawn portraits exist yet — everything shown today is derived from the overworld sprites.
+
 ### Voiced Dialogue (text-to-speech)
 
 NPC dialogue can be read aloud. A resolved NPC state carrying `"voice": <voiceId>` (passed through
@@ -187,6 +223,7 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC).
 - **Movement**: WASD or arrows move 1 cell, Shift doubles speed (not distance)
 - **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
 - **Dialogue**: SPACE/ENTER advances, ESC closes
+- **Title screen**: SPACE/ENTER/ESC or a tap starts the game (`?notitle=1` skips the screen)
 - **Hidden debug menu**: triple-press backtick (``` within a second) — rows for
   the grid view/inspector, the N/E/X flag keys, map-click travel, a time-of-day
   pin (AUTO/day/dusk/night/dawn, same effect as `?tod=`), exact wallet amount

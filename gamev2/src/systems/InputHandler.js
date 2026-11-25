@@ -52,6 +52,17 @@ class InputHandler {
      * Main input update - called every frame
      */
     handleInput() {
+        // Priority 0: the title screen owns all input until it is dismissed
+        // (sync the keys that dismiss it, so the same press doesn't also pop
+        // the menu or activate something on the very next frame)
+        if (this.scene.titleScreen && this.scene.titleScreen.isVisible()) {
+            this.scene.titleScreen.handleInput();
+            this.lastKeyState.esc = this.escKey.isDown;
+            this.lastKeyState.space = this.spaceKey.isDown || this.enterKey.isDown;
+            this.lastKeyState.enter = this.enterKey.isDown;
+            return;
+        }
+
         // Priority 0: no input at all while riding the train
         if (this.scene.trainTravel && this.scene.trainTravel.riding) return;
 

@@ -1,4 +1,21 @@
 class DialogueManager {
+    /**
+     * Head-and-shoulders band of a 64px `<name>_front_frame_0` character
+     * sprite: the head is rows 8-37 (CharacterCreator.CUTS.front.top[0] = 38
+     * is the first torso row), so this keeps 4px of air above the hair and
+     * 6 rows of shoulders, centred on the 42px-wide body.
+     */
+    static BUST = { x: 7, y: 4, w: 48, h: 40 };
+
+    /** The portrait window inside the frame: the bust at 5x. */
+    static PORTRAIT_WINDOW = { w: 240, h: 200 };
+
+    /** `bailey_front` -> `bailey`: the name portraits are filed under. */
+    static portraitName(spriteKey) {
+        const m = /^(.+)_front$/.exec(spriteKey || '');
+        return m ? m[1] : null;
+    }
+
     constructor(scene) {
         this.scene = scene;
         this.visible = false;
@@ -48,7 +65,10 @@ class DialogueManager {
         // Calculate positions for NPC elements
         this.npcSpriteY = this.panelY - 100; // NPC sprite position
         // World: label is 5px above sprite top. At 2x scale: (GRID_SIZE/2 + 5) * 2 = 74px
+        // (only used by the full-sprite fallback; a framed portrait carries
+        // its own name plate — see showPortrait)
         const nameY = this.npcSpriteY - 74;
+        this.npcNameY = nameY;
 
         // NPC name label (styled same as world labels, scaled 2x)
         this.npcNameText = this.scene.add.text(
@@ -66,7 +86,7 @@ class DialogueManager {
         this.npcNameText.setOrigin(0.5, 1); // Bottom-center aligned like world labels
         this.npcNameText.setResolution(1);
         this.npcNameText.setScrollFactor(0);
-        this.npcNameText.setDepth(3002);
+        this.npcNameText.setDepth(3004); // above the portrait frame it straddles
         this.npcNameText.setVisible(false);
 
         // Dialogue text
@@ -120,16 +140,142 @@ class DialogueManager {
         this.currentNPC = npc;
         this.currentDialogueIndex = 0;
 
-        // Create NPC sprite (use configured scale * 2 for dialogue view)
         if (this.npcSprite) {
             this.npcSprite.destroy();
+            this.npcSprite = null;
         }
+        this.destroyPortrait();
         this.destroyPhoto();
 
-        // Blog-post photo (dated NPC state "photo") hangs in a frame beside
-        // the author; shift the author left to make room for it
+        // Blog-post photo (dated NPC state "photo") hangs in a frame on the
+        // right, above the panel
         const photoKey = npc.photo ? `photo-${npc.photo}` : null;
         const hasPhoto = !!(photoKey && this.scene.textures.exists(photoKey));
+
+        // The speaker: a framed bust standing on the panel's top-left corner
+        // (visual-novel style). Sprites without a front-facing frame set keep
+        // the old look — the whole sprite at 2x, centred above the panel.
+        if (!this.showPortrait(npc)) {
+            this.showFullSprite(npc, hasPhoto);
+        }
+        if (hasPhoto) {
+            this.showPhoto(photoKey);
+        }
+
+        // Show overlay elements
+        this.overlay.setVisible(true);
+        this.panel.setVisible(true);
+        this.npcNameText.setVisible(true);
+        this.dialogueText.setVisible(true);
+        this.continuePrompt.setVisible(true);
+
+        // Set NPC name
+        this.npcNameText.setText(npc.name);
+
+        // Display first dialogue line
+        this.updateText();
+    }
+
+    /**
+     * What to draw as the speaker's portrait, or null when the NPC has
+     * nothing bust-shaped (the caller then falls back to the full sprite).
+     *
+     *  - hand-drawn art: texture `portrait-<name>`, loaded at boot for every
+     *    name listed in assets/portraits/manifest.json (see the README there)
+     *  - otherwise the head-and-shoulders band of `<name>_front_frame_0`
+     *    (DialogueManager.BUST), for any directional 64px character sprite
+     */
+    portraitSource(npc) {
+        const textures = this.scene.textures;
+        const baseSpriteKey = npc.baseSpriteKey || npc.sprite.texture.key;
+        const name = DialogueManager.portraitName(baseSpriteKey);
+
+        if (name && textures.exists(`portrait-${name}`)) {
+            return { key: `portrait-${name}`, crop: null };
+        }
+
+        const spriteConfig = this.scene.getSpriteConfig(baseSpriteKey);
+        if (!name || !spriteConfig.isDirectional) return null;
+        const frontKey = this.scene.getDirectionalSpriteKey(baseSpriteKey, 'down');
+        const key = `${frontKey}_frame_0`;
+        if (!frontKey || !frontKey.endsWith('_front') || !textures.exists(key)) return null;
+        const src = textures.get(key).getSourceImage();
+        const b = DialogueManager.BUST;
+        if (!src || src.width < b.x + b.w || src.height < b.y + b.h) return null;
+        return { key, crop: b };
+    }
+
+    /**
+     * Frame the speaker dating-sim style: a large crisp bust in a bevelled
+     * frame that stands proud of the panel's top-left corner, with the name
+     * plate bridging frame and panel. Returns false (nothing drawn) when the
+     * NPC has no portrait source.
+     */
+    showPortrait(npc) {
+        const source = this.portraitSource(npc);
+        if (!source) return false;
+
+        const { w: winW, h: winH } = DialogueManager.PORTRAIT_WINDOW;
+        const border = 20;
+        const frameW = winW + border * 2;
+        const frameH = winH + border * 2;
+        // hangs 60px off the panel's left edge; its right edge stops 20px
+        // short of the blog-photo frame (which is right-aligned to the panel)
+        const frameX = this.panelX - 60;
+        const frameY = this.panelY - 12 - frameH; // same baseline as the blog-photo frame
+        const winX = frameX + border;
+        const winY = frameY + border;
+
+        this.portraitFrame = this.drawFrame(frameX, frameY, winW, winH, 0x3a4a6e);
+
+        const img = this.scene.add.image(0, 0, source.key);
+        img.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+        img.setOrigin(0, 0);
+        if (source.crop) {
+            // the bust band, at a whole-number scale that fills the window
+            const c = source.crop;
+            const scale = winW / c.w;
+            img.setCrop(c.x, c.y, c.w, c.h);
+            img.setScale(scale);
+            img.setPosition(winX - c.x * scale, winY - c.y * scale);
+        } else {
+            // hand-drawn portrait: fit the window, centred, standing on its
+            // bottom edge (whole-number scale when it is being enlarged)
+            let scale = Math.min(winW / img.width, winH / img.height);
+            if (scale > 1) scale = Math.floor(scale);
+            img.setScale(scale);
+            img.setPosition(
+                Math.round(winX + (winW - img.width * scale) / 2),
+                Math.round(winY + winH - img.height * scale)
+            );
+        }
+        img.setScrollFactor(0);
+        img.setDepth(3003);
+        this.portraitImage = img;
+
+        // name plate straddles the frame's bottom edge and the panel's top
+        this.npcNameText.setOrigin(0.5, 0.5);
+        this.npcNameText.setPosition(frameX + frameW / 2, this.panelY - 8);
+        return true;
+    }
+
+    destroyPortrait() {
+        if (this.portraitFrame) {
+            this.portraitFrame.destroy();
+            this.portraitFrame = null;
+        }
+        if (this.portraitImage) {
+            this.portraitImage.destroy();
+            this.portraitImage = null;
+        }
+    }
+
+    /**
+     * Fallback for sprites with no front-facing frame set (tiles, objects,
+     * single-image NPCs): the whole sprite at 2x centred above the panel,
+     * shifted left when a photo hangs beside it, with the name above it.
+     */
+    showFullSprite(npc, hasPhoto) {
         const spriteX = this.scene.cameras.main.width / 2 - (hasPhoto ? 180 : 0);
 
         // Get the base sprite key and config
@@ -177,39 +323,18 @@ class DialogueManager {
         // Enable pixel-perfect rendering (no anti-aliasing)
         this.npcSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
 
-        if (hasPhoto) {
-            this.showPhoto(photoKey);
-        }
-        this.npcNameText.setX(spriteX);
-
-        // Show overlay elements
-        this.overlay.setVisible(true);
-        this.panel.setVisible(true);
-        this.npcNameText.setVisible(true);
-        this.dialogueText.setVisible(true);
-        this.continuePrompt.setVisible(true);
-
-        // Set NPC name
-        this.npcNameText.setText(npc.name);
-
-        // Display first dialogue line
-        this.updateText();
+        this.npcNameText.setOrigin(0.5, 1); // sits on top of the sprite, like world labels
+        this.npcNameText.setPosition(spriteX, this.npcNameY);
     }
 
     /**
-     * Hang the blog-post photo in a chunky wooden pixel frame beside the
-     * author, right-aligned with the dialogue panel. Photos are 160×144
-     * pixel-art prints (tools/photo_pixelize.py) shown at 2x.
+     * A chunky wooden pixel frame around a winW x winH window whose backing
+     * colour is `inset`. (x, y) is the frame's outer top-left; the window
+     * starts 20px in (4px outline + 12px wood + 4px inner inset).
      */
-    showPhoto(photoKey) {
-        const photoW = 160 * 2;
-        const photoH = 144 * 2;
-        const border = 20;   // 4px outline + 12px wood + 4px inner inset
-        const frameW = photoW + border * 2;
-        const frameH = photoH + border * 2;
-        const frameX = this.panelX + this.panelWidth - frameW;
-        const frameY = this.panelY - 12 - frameH;
-
+    drawFrame(x, y, winW, winH, inset) {
+        const frameX = x, frameY = y;
+        const frameW = winW + 40, frameH = winH + 40;
         const g = this.scene.add.graphics();
         g.fillStyle(0x1f1410, 1);   // outline
         g.fillRect(frameX, frameY, frameW, frameH);
@@ -221,11 +346,32 @@ class DialogueManager {
         g.fillStyle(0x6e4526, 1);   // bevel shadow (bottom + right)
         g.fillRect(frameX + 4, frameY + frameH - 8, frameW - 8, 4);
         g.fillRect(frameX + frameW - 8, frameY + 4, 4, frameH - 8);
-        g.fillStyle(0x2a1c10, 1);   // inner inset around the print
-        g.fillRect(frameX + 16, frameY + 16, photoW + 8, photoH + 8);
+        g.fillStyle(0x2a1c10, 1);   // inner inset around the window
+        g.fillRect(frameX + 16, frameY + 16, winW + 8, winH + 8);
+        if (inset !== undefined) {
+            g.fillStyle(inset, 1);  // backdrop behind a transparent picture
+            g.fillRect(frameX + 20, frameY + 20, winW, winH);
+        }
         g.setScrollFactor(0);
         g.setDepth(3002);
-        this.photoFrame = g;
+        return g;
+    }
+
+    /**
+     * Hang the blog-post photo in a chunky wooden pixel frame on the right,
+     * right-aligned with the dialogue panel. Photos are 160×144 pixel-art
+     * prints (tools/photo_pixelize.py) shown at 2x.
+     */
+    showPhoto(photoKey) {
+        const photoW = 160 * 2;
+        const photoH = 144 * 2;
+        const border = 20;
+        const frameW = photoW + border * 2;
+        const frameH = photoH + border * 2;
+        const frameX = this.panelX + this.panelWidth - frameW;
+        const frameY = this.panelY - 12 - frameH;
+
+        this.photoFrame = this.drawFrame(frameX, frameY, photoW, photoH);
 
         this.photoImage = this.scene.add.image(frameX + border, frameY + border, photoKey);
         this.photoImage.setOrigin(0, 0);
@@ -285,6 +431,7 @@ class DialogueManager {
             this.npcSprite.destroy();
             this.npcSprite = null;
         }
+        this.destroyPortrait();
         this.destroyPhoto();
 
         // Hide overlay elements

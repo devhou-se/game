@@ -88,6 +88,10 @@ function setGameDate(iso) {
         String(d.getDate()).padStart(2, '0');
     if (!iso || iso === todayIso) params.delete('date'); else params.set('date', iso);
     const qs = params.toString();
+    // a date hop is an in-game action that happens to reload the page: don't
+    // drop the player back on the title screen (one-shot, consumed by
+    // TitleScreen.shouldShow on the next load)
+    try { sessionStorage.setItem('gamev2_skip_title', '1'); } catch (e) { /* storage blocked */ }
     location.href = location.pathname + (qs ? '?' + qs : '');
 }
 

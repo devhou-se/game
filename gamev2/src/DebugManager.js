@@ -109,6 +109,9 @@ class DebugManager {
 
     // ---- the hidden debug menu (triple-backtick) ----
     onBacktick() {
+        // the title screen owns all input; don't open the menu hidden behind it
+        const title = this.scene.titleScreen;
+        if (title && title.isVisible()) { this._backtickTimes = []; return; }
         const now = Date.now();
         this._backtickTimes = this._backtickTimes.filter(t => now - t < 900);
         this._backtickTimes.push(now);

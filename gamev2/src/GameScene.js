@@ -41,6 +41,21 @@ class GameScene extends Phaser.Scene {
             for (const ad of (data.ads || [])) this.load.image(ad.key, `assets/ads/${ad.file}`);
         });
 
+        // Hand-drawn character portraits (issue #9): only the names listed in
+        // the manifest are requested, so a character without art never 404s.
+        // Dialogue and the title screen use `portrait-<name>` when it exists
+        // and fall back to the character's sprite — see assets/portraits/README.md
+        this.load.json('portraitManifest', `assets/portraits/manifest.json?t=${Date.now()}`);
+        this.load.once('filecomplete-json-portraitManifest', (key, type, data) => {
+            // tolerate a hand-edited manifest that isn't { "portraits": [names] }
+            const names = Array.isArray(data && data.portraits) ? data.portraits : [];
+            const t = Date.now(); // replaced art must not be served stale
+            for (const name of names) {
+                if (typeof name !== 'string' || !/^[\w-]+$/.test(name)) continue;
+                this.load.image(`portrait-${name}`, `assets/portraits/${name}.png?t=${t}`);
+            }
+        });
+
         // Dynamically load sprite frames for animations when config loads
         this.load.once('filecomplete-json-config', (key, type, data) => {
             // Maps are authored in Tiled: enqueue every room's .tmj (files added
@@ -230,6 +245,7 @@ class GameScene extends Phaser.Scene {
             this.drinkingGame = new DrinkingGame(this);
             this.characterSelect = new CharacterSelect(this);
             this.characterCreator = new CharacterCreator(this);
+            this.titleScreen = new TitleScreen(this);
             this.dayNight = new DayNight(this);
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
@@ -244,9 +260,17 @@ class GameScene extends Phaser.Scene {
             // playable — drop the loading screen
             if (window.hideLoader) window.hideLoader();
 
-            // first ever visit: make your own character before you set off
-            if (CharacterCreator.shouldAutoShow()) {
-                this.characterCreator.show({ firstRun: true });
+            // title screen first (every load; ?notitle=1 skips it), then on
+            // the first ever visit: make your own character before you set off
+            const begin = () => {
+                if (CharacterCreator.shouldAutoShow()) {
+                    this.characterCreator.show({ firstRun: true });
+                }
+            };
+            if (TitleScreen.shouldShow()) {
+                this.titleScreen.show(begin);
+            } else {
+                begin();
             }
 
         } catch (error) {
