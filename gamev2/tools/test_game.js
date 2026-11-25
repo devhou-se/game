@@ -15,7 +15,7 @@ const ctx = vm.createContext({
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
-    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js'].forEach(load);
+    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
 // A Shop with no Phaser behind it: the save blob comes from (and goes to) `store`.
@@ -177,6 +177,48 @@ const tests = {
             }
         }
         assert.deepStrictEqual(stale, []);
+    },
+
+    'creator donor sprites have no see-through holes, and every clothing colour is in their palette'() {
+        const png = require('./png');
+        const donors = JSON.parse(game('JSON.stringify(CharacterCreator.DONORS)'));
+        const cuts = JSON.parse(game('JSON.stringify(CharacterCreator.CUTS)'));
+        const hex = (d, i) => '#' + [d[i], d[i + 1], d[i + 2]].map((v) => v.toString(16).padStart(2, '0')).join('');
+        const bad = [];
+        for (const [name, def] of Object.entries(donors)) {
+            for (const [dir, cut] of Object.entries(cuts)) {
+                cut.top.forEach((topStart, frame) => {
+                    const file = `${name}_${dir}_frame_${frame}`;
+                    const { width: W, height: H, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', file + '.png')));
+                    // flood the transparent background in from the border: what is left is a hole
+                    const outside = new Uint8Array(W * H), stack = [];
+                    for (let x = 0; x < W; x++) stack.push(x, (H - 1) * W + x);
+                    for (let y = 0; y < H; y++) stack.push(y * W, y * W + W - 1);
+                    while (stack.length) {
+                        const p = stack.pop();
+                        if (outside[p] || data[p * 4 + 3] !== 0) continue;
+                        outside[p] = 1;
+                        const x = p % W;
+                        if (x > 0) stack.push(p - 1);
+                        if (x < W - 1) stack.push(p + 1);
+                        if (p >= W) stack.push(p - W);
+                        if (p < W * (H - 1)) stack.push(p + W);
+                    }
+                    let holes = 0;
+                    const stray = new Set();
+                    for (let p = 0; p < W * H; p++) {
+                        if (data[p * 4 + 3] === 0) { if (!outside[p]) holes++; continue; }
+                        const y = (p - p % W) / W, c = hex(data, p * 4);
+                        // the torso band holds only outline, skin, hair and the donor's top/legs colours
+                        if (y >= topStart && y < cut.bottom[frame] && c !== '#000000'
+                            && !['skin', 'hair', 'top', 'legs'].some((slot) => def[slot].includes(c))) stray.add(c);
+                    }
+                    if (holes) bad.push(`${file}: ${holes} transparent pixel(s) inside the sprite`);
+                    if (stray.size) bad.push(`${file}: torso colour(s) ${[...stray].join(' ')} not in DONORS.${name}`);
+                });
+            }
+        }
+        assert.deepStrictEqual(bad, []);
     },
 
     'the retired office-bin sprite is gone, and nothing still points at its palette slot'() {

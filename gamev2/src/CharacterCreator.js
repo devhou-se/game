@@ -40,7 +40,7 @@ class CharacterCreator {
         james:  { skin: ['#f6c39a', '#fdcba2'], hair: ['#3c2e20'],            top: ['#a53137', '#ea757b'], legs: [] },
         bailey: { skin: ['#f4bc8e'],            hair: ['#58371b'],            top: ['#327345', '#63c64d'], legs: ['#afbfd2'] },
         damian: { skin: ['#f9cba4', '#f4bc8e'], hair: ['#e6af3a', '#ffd962'], top: ['#fa7c00'],            legs: ['#327345', '#63c64d'] },
-        dylan:  { skin: ['#fdcba2'],            hair: ['#1c150e'],            top: ['#193d3f'],            legs: [] },
+        dylan:  { skin: ['#fdcba2'],            hair: ['#1c150e'],            top: ['#193d3f', '#245a5c'], legs: [] },
         julia:  { skin: ['#f2ab70'],            hair: ['#150b06'],            top: ['#032e48', '#011a29'], legs: ['#d9d9d9'] },
     };
 
