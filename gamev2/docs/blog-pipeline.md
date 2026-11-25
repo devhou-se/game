@@ -37,7 +37,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   assets (both are fingerprinted before and after). Nothing leaves the machine: `--mock` for the LLM, local
   stand-ins for the photo download and the ElevenLabs call, `anthropic` un-importable, every socket connect
   refused and counted. The result is checked against the written config AND through the game's own code
-  (`node tools/play.js --config=<scratch>/config.json`: every NPC resolved on every day from 4 Feb to 1 Mar
+  (`node tools/play.js --config=<scratch>/config.json`: every NPC resolved on every day from 19 Jan to 1 Mar
   2027, plus `check`). Run it after touching `blog_to_npc.py`, a Hokkaido map, the trips or the cast.
   What it needs from the tools:
   - `--mock` is steerable: a payload's `"mock": {"spot", "dialogue", "drunk"}` overrides the canned

@@ -24,7 +24,7 @@ Nothing real is touched and nothing leaves the machine:
 
 The result is checked twice: against the written config (states, photos,
 clips) and through the game's own code — `node tools/play.js --config=…`
-resolves every NPC on every day from 4 February to 1 March 2027 and runs the
+resolves every NPC on every day from 19 January to 1 March 2027 and runs the
 world check — so what is asserted is what a player would meet.
 
 Run from gamev2/:
@@ -65,7 +65,7 @@ import post_voice  # noqa: E402
 
 TRIP = 'devhouse3'
 MEMBERS = ['Bailey', 'Damian', 'Dylan', 'Julia', 'Khoi', 'Sam', 'Xander']
-FIRST_DAY, LAST_DAY = '2027-02-04', '2027-03-01'      # the lead-in opens … the day after the trip
+FIRST_DAY, LAST_DAY = '2027-01-19', '2027-03-01'      # the lead-in opens … the day after the trip
 PHOTO_URL = 'https://rehearsal.invalid/photo-{}.png'   # .invalid never resolves (RFC 2606)
 
 

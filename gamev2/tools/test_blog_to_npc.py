@@ -821,7 +821,7 @@ def test_post_date(cfg):
     assert day('2027-02-17T23:15:00+00:00') == '2027-02-18'
     assert day('2027-02-11T20:00:00Z') == '2027-02-12'
     # the first hours of the first lead-in day are still devhouse 2's day in UTC
-    assert day('2027-02-03T16:00:00Z') == '2027-02-04' and day('2027-02-03T14:59:00Z') == '2027-02-03'
+    assert day('2027-01-18T16:00:00Z') == '2027-01-19' and day('2027-01-18T14:59:00Z') == '2027-01-18'
     # any zone is the same moment
     assert day('2027-02-18T08:15:00+09:00') == '2027-02-18' and day('2027-02-18T10:15:00+11:00') == '2027-02-18'
     # nothing to convert: a bare date, a time with no zone, a trip with no offset, no trips
@@ -977,10 +977,17 @@ def test_trips(base_cfg):
     assert b.trip_window(cfg, '2027-02-25')['from'] == '2027-02-25'
     assert b.trip_window(cfg, '2026-11-25')['trip']['id'] == 'devhouse2'
     assert b.trip_window({'rooms': {}}, '2027-02-20') is None
-    # a trip opens a fortnight before it starts (the lead-in): its posts, nobody at the base yet
-    assert b.trip_window(cfg, '2027-02-03')['trip']['id'] == 'devhouse2'
+    # a trip opens before it starts (the lead-in — a fortnight, or its `lead` days: 30 for devhouse 3, #170):
+    # its posts, nobody at the base yet
+    assert trips['devhouse3'].get('lead') == 30
+    assert b.trip_window(cfg, '2027-01-18')['trip']['id'] == 'devhouse2'
+    early = b.trip_window(cfg, '2027-01-19')
+    assert (early['trip']['id'], early['early'], early['from']) == ('devhouse3', True, '2027-01-19'), early
+    no_lead = copy.deepcopy(cfg)
+    del next(t for t in no_lead['trips'] if t['id'] == 'devhouse3')['lead']
+    assert b.trip_window(no_lead, '2027-02-03')['trip']['id'] == 'devhouse2' and b.trip_window(no_lead, '2027-02-04')['from'] == '2027-02-04'
     lead = b.trip_window(cfg, '2027-02-10')
-    assert (lead['trip']['id'], lead['early'], lead['from']) == ('devhouse3', True, '2027-02-04'), lead
+    assert (lead['trip']['id'], lead['early'], lead['from']) == ('devhouse3', True, '2027-01-19'), lead
     assert b.trip_window(cfg, '2027-02-18')['early'] is False and b.trip_window(cfg, '2025-09-01')['early'] is False
     cfg_l = copy.deepcopy(cfg)
     for name in seven:

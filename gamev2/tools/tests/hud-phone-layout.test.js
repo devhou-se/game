@@ -4,7 +4,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         // the HUD's metrics: PixelOperatorMono at 16px is 16px a character; 1280 wide, 10px padding, "menu" right-aligned
         const CH = 16, PAD = 10, MENU_LEFT = 1280 - PAD - 4 * CH;
         const right = (room, label, money) => PAD + CH * `${config.game.title} | ${room} | ${label} | ${money}`.length;
-        const days = [...game('contentChangeDates')(config)].sort().concat('2027-02-20', '2027-02-26', '2026-11-25', '2027-02-04', '2027-02-17');
+        const days = [...game('contentChangeDates')(config)].sort().concat('2027-02-20', '2027-02-26', '2026-11-25', '2027-01-18', '2027-01-19', '2027-02-04', '2027-02-17');
         let dropped = 0, kept = 0;
         for (const def of Object.values(config.rooms)) {
             for (const iso of days) {
@@ -14,7 +14,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
                     assert.ok(fits(label), `${def.name} on ${iso} with ${money}: "${label}" ends at ${right(def.name, label, money)}`);
                     assert.ok(label.endsWith(fmt(iso)));
                     if (T.during(T.forDate(trips, iso), iso)) (label === fmt(iso) ? dropped++ : kept++);
-                    else if (T.leadIn(trips, iso)) assert.ok(label === fmt(iso) || /^devhouse 3 (in 14 days|in 14d|tomorrow|in 1d|soon) · /.test(label), label);
+                    else if (T.leadIn(trips, iso)) assert.ok(label === fmt(iso) || /^devhouse 3 (in 30 days|in 30d|in 14 days|in 14d|tomorrow|in 1d|soon) · /.test(label), label);
                     else assert.strictEqual(label, fmt(iso));
                 }
             }

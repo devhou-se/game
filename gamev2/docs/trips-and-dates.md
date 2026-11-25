@@ -32,7 +32,8 @@ devhouse 2 has none on purpose — its history was written with UTC dates, and a
 
 **The trip a game date belongs to** (`Trips.forDate`) is the latest one that has OPENED by then — the
 days after a trip still belong to it — or the first trip for a date before them all. A trip opens
-`"lead"` days before its `start` (default `Trips.LEAD`, 14; `trip.opens`): a post from the travel days on
+`"lead"` days before its `start` (default `Trips.LEAD`, 14; `trip.opens`; devhouse 3 says `"lead": 30`, so it opens on 19 January 2027 and a
+planning post up to 30 days out is its own — issue #170): a post from the travel days on
 the way there is that trip's content day, not the previous trip's (it would otherwise join the previous
 trip's cycle and shift the between-trips default date). On those lead-in days (`windowFor(...).early`)
 the previous trip is history and the new trip's base NPCs are not standing anywhere yet — only people

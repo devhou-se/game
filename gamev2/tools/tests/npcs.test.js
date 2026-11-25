@@ -50,13 +50,13 @@ module.exports = ({ test, assert, fs, path, GV2, ctx, game, realConfig, castOn }
         }
         const days = [...game('contentChangeDates')(config)].filter(d => d < '2027').sort();
         assert.ok(days.length > 20);
-        for (const d of days.concat('2025-09-01', '2026-11-25', '2027-02-03')) {
+        for (const d of days.concat('2025-09-01', '2026-11-25', '2027-01-18')) {
             const cast = castOn(config, d);
             assert.ok(!cast.some(c => /\/(Khoi|Sam|Xander)$/.test(c)), `${d}: ${cast}`);
             assert.ok(cast.some(c => /\/(Bailey|Damian|Dylan|Julia)$/.test(c)), `${d}: devhouse 2 is there`);
         }
-        // the fortnight before devhouse 3 is its lead-in: devhouse 2 is history and nobody stands at the base yet
-        for (const d of ['2027-02-04', '2027-02-10', '2027-02-17']) assert.deepStrictEqual(castOn(config, d), [], d);
+        // the 30 days before devhouse 3 are its lead-in: devhouse 2 is history and nobody stands at the base yet
+        for (const d of ['2027-01-19', '2027-02-04', '2027-02-10', '2027-02-17']) assert.deepStrictEqual(castOn(config, d), [], d);
         // the base lines are neutral: nobody is still waiting for a trip they are on
         const resolveNpc = game('resolveNpc'), trips = game('Trips.of')(config);
         for (const room of ['Sapporo', 'Asahikawa']) {

@@ -67,8 +67,8 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
         assert.strictEqual(defaultGameDate('2026-06-01', [], trips), '2026-06-01');
         // which trip a date belongs to, and where the group is based
         const trip = (d) => T.forDate(trips, d).id;
-        assert.deepStrictEqual(['2025-01-01', '2025-11-02', '2026-11-25', '2027-02-03', '2027-02-04', '2027-02-18', '2027-06-01'].map(trip),
-            ['devhouse2', 'devhouse2', 'devhouse2', 'devhouse2', 'devhouse3', 'devhouse3', 'devhouse3']);
+        assert.deepStrictEqual(['2025-01-01', '2025-11-02', '2026-11-25', '2027-01-18', '2027-01-19', '2027-02-04', '2027-02-18', '2027-06-01'].map(trip),
+            ['devhouse2', 'devhouse2', 'devhouse2', 'devhouse2', 'devhouse3', 'devhouse3', 'devhouse3', 'devhouse3']);
         const d3 = trips[1];
         assert.deepStrictEqual(['2027-02-18', '2027-02-24', '2027-02-25', '2027-02-28'].map(d => T.stayFor(d3, d).room),
             ['Sapporo', 'Sapporo', 'Asahikawa', 'Asahikawa']);
@@ -78,24 +78,33 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
         assert.strictEqual(T.of({ trips: [{ id: 'x' }, { id: 'y', start: '2027-02-18', end: '2027-02-01' }] }).length, 0, 'bad trips are dropped');
     });
 
-    test('a trip opens a fortnight before it starts: a travel-day post is its own, not the last trip\'s', () => {
+    test('a trip opens before it starts (a fortnight, or its `lead` days: devhouse 3 opens 30 days ahead, #170): a post from then is its own, not the last trip\'s', () => {
         const defaultGameDate = game('defaultGameDate'), T = game('Trips'), resolveNpc = game('resolveNpc');
         const trips = T.of(realConfig());
         const d2 = [...game('contentChangeDates')(realConfig())].filter(d => d < '2027').sort();
-        assert.strictEqual(trips[1].opens, '2027-02-04');
+        assert.strictEqual(realConfig().trips[1].lead, 30, 'devhouse 3 says its own lead-in');
+        assert.strictEqual(trips[1].opens, '2027-01-19');
+        assert.strictEqual(T.of({ trips: [{ id: 'a', start: '2027-02-18', end: '2027-02-20' }] })[0].opens, '2027-02-04', 'a trip that says nothing opens a fortnight ahead');
         assert.strictEqual(T.of({ trips: [{ id: 'a', start: '2027-02-18', end: '2027-02-20', lead: 2 }] })[0].opens, '2027-02-16');
         assert.strictEqual(T.addDays('2027-03-01', -1), '2027-02-28');
         // the lead-in window: open, not started
         const w = T.windowFor(trips, '2027-02-10');
-        assert.deepStrictEqual([w.trip.id, w.early, w.from], ['devhouse3', true, '2027-02-04']);
+        assert.deepStrictEqual([w.trip.id, w.early, w.from], ['devhouse3', true, '2027-01-19']);
         assert.strictEqual(T.windowFor(trips, '2027-02-18').early, false);
         assert.strictEqual(T.windowFor(trips, '2025-09-01').early, false, 'before the first trip is not a lead-in');
         assert.strictEqual(T.during(trips[1], '2027-02-10'), false, 'not a trip day: no underline, and the HUD counts down to it instead');
         // a post on the way there is a devhouse 3 day, and leaves devhouse 2's days — and today's default — alone
         const withPost = d2.concat('2027-02-10');
+        // a planning post four weeks out (#170) is devhouse 3's too, and is what a visitor that week opens on
+        const planned = d2.concat('2027-01-21');
+        assert.deepStrictEqual(Array.from(T.daysOf(trips, trips[0], planned)), d2);
+        assert.deepStrictEqual(Array.from(T.daysOf(trips, trips[1], planned)), ['2027-01-21']);
+        assert.strictEqual(defaultGameDate('2027-01-25', planned, trips), '2027-01-21');
+        assert.strictEqual(defaultGameDate('2027-01-25', d2, trips), defaultGameDate('2027-01-25', d2, []), 'no post yet: still devhouse 2');
+        assert.strictEqual(defaultGameDate('2027-01-18', planned, trips), defaultGameDate('2027-01-18', d2, trips), 'the day before it opens');
         assert.deepStrictEqual(Array.from(T.daysOf(trips, trips[0], withPost)), d2);
         assert.deepStrictEqual(Array.from(T.daysOf(trips, trips[1], withPost)), ['2027-02-10']);
-        for (const today of ['2026-11-25', '2027-02-03']) {
+        for (const today of ['2026-11-25', '2027-01-18']) {
             assert.strictEqual(defaultGameDate(today, withPost, trips), defaultGameDate(today, d2, trips), today);
         }
         assert.strictEqual(defaultGameDate('2027-02-12', withPost, trips), '2027-02-10', 'in the lead-in, with a post: that post');
@@ -121,9 +130,10 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
     test('the lead-in days say the trip has not started: HUD countdown, intro, and a start at the base to come (#164)', () => {
         const config = realConfig(), T = game('Trips'), trips = T.of(config), fmt = game('formatGameDate');
         const lead = (d) => { const l = T.leadIn(trips, d); return l && [l.trip.id, l.days, l.stay.room]; };
+        assert.deepStrictEqual(lead('2027-01-19'), ['devhouse3', 30, 'Sapporo']);
         assert.deepStrictEqual(lead('2027-02-04'), ['devhouse3', 14, 'Sapporo']);
         assert.deepStrictEqual(lead('2027-02-17'), ['devhouse3', 1, 'Sapporo']);
-        for (const d of ['2027-02-03', '2027-02-18', '2027-02-26', '2027-03-01', '2025-09-01', '2025-11-02']) assert.strictEqual(lead(d), null, d);
+        for (const d of ['2027-01-18', '2027-02-18', '2027-02-26', '2027-03-01', '2025-09-01', '2025-11-02']) assert.strictEqual(lead(d), null, d);
         assert.strictEqual(T.upcoming(trips, '2027-02-10').id, 'devhouse3');
         assert.strictEqual(T.upcoming(trips, '2027-02-18'), null);
         assert.strictEqual(T.upcoming(trips, '2026-11-25'), null);
@@ -138,10 +148,12 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
         const inSapporo = (label) => 10 + 16 * `${config.game.title} | Sapporo | ${label} | ¥5,000`.length <= 1280 - 10 - 64 - 20;
         assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, inSapporo), 'devhouse 3 in 8d · February 10 2027');
         assert.strictEqual(T.dateLabel(trips, '2027-02-04', fmt, inSapporo), 'devhouse 3 in 14d · February 4 2027');
-        assert.strictEqual(T.dateLabel(trips, '2027-02-03', fmt), 'February 3 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-01-19', fmt), 'devhouse 3 in 30 days · January 19 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-01-19', fmt, inSapporo), 'devhouse 3 in 30d · January 19 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-01-18', fmt), 'January 18 2027');
         assert.strictEqual(T.dateLabel(trips, '2027-03-01', fmt), 'March 1 2027');
         // nobody is anywhere, so everyone starts at the base the group will arrive at
-        for (const d of ['2027-02-04', '2027-02-10', '2027-02-17']) {
+        for (const d of ['2027-01-19', '2027-02-04', '2027-02-10', '2027-02-17']) {
             assert.strictEqual(T.membersByRoom(config, d).length, 0, d);
             for (const played of [undefined, 'james', 'khoi']) {
                 assert.deepStrictEqual({ ...T.startFor(config, d, { played }) }, { room: 'Sapporo', x: 33, y: 12 }, d);
