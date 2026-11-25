@@ -138,6 +138,8 @@ for i, x in enumerate(range(3, 45)):
 # which has no seam teleport there, cannot be walked round the gate
 b.put('Collidables', 47, 19, 'shrub-small-circle_0_0'); b.solid(47, 19)
 b.solid(47, 22)
+# two cells boxed in north of the gate that no walk reaches are solid (issue #196)
+b.solid(46, 13); b.solid(47, 13)
 # the path runs out through the gate instead of ending in a rounded cap (issue #147)
 b.put('Floor', 47, 20, 'gravel-autotile_edge-n', replace=True)
 b.put('Floor', 47, 21, 'gravel-autotile_edge-s', replace=True)
