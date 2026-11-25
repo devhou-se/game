@@ -90,14 +90,12 @@ code { display: block; padding: 8px 10px; background: var(--ink); color: var(--p
         <section><h2>Rooms</h2><div id="rooms"></div></section>
     </aside>
 </div>
-<script src="../src/utils/ConfigCodec.js"></script>
-<script src="../src/utils/NpcStates.js"></script>
-<script src="../src/utils/Interactions.js"></script>
-<script src="../src/systems/TiledAdapter.js"></script>
-<script src="../src/systems/RoomManager.js"></script>
-<script src="../src/systems/CollisionSystem.js"></script>
-<script src="../src/Shop.js"></script>
-<script src="../tools/world-model.js"></script>
-<script src="studio.js"></script>
+<script>
+    for (const f of ['../src/utils/ConfigCodec.js', '../src/utils/NpcStates.js', '../src/utils/Interactions.js',
+        '../src/systems/TiledAdapter.js', '../src/systems/RoomManager.js', '../src/systems/CollisionSystem.js',
+        '../src/Shop.js', '../tools/world-model.js', 'studio.js']) {
+        document.write('<script src="' + f + '?v=' + Date.now() + '"><\/script>');
+    }
+</script>
 </body>
 </html>

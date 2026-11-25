@@ -123,8 +123,8 @@ stale v1 pipeline; prefer `doport.py`.)
 ## Rendering a map without the Tiled app
 
 `node tools/play.js render <Room> out.png [--scale 0.5] [--colliders]` draws
-`tiled/<room>.tmj` with Pillow in the game's own draw order (feet Y-sort, Tops
-bias) — use it wherever these docs say `tmxrasterizer` if Tiled isn't
+`tiled/<room>.tmj` in the game's own draw order (feet Y-sort, Tops bias; no
+dependencies) — use it wherever these docs say `tmxrasterizer` if Tiled isn't
 installed. `tools/make_worldmap.py` falls back to it automatically.
 
 ## Gotcha ledger
