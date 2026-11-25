@@ -639,6 +639,13 @@ class WorldModel {
             if (!rooms[spot.room]) problem(spot.room, undefined, undefined, `${via} names a missing room`);
             else arrive(spot.room, spot.x, spot.y, via);
         };
+        // player.start* is the fallback the first trip's home replaced: the two are one place
+        // (the editor's Spawn tool moves both, Trips.moveStart), so apart they are a mistake
+        const p = this.config.player, first = this.trips[0] && Trips.cell(this.config, this.trips[0].home);
+        if (first && (first.room !== p.startRoom || first.x !== p.startX || first.y !== p.startY)) {
+            problem(first.room, undefined, undefined, `${this.trips[0].name} home (${first.room} ${first.x},${first.y}) is not ` +
+                `player.start (${p.startRoom} ${p.startX},${p.startY}): the game opens at the trip's home, keep them the same`);
+        }
         for (const trip of this.trips) {
             start(trip.home, `${trip.name} home`);
             for (const stay of trip.stays) start(stay, `${trip.name} stay`);

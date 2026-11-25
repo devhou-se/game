@@ -70,15 +70,20 @@ class EditorApp {
                 this._status(cell);
             },
         });
-        // Spawn: set the player start (and start room) to the clicked cell.
+        // Spawn: set the player start (and start room) to the clicked cell. The game opens at the
+        // game date's trip home, so the trips that started on the old cell move with it
+        // (Trips.moveStart) and the status line says which did.
         this.registerTool({
             id: 'spawn', label: 'Spawn',
             onCell: (cell, type) => {
                 if (type !== 'down') return;
-                const p = this.config.data.player;
-                p.startRoom = this.activeRoom; p.startX = cell.x; p.startY = cell.y;
+                const moved = Trips.moveStart(this.config.data, this.activeRoom, cell.x, cell.y);
+                const trips = (this.config.data.trips || []).length;
                 this.config.markDirty(); this.canvas.setSelection(cell); this.canvas.render();
-                this.inspector.show(this.activeRoom, cell); this._status(cell);
+                this.inspector.show(this.activeRoom, cell);
+                this._status(cell, !trips ? 'spawn set'
+                    : moved.length ? `spawn set, and the home of ${moved.join(', ')}`
+                        : 'spawn set (fallback only: no trip starts here, see trips[].home)');
             },
         });
         this.tool = 'inspect';
@@ -161,10 +166,10 @@ class EditorApp {
         });
     }
 
-    _status(cell) {
+    _status(cell, note) {
         $('#status').textContent =
             `${this.activeRoom}   |   ${cell ? `cell ${cell.x},${cell.y}` : '—'}   |   zoom ${Math.round(this.canvas.cam.zoom * 100)}%` +
-            (this.config.dirty ? '   |   ● unsaved' : '');
+            (this.config.dirty ? '   |   ● unsaved' : '') + (note ? `   |   ${note}` : '');
     }
 }
 

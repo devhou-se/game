@@ -270,6 +270,27 @@ class Trips {
             { room: p.startRoom, x: p.startX, y: p.startY };
     }
 
+    /**
+     * Move the start cell (the editor's Spawn tool, issue #169): config.player's
+     * start, and with it every trip `home` and `stays` cell that stood on the
+     * old one — those are what decide where the game opens (homeFor), and
+     * player.start* is only their fallback. Returns the names of the trips
+     * that moved; a trip that starts somewhere else is left where it is.
+     */
+    static moveStart(config, room, x, y) {
+        const p = config.player || (config.player = {});
+        const was = (s) => !!s && s.room === p.startRoom && s.x === p.startX && s.y === p.startY;
+        const moved = [];
+        for (const trip of (Array.isArray(config.trips) ? config.trips : [])) {
+            if (!trip) continue;
+            const spots = [trip.home, ...(Array.isArray(trip.stays) ? trip.stays : [])].filter(was);
+            for (const s of spots) { s.room = room; s.x = x; s.y = y; }
+            if (spots.length) moved.push(trip.name || trip.id);
+        }
+        p.startRoom = room; p.startX = x; p.startY = y;
+        return moved;
+    }
+
     /** How close (in cells, either axis) a start cell must be to count as "next to" someone. */
     static NEAR = 6;
 

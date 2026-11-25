@@ -1251,6 +1251,38 @@ const tests = {
         assert.strictEqual(game('Trips').homeFor(config({ from: '2031-01-06', room: 'South' }), '2031-01-07').room, 'North');
     },
 
+    "the editor's Spawn tool moves the trip home that decides where the game opens"() {
+        const Trips = game('Trips'), WorldModel = game('WorldModel');
+        const room = (name) => ({ name, objects: [], npcs: [], layers: [], transporters: [
+            { gridX: 0, gridY: 0, targetRoom: name === 'North' ? 'South' : 'North', targetX: 1, targetY: 1 }] });
+        const config = () => ({
+            game: { gridSize: 64, worldWidth: 256, worldHeight: 192 },
+            player: { startRoom: 'North', startX: 1, startY: 1, sprite: 'bailey_front' },
+            rooms: { North: room('North'), South: room('South') },
+            trips: [
+                { id: 'a', name: 'trip a', start: '2031-01-01', end: '2031-01-09', members: [], home: { room: 'North', x: 1, y: 1 },
+                    stays: [{ from: '2031-01-01', room: 'North', x: 1, y: 1 }] },
+                { id: 'b', start: '2032-01-01', end: '2032-01-09', members: [], home: { room: 'South', x: 2, y: 1 } },
+            ],
+        });
+        const cfg = config();
+        assert.deepStrictEqual(Array.from(Trips.moveStart(cfg, 'North', 2, 2)), ['trip a'], 'the trip that started on the old cell moves');
+        assert.deepStrictEqual([cfg.player.startRoom, cfg.player.startX, cfg.player.startY], ['North', 2, 2]);
+        assert.deepStrictEqual({ ...Trips.homeFor(cfg, '2031-01-02') }, { room: 'North', x: 2, y: 2 }, 'the game opens on the new cell (home and stay)');
+        assert.deepStrictEqual({ ...Trips.homeFor(cfg, '2032-01-02') }, { room: 'South', x: 2, y: 1 }, 'a trip that starts elsewhere stays put');
+        assert.deepStrictEqual(Array.from(Trips.moveStart(cfg, 'South', 2, 1)), ['trip a'], 'moving onto another trip\'s home does not claim it');
+        assert.deepStrictEqual(Array.from(Trips.moveStart({ player: {}, rooms: {} }, 'North', 1, 1)), [], 'no trips: just the player start');
+
+        // and the world check fails when the two drift apart (a hand edit of one of them)
+        const drift = (c) => new WorldModel(c, { exists: () => true, sizeOf: () => [1, 1] }, { date: '2031-01-02' })
+            .survey(['2031-01-02']).problems.filter(p => /is not player\.start/.test(p.text));
+        assert.strictEqual(drift(config()).length, 0, 'in step');
+        const apart = config();
+        apart.player.startX = 2;
+        assert.strictEqual(drift(apart).length, 1, 'player.start moved without the first trip');
+        assert.strictEqual(drift(cfg).length, 0, 'the Spawn tool keeps them together');
+    },
+
     'play.js and the studio model the stitched Tokyo the game plays'() {
         const { world } = worldWith(true);
         const rm = world.roomManager;
