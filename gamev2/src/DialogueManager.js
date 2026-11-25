@@ -223,7 +223,7 @@ class DialogueManager {
         this.continuePrompt = this.scene.add.text(
             this.scene.cameras.main.width / 2,
             this.panelY + this.panelHeight - 30,
-            'SPACE/ENTER: continue | ESC: close',
+            DialogueManager.hintText(this.scene.touchControls && this.scene.touchControls.enabled, ''),
             {
                 fontSize: '16px',
                 fill: '#888888',
@@ -565,7 +565,13 @@ class DialogueManager {
     showPage() {
         this.dialogueText.setText(this.pages[this.currentPage].join('\n'));
         const more = this.pages.length > 1 ? ` (${this.currentPage + 1}/${this.pages.length})` : '';
-        this.continuePrompt.setText(`SPACE/ENTER: continue${more} | ESC: close`);
+        this.continuePrompt.setText(DialogueManager.hintText(
+            this.scene.touchControls && this.scene.touchControls.enabled, more));
+    }
+
+    /** The line under the dialogue text, worded for how this player advances it. */
+    static hintText(touch, more) {
+        return touch ? `TAP: continue${more} | B: close` : `SPACE/ENTER: continue${more} | ESC: close`;
     }
 
     advance() {

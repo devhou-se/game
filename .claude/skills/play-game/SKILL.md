@@ -75,7 +75,8 @@ Everything marked is also listed under the map with its exact cell.
   transporters as walls unless one is the destination, so it never teleports
   you by accident.
 - Trains: stand on a `T` cell in a station room, then `ride <station>`
-  (`ride osaka`). `ride` with no match lists the destinations.
+  (`ride osaka`). `ride` with no match lists the destinations. In a station,
+  `where` names the parked train: the station's own, or the one you rode in on.
 - `warp <room> [x y]` teleports. Without a cell it lands where a transporter
   or train would put you. Use it to get somewhere quickly, not to prove a
   place is reachable.
@@ -135,6 +136,20 @@ node tools/play.js render Osaka /tmp/osaka.png --scale 0.5 --colliders
 Then walk it: `warp` next to the change, `look`, and `goto` through any door
 you touched in both directions.
 
+## Testing game code that play.js cannot reach
+
+`play.js` runs the world, not the screens. For logic inside a Phaser-side
+class (`TrainTravel`, `DialogueManager`, `TouchControls`, ...), pull the
+decision into a static function on that class, call it from the Phaser code,
+and add a case to `tools/test_game.js`, which loads the real `src/` files into
+Node with small stand-ins for `window` and events:
+
+```bash
+node tools/test_game.js
+```
+
+A class file loads in Node as long as it only touches `Phaser` inside methods.
+
 ## What it does not do
 
 - **No live screen.** `render` gives a still picture of a room's map; nothing
@@ -150,8 +165,8 @@ you touched in both directions.
 
 It loads `src/utils/ConfigCodec.js`, `src/utils/NpcStates.js`,
 `src/utils/Interactions.js`, `src/systems/TiledAdapter.js`,
-`src/systems/RoomManager.js`, `src/systems/CollisionSystem.js` and `src/Shop.js`
-unmodified, so maps, boundaries, collision, dated NPC states, interaction
+`src/systems/RoomManager.js`, `src/systems/CollisionSystem.js`, `src/Shop.js` and
+`src/TrainTravel.js` unmodified, so maps, boundaries, collision, dated NPC states, interaction
 triggers and shop catalogues follow the game's real code. Keep those files
 free of Phaser calls at load time and in the parts the tool uses
 (`initializeRooms`, `checkBoundary`, `checkCollision`, `Interactions`,

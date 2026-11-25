@@ -31,6 +31,10 @@ ride trains, time travel, inspect cells, `lint` a room's map, `render` it to a P
 confirm the world is still playable after a map change. `node tools/play.js help` lists the commands; the `play-game` skill
 (`.claude/skills/play-game/SKILL.md`) is the full guide, including what the tool cannot do.
 
+`node tools/test_game.js` runs the game's own decision code in Node, with no browser: which train a
+station parks, the dialogue hint wording, touch buttons cancelling their touch, the default game date.
+When a fix lives in a Phaser-side class, pull the decision into a static function there and add a case.
+
 ## Studio
 
 `studio/` is a read-only view of the whole world for developers, served at `/studio/` (locally
@@ -115,7 +119,7 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
     neighbouring rooms. The HUD shows that date. `?date=` and Time
     Travel always win; `setGameDate()` drops the param only for the date a clean URL already gives, so
     picking today's real date after the trip is an explicit `?date=` like any other. `tools/play.js`
-    still defaults to the real date (`WorldModel.today()`).
+    and the studio open on the same day (`WorldModel.defaultDate()` calls `defaultGameDate`).
 - `objects`: Array of static obstacles with position (absolute or offset from center) that block movement
 - `transporters`: Array of teleport points with position, targetRoom, and target position
 
@@ -386,8 +390,8 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   otherwise (or with `--pil`) draws the rooms itself via `node tools/play.js render`, which is also the
   "look at the render" step for a new room: `node tools/play.js render <Room> out.png [--scale .5] [--colliders]`.
 - `tools/generate_stations.py` keeps an existing station room's NPCs (the blog pipeline parks dated NPC
-  states there), and `tools/seal_tracks.py` takes room names — run it bare and it re-seals Palace's level
-  crossing.
+  states there), and `tools/seal_tracks.py` takes room names; a track cell with a road under it (Palace's level
+  crossing) is left open.
 
 ### Hokkaido: Sapporo and Asahikawa (issue #43)
 
@@ -469,7 +473,7 @@ sealed - none has an interior.
   transporter or any dated NPC position (under its solid rows or its walk-behind roof rows), or cuts walkable
   cells off from the room's transporters (flood-fill). To change a building prefab's collision, `--remove` it
   from the ported rooms first, re-run `make_prefabs.py`, then `--add` it back. Then
-  `play.js lint`, `config_to_tiled.py`, `make_worldmap.py`.
+  `config_to_tiled.py`, `play.js lint` (it reads the Tiled map), `make_worldmap.py`.
 - Blog NPCs can be sent to `the Don Takote discount store` and `the old-town lane` (`LANDMARKS` in
   `tools/blog_to_npc.py`).
 

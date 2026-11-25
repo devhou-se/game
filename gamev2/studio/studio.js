@@ -61,7 +61,7 @@ async function boot() {
     }
 
     S.dates = [...contentChangeDates(config)].sort();
-    const today = WorldModel.today();
+    const today = m.date;
     if (!S.dates.includes(today)) S.dates.push(today);
     S.dates.sort();
     S.dateIndex = S.dates.indexOf(today);

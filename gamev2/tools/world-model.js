@@ -17,9 +17,8 @@ class WorldModel {
         return config;
     }
 
-    static today() {
-        const d = new Date();
-        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    static defaultDate(config) {
+        return defaultGameDate(todayIso(), [...contentChangeDates(config)].sort());
     }
 
     constructor(config, env, state) {
@@ -38,17 +37,18 @@ class WorldModel {
 
         const s = Object.assign({
             room: config.player.startRoom, x: config.player.startX, y: config.player.startY,
-            date: WorldModel.today(), as: baseOf(config.player.sprite),
+            date: WorldModel.defaultDate(config), as: baseOf(config.player.sprite),
         }, state || {});
         this.date = s.date;
         this.as = s.as;
+        this.livery = s.livery || null;
         this.player = this.character('you', s.x, s.y);
         this.player.isPlayer = true;
         this.enter(s.room, s.x, s.y);
     }
 
     state() {
-        return { room: this.roomManager.currentRoom, x: this.player.gridX, y: this.player.gridY, date: this.date, as: this.as };
+        return { room: this.roomManager.currentRoom, x: this.player.gridX, y: this.player.gridY, date: this.date, as: this.as, livery: this.livery };
     }
 
     character(name, x, y, extra) {
@@ -82,6 +82,8 @@ class WorldModel {
         if (!rm.rooms[roomKey]) throw new Error(`no room "${roomKey}" (try: rooms)`);
         rm.currentRoom = roomKey;
         const room = rm.rooms[roomKey];
+        const st = (this.config.stations || {})[roomKey];
+        this.livery = st ? TrainTravel.liveryFor(st, this.livery) : null;
         room.npcs = this.npcsIn(roomKey);
         rm.objectSprites = room.objects;
         rm.floorSprites = [];

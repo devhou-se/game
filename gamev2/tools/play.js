@@ -12,7 +12,7 @@ const SESSION = path.join(os.tmpdir(), 'gamev2-play-' +
 
 const ctx = vm.createContext({ console, URLSearchParams, location: { search: '' } });
 for (const f of ['utils/ConfigCodec.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'systems/TiledAdapter.js',
-    'systems/RoomManager.js', 'systems/CollisionSystem.js', 'Shop.js', '../tools/world-model.js']) {
+    'systems/RoomManager.js', 'systems/CollisionSystem.js', 'Shop.js', 'TrainTravel.js', '../tools/world-model.js']) {
     vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 }
 const { decodeConfig, contentChangeDates, Shop, WorldModel, DIRS } =
@@ -101,6 +101,7 @@ function draw(world, x0, y0, x1, y1) {
 function where(world) {
     const p = world.player;
     return `${world.roomManager.currentRoom} ${p.gridX},${p.gridY} on ${world.date} as ${world.as}` +
+        (world.livery ? `\nparked train: ${world.livery}` : '') +
         (world.onBoardCell() ? '\non a train boarding cell: ride <' +
             Object.keys(world.config.stations).filter(k => k !== world.roomManager.currentRoom).join('|') + '>' : '');
 }
@@ -126,12 +127,12 @@ const COMMANDS = {
             'transporters [room]        where every teleport leads',
             'npcs                       everyone in the world on the current date',
             'dates                      days that have blog content',
-            'date <YYYY-MM-DD|today>    time travel',
+            'date <YYYY-MM-DD|today>    time travel; today is the day the game opens on',
             'as <name>                  play as a cast member (their NPC leaves the world)',
             'check                      transporter targets and unreachable rooms, plus NPC placement on every content day',
             'lint [room]...             map QA: floor holes, missing or stray colliders, tree and overhang layering',
             'render <room> <out.png>    draw a room to a PNG [--scale 0.5] [--colliders]',
-            'reset                      back to the spawn point, today',
+            'reset                      back to the spawn point, on the day the game opens on',
             '',
             'Legend: @ you  # blocked  . walkable  > transporter  T train  $ shop  ~ pond  ? clock  D drinking game  letters are NPCs',
             'State persists between runs. With no arguments, commands are read from stdin, one per line.',
@@ -240,7 +241,7 @@ const COMMANDS = {
     },
     dates: (w) => [...contentChangeDates(w.config)].sort().join(' '),
     date(w, [d]) {
-        if (d === 'today') d = WorldModel.today();
+        if (d === 'today') d = WorldModel.defaultDate(w.config);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(d || '')) throw new Error('date <YYYY-MM-DD|today>');
         w.date = d;
         w.enter(w.roomManager.currentRoom, w.player.gridX, w.player.gridY);

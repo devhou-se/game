@@ -57,10 +57,23 @@ class TouchControls {
                 wait ? setTimeout(() => fire('keyup'), wait) : fire('keyup');
             }
         };
+        TouchControls.swallowTouch(btn);
         btn.addEventListener('pointerdown', set(true));
         btn.addEventListener('pointerup', set(false));
         btn.addEventListener('pointercancel', set(false));
         btn.addEventListener('pointerleave', set(false));
+    }
+
+    /**
+     * A touch on a control must not also reach the game as a tap. Phaser
+     * listens for touchstart on the window and treats one outside the canvas
+     * as a pointer-down unless it is defaultPrevented; cancelling pointerdown
+     * (as the handlers here do) suppresses the follow-up mouse events but
+     * not the touch ones. Without this, A during dialogue advanced a line by
+     * key and another by the overlay's tap handler.
+     */
+    static swallowTouch(el) {
+        el.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     }
 
     _btn(label, cls, extra) {
@@ -118,6 +131,7 @@ class TouchControls {
             return s;
         };
 
+        TouchControls.swallowTouch(pad);
         pad.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             if (pointerId !== null) return;

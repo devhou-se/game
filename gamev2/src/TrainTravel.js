@@ -13,9 +13,18 @@ class TrainTravel {
         this.scene = scene;
         this.riding = false;
         this.sprite = null;   // one train image, re-dressed per ride
-        this.livery = null;   // rolled when entering a station, persists until
+        this.livery = null;   // set when entering a station, persists until
                               // the player leaves the station system — so the
                               // train you board is the train you arrive in
+    }
+
+    /**
+     * The train parked at a station: the one you rode in on if you are still
+     * in the station system, otherwise the station's own (config
+     * `stations.<key>.train`).
+     */
+    static liveryFor(station, riding) {
+        return riding || station.train;
     }
 
     stationOf(roomKey) {
@@ -49,10 +58,7 @@ class TrainTravel {
             if (this.sprite) this.sprite.setVisible(false);
             return;
         }
-        if (!this.livery) {
-            const all = [...new Set(Object.values(this.scene.config.stations).map(s => s.train))];
-            this.livery = all[Math.floor(Math.random() * all.length)];
-        }
+        this.livery = TrainTravel.liveryFor(st, this.livery);
         if (!this.sprite) {
             this.sprite = this.scene.add.image(0, 0, this.livery);
             this.sprite.setOrigin(0, 0);
