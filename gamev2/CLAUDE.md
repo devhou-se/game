@@ -375,7 +375,7 @@ the HTML loader.
 ### New-Player Intro (issue #39)
 
 `src/Intro.js` (`scene.intro`): a three-page overlay in the usual panel style (depth 2000-2003).
-1. **Welcome to devhouse** — the friends (names parsed from `config.credits` "Role: Name" lines), the
+1. **Welcome to devhouse** — the friends (named from `CharacterSelect.lineup(config)`, the same list the cast row draws), the
    Japan trip, NPC lines coming from the trip's blog posts, and the HUD date picking the day ("Time Travel
    in the menu" to visit another day of the trip — the game always opens on a trip day, see the default
    game date under `npcs`).
@@ -471,7 +471,7 @@ instead of saving a composite. It deliberately skips `CharacterCreator.save()`, 
 (`<name>_front`, `_back`, `_side`; 4 + 4 + 2 frames of 64x64 in `assets/sprites/<name>_<dir>_frame_<i>.png`).
 `CharacterSelect.available(config)` derives the list, and everything playable reads it: Menu → Character,
 the creator's name Easter egg, `syncNpcPresence` (you never meet yourself) and `tools/play.js as <name>`.
-No code lists the names. The ONE explicit list is `config.json` top-level `members` (sprite base names, in
+No code lists the names. The ONE explicit list is `config.json` top-level `members` (sprite base names;
 shown alphabetically whatever order the list is written in: bailey, damian, dylan, julia, khoi, sam, xander) — the devhouse members, read through
 `CharacterSelect.lineup(config)` by the title line-up and the intro's cast row ONLY. A listed name with no
 sprite set is skipped; a sprite set that is not listed never appears there (James is the default player

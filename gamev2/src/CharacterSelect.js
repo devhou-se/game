@@ -43,7 +43,7 @@ class CharacterSelect {
 
     /**
      * The devhouse members shown in the title line-up and the intro's cast
-     * row: config.members (sprite base names), in that order. A listed name
+     * row: config.members (sprite base names), sorted alphabetically. A listed name
      * with no sprite set is skipped; a sprite set that is not listed (james,
      * the default player sprite, is not a member) never appears.
      */

@@ -15,7 +15,7 @@ const ctx = vm.createContext({
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
-    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'systems/NPCManager.js', 'systems/UIScale.js'].forEach(load);
+    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js', 'systems/UIScale.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
 // A Shop with no Phaser behind it: the save blob comes from (and goes to) `store`.
@@ -219,6 +219,9 @@ const tests = {
         const fake = { members: ['sam', 'gloria', 'james_front', 'bailey'], spriteMetadata: set('james', 'bailey', 'sam', 'custom') };
         assert.deepStrictEqual(Array.from(lineup(fake)), ['bailey', 'sam'], 'alphabetical whatever the list order');
         assert.deepStrictEqual(Array.from(lineup({ spriteMetadata: set('james', 'bailey') })), [], 'no list, no line-up');
+        // the intro's sentence under the row names the same people as the row
+        const named = game('(cfg) => Intro.prototype.members.call({ scene: { config: cfg } })');
+        assert.deepStrictEqual(Array.from(named(cfg)), ['Bailey', 'Damian', 'Dylan', 'Julia', 'Khoi', 'Sam', 'Xander']);
         for (const f of ['TitleScreen.js', 'Intro.js']) {
             const src = fs.readFileSync(path.join(GV2, 'src', f), 'utf8');
             assert.ok(src.includes('CharacterSelect.lineup('), `${f} draws CharacterSelect.lineup()`);

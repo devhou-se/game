@@ -158,7 +158,7 @@ class WorldModel {
         if (i.group === 'shop') {
             const venue = Shop.VENUES[i.kind];
             const items = (this.config.items || Shop.DEFAULT_ITEMS).filter(venue.sells);
-            return `opens the ${venue.title} shop: ` + items.map(it => `${it.name} ¥${it.price}`).join(', ') +
+            return `opens the ${Shop.titleFor(i.kind, this.roomConfig)} shop: ` + items.map(it => `${it.name} ¥${it.price}`).join(', ') +
                 (venue.buys ? `; buys caught fish${venue.grills ? ' and grills them' : ''}` : '');
         }
         if (i.kind === 'pond') return 'casts a fishing line (needs the fishing rod); a catch goes into the bag to sell';

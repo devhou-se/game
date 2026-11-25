@@ -105,11 +105,12 @@ class Intro {
         this.objs = [];
     }
 
-    /** Names from config.credits ("Role: Name" lines), in credit order. */
+    /**
+     * The friends by name ("Bailey"): the same CharacterSelect.lineup() the
+     * cast row draws, so the sentence under the row names who is in it.
+     */
     members() {
-        return (this.scene.config.credits || [])
-            .map(line => (/:\s*(.+)$/.exec(line) || [])[1])
-            .filter(Boolean);
+        return CharacterSelect.lineup(this.scene.config).map(n => n.charAt(0).toUpperCase() + n.slice(1));
     }
 
     // --------------------------------------------------------------- drawing
