@@ -24,8 +24,11 @@ Run from gamev2/:  python3 tools/check_generators.py [generator ...]
 Exit 0 when every generator reproduces the committed world, 1 otherwise.
 The room generators and config_to_tiled need no Pillow. The art tools do:
 without it they are listed as skipped, not as ok — run the check with a
-python3 that has Pillow to cover them. A new room generator belongs in
-GENERATORS, a new art tool in ART_TOOLS.
+python3 that has Pillow to cover them. The two that draw Japanese text
+(FONT_TOOLS) are skipped the same way where no Japanese system font is
+readable (a sandboxed shell, a machine without one): the glyphs decide the
+bytes, so no stand-in font would rebuild the committed art. A new room
+generator belongs in GENERATORS, a new art tool in ART_TOOLS.
 """
 import filecmp
 import json
@@ -47,18 +50,21 @@ GENERATORS = [
 TILED = 'config_to_tiled'
 # Tools that draw sprites / prefabs (and register them in config.json). They
 # need Pillow; the extract_* ones read the Godot project's ../Assets, and
-# extract_city also a Japanese system font (see generate_ads.find_font).
+# generate_cast the character creator's tables (src/CharacterCreator.js).
 ART_TOOLS = [
     'make_prefabs', 'generate_hokkaido', 'generate_tsutenkaku',
     'generate_discount_art', 'generate_cooler_art', 'make_snow_tiles',
-    'make_road_tiles', 'extract_city', 'extract_dotonbori', 'extract_shrine',
-    'extract_street', 'extract_train', 'extract_train_interior',
+    'make_road_tiles', 'generate_ads', 'generate_cast', 'extract_city',
+    'extract_dotonbori', 'extract_shrine', 'extract_street', 'extract_train',
+    'extract_train_interior',
 ]
+# the art tools that also need a Japanese system font (generate_ads.find_font)
+FONT_TOOLS = ['generate_ads', 'extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS
 # what a tool reads and may write, relative to gamev2/ — copied to the scratch
 # project once (plus config.json), compared and put back after every run
-OUTPUTS = ['tiled', 'assets/sprites']
-INPUTS = ['tools'] + OUTPUTS
+OUTPUTS = ['tiled', 'assets/sprites', 'assets/ads']
+INPUTS = ['tools', 'src/CharacterCreator.js'] + OUTPUTS
 
 
 def have_pillow():
@@ -67,6 +73,25 @@ def have_pillow():
         return True
     except ImportError:
         return False
+
+
+def have_jp_font():
+    """Whether generate_ads.find_font finds a font it can read (needs Pillow)."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import generate_ads
+    try:
+        generate_ads.find_font()
+        return True
+    except SystemExit:
+        return False
+
+
+def skips(names, pillow, font):
+    """{tool: why it cannot be checked here} for the art tools among `names`:
+    all of them without Pillow, the FONT_TOOLS without a Japanese font."""
+    if not pillow:
+        return {n: 'needs Pillow' for n in names if n in ART_TOOLS}
+    return {} if font else {n: 'needs a Japanese system font' for n in names if n in FONT_TOOLS}
 
 
 def tiled_rooms(root='.'):
@@ -155,8 +180,12 @@ def check(names, root='.'):
         if os.path.isdir(godot_art):
             os.symlink(godot_art, os.path.join(top, 'Assets'))
         for rel in INPUTS:
-            shutil.copytree(os.path.join(root, rel), os.path.join(work, rel),
-                            ignore=shutil.ignore_patterns('__pycache__'))
+            src, dst = os.path.join(root, rel), os.path.join(work, rel)
+            if os.path.isdir(src):
+                shutil.copytree(src, dst, ignore=shutil.ignore_patterns('__pycache__'))
+            else:
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.copyfile(src, dst)
         scratch = os.path.join(work, 'config.json')
         for name in names:
             open(scratch, 'w').write(committed)
@@ -183,13 +212,14 @@ def main(argv):
     if unknown:
         print(f'unknown generator(s) {unknown}; expected some of {CHECKS}')
         return 2
-    skipped = [] if have_pillow() else [n for n in names if n in ART_TOOLS]
+    pillow = have_pillow()
+    skipped = skips(names, pillow, pillow and have_jp_font())
     failures = check([n for n in names if n not in skipped])
     what = lambda n: ('the Tiled maps' if n == TILED else
                       'the sprites and prefabs' if n in ART_TOOLS else 'config.json')
     for name in names:
         if name in skipped:
-            print(f'skip  {name}.py needs Pillow - NOT checked')
+            print(f'skip  {name}.py {skipped[name]} - NOT checked')
         elif name not in failures:
             print(f'ok    {name}.py reproduces {what(name)}')
         else:
@@ -203,8 +233,10 @@ def main(argv):
               'generator (or have it keep what it does not own) - do not re-run it over the room.\n'
               'For a Tiled map: python3 tools/config_to_tiled.py <Room> after the config edit.')
     if skipped:
-        print(f'\n{len(skipped)} art tool(s) not checked: this python3 has no Pillow. Run the check '
-              'with one that does.')
+        print(f'\n{len(skipped)} art tool(s) not checked: ' +
+              ('this python3 has no Pillow. Run the check with one that does.' if not pillow else
+               'no Japanese system font is readable here (generate_ads.find_font). '
+               'Run the check where the system fonts are.'))
     return 1 if failures else 0
 
 

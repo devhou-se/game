@@ -120,7 +120,10 @@ def find_font():
                 return path, index
             except OSError:
                 continue
-    raise SystemExit('no JP-capable font found — add one to find_font()')
+    raise SystemExit('no JP-capable font found (looked for ' +
+                     ', '.join(sorted({os.path.basename(p) for p, _ in candidates})) +
+                     ' — unreadable in a sandboxed shell); run where the system fonts '
+                     'are readable, or add one to find_font()')
 
 
 FONT_PATH, FONT_INDEX = None, None

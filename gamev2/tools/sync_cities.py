@@ -15,12 +15,14 @@ repo root and is not deployed. So the offsets are copied into config.json:
 The room LIST and its ORDER are hand-authored and never touched (a later room
 wins the cells it overlaps with an earlier one). `--check` is also run by
 tools/make_worldmap.py, and the game re-checks the offsets against
-assets/map/world-map.json at boot. Run from gamev2/. Stdlib only.
+assets/map/world-map.json at boot. Both files are found from this script's
+own place in the repo, so it runs from any directory. Stdlib only.
 """
 import json, os, sys
 
-WORLD = '../devhouse.world'
-CONFIG = 'config.json'
+GV2 = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WORLD = os.path.join(os.path.dirname(GV2), 'devhouse.world')
+CONFIG = os.path.join(GV2, 'config.json')
 GS = 64
 
 
@@ -47,17 +49,17 @@ def problems(cfg, cells):
             if room is None:
                 out.append(f'{city_key}: "{m["room"]}" is not a room in config.json')
             elif m['room'].lower() not in cells:
-                out.append(f'{city_key}: "{m["room"]}" is not placed in {WORLD}')
+                out.append(f'{city_key}: "{m["room"]}" is not placed in devhouse.world')
             elif at is None:
-                out.append(f'{city_key}: {m["room"]} is not on the {GS}px grid in {WORLD}')
+                out.append(f'{city_key}: {m["room"]} is not on the {GS}px grid in devhouse.world')
             else:
                 if (m.get('x'), m.get('y')) != at[:2]:
-                    out.append(f'{city_key}: {m["room"]} is at cell {at[:2]} in {WORLD} '
+                    out.append(f'{city_key}: {m["room"]} is at cell {at[:2]} in devhouse.world '
                                f'but ({m.get("x")}, {m.get("y")}) in config.json')
                 size = (room['worldWidth'] // GS, room['worldHeight'] // GS)
                 if size != at[2:]:
                     out.append(f'{city_key}: {m["room"]} is {size} cells in config.json '
-                               f'but {at[2:]} in {WORLD}')
+                               f'but {at[2:]} in devhouse.world')
     return out
 
 

@@ -46,12 +46,13 @@ committed world: it runs each one in a scratch copy and fails, naming the rooms 
 would change (issue #107, see "Generated rooms stay regenerable"). It also re-seeds every room with
 `config_to_tiled.py` and fails if a committed `tiled/*.tmj` would change (a config edit whose map was not
 re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_tsutenkaku`,
-`_discount_art`, `_cooler_art`, `make_snow_tiles`, `make_road_tiles`, the `extract_*.py` scripts) and fails
-if `assets/sprites`, `tiled/prefabs` or `config.json` would change (issue #186). Run it after any edit to a
+`_discount_art`, `_cooler_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
+`extract_*.py` scripts) and fails if `assets/sprites`, `assets/ads`, `tiled/prefabs` or `config.json` would
+change (issues #186, #193). Run it after any edit to a
 generated room, a map or a generator. The room and map checks take a few seconds and need no Pillow; the
 art tools are listed as `skip` without it, so use `/Library/Developer/CommandLineTools/usr/bin/python3
-tools/check_generators.py` to cover them (ten seconds; `extract_city` also needs a Japanese system font,
-see `generate_ads.find_font`, and reports `FAIL ... did not finish` where none is readable).
+tools/check_generators.py` to cover them (ten seconds; `generate_ads` and `extract_city` also need a Japanese system font,
+see `generate_ads.find_font`, and are listed as `skip`, not checked, where none is readable — a sandboxed shell).
 
 ## Studio
 

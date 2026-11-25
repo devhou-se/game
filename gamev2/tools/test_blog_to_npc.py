@@ -20,6 +20,7 @@ import blog_to_npc as b  # noqa: E402
 import check_generators  # noqa: E402
 import config_to_tiled as c2t  # noqa: E402
 import post_photos  # noqa: E402
+import sync_cities  # noqa: E402
 
 
 def test_trim_line():
@@ -1099,6 +1100,36 @@ def test_tiled_maps_in_sync():
         assert cg.restore(a, w) == [] and open(os.path.join(w, 'tiled/one.tmj')).read() == '1'
 
 
+def test_generator_check_skips():
+    """check_generators covers generate_ads and generate_cast, and lists a tool
+    it cannot run here as skipped rather than failed: every art tool without
+    Pillow, the two that draw Japanese text without a readable font (#193)."""
+    cg = check_generators
+    assert {'generate_ads', 'generate_cast'} < set(cg.ART_TOOLS) and set(cg.FONT_TOOLS) < set(cg.ART_TOOLS)
+    assert 'assets/ads' in cg.OUTPUTS and 'src/CharacterCreator.js' in cg.INPUTS
+    assert cg.skips(cg.CHECKS, True, True) == {}
+    assert cg.skips(cg.CHECKS, True, False) == {n: 'needs a Japanese system font' for n in cg.FONT_TOOLS}
+    assert sorted(cg.skips(cg.CHECKS, False, False)) == sorted(cg.ART_TOOLS)
+    assert cg.skips(['generate_machi', cg.TILED], False, False) == {}
+
+
+def test_sync_cities_anywhere():
+    """sync_cities finds config.json and devhouse.world from its own place in
+    the repo, not from the working directory (#193)."""
+    gv2 = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    assert sync_cities.CONFIG == os.path.join(gv2, 'config.json')
+    assert sync_cities.WORLD == os.path.join(os.path.dirname(gv2), 'devhouse.world')
+    here = os.getcwd()
+    with tempfile.TemporaryDirectory() as tmp:
+        os.chdir(tmp)
+        try:
+            cells = sync_cities.world_cells()
+            sync_cities.check()             # exits if config and world disagree
+        finally:
+            os.chdir(here)
+    assert cells['tokyo'] and cells['market'], sorted(cells)
+
+
 if __name__ == '__main__':
     config = b.load_config()
     test_trim_line()
@@ -1121,4 +1152,6 @@ if __name__ == '__main__':
     test_shipped_dialogue(config)
     test_tiled_ids_stable()
     test_tiled_maps_in_sync()
+    test_generator_check_skips()
+    test_sync_cities_anywhere()
     print('ok')
