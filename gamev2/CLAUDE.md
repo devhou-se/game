@@ -1423,8 +1423,10 @@ The game always renders 1280x960; everything below is about showing that on anyt
     camera while the split is on — so it covers the HUD and overlays as the single camera's fade does.
   - **HUD** (depth 1000-1999 with scroll factor 0, `'hud'` camera): magnified from the top-left by
     `hudScale()` (towards 0.7x on screen). That leaves the bar less width, so `GameScene.layoutHUD()`
-    lays it out for `cameras.main.width / hudZoom`: it drops the game's title, then wraps date and
-    wallet onto a second row. `scene.hudWidth` / `scene.hudBarHeight` are the bar's size in HUD
+    lays it out for `cameras.main.width / hudZoom`: it drops the game's title, then — on a
+    landscape phone, where the whole canvas is across the view and two rows are a lot of the height —
+    abbreviates (`Nov 11 2025`, `shortGameDate`; then the room's name to its first part, `7-Eleven · Park 1`
+    -> `7-Eleven`; then the date's year), and only then wraps date and wallet onto a second row. `scene.hudWidth` / `scene.hudBarHeight` are the bar's size in HUD
     coordinates (the shop's effect chips hang off them); scene event `'hudscalechange'` says when to
     lay out again. Anything new on the HUD goes at depth 1000-1999, scroll factor 0. The date,
     wallet and `menu` buttons take a tap anywhere in the height of their row (`layoutHUD` sets their

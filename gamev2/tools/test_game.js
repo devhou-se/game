@@ -2443,6 +2443,18 @@ const tests = {
         assert.ok(/const s = UIScale\.mapFit\(W, H, meta\.width, meta\.height, W < this\.scale\.width\);/.test(
             fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8')));
     },
+
+    'a landscape phone keeps a long room name on one HUD row by abbreviating (#202)'() {
+        const short = game('shortGameDate');
+        assert.strictEqual(short('2025-11-11'), 'Nov 11 2025');
+        assert.strictEqual(short('2027-02-02', false), 'Feb 2');
+        assert.strictEqual(short('2026-05-31'), 'May 31 2026');
+        // tried in order before the bar wraps, and only where the whole canvas is across the view
+        const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(src.includes("const brief = room.split(' · ')[0], whole = this.cameras.main.width >= this.scale.width;"));
+        assert.ok(src.includes('whole && [[room, true], [brief, true], [room, false], [brief, false]]'));
+        assert.ok(src.includes('if (!row(long) && !full && !row(short) && !compact()) {'));
+    },
 };
 
 let failed = 0;

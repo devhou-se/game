@@ -193,6 +193,12 @@ function formatGameDate(iso) {
     return `${MONTHS[m - 1]} ${d} ${y}`;
 }
 
+/** "2026-07-02" -> "Jul 2 2026", or "Jul 2" without its year: the HUD's date where the row is short. */
+function shortGameDate(iso, year = true) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return `${MONTHS[m - 1].slice(0, 3)} ${d}${year ? ` ${y}` : ''}`;
+}
+
 /**
  * Navigate to the given game date. The date a clean URL already gives
  * (defaultGameDate) drops the param; any other date — including today's real
@@ -219,5 +225,6 @@ if (typeof window !== 'undefined') {
     window.postLink = postLink;
     window.contentChangeDates = contentChangeDates;
     window.formatGameDate = formatGameDate;
+    window.shortGameDate = shortGameDate;
     window.setGameDate = setGameDate;
 }

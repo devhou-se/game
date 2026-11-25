@@ -539,7 +539,8 @@ class GameScene extends Phaser.Scene {
      * On a small screen UIScale draws the HUD layer magnified (so its text
      * stays legible), and a portrait phone shows only a slice of the canvas;
      * either leaves the bar narrower: it drops the game's title first, then
-     * moves the date and wallet to a second row.
+     * (landscape only) abbreviates the date and the room's name, then moves
+     * the date and wallet to a second row.
      * On one of a trip's own days the date is led by the trip's name
      * ("devhouse 3 · February 20 2027", Trips.dateLabel) when that still
      * ends two paddings clear of the menu button — it does not in rooms with
@@ -573,8 +574,16 @@ class GameScene extends Phaser.Scene {
                 (l) => fits(lead, l, 2 * pad)) : bare;
             return label !== bare ? fits(lead, label, 2 * pad) : fits(lead, bare, pad);
         };
+        // a magnified bar on a landscape phone is too narrow for a long room name (a
+        // konbini, a station) and 60px of two rows is a lot of a 390px screen (issue
+        // #202): there the row is kept by abbreviating instead — the month ("Nov 11
+        // 2025"), then the name to its first part ("7-Eleven · Park 1" -> "7-Eleven"),
+        // then the date's year. A portrait slice has the height and keeps its two rows.
+        const brief = room.split(' · ')[0], whole = this.cameras.main.width >= this.scale.width;
+        const compact = () => whole && [[room, true], [brief, true], [room, false], [brief, false]]
+            .some(([name, year]) => fits(`${name} | `, shortGameDate(gameDate(), year), pad));
         let rows = 1;
-        if (!row(long) && !full && !row(short)) {
+        if (!row(long) && !full && !row(short) && !compact()) {
             rows = 2;
             JapaneseFont.fit(this.hudText.setText(room));
             this.hudDateText.setText(Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate,
