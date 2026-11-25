@@ -43,6 +43,9 @@ map change. `node tools/play.js help` lists the commands; the `play-game` skill
 - `src/GameScene.js` - Main game scene (room system, HUD, input handling, collision)
 - `src/Character.js` - Character movement class with grid-based tweening
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
+- `src/utils/Interactions.js` - The one table of what a bump opens (shops, ponds, clocks, the drinking
+  table). `Shop`, `Fishing`, `DrinkingGame`, `GameScene` and `tools/play.js` all read it; add a rule here
+  rather than a tile-name check in a feature file
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
 - `src/TitleScreen.js` - Title / splash screen shown at boot (cast line-up, press SPACE / tap to start)
 - `src/Intro.js` - New-player intro (who devhouse is, controls as keycaps, where to start); replayable from the menu as How to Play

@@ -27,9 +27,8 @@ class Fishing {
     checkStart(gridX, gridY) {
         if (this.isActive()) return;
         const room = this.scene.roomManager.rooms[this.scene.roomManager.currentRoom];
-        const xy = `${gridX},${gridY}`;
-        const isPond = (room.layers || []).some(l => /^pond-autotile/.test((l.tiles || {})[xy] || ''));
-        if (!isPond) return;
+        const roomConfig = this.scene.config.rooms[this.scene.roomManager.currentRoom] || {};
+        if (!Interactions.find(room, roomConfig, gridX, gridY, { group: 'pond' })) return;
 
         if (!this.scene.shop.items['fishing-rod']) {
             this.scene.shop.toast('you need a fishing rod — the konbini sells them');

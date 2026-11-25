@@ -159,36 +159,15 @@ class Shop {
         const roomKey = this.scene.roomManager.currentRoom;
         const room = this.scene.roomManager.rooms[roomKey];
         const roomConfig = this.scene.config.rooms[roomKey] || {};
-        const interior = !!roomConfig.interior;
-        const konbini = interior && roomConfig.shopEnabled !== false;
-        const venue = interior && Shop.VENUES[roomConfig.shopMenu] ? roomConfig.shopMenu : null;
-        const kindOf = (key) => {
-            if (/vending-machine/.test(key)) return 'vending';
-            if (konbini) {
-                if (/^(blue-shrine-platform-base|office-counter)/.test(key)) return 'counter';
-                if (/^office-(shelf-drinks|shelf-glass|fridge|freezer)/.test(key)) return 'drinks';
-                if (/^office-shelf-snacks/.test(key)) return 'snacks';
-            }
-            // a venue with its own menu sells it over the bar (counter2);
-            // its tables (office-counter) stay furniture
-            if (venue && /^office-counter2/.test(key)) return venue;
-            return null;
+        const sizeOf = (key) => {
+            const tex = this.scene.textures.exists(key)
+                ? this.scene.textures.get(key).getSourceImage() : null;
+            return [tex ? Math.max(1, Math.round(tex.width / 64)) : 1,
+                    tex ? Math.max(1, Math.round(tex.height / 64)) : 1];
         };
-        for (const layer of (room.layers || [])) {
-            for (const xy in (layer.tiles || {})) {
-                const key = layer.tiles[xy];
-                const kind = kindOf(key);
-                if (!kind) continue;
-                const [tx, ty] = xy.split(',').map(Number);
-                const tex = this.scene.textures.exists(key)
-                    ? this.scene.textures.get(key).getSourceImage() : null;
-                const w = tex ? Math.max(1, Math.round(tex.width / 64)) : 1;
-                const h = tex ? Math.max(1, Math.round(tex.height / 64)) : 1;
-                if (gridX >= tx && gridX < tx + w && gridY >= ty && gridY < ty + h) {
-                    return this.showShop(kind);
-                }
-            }
-        }
+        const hit = Interactions.find(room, roomConfig, gridX, gridY,
+            { group: 'shop', sizeOf, venues: Shop.VENUES });
+        if (hit) return this.showShop(hit.kind);
     }
 
     // ---------------- effects ----------------

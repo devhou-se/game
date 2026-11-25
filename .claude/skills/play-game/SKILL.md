@@ -58,7 +58,7 @@ $ 18,13 vending
 | `.` | walkable |
 | `>` | transporter |
 | `T` | train boarding cell |
-| `$` | vending machine or konbini counter |
+| `$` | anything that opens a shop (vending machine, konbini counter or shelf, izakaya bar) |
 | `~` | pond (fishing) |
 | `?` | wall clock or calendar (time travel) |
 | `D` | izakaya drinking-game table |
@@ -136,19 +136,19 @@ you touched in both directions.
 ## How it stays honest
 
 It loads `src/utils/ConfigCodec.js`, `src/utils/NpcStates.js`,
-`src/systems/TiledAdapter.js`, `src/systems/RoomManager.js` and
-`src/systems/CollisionSystem.js` unmodified, so maps, boundaries, collision
-and dated NPC states follow the game's real code. Keep those five files free
-of Phaser calls at load time and in the methods the tool uses
-(`initializeRooms`, `checkBoundary`, `checkCollision`).
+`src/utils/Interactions.js`, `src/systems/TiledAdapter.js`,
+`src/systems/RoomManager.js`, `src/systems/CollisionSystem.js` and `src/Shop.js`
+unmodified, so maps, boundaries, collision, dated NPC states, interaction
+triggers and shop catalogues follow the game's real code. Keep those files
+free of Phaser calls at load time and in the parts the tool uses
+(`initializeRooms`, `checkBoundary`, `checkCollision`, `Interactions`,
+`Shop.VENUES`, `Shop.DEFAULT_ITEMS`).
 
-Two things are mirrored by hand in `tools/play.js` and must be updated with
-the game:
+`src/utils/Interactions.js` is the one table of what a bump opens: add a rule
+there and the game, `look`, `map` and `inspect` all pick it up.
 
-- which tiles trigger an interaction (`interactionAt`), from
-  `GameScene.checkNPCInteraction`, `Shop.checkShopInteraction` and
-  `Fishing.checkStart`;
-- which NPCs exist for a date and character (`npcsIn`), from
-  `GameScene.syncNpcPresence`.
+One thing is still mirrored by hand in `tools/play.js` and must be updated with
+the game: which NPCs exist for a date and character (`npcsIn`), from
+`GameScene.syncNpcPresence`.
 
 A new command is one entry in `COMMANDS` plus a line in `help`.

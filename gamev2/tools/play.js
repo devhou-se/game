@@ -10,12 +10,12 @@ const SESSION = path.join(os.tmpdir(), 'gamev2-play-' +
     crypto.createHash('sha1').update(GV2).digest('hex').slice(0, 8) + '.json');
 
 const ctx = vm.createContext({ console, URLSearchParams, location: { search: '' } });
-for (const f of ['utils/ConfigCodec.js', 'utils/NpcStates.js', 'systems/TiledAdapter.js',
-    'systems/RoomManager.js', 'systems/CollisionSystem.js']) {
+for (const f of ['utils/ConfigCodec.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'systems/TiledAdapter.js',
+    'systems/RoomManager.js', 'systems/CollisionSystem.js', 'Shop.js']) {
     vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 }
-const { decodeConfig, resolveNpc, contentChangeDates, TiledAdapter, RoomManager, CollisionSystem } =
-    vm.runInContext('({decodeConfig, resolveNpc, contentChangeDates, TiledAdapter, RoomManager, CollisionSystem})', ctx);
+const { decodeConfig, resolveNpc, contentChangeDates, Interactions, TiledAdapter, RoomManager, CollisionSystem, Shop } =
+    vm.runInContext('({decodeConfig, resolveNpc, contentChangeDates, Interactions, TiledAdapter, RoomManager, CollisionSystem, Shop})', ctx);
 
 const DIRS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 const ALIAS = { up: 'n', down: 's', left: 'w', right: 'e', north: 'n', south: 's', east: 'e', west: 'w' };
@@ -152,21 +152,18 @@ class World {
         return hits;
     }
 
+    interactions() {
+        return Interactions.all(this.room, this.roomConfig, { sizeOf: (key) => this.cells(key), venues: Shop.VENUES });
+    }
+
     interactionAt(x, y) {
-        const rc = this.roomConfig;
-        const dg = rc.drinkingGame;
-        if (dg && (dg.triggerCells || []).some(([cx, cy]) => cx === x && cy === y)) return { kind: 'drinking-game' };
+        const covers = (i) => x >= i.x && x < i.x + i.w && y >= i.y && y < i.y + i.h;
+        const all = this.interactions();
+        const table = all.find(i => i.group === 'drinking-game' && covers(i));
+        if (table) return table;
         const npc = this.room.npcs.find(n => n.gridX === x && n.gridY === y);
-        if (npc) return { kind: 'npc', npc };
-        const hits = this.tilesAt(x, y);
-        for (const t of hits) {
-            if (/vending-machine/.test(t.key)) return { kind: 'vending' };
-            if (rc.interior && rc.shopEnabled !== false && /^(blue-shrine-platform-base|office-counter)/.test(t.key)) return { kind: 'counter' };
-        }
-        const own = hits.filter(t => t.at[0] === x && t.at[1] === y);
-        if (own.some(t => /^pond-autotile/.test(t.key))) return { kind: 'pond' };
-        if (own.some(t => /^(office-clock|office-poster-menu)/.test(t.key))) return { kind: 'clock' };
-        return null;
+        if (npc) return { kind: 'npc', group: 'npc', npc };
+        return ['shop', 'pond', 'clock'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
     }
 
     station() { return (this.config.stations || {})[this.roomManager.currentRoom]; }
@@ -233,20 +230,14 @@ class World {
     }
 }
 
-const GLYPH = { vending: '$', counter: '$', pond: '~', clock: '?', 'drinking-game': 'D' };
+const GLYPH = { shop: '$', pond: '~', clock: '?', 'drinking-game': 'D' };
 
 function draw(world, x0, y0, x1, y1) {
     const p = world.player;
-    const special = new Map();
-    for (const layer of world.room.layers) {
-        for (const [xy, key] of Object.entries(layer.tiles || {})) {
-            if (!/vending-machine|^pond-autotile|^office-clock|^office-poster-menu|^blue-shrine-platform-base|^office-counter/.test(key)) continue;
-            const [tx, ty] = xy.split(',').map(Number);
-            const [w, h] = world.cells(key);
-            for (let x = tx; x < tx + w; x++) for (let y = ty; y < ty + h; y++) special.set(x + ',' + y, 1);
-        }
+    const special = new Set();
+    for (const i of world.interactions()) {
+        for (let x = i.x; x < i.x + i.w; x++) for (let y = i.y; y < i.y + i.h; y++) special.add(x + ',' + y);
     }
-    for (const [cx, cy] of ((world.roomConfig.drinkingGame || {}).triggerCells || [])) special.set(cx + ',' + cy, 1);
     const board = new Set(((world.station() || {}).board || []).map(c => c.join(',')));
     const lines = [];
     const notes = [];
@@ -264,7 +255,7 @@ function draw(world, x0, y0, x1, y1) {
             else if (board.has(k)) { c = 'T'; notes.push(`T ${x},${y} train boarding`); }
             else if (special.has(k)) {
                 const i = world.interactionAt(x, y);
-                c = i ? GLYPH[i.kind] : (world.blocked.has(k) ? '#' : '.');
+                c = i ? GLYPH[i.group] : (world.blocked.has(k) ? '#' : '.');
                 if (i) notes.push(`${c} ${x},${y} ${i.kind}`);
             }
             else if (world.blocked.has(k) || !world.roomManager.checkBoundary(x, y)) c = '#';
@@ -285,11 +276,10 @@ function describe(world, i) {
         const lines = n.dialogue.length ? n.dialogue.map(l => `  "${l}"`).join('\n') : '  (nothing to say)';
         return `${n.name} says:\n${lines}` + (n.photo ? `\n  photo: assets/photos/${n.photo}.png` : '');
     }
-    if (i.kind === 'vending' || i.kind === 'counter') {
-        const where = i.kind === 'vending' ? 'vending' : 'counter';
-        const items = (world.config.items || []).filter(it => it.where === where);
-        return `opens the ${i.kind === 'vending' ? 'vending machine' : 'konbini counter'} shop` +
-            (items.length ? ': ' + items.map(it => `${it.name} ¥${it.price}`).join(', ') : ' (catalogue is Shop.DEFAULT_ITEMS)');
+    if (i.group === 'shop') {
+        const venue = Shop.VENUES[i.kind];
+        const items = (world.config.items || Shop.DEFAULT_ITEMS).filter(venue.sells);
+        return `opens the ${venue.title} shop: ` + items.map(it => `${it.name} ¥${it.price}`).join(', ');
     }
     if (i.kind === 'pond') return 'casts a fishing line (needs the fishing rod)';
     if (i.kind === 'clock') return 'opens the time-travel date picker';

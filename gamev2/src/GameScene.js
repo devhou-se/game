@@ -858,13 +858,9 @@ class GameScene extends Phaser.Scene {
         if (!this.dialogueManager.isVisible() && !this.shop.isVisible() &&
             this.datePicker && !this.datePicker.isVisible()) {
             const room = this.roomManager.rooms[this.roomManager.currentRoom];
-            const xy = `${targetGridX},${targetGridY}`;
-            for (const layer of (room.layers || [])) {
-                const key = (layer.tiles || {})[xy];
-                if (key && /^(office-clock|office-poster-menu)/.test(key)) {
-                    this.datePicker.show();
-                    break;
-                }
+            const roomConfig = this.config.rooms[this.roomManager.currentRoom] || {};
+            if (Interactions.find(room, roomConfig, targetGridX, targetGridY, { group: 'clock' })) {
+                this.datePicker.show();
             }
         }
     }

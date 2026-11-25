@@ -61,9 +61,9 @@ class DrinkingGame {
     checkStart(gridX, gridY) {
         if (this.isActive() || this.scene.roomManager.isTransitioning) return false;
         const roomKey = this.scene.roomManager.currentRoom;
-        const settings = (this.scene.config.rooms[roomKey] || {}).drinkingGame;
-        if (!settings || !(settings.triggerCells || [])
-            .some(([x, y]) => x === gridX && y === gridY)) return false;
+        const roomConfig = this.scene.config.rooms[roomKey] || {};
+        const settings = roomConfig.drinkingGame;
+        if (!Interactions.find({}, roomConfig, gridX, gridY, { group: 'drinking-game' })) return false;
 
         const JD = Phaser.Input.Keyboard.JustDown;
         JD(this.keys.space); JD(this.keys.enter); JD(this.keys.esc);
