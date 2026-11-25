@@ -412,7 +412,7 @@ class CharacterCreator {
         this.keys = scene.input.keyboard.addKeys({
             up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT,
             w: K.W, s: K.S, a: K.A, d: K.D,
-            enter: K.ENTER, space: K.SPACE, esc: K.ESC, r: K.R,
+            enter: K.ENTER, space: K.SPACE, esc: K.ESC,
         });
         this.donors = Object.keys(CharacterCreator.DONORS)
             .filter(b => (scene.config.spriteMetadata || {})[`${b}_front`]);
@@ -522,8 +522,10 @@ class CharacterCreator {
         if (this.nameInput && document.activeElement === this.nameInput) return;
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
         if (JD(k.esc)) return this.hide();
+        // ENTER/SPACE always plays, on the RANDOM row too: rolls are ←/→, so
+        // the roll you like is kept by the same key as everywhere else
+        // (if ENTER rolled there, confirming would throw the look away)
         if (JD(k.enter) || JD(k.space)) return this.confirm();
-        if (JD(k.r)) return this.randomise();
         const n = this.rowDefs.length;
         if (!n || this.castMatch()) return; // rows are locked to that person
         if (JD(k.up) || JD(k.w)) { this.selectedRow = (this.selectedRow - 1 + n) % n; this.paint(); }
@@ -532,7 +534,7 @@ class CharacterCreator {
         if (JD(k.right) || JD(k.d)) this.cycle(1);
     }
 
-    /** Left/right on the selected row: previous/next donor or swatch. */
+    /** Left/right on the selected row: previous/next donor or swatch, or a re-roll. */
     cycle(step) {
         const row = this.rowDefs[this.selectedRow];
         if (!row || this.castMatch()) return;
@@ -546,6 +548,8 @@ class CharacterCreator {
             const cur = options.indexOf(this.data.colors[row.slot] || null);
             this.data.colors[row.slot] = options[(Math.max(cur, 0) + step + options.length) % options.length];
             this.paint();
+        } else if (row.kind === 'random') {
+            this.randomise(); // either way is another roll
         }
     }
 
@@ -638,6 +642,9 @@ class CharacterCreator {
             { kind: 'color', slot: 'top', palette: CharacterCreator.OUTFIT_COLORS, of: 'top' },
             { kind: 'donor', part: 'legs', label: 'LEGS', donors: this.donors },
             { kind: 'color', slot: 'legs', palette: CharacterCreator.OUTFIT_COLORS, of: 'legs' },
+            // the RANDOM button is the last row, so the keyboard reaches it
+            // with the same keys as everything else (no key of its own)
+            { kind: 'random' },
         ];
 
         this.rowLabels = [];
@@ -646,6 +653,7 @@ class CharacterCreator {
         let y = py + 136;
         const firstRowObj = objs.length;
         this.rowDefs.forEach((row, rowIndex) => {
+            if (row.kind === 'random') return; // drawn with the buttons below
             if (row.kind === 'donor') {
                 this.rowLabels.push(text(px + 250, y, row.label, '20px', { bold: true, originX: 0 }));
                 const mk = (x, step) => {
@@ -705,7 +713,14 @@ class CharacterCreator {
             objs.push(b);
             return [b, text(x, py + ph - 66, label, '20px', { bold: true })];
         };
-        this.lockable.push(...btn(px + 360, 'RANDOM (R)', () => this.randomise()));
+        const random = btn(px + 360, '‹ RANDOM ›', () => {
+            if (this.castMatch()) return;
+            this.selectedRow = this.rowDefs.length - 1;
+            this.randomise();
+        });
+        this.lockable.push(...random);
+        [this.randomBox, this.randomLabel] = random;
+        this.rowLabels.push(this.randomLabel); // its row label: yellow while selected
         btn(px + 570, 'START ▶', () => this.confirm());
 
         this.footer = text(W / 2, py + ph - 24, '', '14px', { color: '#888888' });
@@ -749,6 +764,10 @@ class CharacterCreator {
         // the label when EITHER of its rows is selected
         const selectedLabel = cast ? null : this.rowLabels[this.selectedRow];
         this.rowLabels.forEach(l => l.setFill(l === selectedLabel ? '#ffff00' : '#ffffff'));
+        if (this.randomBox) {
+            const on = selectedLabel === this.randomLabel;
+            this.randomBox.setStrokeStyle(on ? 3 : 2, on ? 0xffff00 : 0x666666);
+        }
 
         this.rowDefs.forEach((row, i) => {
             if (row.kind !== 'color') return;
@@ -817,7 +836,7 @@ class CharacterCreator {
             // repaint only when the name starts/stops matching a cast member
             if (this.castMatch() !== this.paintedCast) this.paint();
         });
-        // keep typed keys (arrows, R, space, enter…) away from Phaser
+        // keep typed keys (arrows, WASD, space, enter…) away from Phaser
         el.addEventListener('keydown', (e) => {
             e.stopPropagation();
             if (e.key === 'Enter' || e.key === 'Escape') el.blur();

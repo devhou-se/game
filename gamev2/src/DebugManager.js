@@ -1,7 +1,7 @@
 /**
  * DebugManager - hidden debug menu + in-game debug overlay + issue flagging.
  *
- * Everything here is deliberately undocumented in the controls overlay.
+ * Everything here is deliberately undocumented in How to Play.
  * Triple-press the backtick key ( ``` within a second ) to open the debug
  * menu: W/S select, SPACE toggles, ESC closes. Toggles (persisted in
  * localStorage, so they survive the frequent date-travel reloads):

@@ -34,7 +34,6 @@ class MenuManager {
             { text: 'Achievements', action: () => this.scene.showAchievements() },
             { text: 'Time Travel', action: () => this.scene.datePicker.show() },
             { text: 'Map', action: () => this.scene.showMap() },
-            { text: 'Controls', action: () => this.scene.showControls() },
             { text: 'How to Play', action: () => this.scene.intro.show() },
             // a setting, not a screen: flips in place and the menu stays open
             { label: () => `Voices: ${this.scene.voice.isMuted() ? 'OFF' : 'ON'}`,

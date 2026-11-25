@@ -117,10 +117,22 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
 - `npcs`: Array of NPC definitions with position (absolute or offset from center), sprite, name, and dialogue.
   An NPC may also carry dated state updates under `states` (`{"YYYY-MM-DD": {fields}}`): at load, every
   state dated on-or-before the game date is applied over the base definition in chronological order —
-  so viewing July 27 shows the July 26 update if the next one is July 28. The game date defaults to
-  today and can be overridden with `?date=YYYY-MM-DD`; a state of `{"present": false}` removes the NPC
+  so viewing July 27 shows the July 26 update if the next one is July 28. The game date is
+  `?date=YYYY-MM-DD` when given, else the default below; a state of `{"present": false}` removes the NPC
   from that date. Author states with `python3 tools/npc_state.py <Room> <Npc> <date> --dialogue ... --pos X,Y`
   (see `src/utils/NpcStates.js`)
+  - **Default game date** (`defaultGameDate()`, issue #54): the trip is the set of dated days in the
+    config (`contentChangeDates`, handed over by `setTripDates(config)` at the top of `GameScene.create()` —
+    nothing is hard-coded). While today is between the first and last of them the game date is today.
+    Outside the trip, today is mapped onto a trip day: days since the day after the trip's last day,
+    modulo the number of trip days, indexes the sorted list (the day after the trip ends is its first day
+    again) — so a visitor with no `?date=` always opens on a day that has posts, and the next real day
+    shows the next trip day. The default is fixed when the config loads (`bootToday`), so a session left
+    open past midnight keeps the day its NPCs were resolved for. On most trip days nobody is in the start room (Tokyo); they are in the
+    neighbouring rooms. The HUD shows that date. `?date=` and Time
+    Travel always win; `setGameDate()` drops the param only for the date a clean URL already gives, so
+    picking today's real date after the trip is an explicit `?date=` like any other. `tools/play.js`
+    still defaults to the real date (`WorldModel.today()`).
 - `objects`: Array of static obstacles with position (absolute or offset from center) that block movement
 - `transporters`: Array of teleport points with position, targetRoom, and target position
 
@@ -259,13 +271,16 @@ the HTML loader.
 `src/Intro.js` (`scene.intro`): a three-page overlay in the usual panel style (depth 2000-2003).
 1. **Welcome to devhouse** — the friends (names parsed from `config.credits` "Role: Name" lines), the
    Japan trip, NPC lines coming from the trip's blog posts, and the HUD date picking the day ("Time Travel
-   in the menu" to visit a day of the trip — the default date is today's, which is not a trip day, so the
-   copy must not imply the player starts on one).
-2. **How to play** — move / sprint / interact / talk / menu drawn as keycaps; when
+   in the menu" to visit another day of the trip — the game always opens on a trip day, see the default
+   game date under `npcs`).
+2. **How to play** — move / sprint / interact / talk / menu drawn as keycaps (the interact row also
+   lists what a bump starts: people, shops, trains, the izakaya); when
    `touchControls.enabled` the same rows are drawn as the on-screen d-pad, sprint pill and A / B buttons,
    plus a one-line keyboard reminder (touch controls are also on for touchscreen laptops).
-3. **Where to start** — there is no quest system, so it points at real things: the friends around
-   Tokyo (same word as page 1), exploring, and Paint the Board (with the live progress bar from `achievementManager`).
+3. **Where to start** — there is no quest system, so it points at real things: the friends (`whereFriendsAre()`:
+   "around Tokyo" when one of them is in the start room on the game date, otherwise the rooms they are
+   in that day are named — on most trip days Tokyo is empty), exploring, and Paint the Board (with the
+   live progress bar from `achievementManager`).
 
 Fishing controls and map travel are **deliberately absent** (fishing is learned when a rod is bought; map
 travel is a debug feature) — keep them out when editing the copy.
@@ -281,7 +296,9 @@ travel is a debug feature) — keep them out when editing the copy.
   — is never shown it automatically, and a Time Travel reload does not replay it.
 - **`?nointro=1`** suppresses the automatic showing (and leaves the gate untouched) — combine with
   `?notitle=1` in tests that start from a fresh profile. Tests that pre-seed `gamev2_character` never see it.
-- **How to Play** in the ESC menu replays it at any time (`scene.intro.show()`).
+- **How to Play** in the ESC menu replays it at any time (`scene.intro.show()`). It is the only controls
+  reference: the separate Controls menu entry and overlay (#38) were folded into page 2 (#55), so a new
+  global binding or bump interaction is documented there.
 
 **Dialogue portrait** (`DialogueManager.showPortrait`): the speaker is shown dating-sim style as a large
 bust in the same wooden frame as the blog photo (`drawFrame`, shared by both), standing on the panel's
@@ -457,11 +474,15 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC).
 - **Dialogue**: SPACE/ENTER advances, ESC closes
 - **Title screen**: SPACE/ENTER/ESC or a tap starts the game (`?notitle=1` skips the screen)
 - **Intro**: SPACE/ENTER or a tap turns the page, ESC skips (`?nointro=1` skips the first-visit intro)
+- **Character creator**: ↑/↓ pick a row, ←/→ change it, ENTER/SPACE plays, ESC cancels. RANDOM is the last
+  row (←/→ re-rolls, or click/tap it) — it has no key of its own (#53). ENTER/SPACE plays on that
+  row too (deliberate: the roll you like is kept with the usual key; if ENTER rolled there it would
+  throw the look away)
 - **Hidden debug menu**: triple-press backtick (``` within a second) — rows for
   the grid view/inspector, the N/E/X flag keys, map-click travel, a time-of-day
   pin (AUTO/day/dusk/night/dawn, same effect as `?tod=`), exact wallet amount
   (prompt), and noclip (all default off, persisted in localStorage). Deliberately
-  absent from the Controls overlay. Map-click travel on the menu's Map overlay
+  absent from How to Play. Map-click travel on the menu's Map overlay
   only works when its toggle is on.
 - Input blocked when `player.isMoving` or `isTransitioning`
 - Supports diagonal movement with simultaneous key presses

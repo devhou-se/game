@@ -19,7 +19,8 @@
  * Shown automatically once, on a first visit, after the first-run character
  * creator closes — see shouldAutoShow(). `?nointro=1` suppresses the
  * automatic showing (tests / development). 'How to Play' in the ESC menu
- * replays it at any time.
+ * replays it at any time — it is also the game's only controls reference
+ * (the separate Controls overlay was folded into page 2, issue #55).
  */
 class Intro {
     constructor(scene) {
@@ -190,9 +191,10 @@ class Intro {
             [`devhouse is a group of friends${list ? `: ${list}` : ''}.`, '#ffffff'],
             ['Their trip to Japan is now a little world you can walk around.', '#dddddd'],
             ['The people you meet will tell you about their day. Their lines come from the blog posts they wrote on the road.', '#dddddd'],
-            // the default date is today's, which is not a day of the trip — so
-            // say where the trip days are rather than imply you are on one
-            ['The date at the top of the screen picks the day. Use Time Travel in the menu to visit a day of the trip, and everyone has a new story.', '#dddddd'],
+            // the game always opens on a day of the trip (today's, or the one
+            // today cycles onto — NpcStates.defaultGameDate), so Time Travel
+            // is for visiting ANOTHER day
+            ['The date at the top of the screen picks the day. Use Time Travel in the menu to visit another day of the trip, and everyone has a new story.', '#dddddd'],
         ];
         let y = l.py + 232;
         paras.forEach(([copy, color]) => {
@@ -267,7 +269,9 @@ class Intro {
             }]);
             rows.push(['SPRINT', 'hold while moving', (x, cy) => keycap(x, cy - 20, 110, 36, 'SHIFT')]);
         }
-        rows.push(['INTERACT', 'walk into people and things', (x, cy) => this.drawBump(l, x, cy)]);
+        // the one rule behind everything contextual; the second line is the
+        // list the old Controls overlay carried (minus ponds — see the header)
+        rows.push(['INTERACT', 'walk into people and things:\nshops, trains, the izakaya', (x, cy) => this.drawBump(l, x, cy)]);
         if (l.touch) {
             rows.push(['TALK', 'next line of dialogue', (x, cy) => touchButton(x + 28, cy, 56, 56, 'A', 0xffd700)]);
             rows.push(['MENU', 'opens the menu, closes anything', (x, cy) => touchButton(x + 28, cy, 56, 56, 'B', 0xff9c9c)]);
@@ -318,6 +322,33 @@ class Intro {
         [12, 23, 34].forEach(dx => g.fillRect(bx + dx, by + 12, 6, 6));
     }
 
+    /**
+     * Where the friends are on the game date, for page 3. The game opens on
+     * a trip day (NpcStates.defaultGameDate) and on most of those nobody is
+     * in the start room, so "around Tokyo" is only said when it is true;
+     * otherwise the rooms they are in are named (the HUD shows room names).
+     */
+    whereFriendsAre() {
+        const s = this.scene;
+        const start = s.config.player && s.config.player.startRoom;
+        const friends = new Set(this.members().map(n => n.toLowerCase()));
+        // the travelling cast only: a dated NPC (config `states`) that is in
+        // the live room today — not a fixture like the izakaya's opponent
+        const live = (s.roomManager && s.roomManager.rooms) || {};
+        const rooms = Object.entries(s.config.rooms || {})
+            .filter(([key, r]) => (r.npcs || []).some(n => n.states && friends.has(String(n.name).toLowerCase())
+                && ((live[key] && live[key].npcs) || []).some(o => o.name === n.name)))
+            .map(([key]) => key)
+            .slice(0, 3);   // a few places to head for, not an itinerary
+        if (!rooms.length || !start || rooms.includes(start)) {
+            return `They are out and about around ${start || 'town'}.`;
+        }
+        const list = rooms.length > 1
+            ? `${rooms.slice(0, -1).join(', ')} and ${rooms[rooms.length - 1]}`
+            : rooms[0];
+        return `Today they are in ${list}.`;
+    }
+
     /** Page 3: something to go and do. */
     drawObjective(l) {
         const g = l.g;
@@ -325,7 +356,7 @@ class Intro {
         const p = this.scene.achievementManager ? this.scene.achievementManager.paintProgress() : null;
         const items = [
             ['Meet the friends',
-                'They are out and about around Tokyo. Walk into one to say hello.'],
+                `${this.whereFriendsAre()} Walk into one to say hello.`],
             ['Have a wander',
                 'Streets, shops, stations, the countryside. See what is out there.'],
             ['Paint the Board',

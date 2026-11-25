@@ -103,6 +103,7 @@ class GameScene extends Phaser.Scene {
             // Load configuration (expand the v2 tile-palette format to the
             // runtime "x,y" -> tileKey shape before anything reads it)
             this.config = decodeConfig(this.cache.json.get('config'));
+            setTripDates(this.config);   // the default game date is a day of the trip
 
             // Rooms are authored in Tiled (tiled/*.tmj is the map source of truth).
             // TiledAdapter outputs the exact room shape RoomManager renders, so the
@@ -157,8 +158,6 @@ class GameScene extends Phaser.Scene {
             this.achievementsCloseCallback = null;
             this.mapVisible = false;
             this.mapCloseCallback = null;
-            this.controlsVisible = false;
-            this.controlsCloseCallback = null;
 
             // Calculate grid boundaries
             const minGridX = 0;
@@ -200,7 +199,7 @@ class GameScene extends Phaser.Scene {
 
             // Spawn NPCs, resolved to their dated state (states on-or-before
             // the game date apply in order; ?date=YYYY-MM-DD time-travels,
-            // default today — see src/utils/NpcStates.js). Also excludes the
+            // default today or its trip day — see src/utils/NpcStates.js). Also excludes the
             // character the player is playing as.
             this.syncNpcPresence();
 
@@ -390,8 +389,8 @@ class GameScene extends Phaser.Scene {
         this.hudBackground.setScrollFactor(0);
         this.hudBackground.setDepth(DEPTH.HUD_BACKGROUND);
 
-        // Game info text; the date segment is the LIVE game date (today, or
-        // ?date=YYYY-MM-DD) and clicking it opens a date picker — NPC states
+        // Game info text; the date segment is the LIVE game date (?date=YYYY-MM-DD,
+        // else today or its trip day) and clicking it opens a date picker — NPC states
         // re-resolve to the picked date on reload.
         const hudText = `${this.config.game.title} | ${this.roomManager.currentRoom} | `;
 
@@ -528,57 +527,6 @@ class GameScene extends Phaser.Scene {
         };
         this.achievementsVisible = true;
         this.achievementsCloseCallback = close;
-        overlay.on('pointerdown', close);
-    }
-
-    /**
-     * Show the controls overlay (issue #38): every global key binding, plus
-     * the bump-to-interact rule that covers everything contextual.
-     */
-    showControls() {
-        if (this.controlsVisible) return;   // only one overlay at a time
-        const cam = this.cameras.main, W = cam.width, H = cam.height;
-        const rows = [
-            ['MOVE', 'WASD / arrows — diagonals work'],
-            ['SPRINT', 'hold SHIFT while moving'],
-            ['INTERACT', 'walk into people and things'],
-            ['DIALOGUE', 'SPACE / ENTER next line · ESC close'],
-            ['MENU', 'ESC'],
-            ['ON TOUCH', 'd-pad to move · slide for diagonals'],
-        ];
-        const pw = 620, ph = 150 + rows.length * 40, px = (W - pw) / 2, py = (H - ph) / 2;
-        const objs = [];
-        const overlay = this.add.graphics();
-        overlay.fillStyle(0x000000, 0.85); overlay.fillRect(0, 0, W, H);
-        overlay.setScrollFactor(0); overlay.setDepth(2000);
-        overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, W, H), Phaser.Geom.Rectangle.Contains);
-        objs.push(overlay);
-        const panel = this.add.graphics();
-        panel.fillStyle(0x1a1a1a, 1); panel.fillRect(px, py, pw, ph);
-        panel.lineStyle(2, 0x666666, 1); panel.strokeRect(px, py, pw, ph);
-        panel.setScrollFactor(0); panel.setDepth(2001); objs.push(panel);
-        const text = (x, y, t, size, bold, color, origin) => {
-            const o = this.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
-                fontFamily: bold ? 'PixelOperatorMonoBold' : 'PixelOperatorMono' });
-            o.setOrigin(origin != null ? origin : 0.5, 0.5); o.setResolution(1);
-            o.setScrollFactor(0); o.setDepth(2002); objs.push(o); return o;
-        };
-        text(W / 2, py + 34, 'CONTROLS', '32px', true);
-        rows.forEach(([key, what], i) => {
-            const y = py + 88 + i * 40;
-            text(px + 200, y, key, '22px', true, '#ffd700', 1);       // right-aligned key
-            text(px + 228, y, what, '20px', false, '#dddddd', 0);     // left-aligned action
-        });
-        text(W / 2, py + ph - 52, 'Shops, ponds, trains and the izakaya all start with a bump.',
-            '16px', false, '#888888');
-        text(W / 2, py + ph - 26, '(click or ESC to close)', '16px', false, '#888888');
-        const close = () => {
-            this.controlsVisible = false;
-            this.controlsCloseCallback = null;
-            objs.forEach(o => o.destroy());
-        };
-        this.controlsVisible = true;
-        this.controlsCloseCallback = close;
         overlay.on('pointerdown', close);
     }
 

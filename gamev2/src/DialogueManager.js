@@ -133,7 +133,12 @@ class DialogueManager {
     }
 
     createOverlay() {
-        // Semi-transparent background overlay
+        // Semi-transparent background overlay: the same 0.85 black as the menu
+        // and the other overlays, and it measures the same on screen (15% of
+        // the world's brightness gets through — issue #52). The world reads
+        // as lighter here only because this panel is small and leaves most
+        // of the dimmed scene in view, which is wanted: you can still see
+        // who you are talking to and where.
         this.overlay = this.scene.add.graphics();
         this.overlay.fillStyle(0x000000, 0.85);
         this.overlay.fillRect(0, 0, this.scene.cameras.main.width, this.scene.cameras.main.height);

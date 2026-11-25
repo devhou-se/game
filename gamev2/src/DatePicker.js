@@ -5,7 +5,7 @@
  * src/utils/NpcStates.js). This overlay lets the player pick that date
  * without leaving the game: open it from the menu ("Time Travel") or by
  * clicking the HUD date. Picking a day reloads at ?date=YYYY-MM-DD
- * (picking today returns to the clean live URL).
+ * (picking the day a clean URL already shows returns to the clean URL).
  *
  * Keys while open: arrows/WASD move a day (left-right) or a week (up-down),
  * ENTER/SPACE travels, ESC closes. Everything is also clickable (day cells,
@@ -69,7 +69,7 @@ class DatePicker {
     confirm() {
         const target = this.iso(this.sel);
         this.hide();
-        setGameDate(target);   // navigates; today -> clean URL
+        setGameDate(target);   // navigates; the default date -> clean URL
     }
 
     rerender() {
