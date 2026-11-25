@@ -220,9 +220,17 @@ for store in stores:
     for layer in host['layers']:
         if layer['name'] == 'Colliders':
             layer['tiles'].pop(f'{dx},{dy}', None)
-    host['transporters'] = [t for t in host.get('transporters', [])
-                            if (t['gridX'], t['gridY']) != (dx, dy)]
-    host['transporters'].append(rg.transporter(dx, dy, store['key'], *arrive, hidden=True))
+    # replace the door's transporter where it already sits (append only a new
+    # one): a re-run on an unchanged world must leave config.json byte-identical
+    door = rg.transporter(dx, dy, store['key'], *arrive, hidden=True)
+    ts = host.setdefault('transporters', [])
+    at = [i for i, t in enumerate(ts) if (t['gridX'], t['gridY']) == (dx, dy)]
+    if at:
+        ts[at[0]] = door
+        for i in reversed(at[1:]):
+            del ts[i]
+    else:
+        ts.append(door)
     new_rooms.append(store['key'])
     print(f"built  {store['key']} — door {store['door']}, "
           f"{cfg['rooms'][store['key']]['worldWidth'] // 64}x"
