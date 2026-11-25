@@ -163,7 +163,7 @@ damian = rg.make_npc('Damian', 'damian', 6, 7, [
     'Bump the table when you are ready. Fifteen seconds. No excuses.',
 ])
 bailey = rg.make_npc('Bailey', 'bailey', 6, 7, [
-    'Want a drinking game? I only need a ten-point head start.',
+    'Bump the table when you are ready. Fifteen seconds. No excuses.',
 ])
 for opponent in (damian, bailey):
     opponent['drinkingGameOpponent'] = True
