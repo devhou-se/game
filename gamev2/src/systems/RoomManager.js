@@ -650,6 +650,28 @@ class RoomManager {
         return { x0: Math.min(...xs) * GS, x1: Math.max(...xs) * GS };
     }
 
+    /** The rows it spans, likewise ({y0, y1}). */
+    contentRows(roomKey) {
+        const room = this.rooms[roomKey];
+        if (!room || !room.boundary || !room.boundary.length) return null;
+        const ys = room.boundary.map(([, y]) => y), GS = this.scene.GRID_SIZE;
+        return { y0: Math.min(...ys) * GS, y1: Math.max(...ys) * GS };
+    }
+
+    /**
+     * The camera's bounds down the screen ({y, height}, world px) for a room
+     * spanning `rows` in a view `viewH` tall whose top `bar` px are under
+     * the HUD bar: the room centred in what shows below the bar, or - when
+     * it is taller than that - from its top edge just under the bar to its
+     * bottom edge at the foot of the view. null for a room taller than the
+     * view, which the camera follows the player through as ever.
+     */
+    static heldRows(rows, viewH, bar) {
+        if (!rows || rows.y1 - rows.y0 > viewH) return null;
+        const height = Math.max(viewH, rows.y1 - rows.y0 + bar);
+        return { y: (rows.y0 + rows.y1 - bar - height) / 2, height };
+    }
+
     /**
      * Switch to a different room
      * @param {string} newRoom - Target room name

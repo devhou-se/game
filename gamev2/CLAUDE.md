@@ -1411,6 +1411,10 @@ The game always renders 1280x960; everything below is about showing that on anyt
     `GameScene.applyRoomBounds` narrows the camera bounds to the view around
     `roomManager.contentColumns()`, and runs again on scene event `'worldviewchange'` (zoom or view
     width changed). With the whole canvas in view the bounds are the room's, as always.
+    Down the screen likewise when the view is zoomed in: a room no taller than the view
+    (`roomManager.contentRows()`) is held in the part of it under the HUD bar (`GameScene.hudCover()`,
+    world px) — centred there if it fits, else scrolling only from its back wall under the bar to its
+    door (`RoomManager.heldRows`); `layoutHUD` re-applies the bounds when the bar's height changes.
     The room-change fade (`RoomManager.switchRoom`) runs on the camera drawn last — the `'ui'`
     camera while the split is on — so it covers the HUD and overlays as the single camera's fade does.
   - **HUD** (depth 1000-1999 with scroll factor 0, `'hud'` camera): magnified from the top-left by

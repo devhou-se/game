@@ -2374,6 +2374,33 @@ const tests = {
         scene.trainTravel.riding = false;
         assert.strictEqual(frame(), '', 'a tap during a train ride does not fire after it');
     },
+
+    'a room shorter than a zoomed view is held under the HUD bar (#205)'() {
+        const RM = game('RoomManager');
+        const rm = { scene: { GRID_SIZE: 64 }, rooms: {
+            Konbini: { boundary: [[6, 4], [14, 4], [14, 10], [11, 10], [11, 11], [9, 11], [9, 10], [6, 10]] },
+            City: { boundary: null } } };
+        const rows = RM.prototype.contentRows.call(rm, 'Konbini');
+        assert.strictEqual(JSON.stringify(rows), '{"y0":256,"y1":704}');
+        assert.strictEqual(RM.prototype.contentRows.call(rm, 'City'), null);
+        // fits under the bar: one camera position, the room centred in the 550px below a 50px bar
+        let held = RM.heldRows(rows, 600, 50);
+        assert.deepStrictEqual([held.y, held.height], [155, 600]);
+        assert.strictEqual(held.y + 50 + (600 - 50) / 2, (256 + 704) / 2);
+        // fits the view but not under the bar (a 2x landscape phone): scrolls only from
+        // its back wall just under the bar to its door at the foot of the view
+        held = RM.heldRows(rows, 480, 50);
+        assert.deepStrictEqual([held.y, held.height], [206, 498]);
+        assert.strictEqual(held.y + 50, 256);
+        assert.strictEqual(held.y + held.height, 704);
+        // taller than the view, or no outline: the camera follows as ever
+        assert.strictEqual(RM.heldRows(rows, 400, 50), null);
+        assert.strictEqual(RM.heldRows(null, 480, 50), null);
+        // only a zoomed view is held, and a HUD bar that changes height re-applies the bounds
+        const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(/if \(viewH < this\.scale\.height\) \{\s*const held = RoomManager\.heldRows\(this\.roomManager\.contentRows\(roomKey\), viewH, this\.hudCover\(\)\)/.test(src));
+        assert.ok(/this\.hudBarCover = this\.hudBarHeight \* zoom;\s*this\.applyRoomBounds\(/.test(src));
+    },
 };
 
 let failed = 0;

@@ -382,7 +382,17 @@ class GameScene extends Phaser.Scene {
             const cols = this.roomManager.contentColumns(roomKey);
             if (cols && cols.x1 - cols.x0 <= viewW) { bx = (cols.x0 + cols.x1 - viewW) / 2; bw = viewW; }
         }
-        cam.setBounds(bx, 0, bw, wh);
+        // Down the screen likewise, when the view is shorter than the canvas
+        // (zoomed in): a room no taller than the view keeps to the part of
+        // it under the HUD bar - centred there if it fits, else scrolled no
+        // further than from its back wall under the bar to its door.
+        const viewH = cam.height / cam.zoom;
+        let by = 0, bh = wh;
+        if (viewH < this.scale.height) {
+            const held = RoomManager.heldRows(this.roomManager.contentRows(roomKey), viewH, this.hudCover());
+            if (held) { by = held.y; bh = held.height; }
+        }
+        cam.setBounds(bx, by, bw, bh);
         this.physics.world.setBounds(0, 0, ww, wh);
         if (this.player) {
             this.player.minGridX = 0;
@@ -390,6 +400,12 @@ class GameScene extends Phaser.Scene {
             this.player.maxGridX = (ww / this.GRID_SIZE) - 1;
             this.player.maxGridY = (wh / this.GRID_SIZE) - 1;
         }
+    }
+
+    /** How far down the world view the HUD bar reaches, in world px (it is magnified apart from the world). */
+    hudCover() {
+        const ui = this.uiScale;
+        return (this.hudBarHeight || UI.HUD_HEIGHT) * (ui ? ui.hudZoom : 1) / this.cameras.main.zoom;
     }
 
     /**
@@ -582,6 +598,11 @@ class GameScene extends Phaser.Scene {
             t.input.hitArea.setTo(0, (t.height - rowHeight) / 2, t.width, rowHeight);
         }
         if (this.shop) this.shop.updateEffectChip();
+        // a bar that covers more or less of the world moves a held room (applyRoomBounds)
+        if (this.hudBarHeight * zoom !== this.hudBarCover) {
+            this.hudBarCover = this.hudBarHeight * zoom;
+            this.applyRoomBounds(this.roomManager.currentRoom);
+        }
     }
 
     /**
