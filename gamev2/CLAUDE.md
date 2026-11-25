@@ -624,11 +624,13 @@ creator's composite (head / torso / legs / beard donors + recolours), run offlin
   `DONORS` / `BEARDS` / `CUTS` are parsed out of `src/CharacterCreator.js` at run time, so those tables
   cannot drift (the tool exits if it cannot find them). The output is pixel-identical to the creator's
   (a unit test composes every look with the game's code and compares it with the baked PNGs — change one
-  side and port it to the other). Both carry four marked `TIDY` rules that remove
+  side and port it to the other). Both carry five marked `TIDY` rules that remove
   the artefacts of a plain band cut between different donors: holes where the top donor shows its own trousers in the torso band
   (damian's hem), the stray outline of the head donor's own high sleeve (james, side frame 1), mouth-interior
-  pixels recoloured as hair (dylan — a moustache that flickers with the walk cycle), and an open shoulder
-  line where the head donor's shoulders are narrower than the top worn.
+  pixels recoloured as hair (dylan — a moustache that flickers with the walk cycle), an open shoulder
+  line where the head donor's shoulders are narrower than the top worn, and what the top donor's own long hair
+  leaves in the torso band (julia's top on another head: a stray strand of outline behind the shoulder in side
+  view, and in back view a see-through hole over a dark band — the hole and the outline under it become shirt).
 - **`dylan` as a top donor**: his shirt is a two-teal checker (both teals are in `DONORS.dylan.top`), so a
   recolour keeps the checker as two shades. It is solid: a unit test keeps every donor sprite hole-free.
 - **Replacing an interim set with real art**: drop the ten hand-drawn PNGs over the generated ones (same file

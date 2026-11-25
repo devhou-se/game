@@ -25,7 +25,7 @@ remove that name from LOOKS so a later run does not overwrite them. No code or
 config change is needed.
 
 The compose logic is a line-for-line port of CharacterCreator.composePixels /
-addSlot / inBeardBox (the four rules marked TIDY included); the donor
+addSlot / inBeardBox (the five rules marked TIDY included); the donor
 palettes, the beard donors and the cut rows are READ from CharacterCreator.js
 (never copied here), so those cannot drift. The baked frames are
 pixel-identical to the creator's preview of the same look — a unit test in
@@ -263,7 +263,7 @@ def compose_frame(look, d, frame, tables):
                     rgb = maps[part].get((r, g, b), (r, g, b)) if recolour(x, y, c) else (r, g, b)
                     px[x, y] = rgb + (a,)
 
-    # The four TIDY rules below (the creator has the same four) clean up
+    # The five TIDY rules below (the creator has the same five) clean up
     # what a plain band cut leaves behind when the parts come from different
     # donors.
     mixed_top = parts['top'] != parts['hair']
@@ -281,8 +281,16 @@ def compose_frame(look, d, frame, tables):
         for x in range(W):
             if klass('top', x, y) == 'legs' and px[x, y][3] == 0:
                 px[x, y] = maps['top'].get(top_anchor, top_anchor) + (255,)
+    # TIDY 5a: the top donor's own long hair (julia) hangs into the torso
+    # band and is not worn with the top — nor is the part of its outline
+    # that touches nothing but that hair, a stray strand behind the shoulder.
+    def strand_outline(x, y):
+        return (mixed_top and klass('top', x, y) == ''
+                and near('top', x, y, lambda k, nx, ny, _: k == 'hair')
+                and not near('top', x, y, lambda k, nx, ny, _: k in ('skin', 'top', 'legs')))
     each('top', lambda x, y, c: c not in ('hair', 'legs')
-         and ((top_start <= y < bottom_start) or (c == 'top' and y < top_start)))
+         and ((top_start <= y < bottom_start) or (c == 'top' and y < top_start))
+         and not strand_outline(x, y))
 
     # HEAD: everything above the shoulder line except this donor's own
     # clothing, plus hair pixels at ANY row.
@@ -313,6 +321,29 @@ def compose_frame(look, d, frame, tables):
                 if px[x, y][3] == 0 and klass('top', x, y) == '' and px[x, y + 2][3] != 0 \
                         and klass('top', x, y + 2) == 'top':
                     px[x, y] = data['top'][x, y]
+
+    # TIDY 5b: where that hair covered the back of the shirt, nothing drew
+    # it: a see-through hole under the new head, over the hair's lower
+    # outline. Fill what is enclosed with the top's colour, and turn the
+    # outline right under it into shirt too.
+    if mixed_top:
+        # flood the transparent background in from the border: what is left is a hole
+        outside = set()
+        stack = [(x, y) for x in range(W) for y in (0, H - 1)] + [(x, y) for y in range(H) for x in (0, W - 1)]
+        while stack:
+            x, y = stack.pop()
+            if (x, y) in outside or not (0 <= x < W and 0 <= y < H) or px[x, y][3] != 0:
+                continue
+            outside.add((x, y))
+            stack += [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+        filled = set()
+        for y in range(top_start, bottom_start):
+            for x in range(W):
+                hole = klass('top', x, y) == 'hair' and px[x, y][3] == 0 and (x, y) not in outside
+                if hole or (klass('top', x, y) == '' and (x, y - 2) in filled):
+                    px[x, y] = maps['top'].get(top_anchor, top_anchor) + (255,)
+                    if hole:
+                        filled.add((x, y))
 
     # BEARD: the donor's facial-hair pixels, on top of the new face
     if parts.get('beard'):

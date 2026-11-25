@@ -312,7 +312,7 @@ class CharacterCreator {
      * {hair, top, legs, beard?}, each {width, height, data: RGBA bytes} of
      * that donor's frame. Returns {width, height, data}.
      *
-     * The four TIDY rules clean up what a plain band cut leaves behind when
+     * The five TIDY rules clean up what a plain band cut leaves behind when
      * the parts come from different donors.
      */
     static composePixels(src, data, dir, frame) {
@@ -407,9 +407,15 @@ class CharacterCreator {
         }
         // TOP: the torso band (arms included — skin recolours globally), plus
         // this donor's top-slot pixels above the shoulder line (high sleeves)
+        // TIDY 5a: the top donor's own long hair (julia) hangs into the torso
+        // band and is not worn with the top — nor is the part of its outline
+        // that touches nothing but that hair, a stray strand behind the shoulder.
+        const strandOutline = (x, y) => mixedTop && klass('top', x, y) === ''
+            && near('top', x, y, (k) => k === 'hair')
+            && !near('top', x, y, (k) => k === 'skin' || k === 'top' || k === 'legs');
         each('top', (x, y, d, i, c) => {
             if (c === 'hair' || c === 'legs') return;
-            if ((y >= topStart && y < bottomStart) || (c === 'top' && y < topStart)) put(x, y, d, i, maps.top);
+            if (((y >= topStart && y < bottomStart) || (c === 'top' && y < topStart)) && !strandOutline(x, y)) put(x, y, d, i, maps.top);
         });
         // TIDY 2: the outline of the head donor's own high sleeve (james, side
         // view) is not part of the head — with another top it is a stray tick.
@@ -437,6 +443,37 @@ class CharacterCreator {
                 for (let x = 0; x < W; x++) {
                     if (!drawn(x, y) && klass('top', x, y) === '' && drawn(x, y + 2) && klass('top', x, y + 2) === 'top') {
                         put(x, y, src.top.data, (y * W + x) * 4, maps.top, false);
+                    }
+                }
+            }
+        }
+        // TIDY 5b: where that hair covered the back of the shirt, nothing drew
+        // it: a see-through hole under the new head, over the hair's lower
+        // outline. Fill what is enclosed with the top's colour, and turn the
+        // outline right under it into shirt too.
+        if (mixedTop) {
+            // flood the transparent background in from the border: what is left is a hole
+            const outside = new Uint8Array(W * H), stack = [];
+            for (let x = 0; x < W; x++) stack.push(x, (H - 1) * W + x);
+            for (let y = 0; y < H; y++) stack.push(y * W, y * W + W - 1);
+            while (stack.length) {
+                const p = stack.pop();
+                if (outside[p] || out[p * 4 + 3] !== 0) continue;
+                outside[p] = 1;
+                const x = p % W;
+                if (x > 0) stack.push(p - 1);
+                if (x < W - 1) stack.push(p + 1);
+                if (p >= W) stack.push(p - W);
+                if (p < W * (H - 1)) stack.push(p + W);
+            }
+            const filled = new Uint8Array(W * H);
+            for (let y = topStart; y < bottomStart; y++) {
+                for (let x = 0; x < W; x++) {
+                    const p = y * W + x;
+                    const hole = klass('top', x, y) === 'hair' && !drawn(x, y) && !outside[p];
+                    if (hole || (klass('top', x, y) === '' && y >= 2 && filled[p - 2 * W])) {
+                        out.set([hem[0], hem[1], hem[2], 255], p * 4);
+                        filled[p] = hole ? 1 : 0;
                     }
                 }
             }

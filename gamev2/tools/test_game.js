@@ -399,6 +399,42 @@ const tests = {
             }
         }
         assert.ok(closed > 0, 'no donor pair has shoulders of different widths: the check tests nothing');
+        // 5. julia's top on another head (#160): her long hair is not worn with it. Side view: the strand of outline
+        //    behind the shoulder is gone. Back view: no see-through hole where the hair was, and the hair's lower
+        //    outline is shirt, not a dark band — and no mixed composite at all has a hole.
+        assert.strictEqual(at(compose(look('james', 'julia', 'julia'), 'side', 0), 14, 36)[3], 0, 'stray strand outline behind the shoulder (side 0)');
+        assert.strictEqual(at(compose(look('dylan', 'julia', 'julia'), 'side', 1), 14, 36)[3], 0, 'stray strand outline behind the shoulder (side 1)');
+        const shirt = Array.from(game('CharacterCreator.hslToRgb')(...Object.values(game('CharacterCreator.rgbToHsl')(0x3a, 0x6f, 0xd8)))).concat(255);
+        const back = compose(look('james', 'julia', 'julia'), 'back', 0);
+        for (let x = 22; x < 40; x++) {
+            for (const y of [36, 38]) assert.deepStrictEqual(at(back, x, y), shirt, `back of julia's top at ${x},${y} is not shirt`);
+        }
+        const holed = [];
+        for (const hair of Object.keys(donors)) {
+            for (const top of Object.keys(donors)) {
+                for (const [dir, n] of Object.entries(frames)) {
+                    for (let f = 0; f < n; f++) {
+                        const { width: W, height: H, data } = compose(look(hair, top, top), dir, f);
+                        // flood the transparent background in from the border: what is left is a hole
+                        const outside = new Uint8Array(W * H), stack = [];
+                        for (let x = 0; x < W; x++) stack.push(x, (H - 1) * W + x);
+                        for (let y = 0; y < H; y++) stack.push(y * W, y * W + W - 1);
+                        while (stack.length) {
+                            const p = stack.pop();
+                            if (outside[p] || data[p * 4 + 3] !== 0) continue;
+                            outside[p] = 1;
+                            const x = p % W;
+                            if (x > 0) stack.push(p - 1);
+                            if (x < W - 1) stack.push(p + 1);
+                            if (p >= W) stack.push(p - W);
+                            if (p < W * (H - 1)) stack.push(p + W);
+                        }
+                        if (outside.some((o, p) => !o && data[p * 4 + 3] === 0)) holed.push(`${hair} head / ${top} top ${dir} ${f}`);
+                    }
+                }
+            }
+        }
+        assert.deepStrictEqual(holed, [], 'see-through hole inside a composed character');
 
         // tools/generate_cast.py is a port of the same compose: the frames it baked are what the creator draws
         const py = fs.readFileSync(path.join(__dirname, 'generate_cast.py'), 'utf8');
