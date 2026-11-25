@@ -159,11 +159,12 @@ their route in the room's map data rather than in coordinates, have no collision
     them, passing behind the domes. It used to be row 5, which is half way up the building: the train was
     a strip of roof sliding along above the station with no rails under it. It is a map change; the
     only code change is the depth rule above (44 on row 3, so the player on the crossing is not drawn
-    under the train). The level crossing is the west road's two cells, `(0,3)` and `(1,3)` (left
-    unsealed, as `seal_tracks.py` does for any track cell over a road); the track still closes the east
-    road. **`(2,2)` must stay open**: with the lantern on `(2,1)` and the track sealed from column 2
-    east, it is the only way from the west road into the strip behind the station (rows 0-2) - do not
-    put a cone or prop there. From the forecourt the camera cannot reach row 3 - the train is seen from
+    under the train). Both roads cross it: the west road's two cells, `(0,3)` and `(1,3)`, and the
+    east road's three, `(54,3)`-`(56,3)` (issue #138; left unsealed, as `seal_tracks.py` does for any
+    track cell over a road, with cones on `(53,4)` and `(57,4)` beside the east one - a unit test
+    fails a sealed road-over-track cell in any room). **`(2,2)` must stay open**: with the lantern on
+    `(2,1)` and the track sealed from column 2 to the east road, it is the only way from the west
+    road into the strip behind the station (rows 0-2) - do not put a cone or prop there. From the forecourt the camera cannot reach row 3 - the train is seen from
     the west road, the yards beside the station (rows 4-7) or the strip behind it.
 - **`AmbientBoats`** - any room with straight moat tiles (today: the Tokyo moat) gets a boat. A "run" is a
   line of consecutive cells holding the same plain `moat-<north|south|east|west>` tile; `-rocks` tiles,

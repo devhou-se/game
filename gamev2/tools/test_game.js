@@ -189,6 +189,26 @@ const tests = {
         }
     },
 
+    'a road over a train track is an open level crossing, in every room'() {
+        // tools/seal_tracks.py leaves a track cell with a road under it unsealed; Palace has two (#138)
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
+        const sealed = [], crossings = {};
+        for (const [key, room] of Object.entries(cfg.rooms)) {
+            const layer = (n) => ((room.layers || []).find((l) => l.name === n) || {}).tiles || {};
+            const floor = layer('Floor'), colliders = layer('Colliders');
+            for (const l of room.layers || []) {
+                for (const [xy, t] of Object.entries(l.tiles || {})) {
+                    if (!name(t).startsWith('train-track') || !name(floor[xy]).startsWith('road-')) continue;
+                    (crossings[key] = crossings[key] || []).push(xy);
+                    if (xy in colliders) sealed.push(`${key} @${xy}`);
+                }
+            }
+        }
+        assert.deepStrictEqual(sealed, []);
+        assert.deepStrictEqual(crossings.Palace.sort(), ['0,3', '1,3', '54,3', '55,3', '56,3'], 'west and east roads cross the track');
+    },
+
     'a dated state that marks an NPC absent carries no placement'() {
         // tools/blog_to_npc.py PLACEMENT_KEYS: a leftover photo is still preloaded, leftover dialogue reads as a post
         const placementKeys = ['gridX', 'gridY', 'dialogue', 'photo', 'voice', 'drunk', 'posts'];
