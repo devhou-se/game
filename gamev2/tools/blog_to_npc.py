@@ -890,7 +890,11 @@ def rehome(cfg, npc_name, date, spot_id, spots):
     behind, the new room a hidden base def if they were never there, and the
     later history is re-checked (repair_presence) — it is apply() with the
     old state's content. The cell is one nobody else stands on for as long
-    as they stay (occupied_during)."""
+    as they stay (occupied_during).
+
+    A spot in the room they are already in changes the cell and nothing else
+    (#190): presence everywhere is already right for that date, so no state
+    is added in other rooms and no key the state lacked is written."""
     if spot_id not in spots:
         raise ValueError(f'unknown spot {spot_id!r}')
     from_room = placement_room(cfg, npc_name, date)
@@ -900,9 +904,13 @@ def rehome(cfg, npc_name, date, spot_id, spots):
     cell = walkable_near(cfg, room_key, ax, ay, occupied_during(cfg, room_key, date, npc_name))
     if cell is None:
         raise ValueError(f'no walkable cell near {spot_id}')
-    # a copy: when the spot is in another room apply() strips the old state
-    old = dict(npc_in_room(cfg['rooms'][from_room], npc_name)['states'][date])
-    return [f'{npc_name} {date}: {from_room} ({old["gridX"]},{old["gridY"]}) -> {spot_id} {cell}'] + \
+    state = npc_in_room(cfg['rooms'][from_room], npc_name)['states'][date]
+    old = dict(state)   # a copy: when the spot is in another room apply() strips the old state
+    moved = f'{npc_name} {date}: {from_room} ({old["gridX"]},{old["gridY"]}) -> {spot_id} {cell}'
+    if room_key == from_room:
+        state['gridX'], state['gridY'] = cell
+        return [moved]
+    return [moved] + \
         apply(cfg, npc_name, date, room_key, cell[0], cell[1], old.get('dialogue', []),
               old.get('photo'), old.get('voice'), old.get('drunk') is True, old.get('posts'))
 

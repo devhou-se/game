@@ -236,6 +236,21 @@ def test_rehome(base_cfg):
     again = b.npc_in_room(cfg['rooms'][target_room], 'Bailey')['states'][d1]
     assert (again['gridX'], again['gridY']) == cell and again['dialogue'] == before['dialogue']
 
+    # ... and to another spot in the same room it changes the cell and nothing
+    # else (#190): no "voice" key on a state that had none, no extra states
+    # in the other rooms
+    del again['voice']
+    nearby = next(s for s in outdoor if spots[s][0] == target_room and b.walkable_near(
+        cfg, target_room, *spots[s][1:], b.occupied_during(cfg, target_room, d1, 'Bailey')) != cell)
+    untouched = copy.deepcopy(cfg)
+    with contextlib.redirect_stdout(io.StringIO()):
+        changes = b.rehome(cfg, 'Bailey', d1, nearby, spots)
+    assert len(changes) == 1 and changes[0].startswith(f'Bailey {d1}: {target_room}'), changes
+    moved = b.npc_in_room(cfg['rooms'][target_room], 'Bailey')['states'][d1]
+    assert (moved['gridX'], moved['gridY']) != cell and 'voice' not in moved
+    moved['gridX'], moved['gridY'] = cell
+    assert cfg == untouched, 'a same-room rehome changed more than the cell'
+
     # nothing to move, or nowhere to move it: refused, config untouched
     snapshot = json.dumps(cfg, sort_keys=True)
     for args in (('Bailey', '2031-01-01', target), ('Bailey', d1, 'Nowhere · the moon'),
