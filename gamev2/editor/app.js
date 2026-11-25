@@ -72,7 +72,8 @@ class EditorApp {
         });
         // Spawn: set the player start (and start room) to the clicked cell. The game opens at the
         // game date's trip home, so the trips that started on the old cell move with it
-        // (Trips.moveStart) and the status line says which did.
+        // (Trips.moveStart) and the status line says which did — a note that stays
+        // through mouse moves, until the next click, tool, room or save.
         this.registerTool({
             id: 'spawn', label: 'Spawn',
             onCell: (cell, type) => {
@@ -81,9 +82,10 @@ class EditorApp {
                 const trips = (this.config.data.trips || []).length;
                 this.config.markDirty(); this.canvas.setSelection(cell); this.canvas.render();
                 this.inspector.show(this.activeRoom, cell);
-                this._status(cell, !trips ? 'spawn set'
+                this._note = !trips ? 'spawn set'
                     : moved.length ? `spawn set, and the home of ${moved.join(', ')}`
-                        : 'spawn set (fallback only: no trip starts here, see trips[].home)');
+                        : 'spawn set (fallback only: no trip starts here, see trips[].home)';
+                this._status(cell);
             },
         });
         this.tool = 'inspect';
@@ -138,17 +140,19 @@ class EditorApp {
         this.layerPanel.render(key);
         this.inspector.clear();
         if (this.props) this.props.clear();
+        this._note = '';
         this._status();
     }
 
     _onCell(cell, type, btn) {
         if (type === 'move') { this._status(cell); return; }
+        if (type === 'down') this._note = '';
         const t = this.currentTool();
         if (t && t.onCell) t.onCell(cell, type, btn);
     }
 
     _wireChrome() {
-        $('#btn-save').onclick = () => this.config.save();
+        $('#btn-save').onclick = () => { this._note = ''; this.config.save(); };
         $('#btn-reload').onclick = () => location.reload();
         $('#btn-fit').onclick = () => this.canvas.fitView();
     }
@@ -159,6 +163,7 @@ class EditorApp {
             `<button class="tool-btn ${t.id === this.tool ? 'active' : ''}" data-tool="${t.id}">${t.label}</button>`).join('');
         bar.querySelectorAll('.tool-btn').forEach(b => b.onclick = () => {
             this.tool = b.dataset.tool;
+            this._note = '';
             const t = this.currentTool();
             if (t && t.onSelect) t.onSelect();
             this._applyDragMode();
@@ -166,7 +171,9 @@ class EditorApp {
         });
     }
 
-    _status(cell, note) {
+    /** The status line. `_note` is what the last tool action had to say (see the Spawn tool). */
+    _status(cell) {
+        const note = this._note;
         $('#status').textContent =
             `${this.activeRoom}   |   ${cell ? `cell ${cell.x},${cell.y}` : '—'}   |   zoom ${Math.round(this.canvas.cam.zoom * 100)}%` +
             (this.config.dirty ? '   |   ● unsaved' : '') + (note ? `   |   ${note}` : '');

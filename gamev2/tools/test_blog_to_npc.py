@@ -294,6 +294,16 @@ def test_shipped_whereabouts(cfg):
                 if present:
                     assert (x, y) not in taken, f'{room_key} {date}: {n["name"]} and {taken[(x, y)]} share {(x, y)}'
                     taken[(x, y)] = n['name']
+    # nobody's dated placement is inside a sprite — under a canopy, bell roof
+    # or gate beam, or on the head of a statue or vending machine (#183, #189:
+    # the resolver keeps off those cells, and so do the placements made before it did)
+    for room_key, room in cfg['rooms'].items():
+        behind = b.overhead_cells(cfg, room_key, standing=True)
+        for n in room.get('npcs', []):
+            for date, state in n.get('states', {}).items():
+                if state.get('present') is not False and state.get('gridX') is not None:
+                    assert (state['gridX'], state['gridY']) not in behind, \
+                        f'{room_key} {date}: {n["name"]} stands inside a sprite at {(state["gridX"], state["gridY"])}'
     for name, date in OFF_THE_PLATFORM:
         for station in cfg['stations']:
             npc = b.npc_in_room(cfg['rooms'][station], name)
@@ -428,6 +438,19 @@ def test_spots(cfg):
                     and max(abs(t['gridX'] - by_room[room_key]['the 7-Eleven'][0]), abs(t['gridY'] - by_room[room_key]['the 7-Eleven'][1])) <= 2)
         cell = b.walkable_near(cfg, room_key, *by_room[room_key]['the 7-Eleven'])
         assert cell == (door[0] - 1, door[1] + 1), f'{room_key}: 7-Eleven door {door}, visitor at {cell}'
+    # no spot stands its visitor inside a sprite: under a roof or gate beam, or
+    # on the head of a statue or vending machine, which collide only at the
+    # base (Palace's vending machines, Market's torii)
+    for spot_id, (room_key, x, y) in spots.items():
+        cell = b.walkable_near(cfg, room_key, x, y)
+        assert cell not in b.overhead_cells(cfg, room_key, standing=True), f'{spot_id}: {cell} is inside a sprite'
+    # a cell inside a standing sprite is taken before one under a roof, when nothing is open
+    statues = copy.deepcopy(cfg)
+    w, h = b.room_cells(statues, 'Inaka')[:2]
+    statues['rooms']['Inaka']['layers'].append(
+        {'name': 'Statues', 'z': 5, 'tiles': {f'{x},{y}': 'shrub-small-circle_0_0' for x in range(w) for y in range(h)}})
+    cell = b.walkable_near(statues, 'Inaka', *canopy)
+    assert cell is not None and cell not in b.overhead_cells(statues, 'Inaka'), cell
     # with nowhere open in range a covered cell still does (better hidden than unplaced)
     roofed = copy.deepcopy(cfg)
     tops = next(layer for layer in roofed['rooms']['Inaka']['layers'] if layer['name'] == 'Tops')

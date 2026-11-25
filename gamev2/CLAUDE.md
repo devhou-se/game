@@ -120,7 +120,7 @@ All game constants are loaded from `config.json` and applied in GameScene.create
 - `deadzoneCells`: 4 (creates effective 5×5 cell camera deadzone)
 - `moveDuration`: 200ms per cell movement
 - `npcWanderInterval`: 5000ms between NPC wander attempts
-- `npcWanderRadius`: 2 cells from NPC spawn point
+- `npcWanderRadius`: 2 cells from NPC spawn point (a wandering NPC never steps onto a transporter or the cell beside one — `NPCManager.atDoorway` — so nobody blocks the cell in front of a door)
 
 ### Grid-Based Movement System
 

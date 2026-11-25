@@ -434,12 +434,16 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
     defs — see occupied_cells).
 
     A cell under a canopy or roof (overhead_cells) is passed over, so nobody
-    is stood where the tree hides them (issue #183); only when no open cell is
-    in range does a covered one do."""
+    is stood where the tree hides them (issue #183), and so is a cell inside a
+    sprite that stands on the ground (standing=True: the head of a statue or
+    a vending machine, which only collide at the base). Only when no open
+    cell is in range does one of those do — inside a sprite before under a
+    roof."""
     cells_w, cells_h, floored, blocked = room_cells(cfg, room_key)
     portals = {f"{t['gridX']},{t['gridY']}" for t in cfg['rooms'][room_key].get('transporters', [])}
     reachable = reachable_cells(cfg, room_key)
     overhead = overhead_cells(cfg, room_key)
+    behind = overhead_cells(cfg, room_key, standing=True)
 
     def ok(x, y):
         key = f'{x},{y}'
@@ -447,7 +451,7 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
                 and key not in blocked and key not in portals and (x, y) not in occupied
                 and (reachable is None or (x, y) in reachable))
 
-    covered = None
+    inside = covered = None
     for rad in range(0, 12):
         for dx in range(-rad, rad + 1):
             for dy in range(-rad, rad + 1):
@@ -456,10 +460,12 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
                 cell = (gx + dx, gy + dy)
                 if not ok(*cell):
                     continue
-                if cell not in overhead:
+                if cell not in behind:
                     return cell
+                if cell not in overhead:
+                    inside = inside or cell
                 covered = covered or cell
-    return covered
+    return inside or covered
 
 
 def generate(post, npc_name, spot_ids, mock=False):

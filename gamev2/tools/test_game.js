@@ -700,6 +700,29 @@ const tests = {
         assert.deepStrictEqual([here.nameLabel.visible, riding.nameLabel.visible], [true, false]);
     },
 
+    'a wandering NPC keeps off a doorway: a transporter and the cells beside it'() {
+        const mgr = game('Object.create(NPCManager.prototype)');
+        const steps = [];
+        const npc = { gridX: 4, gridY: 6, isMoving: false, startMovement: (dx, dy) => steps.push(`${dx},${dy}`) };
+        const room = { npcs: [npc], transporters: [{ gridX: 5, gridY: 5 }] };   // a door at 5,5: 5,6 is in front of it
+        mgr.scene = { dialogueManager: { isVisible: () => false },
+            roomManager: { currentRoom: 'Market', rooms: { Market: room } } };
+        assert.deepStrictEqual([[5, 5], [5, 6], [4, 5], [6, 5], [5, 4], [4, 6], [6, 6], [5, 7]].map(c => mgr.atDoorway(...c)),
+            [true, true, true, true, true, false, false, false]);
+        const roll = (direction) => { ctx.Phaser = { Math: { Between: () => direction } }; mgr.handleWander(); };
+        try {
+            roll(2);   // right, onto 5,6
+            assert.deepStrictEqual(steps, [], 'stepped in front of the door');
+            [1, 3, 4].forEach(roll);   // left, up (4,5 is beside the door), down
+            assert.deepStrictEqual(steps, ['-1,0', '0,1']);
+            room.transporters = [];
+            roll(2);
+            assert.deepStrictEqual(steps, ['-1,0', '0,1', '1,0'], 'no door, no restriction');
+        } finally {
+            delete ctx.Phaser;
+        }
+    },
+
     'a touch on a control is cancelled before Phaser can read it as a tap'() {
         const listeners = {};
         const btn = {

@@ -95,6 +95,18 @@ class NPCManager {
     }
 
     /**
+     * True when a cell is a doorway of the current room: a transporter, or the
+     * cell beside one. A wandering NPC keeps off those — the cell in front of
+     * a shop door is the only way in, and someone standing on it turns
+     * "walk in" into "talk to them" (a blog visitor at the 7-Eleven, #184).
+     */
+    atDoorway(gridX, gridY) {
+        const room = this.scene.roomManager.rooms[this.scene.roomManager.currentRoom];
+        return (room.transporters || []).some(t =>
+            Math.abs(t.gridX - gridX) + Math.abs(t.gridY - gridY) <= 1);
+    }
+
+    /**
      * Handle NPC wandering behavior
      */
     handleWander() {
@@ -133,7 +145,8 @@ class NPCManager {
                 }
 
                 // Attempt to move
-                if (deltaX !== 0 || deltaY !== 0) {
+                if ((deltaX !== 0 || deltaY !== 0) &&
+                    !this.atDoorway(npc.gridX + deltaX, npc.gridY + deltaY)) {
                     npc.startMovement(deltaX, deltaY);
                 }
             }

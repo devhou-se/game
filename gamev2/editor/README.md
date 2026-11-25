@@ -12,7 +12,7 @@ It draws a room with the game's depth rules and has four tools:
   player at the `home` (or current `stays` cell) of the game date's trip in `config.trips`; `player.start*`
   is only the fallback for a config with no trips, and the seed the achievements / `play.js check`
   reachability use. So the tool moves both (`Trips.moveStart`): every trip `home` / `stays` cell that stood
-  on the old start moves with it, and the status line names those trips. A trip that starts somewhere else
+  on the old start moves with it, and the status line names those trips (the note stays until the next click, tool, room or save). A trip that starts somewhere else
   (devhouse 3 in Sapporo) is left alone - edit its `home` in `config.json`. `play.js check` fails when
   `player.start*` and the first trip's `home` drift apart.
 
