@@ -32,7 +32,7 @@ before re-running make_prefabs.py). A collider cell that another standing
 sprite still covers is kept. Removals run before additions. Doors are sealed
 (a wired interior needs a transporter — do that in a script).
 
-Then, as for any map edit:  qa_port.py --room <Room>;  config_to_tiled.py <Room>.
+Then, as for any map edit:  play.js lint <Room>;  config_to_tiled.py <Room>.
 Run from gamev2/.
 """
 import json, struct, sys
@@ -201,7 +201,7 @@ def main(argv):
     if dry:
         print('dry run - config.json not written'); return
     open('config.json', 'w').write(json.dumps(cfg, indent=2, sort_keys=True))
-    print(f'wrote config.json - now: qa_port.py --room {name}; config_to_tiled.py {name}')
+    print(f'wrote config.json - now: play.js lint {name}; config_to_tiled.py {name}')
 
 
 if __name__ == '__main__':

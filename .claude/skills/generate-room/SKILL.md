@@ -91,7 +91,7 @@ python3 tools/fix_fences.py <Name>            # ONLY if the room calls b.fence()
 python3 tools/seal_tracks.py                  # ONLY if the room has train-track
                                               # tiles: makes the rail solid
 # ------------------------------------------------------------------------------
-python3 tools/qa_port.py --room <Name>        # must reach 0 errors; fix warnings
+node tools/play.js lint <Name>                # must reach 0 errors; fix warnings
 python3 tools/config_to_tiled.py <Name>       # + every room fix_fences/seal_tracks
                                               #   or a transporter edit touched
 /Applications/Tiled.app/Contents/MacOS/tmxrasterizer tiled/<name>.tmj /tmp/<name>.png

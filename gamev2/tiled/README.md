@@ -85,7 +85,7 @@ use `tools/stamp_prefab.py`:
 It writes nothing unless the placement is clean: inside the room, not over another standing sprite
 (`--allow-overlap` to permit), no solid cell on a cell that is already solid, no transporter or dated NPC
 position anywhere under its sprites (solid rows or the walk-behind roof rows), and every walkable cell that
-was reachable from the transporters still is. Follow with `qa_port.py --room <Room>` and
+was reachable from the transporters still is. Follow with `node tools/play.js lint <Room>` and
 `config_to_tiled.py <Room>`. `--remove` lifts the colliders of the prefab as it is defined NOW (so when
 changing a prefab's collision: remove it from the rooms, re-run `make_prefabs.py`, add it back) and keeps
 any collider cell another standing sprite still covers.
@@ -113,7 +113,7 @@ The pipeline that produced all four rooms is committed in `tools/`:
    port that rect `.tscn → config.json` room (slices atlas tiles into
    `assets/sprites/`, builds layers/collision/Y-sort data, merges into the
    existing config preserving other rooms and hand-added transporters).
-3. `python3 tools/qa_port.py` — QA gate; fix any ERRORs before shipping.
+3. `node tools/play.js lint` — QA gate; fix any ERRORs before shipping.
 4. `python3 tools/config_to_tiled.py <Name>` — seed `tiled/<name>.tmj`.
 
 Once seeded, Tiled is the editor — don't hand-edit the generated `.tmj` back
@@ -122,7 +122,7 @@ stale v1 pipeline; prefer `doport.py`.)
 
 ## Rendering a map without the Tiled app
 
-`python3 tools/render_room.py <Room> out.png [--scale 0.5] [--colliders]` draws
+`node tools/play.js render <Room> out.png [--scale 0.5] [--colliders]` draws
 `tiled/<room>.tmj` with Pillow in the game's own draw order (feet Y-sort, Tops
 bias) — use it wherever these docs say `tmxrasterizer` if Tiled isn't
 installed. `tools/make_worldmap.py` falls back to it automatically.

@@ -112,32 +112,16 @@ function layout(keys, worldMap) {
 }
 
 function renderArt(k) {
-    const room = S.model.roomManager.rooms[k];
     const r = S.rooms[k];
     const c = el('canvas', { width: r.w * ART, height: r.h * ART });
     const g = c.getContext('2d');
     g.imageSmoothingEnabled = false;
     g.fillStyle = '#000';
     g.fillRect(0, 0, c.width, c.height);
-    const meta = S.model.config.spriteMetadata || {};
-    const put = (key, x, y) => {
-        const im = S.images[key];
-        if (im) g.drawImage(im, x * ART, y * ART, im.width * ART / 64, im.height * ART / 64);
-    };
-    const standing = [];
-    room.layers.forEach((layer, order) => {
-        if (layer.collision) return;
-        for (const [xy, key] of Object.entries(layer.tiles || {})) {
-            const [x, y] = xy.split(',').map(Number);
-            const im = S.images[key];
-            if (!im) continue;
-            if (layer.z < 2) { put(key, x, y); continue; }
-            const feet = y + Math.max(1, Math.round(im.height / 64));
-            standing.push([feet * 10 + (layer.z >= 7 ? 11 : 0) + ((meta[key] || {}).depthBias || 0), order, y, x, key]);
-        }
-    });
-    standing.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || a[3] - b[3]);
-    for (const [, , y, x, key] of standing) put(key, x, y);
+    for (const t of S.model.drawOrder(k)) {
+        const im = S.images[t.key];
+        g.drawImage(im, t.x * ART, t.y * ART, im.width * ART / 64, im.height * ART / 64);
+    }
     return c;
 }
 

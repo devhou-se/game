@@ -4,6 +4,7 @@ const os = require('os');
 const path = require('path');
 const vm = require('vm');
 const crypto = require('crypto');
+const png = require('./png');
 
 const GV2 = path.dirname(__dirname);
 const SESSION = path.join(os.tmpdir(), 'gamev2-play-' +
@@ -37,6 +38,17 @@ const env = {
         return (sizes[key] = [w, h]);
     },
 };
+
+const sprites = {};
+function sprite(key) {
+    return sprites[key] || (sprites[key] = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png'))));
+}
+
+function roomKey(world, name) {
+    const key = Object.keys(world.config.rooms).find(k => k.toLowerCase() === String(name).toLowerCase());
+    if (!key) throw new Error(`no room "${name}" (try: rooms)`);
+    return key;
+}
 
 function newWorld(state) {
     const config = decodeConfig(JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')));
@@ -117,6 +129,8 @@ const COMMANDS = {
             'date <YYYY-MM-DD|today>    time travel',
             'as <name>                  play as a cast member (their NPC leaves the world)',
             'check                      transporter targets, NPC placement, unreachable rooms',
+            'lint [room]...             map QA: floor holes, missing or stray colliders, tree and overhang layering',
+            'render <room> <out.png>    draw a room to a PNG [--scale 0.5] [--colliders]',
             'reset                      back to the spawn point, today',
             '',
             'Legend: @ you  # blocked  . walkable  > transporter  T train  $ shop  ~ pond  ? clock  D drinking game  letters are NPCs',
@@ -236,6 +250,51 @@ const COMMANDS = {
         w.as = String(name).toLowerCase();
         w.enter(w.roomManager.currentRoom, w.player.gridX, w.player.gridY);
         return where(w);
+    },
+    lint(w, rooms) {
+        const keys = rooms.length ? rooms.map(r => roomKey(w, r)) : Object.keys(w.config.rooms);
+        const lines = [];
+        let errorCount = 0;
+        for (const k of keys) {
+            const r = w.lint(k);
+            const count = (bag) => Object.values(bag).reduce((n, v) => n + v.length, 0);
+            lines.push(`${k} ${r.width}x${r.height}: ${count(r.errors)} errors, ${count(r.warns)} warnings`);
+            for (const [tag, bag] of [['ERR', r.errors], ['WARN', r.warns]]) {
+                for (const kind of Object.keys(bag).sort()) {
+                    lines.push(`  [${tag}] ${kind}: ${bag[kind].length}`);
+                    for (const item of bag[kind].slice(0, 8)) lines.push(`        ${item}`);
+                    if (bag[kind].length > 8) lines.push(`        ... +${bag[kind].length - 8} more`);
+                }
+            }
+            errorCount += count(r.errors);
+        }
+        if (errorCount) throw new Error(lines.join('\n') + `\n${errorCount} errors`);
+        return lines.join('\n');
+    },
+    render(w, args) {
+        const rest = args.slice();
+        const colliders = rest.includes('--colliders');
+        if (colliders) rest.splice(rest.indexOf('--colliders'), 1);
+        let scale = 1;
+        if (rest.includes('--scale')) scale = Number(rest.splice(rest.indexOf('--scale'), 2)[1]);
+        const [room, file] = rest;
+        if (!room || !file) throw new Error('render <room> <out.png> [--scale 0.5] [--colliders]');
+        const k = roomKey(w, room);
+        const r = w.roomManager.rooms[k];
+        let img = png.blank(r.worldWidth, r.worldHeight);
+        for (const t of w.drawOrder(k)) png.paste(img, sprite(t.key), t.x * 64, t.y * 64);
+        if (colliders) {
+            const saved = w.state();
+            w.enter(k, 0, 0);
+            for (const xy of w.blocked) {
+                const [x, y] = xy.split(',').map(Number);
+                png.wash(img, x * 64, y * 64, 64, 64, [255, 0, 0, 90]);
+            }
+            w.enter(saved.room, saved.x, saved.y);
+        }
+        if (scale !== 1) img = png.scale(img, scale);
+        fs.writeFileSync(file, png.encode(img));
+        return `${k}: ${img.width}x${img.height}px -> ${file}`;
     },
     check(w) {
         const { problems } = w.survey();

@@ -19,7 +19,7 @@ Run from gamev2/:
     python3 tools/make_prefabs.py
     python3 tools/generate_yukimura.py
     python3 tools/generate_stations.py            # builds YukimuraStation + registry
-    python3 tools/qa_port.py --room Yukimura       (and --room YukimuraStation)
+    node tools/play.js lint Yukimura       (and --room YukimuraStation)
     python3 tools/config_to_tiled.py Yukimura      (and YukimuraStation)
 """
 import random

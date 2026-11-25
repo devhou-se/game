@@ -216,6 +216,155 @@ class WorldModel {
         return seen;
     }
 
+    drawOrder(roomKey) {
+        const room = this.roomManager.rooms[roomKey];
+        const meta = this.config.spriteMetadata || {};
+        const ground = [], standing = [];
+        room.layers.forEach((layer, order) => {
+            if (layer.collision) return;
+            for (const [xy, key] of Object.entries(layer.tiles || {})) {
+                if (!this.exists(key)) continue;
+                const [x, y] = xy.split(',').map(Number);
+                if (layer.z < 2) { ground.push({ key, x, y }); continue; }
+                const depth = (y + this.cells(key)[1]) * 10 + (layer.z >= 7 ? 11 : 0) + ((meta[key] || {}).depthBias || 0);
+                standing.push({ key, x, y, depth, order });
+            }
+        });
+        standing.sort((a, b) => a.depth - b.depth || a.order - b.order || a.y - b.y || a.x - b.x);
+        return ground.concat(standing);
+    }
+
+    lint(roomKey) {
+        const room = this.roomManager.rooms[roomKey];
+        const names = this.config.tileNames || {};
+        const nm = (key) => names[key] || key;
+        const K = (x, y) => x + ',' + y;
+        const floor = new Set(), overFloor = new Set(), colliders = new Set();
+        const objects = [];
+        let W = 0, H = 0;
+        const foot = (x, y, key) => {
+            const [w, h] = this.cells(key);
+            const cells = [];
+            for (let a = 0; a < w; a++) for (let b = 0; b < h; b++) cells.push([x + a, y + b]);
+            return { cells, w, h };
+        };
+        for (const layer of room.layers) {
+            const z = layer.z || 0;
+            for (const [xy, key] of Object.entries(layer.tiles || {})) {
+                const [x, y] = xy.split(',').map(Number);
+                W = Math.max(W, x + 1); H = Math.max(H, y + 1);
+                if (layer.name === 'Floor') floor.add(xy);
+                if (layer.name === 'Over Floor') for (const [cx, cy] of foot(x, y, key).cells) overFloor.add(K(cx, cy));
+                if (layer.collision) { colliders.add(xy); continue; }
+                if (z >= 1 && layer.name !== 'Floor') objects.push(Object.assign({ layer: layer.name, z, x, y, key }, foot(x, y, key)));
+            }
+        }
+        const doors = new Set(room.transporters.map(t => K(t.gridX, t.gridY)));
+        const inside = (x, y) => !room.boundary || room.boundary.length < 3 ||
+            this.roomManager.isPointInPolygon(x + 0.5, y + 0.5, room.boundary);
+        const walkable = (x, y) => x >= 0 && x < W && y >= 0 && y < H && floor.has(K(x, y)) && !colliders.has(K(x, y)) && inside(x, y);
+
+        let seed = [this.config.player.startX || 0, this.config.player.startY || 0];
+        if (!walkable(...seed)) {
+            const first = [...floor].map(c => c.split(',').map(Number)).sort((a, b) => a[0] - b[0] || a[1] - b[1]).find(c => walkable(...c));
+            if (first) seed = first;
+        }
+        const reachable = new Set();
+        if (walkable(...seed)) {
+            const queue = [seed];
+            reachable.add(K(...seed));
+            while (queue.length) {
+                const [cx, cy] = queue.shift();
+                for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) {
+                    if (reachable.has(K(nx, ny)) || !walkable(nx, ny)) continue;
+                    reachable.add(K(nx, ny));
+                    queue.push([nx, ny]);
+                }
+            }
+        }
+
+        const errors = {}, warns = {};
+        const push = (bag, kind, item) => (bag[kind] = bag[kind] || []).push(item);
+
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!floor.has(K(x, y))) push(errors, 'floor-hole', K(x, y));
+        for (const xy of colliders) {
+            const [x, y] = xy.split(',').map(Number);
+            if (!(x >= 0 && x < W && y >= 0 && y < H)) push(errors, 'oob-collider', xy);
+        }
+
+        const covered = new Set();
+        for (const o of objects) for (const [cx, cy] of o.cells) { covered.add(K(cx, cy)); covered.add(K(cx, cy - 1)); }
+        const sortedColliders = [...colliders].map(c => c.split(',').map(Number)).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+        for (const [x, y] of sortedColliders) if (!covered.has(K(x, y))) push(warns, 'stray-collision', K(x, y));
+
+        for (const o of objects) {
+            if (o.layer !== 'Collidables') continue;
+            if (o.cells.some(([cx, cy]) => doors.has(K(cx, cy)))) continue;
+            if (!o.cells.some(([cx, cy]) => colliders.has(K(cx, cy)))) push(errors, 'missing-collision', `${nm(o.key)} @${o.x},${o.y}`);
+        }
+
+        for (const o of objects) {
+            if (o.z < 7 || o.h < 4) continue;
+            let pavilion = o.cells.some(([cx, cy]) => overFloor.has(K(cx, cy)));
+            for (let a = 0; a < o.w; a++) if (overFloor.has(K(o.x + a, o.y + o.h))) pavilion = true;
+            if (pavilion) continue;
+            let under = false;
+            for (let a = 0; a < o.w; a++) {
+                const c = K(o.x + a, o.y + o.h - 1);
+                if (!colliders.has(c) && reachable.has(c)) under = true;
+            }
+            if (under) push(warns, 'under-overhead', `${nm(o.key)} @${o.x},${o.y} (${o.w}x${o.h})`);
+        }
+
+        const tops = {};
+        for (const o of objects) if (o.z >= 7) (tops[o.key] = tops[o.key] || new Set()).add(K(o.x, o.y));
+        for (const [key, cells] of Object.entries(tops)) {
+            const seen = new Set();
+            for (const c of cells) {
+                if (seen.has(c)) continue;
+                const comp = [], queue = [c];
+                seen.add(c);
+                while (queue.length) {
+                    const cur = queue.shift();
+                    comp.push(cur);
+                    const [cx, cy] = cur.split(',').map(Number);
+                    for (const nb of [K(cx + 1, cy), K(cx - 1, cy), K(cx, cy + 1), K(cx, cy - 1)]) {
+                        if (cells.has(nb) && !seen.has(nb)) { seen.add(nb); queue.push(nb); }
+                    }
+                }
+                if (comp.length > 15) push(warns, 'ground-on-tops', `${nm(key)} x${comp.length} contiguous (e.g. @${comp[0]})`);
+            }
+        }
+
+        const isCanopy = (n) => (n.endsWith('-top') && (n.includes('sakura') || n.startsWith('tree-'))) || n === 'sakura-small';
+        const isTrunk = (n) => n.includes('base') && (n.includes('sakura') || n.startsWith('tree-'));
+        const depthOf = (z, y, h) => z < 2 ? -1000 : (y + h) * 10 + (z >= 7 ? 11 : 0);
+        const canopies = objects.filter(o => o.z >= 7 && isCanopy(nm(o.key)));
+        const trunks = objects.filter(o => o.layer === 'Collidables' && isTrunk(nm(o.key)));
+        const cover = {};
+        for (const o of canopies) for (const [cx, cy] of o.cells) (cover[K(cx, cy)] = cover[K(cx, cy)] || new Set()).add(`${nm(o.key)}@${o.x},${o.y}`);
+        for (const [c, list] of Object.entries(cover)) if (list.size > 1) push(errors, 'canopy-overlap', `${c}: ${[...list].sort().join(' + ')}`);
+        const trunkCells = new Set();
+        for (const t of trunks) {
+            const cells = new Set(t.cells.map(([cx, cy]) => K(cx, cy)));
+            for (const c of cells) trunkCells.add(c);
+            const td = depthOf(5, t.y, t.h);
+            for (const o of canopies) {
+                if (!o.cells.some(([cx, cy]) => cells.has(K(cx, cy)))) continue;
+                const cd = depthOf(7, o.y, o.h);
+                if (td > cd) push(errors, 'trunk-over-canopy', `${nm(t.key)}@${t.x},${t.y}(d${td}) over ${nm(o.key)}@${o.x},${o.y}(d${cd})`);
+            }
+        }
+        for (const o of canopies) {
+            if (nm(o.key) === 'sakura-small') continue;
+            let trunk = false;
+            for (let a = 0; a < o.w; a++) if (trunkCells.has(K(o.x + a, o.y + o.h))) trunk = true;
+            if (!trunk) push(warns, 'floating-canopy', `${nm(o.key)} @${o.x},${o.y}`);
+        }
+
+        return { room: roomKey, width: W, height: H, objects: objects.length, colliders: colliders.size, floor: floor.size, errors, warns };
+    }
+
     survey() {
         const problems = [];
         const reach = {};

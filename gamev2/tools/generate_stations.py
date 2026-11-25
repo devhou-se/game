@@ -19,7 +19,7 @@ portals (superseded by the train). Idempotent, and safe to re-run on the live
 config: a station room that already exists keeps its NPCs (the blog pipeline
 parks dated NPC states in station rooms). Run from gamev2/ AFTER the town
 generators (generate_inaka.py / generate_yukimura.py / generate_osaka.py).
-Then: qa_port + config_to_tiled for every *Station room and Palace (and any
+Then: play.js lint + config_to_tiled for every *Station room and Palace (and any
 town you regenerated).
 """
 import roomgen as rg

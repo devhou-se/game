@@ -74,7 +74,7 @@ If sprite sizes differ when swapping A→B, re-anchor so the FEET line up
 
 ## 4. Verify like generate-room does (never skip)
 
-1. `python3 tools/qa_port.py --room <Room>` for every touched room — 0 errors.
+1. `node tools/play.js lint <Room>` for every touched room — 0 errors.
 2. `python3 tools/config_to_tiled.py <Room>` for every touched room (and any
    room whose transporters changed).
 3. Render before/after: `/Applications/Tiled.app/Contents/MacOS/tmxrasterizer

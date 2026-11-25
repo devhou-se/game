@@ -19,9 +19,9 @@ describe where each room sits on it, set "custom": true, and this tool will
 refuse to overwrite your work (--force overrides).
 
 The image is rasterized by Tiled's `tmxrasterizer` when the Tiled app is
-installed, and otherwise (or with --pil) by a Pillow renderer that draws the
-same rooms from their .tmj files (tools/render_room.py) — so the tool runs on
-a machine without Tiled. Needs Pillow either way.
+installed, and otherwise (or with --pil) room by room with
+`node tools/play.js render`, which draws them in the game's own order — so the
+tool runs on a machine without Tiled. Needs Pillow either way.
 
 RE-RUN whenever exterior rooms change (unless custom). Run from gamev2/.
 """
@@ -56,21 +56,23 @@ if os.path.exists(RAST) and '--pil' not in sys.argv:
     im = Image.open(tmp).convert('RGB')
     os.unlink(tmp)
 else:
-    # No Tiled on this machine (or --pil): draw the same picture with Pillow —
-    # every room rendered by tools/render_room.py (the game's own draw order,
-    # colliders and Meta pins left out) and pasted at its world position.
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from render_room import render_tmj
+    # No Tiled on this machine (or --pil): each room is drawn by the game's
+    # own draw order (`node tools/play.js render`, colliders and Meta pins
+    # left out) and pasted at its world position.
     k = size / max(world_w, world_h)
     im = Image.new('RGB', (round(world_w * k), round(world_h * k)), (0, 0, 0))
+    here = os.path.dirname(os.path.abspath(__file__))
     for m in world['maps']:
-        room_im = render_tmj(os.path.join(os.path.dirname(WORLD), m['fileName']),
-                             sprite_meta=cfg.get('spriteMetadata', {}))
+        tmp = tempfile.mktemp(suffix='.png')
+        subprocess.run(['node', os.path.join(here, 'play.js'), 'render',
+                        os.path.basename(m['fileName'])[:-4], tmp], check=True, stdout=subprocess.DEVNULL)
+        room_im = Image.open(tmp).convert('RGB')
+        os.unlink(tmp)
         # size from the far edge, not the width, so neighbours meet without a seam
         x0, y0 = round((m['x'] - minx) * k), round((m['y'] - miny) * k)
         x1, y1 = round((m['x'] + m['width'] - minx) * k), round((m['y'] + m['height'] - miny) * k)
-        im.paste(room_im.convert('RGB').resize((x1 - x0, y1 - y0), Image.NEAREST), (x0, y0))
-    print('tmxrasterizer not used — rendered with Pillow (tools/render_room.py)')
+        im.paste(room_im.resize((x1 - x0, y1 - y0), Image.NEAREST), (x0, y0))
+    print('tmxrasterizer not used — rooms rendered by tools/play.js')
 os.makedirs(OUT_DIR, exist_ok=True)
 im.save(f'{OUT_DIR}/world-map.png', optimize=True)
 scale = im.width / world_w

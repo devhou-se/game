@@ -16,7 +16,7 @@ Typical script:
     cfg['rooms']['MyRoom'] = b.room('MyRoom', npcs=[], transporters=[...])
     rg.save_config(cfg)
 
-Then: qa_port --room MyRoom; config_to_tiled.py MyRoom (and any room whose
+Then: play.js lint MyRoom; config_to_tiled.py MyRoom (and any room whose
 transporters you touched — the game reads transporters from the .tmj!).
 """
 import json, os

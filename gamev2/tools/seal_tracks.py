@@ -6,7 +6,7 @@ Adds gk_blank colliders on every train-track tile cell. In station rooms the
 up into the train's doorway to board.
 
 Run from gamev2/:  python3 tools/seal_tracks.py [Room ...]
-Then qa_port + config_to_tiled for the printed rooms.
+Then play.js lint + config_to_tiled for the printed rooms.
 
 Pass room names to seal only those rooms (e.g. a freshly generated town).
 With no arguments EVERY room is sealed — which also re-seals deliberate level

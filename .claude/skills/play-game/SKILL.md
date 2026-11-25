@@ -1,6 +1,6 @@
 ---
 name: play-game
-description: Play, explore or query the gamev2 world from the terminal with no browser — walk around, talk to NPCs, follow teleports, ride trains, time travel, inspect any cell, and check the world for broken connections. Use whenever you need to know what is at a place, how to get somewhere, what an NPC says on a date, whether a cell is walkable, or whether a map change left the world playable. Reach for this before starting a browser.
+description: Play, explore, check or render the gamev2 world from the terminal with no browser — walk around, talk to NPCs, follow teleports, ride trains, time travel, inspect any cell, lint a room's map, render it to a PNG, and check the world for broken connections. Use whenever you need to know what is at a place, how to get somewhere, what an NPC says on a date, whether a cell is walkable, or whether a map change left the world playable. Reach for this before starting a browser.
 ---
 
 # Play the game as text
@@ -94,6 +94,8 @@ the izakaya table to learn what would open.
 | Which days have blog content? | `dates` |
 | What exactly is on this cell? | `inspect <x> <y>` |
 | Is the world still playable? | `check` |
+| Is this room's map well formed? | `lint [room]...` |
+| What does this room look like? | `render <room> <out.png> [--scale 0.5] [--colliders]` |
 
 `inspect` lists every tile on every layer covering the cell (including
 multi-cell sprites anchored elsewhere), whether a collider blocks it, any
@@ -119,14 +121,25 @@ blocked cell, transporters nobody can walk to, rooms nothing leads to, and
 NPCs standing on a collider or boxed in. NPCs are checked for the current
 date only, so set `date` first when the change is about a particular day.
 
+`lint` is the map QA gate (it replaced `qa_port.py`): floor holes, solid objects
+with no collider, colliders under nothing, overlapping tree canopies, and tall
+overhead sprites the player would walk under. With no room it checks them all;
+any ERROR makes the exit code non-zero. `render` draws the room in the game's
+draw order so you can look at the result; `--colliders` washes solid cells red.
+
+```bash
+node tools/play.js lint Osaka
+node tools/play.js render Osaka /tmp/osaka.png --scale 0.5 --colliders
+```
+
 Then walk it: `warp` next to the change, `look`, and `goto` through any door
 you touched in both directions.
 
 ## What it does not do
 
-- **No pictures.** It cannot tell you how something looks, whether sprites
-  overlap or Y-sort correctly. Use `python3 tools/render_room.py <Room>
-  out.png` or the browser for that.
+- **No live screen.** `render` gives a still picture of a room's map; nothing
+  shows NPCs, the HUD, overlays or animation. The studio (`/studio/`) shows
+  the whole world with people on it, in a browser.
 - **No mini-games or shop.** Fishing, the drinking game, buying items and the
   wallet are reported as "would open", not simulated.
 - **NPCs do not wander.** They stand on their placed cell; in the game they
@@ -152,7 +165,7 @@ the game: which NPCs exist for a date and character (`npcsIn` in
 `tools/world-model.js`), from `GameScene.syncNpcPresence`.
 
 The world itself (rooms, movement, pathfinding, NPC presence, the `check`
-survey) lives in `tools/world-model.js`, which the studio page
+survey, the `lint` rules, the draw order) lives in `tools/world-model.js`, which the studio page
 (`gamev2/studio/`, served at `/studio/`) loads too. Change behaviour there and
 both follow; `play.js` is only the command layer. A new command is one entry in
 `COMMANDS` plus a line in `help`.

@@ -27,8 +27,8 @@ Then navigate to `http://localhost:8000` in your browser.
 **Option 3: No browser (for agents)**
 `node tools/play.js <command>` plays the game as text: it loads the real map, collision and NPC-date
 code from `src/` into Node, with no Phaser and no dependencies. Walk, talk to NPCs, follow teleports,
-ride trains, time travel, inspect cells, and run `check` to confirm the world is still playable after a
-map change. `node tools/play.js help` lists the commands; the `play-game` skill
+ride trains, time travel, inspect cells, `lint` a room's map, `render` it to a PNG, and run `check` to
+confirm the world is still playable after a map change. `node tools/play.js help` lists the commands; the `play-game` skill
 (`.claude/skills/play-game/SKILL.md`) is the full guide, including what the tool cannot do.
 
 ## Studio
@@ -381,8 +381,8 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   element `(dx, dy)`: the cell, relative to the sprite's top-left, where a visitor stands (tall sprites'
   own cell is their tip, not their foot).
 - **World map without Tiled**: `tools/make_worldmap.py` uses `tmxrasterizer` when Tiled is installed and
-  otherwise (or with `--pil`) draws the rooms itself via `tools/render_room.py`, which is also the
-  "look at the render" step for a new room: `python3 tools/render_room.py <Room> out.png [--scale .5] [--colliders]`.
+  otherwise (or with `--pil`) draws the rooms itself via `node tools/play.js render`, which is also the
+  "look at the render" step for a new room: `node tools/play.js render <Room> out.png [--scale .5] [--colliders]`.
 - `tools/generate_stations.py` keeps an existing station room's NPCs (the blog pipeline parks dated NPC
   states there), and `tools/seal_tracks.py` takes room names — run it bare and it re-seals Palace's level
   crossing.
@@ -420,7 +420,7 @@ sealed - none has an interior.
   transporter or any dated NPC position (under its solid rows or its walk-behind roof rows), or cuts walkable
   cells off from the room's transporters (flood-fill). To change a building prefab's collision, `--remove` it
   from the ported rooms first, re-run `make_prefabs.py`, then `--add` it back. Then
-  `qa_port.py --room`, `config_to_tiled.py`, `make_worldmap.py`.
+  `play.js lint`, `config_to_tiled.py`, `make_worldmap.py`.
 - Blog NPCs can be sent to `the Don Takote discount store` and `the old-town lane` (`LANDMARKS` in
   `tools/blog_to_npc.py`).
 
