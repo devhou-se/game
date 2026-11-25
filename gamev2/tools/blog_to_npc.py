@@ -32,13 +32,25 @@ are keyed by date): the later post's spot wins and its lines are appended to
 the earlier post's, capped at MAX_DAY_LINES (oldest dropped first) — see
 merge_same_day. The state records which post each run of lines came from as
 "posts", so a re-run of a post replaces its own lines instead of stacking on
-top of itself or wiping the other post's.
+top of itself or wiping the other post's. Each entry also keeps the post's
+"title", and its "url" when the payload carries one, so the game can caption
+the lines with the post they came from (DialogueManager) — [{"id", "lines",
+"title", "url"}].
+
+Where an author can be put (find_spots): every landmark in LANDMARKS, in the
+outdoor rooms. A landmark that belongs to one town names its rooms, so a
+sprite reused elsewhere does not carry the name along. Indoor rooms are
+opt-in: a station room offers only the landmarks flagged "indoors" (today
+just its platform, and the model is told to pick that only for a post about
+the station or the train ride), and konbini / izakaya interiors are never
+offered.
 
 Run from gamev2/ (normally by the www-jp game-npc-pipeline workflow; the unit
 checks are `python3 tools/test_blog_to_npc.py`):
 
   python3 tools/blog_to_npc.py --payload post.json [--dry-run] [--mock]
   python3 tools/blog_to_npc.py --voice-backfill [--dry-run]
+  python3 tools/blog_to_npc.py --backfill-posts posts.json [--dry-run]
 
 --voice-backfill makes no LLM call and places nobody: it speaks every existing
 dated state that has dialogue but no voice (a state with "drunk": true gets
@@ -46,9 +58,15 @@ the drunk voice), so history placed before voices existed can be voiced once
 the ElevenLabs env is configured. With --dry-run it only reports the lines and
 characters it would send, which is the number ElevenLabs bills on.
 
+--backfill-posts makes no LLM call and places nobody either: it fills in the
+post title and url on states that were placed before those were recorded.
+posts.json is a list of {"id", "title", "url"} (optionally "author" and
+"date" too — see backfill_posts for how a state is matched to its post).
+
 post.json is the blog payload: {"post_id", "title", "author", "date",
-"content"} — author is the GitHub login. Needs ANTHROPIC_API_KEY unless
---mock (canned LLM response, for testing the placement plumbing).
+"content"} and optionally "url" (the post's page; recorded when present) —
+author is the GitHub login. Needs ANTHROPIC_API_KEY unless --mock (canned
+LLM response, for testing the placement plumbing).
 
 Cross-room moves rely on resolveNpc semantics: an NPC definition whose base
 has "present": false stays hidden until a dated state sets present true, so
@@ -71,7 +89,16 @@ AUTHOR_NPCS = {
     'jughents': 'Julia',
 }
 
-# landmark tile-key prefix -> spot label offered to the model
+# landmark tile-key prefix -> spot label offered to the model:
+#   (prefix, label[, stand][, options])
+# `stand` is the cell to stand on, relative to the first matching tile.
+# options:
+#   'rooms': (room keys)  the label names one place, so only these rooms offer
+#                         it — other rooms built from the same sprites do not
+#   'indoors': True       offered inside station rooms, and only there. Without
+#                         it a landmark is matched in outdoor rooms only, so an
+#                         interior is never picked up by a prop it happens to
+#                         contain (see find_spots)
 LANDMARKS = [
     # the hall's tile cell is its top-left corner, under the roof's eaves (the
     # roof is 5x6 on Tops and hides anyone behind it) — stand below the steps
@@ -84,7 +111,9 @@ LANDMARKS = [
     ('blue-bell', 'the temple bell'),
     ('sakura-large-top', 'the sakura trees'),
     ('white-vending-machine-top', 'the vending machines'),
-    ('machiya-', 'the old-town lane', (2, 5)),          # on the lane, at a shop door
+    # Machi's lane. Asahikawa's ramen alley is built from the same machiya
+    # prefabs and has its own name below (issue #100)
+    ('machiya-', 'the old-town lane', (2, 5), {'rooms': ('Machi',)}),   # on the lane, at a shop door
     # Named landmarks. These are single sprites many cells tall, whose tile
     # cell is their top-left corner (the tip of a tower) — so each carries the
     # cell, relative to that corner, where someone visiting it would stand:
@@ -101,6 +130,9 @@ LANDMARKS = [
     ('asahikawa-bridge_', 'the bridge over the frozen river', (1, -1)),   # the north bridgehead
     ('ramen-banner_', 'ramen alley', (-1, 2)),                     # on the lane, outside a shop
     ('ice-pond-autotile_corner-nw', 'the frozen pond', (0, -1)),   # on the bank (the ice is solid)
+    # Inside a station (issue #73): the west end of the platform, by the
+    # vending machine — clear of the train doors, the arrival cell and the exit
+    ('white-vending-machine-top', 'the platform', {'indoors': True}),
 ]
 
 MODEL = 'claude-sonnet-5'
@@ -124,7 +156,31 @@ def save_config(cfg):
 
 
 def overworld_rooms(cfg):
+    """The rooms the pipeline keeps an author's whereabouts in: everything but
+    the `interior` rooms (konbini, izakaya). Station rooms are in here — they
+    hold placements — but are indoors as far as spots go (is_indoors)."""
     return {k: r for k, r in cfg['rooms'].items() if not r.get('interior')}
+
+
+def is_indoors(cfg, room_key):
+    """An interior, or a station room (those carry no `interior` flag: they
+    are listed under config.stations)."""
+    return bool(cfg['rooms'][room_key].get('interior')) or room_key in cfg.get('stations', {})
+
+
+def landmark_fields(entry):
+    """(prefix, label, (dx, dy), options) of a LANDMARKS entry."""
+    prefix, label, *rest = entry
+    stand = next((r for r in rest if isinstance(r, tuple)), (0, 0))
+    options = next((r for r in rest if isinstance(r, dict)), {})
+    return prefix, label, stand, options
+
+
+def landmark_applies(cfg, room_key, options):
+    """Whether a landmark with these options may be offered in room_key."""
+    if 'rooms' in options and room_key not in options['rooms']:
+        return False
+    return bool(options.get('indoors')) == is_indoors(cfg, room_key)
 
 
 def decode_tiles(cfg, layer):
@@ -136,26 +192,30 @@ def decode_tiles(cfg, layer):
 
 
 def find_spots(cfg):
-    """Every landmark in every overworld room -> {'Room · label': (room, x, y)}."""
+    """Every landmark that applies to its room -> {'Room · label': (room, x, y)}.
+
+    Outdoor rooms offer the ordinary landmarks. A station room offers only
+    landmarks flagged 'indoors', and `interior` rooms (konbini, izakaya) offer
+    nothing — see landmark_applies."""
     spots = {}
     for room_key, room in overworld_rooms(cfg).items():
+        landmarks = [(prefix, label, stand)
+                     for prefix, label, stand, options in map(landmark_fields, LANDMARKS)
+                     if landmark_applies(cfg, room_key, options)]
         for layer in room.get('layers', []):
             tiles = decode_tiles(cfg, layer)
             for xy, key in tiles.items():
-                for prefix, label, *stand in LANDMARKS:
+                for prefix, label, (dx, dy) in landmarks:
                     spot_id = f'{room_key} · {label}'
                     if key.startswith(prefix) and spot_id not in spots:
                         x, y = map(int, xy.split(','))
-                        dx, dy = stand[0] if stand else (0, 0)
                         spots[spot_id] = (room_key, x + dx, y + dy)
     return spots
 
 
-def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
-    """Nearest walkable cell (floored, uncollided, not a transporter, not an
-    occupied cell) — a python port of GameScene.findWalkableNear. `occupied`
-    is (x,y) tuples already taken by other NPCs (resolved positions, not base
-    defs — see occupied_cells)."""
+def room_cells(cfg, room_key):
+    """(cells_w, cells_h, floored, blocked) for a room — the sets hold 'x,y'
+    keys: cells with a Floor tile, and cells on a collision layer."""
     room = cfg['rooms'][room_key]
     gs = cfg['game']['gridSize']
     cells_w = round(room.get('worldWidth', cfg['game']['worldWidth']) / gs)
@@ -166,12 +226,46 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
         target = blocked if layer.get('collision') else (floored if layer['name'] == 'Floor' else None)
         if target is not None:
             target.update(tiles)
-    portals = {f"{t['gridX']},{t['gridY']}" for t in room.get('transporters', [])}
+    return cells_w, cells_h, floored, blocked
+
+
+def reachable_cells(cfg, room_key):
+    """(x, y) of every cell the player can walk to from the room's ways in
+    (its transporters), or None for a room that has none to start from —
+    callers then do not filter on reachability at all. Transporters are the
+    only seeds: if rooms ever join some other way, seed from that too."""
+    cells_w, cells_h, floored, blocked = room_cells(cfg, room_key)
+    todo = [(t['gridX'], t['gridY']) for t in cfg['rooms'][room_key].get('transporters', [])]
+    if not todo:
+        return None
+    seen = set(todo)
+    while todo:
+        x, y = todo.pop()
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            key = f'{nx},{ny}'
+            if ((nx, ny) not in seen and 0 <= nx < cells_w and 0 <= ny < cells_h
+                    and key in floored and key not in blocked):
+                seen.add((nx, ny))
+                todo.append((nx, ny))
+    return seen
+
+
+def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
+    """Nearest cell someone can stand on and be walked up to: floored,
+    uncollided, not a transporter, not an occupied cell (the test of
+    GameScene.findWalkableNear) and connected to one of the room's ways in —
+    so a landmark standing in a fenced garden puts its visitor outside the
+    fence, not in with it. `occupied` is (x,y) tuples already taken by other
+    NPCs (resolved positions, not base defs — see occupied_cells)."""
+    cells_w, cells_h, floored, blocked = room_cells(cfg, room_key)
+    portals = {f"{t['gridX']},{t['gridY']}" for t in cfg['rooms'][room_key].get('transporters', [])}
+    reachable = reachable_cells(cfg, room_key)
 
     def ok(x, y):
         key = f'{x},{y}'
         return (0 <= x < cells_w and 0 <= y < cells_h and key in floored
-                and key not in blocked and key not in portals and (x, y) not in occupied)
+                and key not in blocked and key not in portals and (x, y) not in occupied
+                and (reachable is None or (x, y) in reachable))
 
     for rad in range(0, 12):
         for dx in range(-rad, rad + 1):
@@ -218,8 +312,12 @@ def generate(post, npc_name, spot_ids, mock=False):
         'no URLs, no @mentions. The last line should be a small sign-off or '
         'quip.\n\n'
         'Spot rules: choose the location that best matches the post\'s '
-        'content or mood (e.g. a post about trains near the station room, '
-        'food near the 7-Eleven, reflection near the shrine or pond).\n\n'
+        'content or mood (e.g. food near the 7-Eleven, reflection near the '
+        'shrine or pond). A spot named "the platform" is indoors, on the '
+        'platform of that town\'s train station: choose one only when the '
+        'post is mainly about that station or the train ride itself. For '
+        'everything else, including a day that merely involved a train, '
+        'choose an outdoor spot.\n\n'
         'Drunk rule: set drunk to true only when the post itself reads as if '
         'it was written drunk (slurred or rambling prose, typos played for '
         'laughs, the author saying so) — it picks the voice the dialogue is '
@@ -373,7 +471,20 @@ def same_day_placement(cfg, npc_name, date):
     return None
 
 
-def merge_same_day(earlier, post_id, dialogue, photo, drunk):
+def post_entry(post_id, lines, title=None, url=None):
+    """One element of a state's "posts": which post `lines` lines of its
+    dialogue came from, with the post's title and url when they are known
+    (the game captions the lines with the title, and links it to the url)."""
+    entry = {'id': str(post_id), 'lines': lines}
+    title = ' '.join(title.split()) if isinstance(title, str) else ''
+    if title:
+        entry['title'] = title
+    if isinstance(url, str) and url.startswith(('http://', 'https://')):
+        entry['url'] = url
+    return entry
+
+
+def merge_same_day(earlier, post_id, dialogue, photo, drunk, title=None, url=None):
     """Fold a post into the day's existing placement, if other posts made
     one. Returns (dialogue, photo, drunk, posts) to place with.
 
@@ -385,7 +496,8 @@ def merge_same_day(earlier, post_id, dialogue, photo, drunk):
     whole state).
 
     "posts" on the state says which lines are whose: [{"id", "lines"}, ...]
-    in dialogue order, listing only posts that still have lines in it. A
+    in dialogue order (each with the post's "title" / "url" when known — see
+    post_entry), listing only posts that still have lines in it. A
     re-run of a post therefore replaces just that post's own lines and keeps
     the others'. A state from before "posts" was recorded (or one edited so
     the counts no longer add up), or a payload without a post_id, replaces
@@ -394,7 +506,7 @@ def merge_same_day(earlier, post_id, dialogue, photo, drunk):
     if post_id is None:
         return dialogue, photo, drunk, None
     post_id = str(post_id)
-    mine = {'id': post_id, 'lines': len(dialogue)}
+    mine = post_entry(post_id, len(dialogue), title, url)
     made_by = (earlier or {}).get('posts')
     if not (isinstance(made_by, list) and made_by
             and all(isinstance(p, dict) and isinstance(p.get('lines'), int) for p in made_by)
@@ -567,7 +679,8 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
     earlier = same_day_placement(cfg, npc_name, date)
     said = len(dialogue)
     dialogue, photo, drunk, posts = merge_same_day(
-        earlier, post.get('post_id'), dialogue, photo, drunk)
+        earlier, post.get('post_id'), dialogue, photo, drunk,
+        title=post.get('title'), url=post.get('url'))
     if posts and len(posts) > 1:
         print(f'  same day as post(s) {", ".join(p["id"] for p in posts[:-1])}: this spot '
               f'wins, {len(dialogue) - said} of their line(s) kept ahead of these {said}')
@@ -613,6 +726,81 @@ def voice_backfill(cfg, dry_run=False):
     return voiced
 
 
+def backfill_posts(cfg, entries):
+    """Fill in post titles and urls on states placed before they were
+    recorded (issue #79). `entries` is a list of {"id", "title", "url"},
+    optionally with "author" (GitHub login) and "date". Returns the number of
+    states changed. No state's dialogue, spot, photo or voice is touched.
+
+    A state is matched to its post by, in order:
+      1. its own "posts" — every entry whose id is in the list gets that
+         post's title and url;
+      2. its photo — a photo is filed under the id of the post it came from,
+         so a state with no "posts" and photo N is post N's;
+      3. author and date, for a state with neither: the one listed post by
+         that NPC's author on that day. Several posts on the day cannot be
+         told apart (the last one processed wrote the state), so the state is
+         reported and left alone.
+    A state matched by 2 or 3 gains "posts": [{id, lines: all of them, ...}].
+    """
+    by_id, by_day = {}, {}
+    for e in entries:
+        if not isinstance(e, dict) or e.get('id') is None:
+            continue
+        by_id[str(e['id'])] = e
+        npc_name = AUTHOR_NPCS.get(str(e.get('author') or '').lower())
+        date = str(e.get('date') or '')[:10]
+        if npc_name and len(date) == 10:
+            by_day.setdefault((npc_name, date), []).append(e)
+
+    changed = unmatched = 0
+    used = set()
+    for room_key, room in cfg['rooms'].items():
+        for npc in room.get('npcs', []):
+            for date, st in sorted(npc.get('states', {}).items()):
+                if not st.get('dialogue') or st.get('present') is False:
+                    continue
+                where = f'{room_key} {npc["name"]} {date}'
+                before = json.dumps(st.get('posts'), sort_keys=True)
+                made_by = st.get('posts')
+                if isinstance(made_by, list) and made_by:
+                    st['posts'] = [
+                        post_entry(p['id'], p.get('lines'),
+                                   by_id[str(p['id'])].get('title') or p.get('title'),
+                                   by_id[str(p['id'])].get('url') or p.get('url'))
+                        if isinstance(p, dict) and str(p.get('id')) in by_id else p
+                        for p in made_by]
+                    found = [str(p['id']) for p in made_by
+                             if isinstance(p, dict) and str(p.get('id')) in by_id]
+                else:
+                    same_day = by_day.get((npc['name'], date), [])
+                    if st.get('photo') is not None and str(st['photo']) in by_id:
+                        e = by_id[str(st['photo'])]
+                    elif len(same_day) == 1:
+                        e = same_day[0]
+                    else:
+                        if len(same_day) > 1:
+                            print(f'{where}: {len(same_day)} posts that day '
+                                  f'({", ".join(str(x["id"]) for x in same_day)}) and no photo '
+                                  'to tell them apart — left alone')
+                        e = None
+                    found = [str(e['id'])] if e else []
+                    if e:
+                        st['posts'] = [post_entry(e['id'], len(st['dialogue']),
+                                                  e.get('title'), e.get('url'))]
+                used.update(found)
+                if not found:
+                    unmatched += 1
+                elif json.dumps(st.get('posts'), sort_keys=True) != before:
+                    changed += 1
+                    print(f'{where}: ' + ', '.join(
+                        f'#{p["id"]} {p.get("title", "(no title)")!r}' for p in st['posts']))
+    unused = sorted(set(by_id) - used, key=lambda i: (len(i), i))
+    print(f'post backfill: {changed} state(s) updated, {unmatched} with no post in the list'
+          + (f', {len(unused)} listed post(s) matched nothing: {", ".join(unused)}' if unused else ''))
+    return changed
+
+
 def main():
     ap = argparse.ArgumentParser()
     src = ap.add_mutually_exclusive_group(required=True)
@@ -620,6 +808,9 @@ def main():
     src.add_argument('--payloads-dir', help='directory of payload JSONs — processed in date order (backfill)')
     src.add_argument('--voice-backfill', action='store_true',
                      help='speak existing dated states that have dialogue but no voice (no LLM, no placement)')
+    src.add_argument('--backfill-posts', metavar='POSTS_JSON',
+                     help='fill post title/url into existing states from a JSON list of '
+                          '{id, title, url[, author, date]} (no LLM, no placement)')
     ap.add_argument('--reset', action='store_true', help='clear all NPC states + hidden defs before placing (backfill)')
     ap.add_argument('--dry-run', action='store_true', help='generate + place, but do not write config')
     ap.add_argument('--mock', action='store_true', help='skip the LLM (canned response)')
@@ -638,6 +829,23 @@ def main():
                 save_config(cfg)
                 print('config.json updated')
             prune_voices(cfg)
+        return 0
+
+    if args.backfill_posts:
+        if args.reset:
+            ap.error('--reset cannot be combined with --backfill-posts')
+        entries = json.load(open(args.backfill_posts))
+        if isinstance(entries, dict):
+            entries = entries.get('posts')
+        if not isinstance(entries, list):
+            ap.error('--backfill-posts wants a JSON list of {id, title, url}')
+        cfg = load_config()
+        changed = backfill_posts(cfg, entries)
+        if args.dry_run:
+            print('dry run — config.json not written')
+        elif changed:
+            save_config(cfg)
+            print('config.json updated')
         return 0
 
     if args.payload:

@@ -35,6 +35,7 @@ class NPCManager {
         npc.stationary = !!options.stationary;
         npc.photo = options.photo || null;   // blog-post photo id (assets/photos/<id>.png)
         npc.voice = options.voice || null;   // spoken-dialogue clip set (assets/voice/<id>/<line>.mp3)
+        npc.posts = options.posts || null;   // which blog post each dialogue line came from (see NpcStates.js)
         this.characters.push(npc);
 
         // Add dialogue if provided

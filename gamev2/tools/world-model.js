@@ -74,7 +74,7 @@ class WorldModel {
             list.push(this.character(r.name,
                 r.gridX !== null ? r.gridX : this.cx + r.gridOffsetX,
                 r.gridY !== null ? r.gridY : this.cy + r.gridOffsetY,
-                { canInteract: true, dialogue: r.dialogue || [], photo: r.photo || null }));
+                { canInteract: true, dialogue: r.dialogue || [], photo: r.photo || null, posts: r.posts || null }));
         }
         return list;
     }
@@ -145,7 +145,14 @@ class WorldModel {
         if (i.kind === 'npc') {
             const n = i.npc;
             const lines = n.dialogue.length ? n.dialogue.map(l => `  "${l}"`).join('\n') : '  (nothing to say)';
-            return `${n.name} says:\n${lines}` + (n.photo ? `\n  photo: assets/photos/${n.photo}.png` : '');
+            // the posts the lines came from, as the dialogue box captions them
+            const from = [];
+            n.dialogue.forEach((_, i) => {
+                const post = postForLine(n.posts, i, n.dialogue.length);
+                if (post && !from.includes(post)) from.push(post);
+            });
+            return `${n.name} says:\n${lines}` + (n.photo ? `\n  photo: assets/photos/${n.photo}.png` : '') +
+                from.map(p => `\n  from: ${p.title}` + (postLink(p) ? ` <${p.url}>` : '')).join('');
         }
         if (i.group === 'shop') {
             const venue = Shop.VENUES[i.kind];

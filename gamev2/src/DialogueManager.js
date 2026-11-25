@@ -121,6 +121,28 @@ class DialogueManager {
         return pages.length ? pages : [[]];
     }
 
+    /**
+     * The caption for a post, 'from: <title>', cut with an ellipsis to fit
+     * maxWidth as measured by `measure(string) -> px`.
+     */
+    static captionText(post, maxWidth, measure) {
+        const prefix = 'from: ';
+        const title = Array.from(post.title.trim().replace(/\s+/g, ' '));
+        if (measure(prefix + title.join('')) <= maxWidth) return prefix + title.join('');
+        while (title.length > 1) {
+            title.pop();
+            const cut = prefix + title.join('').trimEnd() + '…';
+            if (measure(cut) <= maxWidth) return cut;
+        }
+        return prefix + title.join('') + '…';
+    }
+
+    /** Widest the post caption may be, plate and all: the photo frame's width less a margin each side. */
+    static CAPTION_MAX_WIDTH = 328;
+
+    /** How far above and below its plate the post caption still takes a click or tap. */
+    static CAPTION_HIT_PAD = 12;
+
     constructor(scene) {
         this.scene = scene;
         this.visible = false;
@@ -200,6 +222,56 @@ class DialogueManager {
         this.npcNameText.setScrollFactor(0);
         this.npcNameText.setDepth(3004); // above the portrait frame it straddles
         this.npcNameText.setVisible(false);
+
+        // Post caption: 'from: <post title>' on a small plate, shown only for
+        // lines whose blog post is recorded with a title (postForLine in NpcStates.js). It
+        // straddles the panel's top edge at its right end, the way the name
+        // plate does on the left — under the blog photo when there is one —
+        // and sits inside space the panel and frames already take up, so
+        // nothing else moves. With a recorded url it is a link to the post.
+        this.postCaption = this.scene.add.text(
+            this.panelX + this.panelWidth - 16,
+            this.panelY - 8,
+            '',
+            {
+                fontSize: '16px',
+                fill: '#cccccc',
+                fontFamily: 'PixelOperatorMono',
+                backgroundColor: '#000000',
+                padding: { x: 8, y: 4 }
+            }
+        );
+        this.postCaption.setOrigin(1, 0.5);
+        this.postCaption.setResolution(1);
+        this.postCaption.setScrollFactor(0);
+        this.postCaption.setDepth(3004);
+        this.postCaption.setVisible(false);
+        this.postCaptionUrl = null;
+        // The plate is thin, so its hit area reaches a little above and
+        // below it (a finger on a phone needs the room). Measured on every
+        // test because the caption's width changes with its text.
+        this.postCaption.setInteractive({
+            hitArea: new Phaser.Geom.Rectangle(),
+            hitAreaCallback: (area, x, y) => x >= 0 && x <= this.postCaption.width
+                && y >= -DialogueManager.CAPTION_HIT_PAD
+                && y <= this.postCaption.height + DialogueManager.CAPTION_HIT_PAD
+        });
+        // A caption without a link is part of the dialogue: a press advances.
+        // A linked one opens its post on release, not on press (a browser
+        // only lets a tap open a tab once the finger lifts) — and only when
+        // the press began on this same link, so the release of a press that
+        // advanced the dialogue never opens the next line's post.
+        this.postCaptionPress = null;
+        this.postCaption.on('pointerdown', () => {
+            this.postCaptionPress = this.postCaptionUrl;
+            if (!this.postCaptionUrl) this.advance();
+        });
+        this.postCaption.on('pointerup', () => {
+            const url = this.postCaptionPress;
+            this.postCaptionPress = null;
+            if (url && url === this.postCaptionUrl) window.open(url, '_blank', 'noopener');
+        });
+        this.postCaption.on('pointerout', () => { this.postCaptionPress = null; });
 
         // Dialogue text. Wrapped by layout() rather than Phaser's wordWrap,
         // which only breaks on spaces (Japanese lines have none).
@@ -556,10 +628,29 @@ class DialogueManager {
         this.currentPage = 0;
         this.dialogueText.setLineSpacing(lineSpacing);
         this.showPage();
+        this.updatePostCaption();
 
         // Speak the line (replaces the previous line's clip; a no-op for
         // NPCs without a voice — see src/Voice.js)
         this.scene.voice.playLine(this.currentNPC.voice, this.currentDialogueIndex);
+    }
+
+    /** Caption the current line with the blog post it came from, if that is recorded. */
+    updatePostCaption() {
+        const npc = this.currentNPC;
+        const post = postForLine(npc.posts, this.currentDialogueIndex, npc.dialogue.length);
+        this.postCaption.setVisible(!!post);
+        this.postCaptionUrl = postLink(post);
+        this.postCaptionPress = null;
+        if (!post) return;
+        if (!this.captionContext) {
+            this.captionContext = document.createElement('canvas').getContext('2d');
+        }
+        this.captionContext.font = `${this.postCaption.style.fontSize} ${this.postCaption.style.fontFamily}`;
+        const room = DialogueManager.CAPTION_MAX_WIDTH - this.postCaption.padding.left - this.postCaption.padding.right;
+        this.postCaption.setText(DialogueManager.captionText(post, room, s => this.captionContext.measureText(s).width));
+        this.postCaption.setColor(this.postCaptionUrl ? '#9fd0ff' : '#cccccc');
+        this.postCaption.input.cursor = this.postCaptionUrl ? 'pointer' : 'default';
     }
 
     showPage() {
@@ -619,6 +710,9 @@ class DialogueManager {
         this.npcNameText.setVisible(false);
         this.dialogueText.setVisible(false);
         this.continuePrompt.setVisible(false);
+        this.postCaption.setVisible(false);
+        this.postCaptionUrl = null;
+        this.postCaptionPress = null;
     }
 
     isVisible() {

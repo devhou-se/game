@@ -31,6 +31,15 @@
  * by src/Voice.js). Clips belong to the exact dialogue they were generated
  * from, so a state that changes the dialogue without naming a voice clears
  * it rather than inheriting clips for lines that are no longer said.
+ *
+ * And "posts": [{ id, lines, title?, url? }, ...] — which blog post each run
+ * of the state's dialogue lines came from, in dialogue order (the pipeline
+ * merges an author's same-day posts into one state). The dialogue box
+ * captions each line with its post's title when one is recorded
+ * (postForLine below); `tools/blog_to_npc.py --backfill-posts` adds
+ * titles to states placed before they were kept. Like voice, posts belong to
+ * the dialogue they were written with and are not inherited by a later state
+ * that changes it.
  */
 /** Today's real date, device local time, as YYYY-MM-DD. */
 function todayIso() {
@@ -105,9 +114,39 @@ function resolveNpc(npcConfig, date) {
         const state = npcConfig.states[d];
         Object.assign(merged, state);
         if ('dialogue' in state && !('voice' in state)) merged.voice = null;
+        if ('dialogue' in state && !('posts' in state)) merged.posts = null;
     }
     if (merged.present === false) return null;
     return merged;
+}
+
+/**
+ * The blog post dialogue line `lineIndex` came from, or null.
+ *
+ * `posts` is a resolved state's "posts": [{ id, lines, title?, url? }, ...]
+ * in dialogue order, each covering `lines` lines. Only a post with a recorded
+ * title is returned — nothing is captioned for states from before titles
+ * were kept — and only when the counts add up to the `lineCount` lines being
+ * said, so a hand-edited state never credits a line to the wrong post.
+ */
+function postForLine(posts, lineIndex, lineCount) {
+    if (!Array.isArray(posts) || !posts.length) return null;
+    const counted = posts.every(p => p && Number.isInteger(p.lines) && p.lines >= 0);
+    if (!counted || posts.reduce((n, p) => n + p.lines, 0) !== lineCount) return null;
+    let end = 0;
+    for (const post of posts) {
+        end += post.lines;
+        if (lineIndex < end) {
+            const titled = typeof post.title === 'string' && post.title.trim() !== '';
+            return titled ? post : null;
+        }
+    }
+    return null;
+}
+
+/** A post's link, if it is a web address (config is data: nothing else is ever opened). */
+function postLink(post) {
+    return post && typeof post.url === 'string' && /^https?:\/\//.test(post.url) ? post.url : null;
 }
 
 /**
@@ -158,6 +197,8 @@ if (typeof window !== 'undefined') {
     window.defaultGameDate = defaultGameDate;
     window.setTripDates = setTripDates;
     window.resolveNpc = resolveNpc;
+    window.postForLine = postForLine;
+    window.postLink = postLink;
     window.contentChangeDates = contentChangeDates;
     window.formatGameDate = formatGameDate;
     window.setGameDate = setGameDate;

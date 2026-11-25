@@ -119,7 +119,8 @@ def test_same_day_posts(base_cfg):
     # lines are kept in order, and room A keeps nothing but "absent"
     place(cfg, post(2), spot_b, spots)
     (room, st), = live()
-    assert room == room_b and st['posts'] == [{'id': '1', 'lines': 2}, {'id': '2', 'lines': 2}]
+    assert room == room_b and st['posts'] == [{'id': '1', 'lines': 2, 'title': 'post 1'},
+                                              {'id': '2', 'lines': 2, 'title': 'post 2'}]
     assert st['dialogue'][:2] == first and 'post 2' in st['dialogue'][2] and len(st['dialogue']) == 4
     assert dict(placements(cfg, 'Bailey', date))[room_a] == {'present': False}
 
@@ -180,6 +181,211 @@ def test_merge_same_day():
     assert earlier['posts'] == [{'id': '10', 'lines': 2}]                    # inputs are not mutated
 
 
+def test_spots(cfg):
+    """What find_spots offers, over every room (issues #73, #100)."""
+    spots = b.find_spots(cfg)
+    stations = set(cfg.get('stations', {}))
+    assert stations, 'config has no stations'
+    by_room = {}
+    for spot_id, (room_key, x, y) in spots.items():
+        assert spot_id.startswith(room_key + ' · '), spot_id
+        by_room.setdefault(room_key, {})[spot_id.split(' · ', 1)[1]] = (x, y)
+
+    # interiors are opt-in: a konbini or the izakaya is never offered, and a
+    # station offers its platform and none of the props standing on it
+    for room_key, room in cfg['rooms'].items():
+        if room.get('interior'):
+            assert room_key not in by_room, f'{room_key} is an interior but offers {by_room[room_key]}'
+        elif room_key in stations:
+            assert set(by_room.get(room_key, {})) == {'the platform'}, (room_key, by_room.get(room_key))
+        else:
+            assert 'the platform' not in by_room.get(room_key, {}), room_key
+            assert by_room.get(room_key), f'{room_key} is outdoors and offers nowhere to stand'
+    indoor_labels = {label for _, label, _, options in map(b.landmark_fields, b.LANDMARKS)
+                     if options.get('indoors')}
+    assert indoor_labels == {'the platform'}, indoor_labels
+
+    # a landmark that names one town is offered there and nowhere else, even
+    # where another town is built from the same sprites
+    assert 'the old-town lane' in by_room['Machi']
+    assert [r for r in by_room if 'the old-town lane' in by_room[r]] == ['Machi']
+    assert 'ramen alley' in by_room['Asahikawa']
+    for prefix, label, _, options in map(b.landmark_fields, b.LANDMARKS):
+        for room_key in options.get('rooms', ()):
+            assert room_key in cfg['rooms'], f'{label}: no room {room_key!r}'
+            assert label in by_room.get(room_key, {}), f'{label} is not found in {room_key}'
+        if 'rooms' in options:
+            offered = {r for r in by_room if label in by_room[r]}
+            assert offered == set(options['rooms']), (label, offered)
+    # ... and that lane filter is doing something: the sprites are in both towns
+    def has_tile(room_key, prefix):
+        return any(key.startswith(prefix) for layer in cfg['rooms'][room_key]['layers']
+                   for key in b.decode_tiles(cfg, layer).values())
+    assert has_tile('Machi', 'machiya-') and has_tile('Asahikawa', 'machiya-')
+
+    # every spot is somewhere an author can stand and the player can walk up
+    # to: a free cell at the landmark's standing cell or within two of it
+    # (Market's fox statues stand in a fenced garden: the visitor is put
+    # outside the fence), that is connected to one of the room's ways in
+    reach = {}
+    for spot_id, (room_key, x, y) in sorted(spots.items()):
+        cell = b.walkable_near(cfg, room_key, x, y)
+        assert cell is not None, f'{spot_id}: nowhere to stand near ({x},{y})'
+        assert max(abs(cell[0] - x), abs(cell[1] - y)) <= 2, f'{spot_id}: ({x},{y}) resolves to far-off {cell}'
+        if room_key not in reach:
+            reach[room_key] = b.reachable_cells(cfg, room_key)
+        assert cell in reach[room_key], f'{spot_id}: {cell} cannot be walked to'
+        # four authors can be at one spot on one day without anyone being walled in
+        taken = set()
+        for _ in b.AUTHOR_NPCS:
+            c = b.walkable_near(cfg, room_key, x, y, taken)
+            assert c in reach[room_key], f'{spot_id}: {c} (with {sorted(taken)} taken) cannot be walked to'
+            taken.add(c)
+
+    # a station's platform spot keeps clear of the train doors and where you arrive
+    for room_key in stations:
+        st = cfg['stations'][room_key]
+        cell = b.walkable_near(cfg, room_key, *by_room[room_key]['the platform'])
+        keep_clear = [tuple(c) for c in st.get('board', [])] + [tuple(st['arrive'])]
+        assert all(max(abs(cell[0] - cx), abs(cell[1] - cy)) > 2 for cx, cy in keep_clear), (room_key, cell)
+
+
+def test_landmark_rules():
+    """landmark_applies on a made-up world: outdoors, a station, an interior."""
+    cfg = {'rooms': {'Machi': {}, 'Other': {}, 'MachiStation': {}, 'Shop': {'interior': True}},
+           'stations': {'MachiStation': {}}}
+    plain, lane, platform = {}, {'rooms': ('Machi',)}, {'indoors': True}
+    assert [b.landmark_applies(cfg, r, plain) for r in cfg['rooms']] == [True, True, False, False]
+    assert [b.landmark_applies(cfg, r, lane) for r in cfg['rooms']] == [True, False, False, False]
+    assert [b.landmark_applies(cfg, r, platform) for r in cfg['rooms']] == [False, False, True, True]
+    assert b.landmark_fields(('a-', 'A')) == ('a-', 'A', (0, 0), {})
+    assert b.landmark_fields(('a-', 'A', (1, 2))) == ('a-', 'A', (1, 2), {})
+    assert b.landmark_fields(('a-', 'A', lane)) == ('a-', 'A', (0, 0), lane)
+    assert b.landmark_fields(('a-', 'A', (1, 2), lane)) == ('a-', 'A', (1, 2), lane)
+
+    # find_spots on it: the shop offers nothing even to an 'indoors' landmark
+    # (the pipeline keeps no books in `interior` rooms), the station only that
+    tiles = {'layers': [{'name': 'Other', 'tiles': {'3,4': 'white-vending-machine-top_0_0',
+                                                    '6,6': 'machiya-a_0_0'}}]}
+    for room in cfg['rooms'].values():
+        room.update(tiles)
+    assert b.find_spots(cfg) == {
+        'Machi · the vending machines': ('Machi', 3, 4),
+        'Other · the vending machines': ('Other', 3, 4),
+        'Machi · the old-town lane': ('Machi', 8, 11),
+        'MachiStation · the platform': ('MachiStation', 3, 4),
+    }
+
+
+def test_post_source(base_cfg):
+    """A placement records the post's title, and its url when the payload has one."""
+    cfg = copy.deepcopy(base_cfg)
+    spots = b.find_spots(cfg)
+    spot = sorted(spots)[0]
+    date = '2031-03-04'
+
+    def state():
+        (_, st), = [(r, s) for r, s in placements(cfg, 'Bailey', date) if s.get('present')]
+        return st
+
+    place(cfg, dict(post(1, title='  Ramen,\n again '), url='https://devhou.se/posts/1'), spot, spots)
+    assert state()['posts'] == [{'id': '1', 'lines': 2, 'title': 'Ramen, again',
+                                 'url': 'https://devhou.se/posts/1'}]
+    # a second post the same day keeps the first one's title and url
+    place(cfg, post(2, title='Trains'), spot, spots)
+    assert state()['posts'] == [
+        {'id': '1', 'lines': 2, 'title': 'Ramen, again', 'url': 'https://devhou.se/posts/1'},
+        {'id': '2', 'lines': 2, 'title': 'Trains'}]
+    # a url that is not a web address is not recorded; nor is a blank title
+    assert b.post_entry(3, 1, '  ', 'javascript:alert(1)') == {'id': '3', 'lines': 1}
+    assert b.post_entry(3, 1, None, None) == {'id': '3', 'lines': 1}
+    assert b.post_entry(3, 1, 'T', 'http://x.test/3') == {'id': '3', 'lines': 1, 'title': 'T', 'url': 'http://x.test/3'}
+
+
+def test_backfill_posts():
+    def npc(name, states):
+        return {'name': name, 'states': states}
+    cfg = {'rooms': {
+        'A': {'npcs': [
+            npc('Bailey', {
+                # already has "posts": titles are filled in per id
+                '2031-01-01': {'dialogue': ['a', 'b', 'c'], 'photo': None,
+                               'posts': [{'id': '10', 'lines': 2}, {'id': '11', 'lines': 1, 'title': 'old'}]},
+                # no "posts": the photo is the post id
+                '2031-01-02': {'dialogue': ['a', 'b'], 'photo': '12'},
+                # neither: the one post by baely that day
+                '2031-01-03': {'dialogue': ['a'], 'photo': None},
+                # two posts that day and nothing to tell them apart: left alone
+                '2031-01-04': {'dialogue': ['a'], 'photo': None},
+                # not a placement
+                '2031-01-05': {'present': False},
+                '2031-01-06': {'present': False, 'dialogue': ['a'], 'photo': '12'},
+                # a post the list does not know
+                '2031-01-07': {'dialogue': ['a'], 'photo': '99'},
+            }),
+            npc('Julia', {'2031-01-03': {'dialogue': ['j'], 'photo': None}}),
+            {'name': 'Shopkeeper', 'dialogue': ['hi']},
+        ]},
+    }}
+    entries = [
+        {'id': 10, 'title': 'Ten', 'url': 'https://b.test/10'},
+        {'id': '11', 'title': 'Eleven'},
+        {'id': 12, 'title': 'Twelve', 'url': 'https://b.test/12'},
+        {'id': 13, 'title': 'Thirteen', 'url': 'https://b.test/13', 'author': 'Baely', 'date': '2031-01-03T09:00:00Z'},
+        {'id': 14, 'title': 'Fourteen', 'author': 'baely', 'date': '2031-01-04'},
+        {'id': 15, 'title': 'Fifteen', 'author': 'baely', 'date': '2031-01-04'},
+        {'id': 16, 'title': 'Sixteen', 'author': 'nobody', 'date': '2031-01-03'},
+        {'title': 'no id'}, 'junk',
+    ]
+    before = copy.deepcopy(cfg)
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        changed = b.backfill_posts(cfg, entries)
+    st = cfg['rooms']['A']['npcs'][0]['states']
+    assert changed == 3, out.getvalue()
+    assert st['2031-01-01']['posts'] == [{'id': '10', 'lines': 2, 'title': 'Ten', 'url': 'https://b.test/10'},
+                                         {'id': '11', 'lines': 1, 'title': 'Eleven'}]
+    assert st['2031-01-02']['posts'] == [{'id': '12', 'lines': 2, 'title': 'Twelve', 'url': 'https://b.test/12'}]
+    assert st['2031-01-03']['posts'] == [{'id': '13', 'lines': 1, 'title': 'Thirteen', 'url': 'https://b.test/13'}]
+    for date in ('2031-01-04', '2031-01-05', '2031-01-06', '2031-01-07'):
+        assert st[date] == before['rooms']['A']['npcs'][0]['states'][date], date
+    assert cfg['rooms']['A']['npcs'][1:] == before['rooms']['A']['npcs'][1:]     # Julia: nobody listed for her
+    # nothing but "posts" changed anywhere
+    for date, state in st.items():
+        was = before['rooms']['A']['npcs'][0]['states'][date]
+        assert {k: v for k, v in state.items() if k != 'posts'} == {k: v for k, v in was.items() if k != 'posts'}
+    assert '14, 15' in out.getvalue() and 'left alone' in out.getvalue()
+    assert 'matched nothing: 14, 15, 16' in out.getvalue(), out.getvalue()
+    # a second run finds nothing left to do
+    with contextlib.redirect_stdout(io.StringIO()):
+        assert b.backfill_posts(cfg, entries) == 0
+    # a listed post with a null (or missing) title or url keeps what the state already records
+    with contextlib.redirect_stdout(io.StringIO()):
+        assert b.backfill_posts(cfg, [{'id': 10, 'title': None, 'url': 'https://b.test/ten'},
+                                      {'id': 11, 'url': None}, {'id': 12, 'title': '', 'url': None}]) == 1
+    assert st['2031-01-01']['posts'] == [{'id': '10', 'lines': 2, 'title': 'Ten', 'url': 'https://b.test/ten'},
+                                         {'id': '11', 'lines': 1, 'title': 'Eleven'}]
+    assert st['2031-01-02']['posts'] == [{'id': '12', 'lines': 2, 'title': 'Twelve', 'url': 'https://b.test/12'}]
+    st['2031-01-01']['posts'][0]['url'] = 'https://b.test/10'
+    # the backfilled "posts" are what merge_same_day expects: a re-run of post 12 replaces its lines
+    assert b.merge_same_day(st['2031-01-02'], 12, ['x'], None, False, title='Twelve!') == (
+        ['x'], None, False, [{'id': '12', 'lines': 1, 'title': 'Twelve!'}])
+
+
+def test_shipped_posts(cfg):
+    """Every "posts" in config.json adds up to its dialogue (the game captions
+    lines by these counts) and no title was made up for a state without one."""
+    for room_key, room in cfg['rooms'].items():
+        for npc in room.get('npcs', []):
+            for date, st in npc.get('states', {}).items():
+                made_by = st.get('posts')
+                if made_by is None:
+                    continue
+                where = f'{room_key} {npc["name"]} {date}'
+                assert sum(p['lines'] for p in made_by) == len(st['dialogue']), where
+                assert all(str(p['id']) == p['id'] for p in made_by), where
+
+
 def test_shipped_dialogue(cfg):
     """Nothing in config.json is over the limit or cut mid-word at it."""
     for room_key, room in cfg['rooms'].items():
@@ -196,5 +402,10 @@ if __name__ == '__main__':
     test_trim_line()
     test_merge_same_day()
     test_same_day_posts(config)
+    test_landmark_rules()
+    test_spots(config)
+    test_post_source(config)
+    test_backfill_posts()
+    test_shipped_posts(config)
     test_shipped_dialogue(config)
     print('ok')

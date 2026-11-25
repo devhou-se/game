@@ -341,6 +341,7 @@ class GameScene extends Phaser.Scene {
                         stationary: resolved.stationary,
                         photo: resolved.photo,
                         voice: resolved.voice,
+                        posts: resolved.posts,
                     });
                     const here = roomKey === this.roomManager.currentRoom;
                     npc.sprite.setVisible(here);

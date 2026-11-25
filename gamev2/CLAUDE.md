@@ -32,7 +32,8 @@ confirm the world is still playable after a map change. `node tools/play.js help
 (`.claude/skills/play-game/SKILL.md`) is the full guide, including what the tool cannot do.
 
 `node tools/test_game.js` runs the game's own decision code in Node, with no browser: which train a
-station parks, the dialogue hint wording, touch buttons cancelling their touch, the default game date.
+station parks, the dialogue hint wording, touch buttons cancelling their touch, which post a dialogue
+line is captioned with, the default game date.
 When a fix lives in a Phaser-side class, pull the decision into a static function there and add a case.
 
 ## Studio
@@ -299,6 +300,31 @@ the two never overlap (20px gap) and share a bottom edge (`panelY - 12`). The bu
 directional `<name>_front` 64px character sprite falls back to the old look (`showFullSprite`: whole sprite
 at 2x centred above the panel, name above it).
 
+**Post caption** (issue #79): a dated state may carry `"posts": [{id, lines, title?, url?}, ...]` — which
+blog post each run of its dialogue lines came from (`tools/blog_to_npc.py` writes it; same-day posts share
+a state). `postForLine` in `src/utils/NpcStates.js` maps the line being said to its post, and
+`DialogueManager.updatePostCaption` shows `from: <post title>` on a small plate straddling the panel's top
+edge at its right end (under the blog photo when there is one), cut with an ellipsis at
+`CAPTION_MAX_WIDTH`. It appears only when a title is recorded and the `lines` counts add up to the
+dialogue — states placed before titles were kept show nothing, and nothing is invented for them. With a
+`url` (http/https only) the caption is light blue and a click or tap on it opens the post in a new tab
+instead of advancing; without one a click on it advances like the rest of the overlay. The link opens on
+release, and only when the press began on that same link, so the release of a press that advanced the
+dialogue never opens the next line's post; the hit area reaches `CAPTION_HIT_PAD` above and below the
+plate for fingers. It adds no key
+binding and changes no hint or panel size. `posts` belong to the dialogue they were written with:
+`resolveNpc` clears them when a later state changes the dialogue without naming its own (same rule as
+`voice`). The plumbing is `resolved.posts` → `NPCManager.spawnNPC` → `npc.posts`, exactly like `photo`;
+`play.js` prints `from: <title> <url>` under an NPC's lines.
+- **Recording**: the payload's `title` is always kept; `url` only if the payload has one (today's payload is
+  `{post_id, title, author, date, content}` — the www-jp workflow has to add `url` for links to appear).
+- **Backfill**: `python3 tools/blog_to_npc.py --backfill-posts posts.json [--dry-run]` fills title/url into
+  existing states from a list of `{id, title, url}` (optionally `author`, `date`). A state is matched by
+  its `posts` ids, else by its photo id (a photo is filed under its post's id), else by author + date when
+  exactly one listed post fits; anything else is reported and left alone. No LLM call, no placement.
+  The shipped states have not been backfilled (the post list lives in the www-jp repo: `site/content/<id>.md`
+  front matter), so no caption shows in the live game yet.
+
 **Real art drop-in, no code change**: put `assets/portraits/<name>.png` in place and add `<name>` to
 `assets/portraits/manifest.json` (`{"portraits": ["bailey", ...]}`, shipped empty). `preload()` loads only
 the listed names as textures `portrait-<name>` (so a character without art never 404s; a malformed
@@ -389,7 +415,20 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   `tools/make_prefabs.py` (colliders = the base cells only), stamp it from the room generator, and add it to
   `LANDMARKS` in `tools/blog_to_npc.py` so blog NPCs can be placed there. A landmark entry may carry a third
   element `(dx, dy)`: the cell, relative to the sprite's top-left, where a visitor stands (tall sprites'
-  own cell is their tip, not their foot).
+  own cell is their tip, not their foot), and an options dict:
+  - `{'rooms': ('Machi',)}` — the label names one place, so only those rooms offer it. Use it whenever a
+    label would be wrong in another town built from the same sprites (`the old-town lane` is Machi's;
+    Asahikawa's machiya row is `ramen alley` — issue #100).
+  - `{'indoors': True}` — offered inside station rooms, and only there (issue #73).
+- **Where blog NPCs may be put** (`find_spots` / `walkable_near` in `tools/blog_to_npc.py`): outdoor rooms
+  offer the ordinary landmarks. Interiors are opt-in: a station room (a key of `config.stations`; they
+  carry no `interior` flag) offers only `indoors` landmarks — today `the platform`, its west end by the
+  vending machine — and the model is told to pick it only for a post about that station or the train ride
+  itself. `interior: true` rooms (konbini, izakaya) are never offered. The cell chosen is the nearest free
+  one to the landmark's standing cell that can be walked to from one of the room's transporters, so a
+  landmark inside a fence (Market's fox statues) puts its visitor outside it. `python3
+  tools/test_blog_to_npc.py` checks all of this over every room in `config.json`: add a room or a
+  landmark and it tells you if a spot is mislabelled, unreachable, or lands on a station's doors.
 - **World map without Tiled**: `tools/make_worldmap.py` uses `tmxrasterizer` when Tiled is installed and
   otherwise (or with `--pil`) draws the rooms itself via `node tools/play.js render`, which is also the
   "look at the render" step for a new room: `node tools/play.js render <Room> out.png [--scale .5] [--colliders]`.
