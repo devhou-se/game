@@ -829,6 +829,24 @@ const tests = {
         assert.strictEqual(walkedFrom(new Set(), [[0, 0]]).size, 0);
     },
 
+    'lint lets the player stand at a shrine roof\'s eave tips, but not under the roof'() {
+        const overheadCols = game('WorldModel.overheadCols');
+        assert.strictEqual(overheadCols('shrine-top', 5).join(), '1,2,3', 'the eave columns are not under the roof');
+        assert.strictEqual(overheadCols('red-shrine-top', 5).join(), '1,2,3');
+        assert.strictEqual(overheadCols('temple-hallway-top', 4).join(), '0,1,2,3', 'any other overhead sprite is checked edge to edge');
+        // ...and the art agrees: those two bottom-row corner cells are all but empty
+        const png = require('./png');
+        for (const key of ['shrine-top_0_0', 'red-shrine-top_0_0']) {
+            const { width, height, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png')));
+            assert.deepStrictEqual([width, height], [320, 384]);
+            for (const col of [0, 4]) {
+                let opaque = 0;
+                for (let y = height - 64; y < height; y++) for (let x = col * 64; x < col * 64 + 64; x++) if (data[(y * width + x) * 4 + 3]) opaque++;
+                assert.ok(opaque < 64 * 64 * 0.15, `${key} column ${col}: ${opaque}px of roof in the bottom cell`);
+            }
+        }
+    },
+
     'the headless world model is stopped by collision tiles, like the game'() {
         const WorldModel = game('WorldModel');
         // a 4x3 room: a wall tile at 2,1 on a collision layer, a rug at 1,2 on a plain one

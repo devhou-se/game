@@ -2,6 +2,9 @@ const DIRS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 const baseOf = (key) => (key || '').replace(/_(front|back|side)$/, '');
 
 const VENDING_RE = /vending-machine/;   // same test as the vending rule in src/utils/Interactions.js
+// Overhead sprites whose bottom row is bare at each end: the shrine roofs' outer columns hold only the
+// upturned eave tip there (a sliver above a head, #157), so standing in them is not standing under the roof.
+const OPEN_EAVES = { 'shrine-top': 1, 'red-shrine-top': 1 };
 const BIN_RE = /(^|[-_])(bin|dustbin|dumpster|trash|trashcan|rubbish|garbage|litter)([-_]|$)/i;
 
 class WorldModel {
@@ -280,6 +283,14 @@ class WorldModel {
         return new Set(best);
     }
 
+    // Columns of an overhead sprite's bottom row that would hide someone standing in them.
+    static overheadCols(name, w) {
+        const eave = OPEN_EAVES[name] || 0;
+        const cols = [];
+        for (let a = eave; a < w - eave; a++) cols.push(a);
+        return cols;
+    }
+
     drawOrder(roomKey) {
         const room = this.roomManager.rooms[roomKey];
         const meta = this.config.spriteMetadata || {};
@@ -400,7 +411,7 @@ class WorldModel {
             for (let a = 0; a < o.w; a++) if (overFloor.has(K(o.x + a, o.y + o.h))) pavilion = true;
             if (pavilion) continue;
             let under = false;
-            for (let a = 0; a < o.w; a++) {
+            for (const a of WorldModel.overheadCols(nm(o.key), o.w)) {
                 const c = K(o.x + a, o.y + o.h - 1);
                 if (!colliders.has(c) && reachable.has(c)) under = true;
             }

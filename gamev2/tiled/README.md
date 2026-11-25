@@ -236,6 +236,9 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   the eave columns, rows 1-4 of the 5x8) and NPC spots go below the steps
   (`blog_to_npc.py` LANDMARKS stand offset). NPCs wander 2 cells from home —
   an open cell under a Tops roof within that box means a floating name label.
+  The two bottom-row eave cells (row 5, the outer columns) stay open on purpose: the roof has
+  only its upturned tip there, a sliver above a head, so lint's `under-overhead` skips them
+  (`OPEN_EAVES` in `tools/world-model.js`, #157) and still checks the three columns between.
   `tools/extract_shrine.py` re-cuts the blue roof from the atlas using the
   rect in `Assets/Tilemap/GuttyKreum.tres` (tile `shrine-top`, 160x192 like the
   red one — it used to be 160x160, which cut the eaves flat) and refuses a
