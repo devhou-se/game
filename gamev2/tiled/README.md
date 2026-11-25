@@ -74,6 +74,25 @@ builds the whole Machi town and the Konbini shop interior from prefabs +
 autotiled floors. Same recipe works for interiors: make `shelf` / `counter`
 prefabs and let a generator lay out the room.
 
+### Stamping a prefab into an existing (ported) room
+
+Generators call `b.stamp()`. For Tokyo / Market / Park / Palace and Machi, whose map lives in `config.json`,
+use `tools/stamp_prefab.py`:
+
+    python3 tools/stamp_prefab.py Market --add discount-store 46 22
+    python3 tools/stamp_prefab.py Machi --remove sakura-small 5 20 --add machiya-black 4 17 --dry-run
+
+It writes nothing unless the placement is clean: inside the room, not over another standing sprite
+(`--allow-overlap` to permit), no solid cell on a cell that is already solid, no transporter or dated NPC
+position anywhere under its sprites (solid rows or the walk-behind roof rows), and every walkable cell that
+was reachable from the transporters still is. Follow with `qa_port.py --room <Room>` and
+`config_to_tiled.py <Room>`. `--remove` lifts the colliders of the prefab as it is defined NOW (so when
+changing a prefab's collision: remove it from the rooms, re-run `make_prefabs.py`, add it back) and keeps
+any collider cell another standing sprite still covers.
+
+The city buildings (`highrise-*`, `discount-store`, `machiya-*`) come from `tools/extract_city.py` - see
+"Generic city buildings" in `gamev2/CLAUDE.md`.
+
 ## Adding a new room
 
 1. Copy an existing `.tmj` (or seed one from a config room with
@@ -132,6 +151,19 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   accept `PORT_SCENE=<repo-relative .tscn>` should a real second scene appear.
 - **`seal_tracks.py` with no arguments re-seals Palace's level crossing**
   (cells 0,5 and 1,5). Pass the rooms you mean: `seal_tracks.py Osaka`.
+- **GuttyKreum sheets are 2x, not 4x**: one 32px RPG Maker tile is one 64px cell (the ported houses are
+  pixel-identical 2x crops). Only the Dotonbori arch / ferris wheel were extracted at 4x, as oversized
+  landmarks. A building extracted at 4x gets a two-cell-wide door and pixels twice the size of its neighbours.
+- **City buildings are solid up to the roof line**: `building()` prefabs collide on every row except the
+  top two, which are walk-behind like a house roof. The first cut left the whole upper half open and the
+  player vanished into a pocket up to 5x6 cells behind a tower. Keep doors, NPC spots and paths out of
+  those two rows (`stamp_prefab.py` refuses a transporter or NPC there).
+- **A building's feet belong on the plaza / kerb edge, not across it**: an 8-row block on Palace's
+  forecourt reached over the kerb and walled off the pavement. Where the gap is short use the lower
+  variant (`midrise-apartment`, 5x6) rather than letting a tall one overhang.
+- **Anchors are not rounded**: `anchorY = 32/height` to 4 places put the 11-row tower 0.03px off the grid.
+- **`extract_city.py` needs a Japanese font** for the discount-store sign (`generate_ads.find_font()`); in
+  a sandbox that hides `/System/Library/Fonts` it stops before writing that sprite.
 - **One tile per cell per layer**: a big landmark sprite occupies only its
   top-left cell on `Collidables`, so a lantern post stamped on that exact cell
   is silently replaced (its collider stays). Keep small props off the top-left

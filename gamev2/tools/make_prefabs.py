@@ -24,6 +24,16 @@ def props(d):
 
 Z = {'Floor': 0, 'Over Floor': 1, 'Water': 1, 'Non-Collidables': 4, 'Collidables': 5, 'Other': 6, 'Tops': 7}
 
+def building(w, h, door, roof=2, door_w=1):
+    """A single-sprite street building, w x h cells. Everything collides except
+    the top `roof` rows, which are walk-behind (the house-roof convention): a
+    tower whose whole upper half was open hid the player in a pocket up to
+    5x6 cells deep. The door cell(s) sit in the bottom row from column `door`."""
+    return dict(w=w, h=h, sprites=None,
+                colliders=[(x, y) for x in range(w) for y in range(roof, h)],
+                doors=[(door + i, h - 1) for i in range(door_w)])
+
+
 # name -> dict(w, h, sprites=[(layer, dx, dy, key)], colliders=[(dx,dy)], doors=[(dx,dy)])
 PREFABS = {
     'lantern-red':  dict(w=1, h=2, sprites=[('Tops', 0, 0, 'red-lanterns_6_3'), ('Collidables', 0, 1, 'red-lanterns_4_1')],
@@ -99,7 +109,27 @@ PREFABS = {
                             colliders=[(x, 9) for x in range(2, 6)]
                                       + [(x, y) for x in range(1, 7) for y in (10, 11)]
                                       + [(x, 12) for x in range(8) if x not in (3, 4)], doors=[]),
+    # ---- generic city buildings (issue #18; art assembled by tools/extract_city.py
+    #      at the 2x scale of the houses). One sprite each on Collidables, so it
+    #      Y-sorts by its feet: solid from the ground up, only the top two rows
+    #      (the roof line) are walk-behind. Doors are listed so a generator can
+    #      wire an interior later; stamped sealed, the whole footprint is solid. --
+    'highrise-yellow':    building(4, 8, door=1),
+    'highrise-blue':      building(5, 11, door=2),
+    'highrise-glass':     building(4, 10, door=1, door_w=2),
+    'highrise-apartment': building(5, 8, door=2),
+    'midrise-apartment':  building(5, 6, door=2),
+    # the discount store ("Don Quijote"): generated parody sign over the facade
+    'discount-store':     building(5, 8, door=2),
+    # Kyoto-style two-storey townhouses: the main roof (rows 0-1) is overhead,
+    # the upper wall, pent roof and shopfront (rows 2-4) are solid.
+    'machiya-black':      building(5, 5, door=2),
+    'machiya-red':        building(5, 5, door=2),
+    'machiya-blue':       building(5, 5, door=2),
 }
+for _name, _spec in PREFABS.items():
+    if _spec['sprites'] is None:                 # building(): one sprite named after the prefab
+        _spec['sprites'] = [('Collidables', 0, 0, f'{_name}_0_0')]
 
 
 def write_prefab(name, spec):

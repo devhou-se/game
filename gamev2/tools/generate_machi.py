@@ -72,7 +72,7 @@ b.stamp('sakura-small', 44, 4); b.stamp('shrub-small', 35, 8); b.plants(42, 9, 1
 
 # street lamps (kept clear of the shop fronts and house footprints)
 for x in (6, 34): b.stamp('lamp-blue', x, 14)
-for x in (9, 15, 27, 37, 43): b.stamp('lamp-blue', x, 17)
+for x in (27, 37, 43): b.stamp('lamp-blue', x, 17)      # (9 and 15 made way for the machiya lane)
 
 # shop row: the 7-Eleven's door stays OPEN and leads into the Konbini room
 konbini_door = b.stamp('seven-eleven', 7, 11, seal=False)[0]
@@ -98,10 +98,14 @@ b.stamp('lantern-red', 20, 16); b.stamp('lantern-red', 29, 16)
 b.stamp('lantern-red', 20, 24); b.stamp('lantern-red', 29, 24)
 b.plants(22, 18, 0); b.plants(27, 18, 3); b.plants(20, 21, 2); b.plants(29, 22, 1)
 
-# orchard + garden (south-west)
+# old-town lane (south-west, issue #18): three narrow machiya townhouses
+# (tools/extract_city.py) shoulder to shoulder along the north side of the dirt
+# lane, feet on row 21, the blossom row facing them across it. Live in the map
+# via tools/stamp_prefab.py — this generator is not re-run (tiled/README.md).
+for i, colour in enumerate(('black', 'red', 'blue')):
+    b.stamp(f'machiya-{colour}', 4 + 5 * i, 17)
 for ox in (5, 8, 11, 14):
-    for oy in (20, 24):
-        b.stamp('sakura-small', ox, oy)
+    b.stamp('sakura-small', ox, 24)
 b.plants(6, 22, 0); b.plants(9, 23, 1); b.plants(12, 22, 2); b.plants(15, 23, 3); b.plants(7, 26, 1)
 
 # east road lanterns + greenery south of the houses
@@ -117,6 +121,8 @@ for i, x in enumerate(range(3, 45)):
 # scattered plants
 for i in range(14):
     sx, sy = rng.randrange(3, 45), rng.randrange(17, 27)
+    if (4 <= sx <= 18 and 17 <= sy <= 21):       # under the machiya lane: would never be seen
+        continue
     if all(f'{sx},{sy}' not in b.L[n] for n in ('Collidables', 'Colliders', 'Over Floor', 'Other')) \
        and rg._pal[b.L['Floor'][f'{sx},{sy}']].startswith('grass'):
         b.plants(sx, sy, i)

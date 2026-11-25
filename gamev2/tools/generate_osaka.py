@@ -11,13 +11,17 @@ side leads into the OsakaStation interior (built by generate_stations.py).
 From the station you walk south down the main street:
 
   north   the rail line, the platform and the station house
-          the Dotonbori entrance ARCH over the street (walk under it), a row
-          of townhouses to the west, the oval FERRIS WHEEL to the east
+          the Dotonbori entrance ARCH over the street (walk under it); to the
+          west an office block, a townhouse and the DISCOUNT STORE (the "Don
+          Quijote", issue #18); the oval FERRIS WHEEL to the east
   middle  the Dotonbori canal, crossed by the street (the bridge)
   south   Shinsekai: TSUTENKAKU TOWER on the street's axis, standing on its
-          own plaza, townhouses either side. A garden thicket fills the ground
+          own plaza, townhouses, an apartment block and a glass tower either
+          side. A garden thicket fills the ground
           behind the tower, so the street forks round it (nobody walks hidden
-          behind a 13-cell sprite)
+          behind a 13-cell sprite). The city buildings follow the same rule
+          through their prefabs: solid from the ground up, only the top two
+          rows (the roof line) are walk-behind
 
 The three landmarks are prefabs (tools/make_prefabs.py) whose art comes from
 tools/extract_dotonbori.py (real GuttyKreum Dotonbori art) and
@@ -27,6 +31,7 @@ blog pipeline has placed there.
 
 Run from gamev2/:
     python3 tools/extract_dotonbori.py
+    python3 tools/extract_city.py                 # high-rises + discount store
     python3 tools/generate_tsutenkaku.py
     python3 tools/make_prefabs.py
     python3 tools/generate_osaka.py
@@ -83,12 +88,16 @@ ARCH = (21, 12)
 b.stamp('dotonbori-arch', *ARCH)
 b.stamp('lantern-red', 20, 10); b.stamp('lantern-red', 29, 10)
 
-# ---- west of the street: a row of townhouses (doors sealed — no interiors) ----
-b.stamp('house-red', 4, 10); b.stamp('house-black', 9, 10); b.stamp('house-blue', 14, 10)
-b.stamp('lantern-red', 8, 15); b.stamp('lantern-red', 13, 15)
+# ---- west of the street: an office block, a townhouse and the discount store
+#      (ドン・タコーテ — Dotonbori's Don Quijote, by the arch and across from its
+#      ferris wheel). City buildings come from tools/extract_city.py; all feet
+#      on row 16-17 so the row reads as one street front. Doors sealed — no
+#      interiors. ---------------------------------------------------------------
+b.stamp('highrise-blue', 3, 7); b.stamp('house-black', 9, 11); b.stamp('discount-store', 13, 9)
+b.stamp('lantern-red', 8, 16); b.stamp('lantern-red', 12, 16)
 b.stamp('vending-white', 18, 13); b.stamp('vending-red', 19, 13)
-for x in (6, 11, 16):
-    b.stamp('lamp-blue', x, 18)
+for x in (11, 16):                                # (none at 6: the office block's feet are on
+    b.stamp('lamp-blue', x, 18)                   #  row 17, a lamp there stood beside its door)
 
 # ---- east of the street: the oval ferris wheel on the canal bank --------------
 WHEEL = (33, 7)
@@ -118,15 +127,15 @@ for gy in range(24, 32, 2):
 b.stamp('lantern-red', 19, 35); b.stamp('lantern-red', 30, 35)
 for i, (px, py) in enumerate([(19, 33), (30, 33), (22, 37), (27, 37), (20, 37), (29, 37)]):
     b.paver(px, py, i)
-b.stamp('house-red', 5, 26); b.stamp('house-black', 10, 26)
-b.stamp('house-blue', 37, 26); b.stamp('house-red', 42, 26)
+b.stamp('highrise-apartment', 3, 24); b.stamp('house-black', 10, 26)       # feet on row 31
+b.stamp('house-blue', 37, 26); b.stamp('highrise-glass', 42, 22)
 b.stamp('vending-red', 14, 29); b.stamp('vending-white', 35, 29)
 b.stamp('lantern-red', 9, 31); b.stamp('lantern-red', 41, 31)
 b.stamp('sakura-large', 16, 26); b.stamp('sakura-large', 31, 26)   # flanking the tower
 b.stamp('sakura-large', 3, 33); b.stamp('sakura-large', 44, 33)
 b.stamp('sakura-small', 15, 34); b.stamp('sakura-small', 34, 34)
 b.stamp('shrub-small', 17, 30); b.stamp('shrub-small', 32, 30)
-b.stamp('shrub-small', 3, 25); b.stamp('shrub-small', 46, 25)
+b.stamp('shrub-small', 46, 25)
 for x in (8, 13, 36, 41):
     b.stamp('lamp-blue', x, 36)
 
@@ -143,6 +152,8 @@ for i, x in enumerate(range(1, W - 1)):
 # ---- greenery on the canal banks ----------------------------------------------
 for i in range(60):
     sx, sy = rng.randrange(2, W - 2), rng.choice((19, 22))
+    if 42 <= sx <= 45 and sy == 22:               # under the glass tower's roof line
+        continue
     if all(f'{sx},{sy}' not in b.L[n] for n in
            ('Collidables', 'Colliders', 'Over Floor', 'Other', 'Water', 'Tops')) \
        and rg._pal[b.L['Floor'][f'{sx},{sy}']].startswith('grass'):

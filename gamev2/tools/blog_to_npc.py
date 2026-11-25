@@ -84,6 +84,7 @@ LANDMARKS = [
     ('blue-bell', 'the temple bell'),
     ('sakura-large-top', 'the sakura trees'),
     ('white-vending-machine-top', 'the vending machines'),
+    ('machiya-', 'the old-town lane', (2, 5)),          # on the lane, at a shop door
     # Named landmarks. These are single sprites many cells tall, whose tile
     # cell is their top-left corner (the tip of a tower) — so each carries the
     # cell, relative to that corner, where someone visiting it would stand:
@@ -93,6 +94,7 @@ LANDMARKS = [
     ('tsutenkaku_', 'Tsutenkaku Tower', (5, 14)),      # the plaza in front of it
     ('dotonbori-arch_', 'the Dotonbori arch', (2, 6)),  # just through the arch
     ('dotonbori-wheel_', 'the Dotonbori ferris wheel', (6, 12)),   # the canal bank below it
+    ('discount-store_', 'the Don Takote discount store', (2, 8)),  # outside its doors
 ]
 
 MODEL = 'claude-sonnet-5'

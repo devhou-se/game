@@ -373,6 +373,43 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   states there), and `tools/seal_tracks.py` takes room names — run it bare and it re-seals Palace's level
   crossing.
 
+### Generic city buildings: high-rises, the discount store, machiya (issue #18)
+
+Street buildings beyond the ported houses / konbini / shrines. Each is ONE sprite on `Collidables` wrapped in
+a prefab (`building()` in `tools/make_prefabs.py`): solid from the ground up, with only the top two rows (the
+roof line) walk-behind, as behind a house roof - so the player is never lost behind a tower. Doors are
+sealed - none has an interior.
+
+| Prefab | Cells | Placed in |
+|---|---|---|
+| `highrise-yellow` (ochre office block) | 4x8 | Market (15,22), Palace (48,6) |
+| `highrise-blue` (blue-grey office block) | 5x11 | Osaka (3,7) |
+| `highrise-glass` (curtain-wall tower) | 4x10 | Osaka (42,22) |
+| `highrise-apartment` (tiled-balcony flats) | 5x8 | Osaka (3,24) |
+| `midrise-apartment` (the same block, two floors lower) | 5x6 | Palace (40,10), feet on the forecourt edge |
+| `discount-store` (the "Don Quijote") | 5x8 | Market (46,22), Osaka (13,9) by the Dotonbori arch |
+| `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Machi (4/9/14,17): the old-town lane |
+
+- **Art** is assembled by `tools/extract_city.py` from the GuttyKreum RPG Maker tile kits in `../Assets/GuttyKreum`
+  (Osaka `GK_Osaka_C_2`, Dotonbori `GK_DB_B`, Japanese City `GK_JC_C_2`) - a kit holds a roof cap, one window
+  floor, a ground floor, roof edges..., so the script repeats floors / middle columns to get the size wanted
+  (change the arguments in `BUILDINGS` for a taller or wider block; `--preview out.png` writes a contact sheet).
+  **Scale is 2x**: one 32px RPG Maker tile = one 64px cell, the scale of every ported building (doors are one
+  cell wide). The Dotonbori arch / ferris wheel are deliberately 4x landmarks - do not copy that for buildings.
+  Do not mix in the LimeZu `Modern_Exteriors` pack (different, more saturated style).
+- **The discount store** carries no real branding, like the ad pool: its sign is drawn by `extract_city.py`
+  with `tools/generate_ads.py`'s text helpers - ドン・タコーテ ("Don Takote"), yellow board, blue band, a red
+  octopus. It needs a Japanese font from `generate_ads.find_font()` (macOS system fonts).
+- **Placing one**: generated rooms `b.stamp('highrise-glass', x, y)` in their generator (Osaka does). Ported
+  rooms and Machi use **`tools/stamp_prefab.py <Room> --add <prefab> x y [--remove <prefab> x y] [--dry-run]`**,
+  which refuses to write if the prefab overlaps another standing sprite, lands on a solid cell, covers a
+  transporter or any dated NPC position (under its solid rows or its walk-behind roof rows), or cuts walkable
+  cells off from the room's transporters (flood-fill). To change a building prefab's collision, `--remove` it
+  from the ported rooms first, re-run `make_prefabs.py`, then `--add` it back. Then
+  `qa_port.py --room`, `config_to_tiled.py`, `make_worldmap.py`.
+- Blog NPCs can be sent to `the Don Takote discount store` and `the old-town lane` (`LANDMARKS` in
+  `tools/blog_to_npc.py`).
+
 ## Asset Generation
 
 Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/`:
