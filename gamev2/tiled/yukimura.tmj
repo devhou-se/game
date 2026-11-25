@@ -123,37 +123,37 @@
     },
     {
      "id": 13,
-     "image": "../assets/sprites/dirt-outside-autotile_corner-ne.png",
+     "image": "../assets/sprites/dirt-snow-autotile_corner-ne.png",
      "imagewidth": 64,
      "imageheight": 64
     },
     {
      "id": 14,
-     "image": "../assets/sprites/dirt-outside-autotile_corner-nw.png",
+     "image": "../assets/sprites/dirt-snow-autotile_corner-nw.png",
      "imagewidth": 64,
      "imageheight": 64
     },
     {
      "id": 15,
-     "image": "../assets/sprites/dirt-outside-autotile_corner-se.png",
+     "image": "../assets/sprites/dirt-snow-autotile_corner-se.png",
      "imagewidth": 64,
      "imageheight": 64
     },
     {
      "id": 16,
-     "image": "../assets/sprites/dirt-outside-autotile_corner-sw.png",
+     "image": "../assets/sprites/dirt-snow-autotile_corner-sw.png",
      "imagewidth": 64,
      "imageheight": 64
     },
     {
      "id": 17,
-     "image": "../assets/sprites/dirt-outside-autotile_edge-e.png",
+     "image": "../assets/sprites/dirt-snow-autotile_edge-e.png",
      "imagewidth": 64,
      "imageheight": 64
     },
     {
      "id": 18,
-     "image": "../assets/sprites/dirt-outside-autotile_edge-w.png",
+     "image": "../assets/sprites/dirt-snow-autotile_edge-w.png",
      "imagewidth": 64,
      "imageheight": 64
     },
@@ -460,15 +460,15 @@
    ],
    "wangsets": [
     {
-     "name": "dirt-outside-autotile",
+     "name": "dirt-snow-autotile",
      "type": "mixed",
      "tile": -1,
      "colors": [
       {
-       "name": "dirt-outside-autotile",
+       "name": "dirt-snow-autotile",
        "tile": -1,
        "probability": 1,
-       "color": "#74d33b"
+       "color": "#aa740e"
       }
      ],
      "wangtiles": [

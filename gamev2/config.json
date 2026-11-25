@@ -3120,7 +3120,7 @@
           "z": 5
         }
       ],
-      "name": "AsahikawaStation",
+      "name": "Asahikawa Station",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -5639,7 +5639,7 @@
           "z": 5
         }
       ],
-      "name": "InakaStation",
+      "name": "Inaka Station",
       "npcs": [
         {
           "autoFlip": {
@@ -6750,7 +6750,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniMachi1",
+      "name": "7-Eleven \u00b7 Machi",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -7245,7 +7245,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniMarket1",
+      "name": "7-Eleven \u00b7 Market 1",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -7732,7 +7732,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniMarket2",
+      "name": "7-Eleven \u00b7 Market 2",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -8212,7 +8212,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniMarket3",
+      "name": "7-Eleven \u00b7 Market 3",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -8682,7 +8682,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniMarket4",
+      "name": "7-Eleven \u00b7 Market 4",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -9152,7 +9152,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniMarket5",
+      "name": "7-Eleven \u00b7 Market 5",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -9616,7 +9616,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniMarket6",
+      "name": "7-Eleven \u00b7 Market 6",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -10074,7 +10074,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniPark1",
+      "name": "7-Eleven \u00b7 Park 1",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -10563,7 +10563,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniPark2",
+      "name": "7-Eleven \u00b7 Park 2",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -11035,7 +11035,7 @@
           "z": 5
         }
       ],
-      "name": "KonbiniSapporo1",
+      "name": "7-Eleven \u00b7 Sapporo",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -22329,7 +22329,7 @@
           "z": 5
         }
       ],
-      "name": "OsakaStation",
+      "name": "Osaka Station",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -32499,7 +32499,7 @@
           "z": 5
         }
       ],
-      "name": "SapporoStation",
+      "name": "Sapporo Station",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -37997,7 +37997,7 @@
           "z": 5
         }
       ],
-      "name": "TokyoStation",
+      "name": "Tokyo Station",
       "npcs": [
         {
           "autoFlip": {
@@ -39026,21 +39026,21 @@
             "23,0": 315,
             "23,1": 315,
             "23,10": 137,
-            "23,11": 194,
-            "23,12": 195,
-            "23,13": 195,
-            "23,14": 195,
-            "23,15": 195,
-            "23,16": 195,
-            "23,17": 195,
-            "23,18": 195,
-            "23,19": 195,
+            "23,11": 345,
+            "23,12": 350,
+            "23,13": 350,
+            "23,14": 350,
+            "23,15": 350,
+            "23,16": 350,
+            "23,17": 350,
+            "23,18": 350,
+            "23,19": 350,
             "23,2": 315,
-            "23,20": 195,
-            "23,21": 195,
-            "23,22": 195,
-            "23,23": 195,
-            "23,24": 196,
+            "23,20": 350,
+            "23,21": 350,
+            "23,22": 350,
+            "23,23": 350,
+            "23,24": 353,
             "23,25": 315,
             "23,26": 315,
             "23,27": 315,
@@ -39054,21 +39054,21 @@
             "24,0": 315,
             "24,1": 315,
             "24,10": 137,
-            "24,11": 200,
-            "24,12": 201,
-            "24,13": 201,
-            "24,14": 201,
-            "24,15": 201,
-            "24,16": 201,
-            "24,17": 201,
-            "24,18": 201,
-            "24,19": 201,
+            "24,11": 352,
+            "24,12": 348,
+            "24,13": 348,
+            "24,14": 348,
+            "24,15": 348,
+            "24,16": 348,
+            "24,17": 348,
+            "24,18": 348,
+            "24,19": 348,
             "24,2": 315,
-            "24,20": 201,
-            "24,21": 201,
-            "24,22": 201,
-            "24,23": 201,
-            "24,24": 202,
+            "24,20": 348,
+            "24,21": 348,
+            "24,22": 348,
+            "24,23": 348,
+            "24,24": 351,
             "24,25": 315,
             "24,26": 315,
             "24,27": 315,
@@ -41344,7 +41344,7 @@
           "z": 5
         }
       ],
-      "name": "YukimuraStation",
+      "name": "Yukimura Station",
       "npcs": [
         {
           "autoFlip": {
@@ -43883,6 +43883,8 @@
         ]
       ],
       "label": "Asahikawa",
+      "order": 5,
+      "parent": "SapporoStation",
       "town": "Asahikawa",
       "train": "train-green",
       "trainCell": [
@@ -43906,6 +43908,8 @@
         ]
       ],
       "label": "Inaka",
+      "order": 1,
+      "parent": "TokyoStation",
       "town": "Inaka",
       "train": "train-green",
       "trainCell": [
@@ -43929,6 +43933,7 @@
         ]
       ],
       "label": "Osaka",
+      "order": 3,
       "town": "Osaka",
       "train": "train-orange",
       "trainCell": [
@@ -43952,6 +43957,7 @@
         ]
       ],
       "label": "Sapporo",
+      "order": 4,
       "town": "Sapporo",
       "train": "train-orange",
       "trainCell": [
@@ -43975,6 +43981,7 @@
         ]
       ],
       "label": "Tokyo Station",
+      "order": 0,
       "town": "Palace",
       "train": "train-orange",
       "trainCell": [
@@ -43998,6 +44005,8 @@
         ]
       ],
       "label": "Yukimura",
+      "order": 2,
+      "parent": "TokyoStation",
       "town": "Yukimura",
       "train": "train-green",
       "trainCell": [

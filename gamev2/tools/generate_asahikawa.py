@@ -29,7 +29,7 @@ Run from gamev2/:
     python3 tools/fix_fences.py Asahikawa         # MANDATORY (b.fence)
     python3 tools/seal_tracks.py Asahikawa        # MANDATORY (rail line)
     node tools/play.js lint Asahikawa          (and AsahikawaStation)
-    python3 tools/config_to_tiled.py Asahikawa     (and AsahikawaStation - one room per call)
+    python3 tools/config_to_tiled.py Asahikawa AsahikawaStation
 """
 import roomgen as rg
 from roomgen import rect

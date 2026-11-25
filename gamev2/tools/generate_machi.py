@@ -9,7 +9,7 @@ rooms.Konbini from scratch each run, leaves other rooms alone, and (once)
 adds the Tokyo road transporters.
 
 Run from gamev2/:  python3 tools/generate_machi.py
-Then:              python3 tools/config_to_tiled.py Machi  (and Konbini, Tokyo)
+Then:              python3 tools/config_to_tiled.py Machi Tokyo  (and Machi's konbini rooms)
                    node tools/play.js lint Machi
 """
 import random

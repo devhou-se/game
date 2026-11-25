@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-config_to_tiled.py — generate a Tiled .tmj from ONE gamev2 config.json room.
+config_to_tiled.py — generate Tiled .tmj maps from gamev2 config.json rooms.
 
 This is the "seeder": it expresses an existing room as a standard, editable
 Tiled map so you can author in Tiled instead of the bespoke config.json.
@@ -17,7 +17,11 @@ tile-object's top-left sits on its cell, matching how gamev2 anchors sprites).
 TiledAdapter.js reads this back into the exact room shape RoomManager renders,
 so the whole existing renderer (feet-based Y-sort included) is reused untouched.
 
-Usage:  python3 tools/config_to_tiled.py [RoomName]   (default: Tokyo)
+Usage:  python3 tools/config_to_tiled.py [RoomName ...]   (default: Tokyo)
+
+Any number of rooms may be named; each is written to tiled/<roomname>.tmj.
+An unknown room name is an error (exit 2) and nothing is written, so a typo
+cannot leave a stale .tmj behind unnoticed.
 """
 import json, struct, os, sys, re, hashlib
 import autotile
@@ -36,9 +40,8 @@ def props(d):
         out.append({'name': n, 'type': t, 'value': v})
     return out
 
-def main():
-    room_name = sys.argv[1] if len(sys.argv) > 1 else 'Tokyo'
-    cfg = json.load(open('config.json'))
+def convert(cfg, room_name):
+    """Write tiled/<room_name lowercased>.tmj for one room of the loaded config."""
     pal = cfg['tilePalette']
     keyof = lambda idx: pal[idx] if isinstance(idx, int) else idx
     room = cfg['rooms'][room_name]
@@ -147,6 +150,25 @@ def main():
     out = f'tiled/{room_name.lower()}.tmj'
     json.dump(tmj, open(out, 'w'), indent=1)
     print(f'wrote {out}: {W}x{H} cells, {len(keys)} tiles, {len(layers)} Tiled layers')
+
+def main():
+    names = sys.argv[1:] or ['Tokyo']
+    if any(n in ('-h', '--help') for n in names):
+        print(__doc__.strip())
+        return
+    cfg = json.load(open('config.json'))
+    unknown = [n for n in names if n not in cfg['rooms']]
+    if unknown:
+        # match case-insensitively only to suggest: room keys are case-sensitive
+        by_lower = {k.lower(): k for k in cfg['rooms']}
+        for n in unknown:
+            hint = by_lower.get(n.lower())
+            print(f'config_to_tiled: unknown room {n!r}'
+                  + (f' (did you mean {hint}?)' if hint else ''), file=sys.stderr)
+        print('nothing written. Rooms: ' + ', '.join(sorted(cfg['rooms'])), file=sys.stderr)
+        sys.exit(2)
+    for n in dict.fromkeys(names):           # each room once, in the order given
+        convert(cfg, n)
 
 if __name__ == '__main__':
     main()

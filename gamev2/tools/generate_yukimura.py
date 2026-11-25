@@ -11,17 +11,20 @@ evergreens ringing the clearing, warm lanterns, a couple of cottages.
 
 Snow art is recoloured from the existing pack by tools/make_snow_tiles.py, and
 the snow trees/shrubs are prefabs added by tools/make_prefabs.py — so run BOTH
-of those first. Deterministic and idempotent: rebuilds rooms.Yukimura from
+of those first. The shrine path is `dirt-snow-autotile` (the dirt path with a
+snow bank instead of a grass fringe), derived by tools/generate_hokkaido.py, so
+that has to have run once too. Deterministic and idempotent: rebuilds rooms.Yukimura from
 scratch each run.
 
 Run from gamev2/:
     python3 tools/make_snow_tiles.py
     python3 tools/make_prefabs.py
+    python3 tools/generate_hokkaido.py            # only if dirt-snow-autotile_* is missing
     python3 tools/generate_yukimura.py
     python3 tools/generate_stations.py            # builds YukimuraStation + registry
     python3 tools/fix_fences.py Yukimura          # MANDATORY (b.fence)
     python3 tools/seal_tracks.py Yukimura         # MANDATORY (rail line)
-    python3 tools/config_to_tiled.py Yukimura      (and YukimuraStation)
+    python3 tools/config_to_tiled.py Yukimura YukimuraStation
     node tools/play.js lint Yukimura YukimuraStation
 """
 import random
@@ -59,7 +62,7 @@ b.autotile('light-concrete-autotile', rect(12, 9, 30, 10))
 
 # ---- the shrine approach (sando): a path trodden down to dirt through the
 #      snow, straight from the platform, through the torii, into the square -----
-b.autotile('dirt-outside-autotile', rect(23, 11, 24, 24))
+b.autotile('dirt-snow-autotile', rect(23, 11, 24, 24))
 b.stamp('lantern-red', 22, 13); b.stamp('lantern-red', 25, 13)
 
 # ---- frozen pond (west) -------------------------------------------------------

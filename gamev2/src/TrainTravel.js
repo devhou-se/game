@@ -16,6 +16,16 @@ class TrainTravel {
         this.livery = null;   // set when entering a station, persists until
                               // the player leaves the station system — so the
                               // train you board is the train you arrive in
+        this.lastRide = null; // { from, to } station keys of the last ride taken
+    }
+
+    /**
+     * The station the player last arrived at `roomKey` from, or null if they
+     * did not get here by train this session. The departures board starts on
+     * it, so the way back is one press.
+     */
+    cameFrom(roomKey) {
+        return this.lastRide && this.lastRide.to === roomKey ? this.lastRide.from : null;
     }
 
     /**
@@ -180,6 +190,7 @@ class TrainTravel {
         const from = this.stationOf(fromKey), to = this.stationOf(toKey);
         if (!from || !to) return;
         this.riding = true;
+        this.lastRide = { from: fromKey, to: toKey };
         scene.roomManager.isTransitioning = true;
 
         const player = scene.player;

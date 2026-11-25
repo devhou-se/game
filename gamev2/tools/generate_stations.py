@@ -72,18 +72,34 @@ def station_interior(train_sprite):
     return b
 
 
+# The departures board (src/StationPicker.js) lists stations in THIS order - the
+# dict order is written to the registry as `order`, because save_config sorts
+# keys. `parent` marks a day trip: it is listed indented under its parent city.
+# Put a new city where it belongs along the line, and its day trips after it.
 STATIONS = {
     'TokyoStation':    {'label': 'Tokyo Station', 'town': 'Palace',   'train': 'train-orange'},
-    'InakaStation':    {'label': 'Inaka',         'town': 'Inaka',    'train': 'train-green'},
-    # Yukimura — the snowy village, on the same branch line as Inaka (green).
-    'YukimuraStation': {'label': 'Yukimura',      'town': 'Yukimura', 'train': 'train-green'},
+    # Tokyo's day trips, both up the branch line (green).
+    'InakaStation':    {'label': 'Inaka',         'town': 'Inaka',    'train': 'train-green',
+                        'parent': 'TokyoStation'},
+    # Yukimura — the snowy village, on the same branch line as Inaka.
+    'YukimuraStation': {'label': 'Yukimura',      'town': 'Yukimura', 'train': 'train-green',
+                        'parent': 'TokyoStation'},
     # Osaka — the second city, a main-line stop like Tokyo (orange).
     'OsakaStation':    {'label': 'Osaka',         'town': 'Osaka',    'train': 'train-orange'},
     # Hokkaido (issue #43): Sapporo is a main-line city stop (orange), Asahikawa
     # the day trip up the branch line from it (green).
     'SapporoStation':   {'label': 'Sapporo',   'town': 'Sapporo',   'train': 'train-orange'},
-    'AsahikawaStation': {'label': 'Asahikawa', 'town': 'Asahikawa', 'train': 'train-green'},
+    'AsahikawaStation': {'label': 'Asahikawa', 'town': 'Asahikawa', 'train': 'train-green',
+                         'parent': 'SapporoStation'},
 }
+assert all(st.get('parent', 'TokyoStation') in STATIONS for st in STATIONS.values()), 'unknown parent station'
+
+
+def station_name(st):
+    """The room's display name (the HUD shows it): 'Sapporo Station'."""
+    return st['label'] if st['label'].endswith('Station') else f"{st['label']} Station"
+
+
 TOWN_DOORS = {          # townRoom: (hidden door cell into the station, exit cell outside)
     'TokyoStation':    {'door': [27, 9], 'exit': [27, 10]},
     'InakaStation':    {'door': [29, 9], 'exit': [29, 10]},
@@ -97,7 +113,7 @@ for key, st in STATIONS.items():
     b = station_interior(st['train'])
     exit_cell = TOWN_DOORS[key]['exit']
     prev = cfg['rooms'].get(key, {})
-    cfg['rooms'][key] = b.room(key, npcs=prev.get('npcs', []), transporters=[
+    cfg['rooms'][key] = b.room(station_name(st), npcs=prev.get('npcs', []), transporters=[
         rg.transporter(mx, my, st['town'], exit_cell[0], exit_cell[1], hidden=True)
         for (mx, my) in DOOR_MATS
     ])
@@ -105,9 +121,11 @@ for key, st in STATIONS.items():
 # registry the game reads (StationPicker + TrainTravel)
 cfg['stations'] = {
     key: {'label': st['label'], 'town': st['town'], 'train': st['train'],
+          'order': order,                  # position on the departures board
+          **({'parent': st['parent']} if st.get('parent') else {}),
           'board': BOARD, 'arrive': ARRIVE,
           'trainCell': [7, 4]}             # train's left edge; feet on the platform edge row
-    for key, st in STATIONS.items()
+    for order, (key, st) in enumerate(STATIONS.items())
 }
 
 # ---- Palace: carve the facade door, remove the old direct portals -------------

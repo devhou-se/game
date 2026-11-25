@@ -67,6 +67,13 @@ def register_metadata():
         sm[k] = {'anchorX': round(32 / w, 4), 'anchorY': round(32 / h, 4), 'frameCount': 1}
 
 
+def store_name(host, ordinal, count):
+    """The room's display name (the HUD shows it, never the room key):
+    '7-Eleven · Sapporo', numbered only where a host has several stores."""
+    where = cfg['rooms'][host].get('name', host)
+    return f'7-Eleven · {where}' + (f' {ordinal}' if count > 1 else '')
+
+
 def find_stores():
     """All 7-Eleven doors, per host, in stable (y, x) order. A store whose door
     already has a transporter (the original Machi Konbini) is 'wired'."""
@@ -85,6 +92,7 @@ def find_stores():
                 'host': host, 'ordinal': n, 'door': door,
                 'front': (door[0], door[1] + 1),
                 'key': f'Konbini{host}{n}',
+                'name': store_name(host, n, len(cells)),
             })
     return stores
 
@@ -179,7 +187,7 @@ def build_interior(store):
         b.paver(x, y0 + bh - 2, i)
 
     fx, fy = store['front']
-    room = b.room(store['key'], transporters=[
+    room = b.room(store['name'], transporters=[
         rg.transporter(gapx[0], y0 + bh - 2, store['host'], fx, fy, hidden=True),
         rg.transporter(gapx[1], y0 + bh - 2, store['host'], fx, fy, hidden=True),
     ])

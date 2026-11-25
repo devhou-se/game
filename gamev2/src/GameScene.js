@@ -395,7 +395,7 @@ class GameScene extends Phaser.Scene {
         // Game info text; the date segment is the LIVE game date (?date=YYYY-MM-DD,
         // else today or its trip day) and clicking it opens a date picker — NPC states
         // re-resolve to the picked date on reload.
-        const hudText = `${this.config.game.title} | ${this.roomManager.currentRoom} | `;
+        const hudText = `${this.config.game.title} | ${this.hudRoomName()} | `;
 
         this.hudText = this.add.text(
             UI.HUD_PADDING,
@@ -467,10 +467,21 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
+     * What the HUD calls the room the player is in: its display `name` from
+     * config ("7-Eleven · Sapporo", "Sapporo Station"), never the bare room
+     * key unless the room has no name.
+     */
+    hudRoomName() {
+        const key = this.roomManager.currentRoom;
+        const room = this.config.rooms[key];
+        return (room && room.name) || key;
+    }
+
+    /**
      * Update HUD text
      */
     updateHUD() {
-        const hudText = `${this.config.game.title} | ${this.roomManager.currentRoom} | `;
+        const hudText = `${this.config.game.title} | ${this.hudRoomName()} | `;
         this.hudText.setText(hudText);
         this.hudDateText.setText(formatGameDate(gameDate()));
         this.hudDateText.setX(UI.HUD_PADDING + this.hudText.width);

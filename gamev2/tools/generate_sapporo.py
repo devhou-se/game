@@ -38,8 +38,7 @@ Run from gamev2/:
     python3 tools/fix_fences.py Sapporo           # MANDATORY (b.fence)
     python3 tools/seal_tracks.py Sapporo          # MANDATORY (rail line)
     node tools/play.js lint Sapporo            (and SapporoStation, KonbiniSapporo1)
-    python3 tools/config_to_tiled.py Sapporo       (then SapporoStation, KonbiniSapporo1 -
-                                                   one room per call)
+    python3 tools/config_to_tiled.py Sapporo SapporoStation KonbiniSapporo1
 """
 import roomgen as rg
 from roomgen import rect

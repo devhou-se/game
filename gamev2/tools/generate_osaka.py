@@ -38,7 +38,7 @@ Run from gamev2/:
     python3 tools/generate_stations.py            # builds OsakaStation + registry
     python3 tools/fix_fences.py Osaka             # MANDATORY (b.fence)
     python3 tools/seal_tracks.py Osaka            # MANDATORY (rail line)
-    python3 tools/config_to_tiled.py Osaka         (and OsakaStation)
+    python3 tools/config_to_tiled.py Osaka OsakaStation
     node tools/play.js lint Osaka OsakaStation
     python3 tools/make_worldmap.py
 """

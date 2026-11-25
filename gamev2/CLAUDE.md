@@ -32,8 +32,8 @@ confirm the world is still playable after a map change. `node tools/play.js help
 (`.claude/skills/play-game/SKILL.md`) is the full guide, including what the tool cannot do.
 
 `node tools/test_game.js` runs the game's own decision code in Node, with no browser: which train a
-station parks, the dialogue hint wording, touch buttons cancelling their touch, which post a dialogue
-line is captioned with, the default game date.
+station parks, the departures board's order and scrolling, room display names, the dialogue hint wording,
+touch buttons cancelling their touch, which post a dialogue line is captioned with, the default game date.
 When a fix lives in a Phaser-side class, pull the decision into a static function there and add a case.
 
 ## Studio
@@ -79,7 +79,8 @@ problem survey) is shared with `tools/play.js`, so the page and the terminal too
 
 `/editor/` edits one room of `config.json` at a time: inspect a cell, paint collision, place and edit
 transporters, set the spawn, resize the room. It saves by downloading a new `config.json`. The game loads
-rooms from `tiled/*.tmj`, so run `python3 tools/config_to_tiled.py <Room>` after replacing the file.
+rooms from `tiled/*.tmj`, so run `python3 tools/config_to_tiled.py <Room> [<Room> ...]` after replacing the
+file (any number of rooms; an unknown name is an error and nothing is written).
 
 ### Core Constants (config.json)
 
@@ -175,7 +176,12 @@ their route in the room's map data rather than in coordinates, have no collision
 
 ### HUD System
 
-Semi-transparent bar at top showing: `{game.title} | {currentRoom} | {game.date}` with clickable menu button
+Semi-transparent bar at top showing: `{game.title} | {room name} | {game.date}` with clickable menu button
+- The room segment is the room's display `name` from config, never its key (`GameScene.hudRoomName()`, the
+  one place that decides it; falls back to the key for a room with no name). Generated interiors get a
+  human name from their generator: `7-Eleven · Sapporo` (`generate_konbinis.py` `store_name()`, numbered
+  only where a host has several stores: `7-Eleven · Market 3`), `Sapporo Station` (`generate_stations.py`
+  `station_name()`). Nothing reads `room.name` as an identifier - room keys are the identifiers.
 - Title and date loaded from `config.json`
 - Uses `window.devicePixelRatio` for retina display text rendering
 - Fixed to camera with `setScrollFactor(0)`
@@ -436,6 +442,40 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   states there), and `tools/seal_tracks.py` takes room names; a track cell with a road under it (Palace's level
   crossing) is left open.
 
+### Stations and the departures board (issues #48, #104)
+
+Config `stations` is the rail registry, written by `tools/generate_stations.py` from its `STATIONS` dict:
+`label`, `town`, `train`, `board` / `arrive` / `trainCell`, plus the two fields that lay out the board:
+
+- **`order`** - position on the departures board. It is the station's position in `STATIONS` (the
+  registry itself is saved with sorted keys, so key order means nothing - that is how Asahikawa came to
+  be pre-selected everywhere).
+- **`parent`** - the station key of the city this one is a day trip from (Inaka and Yukimura ->
+  `TokyoStation`, Asahikawa -> `SapporoStation`). One level only.
+
+`src/StationPicker.js` builds the board with the static `StationPicker.board(stations, fromKey, cameFrom)`:
+cities in `order`, each followed by its day trips indented and tagged `day trip`. The station you are at
+is not a destination; it is left out unless it has day trips, in which case it stays as their grey,
+unselectable `you are here` heading. A station with no `order` sorts last by label, and a `parent` that is
+unknown, itself or itself a day trip is ignored, so bad data never hides a station. **Starting row**: the
+station you last arrived from by train (`TrainTravel.cameFrom(roomKey)`, in memory for the session - the
+way back is one press), else a day-trip station's parent city, else the first destination.
+
+At most `StationPicker.MAX_VISIBLE` (7) rows show; a longer board scrolls (the `you are here` heading is
+a row, so a city with day trips scrolls one station sooner). The selection pulls the window along
+(`StationPicker.scrollTop`, which also keeps a day trip's city on screen above it), the mouse wheel moves
+it a row, the arrows above / below the list page it on click or tap, and a press that starts on a row and
+travels more than `DRAG_SLOP` drags the list instead of picking the row (that is why a row boards on
+pointer-up, not pointer-down). A pointer scroll never leaves the selection off screen: it moves to the
+nearest row in view (`StationPicker.clampSelection`), or to the row under a resting mouse. W/S or the arrows
+wrap and skip the heading; SPACE/ENTER boards; ESC, or a click outside the panel, steps back. It is all
+drawn in the usual 1280x960 overlay space at depth 2000-2003, so `UIScale` magnifies it on phones.
+
+**Adding a station**: add it to `STATIONS` where it belongs on the board (with `parent` for a day trip)
+and to `TOWN_DOORS`, then re-run `generate_stations.py`. `node tools/test_game.js` checks the real
+registry's board. To see a long board without adding rooms, intercept `config.json` in playwright and add
+fake `stations` entries (do not ride to them).
+
 ### Hokkaido: Sapporo and Asahikawa (issue #43)
 
 Two generated towns reachable only by train (`SapporoStation`, `AsahikawaStation` in
@@ -463,7 +503,8 @@ the blog pipeline places people there.
   clock tower was rejected (16px art - pixels twice the size - and more saturated). `--preview out.png`
   writes a contact sheet. It also derives the `dirt-snow-autotile` family (9 roles) from
   `dirt-outside-autotile` by swapping the green grass fringe for a snow bank - use it for dirt paths on
-  snow ground (Asahikawa does; Yukimura still uses the grass-fringed original).
+  snow ground (Asahikawa and Yukimura's shrine path do, #105). The rail-corridor gravel in the snow towns
+  still has `gravel-autotile`'s green edge - there is no snow variant of that family yet.
 - **Flat sprites over water**: `Over Floor` and `Water` share one fixed depth, so a multi-cell sprite on
   `Over Floor` is drawn UNDER water tiles. The bridge therefore sits on `Non-Collidables` with
   `spriteMetadata.depthBias: -200` (written by `generate_hokkaido.py`'s `FLAT` table): above every ground
@@ -475,8 +516,8 @@ the blog pipeline places people there.
 - **Build order**: `generate_hokkaido.py`, `make_prefabs.py`, `generate_sapporo.py`,
   `generate_asahikawa.py`, `generate_konbinis.py Sapporo`, `generate_stations.py`,
   `fix_fences.py Sapporo Asahikawa`, `seal_tracks.py Sapporo Asahikawa`, then `node tools/play.js lint <Room>` and
-  `config_to_tiled.py` once per room (it takes ONE room name): Sapporo, Asahikawa, SapporoStation,
-  AsahikawaStation, KonbiniSapporo1.
+  `config_to_tiled.py Sapporo Asahikawa SapporoStation AsahikawaStation KonbiniSapporo1` (it takes any
+  number of rooms and fails, writing nothing, on a name that is not a room - #102).
 - Blog NPCs can be sent to `the Sapporo Clock Tower`, `the Sapporo TV Tower`, `the bridge over the frozen
   river`, `ramen alley` and `the frozen pond` (`LANDMARKS` in `tools/blog_to_npc.py`), besides the generic
   shrine / torii / 7-Eleven / vending spots.
