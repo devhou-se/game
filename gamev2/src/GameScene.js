@@ -721,8 +721,9 @@ class GameScene extends Phaser.Scene {
         overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, W, H), Phaser.Geom.Rectangle.Contains);
         objs.push(overlay);
 
-        // fit the overworld into the viewport (never upscale past 1:1)
-        const s = Math.min((W - 120) / meta.width, (H - 170) / meta.height, 1);
+        // fit the overworld into the viewport (never upscale past 1:1); a
+        // portrait phone's cropped view is the narrow one, so it keeps less margin
+        const s = UIScale.mapFit(W, H, meta.width, meta.height, W < this.scale.width);
         const dw = meta.width * s, dh = meta.height * s;
         const px = (W - dw) / 2, py = (H - dh) / 2 + 14;
 

@@ -376,6 +376,16 @@ class UIScale {
         this.scene.events.emit('hudscalechange', zoom);
     }
 
+    /**
+     * The scale the Map overlay draws the overworld image at: the largest
+     * that leaves room for the title above and the footer below, never past
+     * 1:1. The side margin is what limits it where the view is cropped (a
+     * portrait phone), so there it is only enough to clear the frame.
+     */
+    static mapFit(W, H, mapW, mapH, cropped) {
+        return Math.min((W - (cropped ? UIScale.MAP_MARGIN_CROPPED : UIScale.MAP_MARGIN)) / mapW, (H - 170) / mapH, 1);
+    }
+
     /** The part of the canvas the touch controls cover (canvas px in from each edge). */
     static insets() {
         const l = typeof Viewport !== 'undefined' && Viewport.current;
@@ -571,6 +581,9 @@ UIScale.MIN_HINT = 10;
 UIScale.MAX_HINT_GROWTH = 1.6;
 /** Fewest cells across the view the world zoom will leave. */
 UIScale.MIN_CELLS = 8;
+/** Canvas px the Map overlay keeps clear at the sides of the overworld image, both sides together: full view, cropped view. */
+UIScale.MAP_MARGIN = 120;
+UIScale.MAP_MARGIN_CROPPED = 24;
 UIScale.NO_INSETS = { left: 0, right: 0, bottom: 0 };
 UIScale.NO_CROP = { left: 0, right: 0 };
 UIScale.IDENTITY = { zoom: 1, offsetX: 0, offsetY: 0, originX: 0, originY: 0 };

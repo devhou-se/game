@@ -2411,6 +2411,25 @@ const tests = {
         assert.ok(/if \(viewH < this\.scale\.height\) \{\s*const held = RoomManager\.heldRows\(this\.roomManager\.contentRows\(roomKey\), viewH, this\.hudCover\(\)\)/.test(src));
         assert.ok(/this\.hudBarCover = this\.hudBarHeight \* zoom;\s*this\.applyRoomBounds\(/.test(src));
     },
+
+    'the Map overlay draws the towns larger on a portrait phone, and as before elsewhere (#197)'() {
+        const fit = game('UIScale.mapFit');
+        const map = JSON.parse(fs.readFileSync(path.join(GV2, 'assets', 'map', 'world-map.json'), 'utf8'));
+        const before = (W, H) => Math.min((W - 120) / map.width, (H - 170) / map.height, 1);
+        // the full canvas (desktop, landscape phone) is limited by its height: unchanged
+        assert.strictEqual(fit(1280, 960, map.width, map.height, false), before(1280, 960));
+        // a cropped portrait view is limited by its width: only the frame's margin is kept
+        for (const W of [game('Viewport.MIN_VISIBLE'), 612]) {
+            const s = fit(W, 960, map.width, map.height, true);
+            assert.strictEqual(s, (W - 24) / map.width);
+            assert.ok(s >= before(W, 960) * 1.19, `rooms at least 19% larger at ${W}`);
+            assert.ok(map.width * s <= W - 24 && map.height * s <= 960 - 170);
+        }
+        // never past 1:1, whatever the image
+        assert.strictEqual(fit(1280, 960, 400, 300, false), 1);
+        assert.ok(/const s = UIScale\.mapFit\(W, H, meta\.width, meta\.height, W < this\.scale\.width\);/.test(
+            fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8')));
+    },
 };
 
 let failed = 0;
