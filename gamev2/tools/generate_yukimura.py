@@ -96,6 +96,8 @@ for y in (8, 12, 16, 20):
     b.stamp('shrub-large-snow', 0, y); b.stamp('shrub-large-snow', W - 2, y)
 for y in (6, 7, 11, 15, 19, 23, 24, 25, 26):
     for x in (0, 1, W - 2, W - 1):
+        if y == 6 and x in (1, W - 2):          # the south rail fence ends here
+            continue
         b.stamp('shrub-small-snow', x, y)
 # south treeline + fence, with a gap where the approach fades into the forest
 for x in range(3, W - 3, 4):
@@ -105,7 +107,7 @@ for x in range(3, W - 3, 4):
 for i, x in enumerate(range(3, W - 3)):
     if 22 <= x <= 25:            # the approach peters out into the trees here
         continue
-    b.fence(x, 26, i)
+    b.fence(x, 26, i, replace=True)                   # the fence runs through the treeline's trunks
 for x in (2, W - 3, 21, 26):
     b.stamp('shrub-small-snow', x, 26 if x in (2, W - 3) else 27)
 

@@ -59,9 +59,17 @@ class Builder:
         self.W, self.H = w, h
         self.L = {n: {} for n in LAYER_NAMES}
 
-    def put(self, layer, x, y, key):
+    def put(self, layer, x, y, key, replace=False):
+        """One tile per cell per layer. A big sprite lives only on its top-left
+        cell, so putting a second prop there would drop the first and leave its
+        colliders behind: off the Floor that is an error unless replace=True."""
         assert 0 <= x < self.W and 0 <= y < self.H, (layer, x, y, key)
-        self.L[layer][f'{x},{y}'] = pidx(key)
+        cell, new = f'{x},{y}', pidx(key)
+        old = self.L[layer].get(cell)
+        if old is not None and old != new and layer != 'Floor' and not replace:
+            raise ValueError(f'{layer} {cell}: {key} would replace {_pal[old]} '
+                             f'(move one of them, or pass replace=True)')
+        self.L[layer][cell] = new
 
     def solid(self, x, y):
         self.put('Colliders', x, y, 'gk_blank')
@@ -119,8 +127,8 @@ class Builder:
     def paver(self, x, y, v=0):
         self.put('Over Floor', x, y, ['pavers_1_0','pavers_2_0','pavers_1_2','pavers_2_1','pavers_0_2','pavers_2_2'][v % 6])
 
-    def fence(self, x, y, v=0):
-        self.put('Collidables', x, y, ['fence-barriers_2_0','fence-barriers_0_2','fence-barriers_1_2','fence-barriers_0_3'][v % 4])
+    def fence(self, x, y, v=0, replace=False):
+        self.put('Collidables', x, y, ['fence-barriers_2_0','fence-barriers_0_2','fence-barriers_1_2','fence-barriers_0_3'][v % 4], replace)
         self.solid(x, y)
 
     def stairs(self, x, y):
