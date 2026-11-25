@@ -96,6 +96,34 @@ const showdownWith = (money, player, bonus) => {
     return { g, shop };
 };
 
+// The world as tools/play.js and /studio/ model it (tools/world-model.js), in a context of its own:
+// config.json + the .tmj maps, stitched like the game unless `stitch` is false. `edit(config)` may
+// change the decoded config first.
+const worldWith = (stitch, edit) => {
+    const w = vm.createContext({ console, URLSearchParams, location: { search: '' } });
+    for (const f of ['utils/ConfigCodec.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'systems/TiledAdapter.js',
+        'systems/RoomManager.js', 'systems/CollisionSystem.js', 'systems/CityStitcher.js', 'systems/Occlusion.js', 'Shop.js', 'TrainTravel.js',
+        '../tools/world-model.js']) {
+        vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), w, { filename: f });
+    }
+    const run = (expr) => vm.runInContext(expr, w);
+    const config = run('decodeConfig')(JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')));
+    run('WorldModel').applyTiled(config, (key) => {
+        const file = path.join(GV2, 'tiled', key.toLowerCase() + '.tmj');
+        return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+    });
+    if (edit) edit(config);
+    const exists = (key) => fs.existsSync(path.join(GV2, 'assets', 'sprites', key + '.png'));
+    const sizeOf = (key) => {
+        const b = Buffer.alloc(24), fd = fs.openSync(path.join(GV2, 'assets', 'sprites', key + '.png'), 'r');
+        fs.readSync(fd, b, 0, 24, 0);
+        fs.closeSync(fd);
+        return [Math.max(1, Math.round(b.readUInt32BE(16) / 64)), Math.max(1, Math.round(b.readUInt32BE(20) / 64))];
+    };
+    const world = new (run('WorldModel'))(config, { exists, sizeOf }, { date: '2025-11-11' }, { stitch });
+    return { world, run, config };
+};
+
 const tests = {
     'a station parks its own train, and keeps the one you rode in on'() {
         const liveryFor = game('TrainTravel.liveryFor');
@@ -1074,6 +1102,274 @@ const tests = {
         assert.strictEqual(bad[0].room, 'South');
         // which is what the game would do with it: fall back to the trip's home, in the other room
         assert.strictEqual(game('Trips').homeFor(config({ from: '2031-01-06', room: 'South' }), '2031-01-07').room, 'North');
+    },
+
+    'play.js and the studio model the stitched Tokyo the game plays'() {
+        const { world } = worldWith(true);
+        const rm = world.roomManager;
+        assert.strictEqual(rm.currentRoom, 'TokyoCity');
+        assert.deepStrictEqual([world.here().room, world.here().x, world.here().y, world.here().city], ['Tokyo', 29, 38, 'TokyoCity']);
+        assert.deepStrictEqual(world.state().room, 'Tokyo', 'sessions are saved in district cells');
+        assert.strictEqual(world.runtimeRooms().filter(k => /^(Tokyo|Market|Palace|Park|Machi)(City)?$/.test(k)).join(), 'TokyoCity');
+
+        // colliders block (the model once walked through them): the vending machine two cells west
+        assert.ok(world.step('w').moved);
+        const bump = world.step('w');
+        assert.strictEqual(bump.moved, false);
+        assert.strictEqual(bump.interaction.kind, 'vending');
+
+        // one walk from Tokyo into Market: no teleport, the district changes underfoot
+        const to = rm.resolve('Market', 5, 24);
+        const steps = world.path(to.x, to.y);
+        assert.ok(steps && steps.length > 20);
+        const crossings = [];
+        for (const dir of steps) {
+            const r = world.step(dir);
+            assert.ok(r.moved && !r.transported, 'walked, never teleported');
+            if (r.crossed) crossings.push(r.crossed.from + '>' + r.crossed.to);
+        }
+        assert.strictEqual(crossings.join(), 'Tokyo>Market');
+        assert.deepStrictEqual([world.here().room, world.here().x, world.here().y], ['Market', 5, 24]);
+        // the woodland between the districts is scenery
+        assert.strictEqual(world.canStep(to.x, to.y, to.x, -1), false);
+        assert.strictEqual(rm.checkBoundary(10, 80), false);
+
+        // check + lint run on the stitched room, and still on each district
+        const { problems, reach } = world.survey(null, { npcs: false });
+        assert.strictEqual(problems.length, 0, JSON.stringify(problems));
+        const byRoom = world.reachByRoom(reach);
+        for (const k of ['Tokyo', 'Market', 'Palace', 'Park', 'Machi']) {
+            assert.ok(byRoom[k].length > 300, k);
+            assert.strictEqual(JSON.stringify(world.lint(k).errors), '{}', k);
+        }
+        const city = world.lint('TokyoCity');
+        assert.strictEqual(JSON.stringify(city.errors), '{}');
+        assert.deepStrictEqual([city.width, city.height], [rm.cities.TokyoCity.width, rm.cities.TokyoCity.height]);
+        assert.ok(world.drawOrder('TokyoCity').some(t => /^tree-3-top/.test(t.key)), 'the woods are part of the render');
+        assert.ok(world.npcsIn('TokyoCity').every(n => n.homeRoom && rm.checkBoundary(n.gridX, n.gridY, 'TokyoCity')));
+        assert.strictEqual(world.npcsIn('TokyoCity').length, ['Tokyo', 'Market', 'Palace', 'Park', 'Machi'].reduce((n, k) => n + world.npcsIn(k).length, 0));
+
+        // --stitch=0: the five rooms, joined by seam teleports, as ?stitch=0 plays them
+        const legacy = worldWith(false).world;
+        assert.strictEqual(legacy.roomManager.currentRoom, 'Tokyo');
+        assert.strictEqual(legacy.here().city, null);
+        assert.strictEqual(Object.keys(legacy.roomManager.cities).length, 0);
+        legacy.enter('Tokyo', 57, 22);
+        assert.strictEqual(JSON.stringify(legacy.step('e').transported), '{"from":"Tokyo","to":"Market"}');
+        assert.strictEqual(legacy.survey(null, { npcs: false }).problems.length, 0);
+        // both agree on what can be reached, district by district
+        const legacyReach = legacy.reachByRoom(legacy.survey(null, { npcs: false }).reach);
+        for (const k of Object.keys(byRoom)) assert.strictEqual(Array.from(legacyReach[k]).sort().join(' '), Array.from(byRoom[k]).sort().join(' '), k);
+    },
+
+    'a cell two districts share is walkable by the later district\'s map'() {
+        // the same case tools/test_blog_to_npc.py makes for the python port: Palace is listed
+        // after Market, so a collider on Palace's copy of their shared row closes that cell
+        const base = worldWith(true).world;
+        const palace = base.roomManager.memberOf.Palace.member, market = base.roomManager.memberOf.Market.member;
+        const open = new Set(base.reachByRoom(base.survey(null, { npcs: false }).reach).Market);
+        const shared = base.reachByRoom(base.survey(null, { npcs: false }).reach).Palace.map(c => c.split(',').map(Number))
+            .map(([x, y]) => [x, y, x + palace.x - market.x, y + palace.y - market.y])
+            .find(([, , mx, my]) => open.has(mx + ',' + my));
+        assert.ok(shared, 'Market and Palace share a walkable cell');
+        const cut = worldWith(true, (config) => {
+            config.rooms.Palace.layers.find(l => l.collision).tiles[shared[0] + ',' + shared[1]] = 'gk_blank';
+        }).world;
+        const after = cut.reachByRoom(cut.survey(null, { npcs: false }).reach);
+        assert.ok(!after.Market.includes(shared[2] + ',' + shared[3]));
+        assert.ok(!after.Palace.includes(shared[0] + ',' + shared[1]));
+        // ...while Market's own collider there changes nothing: its tiles in that cell are left out
+        const kept = worldWith(true, (config) => {
+            config.rooms.Market.layers.find(l => l.collision).tiles[shared[2] + ',' + shared[3]] = 'gk_blank';
+        }).world;
+        assert.ok(kept.reachByRoom(kept.survey(null, { npcs: false }).reach).Market.includes(shared[2] + ',' + shared[3]));
+    },
+
+    'a bump looks its cell up in an index built once per room load'() {
+        const { world, run } = worldWith(true);
+        const Interactions = run('Interactions'), Shop = run('Shop');
+        const opts = { sizeOf: (key) => world.cells(key), venues: Shop.VENUES };
+        let cells = 0, hits = 0;
+        for (const key of ['TokyoCity', 'KonbiniMarket1', 'Izakaya', 'Osaka']) {
+            const room = world.roomManager.rooms[key], roomConfig = world.config.rooms[key] || {};
+            const index = Interactions.index(room, roomConfig, opts);
+            // find() scans every tile of the room per call: use it as written for the small rooms and
+            // around every interaction; elsewhere compare against its definition (the first of all()
+            // covering the cell)
+            const all = Interactions.all(room, roomConfig, opts);
+            const small = room.worldWidth * room.worldHeight < 64 * 64 * 800;
+            for (let y = 0; y < room.worldHeight / 64; y++) {
+                for (let x = 0; x < room.worldWidth / 64; x++) {
+                    const near = small || all.some(i => i.group !== 'pond' && x >= i.x - 1 && x <= i.x + i.w && y >= i.y - 1 && y <= i.y + i.h);
+                    for (const group of ['shop', 'pond', 'clock', 'drinking-game']) {
+                        const scan = near ? Interactions.find(room, roomConfig, x, y, Object.assign({ group }, opts))
+                            : all.find(i => i.group === group && x >= i.x && x < i.x + i.w && y >= i.y && y < i.y + i.h) || null;
+                        assert.strictEqual(JSON.stringify(Interactions.lookup(index, x, y, group)), JSON.stringify(scan), `${key} ${x},${y} ${group}`);
+                        if (scan) hits++;
+                    }
+                    assert.strictEqual(JSON.stringify(Interactions.lookup(index, x, y)),
+                        JSON.stringify(all.find(i => x >= i.x && x < i.x + i.w && y >= i.y && y < i.y + i.h) || null));
+                    cells++;
+                }
+            }
+        }
+        assert.ok(cells > 15000 && hits > 100, `${hits} interactions over ${cells} cells`);
+
+        // RoomManager.interactionAt: built on the first bump, kept until the room's tiles are reloaded
+        const rm = world.roomManager;
+        rm.scene.textures = { exists: (k) => world.exists(k), get: (k) => ({ getSourceImage: () => ({ width: world.cells(k)[0] * 64, height: world.cells(k)[1] * 64 }) }) };
+        let built = 0;
+        const index = Interactions.index;
+        Interactions.index = function () { built++; return index.apply(this, arguments); };
+        const vending = rm.resolve('Tokyo', 27, 38);
+        assert.strictEqual(rm.interactionAt(vending.x, vending.y, 'shop').kind, 'vending');
+        assert.strictEqual(rm.interactionAt(vending.x, vending.y, 'clock'), null);
+        assert.strictEqual(rm.interactionAt(vending.x + 1, vending.y, 'shop'), null);
+        for (let i = 0; i < 50; i++) rm.interactionAt(i, i);
+        assert.strictEqual(built, 1);
+        rm.clearFloorTiles();
+        rm.interactionAt(vending.x, vending.y, 'shop');
+        assert.strictEqual(built, 2, 'a room change throws the index away');
+        Interactions.index = index;
+    },
+
+    'collider markers feed the blocked set and never become a sprite'() {
+        const { world, run } = worldWith(true);
+        const RoomManager = run('RoomManager');
+        const made = [];
+        const sprite = (key) => {
+            const s = { key, alpha: 1, data: {} };
+            for (const f of ['setOrigin', 'setScale', 'setDepth', 'setTexture', 'setPosition', 'addToDisplayList', 'removeFromDisplayList', 'destroy']) s[f] = () => s;
+            s.setAlpha = (a) => { s.alpha = a; return s; };
+            s.setData = (k, v) => { s.data[k] = v; return s; };
+            made.push(s);
+            return s;
+        };
+        const scene = {
+            GRID_SIZE: 64, config: world.config,
+            textures: { exists: (k) => world.exists(k), getFrame: (k) => ({ realWidth: world.cells(k)[0] * 64, realHeight: world.cells(k)[1] * 64 }) },
+            getSpriteConfig: () => ({ anchorX: 0.5, anchorY: 0.5, scale: 1 }),
+            add: { sprite: (x, y, key) => sprite(key) },
+            cache: { json: { get: () => null } },
+        };
+        for (const key of ['Tokyo', 'KonbiniMarket1', 'Osaka']) {
+            const rm = new RoomManager(scene);
+            rm.rooms = world.roomManager.rooms;
+            rm.currentRoom = key;
+            made.length = 0;
+            rm.loadFloorTiles();
+            const colliders = new Set();
+            for (const layer of rm.rooms[key].layers) if (layer.collision) for (const xy in layer.tiles) colliders.add(xy);
+            assert.ok(colliders.size > 20, key);
+            assert.strictEqual([...rm.blockedCells].sort().join(' '), [...colliders].sort().join(' '), key);
+            assert.ok(rm.tileRecords.length > 100 && rm.tileRecords.every(r => !r.layer.collision), key);
+            assert.ok(made.every(s => s.key !== RoomManager.COLLIDER), 'no sprite for a collider marker');
+            assert.strictEqual(made.length, rm.tileRecords.length);
+            assert.ok(rm.chunks && rm.chunks.size > 0, 'every room is bucketed for Occlusion');
+        }
+        // art painted on a collision layer still blocks AND is drawn
+        const rm = new RoomManager(scene);
+        const fence = Object.values(world.roomManager.rooms.Tokyo.layers.find(l => l.name === 'Collidables').tiles)[0];
+        rm.loadLayer({ name: 'Colliders', z: 9, collision: true, tiles: { '1,1': RoomManager.COLLIDER, '2,2': fence } });
+        assert.strictEqual([...rm.blockedCells].sort().join(' '), '1,1 2,2');
+        assert.strictEqual(rm.tileRecords.map(r => r.key).join(), fence);
+    },
+
+    'scenery fades while it hides someone, and their name label with it'() {
+        const { run } = worldWith(true);
+        const Occlusion = run('Occlusion');
+        const art = (key, left, top, width, height, depth) => {
+            const rec = { key, left, top, width, height, depth, sprite: { alpha: 1, setAlpha(a) { this.alpha = a; } } };
+            return rec;
+        };
+        const label = () => ({ alpha: 1, setAlpha(a) { this.alpha = a; } });
+        const roof = art('roof', 0, 0, 256, 192, 60), ground = art('path', 0, 0, 256, 256, -400);
+        const fence = art('fence', 64, 96, 64, 64, 60);        // covers the lower half of someone at (96, 96)
+        const torii = art('torii', 256, 0, 192, 192, 60);      // drawn over, but open in the middle
+        const sign = art('ad', 448, 0, 128, 128, 60);
+        const player = { sprite: { x: 96, y: 96, depth: 25, visible: true } };
+        const npc = { sprite: { x: 1000, y: 96, depth: 25, visible: true }, nameLabel: label() };
+        const far = { sprite: { x: 9000, y: 96, depth: 25, visible: true }, nameLabel: label() };
+        const records = [roof, ground, fence, torii];
+        const scene = {
+            GRID_SIZE: 64, player, playerNameLabel: label(), game: { loop: { delta: 16 } },
+            cameras: { main: { worldView: { x: 0, y: 0, right: 1280, bottom: 960 } } },
+            roomManager: { tileRecords: records, signArt: [sign], currentRoom: 'R', rooms: { R: { npcs: [npc, far] } },
+                artNear: () => records },
+        };
+        const oc = new Occlusion(scene);
+        // every texture is solid, except the torii: only its outer thirds are
+        oc.mask = (key) => key === 'torii' ? { w: 3, h: 1, bits: [1, 0, 1] } : { w: 1, h: 1, bits: [1] };
+        const frames = (n) => { for (let i = 0; i < n; i++) oc.update(); };
+
+        // behind the roof: it fades to ALPHA and the label to LABEL_ALPHA; the fence (which only
+        // covers what the roof already does... and the ground under everyone) are judged apart
+        const hid = (who) => oc.look(who).hits.map(r => r.key).sort().join();
+        assert.strictEqual(hid(player), 'fence,roof');
+        frames(30);
+        assert.strictEqual(roof.fade, Occlusion.ALPHA);
+        assert.strictEqual(roof.sprite.alpha, Occlusion.ALPHA);
+        assert.strictEqual(scene.playerNameLabel.alpha, Occlusion.LABEL_ALPHA);
+        assert.strictEqual(ground.fade, undefined, 'the ground is drawn under him');
+        assert.strictEqual(npc.nameLabel.alpha, 1);
+        // a streamed sprite that is re-made keeps the fade: it lives on the record
+        roof.sprite = { alpha: 1, setAlpha(a) { this.alpha = a; } };
+        frames(1);
+        assert.strictEqual(roof.sprite.alpha, Occlusion.ALPHA);
+
+        // half hidden (legs behind a fence, roof gone): nothing fades
+        records.splice(records.indexOf(roof), 1);
+        player.sprite.x = 97;
+        assert.strictEqual(hid(player), '');
+        frames(30);
+        assert.strictEqual(fence.fade, undefined);
+        assert.strictEqual(fence.sprite.alpha, 1);
+        assert.strictEqual(scene.playerNameLabel.alpha, 1);
+        assert.strictEqual(oc.fading.size, 0);
+
+        // in the opening of a torii: its rectangle covers him, its pixels do not
+        player.sprite.x = 352;
+        assert.strictEqual(hid(player), '');
+        player.sprite.x = 290;                     // ...behind a leg
+        assert.strictEqual(hid(player), 'torii');
+        // in front of it (drawn over it): never
+        player.sprite.depth = 70;
+        assert.strictEqual(hid(player), '');
+        player.sprite.depth = 25;
+
+        // an NPC behind a wall sign fades the sign and its own label, not the player's
+        npc.sprite.x = 500; npc.sprite.y = 60;
+        player.sprite.x = 800;
+        frames(30);
+        assert.strictEqual(sign.sprite.alpha, Occlusion.ALPHA);
+        assert.strictEqual(npc.nameLabel.alpha, Occlusion.LABEL_ALPHA);
+        assert.strictEqual(scene.playerNameLabel.alpha, 1);
+        assert.strictEqual(torii.sprite.alpha, 1, 'restored once he left');
+        // an NPC off camera is not looked at
+        far.sprite.x = 500; far.sprite.y = 60;
+        npc.sprite.x = 1000;
+        scene.cameras.main.worldView = { x: 2000, y: 0, right: 3280, bottom: 960 };
+        player.sprite.x = 2100;
+        frames(30);
+        assert.strictEqual(sign.sprite.alpha, 1);
+        // ...and a label that was part-faded when its NPC left the camera is not left that way
+        scene.cameras.main.worldView = { x: 0, y: 0, right: 1280, bottom: 960 };
+        frames(3);
+        assert.ok(far.nameLabel.alpha < 1 && far.nameLabel.alpha > Occlusion.LABEL_ALPHA, 'mid-fade');
+        scene.cameras.main.worldView = { x: 2000, y: 0, right: 3280, bottom: 960 };
+        frames(1);
+        assert.strictEqual(far.nameLabel.alpha, 1);
+        assert.strictEqual(oc.dimmed.size, 0);
+
+        // another room: its records are new, nothing is carried over
+        scene.cameras.main.worldView = { x: 0, y: 0, right: 1280, bottom: 960 };
+        frames(30);
+        assert.ok(oc.fading.has(sign));
+        scene.roomManager.tileRecords = [];
+        scene.roomManager.signArt = [];
+        scene.roomManager.artNear = () => [];
+        frames(1);
+        assert.strictEqual(oc.fading.size, 0);
     },
 
     'outside the trip the game opens on a trip day, and cycles through them'() {

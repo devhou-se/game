@@ -31,10 +31,14 @@ const Interactions = {
                 found.push({ kind: 'drinking-game', group: 'drinking-game', x, y, w: 1, h: 1 });
             }
         }
+        // a room uses a few hundred sprite keys for its thousands of tiles:
+        // each key is matched against the rules once
+        const hits = new Map();
         for (const layer of (room.layers || [])) {
             for (const xy in (layer.tiles || {})) {
                 const key = layer.tiles[xy];
-                const hit = Interactions.match(key, roomConfig, venues);
+                let hit = hits.get(key);
+                if (hit === undefined) hits.set(key, hit = Interactions.match(key, roomConfig, venues));
                 if (!hit || (group && hit.group !== group)) continue;
                 const [x, y] = xy.split(',').map(Number);
                 const [w, h] = hit.footprint && sizeOf ? sizeOf(key) : [1, 1];
@@ -47,6 +51,32 @@ const Interactions = {
     find(room, roomConfig, gridX, gridY, opts) {
         return Interactions.all(room, roomConfig, opts).find(i =>
             gridX >= i.x && gridX < i.x + i.w && gridY >= i.y && gridY < i.y + i.h) || null;
+    },
+
+    /**
+     * Every interactive cell of a room: Map "x,y" -> the interactions covering
+     * that cell (footprints expanded), in all() order. Built once per room
+     * load (RoomManager.interactionAt) so a bump is one lookup, not a scan of
+     * every tile in the room (issue #145).
+     */
+    index(room, roomConfig, opts) {
+        const cells = new Map();
+        for (const i of Interactions.all(room, roomConfig, opts)) {
+            for (let y = i.y; y < i.y + i.h; y++) {
+                for (let x = i.x; x < i.x + i.w; x++) {
+                    const list = cells.get(x + ',' + y);
+                    if (list) list.push(i); else cells.set(x + ',' + y, [i]);
+                }
+            }
+        }
+        return cells;
+    },
+
+    /** find() against an index(): the first interaction on the cell (of `group`, when given), or null. */
+    lookup(index, gridX, gridY, group) {
+        const list = index.get(gridX + ',' + gridY);
+        if (!list) return null;
+        return (group ? list.find(i => i.group === group) : list[0]) || null;
     },
 };
 

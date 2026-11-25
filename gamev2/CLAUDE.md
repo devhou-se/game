@@ -30,6 +30,10 @@ code from `src/` into Node, with no Phaser and no dependencies. Walk, talk to NP
 ride trains, time travel, inspect cells, `lint` a room's map, `render` it to a PNG, and run `check` to
 confirm the world is still playable after a map change. `node tools/play.js help` lists the commands; the `play-game` skill
 (`.claude/skills/play-game/SKILL.md`) is the full guide, including what the tool cannot do.
+It plays the world the game plays: the Tokyo districts are stitched into one room by the game's own
+`CityStitcher` (see "Stitched cities" below), so `goto Market 5 24` from Tokyo is one walk with no teleport,
+`where` reads `Market 5,24 (TokyoCity 111,24)`, and every coordinate you type or read is still the
+district's own. `--stitch=0` anywhere on the command line models what `?stitch=0` plays instead.
 
 `node tools/test_game.js` runs the game's own decision code in Node, with no browser: which train a
 station parks, the departures board's order and scrolling, room display names, the dialogue hint wording,
@@ -44,10 +48,14 @@ When a fix lives in a Phaser-side class, pull the decision into a static functio
 overlays collision, unreachable cells, teleports (arrows to their targets), train links, interactions and
 where each person stands on a chosen day. Click a cell for its tiles, what a bump does, the NPC's lines
 and photo, and the `play.js` command that puts you there. Maps are still edited in Tiled.
-Where a city's districts overlap on the map (Palace / Park share four rows) the later district in the city's
-`rooms` list is drawn on top and takes the click, as in the stitched city (`WorldModel.stackOrder`).
-Click the selected cell again for the district underneath (`WorldModel.stackPick`): that is how the covered
-seam transporters (Palace 38..39,21, Market 54..56,47) are inspected.
+Tokyo is drawn as the one stitched city the game plays (woodland included, the five districts outlined and
+named inside it; the inspector gives the district's own cell and the city cell, the owning district where two
+overlap); the **Stitched** button, or `/studio/?stitch=0`, shows the five rooms joined by seam teleports instead.
+In that five-room view, where a city's districts overlap on the map (Palace / Park share four rows) the later
+district in the city's `rooms` list is drawn on top and takes the click, as in the stitched city
+(`WorldModel.stackOrder`). Click the selected cell again for the room underneath (`WorldModel.stackPick`):
+that is how the covered seam transporters (Palace 38..39,21, Market 54..56,47) are inspected - and, in the
+stitched view, the city's woodland under a town that sits inside its box (Inaka, Osaka).
 
 It has no logic of its own: `tools/world-model.js` (rooms, collision, NPC dates, interactions, the
 problem survey) is shared with `tools/play.js`, so the page and the terminal tool always agree.
@@ -69,6 +77,8 @@ problem survey) is shared with `tools/play.js`, so the page and the terminal too
 - `src/GameScene.js` - Main game scene (room system, HUD, input handling, collision)
 - `src/Character.js` - Character movement class with grid-based tweening
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
+- `src/systems/Occlusion.js` - Scenery fades while someone stands hidden behind it, and their name label
+  with it (see "Walking behind things" below)
 - `src/utils/Interactions.js` - The one table of what a bump opens (shops, ponds, clocks, the drinking
   table). `Shop`, `Fishing`, `DrinkingGame`, `GameScene` and `tools/play.js` all read it; add a rule here
   rather than a tile-name check in a feature file
@@ -197,29 +207,79 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   (tiles, signage, characters and the ambient train do).
 - **Performance** — `RoomManager.loadFloorTiles` indexes every tile as a record (`tileRecords`: cell, key,
   depth, pixel bounds) and collision as a set (`blockedCells`; `CollisionSystem` does one lookup per cell
-  instead of scanning every sprite). A city (~25k tiles with the woods) is **streamed**: records are
-  bucketed in 4-cell chunks and only those within 3 cells of the view have a sprite
-  (`updateStreaming`, every frame; retired sprites are pooled OFF the display list), about 1,100 at a time versus ~4,300 for the
-  old Tokyo room. `floorSprites` is therefore "the sprites that exist now" — read `tileRecords` /
-  `standingArt()` when you need the whole room (AmbientBoats does). Night lamp halos are culled the same
-  way (`DayNight.cullGlows`). A held key against a wall re-runs the bump checks (`GameScene.checkNPCInteraction`,
-  whose shop check scans every tile of the room) at most every 150ms for the same cell, not every frame — in a stitched city only; every other room
-  (and all of `?stitch=0`) checks every frame as before.
+  instead of scanning every sprite). In EVERY room (stitched or not) a collision layer's `gk_blank` markers
+  feed that set only: they are not records and never get a sprite (issue #148 — it was 2,440 records in the
+  city, 858 sprites in the old Tokyo room, 37 in a konbini); the debug overlay and inspector read colliders
+  from the set. Anything else painted on a collision layer still blocks and is drawn. A city (~23k tiles
+  with the woods) is **streamed**: records are bucketed in 4-cell chunks (`buildChunks` — every room is
+  bucketed, `Occlusion` looks art up by place through `artNear`) and only those within 3 cells of the view
+  have a sprite (`updateStreaming`, every frame; retired sprites are pooled OFF the display list), about
+  1,000 at a time versus ~3,500 for the old Tokyo room. `floorSprites` is therefore "the sprites that exist
+  now" — read `tileRecords` / `standingArt()` when you need the whole room (AmbientBoats does). Night lamp
+  halos are culled the same way (`DayNight.cullGlows`).
+- **Bumps are a lookup** (issue #145) — what a blocked step opens (shop / pond / clock) comes from
+  **`roomManager.interactionAt(x, y, group)`**: the room's interactive cells are indexed once, on the first
+  bump after a room load (`Interactions.index`: cell -> interactions, footprints expanded; thrown away by
+  `clearFloorTiles`), so a bump costs the same in a konbini and in the city (0.002 ms; the scan it replaced
+  was 7.5 ms, 30 ms on a 4x-throttled CPU). A held key against a wall therefore asks every frame again in
+  every room — the 150 ms throttle the stitch added is gone. `Shop`, `Fishing` and the clock check all go
+  through it; do not call `Interactions.find` (a full scan) from per-frame code.
 - **Systems that re-read the room** — `TrafficLights` rebuilds its signal list whenever `floorSprites` is
   replaced (every chunk change), so signals streamed in are put on the current phase before they scroll into
   view and its night glow follows them; `UIScale`'s overlay camera re-filters the display list every frame it
   is up, which covers sprites coming back from the pool; `Intro.whereFriendsAre` reads the cast from config per district (`Trips.membersByRoom`) and names
   "here" with `roomManager.currentDistrict()` (a district's own `rooms[...].npcs` is empty once it is
   stitched — ask `roomManager.npcsIn(room)` for live NPCs).
-- **Tools** — `tools/play.js`, `tools/world-model.js` (lint / render / check) and `/studio/` model rooms from
-  `config.json` + the `.tmj` files and do not stitch: there Tokyo is still five rooms joined by the 22 seam
-  transporters, i.e. what `?stitch=0` plays. `play.js check` / `lint` therefore keep guarding the districts
-  one map at a time; the stitched room itself is only checked by `tools/sync_cities.py --check` and the game.
+- **Tools** (issue #144) — `tools/world-model.js` (shared by `tools/play.js` and `/studio/`) loads
+  `src/systems/CityStitcher.js` and calls `RoomManager.stitchCities` — the same two functions the game's
+  `setupCities` runs — so the tools hold the room the game plays, not a second implementation of it.
+  `play.js` walks the city continuously (`goto Market 5 24` from Tokyo; a step that changes district says
+  `walked from Tokyo into Market`), always speaks DISTRICT coordinates (`where` = `Market 5,24 (TokyoCity
+  111,24)`; `look` rules its map in the district's cells, so a neighbour's cells are negative or past the
+  edge; sessions are saved as district + cell), `check` surveys the stitched world AND then the separate
+  rooms (problems only the fallback has are tagged `[--stitch=0]`, so the seam transporters stay guarded),
+  `lint` with no room lints every district and then `TokyoCity` (floor holes anywhere in the bounding box,
+  colliders lost to an overlap, a `patch` gone wrong; `Backdrop ...` layers are scenery and are not linted
+  as objects), `lint <District>` is unchanged, `render TokyoCity out.png` draws the city with its woods,
+  and `reach` prints the walkable cells of every room as JSON. `--stitch=0` (play.js) / `?stitch=0`
+  (studio) give the five rooms joined by the 22 seam transporters, i.e. what the game's `?stitch=0` plays.
+  `tools/blog_to_npc.py` has no node at hand, so it carries a ten-line port of "who sits where, later room
+  owns the overlap" (`city_districts` / `city_reachable`); `tools/test_blog_to_npc.py` pins it to
+  `play.js reach` for every cell of every room.
 - **`?stitch=0`** is the safety valve: no cities, the five districts are separate rooms joined by the fade
   transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).
 - **Adding a district / a second city**: place the map in `devhouse.world` so the shared road lines up,
   add it to `cities.<City>.rooms`, run `tools/sync_cities.py` and `tools/make_worldmap.py`. Keep the hidden
-  seam transporters in the maps — `?stitch=0` and the tools still use them.
+  seam transporters in the maps — `?stitch=0` (and `play.js --stitch=0`, which `play.js check` runs too) still use them.
+
+### Walking behind things (issues #76 / #93)
+
+Standing art is Y-sorted, so a character north of a roof, a tower, a torii top, a high-rise or a tree crown is
+drawn under it. `src/systems/Occlusion.js` keeps them in view with one rule for every room, day or night:
+
+- A character is **hidden** when art drawn over them (higher depth) covers more than half of their body
+  with opaque pixels (12 sample points; coverage is read from a quarter-size alpha mask per texture, built
+  the first time that texture is in the way — so the opening of a torii, the gap between Tokyo Tower's legs
+  and the empty corners of a tree crown do not count).
+- The pieces doing the covering **fade to 40%** (`Occlusion.ALPHA`, over `FADE_MS` = 160 ms) and come back
+  when the character steps out. A building that is one sprite fades whole (Tokyo Tower, the Dotonbori arch
+  and wheel, high-rises, house roofs); a roof laid from tiles opens a window over the character. Wall signs
+  (`roomManager.signArt`) fade the same way.
+- The character's **name label fades with them** (to `LABEL_ALPHA` = 60%, as much as the character shows
+  through art at 40%) instead of floating over the roof at full strength. A label whose character stops being
+  tested (an NPC that walks off camera) snaps back to full. Labels stay at depth 900 — they are never hidden by a tree in front of them — the fade
+  is what says "behind". The player's own label (created characters only) and NPC labels follow the same rule.
+- It applies to the player and to every NPC on camera, so a friend who wanders behind a roof is still
+  findable. It is cheap: characters are only re-tested when they move, and only against the art of the
+  4-cell chunks they stand in (`RoomManager.artNear`, the buckets tile streaming uses — built for every
+  room) plus the room's wall signs; nothing scans the room per frame.
+- The fade is stored on the tile RECORD (`rec.fade`), not the sprite, so a streamed sprite that is retired
+  and re-made keeps it (`RoomManager.spawnTile` applies it). Code that sets a tile sprite's alpha for its
+  own reasons would fight it — none does today.
+- `GameScene.update` calls `occlusion.update()` right after `updateCharacterDepths()`. For a before/after
+  look in the console: `game.scene.keys.GameScene.occlusion.enabled = false`.
+- Layering consequences for maps: a walk-behind strip no longer hides anyone, so "the player vanishes
+  behind X" is not a reason to add colliders any more (colliders are for where you cannot stand).
 
 ### Trips (issues #118, #131, #130, #96, #59)
 
@@ -843,10 +903,22 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   carry no `interior` flag) offers only `indoors` landmarks — today `the platform`, its west end by the
   vending machine — and the model is told to pick it only for a post about that station or the train ride
   itself. `interior: true` rooms (konbini, izakaya) are never offered. The cell chosen is the nearest free
-  one to the landmark's standing cell that can be walked to from one of the room's transporters, so a
-  landmark inside a fence (Market's fox statues) puts its visitor outside it. `python3
+  one to the landmark's standing cell that can be walked to from one of the room's ways in, so a
+  landmark inside a fence (Market's fox statues) puts its visitor outside it. A room on its own is entered
+  by its transporters; a district of the stitched Tokyo city is also walked into from its neighbours, so
+  `reachable_cells` floods the whole city as the game merges it (`city_districts` / `city_reachable`: doors
+  and the spawn point as seeds, a later-listed district owning the cells it overlaps — issue #124) and
+  `occupied_cells` counts a neighbour standing on a shared cell. Tokyo, whose only transporters are seams,
+  is judged like the rest; an outdoor room with no way in at all now fails the test instead of silently
+  skipping the reachability filter. `python3
   tools/test_blog_to_npc.py` checks all of this over every room in `config.json`: add a room or a
   landmark and it tells you if a spot is mislabelled, unreachable, or lands on a station's doors.
+- **The world map shows the stitched city** (issue #146): after the rooms are drawn, `tools/make_worldmap.py`
+  renders each config `cities` entry with `node tools/play.js render <City>` — the room the game plays,
+  woodland and seam patches included — and pastes it over the city's bounding box, then redraws the towns
+  the world file places inside that box (Inaka, Osaka, Yukimura) on top. `world-map.json` is unchanged (the
+  five district rects), so the "You" marker, NPC dots and map-click travel work as before. Regenerate
+  `assets/map` with the tool whenever a district, `cities.<City>.backdrop` or `patch` changes.
 - **World map without Tiled**: `tools/make_worldmap.py` uses `tmxrasterizer` when Tiled is installed and
   otherwise (or with `--pil`) draws the rooms itself via `node tools/play.js render`, which is also the
   "look at the render" step for a new room: `node tools/play.js render <Room> out.png [--scale .5] [--colliders]`.
@@ -1057,7 +1129,7 @@ maps that already place it - change the art, not the footprint. Needs Pillow.
 ### Collision Detection
 All intermediate cells in movement path are checked for:
 - Room boundaries (polygon containment check; in a stitched city: inside any district's boundary)
-- Collision-layer tiles (`roomManager.isBlocked(x, y)` — a set lookup)
+- Collision-layer tiles (`roomManager.isBlocked(x, y)` — a set lookup; collider markers have no sprite)
 - Objects (static obstacles)
 - Stationary character positions
 - Moving character destinations

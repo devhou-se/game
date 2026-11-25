@@ -238,6 +238,8 @@ def test_spots(cfg):
         assert max(abs(cell[0] - x), abs(cell[1] - y)) <= 2, f'{spot_id}: ({x},{y}) resolves to far-off {cell}'
         if room_key not in reach:
             reach[room_key] = b.reachable_cells(cfg, room_key)
+            # None = "no way in, so no filter": an outdoor room must never be that (issue #124)
+            assert reach[room_key] is not None, f'{room_key} has no way in to judge its spots from'
         assert cell in reach[room_key], f'{spot_id}: {cell} cannot be walked to'
         # four authors can be at one spot on one day without anyone being walled in
         taken = set()
@@ -252,6 +254,90 @@ def test_spots(cfg):
         cell = b.walkable_near(cfg, room_key, *by_room[room_key]['the platform'])
         keep_clear = [tuple(c) for c in st.get('board', [])] + [tuple(st['arrive'])]
         assert all(max(abs(cell[0] - cx), abs(cell[1] - cy)) > 2 for cx, cy in keep_clear), (room_key, cell)
+
+
+def test_city_reach(cfg):
+    """Spot reachability in the stitched Tokyo city (issue #124).
+
+    The game merges the districts of config `cities` into one room and drops
+    the seam transporters between them; blog_to_npc floods that city with a
+    small port of the merge (city_districts / city_reachable). It is pinned
+    here, for EVERY cell of every room, to `node tools/play.js reach`, which
+    floods the room built by the game's own src/systems/CityStitcher.js."""
+    import json
+    import shutil
+    import subprocess
+    city = cfg['cities']['TokyoCity']
+    names = [m['room'] for m in city['rooms']]
+    assert names == ['Tokyo', 'Market', 'Palace', 'Park', 'Machi'], names
+
+    # the layout: offsets from the union's top-left, sizes from the rooms
+    districts = b.city_districts(cfg, 'Market')
+    assert [d[0] for d in districts] == names
+    assert min(d[1] for d in districts) == 0 and min(d[2] for d in districts) == 0
+    assert dict((d[0], d[1:3]) for d in districts)['Machi'] == (0, 22), districts
+    assert b.city_districts(cfg, 'Osaka') is None and b.city_districts(cfg, 'KonbiniMarket1') is None
+    for name in names:
+        assert b.city_districts(cfg, name) == districts
+
+    # Tokyo has no door of its own - only seams - and is still judged (it
+    # used to fall back to "no filter"); nobody is judged from the seams alone
+    assert all(t['targetRoom'] in names for t in cfg['rooms']['Tokyo']['transporters'])
+    reach = {name: b.reachable_cells(cfg, name) for name in names}
+    for name in names:
+        assert reach[name], f'{name}: nothing reachable'
+        w, h, floored, blocked = b.room_cells(cfg, name)
+        assert all(0 <= x < w and 0 <= y < h for x, y in reach[name]), name
+    px, py = cfg['player']['startX'], cfg['player']['startY']
+    assert (px, py) in reach['Tokyo']
+
+    # the stitch decides ownership: a cell two districts share is walkable or
+    # not by the LATER one's map. Block Palace's copy of a shared cell and the
+    # same cell, seen from Market, is no longer somewhere to stand.
+    at = {d[0]: d for d in districts}
+    shared = None
+    for x, y in sorted(reach['Palace']):
+        mx, my = x + at['Palace'][1] - at['Market'][1], y + at['Palace'][2] - at['Market'][2]
+        if 0 <= mx < at['Market'][3] and 0 <= my < at['Market'][4]:
+            shared = (x, y, mx, my)
+            break
+    assert shared, 'Market and Palace share no walkable cell'
+    assert shared[2:] in reach['Market']
+    cut = copy.deepcopy(cfg)
+    colliders = next(l for l in cut['rooms']['Palace']['layers'] if l.get('collision'))
+    colliders['tiles'][f'{shared[0]},{shared[1]}'] = next(iter(colliders['tiles'].values()))
+    assert shared[2:] not in b.reachable_cells(cut, 'Market'), shared
+    assert b.walkable_near(cut, 'Market', *shared[2:]) != shared[2:]
+    # ...and someone standing on it in Palace occupies it for Market too
+    cfg2 = copy.deepcopy(cfg)
+    cfg2['rooms']['Palace']['npcs'].append(dict(b.hidden_base_def('Zed', shared[0], shared[1]), present=True))
+    assert shared[2:] in b.occupied_cells(cfg2, 'Market', '2025-11-01', 'nobody')
+    assert shared[2:] not in b.occupied_cells(cfg, 'Market', '2025-11-01', 'nobody')
+
+    # without the city block the districts are judged alone, as before
+    alone = copy.deepcopy(cfg)
+    del alone['cities']
+    assert b.city_districts(alone, 'Market') is None
+    assert (0, 41) in b.reachable_cells(alone, 'Tokyo')      # seeded by its seam transporter again
+
+    # the pin: every cell of every room, python against the game's stitcher
+    node = shutil.which('node')
+    assert node, 'node is needed to pin blog_to_npc reachability to the game (tools/play.js reach)'
+    here = os.path.dirname(os.path.abspath(__file__))
+    out = subprocess.run([node, os.path.join(here, 'play.js'), 'reach'], capture_output=True, text=True,
+                         env=dict(os.environ, OPENSSL_CONF='/dev/null'), check=True).stdout
+    game = {room: {tuple(map(int, c.split(','))) for c in cells} for room, cells in json.loads(out).items()}
+    assert set(game) == set(cfg['rooms'])
+    checked = 0
+    for room_key in b.overworld_rooms(cfg):
+        mine = b.reachable_cells(cfg, room_key)
+        assert mine is not None, room_key
+        w, h, _, _ = b.room_cells(cfg, room_key)
+        diff = sorted((mine ^ game[room_key]))
+        assert not diff, (f'{room_key}: blog_to_npc and the game disagree on {len(diff)} cell(s), e.g. {diff[:8]} '
+                          f'(python-only: {sorted(mine - game[room_key])[:4]}, game-only: {sorted(game[room_key] - mine)[:4]})')
+        checked += w * h
+    assert checked > 20000, checked
 
 
 def test_landmark_rules():
@@ -660,6 +746,7 @@ if __name__ == '__main__':
     test_same_day_posts(config)
     test_landmark_rules()
     test_spots(config)
+    test_city_reach(config)
     test_post_source(config)
     test_backfill_posts()
     test_shipped_posts(config)

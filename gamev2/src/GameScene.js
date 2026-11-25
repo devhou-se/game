@@ -159,6 +159,7 @@ class GameScene extends Phaser.Scene {
 
             this.roomManager = new RoomManager(this);
             this.collisionSystem = new CollisionSystem(this);
+            this.occlusion = new Occlusion(this);   // scenery fades when someone is behind it
             this.npcManager = new NPCManager(this);
             this.inputHandler = new InputHandler(this);
             this.achievementManager = new AchievementManager(this);
@@ -917,17 +918,6 @@ class GameScene extends Phaser.Scene {
      * @param {number} targetGridY - Target grid Y position
      */
     checkNPCInteraction(targetGridX, targetGridY) {
-        // A held key bumps the same cell every frame, and the shop check
-        // below scans every tile of the room — a whole city's worth once the
-        // districts are stitched. There (only: every other room, and all of
-        // ?stitch=0, behaves as it always did) re-checking the same bump
-        // every 150ms feels the same and keeps leaning on a wall cheap.
-        const bump = `${this.roomManager.currentRoom}|${this.player.gridX},${this.player.gridY}>${targetGridX},${targetGridY}`;
-        const city = this.roomManager.rooms[this.roomManager.currentRoom].stitched;
-        if (city && bump === this._bump && this.time.now - this._bumpAt < 150) return;
-        this._bump = bump;
-        this._bumpAt = this.time.now;
-
         // The Izakaya's configured table owns the bump before generic
         // counter/shop detection sees its placeholder furniture.
         if (this.drinkingGame && !this.dialogueManager.isVisible() &&
@@ -944,9 +934,7 @@ class GameScene extends Phaser.Scene {
         // bumping a wall clock or calendar opens the time-travel picker
         if (!this.dialogueManager.isVisible() && !this.shop.isVisible() &&
             this.datePicker && !this.datePicker.isVisible()) {
-            const room = this.roomManager.rooms[this.roomManager.currentRoom];
-            const roomConfig = this.config.rooms[this.roomManager.currentRoom] || {};
-            if (Interactions.find(room, roomConfig, targetGridX, targetGridY, { group: 'clock' })) {
+            if (this.roomManager.interactionAt(targetGridX, targetGridY, 'clock')) {
                 this.datePicker.show();
             }
         }
@@ -1033,6 +1021,7 @@ class GameScene extends Phaser.Scene {
             this.playerNameLabel.setVisible(this.player.sprite.visible && this.npcManager.labelsShown());
         }
         this.updateCharacterDepths();
+        this.occlusion.update();
         if (this.debugManager) this.debugManager.update();
         // a player who has left their start cell is where they chose to be (resettleNewPlayer)
         const boot = this.bootStart;

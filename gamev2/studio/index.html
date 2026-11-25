@@ -86,6 +86,7 @@ code { display: block; padding: 8px 10px; background: var(--ink); color: var(--p
             <select id="as"></select>
         </div>
         <div class="group" id="layers"></div>
+        <div class="group"><button id="stitch" hidden title="Tokyo as the one stitched city the game plays, or as the five rooms joined by seam teleports that ?stitch=0 plays">Stitched</button></div>
     </header>
     <div id="stage"><canvas id="view"></canvas><div id="loading">loading world</div></div>
     <aside>
@@ -97,7 +98,7 @@ code { display: block; padding: 8px 10px; background: var(--ink); color: var(--p
 <script>
     for (const f of ['../src/utils/ConfigCodec.js', '../src/utils/Trips.js', '../src/utils/NpcStates.js', '../src/utils/Interactions.js',
         '../src/systems/TiledAdapter.js', '../src/systems/RoomManager.js', '../src/systems/CollisionSystem.js',
-        '../src/Shop.js', '../src/TrainTravel.js', '../tools/world-model.js', 'studio.js']) {
+        '../src/systems/CityStitcher.js', '../src/Shop.js', '../src/TrainTravel.js', '../tools/world-model.js', 'studio.js']) {
         document.write('<script src="' + f + '?v=' + Date.now() + '"><\/script>');
     }
 </script>

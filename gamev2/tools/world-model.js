@@ -45,7 +45,14 @@ class WorldModel {
         return Trips.startFor(config, date, opts);
     }
 
-    constructor(config, env, state) {
+    /**
+     * opts.stitch (default true): merge the districts of config `cities` into
+     * one room each, with the game's own CityStitcher, so the model is the
+     * world the game plays. false = the separate rooms joined by seam
+     * transporters that `?stitch=0` plays. Everything public still speaks
+     * district coordinates where it can (state(), here(), problem.where).
+     */
+    constructor(config, env, state, opts) {
         this.env = env;
         this.config = config;
         this.GRID_SIZE = config.game.gridSize;
@@ -58,6 +65,8 @@ class WorldModel {
         this.roomManager.initializeRooms(config, this.cx, this.cy,
             this.WORLD_WIDTH / this.GRID_SIZE, this.WORLD_HEIGHT / this.GRID_SIZE);
         this.collisionSystem = new CollisionSystem(this);
+        this.stitched = !(opts && opts.stitch === false) && typeof CityStitcher !== 'undefined';
+        if (this.stitched) this.roomManager.stitchCities(config, (opts && opts.worldMap) || null);
 
         this.trips = Trips.of(config);
         const date = (state && state.date) || WorldModel.defaultDate(config);
@@ -72,8 +81,35 @@ class WorldModel {
         this.enter(s.room, s.x, s.y);
     }
 
+    /** Saved in district coordinates, so a session reads the same stitched or not. */
     state() {
-        return { room: this.roomManager.currentRoom, x: this.player.gridX, y: this.player.gridY, date: this.date, as: this.as, livery: this.livery };
+        const at = this.here();
+        return { room: at.room, x: at.x, y: at.y, date: this.date, as: this.as, livery: this.livery };
+    }
+
+    /**
+     * Where the player is, the way config and the maps say it: the district
+     * underfoot and the cell in that district — plus, inside a stitched city,
+     * `city` (its key) and `ox`/`oy`, the district's offset in the city room.
+     */
+    here() {
+        const rm = this.roomManager, p = this.player;
+        const at = rm.localize(p.gridX, p.gridY);
+        const member = rm.memberOf[at.room];
+        const inCity = member && member.city.key === rm.currentRoom;
+        return { room: at.room, x: at.x, y: at.y, city: inCity ? rm.currentRoom : null,
+                 ox: inCity ? member.member.x : 0, oy: inCity ? member.member.y : 0 };
+    }
+
+    /** "Market 5,3" for a cell of a runtime room (the owning district's own cell inside a city). */
+    spot(roomKey, x, y) {
+        const at = this.roomManager.districtsAt(x, y, roomKey)[0] || { room: roomKey, x, y };
+        return `${at.room} ${at.x},${at.y}`;
+    }
+
+    /** The rooms that are entered at runtime: every config room, with a city in place of its districts. */
+    runtimeRooms() {
+        return [...new Set(Object.keys(this.config.rooms).map(k => this.roomManager.resolve(k, 0, 0).room))];
     }
 
     character(name, x, y, extra) {
@@ -88,6 +124,12 @@ class WorldModel {
     cells(key) { return this.env.sizeOf(key); }
 
     npcsIn(roomKey) {
+        const city = this.roomManager.cities[roomKey];
+        if (city) {
+            // a city holds its districts' people, each in city cells
+            return city.members.flatMap(m => this.npcsIn(m.key).map(n =>
+                Object.assign(n, { gridX: n.gridX + m.x, gridY: n.gridY + m.y, homeRoom: m.key })));
+        }
         const opponent = this.as === 'damian' ? 'bailey' : 'damian';
         const list = [];
         for (const raw of this.config.rooms[roomKey].npcs || []) {
@@ -105,34 +147,31 @@ class WorldModel {
     enter(roomKey, x, y) {
         const rm = this.roomManager;
         if (!rm.rooms[roomKey]) throw new Error(`no room "${roomKey}" (try: rooms)`);
+        // a district of a stitched city is the city room at the district's offset
+        ({ room: roomKey, x, y } = rm.resolve(roomKey, x, y));
         rm.currentRoom = roomKey;
         const room = rm.rooms[roomKey];
         const st = (this.config.stations || {})[roomKey];
         this.livery = st ? TrainTravel.liveryFor(st, this.livery) : null;
-        room.npcs = this.npcsIn(roomKey);
+        room.npcs = this.unpeopled ? [] : this.npcsIn(roomKey);
         rm.objectSprites = room.objects;
-        rm.floorSprites = [];
+        // collision is the game's own set lookup (RoomManager.isBlocked)
+        rm.blockedCells = new Set();
         for (const layer of room.layers) {
             if (!layer.collision) continue;
             for (const [xy, key] of Object.entries(layer.tiles || {})) {
-                if (!this.exists(key)) continue;
-                const [gridX, gridY] = xy.split(',').map(Number);
-                const data = { layerCollision: true, gridX, gridY };
-                rm.floorSprites.push({ getData: (k) => data[k] });
+                if (this.exists(key)) rm.blockedCells.add(xy);
             }
         }
         this.player.gridX = x;
         this.player.gridY = y;
         this.w = (room.worldWidth || this.WORLD_WIDTH) / this.GRID_SIZE;
         this.h = (room.worldHeight || this.WORLD_HEIGHT) / this.GRID_SIZE;
-        this.blocked = new Set(rm.floorSprites.map(s => s.getData('gridX') + ',' + s.getData('gridY')));
-        // what CollisionSystem.checkTileCollision asks (RoomManager.isBlocked);
-        // the game fills it as it builds a room's tiles, which never runs here
-        rm.blockedCells = this.blocked;
+        this.blocked = rm.blockedCells;
     }
 
     get room() { return this.roomManager.rooms[this.roomManager.currentRoom]; }
-    get roomConfig() { return this.config.rooms[this.roomManager.currentRoom]; }
+    get roomConfig() { return this.config.rooms[this.roomManager.currentRoom] || {}; }   // a city has no config room
 
     canStep(fx, fy, tx, ty) {
         if (tx < 0 || ty < 0 || tx >= this.w || ty >= this.h) return false;
@@ -205,14 +244,16 @@ class WorldModel {
         if (!this.canStep(p.gridX, p.gridY, tx, ty)) {
             return { moved: false, bumped: [tx, ty], interaction: this.interactionAt(tx, ty) };
         }
+        const from = this.here().room;
         p.gridX = tx; p.gridY = ty;
         const t = this.room.transporters.find(t => t.gridX === tx && t.gridY === ty);
         if (t) {
-            const from = this.roomManager.currentRoom;
             this.enter(t.targetRoom, t.targetX, t.targetY);
             return { moved: true, transported: { from, to: t.targetRoom } };
         }
-        return { moved: true, board: this.onBoardCell() };
+        // walking from one district of a stitched city into the next: no teleport, just a new name
+        const to = this.here().room;
+        return { moved: true, board: this.onBoardCell(), crossed: to !== from ? { from, to } : null };
     }
 
     path(gx, gy) {
@@ -255,16 +296,26 @@ class WorldModel {
     }
 
     // Every cell the game can put the player on in `roomKey`: the spawn, where a transporter
-    // from any room drops them, and the station platform a train arrives at.
+    // from any room drops them, and the station platform a train arrives at. Targets are
+    // authored as (district, cell); for a stitched city they are handed back in city cells,
+    // and for a district linted on its own map the seam transporters of its neighbours count
+    // too (they are what `?stitch=0` plays).
     arrivals(roomKey) {
+        const rm = this.roomManager;
         const cells = [];
+        const lands = (room, x, y) => {
+            if (room === roomKey) { cells.push([x, y]); return; }
+            const at = rm.resolve(room, x, y);
+            if (at.room === roomKey) cells.push([at.x, at.y]);
+        };
         const p = this.config.player;
-        if (p.startRoom === roomKey) cells.push([p.startX, p.startY]);
-        for (const r of Object.values(this.roomManager.rooms)) {
-            for (const t of r.transporters) if (t.targetRoom === roomKey) cells.push([t.targetX, t.targetY]);
+        lands(p.startRoom, p.startX, p.startY);
+        for (const r of Object.values(rm.rooms)) {
+            for (const t of r.transporters) lands(t.targetRoom, t.targetX, t.targetY);
         }
-        const st = (this.config.stations || {})[roomKey];
-        if (st && st.arrive) cells.push([st.arrive[0], st.arrive[1]]);
+        for (const [k, st] of Object.entries(this.config.stations || {})) {
+            if (st && st.arrive) lands(k, st.arrive[0], st.arrive[1]);
+        }
         return cells;
     }
 
@@ -354,7 +405,9 @@ class WorldModel {
         const names = this.config.tileNames || {};
         const nm = (key) => names[key] || key;
         const K = (x, y) => x + ',' + y;
-        const floor = new Set(), overFloor = new Set(), colliders = new Set();
+        // a stitched city: the woodland between the districts ("Backdrop ..." layers) is
+        // generated scenery nobody can enter - it only has to leave no hole in the ground
+        const floor = new Set(), overFloor = new Set(), colliders = new Set(), backdrop = new Set();
         const objects = [];
         let W = 0, H = 0;
         const foot = (x, y, key) => {
@@ -368,6 +421,7 @@ class WorldModel {
             for (const [xy, key] of Object.entries(layer.tiles || {})) {
                 const [x, y] = xy.split(',').map(Number);
                 W = Math.max(W, x + 1); H = Math.max(H, y + 1);
+                if (layer.name.startsWith('Backdrop')) { if (z < 2) backdrop.add(xy); continue; }
                 if (layer.name === 'Floor') floor.add(xy);
                 if (layer.name === 'Over Floor') for (const [cx, cy] of foot(x, y, key).cells) overFloor.add(K(cx, cy));
                 if (layer.collision) { colliders.add(xy); continue; }
@@ -375,7 +429,8 @@ class WorldModel {
             }
         }
         const doors = new Set(room.transporters.map(t => K(t.gridX, t.gridY)));
-        const inside = (x, y) => !room.boundary || room.boundary.length < 3 ||
+        const inside = (x, y) => room.city ? this.roomManager.checkBoundary(x, y, roomKey) :
+            !room.boundary || room.boundary.length < 3 ||
             this.roomManager.isPointInPolygon(x + 0.5, y + 0.5, room.boundary);
         const walkable = (x, y) => x >= 0 && x < W && y >= 0 && y < H && floor.has(K(x, y)) && !colliders.has(K(x, y)) && inside(x, y);
 
@@ -402,7 +457,7 @@ class WorldModel {
         const errors = {}, warns = {};
         const push = (bag, kind, item) => (bag[kind] = bag[kind] || []).push(item);
 
-        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!floor.has(K(x, y))) push(errors, 'floor-hole', K(x, y));
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!floor.has(K(x, y)) && !backdrop.has(K(x, y))) push(errors, 'floor-hole', K(x, y));
 
         // "definitely no rubbish bins!!" (issue #19): any bin / dumpster / trash sprite on any
         // layer is an error, so one can never be placed again. Whole-word match between - and _,
@@ -507,14 +562,28 @@ class WorldModel {
         return { room: roomKey, width: W, height: H, objects: objects.length, colliders: colliders.size, floor: floor.size, errors, warns };
     }
 
-    survey(dates) {
+    /**
+     * Walk the world the way the game plays it. Rooms are RUNTIME rooms (a
+     * stitched city stands in for its districts, in city cells):
+     *   problems: [{ room, x, y, where: "Market 5,3" (the district's own cell), text, date }]
+     *   reach:    { runtime room: Set "x,y" } - every cell that can be walked to
+     * opts.npcs === false leaves everybody out (what the map itself allows).
+     */
+    survey(dates, opts) {
         dates = dates || [this.date];
         const problems = [];
         const reach = {};
         const saved = this.state();
-        const rooms = this.roomManager.rooms;
+        const rm = this.roomManager, rooms = rm.rooms;
+        const keys = this.runtimeRooms();
+        this.unpeopled = !!(opts && opts.npcs === false);
+        const problem = (room, x, y, text, date) => problems.push(x === undefined ? { room, text }
+            : { room, x, y, where: this.spot(room, x, y), text, date });
         const arrivals = {};
-        const arrive = (room, x, y, via) => (arrivals[room] = arrivals[room] || []).push({ x, y, via });
+        const arrive = (room, x, y, via) => {
+            const at = rm.resolve(room, x, y);
+            (arrivals[at.room] = arrivals[at.room] || []).push({ x: at.x, y: at.y, via });
+        };
         arrive(this.config.player.startRoom, this.config.player.startX, this.config.player.startY, 'spawn');
         // every place the game can start a player: each trip's home and stays, and where a
         // new player is put (next to the cast) on each surveyed day
@@ -524,13 +593,13 @@ class WorldModel {
             // Trips.homeFor ignores a home or stay without a cell and falls back — for a stay,
             // to the trip's home, which can be a different room from where the group is
             if (!Number.isInteger(spot.x) || !Number.isInteger(spot.y)) {
-                problems.push({ room: spot.room, text: `${via} has no cell (x, y): players start somewhere else instead` });
+                problem(spot.room, undefined, undefined, `${via} has no cell (x, y): players start somewhere else instead`);
                 return;
             }
             const id = `${spot.room},${spot.x},${spot.y}`;
             if (starts.has(id)) return;
             starts.add(id);
-            if (!rooms[spot.room]) problems.push({ room: spot.room, text: `${via} names a missing room` });
+            if (!rooms[spot.room]) problem(spot.room, undefined, undefined, `${via} names a missing room`);
             else arrive(spot.room, spot.x, spot.y, via);
         };
         for (const trip of this.trips) {
@@ -538,33 +607,43 @@ class WorldModel {
             for (const stay of trip.stays) start(stay, `${trip.name} stay`);
         }
         for (const date of dates) start(WorldModel.startFor(this.config, date, { newPlayer: true }), `new-player start (${date})`);
-        for (const [k, r] of Object.entries(rooms)) {
-            for (const t of r.transporters) {
-                if (!rooms[t.targetRoom]) problems.push({ room: k, x: t.gridX, y: t.gridY, text: `targets missing room "${t.targetRoom}"` });
-                else arrive(t.targetRoom, t.targetX, t.targetY, `${k} ${t.gridX},${t.gridY}`);
+        for (const k of keys) {
+            for (const t of rooms[k].transporters) {
+                if (!rooms[t.targetRoom]) problem(k, t.gridX, t.gridY, `targets missing room "${t.targetRoom}"`);
+                else arrive(t.targetRoom, t.targetX, t.targetY, this.spot(k, t.gridX, t.gridY));
             }
         }
         for (const [k, st] of Object.entries(this.config.stations || {})) arrive(k, st.arrive[0], st.arrive[1], 'train');
-        for (const k of Object.keys(this.config.rooms)) {
+        for (const k of keys) {
             reach[k] = new Set();
-            if (!arrivals[k]) { problems.push({ room: k, text: 'nothing leads here' }); continue; }
+            if (!arrivals[k]) { problem(k, undefined, undefined, 'nothing leads here'); continue; }
             for (const a of arrivals[k]) {
                 this.enter(k, a.x, a.y);
-                if (this.blocked.has(a.x + ',' + a.y) || !this.roomManager.checkBoundary(a.x, a.y)) {
-                    problems.push({ room: k, x: a.x, y: a.y, text: `arrival from ${a.via} lands on a blocked cell` });
+                if (this.blocked.has(a.x + ',' + a.y) || !rm.checkBoundary(a.x, a.y)) {
+                    problem(k, a.x, a.y, `arrival from ${a.via} lands on a blocked cell`);
                     continue;
                 }
+                if (reach[k].has(a.x + ',' + a.y)) continue;   // already flooded from an earlier way in
                 for (const c of this.reachable()) reach[k].add(c);
             }
             this.enter(k, arrivals[k][0].x, arrivals[k][0].y);
             for (const t of this.room.transporters) {
-                if (!reach[k].has(t.gridX + ',' + t.gridY)) problems.push({ room: k, x: t.gridX, y: t.gridY, text: `transporter to ${t.targetRoom} cannot be walked to` });
+                if (!reach[k].has(t.gridX + ',' + t.gridY)) problem(k, t.gridX, t.gridY, `transporter to ${t.targetRoom} cannot be walked to`);
+            }
+            // a city is one room only if its districts really join up
+            for (const m of (rooms[k].city ? rooms[k].city.members : [])) {
+                let any = false;
+                for (const c of reach[k]) {
+                    const [x, y] = c.split(',').map(Number);
+                    if (x >= m.x && x < m.x + m.w && y >= m.y && y < m.y + m.h) { any = true; break; }
+                }
+                if (!any) problem(k, undefined, undefined, `district ${m.key} cannot be walked into`);
             }
         }
         const seen = new Set();
-        for (const date of dates) {
+        for (const date of (this.unpeopled ? [] : dates)) {
             this.date = date;
-            for (const k of Object.keys(this.config.rooms)) {
+            for (const k of keys) {
                 if (!arrivals[k]) continue;
                 this.enter(k, arrivals[k][0].x, arrivals[k][0].y);
                 for (const n of this.room.npcs) {
@@ -574,13 +653,36 @@ class WorldModel {
                     const bad = this.blocked.has(n.gridX + ',' + n.gridY) ? 'stands on a collider' : !near ? 'cannot be walked up to' : null;
                     if (!bad) continue;
                     seen.add(id);
-                    problems.push({ room: k, x: n.gridX, y: n.gridY, date, text: `${n.name} ${bad} (${date})` });
+                    problem(k, n.gridX, n.gridY, `${n.name} ${bad} (${date})`, date);
                 }
             }
         }
+        this.unpeopled = false;
         this.date = saved.date;
         this.enter(saved.room, saved.x, saved.y);
         return { problems, reach };
+    }
+
+    /**
+     * survey().reach handed back per config room, in that room's own cells:
+     * { Market: ["x,y", ...] } - for a district, the cells of its rectangle
+     * that can be walked to in the stitched city (tools/blog_to_npc.py is
+     * pinned to this by its unit test).
+     */
+    reachByRoom(reach) {
+        const out = {};
+        for (const k of Object.keys(this.config.rooms)) {
+            const at = this.roomManager.resolve(k, 0, 0);
+            const r = this.roomManager.rooms[k];
+            const w = r.worldWidth / this.GRID_SIZE, h = r.worldHeight / this.GRID_SIZE;
+            out[k] = [];
+            for (const c of (reach[at.room] || [])) {
+                const [x, y] = c.split(',').map(Number);
+                const lx = x - at.x, ly = y - at.y;
+                if (lx >= 0 && ly >= 0 && lx < w && ly < h) out[k].push(lx + ',' + ly);
+            }
+        }
+        return out;
     }
 }
 

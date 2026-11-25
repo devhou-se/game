@@ -23,7 +23,9 @@ class RoomManager {
         // Everything the current room draws, as data (see loadFloorTiles)
         this.tileRecords = [];       // one per tile: where, what, depth, bounds, live sprite
         this.blockedCells = new Set();   // "x,y" of every collision-layer tile
+        this.interactionIndex = null;    // "x,y" -> interactions, built on the first bump (interactionAt)
         this.signSprites = [];
+        this.signArt = [];           // the signs as art records (Occlusion fades them like tiles)
         this.liveTiles = new Set();  // records that currently have a sprite
         this.spritePool = [];        // hidden sprites of retired streamed tiles, for reuse
         this.depthScale = 1;
@@ -41,13 +43,25 @@ class RoomManager {
      */
     setupCities(config, worldMap) {
         if (typeof CityStitcher === 'undefined' || !CityStitcher.enabled()) return;
+        for (const city of this.stitchCities(config, worldMap)) {
+            console.log(`[stitch] city "${city.key}": ${city.members.map(m => m.key).join(' + ')} ` +
+                `-> one ${city.width}x${city.height} room`);
+        }
+    }
+
+    /**
+     * The stitch itself, with no page around it: plan config `cities`, build
+     * each one's room and register it. tools/world-model.js (play.js, the
+     * studio) calls this directly, so the tools model exactly the room the
+     * game plays. Returns the planned cities.
+     */
+    stitchCities(config, worldMap) {
         this.cities = CityStitcher.plan(config, worldMap);
         for (const city of Object.values(this.cities)) {
             this.rooms[city.key] = CityStitcher.build(city, this.rooms, this.scene.GRID_SIZE);
             for (const member of city.members) this.memberOf[member.key] = { city, member };
-            console.log(`[stitch] city "${city.key}": ${city.members.map(m => m.key).join(' + ')} ` +
-                `-> one ${city.width}x${city.height} room`);
         }
+        return Object.values(this.cities);
     }
 
     /**
@@ -269,8 +283,10 @@ class RoomManager {
             console.warn(`Room ${this.currentRoom} has no floor or layers data`);
         }
 
+        // every room is bucketed (Occlusion looks art up by place); only a
+        // streamed one creates its sprites chunk by chunk
+        this.buildChunks();
         if (this.streamed) {
-            this.buildChunks();
             this.updateStreaming();
         } else {
             for (const rec of this.tileRecords) this.spawnTile(rec);
@@ -288,7 +304,9 @@ class RoomManager {
         this.spritePool = [];
         this.tileRecords = [];
         this.blockedCells = new Set();
+        this.interactionIndex = null;
         this.signSprites = [];
+        this.signArt = [];
         this.liveTiles = new Set();
         this.floorSprites = [];
         this.chunks = null;
@@ -323,11 +341,18 @@ class RoomManager {
             // row, +1 so it draws just over the band it hangs on
             img.setDepth(this.yDepth((spot.gridY + ad.h) * 10 + 1));
             this.signSprites.push(img);
+            this.signArt.push({ key: ad.key, depth: img.depth, left: img.x, top: img.y,
+                                width: img.displayWidth, height: img.displayHeight, sprite: img });
         }
     }
 
     /**
      * Index a single tilemap layer: one record per tile (and its collision).
+     * A collision layer's tiles are invisible markers (RoomManager.COLLIDER,
+     * the game's name for Tiled's collider-marker): they only feed
+     * `blockedCells` and never become a record or a sprite (issue #148) —
+     * the debug overlay draws colliders from the set. Anything else painted
+     * on a collision layer is art that also blocks, and is drawn.
      * @param {Object} layer - Layer configuration object
      */
     loadLayer(layer) {
@@ -345,6 +370,11 @@ class RoomManager {
                 }
                 skippedCount++;
                 continue;
+            }
+
+            if (layer.collision) {
+                this.blockedCells.add(key);
+                if (spriteKey === RoomManager.COLLIDER) continue;
             }
 
             const spriteConfig = this.scene.getSpriteConfig(spriteKey);
@@ -387,7 +417,6 @@ class RoomManager {
                 width, height,
                 sprite: null,
             });
-            if (layer.collision) this.blockedCells.add(key);
         }
     }
 
@@ -409,6 +438,8 @@ class RoomManager {
         sprite.setOrigin(rec.config.anchorX, rec.config.anchorY);
         sprite.setScale(rec.config.scale || 1);
         sprite.setDepth(rec.depth);
+        // a pooled sprite may have been faded by Occlusion in its last life
+        sprite.setAlpha(rec.fade === undefined ? 1 : rec.fade);
 
         // Store collision info on sprite
         sprite.setData('layerCollision', rec.layer.collision);
@@ -448,6 +479,46 @@ class RoomManager {
     /** True when a collision-layer tile sits on the cell. */
     isBlocked(gridX, gridY) {
         return this.blockedCells.has(`${gridX},${gridY}`);
+    }
+
+    /**
+     * What bumping a cell of the current room does: the vending machine /
+     * shop fixture / pond / clock on it (see Interactions), optionally of one
+     * `group`, or null. The room's interactive cells are indexed on the
+     * first bump after a room load, so this is a single lookup however big
+     * the room is (issue #145) — a held key against a wall asks every frame.
+     */
+    interactionAt(gridX, gridY, group) {
+        if (!this.interactionIndex) {
+            const textures = this.scene.textures;
+            const cells = (px) => Math.max(1, Math.round(px / this.scene.GRID_SIZE));
+            const sizeOf = (key) => {
+                if (!textures.exists(key)) return [1, 1];
+                const image = textures.get(key).getSourceImage();
+                return [cells(image.width), cells(image.height)];
+            };
+            this.interactionIndex = Interactions.index(this.rooms[this.currentRoom],
+                this.scene.config.rooms[this.currentRoom] || {}, { sizeOf, venues: Shop.VENUES });
+        }
+        return Interactions.lookup(this.interactionIndex, gridX, gridY, group);
+    }
+
+    /**
+     * The art records whose sprite may touch a pixel rectangle of the room —
+     * every record of the chunks the rectangle touches, so a record can come
+     * up more than once and some lie outside it: callers test bounds.
+     */
+    artNear(left, top, right, bottom) {
+        const out = [];
+        if (!this.chunks) return out;
+        const size = RoomManager.CHUNK * this.scene.GRID_SIZE;
+        for (let cy = Math.floor(top / size); cy <= Math.floor(bottom / size); cy++) {
+            for (let cx = Math.floor(left / size); cx <= Math.floor(right / size); cx++) {
+                const list = this.chunks.get(`${cx},${cy}`);
+                if (list) for (const rec of list) out.push(rec);
+            }
+        }
+        return out;
     }
 
     // ------------------------------------------------------------ streaming
@@ -712,3 +783,5 @@ RoomManager.CHUNK = 4;
 RoomManager.STREAM_MARGIN = 3;
 /** Most hidden sprites kept for reuse between chunk changes. */
 RoomManager.POOL_MAX = 600;
+/** The invisible tile a collision layer is painted with (TiledAdapter maps Tiled's collider-marker to it). */
+RoomManager.COLLIDER = 'gk_blank';

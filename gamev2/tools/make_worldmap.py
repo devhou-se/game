@@ -21,7 +21,9 @@ refuse to overwrite your work (--force overrides).
 The image is rasterized by Tiled's `tmxrasterizer` when the Tiled app is
 installed, and otherwise (or with --pil) room by room with
 `node tools/play.js render`, which draws them in the game's own order — so the
-tool runs on a machine without Tiled. Needs Pillow either way.
+tool runs on a machine without Tiled. Either way a stitched city (config
+`cities`) is then drawn over its districts as the one room the game plays,
+woodland included, by `play.js render <City>`. Needs Pillow and node.
 
 RE-RUN whenever exterior rooms change (unless custom). Run from gamev2/.
 """
@@ -57,6 +59,23 @@ world_h = max(m['y'] + m['height'] for m in world['maps']) - miny
 
 size = TARGET_W if world_w >= world_h else int(TARGET_W * world_h / world_w)
 from PIL import Image
+
+
+def paste_render(im, room, x, y, w, h, k):
+    """Draw a room (or a stitched city) with `node tools/play.js render` — the
+    game's own draw order, colliders and Meta pins left out — and paste it at
+    its world position (x, y, w, h in world pixels; k = image px per world px)."""
+    tmp = tempfile.mktemp(suffix='.png')
+    subprocess.run(['node', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'play.js'),
+                    'render', room, tmp], check=True, stdout=subprocess.DEVNULL)
+    room_im = Image.open(tmp).convert('RGB')
+    os.unlink(tmp)
+    assert room_im.size == (w, h), f'{room}: rendered {room_im.size}px, the world file says {(w, h)}'
+    # size from the far edge, not the width, so neighbours meet without a seam
+    x0, y0 = round((x - minx) * k), round((y - miny) * k)
+    x1, y1 = round((x + w - minx) * k), round((y + h - miny) * k)
+    im.paste(room_im.resize((x1 - x0, y1 - y0), Image.NEAREST), (x0, y0))
+
 if os.path.exists(RAST) and '--pil' not in sys.argv:
     tmp = tempfile.mktemp(suffix='.png')
     # hide the collision markers — they'd wash the minimap red
@@ -70,21 +89,38 @@ else:
     # left out) and pasted at its world position.
     k = size / max(world_w, world_h)
     im = Image.new('RGB', (round(world_w * k), round(world_h * k)), (0, 0, 0))
-    here = os.path.dirname(os.path.abspath(__file__))
     for m in world['maps']:
-        tmp = tempfile.mktemp(suffix='.png')
-        subprocess.run(['node', os.path.join(here, 'play.js'), 'render',
-                        os.path.basename(m['fileName'])[:-4], tmp], check=True, stdout=subprocess.DEVNULL)
-        room_im = Image.open(tmp).convert('RGB')
-        os.unlink(tmp)
-        # size from the far edge, not the width, so neighbours meet without a seam
-        x0, y0 = round((m['x'] - minx) * k), round((m['y'] - miny) * k)
-        x1, y1 = round((m['x'] + m['width'] - minx) * k), round((m['y'] + m['height'] - miny) * k)
-        im.paste(room_im.resize((x1 - x0, y1 - y0), Image.NEAREST), (x0, y0))
+        paste_render(im, os.path.basename(m['fileName'])[:-4], m['x'], m['y'], m['width'], m['height'], k)
     print('tmxrasterizer not used — rooms rendered by tools/play.js')
+scale = im.width / world_w
+
+# A stitched city (config `cities`) is drawn the way the game shows it: its
+# districts as ONE room, with the woodland CityStitcher grows in the gaps of
+# their union and the seam patches applied (issue #146). `play.js render
+# <City>` builds that room with the game's own stitcher, so the map cannot
+# drift from it; it is pasted over the city's bounding box, whichever
+# rasterizer drew the rooms underneath. Towns the world file places inside
+# that box (Inaka and Osaka sit in the crook of Tokyo's L) are then drawn
+# again on top, so the wood only fills what no room covers. The room rects
+# below are unchanged.
+by_file = {os.path.basename(m['fileName'])[:-4]: m for m in world['maps']}
+for city_key, city in (cfg.get('cities') or {}).items():
+    members = [by_file[m['room'].lower()] for m in city.get('rooms', []) if m['room'].lower() in by_file]
+    if len(members) < 2:
+        continue
+    cx0, cy0 = min(m['x'] for m in members), min(m['y'] for m in members)
+    cx1, cy1 = max(m['x'] + m['width'] for m in members), max(m['y'] + m['height'] for m in members)
+    paste_render(im, city_key, cx0, cy0, cx1 - cx0, cy1 - cy0, scale)
+    inside = [name for name, m in by_file.items() if m not in members
+              and m['x'] < cx1 and m['x'] + m['width'] > cx0 and m['y'] < cy1 and m['y'] + m['height'] > cy0]
+    for name in inside:
+        m = by_file[name]
+        paste_render(im, name, m['x'], m['y'], m['width'], m['height'], scale)
+    print(f'{city_key}: stitched city (woods and all) drawn over its {len(members)} districts'
+          + (f'; {", ".join(sorted(inside))} redrawn on top' if inside else ''))
+
 os.makedirs(OUT_DIR, exist_ok=True)
 im.save(f'{OUT_DIR}/world-map.png', optimize=True)
-scale = im.width / world_w
 
 rooms = {}
 for m in world['maps']:

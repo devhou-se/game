@@ -279,11 +279,77 @@ def room_cells(cfg, room_key):
     return cells_w, cells_h, floored, blocked
 
 
+def city_districts(cfg, room_key):
+    """The stitched city `room_key` is a district of -> [(room, x, y, w, h)] for
+    every district of it, in config order, in cells from the union's top-left;
+    None for a room that is in no city.
+
+    The game merges the rooms listed in config `cities` into ONE walkable room
+    at load (src/systems/CityStitcher.js): the seam transporters between them
+    are dropped and you simply walk across. This is the only part of that
+    stitch the pipeline needs — who sits where, and that a LATER listed room
+    owns the cells it overlaps with an earlier one (its floor and colliders
+    are the ones there). test_blog_to_npc.py pins the result, cell for cell,
+    to what `node tools/play.js reach` gets from the stitcher itself."""
+    for city in (cfg.get('cities') or {}).values():
+        listed = city.get('rooms', [])
+        if len(listed) < 2 or not any(m['room'] == room_key for m in listed):
+            continue
+        if any(m['room'] not in cfg['rooms'] for m in listed):
+            continue                       # the game refuses to stitch this city too
+        min_x, min_y = min(m['x'] for m in listed), min(m['y'] for m in listed)
+        return [(m['room'], m['x'] - min_x, m['y'] - min_y) + room_cells(cfg, m['room'])[:2] for m in listed]
+    return None
+
+
+def city_reachable(cfg, districts):
+    """{district: {(x, y)}} — the cells of each district (its own coordinates)
+    a player can walk to in the stitched city: one flood over the merged
+    grid, from every door into it (a transporter that does not lead to a
+    sibling district) and from the spawn point if it is in the city.
+
+    Flooded afresh on every call (tens of milliseconds), never cached: a
+    caller may edit a district's layers or doors in place between calls."""
+    members = {d[0] for d in districts}
+    walkable = {}
+    for room, ox, oy, w, h in districts:        # a later district overwrites the cells it shares
+        _, _, floored, blocked = room_cells(cfg, room)
+        for y in range(h):
+            for x in range(w):
+                xy = f'{x},{y}'
+                walkable[(x + ox, y + oy)] = xy in floored and xy not in blocked
+    todo = []
+    for room, ox, oy, _, _ in districts:
+        todo += [(t['gridX'] + ox, t['gridY'] + oy) for t in cfg['rooms'][room].get('transporters', [])
+                 if t.get('targetRoom') not in members]
+        player = cfg.get('player') or {}
+        if player.get('startRoom') == room:
+            todo.append((player['startX'] + ox, player['startY'] + oy))
+    seen = set(todo)
+    while todo:
+        x, y = todo.pop()
+        for cell in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if cell not in seen and walkable.get(cell):
+                seen.add(cell)
+                todo.append(cell)
+    return {room: {(x - ox, y - oy) for x, y in seen if 0 <= x - ox < w and 0 <= y - oy < h}
+            for room, ox, oy, w, h in districts}
+
+
 def reachable_cells(cfg, room_key):
-    """(x, y) of every cell the player can walk to from the room's ways in
-    (its transporters), or None for a room that has none to start from —
-    callers then do not filter on reachability at all. Transporters are the
-    only seeds: if rooms ever join some other way, seed from that too."""
+    """(x, y) of every cell the player can walk to from the room's ways in, or
+    None for a room that has none to start from — callers then do not filter
+    on reachability at all (test_spots fails an overworld room like that).
+
+    A room on its own is entered by its transporters. A district of a
+    stitched city (config `cities`: Tokyo, Market, Palace, Park, Machi) is
+    also walked into from its neighbours, with no transporter involved, so it
+    is flooded as part of the whole city (city_reachable) — a district whose
+    only door is a konbini is not judged from that door alone, and one with
+    no door at all (Tokyo) still gets its answer (issue #124)."""
+    districts = city_districts(cfg, room_key)
+    if districts:
+        return city_reachable(cfg, districts)[room_key]
     cells_w, cells_h, floored, blocked = room_cells(cfg, room_key)
     todo = [(t['gridX'], t['gridY']) for t in cfg['rooms'][room_key].get('transporters', [])]
     if not todo:
@@ -305,8 +371,10 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
     uncollided, not a transporter, not an occupied cell (the test of
     GameScene.findWalkableNear) and connected to one of the room's ways in —
     so a landmark standing in a fenced garden puts its visitor outside the
-    fence, not in with it. `occupied` is (x,y) tuples already taken by other
-    NPCs (resolved positions, not base defs — see occupied_cells)."""
+    fence, not in with it. In a district of a stitched city "connected" means
+    walkable in the city as the game merges it (reachable_cells). `occupied`
+    is (x,y) tuples already taken by other NPCs (resolved positions, not base
+    defs — see occupied_cells)."""
     cells_w, cells_h, floored, blocked = room_cells(cfg, room_key)
     portals = {f"{t['gridX']},{t['gridY']}" for t in cfg['rooms'][room_key].get('transporters', [])}
     reachable = reachable_cells(cfg, room_key)
@@ -520,15 +588,21 @@ def resolve_pos(npc, date, window=None):
 
 
 def occupied_cells(cfg, room_key, date, exclude_name):
-    """Cells taken by other NPCs present in room_key as of date."""
+    """Cells taken by other NPCs present in room_key as of date — and, for a
+    district of a stitched city, by anyone standing in a neighbouring
+    district on a cell the two share (their maps overlap by a row or a
+    column), in room_key's own coordinates."""
+    districts = city_districts(cfg, room_key) or [(room_key, 0, 0, 0, 0)]
+    here = next(d for d in districts if d[0] == room_key)
     occ = set()
     window = trip_window(cfg, date)
-    for n in cfg['rooms'][room_key].get('npcs', []):
-        if n['name'].lower() == exclude_name.lower():
-            continue
-        present, x, y = resolve_pos(n, date, window)
-        if present and x is not None:
-            occ.add((x, y))
+    for room, ox, oy, _, _ in districts:
+        for n in cfg['rooms'][room].get('npcs', []):
+            if n['name'].lower() == exclude_name.lower():
+                continue
+            present, x, y = resolve_pos(n, date, window)
+            if present and x is not None:
+                occ.add((x + ox - here[1], y + oy - here[2]))
     return occ
 
 

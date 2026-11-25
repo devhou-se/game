@@ -198,17 +198,7 @@ class Shop {
      */
     checkShopInteraction(gridX, gridY) {
         if (this.visible || this.invVisible) return;
-        const roomKey = this.scene.roomManager.currentRoom;
-        const room = this.scene.roomManager.rooms[roomKey];
-        const roomConfig = this.scene.config.rooms[roomKey] || {};
-        const sizeOf = (key) => {
-            const tex = this.scene.textures.exists(key)
-                ? this.scene.textures.get(key).getSourceImage() : null;
-            return [tex ? Math.max(1, Math.round(tex.width / 64)) : 1,
-                    tex ? Math.max(1, Math.round(tex.height / 64)) : 1];
-        };
-        const hit = Interactions.find(room, roomConfig, gridX, gridY,
-            { group: 'shop', sizeOf, venues: Shop.VENUES });
+        const hit = this.scene.roomManager.interactionAt(gridX, gridY, 'shop');
         if (hit) return this.showShop(hit.kind);
     }
 

@@ -168,10 +168,18 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   `cities`, `src/systems/CityStitcher.js` — see "Stitched cities" in
   `gamev2/CLAUDE.md`). The five maps stay separate files and you keep
   editing them one at a time, in their own cell coordinates, but in the game:
-  - the seam transporters are ignored (keep them: `?stitch=0` and the tools
-    use them) and the player simply walks across, so **whatever stands on a
-    map's edge is now visible from the neighbour** — an edge fence, a
-    half-drawn road, a sprite hanging over the border;
+  - the seam transporters are ignored (keep them: `?stitch=0` uses them, and
+    `play.js check` surveys that fallback too) and the player simply walks
+    across, so **whatever stands on a map's edge is now visible from the
+    neighbour** — an edge fence, a half-drawn road, a sprite hanging over the
+    border;
+  - `node tools/play.js` and `/studio/` show the stitched city too (they run
+    the game's own stitcher): `lint <District>` still checks one map at a
+    time, `lint TokyoCity` (also run by a bare `lint`) checks the merged room
+    — a collider lost to an overlap, a hole a `patch` left — and
+    `render TokyoCity out.png` draws it with the woods. Coordinates stay the
+    district's own everywhere (`where` -> `Market 5,24 (TokyoCity 111,24)`);
+    `--stitch=0` / `/studio/?stitch=0` give the five separate rooms;
   - where two maps overlap (Tokyo/Market 1 column, Market/Palace 1 row,
     Palace/Park 4 rows) only the LATER map in `cities.<City>.rooms` is drawn
     and collides; the other map's tiles on those cells are dropped. Edit the
@@ -184,6 +192,15 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
     district there run `python3 tools/sync_cities.py` (then
     `tools/make_worldmap.py`) — the game refuses to stitch a city whose
     offsets disagree with the world map and falls back to separate rooms.
+    `make_worldmap.py` also draws the stitched city (woods included) into
+    the Map screen's image, so re-run it after any district edit.
+- **Nobody is lost behind tall art any more** (`src/systems/Occlusion.js`):
+  a roof, tower, torii top or tree crown that covers most of a character
+  fades to 40% while they are behind it. The Colliders layer is only for
+  where you cannot stand — do not add colliders to keep the player out of a
+  walk-behind strip, and note that the layer's `collider-marker` tiles are
+  never drawn by the game (they only feed the blocked-cell set; the debug
+  overlay shows them).
 - **Track rows in ported rooms are sealed cell-by-cell** (`gk_blank` under
   the `train-track` Over Floor sprite). A road crossing the tracks needs its
   two cells unsealed — that's a level crossing, precedent exists.

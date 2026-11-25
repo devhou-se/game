@@ -296,6 +296,8 @@ class DebugManager {
                 hits.push(`${label} z${t.getData('layerZ')} d${Math.round(t.depth)}${t.getData('layerCollision') ? ' [COLL]' : ''}${anchor}`);
             }
         });
+        // collider markers have no sprite: the cell is simply in the blocked set
+        if (this.scene.roomManager.isBlocked(gx, gy)) hits.push('collider [COLL]');
         return hits;
     }
 
@@ -409,14 +411,14 @@ class DebugManager {
         const x0 = cam.scrollX, y0 = cam.scrollY, x1 = x0 + cam.width, y1 = y0 + cam.height;
         this.overlay.fillStyle(0xff0000, 0.3);
         this.overlay.lineStyle(1, 0xff0000, 0.5);
-        s.roomManager.floorSprites.forEach(t => {
-            if (!t.getData('layerCollision')) return;
-            const px = t.getData('gridX') * GS, py = t.getData('gridY') * GS;
-            if (px < x1 && px + GS > x0 && py < y1 && py + GS > y0) {
-                this.overlay.fillRect(px, py, GS, GS);
-                this.overlay.strokeRect(px, py, GS, GS);
+        // colliders are a set of cells, not sprites: ask it for the cells in view
+        for (let gy = Math.floor(y0 / GS); gy * GS < y1; gy++) {
+            for (let gx = Math.floor(x0 / GS); gx * GS < x1; gx++) {
+                if (!s.roomManager.isBlocked(gx, gy)) continue;
+                this.overlay.fillRect(gx * GS, gy * GS, GS, GS);
+                this.overlay.strokeRect(gx * GS, gy * GS, GS, GS);
             }
-        });
+        }
         this.overlay.fillStyle(0xffff00, 0.35);
         this.overlay.lineStyle(2, 0xffff00, 0.9);
         this.flags.forEach(f => {

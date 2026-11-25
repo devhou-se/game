@@ -35,6 +35,18 @@ Cells are `x,y` from the room's top-left, the same numbers as `gridX`/`gridY`
 in `config.json`, Tiled cell coordinates, and the in-game debug inspector.
 `n` is up (y - 1), `e` is right (x + 1).
 
+**Tokyo is one stitched city.** The game merges Tokyo, Market, Palace, Park
+and Machi into a single room (`TokyoCity`) and so does this tool — it runs the
+game's own stitcher. Coordinates are still each district's own, everywhere:
+`where` prints `Market 5,24 (TokyoCity 111,24)`, `look` rules its map in the
+cells of the district you stand in (a neighbour's cells run negative or past
+the edge), and `goto`, `inspect` and `warp` take district cells. Walking from
+one district into the next is just a step (`walked from Tokyo into Market`);
+`goto Market 5 24` from Tokyo is one walk. `map` draws your district, `map
+city` the whole city; `lint TokyoCity` and `render TokyoCity out.png` work on
+the merged room, woodland included. Add `--stitch=0` to any command to model
+what `?stitch=0` plays: five rooms joined by hidden seam teleports.
+
 ## Reading the map
 
 `look [radius]` draws the cells around you; `map` draws the whole room. The
@@ -70,7 +82,8 @@ Everything marked is also listed under the map with its exact cell.
 
 - `move <n|s|e|w> [count] ...` walks cell by cell: `move n 3 e 2`. It stops at
   the first blocked step and tells you what you bumped.
-- `goto <x> <y>` pathfinds inside the current room and walks there.
+- `goto [room] <x> <y>` pathfinds inside the current room and walks there
+  (inside the Tokyo city name a district to cross into it: `goto Park 30 20`).
 - Stepping on a `>` changes room, exactly as in the game. `goto` treats
   transporters as walls unless one is the destination, so it never teleports
   you by accident.
@@ -97,6 +110,7 @@ the izakaya table to learn what would open.
 | Is the world still playable? | `check` |
 | Is this room's map well formed? | `lint [room]...` |
 | What does this room look like? | `render <room> <out.png> [--scale 0.5] [--colliders]` |
+| Which cells of a room can be walked to? | `reach [room]...` (JSON, the room's own cells) |
 
 `inspect` lists every tile on every layer covering the cell (including
 multi-cell sprites anchored elsewhere), whether a collider blocks it, any

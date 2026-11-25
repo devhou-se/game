@@ -16,6 +16,9 @@ const S = {
     show: Object.fromEntries(LAYERS.map(([k, , on]) => [k, on])),
     view: { x: 0, y: 0, z: 6 }, selected: null, survey: { problems: [], reach: {} },
 };
+// The game stitches the districts of config `cities` into one room, and the studio draws that
+// room. ?stitch=0 (as in the game) shows them as the separate rooms joined by seam teleports.
+const STITCH = new URLSearchParams(location.search).get('stitch') !== '0';
 
 const bust = Date.now();
 const getJSON = (url) => fetch(`${url}?t=${bust}`).then(r => r.ok ? r.json() : null).catch(() => null);
@@ -38,26 +41,43 @@ async function boot() {
     WorldModel.applyTiled(config, (k) => tmj[k]);
     const worldMap = await getJSON('../assets/map/world-map.json') || { rooms: {} };
 
-    const sprites = new Set();
-    for (const room of Object.values(config.rooms)) {
-        for (const layer of room.layers || []) for (const key of Object.values(layer.tiles || {})) sprites.add(key);
-        for (const npc of room.npcs || []) sprites.add(npc.sprite + '_frame_0');
-    }
-    await Promise.all([...sprites].map(loadImage));
-
+    // the model first (it stitches the cities), then the art of every room it holds - a stitched
+    // city's woodland tiles are in its merged layers, not in any config room
     S.model = new WorldModel(config, {
         exists: (key) => !!S.images[key],
         sizeOf: (key) => {
             const im = S.images[key];
             return im ? [Math.max(1, Math.round(im.width / 64)), Math.max(1, Math.round(im.height / 64))] : [1, 1];
         },
-    });
+    }, null, { stitch: STITCH, worldMap });
+    const sprites = new Set();
+    for (const room of Object.values(S.model.roomManager.rooms)) {
+        for (const layer of room.layers || []) for (const key of Object.values(layer.tiles || {})) sprites.add(key);
+    }
+    for (const room of Object.values(config.rooms)) {
+        for (const npc of room.npcs || []) sprites.add(npc.sprite + '_frame_0');
+    }
+    await Promise.all([...sprites].map(loadImage));
     const m = S.model;
 
-    layout(keys, worldMap);
-    for (const k of keys) {
+    // the rooms that are drawn: a stitched city stands in for its districts
+    const shown = m.runtimeRooms();
+    layout(shown, worldMap);
+    for (const k of shown) {
         m.enter(k, 0, 0);
-        Object.assign(S.rooms[k], { blocked: m.blocked, interactions: m.interactions(), art: renderArt(k), npcs: [] });
+        const r = S.rooms[k];
+        Object.assign(r, { blocked: m.blocked, interactions: m.interactions(), art: renderArt(k), npcs: [] });
+        // the woodland between a city's districts is scenery, not unreachable floor
+        r.outside = new Set();
+        if (r.members) {
+            for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) if (!m.roomManager.checkBoundary(x, y)) r.outside.add(x + ',' + y);
+        }
+    }
+    if (config.cities && Object.keys(config.cities).length) {
+        const b = $('stitch');
+        b.hidden = false;
+        b.setAttribute('aria-pressed', STITCH);
+        b.onclick = () => { location.search = STITCH ? '?stitch=0' : ''; };
     }
 
     // the days with posts, plus the first day of every trip and stay (the trip's base cast)
@@ -97,11 +117,15 @@ function layout(keys, worldMap) {
     const size = (k) => [m.roomManager.rooms[k].worldWidth / 64, m.roomManager.rooms[k].worldHeight / 64];
     let right = 0, bottom = 0;
     for (const k of keys) {
-        const rect = worldMap.rooms[k];
+        // a city sits where its first district is on the world map, less that district's offset in it
+        const city = m.roomManager.cities[k];
+        const anchor = city ? city.members.find(mem => worldMap.rooms[mem.key]) : null;
+        const rect = worldMap.rooms[anchor ? anchor.key : k];
         if (!rect) continue;
         const [w, h] = size(k);
         const scale = rect.w / rect.cells[0];
-        S.rooms[k] = { x: Math.round(rect.x / scale), y: Math.round(rect.y / scale), w, h };
+        S.rooms[k] = { x: Math.round(rect.x / scale) - (anchor ? anchor.x : 0), y: Math.round(rect.y / scale) - (anchor ? anchor.y : 0), w, h,
+            members: city ? city.members : null };
         right = Math.max(right, S.rooms[k].x + w);
         bottom = Math.max(bottom, S.rooms[k].y + h);
     }
@@ -114,7 +138,12 @@ function layout(keys, worldMap) {
         x += w + 4;
         rowH = Math.max(rowH, h);
     }
-    S.order = WorldModel.stackOrder(m.config, keys);
+    // bottom first. Districts shown side by side (?stitch=0) stack the way the stitched city does:
+    // the later one on top (WorldModel.stackOrder). A city's woodland fills its whole bounding box,
+    // and other towns sit inside that box on the world map (Inaka and Osaka, in the crook of
+    // Tokyo's L): cities are drawn first, under them
+    const stacked = WorldModel.stackOrder(m.config, keys);
+    S.order = stacked.filter(k => S.rooms[k].members).concat(stacked.filter(k => !S.rooms[k].members));
 }
 
 function renderArt(k) {
@@ -170,7 +199,7 @@ function draw() {
             ctx.fillStyle = 'rgba(27, 31, 59, 0.62)';
             for (let cy = 0; cy < r.h; cy++) for (let cx = 0; cx < r.w; cx++) {
                 const key = cx + ',' + cy;
-                if (!r.blocked.has(key) && !reach.has(key)) ctx.fillRect(x0 + cx * z, y0 + cy * z, z, z);
+                if (!r.blocked.has(key) && !reach.has(key) && !r.outside.has(key)) ctx.fillRect(x0 + cx * z, y0 + cy * z, z, z);
             }
         }
         if (S.show.interactions) {
@@ -183,19 +212,26 @@ function draw() {
         ctx.strokeStyle = COLOR.ink;
         ctx.lineWidth = 2;
         ctx.strokeRect(x0, y0, r.w * z, r.h * z);
+        // the districts of a stitched city: where one map ends and the next begins
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 1;
+        for (const mem of r.members || []) ctx.strokeRect(x0 + mem.x * z, y0 + mem.y * z, mem.w * z, mem.h * z);
+        ctx.setLineDash([]);
     }
 
     if (S.show.teleports) {
         for (const k of S.order) {
             const r = S.rooms[k];
             for (const t of S.model.roomManager.rooms[k].transporters) {
-                const to = S.rooms[t.targetRoom];
+                // a door's target is authored as (district, cell): where that is in the drawn room
+                const at = S.model.roomManager.resolve(t.targetRoom, t.targetX, t.targetY);
+                const to = S.rooms[at.room];
                 if (!to) continue;
                 const lit = S.selected && ((S.selected.room === k && S.selected.x === t.gridX && S.selected.y === t.gridY) ||
-                    (S.selected.room === t.targetRoom && S.selected.x === t.targetX && S.selected.y === t.targetY));
-                const near = S.selected && (S.selected.room === k || S.selected.room === t.targetRoom);
+                    (S.selected.room === at.room && S.selected.x === at.x && S.selected.y === at.y));
+                const near = S.selected && (S.selected.room === k || S.selected.room === at.room);
                 ctx.globalAlpha = lit || near || !S.selected ? (lit ? 1 : near ? 0.9 : 0.45) : 0.12;
-                arrow(sx(r.x + t.gridX + 0.5), sy(r.y + t.gridY + 0.5), sx(to.x + t.targetX + 0.5), sy(to.y + t.targetY + 0.5),
+                arrow(sx(r.x + t.gridX + 0.5), sy(r.y + t.gridY + 0.5), sx(to.x + at.x + 0.5), sy(to.y + at.y + 0.5),
                     lit ? COLOR.torii : COLOR.moss, lit ? 3 : 1.5);
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = COLOR.moss;
@@ -239,13 +275,18 @@ function draw() {
     }
 
     ctx.font = `bold ${Math.max(13, Math.min(20, z * 2.2))}px Pixel, monospace`;
+    const tag = (name, cx, cy) => {
+        const w = ctx.measureText(name).width, h = parseInt(ctx.font.slice(5), 10) + 6;
+        ctx.fillStyle = COLOR.ink;
+        ctx.fillRect(sx(cx), sy(cy), w + 12, h);
+        ctx.fillStyle = COLOR.paper;
+        ctx.fillText(name, sx(cx) + 6, sy(cy) + h - 6);
+    };
     for (const k of S.order) {
         const r = S.rooms[k];
-        const w = ctx.measureText(k).width, h = parseInt(ctx.font.slice(5), 10) + 6;
-        ctx.fillStyle = COLOR.ink;
-        ctx.fillRect(sx(r.x), sy(r.y), w + 12, h);
-        ctx.fillStyle = COLOR.paper;
-        ctx.fillText(k, sx(r.x) + 6, sy(r.y) + h - 6);
+        // a city is named by its districts, each at its own corner
+        if (r.members) for (const mem of r.members) tag(mem.key, r.x + mem.x, r.y + mem.y);
+        else tag(k, r.x, r.y);
     }
 
     ctx.strokeStyle = COLOR.torii;
@@ -289,18 +330,29 @@ function panels() {
     $('problems').replaceChildren(...problems.map(p => {
         const b = el('button', { className: 'row' },
             el('span', { textContent: p.text }),
-            el('span', { className: 'dim', textContent: p.room + (p.x === undefined ? '' : ` ${p.x},${p.y}`) }));
+            el('span', { className: 'dim', textContent: p.where || p.room }));
         b.onclick = () => p.x === undefined ? focusRoom(p.room) : select(p.room, p.x, p.y, true);
         return b;
     }));
-    $('rooms').replaceChildren(...Object.keys(S.model.config.rooms).map(k => {
-        const r = S.rooms[k];
+    // one row per room as authored: a city lists its districts (and, last, itself)
+    const rows = [];
+    const row = (name, w, h, npcs, go) => {
         const b = el('button', { className: 'row' },
-            el('span', { textContent: k }),
-            el('span', { className: 'dim', textContent: `${r.w}x${r.h}` + (r.npcs.length ? ` (${r.npcs.map(n => n.name).join(', ')})` : '') }));
-        b.onclick = () => focusRoom(k);
-        return b;
-    }));
+            el('span', { textContent: name }),
+            el('span', { className: 'dim', textContent: `${w}x${h}` + (npcs.length ? ` (${npcs.map(n => n.name).join(', ')})` : '') }));
+        b.onclick = go;
+        rows.push(b);
+    };
+    // listed in config order, whatever the stacking order is
+    for (const k of S.model.runtimeRooms()) {
+        const r = S.rooms[k];
+        for (const mem of r.members || []) {
+            row(mem.key, mem.w, mem.h, r.npcs.filter(n => n.homeRoom === mem.key),
+                () => focusRect(r.x + mem.x, r.y + mem.y, mem.w, mem.h));
+        }
+        row(r.members ? `${k} (stitched)` : k, r.w, r.h, r.members ? [] : r.npcs, () => focusRoom(k));
+    }
+    $('rooms').replaceChildren(...rows);
 }
 
 function inspect() {
@@ -316,18 +368,23 @@ function inspect() {
     const person = S.rooms[sel.room].npcs.some(n => n.gridX === sel.x && n.gridY === sel.y);
     const state = !inside ? ['outside the boundary', 'bad'] : m.blocked.has(key) ? ['blocked', 'bad']
         : person ? ['occupied', ''] : reach ? ['walkable', 'good'] : ['unreachable', 'bad'];
-    const parts = [el('h2', {}, el('span', { textContent: `${sel.room} ${sel.x},${sel.y}` }), el('span', { className: 'badge ' + state[1], textContent: state[0] }))];
+    // named the way config and the maps name it: the district's own cell inside a stitched city
+    const local = m.roomManager.districtsAt(sel.x, sel.y, sel.room)[0] || sel;
+    const parts = [el('h2', {}, el('span', { textContent: `${local.room} ${local.x},${local.y}` }), el('span', { className: 'badge ' + state[1], textContent: state[0] }))];
+    if (local.room !== sel.room) parts.push(el('div', { className: 'row' }, el('span', { textContent: `${sel.room} ${sel.x},${sel.y}` }), el('span', { className: 'dim', textContent: 'stitched city cell' })));
 
     const t = m.room.transporters.find(t => t.gridX === sel.x && t.gridY === sel.y);
     if (t) {
         const go = el('button', { className: 'row' }, el('span', { textContent: `→ ${t.targetRoom} ${t.targetX},${t.targetY}` }), el('span', { className: 'dim', textContent: t.hidden ? 'hidden door' : 'transporter' }));
-        go.onclick = () => select(t.targetRoom, t.targetX, t.targetY, true);
+        const dest = m.roomManager.resolve(t.targetRoom, t.targetX, t.targetY);
+        go.onclick = () => select(dest.room, dest.x, dest.y, true);
         parts.push(go);
     }
-    for (const [k, room] of Object.entries(m.roomManager.rooms)) {
-        for (const from of room.transporters) {
-            if (from.targetRoom !== sel.room || from.targetX !== sel.x || from.targetY !== sel.y) continue;
-            const back = el('button', { className: 'row' }, el('span', { textContent: `← ${k} ${from.gridX},${from.gridY}` }), el('span', { className: 'dim', textContent: 'arrives here' }));
+    for (const k of S.order) {
+        for (const from of m.roomManager.rooms[k].transporters) {
+            const dest = m.roomManager.resolve(from.targetRoom, from.targetX, from.targetY);
+            if (dest.room !== sel.room || dest.x !== sel.x || dest.y !== sel.y) continue;
+            const back = el('button', { className: 'row' }, el('span', { textContent: `← ${m.spot(k, from.gridX, from.gridY)}` }), el('span', { className: 'dim', textContent: 'arrives here' }));
             back.onclick = () => select(k, from.gridX, from.gridY, true);
             parts.push(back);
         }
@@ -347,7 +404,7 @@ function inspect() {
     parts.push(el('ul', { className: 'tiles' }, ...tiles.map(tile => el('li', { className: tile.collision ? 'solid' : '' },
         `${tile.layer} z${tile.z}: ${tile.key}` + (tile.at[0] !== sel.x || tile.at[1] !== sel.y ? ` (from ${tile.at.join(',')})` : '')))));
 
-    const cmd = `node tools/play.js warp ${sel.room} ${sel.x} ${sel.y}`;
+    const cmd = `node tools/play.js warp ${local.room} ${local.x} ${local.y}`;
     const code = el('code', { textContent: cmd });
     code.onclick = () => navigator.clipboard && navigator.clipboard.writeText(cmd);
     parts.push(code);
@@ -368,9 +425,13 @@ function select(room, x, y, pan) {
 
 function focusRoom(k) {
     const r = S.rooms[k];
-    S.view.z = Math.min(stage.clientWidth / (r.w + 4), stage.clientHeight / (r.h + 6));
-    S.view.x = r.x + r.w / 2 - stage.clientWidth / 2 / S.view.z;
-    S.view.y = r.y + r.h / 2 - stage.clientHeight / 2 / S.view.z;
+    focusRect(r.x, r.y, r.w, r.h);
+}
+
+function focusRect(x, y, w, h) {
+    S.view.z = Math.min(stage.clientWidth / (w + 4), stage.clientHeight / (h + 6));
+    S.view.x = x + w / 2 - stage.clientWidth / 2 / S.view.z;
+    S.view.y = y + h / 2 - stage.clientHeight / 2 / S.view.z;
     draw();
 }
 
@@ -421,7 +482,8 @@ function bind() {
         const cx = S.view.x + (e.clientX - box.left) / S.view.z, cy = S.view.y + (e.clientY - box.top) / S.view.z;
         const cell = (k) => ({ room: k, x: Math.floor(cx - S.rooms[k].x), y: Math.floor(cy - S.rooms[k].y) });
         const under = S.order.filter(k => { const r = S.rooms[k]; return cx >= r.x && cx < r.x + r.w && cy >= r.y && cy < r.y + r.h; }).map(cell);
-        // the top room takes the click; clicking the selected cell again picks the room underneath
+        // the room drawn on top takes the click (a later district over an earlier one, a town over
+        // a city's box); clicking the selected cell again picks the room underneath
         const hit = WorldModel.stackPick(under, S.selected);
         if (hit) select(hit.room, hit.x, hit.y, false);
         else { S.selected = null; inspect(); draw(); }
