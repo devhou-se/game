@@ -58,9 +58,9 @@ python3 tools/sync_cities.py --check    # config `cities` and devhouse.world agr
 - After touching `blog_to_npc.py`, a Hokkaido map, the trips or the cast: `python3 tools/rehearse_blog.py`.
 - Add or extend a unit test for logic you change (`tools/tests/*.test.js`, `tools/test_blog_to_npc.py`). When a
   fix lives in a Phaser-side class, pull the decision into a static function there and add a case.
-The tests live in `tools/tests/<area>.test.js` (`test_game.js` is only the runner and its shared helpers): add a
-`test('name', () => { ... })` to the file for its area, or start a new `*.test.js` there — it is found by name,
-no other file needs an edit, and a name already used anywhere is an error.
+  The tests live in `tools/tests/<area>.test.js` (`test_game.js` is only the runner and its shared helpers): add a
+  `test('name', () => { ... })` to the file for its area, or start a new `*.test.js` there — it is found by name,
+  no other file needs an edit, and a name already used anywhere is an error.
 
 ## Rules for every change
 
