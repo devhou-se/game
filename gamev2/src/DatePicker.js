@@ -16,6 +16,15 @@
  * selected day is on is lit — and a click on a name, or SHIFT with
  * left/right, jumps the selection to that trip's first day with posts
  * (Trips.jump), so two trips fifteen months apart are one press away.
+ *
+ * Three days are marked, and they are rarely the same one: the real today
+ * (gold), the day the game is on (blue — outside a trip that is a trip
+ * day, a year or more of months away from today; see defaultGameDate) and
+ * the cursor (green box). The legend (DatePicker.legend) only names a colour
+ * that is on the month being shown, and the jump row under the selected date — each button
+ * in the colour of its day — moves the cursor straight to today or to the
+ * game's day: click / tap one, or SHIFT with up (today) / down (the game's
+ * day) (issue #98).
  */
 class DatePicker {
     constructor(scene) {
@@ -86,6 +95,23 @@ class DatePicker {
         if (to) this.select(to);
     }
 
+    /**
+     * The jump row's days, as [label, iso, colour]: the real today, and the
+     * day the game is on when that is another day.
+     */
+    jumps() {
+        const today = this.iso(new Date()), live = gameDate();
+        const jumps = [['today', today, DatePicker.TODAY]];
+        if (live !== today) jumps.push(['you are here', live, DatePicker.LIVE]);
+        return jumps;
+    }
+
+    /** Jump to the first (0: today) or second (1: the game's day) of the jump row's days. */
+    jumpTo(i) {
+        const jumps = this.jumps();
+        this.select((jumps[i] || jumps[0])[1]);
+    }
+
     confirm() {
         const target = this.iso(this.sel);
         this.hide();
@@ -104,18 +130,20 @@ class DatePicker {
         if (JD(k.esc)) return this.hide();
         if (JD(k.enter) || JD(k.space)) return this.confirm();
         const left = JD(k.left) || JD(k.a), right = JD(k.right) || JD(k.d);
+        const up = JD(k.up) || JD(k.w), down = JD(k.down) || JD(k.s);
         if (k.shift.isDown && (left || right)) return this.jumpTrip(left ? -1 : 1);
+        if (k.shift.isDown && (up || down)) return this.jumpTo(up ? 0 : 1);
         if (left) return this.moveDays(-1);
         if (right) return this.moveDays(1);
-        if (JD(k.up) || JD(k.w)) return this.moveDays(-7);
-        if (JD(k.down) || JD(k.s)) return this.moveDays(7);
+        if (up) return this.moveDays(-7);
+        if (down) return this.moveDays(7);
     }
 
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
         // the trips row (when the config has trips) makes the panel one row taller
         const tripRow = this.trips.length ? 34 : 0;
-        const pw = 480, ph = 470 + tripRow, px = (W - pw) / 2, py = (H - ph) / 2;
+        const pw = 480, ph = 500 + tripRow, px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = this.objs;
 
         const overlay = scene.add.graphics();
@@ -189,18 +217,34 @@ class DatePicker {
                 marks.fillRect(cxp - 2, cyp + 13, 4, 4);
             }
             let color = '#ffffff';
-            if (dIso === todayIso) color = '#ffd700';
-            else if (dIso === liveIso) color = '#88ccff';
-            const t = text(cxp, cyp, String(day), '18px', dIso === todayIso, color);
+            if (dIso === todayIso) color = DatePicker.TODAY;
+            else if (dIso === liveIso) color = DatePicker.LIVE;
+            const t = text(cxp, cyp, String(day), '18px', dIso === todayIso || dIso === liveIso, color);
             t.setInteractive({ useHandCursor: true });
             t.on('pointerdown', () => { this.sel = new Date(year, month, day); this.confirm(); });
             this.dayCells.push(t);
         }
 
-        if (tripRow) this.renderTrips(text, cx, py + ph - 78 - tripRow, selIso);
-        text(cx, py + ph - 78, `viewing: ${formatGameDate(selIso)}`, '18px', true, '#33cc66');
-        const [marksLine, keysLine] = DatePicker.legend(this.trips.length > 0);
-        text(cx, py + ph - 50, marksLine, '16px', false, '#888888');
+        if (tripRow) this.renderTrips(text, cx, py + ph - 108 - tripRow, selIso);
+        text(cx, py + ph - 108, `viewing: ${formatGameDate(selIso)}`, '18px', true, '#33cc66');
+
+        // jump row: each button wears the colour its day has on the grid
+        const row = this.jumps().map(([label, iso, color]) => {
+            const b = text(0, py + ph - 80, `[ ${label} ]`, '16px', true, color, 0);
+            b.setInteractive({ useHandCursor: true });
+            b.on('pointerdown', () => this.select(iso));
+            return b;
+        });
+        row.push(text(0, py + ph - 80, Hints.text(scene, 'SHIFT + ↑/↓'), '16px', false, '#888888', 0));
+        const gap = 10;
+        let x = cx - (row.reduce((w, o) => w + o.width, 0) + gap * (row.length - 1)) / 2;
+        for (const o of row) { o.setX(Math.round(x)); x += o.width + gap; }
+
+        // the legend names only the colours that are on this month
+        const inView = (iso) => iso.slice(0, 7) === selIso.slice(0, 7);
+        const [marksLine, keysLine] = DatePicker.legend(this.trips.length > 0,
+            { today: inView(todayIso), live: liveIso !== todayIso && inView(liveIso) });
+        text(cx, py + ph - 52, marksLine, '16px', false, '#888888');
         text(cx, py + ph - 26, Hints.text(scene, keysLine), '16px', false, '#888888');
     }
 
@@ -208,10 +252,26 @@ class DatePicker {
      * The two legend lines under the grid: what the marks on a day mean
      * (the underline only when the config has trips to underline), then the
      * keys. Each has to fit the 480px panel — 52 characters at 16px.
+     *
+     * `shown` says which coloured days are on the month in view — `today`
+     * (gold) and `live` (blue: the day the game is on, when that is not
+     * today) — and only those are named: "gold = today" under a month a
+     * year away from today explains nothing (issue #98). Left out, today is
+     * taken to be in view. A line that would be too long is worded shorter.
      */
-    static legend(hasTrips) {
+    static legend(hasTrips, shown) {
+        const { today, live } = shown || { today: true, live: false };
+        const marks = (dot, underline, blue) => [dot]
+            .concat(hasTrips ? [underline] : [], live ? [blue] : [], today ? ['gold = today'] : [])
+            .join(' · ');
+        const wordings = [
+            ['dot = blog post', 'underline = trip', 'blue = you are here'],
+            ['dot = post', 'underline = trip', 'blue = you are here'],
+            ['dot = post', 'underline = trip', 'blue = you'],
+            ['dot = post', 'line = trip', 'blue = you'],
+        ].map(w => marks(...w));
         return [
-            'dot = blog post · ' + (hasTrips ? 'underline = trip · ' : '') + 'gold = today',
+            wordings.find(line => line.length <= DatePicker.LEGEND_CHARS) || wordings[wordings.length - 1],
             'arrows: day/week · ENTER/click: travel · ESC: close',
         ];
     }
@@ -248,3 +308,9 @@ class DatePicker {
         text(x, y, hint, '16px', false, '#888888', 0);
     }
 }
+
+/** Day-number colours: the real today, and the day the game is on. */
+DatePicker.TODAY = '#ffd700';
+DatePicker.LIVE = '#88ccff';
+/** Characters of 16px PixelOperatorMono (8.8px each) that fit the 480px panel with a margin. */
+DatePicker.LEGEND_CHARS = 52;

@@ -637,6 +637,20 @@ class RoomManager {
     }
 
     /**
+     * The columns a room's walkable outline spans, in world px ({x0, x1}):
+     * its `boundary` polygon, whose corners are cell edges. An interior is
+     * drawn in the middle of a larger map of void, and this is the part that
+     * is the room. null for a room with no outline of its own (a stitched
+     * city asks its districts).
+     */
+    contentColumns(roomKey) {
+        const room = this.rooms[roomKey];
+        if (!room || !room.boundary || !room.boundary.length) return null;
+        const xs = room.boundary.map(([x]) => x), GS = this.scene.GRID_SIZE;
+        return { x0: Math.min(...xs) * GS, x1: Math.max(...xs) * GS };
+    }
+
+    /**
      * Switch to a different room
      * @param {string} newRoom - Target room name
      * @param {number} targetX - Target grid X position
@@ -646,18 +660,21 @@ class RoomManager {
         // Block input during transition
         this.isTransitioning = true;
 
-        // Fade to black
-        this.scene.cameras.main.fadeOut(250, 0, 0, 0);
+        // Fade to black — on the camera drawn last, so the fade covers the
+        // HUD and overlays too when UIScale has them on cameras of their own
+        const ui = this.scene.uiScale;
+        const cam = ui && ui.active && ui.camera ? ui.camera : this.scene.cameras.main;
+        cam.fadeOut(250, 0, 0, 0);
 
-        this.scene.cameras.main.once('camerafadeoutcomplete', () => {
+        cam.once('camerafadeoutcomplete', () => {
             this.applyRoomSwap(newRoom, targetX, targetY);
 
             // Wait 0.25 seconds on black, then fade in
             this.scene.time.delayedCall(250, () => {
-                this.scene.cameras.main.fadeIn(250, 0, 0, 0);
+                cam.fadeIn(250, 0, 0, 0);
 
                 // Re-enable input after fade-in completes
-                this.scene.cameras.main.once('camerafadeincomplete', () => {
+                cam.once('camerafadeincomplete', () => {
                     this.isTransitioning = false;
                 });
             });

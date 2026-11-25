@@ -34,6 +34,10 @@ function resizeGame() {
 }
 
 window.addEventListener('resize', resizeGame);
+// phones settle their viewport after the first layout and on rotation, not
+// always with a window resize
+window.addEventListener('orientationchange', resizeGame);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resizeGame);
 // Apply once the canvas exists, then keep it in sync with the window.
 game.events.once('ready', resizeGame);
 resizeGame();

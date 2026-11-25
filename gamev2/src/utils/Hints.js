@@ -16,6 +16,13 @@
  * ENTER does (dialogue, intro): their confirm key reads "TAP or A".
  *
  * Without touch controls the text comes back untouched.
+ *
+ * The controls come and go with the input in use (a touchscreen laptop is a
+ * keyboard until its screen is touched — see TouchControls), so every hint
+ * handed out is remembered: `Hints.refresh(scene)` rewords the ones on
+ * screen when the input changes, and `Hints.isHint(text)` lets UIScale keep
+ * hint lines above a minimum size on small screens. Neither needs anything
+ * from the overlay that asked for the hint.
  */
 class Hints {
     /** Are the on-screen touch controls in use? */
@@ -24,14 +31,44 @@ class Hints {
     }
 
     static text(scene, keyboardText, opts) {
-        if (!Hints.touch(scene)) return keyboardText;
+        const touch = Hints.word(keyboardText, opts);
+        const source = { keyboard: keyboardText, opts };
+        Hints.issued.set(keyboardText, source);
+        Hints.issued.set(touch, source);
+        return Hints.touch(scene) ? touch : keyboardText;
+    }
+
+    /** The touch wording of a keyboard hint. */
+    static word(keyboardText, opts) {
         const a = opts && opts.tap ? 'TAP or A' : 'A';
         return Hints.RULES.reduce(
             (text, [pattern, to]) => text.replace(pattern, to.replace('{A}', a)),
             keyboardText
         );
     }
+
+    /** Is this string a hint line (in either wording) that `text()` handed out? */
+    static isHint(text) {
+        return Hints.issued.has(text);
+    }
+
+    /** Reword every hint on screen for the input now in use. */
+    static refresh(scene) {
+        if (!scene || !scene.children) return;
+        const visit = (o) => {
+            if (o.type === 'Container') return o.list.forEach(visit);
+            if (o.type !== 'Text') return;
+            const source = Hints.issued.get(o.text);
+            if (!source) return;
+            const now = Hints.text(scene, source.keyboard, source.opts);
+            if (now !== o.text) o.setText(now);
+        };
+        scene.children.list.forEach(visit);
+    }
 }
+
+/** Every hint handed out, under both of its wordings -> { keyboard, opts }. */
+Hints.issued = new Map();
 
 /** Applied in order: the combined spellings first, single keys last. */
 Hints.RULES = [

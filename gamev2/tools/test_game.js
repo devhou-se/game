@@ -11,11 +11,12 @@ const ctx = vm.createContext({
     location: { search: '' },
     performance: { now: () => Date.now() },
     KeyboardEvent: class { constructor(type, init) { Object.assign(this, init, { type }); } },
+    navigator: { maxTouchPoints: 0 },
     window: { dispatchEvent: (e) => fired.push(e.type + ':' + e.code) },
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
-['utils/ConfigCodec.js', 'systems/TiledAdapter.js', 'utils/Trips.js', 'utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DatePicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
-    'utils/Hints.js', 'utils/JapaneseFont.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js', 'systems/UIScale.js',
+['utils/ConfigCodec.js', 'systems/TiledAdapter.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Hints.js', 'TrainTravel.js', 'StationPicker.js', 'DatePicker.js', 'DialogueManager.js', 'systems/Viewport.js', 'systems/UIScale.js', 'systems/TouchControls.js',
+    'utils/JapaneseFont.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js',
     'systems/RoomManager.js', 'systems/CollisionSystem.js', '../tools/world-model.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
@@ -825,6 +826,98 @@ const tests = {
         assert.deepStrictEqual(fired, ['keydown:Space'], 'the button still sends its key exactly once');
     },
 
+    'touch controls never cost the canvas any size, and desktop windows are centred'() {
+        const layout = game('Viewport.layout');
+        for (const [w, h] of [[844, 390], [667, 375], [1024, 768], [1180, 820], [1366, 1024], [1280, 960]]) {
+            const bare = layout(w, h, false), touch = layout(w, h, true);
+            assert.deepStrictEqual([touch.width, touch.height], [bare.width, bare.height], `${w}x${h} canvas`);
+        }
+        // room in the side bars: controls beside the canvas, nothing under them
+        const land = layout(844, 390, true);
+        assert.deepStrictEqual([land.mode, land.controls, land.insets.left, land.insets.right], ['side', 0.8, 0, 0]);
+        // none: over the bottom corners, at the floor (lower on a small phone), and how far in they reach
+        const small = layout(667, 375, true), tablet = layout(1024, 768, true);
+        assert.deepStrictEqual([small.mode, small.controls, tablet.mode, tablet.controls], ['over', 0.6, 'over', 0.75]);
+        assert.ok(small.insets.left > 0 && small.insets.right > 0 && small.insets.bottom > 0);
+        assert.strictEqual(tablet.insets.left, Math.round((16 + 174 * 0.75 + 6) / 0.8));
+        // portrait: the canvas fills the height above the controls and the window crops its sides
+        const port = layout(390, 844, true);
+        assert.strictEqual(port.mode, 'portrait');
+        assert.ok(port.height > 600 && port.top + port.height <= 844 - 16 - 210 - 6 + 0.5, 'fills the space above the controls');
+        assert.strictEqual(port.crop.left + port.crop.right + Math.round(390 / port.scale), 1280, 'crop + visible = canvas');
+        assert.ok(1280 - port.crop.left - port.crop.right >= 560, 'a useful width stays in view');
+        // without touch controls a portrait window is just a small canvas
+        assert.strictEqual(layout(390, 844, false).width, 390);
+        // desktop: 1:1 where it fits, centred both ways (issue #114)
+        assert.deepStrictEqual([layout(1280, 960, false).left, layout(1280, 960, false).top], [0, 0]);
+        const tall = layout(1440, 1200, false);
+        assert.deepStrictEqual([tall.scale, tall.left, tall.top, tall.mode], [1, 80, 120, 'none']);
+    },
+
+    'overlays are fitted beside or above the touch controls, and shrink only when something is in the way'() {
+        const fit = game('UIScale.fit');
+        const placed = (box, f) => [f.offsetX + box.x0 * f.zoom, f.offsetY + box.y0 * f.zoom, f.offsetX + box.x1 * f.zoom, f.offsetY + box.y1 * f.zoom];
+        const panel = { x0: 400, y0: 230, x1: 880, y1: 730 };         // 480x500, centred
+        const wide = { x0: 20, y0: 150, x1: 1260, y1: 830 };           // nearly the whole canvas
+        // nothing in the way: magnified up to what is wanted, never shrunk
+        assert.strictEqual(fit(panel, 2.46, 1280, 960).zoom, 1.87);
+        assert.strictEqual(fit(wide, 2.46, 1280, 960).zoom, 1.01);
+        assert.strictEqual(fit({ x0: 0, y0: 0, x1: 1280, y1: 950 }, 2.46, 1280, 960).zoom, 1);
+        // controls over the bottom corners: the wide box goes above them or between them
+        const insets = { left: 191, right: 173, bottom: 224 };
+        const full = { x0: 20, y0: 60, x1: 1260, y1: 900 };
+        const f = fit(full, 1.25, 1280, 960, insets), at = placed(full, f);
+        assert.ok(f.zoom < 1, 'shrunk to fit');
+        const between = at[0] >= insets.left - 0.01 && at[2] <= 1280 - insets.right + 0.01;
+        const above = at[3] <= 960 - insets.bottom + 0.01;
+        assert.ok(between || above, `clear of the controls: ${at}`);
+        // the shorter one fits above them without shrinking, slid up
+        const up = fit(wide, 1.25, 1280, 960, insets);
+        assert.ok(up.zoom >= 1 && placed(wide, up)[3] <= 960 - insets.bottom + 0.01);
+        // a panel that fits between them is not touched at 1:1
+        assert.deepStrictEqual([fit(panel, 1, 1280, 960, insets).zoom, fit(panel, 1, 1280, 960, insets).offsetX], [1, 0]);
+        // room kept for a toast under the panel
+        const r = fit(panel, 2.46, 1280, 960, null, false, 846);
+        assert.ok(placed(panel, r)[3] <= 846 + 0.01 && r.zoom < 1.87);
+        // a cropped portrait view: a panel wider than the view shrinks into it
+        const narrow = fit({ x0: 320, y0: 155, x1: 960, y1: 805 }, 1.57, 612, 960, null, true, null, { width: 1280, height: 960 });
+        const n = placed({ x0: 320, y0: 155, x1: 960, y1: 805 }, narrow);
+        assert.ok(narrow.zoom < 1 && n[0] >= 12 - 0.01 && n[2] <= 600 + 0.01, `inside the view: ${n}`);
+    },
+
+    'hints are worded for the input in use, and remembered under both wordings'() {
+        const Hints = game('Hints');
+        const scene = { touchControls: { enabled: false } };
+        assert.strictEqual(Hints.text(scene, 'ENTER/click: travel · ESC: close'), 'ENTER/click: travel · ESC: close');
+        scene.touchControls.enabled = true;
+        assert.strictEqual(Hints.text(scene, 'ENTER/click: travel · ESC: close'), 'A/tap: travel · B: close');
+        assert.strictEqual(Hints.text(scene, 'SPACE/ENTER: continue | ESC: close', { tap: true }), 'TAP or A: continue | B: close');
+        assert.ok(Hints.isHint('A/tap: travel · B: close') && Hints.isHint('ENTER/click: travel · ESC: close'));
+        assert.ok(!Hints.isHint('November 2025'));
+        // a line on screen is reworded in place when the input changes
+        const line = { type: 'Text', text: 'TAP or A: continue | B: close', setText(t) { this.text = t; } };
+        const other = { type: 'Text', text: 'Dylan', setText() { throw new Error('not a hint'); } };
+        scene.children = { list: [{ type: 'Container', list: [line] }, other] };
+        scene.touchControls.enabled = false;
+        Hints.refresh(scene);
+        assert.strictEqual(line.text, 'SPACE/ENTER: continue | ESC: close');
+    },
+
+    'a touchscreen laptop is a keyboard until it is touched'() {
+        const touchFirst = () => game('TouchControls.touchFirst()');
+        const win = game('window'), nav = game('navigator');
+        nav.maxTouchPoints = 0;
+        assert.strictEqual(touchFirst(), false, 'no touch screen');
+        nav.maxTouchPoints = 10;
+        win.matchMedia = (q) => ({ matches: q === '(pointer: coarse)' });
+        assert.strictEqual(touchFirst(), true, 'phone / tablet: the main pointer is a finger');
+        win.matchMedia = () => ({ matches: false });
+        assert.strictEqual(touchFirst(), false, 'touchscreen laptop: the main pointer is a mouse');
+        const keys = game('TouchControls.GAME_KEYS');
+        assert.ok(['KeyW', 'ArrowLeft', 'Space', 'Enter', 'Escape', 'ShiftLeft'].every(k => keys.test(k)));
+        assert.ok(!['KeyQ', 'Tab', 'F5', 'MetaLeft'].some(k => keys.test(k)));
+    },
+
     'a dialogue line is captioned with the post it came from, when that is recorded'() {
         const postForLine = game('postForLine'), postLink = game('postLink');
         const ramen = { id: '10', lines: 2, title: 'Ramen again', url: 'https://devhou.se/posts/10' };
@@ -1120,6 +1213,25 @@ const tests = {
             assert.ok(/arrows: day\/week/.test(keys) && /ESC: close/.test(keys));
             // 16px PixelOperatorMono is 8.8px a character: 52 fit the 480px panel with a margin
             for (const line of [marks, keys]) assert.ok(line.length <= 52, `${line.length} chars: ${line}`);
+        }
+    },
+
+    'the Time Travel legend only names the colours on the month shown, and still fits (#98)'() {
+        const legend = game('DatePicker.legend');
+        // a trip month a year from today: the game day is here, today is not
+        assert.strictEqual(legend(true, { today: false, live: true })[0], 'dot = post · underline = trip · blue = you are here');
+        // today's month, the game elsewhere; and a month with neither
+        assert.strictEqual(legend(true, { today: true, live: false })[0], 'dot = blog post · underline = trip · gold = today');
+        assert.strictEqual(legend(true, { today: false, live: false })[0], 'dot = blog post · underline = trip');
+        assert.strictEqual(legend(false, { today: false, live: true })[0], 'dot = blog post · blue = you are here');
+        // both on one month (?date= a day of this month)
+        assert.ok(/blue = you/.test(legend(true, { today: true, live: true })[0]) && /gold = today/.test(legend(true, { today: true, live: true })[0]));
+        for (const hasTrips of [true, false]) for (const today of [true, false]) for (const live of [true, false]) {
+            const [marks] = legend(hasTrips, { today, live });
+            assert.ok(marks.length <= 52, `${marks.length} chars: ${marks}`);
+            assert.strictEqual(/gold/.test(marks), today);
+            assert.strictEqual(/blue/.test(marks), live);
+            assert.strictEqual(/trip/.test(marks), hasTrips);
         }
     },
 
@@ -2088,6 +2200,46 @@ const tests = {
         assert.strictEqual(T.jump(trips, '2026-05-01', 1, posts), '2027-02-18');
         assert.strictEqual(T.jump(trips, '2027-02-20', 1, posts), null);
         assert.strictEqual(T.jump(trips, '2025-10-04', -1, posts), null);
+    },
+
+    'a room change fades the camera drawn last, so the HUD goes dark with the world (#110)'() {
+        const RM = game('RoomManager');
+        const camera = (name) => ({ name, calls: [], fadeOut() { this.calls.push('out'); }, fadeIn() { this.calls.push('in'); },
+            once(event, fn) { this.calls.push(event); this.fn = fn; } });
+        const run = (uiScale) => {
+            const main = camera('main');
+            const rm = { scene: { cameras: { main }, uiScale, time: { delayedCall: (ms, fn) => fn() } }, swapped: 0, applyRoomSwap() { this.swapped++; } };
+            RM.prototype.switchRoom.call(rm, 'Machi', 1, 1);
+            const cam = uiScale && uiScale.active ? uiScale.camera : main;
+            assert.strictEqual(rm.isTransitioning, true);
+            cam.fn();                                   // fade-out complete: swap, hold, fade in
+            assert.strictEqual(rm.swapped, 1);
+            cam.fn();                                   // fade-in complete
+            assert.strictEqual(rm.isTransitioning, false);
+            return { main, cam };
+        };
+        // one camera (a desktop-sized window): the main camera, as ever
+        let r = run({ active: false, camera: camera('ui') });
+        assert.deepStrictEqual(r.main.calls, ['out', 'camerafadeoutcomplete', 'in', 'camerafadeincomplete']);
+        r = run(undefined);
+        assert.strictEqual(r.main.calls.length, 4);
+        // three cameras (phone, small window): the overlay camera, which is drawn over the HUD's
+        r = run({ active: true, camera: camera('ui') });
+        assert.deepStrictEqual(r.cam.calls, ['out', 'camerafadeoutcomplete', 'in', 'camerafadeincomplete']);
+        assert.deepStrictEqual(r.main.calls, []);
+    },
+
+    'a room narrower than a phone view is measured by its boundary (#110)'() {
+        const RM = game('RoomManager');
+        const rm = { scene: { GRID_SIZE: 64 }, rooms: {
+            Konbini: { boundary: [[6, 4], [14, 4], [14, 10], [11, 10], [11, 11], [9, 11], [9, 10], [6, 10]] },
+            City: { boundary: null } } };
+        assert.strictEqual(JSON.stringify(RM.prototype.contentColumns.call(rm, 'Konbini')), '{"x0":384,"x1":896}');
+        assert.strictEqual(RM.prototype.contentColumns.call(rm, 'City'), null);
+        assert.strictEqual(RM.prototype.contentColumns.call(rm, 'Nowhere'), null);
+        // the camera bounds only change when the view is narrower than the canvas
+        const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(/if \(viewW < this\.scale\.width\) \{\s*const cols = this\.roomManager\.contentColumns\(roomKey\)/.test(src));
     },
 };
 

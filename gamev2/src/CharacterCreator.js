@@ -571,6 +571,7 @@ class CharacterCreator {
             this.nameInput = null;
             window.removeEventListener('resize', this.onResize);
             this.scene.events.off('uiscalechange', this.onResize);
+            this.scene.events.off('inputmodechange', this.onResize);
         }
         if (this.previewKey && this.scene.textures.exists(this.previewKey)) {
             this.scene.textures.remove(this.previewKey);
@@ -680,7 +681,7 @@ class CharacterCreator {
 
     render() {
         const scene = this.scene;
-        const { W, H, pw, ph, px, py } = this.layout();
+        const { W, H, pw, ph, px, py } = this.drawn = this.layout();
         const objs = this.objs;
 
         const overlay = scene.add.graphics();
@@ -966,6 +967,8 @@ class CharacterCreator {
         this.nameInput = el;
         window.addEventListener('resize', this.onResize);
         this.scene.events.on('uiscalechange', this.onResize);
+        // the touch controls coming or going can move the canvas with no resize and no zoom change
+        this.scene.events.on('inputmodechange', this.onResize);
         this.positionNameInput();
     }
 
@@ -977,7 +980,8 @@ class CharacterCreator {
         const rect = canvas.getBoundingClientRect();
         const sx = rect.width / this.scene.game.config.width;
         const sy = rect.height / this.scene.game.config.height;
-        const { px, py } = this.layout();
+        // where the panel was drawn: the view may have changed width since (a phone turned)
+        const { px, py } = this.drawn || this.layout();
         // the panel may be magnified on small viewports (see UIScale)
         const ui = this.scene.uiScale, zoom = ui ? ui.zoom : 1;
         const at = ui ? ui.project(px + 340, py + 68) : { x: px + 340, y: py + 68 };

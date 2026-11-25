@@ -359,31 +359,6 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
-     * The HUD's date segment: the game date, led by its trip's name on a
-     * trip day when the line still ends clear of the menu button with it
-     * (it does not in rooms with long names — the konbini, Don Takote).
-     */
-    hudDate() {
-        return Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate, (label) => this.hudFits(label));
-    }
-
-    /**
-     * Would the HUD line — title | room | `dateLabel` | wallet — end at
-     * least two HUD_PADDINGs short of the menu button? Measured with the HUD's
-     * own text objects, so it is exact for the font in use. True before the
-     * HUD exists.
-     */
-    hudFits(dateLabel) {
-        if (!this.hudText || !this.hudDateText || !this.menuButton) return true;
-        const was = this.hudDateText.text;
-        this.hudDateText.setText(dateLabel);
-        const right = UI.HUD_PADDING + this.hudText.width + this.hudDateText.width +
-            (this.hudMoneyText ? this.hudMoneyText.width : 0);
-        this.hudDateText.setText(was);
-        return right <= this.menuButton.x - this.menuButton.width - 2 * UI.HUD_PADDING;
-    }
-
-    /**
      * Create the HUD overlay
      */
     /**
@@ -395,7 +370,17 @@ class GameScene extends Phaser.Scene {
         if (!room) return;
         const ww = room.worldWidth || this.WORLD_WIDTH;
         const wh = room.worldHeight || this.WORLD_HEIGHT;
-        this.cameras.main.setBounds(0, 0, ww, wh);
+        // On a phone the view is narrower than the canvas (zoomed in, or a
+        // portrait slice of it). A room whose outline is narrower still (an
+        // interior) is held centred in it, not scrolled after the player:
+        // following would push part of a room that fits off the screen.
+        const cam = this.cameras.main, viewW = cam.width / cam.zoom;
+        let bx = 0, bw = ww;
+        if (viewW < this.scale.width) {
+            const cols = this.roomManager.contentColumns(roomKey);
+            if (cols && cols.x1 - cols.x0 <= viewW) { bx = (cols.x0 + cols.x1 - viewW) / 2; bw = viewW; }
+        }
+        cam.setBounds(bx, 0, bw, wh);
         this.physics.world.setBounds(0, 0, ww, wh);
         if (this.player) {
             this.player.minGridX = 0;
@@ -495,87 +480,99 @@ class GameScene extends Phaser.Scene {
     }
 
     createHUD() {
-        // Create semi-transparent background bar
+        // Semi-transparent background bar (drawn by layoutHUD)
         this.hudBackground = this.add.graphics();
-        this.hudBackground.fillStyle(COLORS.HUD_BACKGROUND, UI.HUD_ALPHA);
-        this.hudBackground.fillRect(0, 0, this.cameras.main.width, UI.HUD_HEIGHT);
         this.hudBackground.setScrollFactor(0);
         this.hudBackground.setDepth(DEPTH.HUD_BACKGROUND);
+
+        const segment = (color) => {
+            const t = this.add.text(0, 0, '', { fontSize: FONTS.HUD_SIZE, fill: color, fontFamily: FONTS.HUD });
+            t.setScrollFactor(0);
+            t.setDepth(DEPTH.HUD_TEXT);
+            t.setResolution(1);
+            return t;
+        };
+        const button = (t, onTap) => {
+            t.setInteractive({ useHandCursor: true });
+            t.on('pointerdown', onTap);
+            return t;
+        };
 
         // Game info text; the date segment is the LIVE game date (?date=YYYY-MM-DD,
         // else today or its trip day) and clicking it opens a date picker — NPC states
         // re-resolve to the picked date on reload.
-        const hudText = `${this.config.game.title} | ${this.hudRoomName()} | `;
-
-        this.hudText = this.add.text(
-            UI.HUD_PADDING,
-            UI.HUD_HEIGHT / 2,
-            hudText,
-            {
-                fontSize: FONTS.HUD_SIZE,
-                fill: COLORS.HUD_TEXT,
-                fontFamily: FONTS.HUD
-            }
-        );
-        this.hudText.setOrigin(0, 0.5);
-        this.hudText.setScrollFactor(0);
-        this.hudText.setDepth(DEPTH.HUD_TEXT);
-        this.hudText.setResolution(1);
-        JapaneseFont.fit(this.hudText);
-
-        this.hudDateText = this.add.text(
-            UI.HUD_PADDING + this.hudText.width,
-            UI.HUD_HEIGHT / 2,
-            this.hudDate(),
-            {
-                fontSize: FONTS.HUD_SIZE,
-                fill: COLORS.HUD_TEXT,
-                fontFamily: FONTS.HUD
-            }
-        );
-        this.hudDateText.setOrigin(0, 0.5);
-        this.hudDateText.setScrollFactor(0);
-        this.hudDateText.setDepth(DEPTH.HUD_TEXT);
-        this.hudDateText.setResolution(1);
-        this.hudDateText.setInteractive({ useHandCursor: true });
-        this.hudDateText.on('pointerdown', () => this.datePicker.show());
-
+        this.hudText = segment(COLORS.HUD_TEXT);
+        this.hudDateText = button(segment(COLORS.HUD_TEXT), () => this.datePicker.show());
         // Wallet (issue #12) — gold, after the date; clicking it opens the items screen
-        this.hudMoneyText = this.add.text(
-            UI.HUD_PADDING + this.hudText.width + this.hudDateText.width,
-            UI.HUD_HEIGHT / 2,
-            ` | ${this.shop.fmt(this.shop.money)}`,
-            {
-                fontSize: FONTS.HUD_SIZE,
-                fill: '#ffd700',
-                fontFamily: FONTS.HUD
-            }
-        );
-        this.hudMoneyText.setOrigin(0, 0.5);
-        this.hudMoneyText.setScrollFactor(0);
-        this.hudMoneyText.setDepth(DEPTH.HUD_TEXT);
-        this.hudMoneyText.setResolution(1);
-        this.hudMoneyText.setInteractive({ useHandCursor: true });
-        this.hudMoneyText.on('pointerdown', () => this.shop.showInventory());
-
+        this.hudMoneyText = button(segment('#ffd700'), () => this.shop.showInventory());
         // Menu button (right aligned)
-        this.menuButton = this.add.text(
-            this.cameras.main.width - UI.HUD_PADDING,
-            UI.HUD_HEIGHT / 2,
-            'menu',
-            {
-                fontSize: FONTS.HUD_SIZE,
-                fill: COLORS.HUD_TEXT,
-                fontFamily: FONTS.HUD
-            }
-        );
-        this.menuButton.setOrigin(1, 0.5);
-        this.menuButton.setScrollFactor(0);
-        this.menuButton.setDepth(DEPTH.HUD_TEXT);
-        this.menuButton.setResolution(1);
-        this.menuButton.setInteractive({ useHandCursor: true });
-        this.menuButton.on('pointerdown', () => this.menuManager.toggle());
-        this.updateHUD();   // now the menu button is there to measure against (hudFits)
+        this.menuButton = button(segment(COLORS.HUD_TEXT).setText('menu'), () => this.menuManager.toggle());
+
+        this.layoutHUD();
+        // the bar is magnified on small screens (UIScale), which leaves it less width
+        this.events.on('hudscalechange', this.layoutHUD, this);
+        // ...and a zoomed or cropped world view has its own camera bounds (applyRoomBounds)
+        this.events.on('worldviewchange', () => this.applyRoomBounds(this.roomManager.currentRoom));
+    }
+
+    /**
+     * Lay the HUD bar out for the width it has. At 1:1 that is the canvas
+     * and the bar reads `title | room | date | wallet ... menu` on one row.
+     * On a small screen UIScale draws the HUD layer magnified (so its text
+     * stays legible), and a portrait phone shows only a slice of the canvas;
+     * either leaves the bar narrower: it drops the game's title first, then
+     * moves the date and wallet to a second row.
+     * On one of a trip's own days the date is led by the trip's name
+     * ("devhouse 3 · February 20 2027", Trips.dateLabel) when that still
+     * ends two paddings clear of the menu button — it does not in rooms with
+     * long names (the konbini, Don Takote) — and whenever the date has the
+     * second row to itself.
+     * `hudWidth` / `hudBarHeight` are the bar's size in HUD coordinates, for
+     * whatever else sits on the HUD layer (the shop's effect chips).
+     */
+    layoutHUD() {
+        const zoom = this.uiScale.hudZoom, pad = UI.HUD_PADDING;
+        const width = this.cameras.main.width / zoom, full = width >= this.scale.width;
+        const room = this.hudRoomName();
+        const bare = formatGameDate(gameDate());
+        const named = Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate);
+        this.hudMoneyText.setText(` | ${this.shop.fmt(this.shop.money)}`);
+        // does `lead` + `date` + wallet end `gap` short of the menu button?
+        const fits = (lead, date, gap) => {
+            JapaneseFont.fit(this.hudText.setText(lead));   // room for a Japanese room name
+            this.hudDateText.setText(date);
+            return pad + this.hudText.width + this.hudDateText.width + this.hudMoneyText.width +
+                gap + this.menuButton.width + pad <= width;
+        };
+        const long = `${this.config.game.title} | ${room} | `, short = `${room} | `;
+        const trip = named !== bare;
+        // with the whole canvas to itself the bar is always the one authored row
+        let rows = 1;
+        if (!(trip && fits(long, named, 2 * pad)) && !fits(long, bare, pad) && !full &&
+            !(trip && fits(short, named, 2 * pad)) && !fits(short, bare, pad)) {
+            rows = 2;
+            JapaneseFont.fit(this.hudText.setText(room));
+            this.hudDateText.setText(named);
+            if (pad + this.hudDateText.width + this.hudMoneyText.width + pad > width) this.hudDateText.setText(bare);
+        }
+        const rowHeight = rows === 1 ? UI.HUD_HEIGHT : UI.HUD_ROW_HEIGHT;
+
+        this.hudWidth = width;
+        this.hudBarHeight = rows * rowHeight;
+        this.hudBackground.clear();
+        this.hudBackground.fillStyle(COLORS.HUD_BACKGROUND, UI.HUD_ALPHA);
+        this.hudBackground.fillRect(0, 0, width, this.hudBarHeight);
+
+        const first = rowHeight / 2, last = this.hudBarHeight - rowHeight / 2;
+        this.hudText.setOrigin(0, 0.5).setPosition(pad, first);
+        this.hudDateText.setOrigin(0, 0.5).setPosition(rows === 1 ? pad + this.hudText.width : pad, last);
+        this.hudMoneyText.setOrigin(0, 0.5).setPosition(this.hudDateText.x + this.hudDateText.width, last);
+        this.menuButton.setOrigin(1, 0.5).setPosition(width - pad, first);
+        // the buttons take taps over the whole height of their row, not just their glyphs
+        for (const t of [this.hudDateText, this.hudMoneyText, this.menuButton]) {
+            t.input.hitArea.setTo(0, (t.height - rowHeight) / 2, t.width, rowHeight);
+        }
+        if (this.shop) this.shop.updateEffectChip();
     }
 
     /**
@@ -594,15 +591,7 @@ class GameScene extends Phaser.Scene {
      * Update HUD text
      */
     updateHUD() {
-        const hudText = `${this.config.game.title} | ${this.hudRoomName()} | `;
-        JapaneseFont.fit(this.hudText.setText(hudText));   // room for a Japanese room name
-        // the wallet first: how much room the date has depends on it (hudFits)
-        if (this.hudMoneyText) this.hudMoneyText.setText(` | ${this.shop.fmt(this.shop.money)}`);
-        this.hudDateText.setText(this.hudDate());
-        this.hudDateText.setX(UI.HUD_PADDING + this.hudText.width);
-        if (this.hudMoneyText) {
-            this.hudMoneyText.setX(UI.HUD_PADDING + this.hudText.width + this.hudDateText.width);
-        }
+        this.layoutHUD();
     }
 
     /**
@@ -747,7 +736,10 @@ class GameScene extends Phaser.Scene {
             o.setOrigin(0.5, 0.5); o.setResolution(1);
             o.setScrollFactor(0); o.setDepth(2003); objs.push(o); return o;
         };
-        text(W / 2, py - 24, 'MAP', '26px', true);
+        // on a small screen the map is magnified until its title is up in the
+        // (magnified) HUD row, which shows through the dimmer: blank it there
+        const title = text(W / 2, py - 24, 'MAP', '26px', true, null, this.uiScale.hudZoom > 1 ? '#000000' : undefined);
+        if (this.uiScale.hudZoom > 1) title.setPadding(14, 2, 14, 2);
 
         // labels dodge each other: try offsets around the anchor until the
         // label's bounds don't intersect anything already placed

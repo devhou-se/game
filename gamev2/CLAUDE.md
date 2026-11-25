@@ -81,8 +81,8 @@ problem survey) is shared with `tools/play.js`, so the page and the terminal too
 - `tiled/*.tmj` - Room maps, authored in the Tiled editor (the map source of truth at
   runtime — see `tiled/README.md`; config.json's room layers are only a fallback)
 - `src/game.js` - Phaser game configuration (viewport: 1280×960, physics setup)
-- `src/systems/Viewport.js` - Where the canvas sits in the window and how big the touch controls are (see Small Viewports and Touch)
-- `src/systems/UIScale.js` - Magnifies overlays when the canvas is shown smaller than 1:1 (see Small Viewports and Touch)
+- `src/systems/Viewport.js` - Where the canvas sits in the window, and where the touch controls go (see Small Viewports and Touch)
+- `src/systems/UIScale.js` - World zoom, HUD magnification and overlay fitting for small, cropped or touch-covered canvases (see Small Viewports and Touch)
 - `src/utils/Hints.js` - The one helper that words key hints for keyboard or touch (see Small Viewports and Touch)
 - `src/utils/JapaneseFont.js` + `fonts/` - The pixel fonts, and the Japanese face added to each of them (see Fonts and Japanese Text)
 - `src/utils/Trips.js` - The devhouse trips as data: which trip a date belongs to, and everything that follows (see Trips)
@@ -95,6 +95,9 @@ problem survey) is shared with `tools/play.js`, so the page and the terminal too
   table). `Shop`, `Fishing`, `DrinkingGame`, `GameScene` and `tools/play.js` all read it; add a rule here
   rather than a tile-name check in a feature file
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
+- `src/DatePicker.js` - Time Travel calendar (menu, or the HUD date). Marks three different days: today (gold), the day the
+  game is on (blue — a trip day, usually a year of months from today) and the cursor (green box). The legend names only
+  colours that are on the month shown; the jump row under the selected date moves the cursor to today / the game's day (click, tap, or SHIFT + up / down), and the trips row above it to a trip
 - `src/TitleScreen.js` - Title / splash screen shown at boot (cast line-up, press SPACE / tap to start)
 - `src/Intro.js` - New-player intro (who devhouse is, controls as keycaps, where to start); replayable from the menu as How to Play
 - `assets/portraits/` - Optional hand-drawn character portraits (`manifest.json` + `<name>.png`, see its README)
@@ -155,10 +158,12 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
     `GameScene.create()`; nothing is hard-coded. The default is fixed when the config loads
     (`bootToday`), so a session left open past midnight keeps the day its NPCs were resolved for.
     The HUD shows that date, led by the trip's name on a trip day (`devhouse 3 · February 20 2027`,
-    `GameScene.hudDate()`) — when the line still ends two `HUD_PADDING`s short of the `menu` button with
-    it: `hudFits()` measures title | room | date | wallet with the HUD's own text objects, and
-    `Trips.dateLabel(..., fits)` drops the name where it does not fit (the konbini, the Don Takotes,
-    Asahikawa Station: long room names), so the wallet is never pushed under the button. Anything
+    `Trips.dateLabel`) — when the line still ends two `HUD_PADDING`s short of the `menu` button with
+    it: `GameScene.layoutHUD()` measures title | room | date | wallet with the HUD's own text objects and
+    drops the name where it does not fit (the konbini, the Don Takotes,
+    Asahikawa Station: long room names), so the wallet is never pushed under the button. On a small
+    screen the same routine goes on to drop the game's title and then to wrap the date and wallet to a
+    second row, where the trip's name comes back if the row has room (see Small Viewports and Touch). Anything
     that lengthens the HUD line must keep going through that check. `?date=` and Time Travel always win; `setGameDate()` drops the param
     only for the date a clean URL already gives, so picking today's real date between trips is an
     explicit `?date=` like any other. `tools/play.js` and the studio open on the same day
@@ -168,7 +173,7 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
 
 Position system supports both absolute grid coordinates (`gridX`/`gridY`) or center-relative offsets (`gridOffsetX`/`gridOffsetY`).
 
-Room transitions use camera fade effects (250ms fade out, 250ms hold, 250ms fade in) and block input during transition via `isTransitioning` flag.
+Room transitions use camera fade effects (250ms fade out, 250ms hold, 250ms fade in; on the last camera drawn, see Small Viewports and Touch) and block input during transition via `isTransitioning` flag.
 Walking between the districts of a stitched city (below) is NOT a room transition.
 
 ### Stitched cities: one continuous Tokyo (issues #40 / #41)
@@ -396,9 +401,12 @@ picker underline, and the default date only lands there once it has a post. `blo
 - **Time Travel** (`src/DatePicker.js`) — a trip's own days are underlined in the grid whether or not
   they have posts, and a row under the grid names every trip (the selected day's is lit). A click / tap
   on a name, or SHIFT + left/right (touch: hold the sprint pill and press ◀ ▶), jumps to that trip's
-  first day with posts, or its first day when it has none (`Trips.jump` / `Trips.landing`). No new key.
+  first day with posts, or its first day when it has none (`Trips.jump` / `Trips.landing`). The row
+  under the selected date jumps to today (SHIFT + up) or back to the day the game is on (SHIFT + down). No new key.
   The legend under the grid (`DatePicker.legend`) explains each mark: dot = blog post, underline = trip
-  (only when the config has trips), gold = today.
+  (only when the config has trips), and of the two coloured days only those on the month shown —
+  gold = today, blue = you are here (the game's day, when it is not today; issue #98). It is worded
+  shorter when the line would not fit the panel (52 characters).
 
 **Adding a trip**: add it to `trips`; give its base cast NPC definitions in the room(s) they are based
 in, marked with `trip` (and `stay` when the trip has stays) — the shape `tools/generate_cast.py`
@@ -747,7 +755,7 @@ the HTML loader.
 2. **How to play** — move / sprint / interact / talk / menu drawn as keycaps (the interact row also
    lists what a bump starts: people, shops, trains, the izakaya); when
    `touchControls.enabled` the same rows are drawn as the on-screen d-pad, sprint pill and A / B buttons,
-   plus a one-line keyboard reminder (touch controls are also on for touchscreen laptops).
+   plus a one-line keyboard reminder (the page is redrawn if the input in use changes while it is up).
 3. **Where to start** — there is no quest system, so it points at real things: the friends (`whereFriendsAre()`
    → `Trips.whereText`: the ones in the room — the district, in a stitched city — the player is standing in are named — "Today Bailey, Damian
    and Julia are here in Machi, and Dylan is in Inaka.", "Today everyone is here in Sapporo." — and
@@ -1269,7 +1277,7 @@ The whole game runs on WASD/arrows + SPACE/ENTER + SHIFT, with ESC as the single
 system key — no other bindings (no T shortcut, no ,/. month keys). Touch controls
 synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill → SHIFT).
 - **Movement**: WASD or arrows move 1 cell, Shift doubles speed (not distance)
-- **Time Travel**: arrows / WASD move a day or a week, SHIFT + left/right jumps to the previous / next trip,
+- **Time Travel**: arrows / WASD move a day or a week, SHIFT + left/right jumps to the previous / next trip, SHIFT + up / down to today / the game's day,
   SPACE/ENTER travels, ESC closes
 - **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
 - **Dialogue**: SPACE/ENTER advances, ESC closes
@@ -1288,55 +1296,128 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
 - Input blocked when `player.isMoving` or `isTransitioning`
 - Supports diagonal movement with simultaneous key presses
 
-### Small Viewports and Touch (issues #49, #50, #57, #81, #85)
-The game always renders 1280x960; everything below is about showing that on a phone. Desktop-sized
-windows (canvas at 1:1 or larger, no touch controls) are untouched by all of it.
+### Small Viewports and Touch (issues #49, #50, #57, #81, #85, #110-#114, #116)
+The game always renders 1280x960; everything below is about showing that on anything else. A
+1280x960-or-larger window driven by mouse and keyboard is untouched by all of it (pixel-identical).
+
+**The layout rule, per kind of window** (canvas size is never traded for controls):
+
+| window | canvas | touch controls | world | text floor |
+|---|---|---|---|---|
+| desktop (>= 1280x960) | 1:1 or a whole multiple, centred both ways | none | as authored | as authored |
+| small desktop / laptop window | exact fit, centred | none | as authored (never zoomed: all 20 x 15 cells stay in view) | overlays magnified to desktop size or the canvas; HUD >= ~11 CSS px |
+| touchscreen laptop | same as the row above it would get | hidden until the screen is touched, gone again on a key press; when up, translucent over the canvas's bottom corners | same | same; keyboard wording until touched |
+| tablet, 4:3-ish landscape | fills the window | translucent over the bottom corners (0.75x) | as authored | overlays kept clear of the controls |
+| landscape phone | full height | in the side bars (0.8-1x); on phones under 400px tall, 0.6x and partly over the corners | 2x (10 x 7.5 cells) | HUD ~11 CSS px, hint lines >= 10, body text 9-10 on the tallest panels |
+| portrait phone / tablet | fills the height above the controls; the window crops its sides (a tall slice, >= 560 canvas px wide) | under the canvas, full size | as authored in the slice (about 9.5 x 15 cells) | HUD ~11, hint lines >= 10; panels wider than the slice shrink to it (the 920px intro lands at ~7 CSS px body text) |
 
 - **Canvas layout — `src/systems/Viewport.js`.** `Viewport.apply(game)` is the only place the canvas
-  style is written (`src/game.js` calls it at boot and on every window resize; Phaser's own
-  `autoCenter` is off). Whole-integer scale when the window is big enough, exact fit otherwise. With
-  touch controls on screen the controls get their own strip of the window and **never overlap the
-  canvas**: a gutter each side (`side`, landscape phones) or a strip underneath (`bottom`, portrait
-  phones and 4:3 tablets), whichever leaves the canvas bigger; the controls shrink to as little as
-  0.75x (`--tc-scale` on `#touch-controls`) when that buys the canvas room, and further on windows
-  under 360px wide so the d-pad and the buttons never overlap each other. `Viewport.CONTROLS` holds the
-  controls' footprint — keep it in step with the stylesheet in `TouchControls._build`.
-  `Viewport.current` is the layout in force (`mode`, `scale`, `controls`, canvas rect).
-- **Overlay magnification — `src/systems/UIScale.js` (`scene.uiScale`).** Overlays are authored in
-  fixed pixels and are NOT given a second layout. When the canvas is shown below 1:1 and an overlay is
-  up, every object at **depth >= 2000** is drawn by a second camera that zooms in on the overlay's
-  content (everything except full-screen dimmers) until it is as big as on a desktop or fills the
-  canvas with a 12px margin, whichever comes first. At 844x390 that is 1.3-2.5x. Rules this puts on
-  overlay code:
-  - Overlays live at depth 2000+, world and HUD below it. A new overlay gets the zoom for free.
+  style is written (`src/game.js` calls it at boot, on window resize, on rotation and on
+  `visualViewport` resize; `TouchControls` when its controls come or go). The canvas is
+  `position: fixed` from the stylesheet on: a 1280px canvas in the page flow makes a phone browser
+  widen its layout viewport, after which `window.innerWidth` is not the screen. Whole-integer scale
+  when the window is big enough, exact fit otherwise, centred both ways. `Viewport.layout()` then
+  places the controls — `portrait`, `side`, `bottom` or `over`, in that order of preference (see the
+  file header) — and reports two things in canvas px that UIScale makes the game fit:
+  `crop` (how much of the canvas is off each side of the window, portrait only) and `insets` (how far
+  the controls reach in over the canvas, `over` only). `Viewport.CONTROLS` holds the controls'
+  footprint — keep it in step with the stylesheet in `TouchControls._build`. `Viewport.current` is
+  the layout in force.
+- **Three layers, three cameras — `src/systems/UIScale.js` (`scene.uiScale`).** Nothing is given a
+  second layout; instead, whenever the canvas is shown below 1:1, is cropped, or has controls over
+  it, the picture is split by depth and each layer is drawn by its own camera:
+  - **World** (everything else, main camera): on a phone or tablet only (`uiScale.handheld()`: a
+    finger is the main pointer, or `?touch=1` — decided once per session, so a mouse/keyboard window
+    of any size keeps all 20 x 15 cells and a touchscreen laptop does not jump when touched), zoomed
+    in quarter steps towards 0.8x of authored size on screen, at most 2x and never to fewer than 8
+    cells across (`worldScale()`). The follow deadzone is divided by the zoom, and its width scaled
+    to a cropped (portrait) view, so the player keeps the same share of the view ahead of them. Use
+    `camera.worldView` / `pointer.worldX`, never `scrollX + width`, and do not assume
+    `cameras.main.x === 0`. A stitched city's chunk streaming (`RoomManager.streamRect`) and the
+    lamp-halo cull (`DayNight.cullGlows`) already measure the zoomed, cropped view (centre
+    `scrollX + width / 2`, half-size `width / 2 / zoom`); tiles streamed in mid-walk get their camera
+    the same frame, because the split below is re-applied to the whole display list on `prerender`.
+    A room whose `boundary` is narrower than that view (a konbini on a phone) is held centred in it:
+    `GameScene.applyRoomBounds` narrows the camera bounds to the view around
+    `roomManager.contentColumns()`, and runs again on scene event `'worldviewchange'` (zoom or view
+    width changed). With the whole canvas in view the bounds are the room's, as always.
+    The room-change fade (`RoomManager.switchRoom`) runs on the camera drawn last — the `'ui'`
+    camera while the split is on — so it covers the HUD and overlays as the single camera's fade does.
+  - **HUD** (depth 1000-1999 with scroll factor 0, `'hud'` camera): magnified from the top-left by
+    `hudScale()` (towards 0.7x on screen). That leaves the bar less width, so `GameScene.layoutHUD()`
+    lays it out for `cameras.main.width / hudZoom`: it drops the game's title, then wraps date and
+    wallet onto a second row. `scene.hudWidth` / `scene.hudBarHeight` are the bar's size in HUD
+    coordinates (the shop's effect chips hang off them); scene event `'hudscalechange'` says when to
+    lay out again. Anything new on the HUD goes at depth 1000-1999, scroll factor 0. The date,
+    wallet and `menu` buttons take a tap anywhere in the height of their row (`layoutHUD` sets their
+    hit areas), not just on the glyphs, which are about 11 CSS px tall on a phone.
+  - **Overlays** (depth >= 2000, `'ui'` camera): zoomed in on the overlay's content (everything
+    except full-screen dimmers) until it is as big as on a desktop or fills its space — the view less
+    a 12px margin, less the controls' `insets` (fitted between the controls or above them, whichever
+    is bigger). A box too big for a space that is cut down (insets, or a cropped view) is shrunk to
+    fit; otherwise overlays are never shrunk. Dimmers are stretched back over the whole view.
+  - On a portrait phone all three cameras get the visible slice as their **viewport**, so
+    `cameras.main.width` is the visible width (612 at 390x844) and `x` is not 0. Overlays built while
+    that is so centre themselves in it; ones built for another width (the persistent menu and
+    dialogue, anything left up while the phone is turned) are re-centred and fitted like any content.
+    Read `cameras.main.width` when you draw, not once at construction, unless the thing is a
+    full-screen dimmer.
+
+  Rules this puts on overlay code:
+  - Overlays live at depth 2000+, HUD at 1000-1999, world below. A new overlay gets all of the above
+    for free.
   - Draw panels with Graphics `fillRect` / `strokeRect` / rounded rects / circles / triangles (their
     extents are tracked — Graphics has no bounds of its own) or any object with `getBounds()`.
   - Do not read raw `pointer.x` / `pointer.y` against overlay coordinates: use the handler's
     `localX` / `localY` (the map's click-to-travel does).
   - DOM placed over an overlay goes through `scene.uiScale.project(x, y)` and `.zoom`, and listens
-    for the scene event `'uiscalechange'` (the character creator's name input does).
+    for the scene events `'uiscalechange'` AND `'inputmodechange'` (the character creator's name
+    input does — from the layout the panel was drawn with, not a fresh one). The second matters on a
+    big touch-capable window: the controls coming or going move the canvas with no window resize and
+    no zoom change.
+  - UIScale moves and scales three kinds of overlay object for the frame and puts them back
+    (`UIScale.put` / `home`): dimmers, floats and hint lines. Do not tween the position or scale of
+    those; alpha is fine.
   - Two per-object opt-outs: `obj.uiScaleSkip = true` for something at depth 2000+ that is NOT an
-    overlay and must stay on the world camera (the debug grid, flag labels and stats text — otherwise
-    the collision tint stops lining up with the world on any window under 960px tall);
-    `obj.uiFloat = true` for something magnified but belonging to no overlay (the shop toast): it
-    never moves or shrinks the overlay it appears over and stays where it was authored on the canvas —
-    except that a float which would cover the open overlay's content slides into the strip under (or
-    over) the panel when one is tall enough to hold it (`UIScale.clearOf`; a panel that fills the
-    canvas height leaves no strip, and the toast stays put over it).
-  - The magnification applies to ANY window showing the canvas below 1:1, not only phones: a
-    1440x800 laptop draws overlays at 1.2x. Only windows of 1280x960 and up are untouched.
+    overlay (the debug grid, flag labels and stats text — it stays with the world, or with the HUD
+    if its scroll factor is 0); `obj.uiFloat = true` for something magnified but belonging to no
+    overlay (the shop toast): it stays where it was authored on the canvas — except that a float
+    which would cover the open overlay's content slides into the strip under (or over) the panel
+    when one is tall enough to hold it (`UIScale.clearOf`). When neither is, the overlay gives up a
+    strip under itself for it and keeps it until it closes, so a toast never sits on the panel's
+    hint lines and the panel does not pulse.
+  - **Hint lines never go below 10 CSS px** (`UIScale.MIN_HINT`): any overlay Text whose string came
+    from `Hints.text` is scaled up in place (to at most 1.6x, and the panel's width) when its panel
+    could not be magnified enough. Body text has no floor — keep it at 18px or more.
   - An overlay that already fills the canvas cannot be magnified; its text can use
-    `scene.uiScale.textSize('14px')` instead (the map's labels do — up to 1.6x).
+    `scene.uiScale.textSize('14px')` instead (the map's labels do — up to 1.6x). The HUD bar shows
+    through a dimmer and is taller where it is magnified, so anything such an overlay draws near the
+    top edge needs its own background there (the map's title gets one when `uiScale.hudZoom > 1`).
+- **Touch in use, not touch available — `src/systems/TouchControls.js` (issue #116).** The controls
+  show while touch is the input being used: a device whose main pointer is a finger
+  (`(pointer: coarse)` — phones, tablets) starts with them, a touchscreen laptop does not; the first
+  real `touchstart` anywhere brings them up and a real (trusted) press of a game key outside a text
+  field takes them away, as often as the player switches. `?touch=1` forces them on.
+  `touchControls.enabled` is "on screen now"; `setEnabled()` re-lays the canvas, rewords every hint
+  on screen (`Hints.refresh`), redraws the intro's controls page and emits the scene event
+  `'inputmodechange'`. Never test for touch capability anywhere else.
 - **Hint wording — `src/utils/Hints.js`.** Write the hint for the keyboard and pass it through
   `Hints.text(scene, 'SPACE/ENTER: start · ESC: leave')`; with touch controls on it comes back as
   `A: start · B: leave` (SPACE/ENTER → A, ESC → B, ↑/↓ and arrows / WASD → d-pad, ←/→ → ◀ ▶, SHIFT → sprint, click → tap).
   `{ tap: true }` for overlays where a tap anywhere confirms (dialogue, intro): `TAP or A`. Use
-  `Hints.touch(scene)` rather than testing `touchControls.enabled`. Never hand-write a touch string.
+  `Hints.touch(scene)` rather than testing `touchControls.enabled`. Never hand-write a touch string:
+  every string `Hints.text` hands out is remembered, which is how a line already on screen is
+  reworded when the input changes and how UIScale knows a hint line when it sees one. A hint must be
+  its own Text object, set to exactly what `Hints.text` returned.
 - **A touch on a control stays on the control.** Phaser listens for touches on the whole window, so
   a tap on the A button used to reach the overlay underneath as well (dialogue advanced twice, the
   intro skipped a page, B closed and reopened the menu). `TouchControls._own` default-prevents the
   touch events on every control, which Phaser's window handlers respect. Any new DOM control over
   the page needs the same.
-- **Testing**: playwright contexts with `hasTouch` at 844x390, 390x844 and 1024x768;
-  `page.touchscreen.tap` or CDP `Input.dispatchTouchEvent` for real touches (a d-pad press needs a
-  held touch, not an instant tap). `?touch=1` shows the controls with a mouse.
+- **Testing**: playwright contexts with `hasTouch` AND `isMobile` (without `isMobile` the layout
+  viewport never misbehaves the way a phone's does) at 844x390, 667x375, 390x844, 1024x768 and
+  1366x1024; `page.touchscreen.tap` or CDP `Input.dispatchTouchEvent` for real touches (a d-pad press
+  needs a held touch, not an instant tap). Headless Chrome with `hasTouch` reports a coarse pointer,
+  so a touchscreen laptop needs `matchMedia('(pointer: coarse)')` stubbed to false. `?touch=1` shows
+  the controls with a mouse. `tools/test_game.js` covers `Viewport.layout`, `UIScale.fit`, the hint
+  registry and `TouchControls.touchFirst` without a browser.

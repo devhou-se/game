@@ -54,6 +54,7 @@ const COLORS = {
  */
 const UI = {
     HUD_HEIGHT: 40,
+    HUD_ROW_HEIGHT: 30,   // each row, when a magnified HUD wraps onto two (GameScene.layoutHUD)
     HUD_ALPHA: 0.8,
     HUD_PADDING: 10,
     CREDITS_PANEL_WIDTH: 400,

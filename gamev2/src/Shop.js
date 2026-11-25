@@ -83,14 +83,17 @@ class Shop {
     updateEffectChip() {
         this.expireEffects();
         this.announceWoreOff();
-        let y = 48;   // just under the 40px HUD bar
+        // just under the HUD bar, at its right end (40px tall and the canvas
+        // wide, unless the bar is magnified — GameScene.layoutHUD)
+        const scene = this.scene;
+        let y = (scene.hudBarHeight || UI.HUD_HEIGHT) + 8;
         for (const slot of Shop.SLOTS) {
             const chip = this.effectChips[slot], fx = this.effects[slot];
             let icon = this.chipIcons[slot];
             if (icon) icon.forEach(o => o.setVisible(!!fx));
             if (!fx) { chip.setVisible(false); continue; }
             chip.setText(`${fx.name} ${this.fmtTime(fx.until - this.now())}`);
-            chip.setY(y);
+            chip.setPosition((scene.hudWidth || scene.cameras.main.width) - 12, y);
             chip.setVisible(true);
             // the icon fills the chip's left padding
             const item = this.itemById(fx.id) || fx;

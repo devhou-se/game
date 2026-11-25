@@ -110,6 +110,9 @@ class TitleScreen {
         const spacing = Math.min(240, Math.floor((W - 80) / n));
         const scale = Math.max(1, Math.min(5, Math.floor((spacing - 12) / 42))); // body is 42px wide
         const baseY = 650;
+        // names shrink when the line-up is squeezed (a portrait phone), so two never run together
+        const longest = Math.max(1, ...cast.map(name => name.length));
+        const nameSize = Math.min(24, Math.floor((spacing - 8) / (longest * 0.55)));   // a monospace glyph is 0.55em
         const shadows = add(scene.add.graphics(), 1);
         const figures = cast.map((name, i) => {
             const cx = Math.round(W / 2 + (i - (n - 1) / 2) * spacing);
@@ -142,7 +145,7 @@ class TitleScreen {
             add(img, 2);
 
             add(text(cx, baseY + 40, name.charAt(0).toUpperCase() + name.slice(1),
-                '24px', 'PixelOperatorMonoBold', '#bbbbbb'), 2);
+                `${nameSize}px`, 'PixelOperatorMonoBold', '#bbbbbb'), 2);
             return img;
         });
 

@@ -1,39 +1,62 @@
 /**
- * UIScale - keeps overlay text readable when the canvas is scaled down.
+ * UIScale - keeps the game readable when the canvas is scaled down, and
+ * keeps overlays out from under the touch controls.
  *
- * Every overlay (menu, dialogue, shop, intro, pickers, ...) is drawn in fixed
- * pixels on the 1280x960 canvas. On a phone that canvas is shown at 0.3-0.4x,
- * so 18px text ends up 6-7 CSS px tall. Rather than give each overlay a
- * second layout, the overlays are magnified as a whole:
+ * Everything is drawn in fixed pixels on the 1280x960 canvas. On a phone
+ * that canvas is shown at 0.3-0.4x, so a 64px cell is 20-26 CSS px and 16px
+ * text is 5-6. Rather than give anything a second layout, the picture is
+ * split into three layers, each drawn by its own camera and magnified as a
+ * whole by as much as it can take:
  *
- *  - Anything at depth >= UIScale.MIN_DEPTH is "overlay" (world and HUD sit
- *    below 2000, every overlay at 2000 or above).
- *  - While the canvas is shown smaller than 1:1 and an overlay is up, the
- *    overlay objects are drawn by a second camera that zooms in on them. The
- *    zoom is what undoes the canvas downscale (so text is as big as on a
- *    desktop), capped so the overlay's content — its panel, portrait, photo,
- *    everything except full-screen dimmers — still fits on the canvas with a
- *    margin. It zooms about the canvas centre and only slides when the
- *    content would otherwise leave the canvas.
- *  - At 1:1 or larger (any desktop-sized window) nothing happens: there is no
- *    second camera and overlays render exactly as they are authored.
+ *  - WORLD (everything else): on a phone or tablet the main camera zooms in
+ *    (`worldScale()`, up to 2x in quarter steps), so you see fewer cells,
+ *    each about as big on screen as on a small laptop. The follow deadzone
+ *    shrinks to match. A mouse / keyboard window is never zoomed.
+ *  - HUD (depth 1000-1999, fixed to the screen): drawn at `hudScale()` from
+ *    the top-left corner. GameScene.layoutHUD lays the bar out for the
+ *    narrower width that leaves it (scene event 'hudscalechange').
+ *  - OVERLAYS (depth >= UIScale.MIN_DEPTH: menu, dialogue, shop, intro,
+ *    pickers, ...): zoomed in on their content — the panel, portrait, photo,
+ *    everything except full-screen dimmers — until it is as big as on a
+ *    desktop or fills the space it has, whichever comes first. That space is
+ *    the canvas less a margin, and less whatever the touch controls cover
+ *    (`Viewport.current.insets`): an overlay is fitted beside the controls
+ *    or above them, whichever shows it bigger, and is shrunk to fit if it
+ *    has to be. Full-screen dimmers are stretched back over the whole
+ *    canvas whatever the zoom.
+ *  - Hint lines (anything worded by Hints.text) never go below
+ *    UIScale.MIN_HINT CSS px: they are scaled up in place when their panel
+ *    could not be magnified enough.
+ *
+ * On a portrait phone the window shows only a tall slice of the canvas
+ * (`Viewport.current.crop`). All three cameras are given that slice as their
+ * viewport, so `cameras.main.width` IS the visible width: the world follows
+ * the player inside it, the HUD is laid out across it, and anything built
+ * while it is in force centres itself in it. Overlays built for another
+ * width (the persistent menu and dialogue, or one left up while the phone is
+ * turned) are fitted into it like any other content.
+ *
+ * At 1:1 or larger with nothing over the canvas (any desktop-sized window)
+ * none of this happens: there is one camera and everything renders exactly
+ * as it is authored.
  *
  * Two opt-outs, set as a property on the game object:
- *  - `uiScaleSkip`  not an overlay at all despite its depth: it stays on the
- *    main camera, unmagnified (the debug grid, flag labels and stats text,
- *    which must line up with the world).
+ *  - `uiScaleSkip`  not an overlay at all despite its depth: it stays with
+ *    the world or the HUD (the debug grid, flag labels and stats text, which
+ *    must line up with the world).
  *  - `uiFloat`      magnified with the overlays but not part of anyone's
- *    content (the toast): it never moves or shrinks the overlay it appears
- *    over, and is kept where it was authored on the canvas — unless that
- *    is on top of the overlay's content and there is room beside it, in
- *    which case it slides just off the panel (see `clearOf`).
+ *    content (the toast): it is kept where it was authored on the canvas
+ *    — unless that is on top of the overlay's content: then it slides into
+ *    the strip under or over the panel when one is tall enough (see
+ *    `clearOf`), and otherwise the panel gives up a strip under itself.
  *
- * Overlays otherwise need no code for this. Phaser hit-tests through the zoomed
- * camera, so clicks and taps on overlay rows keep working. The two things
- * that must know about the zoom are anything positioning DOM over an overlay
- * (`project()` / the 'uiscalechange' scene event — see the character
- * creator's name input) and anything reading raw pointer.x / pointer.y
- * against overlay coordinates (use the handler's localX / localY instead).
+ * Overlays otherwise need no code for this. Phaser hit-tests through the
+ * cameras, so clicks and taps on overlay rows and HUD buttons keep working.
+ * The two things that must know about the zoom are anything positioning DOM
+ * over an overlay (`project()` / the 'uiscalechange' scene event — see the
+ * character creator's name input) and anything reading raw pointer.x /
+ * pointer.y against overlay coordinates (use the handler's localX / localY
+ * instead).
  *
  * Content size comes from each object's bounds. Phaser's Graphics has no
  * bounds, so the shape calls the overlays use are wrapped (trackGraphics) to
@@ -42,26 +65,91 @@
 class UIScale {
     constructor(scene) {
         this.scene = scene;
-        this.camera = null;     // created the first time it is needed
-        this.active = false;
-        this.zoom = 1;
+        this.camera = null;     // overlays; created with hudCamera the first time they are needed
+        this.hudCamera = null;
+        this.active = false;    // are the three cameras in use?
+        this.zoom = 1;          // overlays
         this.offsetX = 0;       // canvas x of overlay x: offsetX + x * zoom
         this.offsetY = 0;
+        this.worldZoom = 1;
+        this.hudZoom = 1;
+        this.viewX = 0;         // left edge of the slice of canvas the cameras draw into
+        this.hudWidth = 0;      // canvas px the HUD layer has across
         this.box = null;        // content box the current zoom was fitted to
         this.cover = null;      // the dimmer that box belongs to
-        this.floats = [];       // uiFloat objects currently placed by us
+        this.reserve = null;    // canvas y the overlay stays above, once a float has shown under it
         scene.events.on('prerender', this.update, this);
+        // before anything is laid out against the camera's width (the HUD,
+        // the title screen): on a portrait phone that is the visible slice
+        this.hudWidth = this.applyView();
+        this.hudZoom = this.hudScale();
     }
 
     /** Overlay coords -> canvas coords, through the current zoom. */
     project(x, y) {
-        return { x: this.offsetX + x * this.zoom, y: this.offsetY + y * this.zoom };
+        return { x: this.viewX + this.offsetX + x * this.zoom, y: this.offsetY + y * this.zoom };
+    }
+
+    /**
+     * Point every camera at the part of the canvas the window shows: all of
+     * it, except on a portrait phone, where the sides are cropped.
+     */
+    applyView() {
+        const scene = this.scene, crop = UIScale.crop();
+        const x = crop.left, width = scene.scale.width - crop.left - crop.right, height = scene.scale.height;
+        for (const cam of [scene.cameras.main, this.hudCamera, this.camera]) {
+            if (cam && (cam.x !== x || cam.width !== width)) cam.setViewport(x, 0, width, height);
+        }
+        this.viewX = x;
+        return width;
+    }
+
+    /** Canvas px per CSS px (1 on a desktop-sized window, 2.5 on a landscape phone). */
+    down() {
+        return this.scene.scale.displayScale.x;
+    }
+
+    /**
+     * Is this a phone or tablet (a finger is its main pointer), or the touch
+     * controls forced on with ?touch=1? Only those get the world zoomed: a
+     * small desktop window keeps the whole 20 x 15 cells in view, as it
+     * always has. Fixed for the session, so the view does not jump when a
+     * touchscreen laptop is touched.
+     */
+    handheld() {
+        if (this._handheld === undefined) {
+            const tc = this.scene.touchControls;
+            if (!tc || typeof TouchControls === 'undefined') return false;   // not built yet: ask again
+            this._handheld = tc.forced || TouchControls.touchFirst();
+        }
+        return this._handheld;
     }
 
     /** The zoom that would show overlays at their authored size on screen. */
     wanted() {
-        const down = this.scene.scale.displayScale.x; // canvas px per CSS px
+        const down = this.down();
         return down > 1.02 ? Math.min(UIScale.MAX_ZOOM, down) : 1;
+    }
+
+    /**
+     * How far the world camera zooms in: enough, in quarter steps (every
+     * sprite pixel stays a whole number of canvas pixels), to show the world
+     * at about UIScale.WORLD_TARGET of its authored size.
+     */
+    worldScale() {
+        const down = this.down();
+        if (down <= 1.02 || !this.handheld()) return 1;
+        // never so far that fewer than MIN_CELLS cells fit across the view
+        const cells = this.scene.cameras.main.width / (this.scene.GRID_SIZE || 64);
+        const most = Math.min(UIScale.MAX_WORLD_ZOOM, Math.floor(cells / UIScale.MIN_CELLS * 4) / 4);
+        return Math.max(1, Math.min(most, Math.round(UIScale.WORLD_TARGET * down * 4) / 4));
+    }
+
+    /** How much the HUD bar is magnified: enough to show it at UIScale.HUD_TARGET of its authored size. */
+    hudScale() {
+        const down = this.down();
+        if (down <= 1.02) return 1;
+        return Math.max(1, Math.min(UIScale.MAX_ZOOM, Math.round(UIScale.HUD_TARGET * down * 100) / 100));
     }
 
     /**
@@ -75,77 +163,153 @@ class UIScale {
 
     /** Once a frame, after the display list is depth-sorted and before it is drawn. */
     update() {
-        const want = this.wanted();
-        if (want <= 1) return this.release();
+        const scene = this.scene, main = scene.cameras.main, list = scene.children.list;
+        const W = this.applyView(), H = main.height, cropped = W < scene.scale.width;
+        const want = this.wanted(), world = this.worldScale(), hud = this.hudScale();
+        const insets = UIScale.insets();
+        if (want <= 1 && world === 1 && hud === 1 && !cropped && !insets.left && !insets.right) return this.release();
 
-        const scene = this.scene, main = scene.cameras.main, W = main.width, H = main.height;
-        const list = scene.children.list;
+        if (!this.camera) {
+            // drawn in this order: world, then HUD, then overlays
+            this.hudCamera = scene.cameras.add(0, 0, W, H, false, 'hud');
+            this.camera = scene.cameras.add(0, 0, W, H, false, 'ui');
+            this.applyView();
+        }
+        const cam = this.camera, hudCam = this.hudCamera;
+
+        this.setWorldZoom(world);
+        hudCam.setVisible(true);
+        hudCam.setOrigin(0, 0);
+        hudCam.setZoom(hud);
+        this.setHud(hud, W);
 
         // overlay objects are the tail of the depth-sorted list
         let box = null, cover = null, floatBox = null;
-        const floats = [];
+        const floats = [], covers = [], hints = [];
         for (let i = list.length - 1; i >= 0 && list[i].depth >= UIScale.MIN_DEPTH; i--) {
             const o = list[i];
+            // measured where and as it was authored, not where we last put it
+            UIScale.home(o);
             if (!o.visible || o.uiScaleSkip) continue;
-            if (o.uiFloat) {
-                // measured where and as it was authored, not where we last put it
-                if (!o._uiHome) o._uiHome = { x: o.x, y: o.y };
-                o.setPosition(o._uiHome.x, o._uiHome.y).setScale(1);
-                const f = UIScale.bounds(o, main);
-                if (f) { floats.push(o); o._uiHome.box = f; floatBox = floatBox ? UIScale.union(floatBox, f) : f; }
-                continue;
-            }
             const b = UIScale.bounds(o, main);
             if (!b) continue;
-            if (b.x0 <= 1 && b.y0 <= 1 && b.x1 >= W - 1 && b.y1 >= H - 1) {
-                cover = o;  // a full-screen dimmer / backdrop is not content
+            if (o.uiFloat) {
+                floats.push(o);
+                o._uiBox = b;
+                floatBox = floatBox ? UIScale.union(floatBox, b) : b;
+                continue;
+            }
+            // a full-screen dimmer / backdrop is not content. It is one for
+            // good: a dimmer built for a narrower or wider view (the phone
+            // was turned) still is, and is stretched over this one
+            const full = o._uiCover || { width: W, height: H };
+            if (b.x0 <= 1 && b.y0 <= 1 && b.x1 >= full.width - 1 && b.y1 >= full.height - 1) {
+                o._uiCover = full;
+                cover = o;
+                covers.push([o, b]);
                 continue;
             }
             box = box ? UIScale.union(box, b) : b;
+            if (o.type === 'Text' && o.scaleX === 1 && o.scaleY === 1 && typeof Hints !== 'undefined' && Hints.isHint(o.text)) hints.push(o);
         }
         // a float decides the zoom only when it is all there is
         const alone = !box;
         if (alone) box = floatBox;
-        this.floats = floats;
-        if (!box) return this.release();
 
         // While one overlay is up (same dimmer) its box only grows, so a
         // blinking prompt or a row that comes and goes does not make it pulse.
-        if (!alone && this.active && cover === this.cover && this.box) box = UIScale.union(box, this.box);
+        if (box && !alone && cover === this.cover && this.box) box = UIScale.union(box, this.box);
         this.box = alone ? null : box;
         this.cover = cover;
 
-        const fit = UIScale.fit(box, want, W, H);
-        if (!this.camera) {
-            this.camera = scene.cameras.add(0, 0, W, H, false, 'ui');
+        // A float over an overlay (the shop's purchase toast) must not sit on
+        // the panel's last lines. When there is a strip under or over the
+        // panel tall enough to hold it, it slides there (clearOf) and the
+        // panel is left alone. Otherwise the panel gives up a strip under
+        // itself, and keeps it until the overlay closes, so it makes room
+        // once, at the first toast, and does not pulse after.
+        if (alone || !box) this.reserve = null;
+        let fit = box ? UIScale.fit(box, want, W, H, insets, cropped, this.reserve, cover && cover._uiCover) : UIScale.IDENTITY;
+        // floats are magnified like the overlay they are over (never shrunk
+        // with it), less if that would make them wider than the canvas — or
+        // than the gap between the touch controls, down where those are
+        const floatScale = (o) => {
+            const low = o.y > H - insets.bottom - UIScale.MARGIN;
+            const room = W - 2 * UIScale.MARGIN - (low ? insets.left + insets.right : 0);
+            return Math.min(Math.max(1, fit.zoom), room / o.width);
+        };
+        for (const o of floats) o._uiSlide = 0;
+        if (!alone && floats.length) {
+            // is a float on the panel with no strip to slide into?
+            const stuck = () => {
+                const panel = {
+                    x0: fit.offsetX + box.x0 * fit.zoom, y0: fit.offsetY + box.y0 * fit.zoom,
+                    x1: fit.offsetX + box.x1 * fit.zoom, y1: fit.offsetY + box.y1 * fit.zoom,
+                };
+                let any = false;
+                for (const o of floats) {
+                    const k = floatScale(o), b = o._uiBox;      // its canvas box, grown about where it sits
+                    const f = {
+                        x0: o.x + (b.x0 - o.x) * k, y0: o.y + (b.y0 - o.y) * k,
+                        x1: o.x + (b.x1 - o.x) * k, y1: o.y + (b.y1 - o.y) * k,
+                    };
+                    o._uiSlide = UIScale.clearOf(f, panel, H);
+                    if (!o._uiSlide && f.x1 > panel.x0 && f.x0 < panel.x1 && f.y1 > panel.y0 && f.y0 < panel.y1) any = true;
+                }
+                return any;
+            };
+            if (this.reserve !== null || stuck()) {
+                const reserve = () => {
+                    const scale = Math.max(1, fit.zoom);
+                    const top = Math.min(...floats.map(o => o.y - o.displayOriginY * scale));
+                    return Math.min(this.reserve === null ? H : this.reserve, Math.floor(top - UIScale.MARGIN));
+                };
+                // twice: the float is magnified with the panel, which the strip shrinks
+                for (let pass = 0; pass < 2; pass++) {
+                    this.reserve = reserve();
+                    fit = UIScale.fit(box, want, W, H, insets, cropped, this.reserve, cover && cover._uiCover);
+                }
+                for (const o of floats) o._uiSlide = 0;
+            }
         }
-        const cam = this.camera;
         cam.setVisible(true);
         cam.setScroll(main.scrollX, main.scrollY);
         cam.setZoom(fit.zoom);
         cam.setOrigin(fit.originX / W, fit.originY / H);
 
-        // overlays on the zoomed camera only, everything else on the main one
+        // one camera each: overlays, the screen-fixed HUD layer, the world
+        const only = { ui: main.id | hudCam.id, hud: main.id | cam.id, world: hudCam.id | cam.id };
         for (let i = 0; i < list.length; i++) {
             const o = list[i];
-            o.cameraFilter = o.depth >= UIScale.MIN_DEPTH && !o.uiScaleSkip ? main.id : cam.id;
+            if (o.depth >= UIScale.MIN_DEPTH && !o.uiScaleSkip) o.cameraFilter = only.ui;
+            else if (o.depth >= UIScale.HUD_DEPTH && !o.scrollFactorX && !o.scrollFactorY) o.cameraFilter = only.hud;
+            else o.cameraFilter = only.world;
         }
 
-        // floats stay where they were authored on the canvas, at the overlay's
-        // zoom (less if that would make them wider than the canvas) — moved
-        // off the overlay's content when they would cover it and there is room
-        const panel = alone ? null : {
-            x0: fit.offsetX + box.x0 * fit.zoom, y0: fit.offsetY + box.y0 * fit.zoom,
-            x1: fit.offsetX + box.x1 * fit.zoom, y1: fit.offsetY + box.y1 * fit.zoom,
-        };
+        // dimmers keep covering the whole view, whatever the overlay's zoom
+        // and whatever size they were built for
+        for (const [o, b] of covers) {
+            const sx = W / (b.x1 - b.x0), sy = H / (b.y1 - b.y0);
+            if (fit === UIScale.IDENTITY && sx === 1 && sy === 1 && !b.x0 && !b.y0) continue;
+            UIScale.put(o,
+                ((o.x - b.x0) * sx - fit.offsetX) / fit.zoom, ((o.y - b.y0) * sy - fit.offsetY) / fit.zoom,
+                o.scaleX * sx / fit.zoom, o.scaleY * sy / fit.zoom);
+        }
+
         for (const o of floats) {
-            const home = o._uiHome, s = Math.min(1, (W - 2 * UIScale.MARGIN) / (o.width * fit.zoom));
-            const k = s * fit.zoom, f = home.box;    // the float's own canvas box, grown about its home
-            const dy = panel ? UIScale.clearOf({
-                x0: home.x + (f.x0 - home.x) * k, y0: home.y + (f.y0 - home.y) * k,
-                x1: home.x + (f.x1 - home.x) * k, y1: home.y + (f.y1 - home.y) * k,
-            }, panel, H) : 0;
-            o.setScale(s).setPosition((home.x - fit.offsetX) / fit.zoom, (home.y + dy - fit.offsetY) / fit.zoom);
+            const scale = floatScale(o);
+            UIScale.put(o, (o.x - fit.offsetX) / fit.zoom, (o.y + o._uiSlide - fit.offsetY) / fit.zoom,
+                o.scaleX * scale / fit.zoom, o.scaleY * scale / fit.zoom);
+        }
+
+        // hint lines their panel could not magnify enough grow in place, as
+        // far as the panel is wide
+        const down = this.down();
+        for (const o of hints) {
+            const css = parseFloat(o.style.fontSize) * fit.zoom / down;
+            const room = (box.x1 - box.x0 - 2 * UIScale.MARGIN) / o.width;
+            const grow = Math.min(UIScale.MAX_HINT_GROWTH, UIScale.MIN_HINT / css, Math.max(1, room));
+            if (grow > 1.01) UIScale.put(o, o.x, o.y, grow, grow);
         }
 
         const changed = !this.active || fit.zoom !== this.zoom ||
@@ -163,35 +327,137 @@ class UIScale {
         this.active = false;
         this.zoom = 1;
         this.offsetX = this.offsetY = 0;
-        this.box = this.cover = null;
-        for (const o of this.floats) if (o.scene && o._uiHome) o.setPosition(o._uiHome.x, o._uiHome.y).setScale(1);
-        this.floats = [];
+        this.box = this.cover = this.reserve = null;
         this.camera.setVisible(false);
+        this.hudCamera.setVisible(false);
         const list = this.scene.children.list;
-        for (let i = 0; i < list.length; i++) list[i].cameraFilter = 0;
+        for (let i = 0; i < list.length; i++) {
+            UIScale.home(list[i]);
+            list[i].cameraFilter = 0;
+        }
+        this.setWorldZoom(1);
+        this.setHud(1, this.applyView());
         this.scene.events.emit('uiscalechange', this);
     }
 
     /**
-     * The zoom (1..want) and zoom origin that show `box` as large as allowed
-     * inside the W x H canvas, keeping UIScale.MARGIN clear on every side.
+     * Zoom the world camera, and scale its follow deadzone to match (and to
+     * the width of a cropped view) so the player keeps the same share of the
+     * view ahead of them. The deadzone is
+     * whatever its owner last set: a size that is not ours is taken as new.
      */
-    static fit(box, want, W, H) {
-        const m = UIScale.MARGIN;
-        const raw = Math.min(want, (W - 2 * m) / (box.x1 - box.x0), (H - 2 * m) / (box.y1 - box.y0));
-        const zoom = Math.max(1, Math.floor(raw * 100) / 100);
+    setWorldZoom(zoom) {
+        const main = this.scene.cameras.main, dz = main.deadzone;
+        if (main.zoom !== zoom) main.setZoom(zoom);
+        if (dz) {
+            const ours = this._deadzone;
+            if (!ours || dz.width !== ours.width || dz.height !== ours.height) {
+                this._deadzoneHome = { width: dz.width, height: dz.height };
+            }
+            // across, the same share of a cropped (portrait) view as of the whole canvas
+            const share = main.width / this.scene.scale.width;
+            const width = this._deadzoneHome.width * share / zoom, height = this._deadzoneHome.height / zoom;
+            if (dz.width !== width || dz.height !== height) main.setDeadzone(width, height);
+            this._deadzone = { width, height };
+        }
+        this.worldZoom = zoom;
+        const view = `${zoom}:${main.width}`;
+        if (view !== this._worldView) {
+            this._worldView = view;
+            this.scene.events.emit('worldviewchange', this);
+        }
+    }
+
+    /** The HUD layer's magnification and the canvas px it has across; tells the HUD when either changes. */
+    setHud(zoom, width) {
+        if (zoom === this.hudZoom && width === this.hudWidth) return;
+        this.hudZoom = zoom;
+        this.hudWidth = width;
+        this.scene.events.emit('hudscalechange', zoom);
+    }
+
+    /** The part of the canvas the touch controls cover (canvas px in from each edge). */
+    static insets() {
+        const l = typeof Viewport !== 'undefined' && Viewport.current;
+        return (l && l.insets) || UIScale.NO_INSETS;
+    }
+
+    /** How much of the canvas is off each side of the window (canvas px). */
+    static crop() {
+        const l = typeof Viewport !== 'undefined' && Viewport.current;
+        return (l && l.crop) || UIScale.NO_CROP;
+    }
+
+    /**
+     * Put an object back where its owner had it (if it is still where we
+     * put it — otherwise the owner has moved it, and that is where it lives).
+     */
+    static home(o) {
+        const p = o._uiPut;
+        if (!p) return;
+        o._uiPut = null;
+        if (o.x !== p.x || o.y !== p.y || o.scaleX !== p.scaleX || o.scaleY !== p.scaleY) return;
+        o.setPosition(p.home.x, p.home.y);
+        o.setScale(p.home.scaleX, p.home.scaleY);
+    }
+
+    /** Move / scale an object for this frame, remembering where it came from. */
+    static put(o, x, y, scaleX, scaleY) {
+        const home = { x: o.x, y: o.y, scaleX: o.scaleX, scaleY: o.scaleY };
+        o.setPosition(x, y);
+        o.setScale(scaleX, scaleY);
+        o._uiPut = { x: o.x, y: o.y, scaleX: o.scaleX, scaleY: o.scaleY, home };
+    }
+
+    /**
+     * The zoom (up to `want`) and zoom origin that show `box` as large as
+     * allowed inside the W x H canvas, keeping UIScale.MARGIN clear on every
+     * side. With `insets` (touch controls over the bottom corners) the box
+     * goes between them or above them, whichever shows it bigger. A box too
+     * big for its space is shrunk to fit when something is in the way
+     * (controls, room kept for a float, or `shrink`: the sides of a cropped
+     * portrait view), and
+     * otherwise left as authored. `below` is a canvas y the box must stay
+     * above (room kept for a float), when it leaves a usable space.
+     * `built` is the view size the overlay was laid out for when that is
+     * not this one (the phone was turned with it up): what was centred
+     * there is centred here.
+     */
+    static fit(box, want, W, H, insets, shrink, below, built) {
+        const m = UIScale.MARGIN, ins = insets || UIScale.NO_INSETS;
+        const covered = ins.left > 0 || ins.right > 0;
+        const bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+        const floor = below && below > H / 2 ? Math.min(H - m, below) : H - m;
+        const spaces = [{ x0: Math.max(m, ins.left), x1: W - Math.max(m, ins.right), y0: m, y1: floor }];
+        if (covered) spaces.push({ x0: m, x1: W - m, y0: m, y1: Math.min(floor, H - Math.max(m, ins.bottom)) });
+        let space = null, raw = 0;
+        for (const s of spaces) {
+            const z = Math.min(want, (s.x1 - s.x0) / bw, (s.y1 - s.y0) / bh);
+            if (!space || z > raw + 1e-6) { space = s; raw = z; }
+        }
+        let zoom = Math.floor(raw * 100) / 100;
+        // something is in the way: controls, the sides of a cropped view, a float's strip
+        const tight = covered || shrink || floor < H - m;
+        if (!tight) zoom = Math.max(1, zoom);
         // per axis: x maps to offset + x * zoom. Start from "zoom about the
-        // centre", slide just enough to keep the box inside the margins, and
-        // never so far that a full-screen dimmer would stop covering the canvas.
-        const axis = (lo, hi, size) => {
-            const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-            let offset = (size / 2) * (1 - zoom);
-            const min = m - lo * zoom, max = size - m - hi * zoom;
-            offset = min <= max ? clamp(offset, min, max) : (min + max) / 2;
-            offset = clamp(offset, size * (1 - zoom), 0);
-            return { offset, origin: zoom > 1 ? offset / (1 - zoom) : size / 2 };
+        // centre" (the centre it was built around, put on this one) and slide
+        // just enough to keep the box inside its space.
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+        const axis = (lo, hi, size, s0, s1, builtSize) => {
+            const min = s0 - lo * zoom, max = s1 - hi * zoom;
+            const offset = min <= max ? clamp(size / 2 - zoom * builtSize / 2, min, max) : (min + max) / 2;
+            return { offset, origin: zoom !== 1 ? offset / (1 - zoom) : size / 2 };
         };
-        const x = axis(box.x0, box.x1, W), y = axis(box.y0, box.y1, H);
+        const bW = built ? built.width : W, bH = built ? built.height : H;
+        let x = axis(box.x0, box.x1, W, space.x0, space.x1, bW), y = axis(box.y0, box.y1, H, space.y0, space.y1, bH);
+        if (zoom === 1 && (x.offset || y.offset)) {
+            // a camera can only slide what it also scales. Out from under a
+            // control is worth a hair of size; otherwise stay put
+            if (!tight && bW === W) return UIScale.IDENTITY;
+            zoom = 0.99;
+            x = axis(box.x0, box.x1, W, space.x0, space.x1, bW);
+            y = axis(box.y0, box.y1, H, space.y0, space.y1, bH);
+        }
         return { zoom, offsetX: x.offset, offsetY: y.offset, originX: x.origin, originY: y.origin };
     }
 
@@ -287,11 +553,27 @@ class UIScale {
 
 /** Depth at which overlays start (the HUD tops out at 1001). */
 UIScale.MIN_DEPTH = 2000;
+/** Depth at which the screen-fixed HUD layer starts (DEPTH.HUD_BACKGROUND). */
+UIScale.HUD_DEPTH = 1000;
 /** Canvas px kept clear around the magnified content. */
 UIScale.MARGIN = 12;
 UIScale.MAX_ZOOM = 3;
 /** Most a full-canvas overlay's text grows (see textSize): more would bury the picture under labels. */
 UIScale.MAX_TEXT_GROWTH = 1.6;
+/** Share of its authored size the world is zoomed towards on a small screen (a 64px cell -> about 51 CSS px). */
+UIScale.WORLD_TARGET = 0.8;
+/** Past 2x there are too few cells in view (10 x 7.5 at 2x) to see where you are going. */
+UIScale.MAX_WORLD_ZOOM = 2;
+/** Share of its authored size the HUD bar is magnified to (16px text -> about 11 CSS px). */
+UIScale.HUD_TARGET = 0.7;
+/** Smallest a hint line is ever shown, in CSS px, and the most one grows to get there. */
+UIScale.MIN_HINT = 10;
+UIScale.MAX_HINT_GROWTH = 1.6;
+/** Fewest cells across the view the world zoom will leave. */
+UIScale.MIN_CELLS = 8;
+UIScale.NO_INSETS = { left: 0, right: 0, bottom: 0 };
+UIScale.NO_CROP = { left: 0, right: 0 };
+UIScale.IDENTITY = { zoom: 1, offsetX: 0, offsetY: 0, originX: 0, originY: 0 };
 
 if (typeof window !== 'undefined') {
     window.UIScale = UIScale;

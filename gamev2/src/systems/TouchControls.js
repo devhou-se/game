@@ -15,13 +15,22 @@
  * future overlay works with no touch-specific code. The `state` object is
  * still maintained for InputHandler's movement fold-in.
  *
- * Shown only on touch devices, or with `?touch=1` for desktop testing. The
- * overlay container is pointer-events:none so stray taps still reach the
- * canvas.
+ * Shown while touch is the input in USE, not merely available (issue #116):
  *
- * The controls never sit on the canvas: Viewport (src/systems/Viewport.js)
- * lays the canvas out beside or above them and sets `--tc-scale`, which
- * shrinks the d-pad and the button cluster on small screens.
+ *   - a device whose main pointer is a finger (phone, tablet) starts with
+ *     them; a touchscreen laptop (main pointer a mouse / trackpad) does not
+ *   - the first real touch anywhere shows them; a real press of a game key
+ *     hides them again. Hint wording follows (see Hints), live
+ *   - `?touch=1` forces them on, whatever is pressed (desktop testing)
+ *
+ * `enabled` is "the controls are on screen now"; listen for the scene event
+ * `'inputmodechange'` to hear it change. The overlay container is
+ * pointer-events:none so stray taps still reach the canvas.
+ *
+ * The controls cost the canvas nothing: Viewport (src/systems/Viewport.js)
+ * puts them in the black bars beside or under the canvas when there are
+ * any, and otherwise translucent over the canvas's bottom corners, and sets
+ * `--tc-scale`, which shrinks the d-pad and the button cluster to fit.
  *
  * A touch on a control belongs to that control alone. Phaser listens for
  * touches on the whole window, not just the canvas, so without `swallowTouch` a tap
@@ -32,12 +41,50 @@ class TouchControls {
     constructor(scene) {
         this.scene = scene;
         this.state = { left: false, right: false, up: false, down: false, sprint: false };
-        this.enabled = this._isTouch() || /[?&]touch=1/.test(location.search);
-        if (this.enabled) this._build();
+        this.forced = /[?&]touch=1/.test(location.search);
+        this.enabled = false;
+        this.releases = [];   // let go of whatever each control is holding
+        this._watch();
+        this.setEnabled(this.forced || TouchControls.touchFirst());
     }
 
-    _isTouch() {
-        return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    /** Is a finger this device's main pointer (a phone or tablet, not a touchscreen laptop)? */
+    static touchFirst() {
+        if (!(('ontouchstart' in window) || (navigator.maxTouchPoints > 0))) return false;
+        return typeof window.matchMedia !== 'function' || window.matchMedia('(pointer: coarse)').matches;
+    }
+
+    /**
+     * Follow the input actually in use: a real touch brings the controls up,
+     * a real game key takes them away. The controls' own synthetic key
+     * events are not trusted, and typing a name (the on-screen keyboard in
+     * the character creator's input) is not playing with a keyboard.
+     */
+    _watch() {
+        window.addEventListener('touchstart', () => this.setEnabled(true), { capture: true, passive: true });
+        window.addEventListener('keydown', (e) => {
+            if (!e.isTrusted || this.forced || !TouchControls.GAME_KEYS.test(e.code || '')) return;
+            const t = e.target;
+            if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ''))) return;
+            this.setEnabled(false);
+        }, true);
+    }
+
+    /** Show or hide the controls; canvas layout and every hint on screen follow. */
+    setEnabled(on) {
+        on = !!on;
+        if (on === this.enabled) return;
+        this.enabled = on;
+        if (on && !this.root) this._build();
+        if (!on) this.releases.forEach(release => release());
+        if (this.root) this.root.style.display = on ? '' : 'none';
+        // controls beside / under / over the canvas, or the window to itself
+        Viewport.apply(this.scene.game);
+        Hints.refresh(this.scene);
+        // the intro draws its controls page for one input or the other
+        const intro = this.scene.intro;
+        if (intro && intro.isVisible()) intro.render();
+        this.scene.events.emit('inputmodechange', on);
     }
 
     /**
@@ -66,11 +113,16 @@ class TouchControls {
                 wait ? setTimeout(() => fire('keyup'), wait) : fire('keyup');
             }
         };
+        let held = false;
+        const press = set(true), lift = set(false);
+        const down = (e) => { held = true; press(e); };
+        const up = (e) => { if (held) { held = false; lift(e); } };
+        if (this.releases) this.releases.push(() => up({ preventDefault() {} }));
         TouchControls.swallowTouch(btn);
-        btn.addEventListener('pointerdown', set(true));
-        btn.addEventListener('pointerup', set(false));
-        btn.addEventListener('pointercancel', set(false));
-        btn.addEventListener('pointerleave', set(false));
+        btn.addEventListener('pointerdown', down);
+        btn.addEventListener('pointerup', up);
+        btn.addEventListener('pointercancel', up);
+        btn.addEventListener('pointerleave', up);
     }
 
     /**
@@ -162,6 +214,7 @@ class TouchControls {
         };
         pad.addEventListener('pointerup', end);
         pad.addEventListener('pointercancel', end);
+        this.releases.push(() => { pointerId = null; apply(new Set()); });
     }
 
     _build() {
@@ -241,10 +294,10 @@ class TouchControls {
         root.append(pad, cluster);
         document.body.appendChild(root);
         this.root = root;
-
-        // make room for the controls beside / under the canvas
-        Viewport.apply(this.scene.game);
     }
 }
+
+/** Trusted presses of these mean a keyboard is in use (KeyboardEvent.code). */
+TouchControls.GAME_KEYS = /^(Key[WASD]|Arrow(Up|Down|Left|Right)|Space|Enter|NumpadEnter|Escape|Shift(Left|Right))$/;
 
 if (typeof window !== 'undefined') window.TouchControls = TouchControls;
