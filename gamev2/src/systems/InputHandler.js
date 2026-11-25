@@ -17,6 +17,9 @@ class InputHandler {
             space: false
         };
 
+        // Keys that went down since the last frame (see held())
+        this.tapped = new Set();
+
         // Keyboard keys (initialized in setupKeys)
         this.cursors = null;
         this.shiftKey = null;
@@ -46,12 +49,39 @@ class InputHandler {
         this.aKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.sKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.dKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+
+        // Latch each keydown until the next frame has read it (see held())
+        const c = this.cursors;
+        for (const key of [c.up, c.down, c.left, c.right, this.escKey, this.enterKey, this.spaceKey,
+            this.wKey, this.aKey, this.sKey, this.dKey]) {
+            key.on('down', () => this.tapped.add(key));
+        }
     }
 
     /**
-     * Main input update - called every frame
+     * Main input update - called every frame. Whatever was tapped since the
+     * last frame has been seen by now, so the latches are dropped.
      */
     handleInput() {
+        this.routeInput();
+        this.tapped.clear();
+    }
+
+    /**
+     * Is the key down, or was it tapped since the last frame? Keys are polled
+     * once a frame; a keydown and keyup that both land between two frames
+     * leave isDown false, so the keydown is latched until it has been read.
+     * lastKeyState remembers isDown alone: a latched tap is already up again,
+     * and the next tap is a new press.
+     */
+    held(key) {
+        return key.isDown || this.tapped.has(key);
+    }
+
+    /**
+     * Hand this frame's input to whoever owns it
+     */
+    routeInput() {
         // Priority 0: the title screen owns all input until it is dismissed
         // (sync the keys that dismiss it, so the same press doesn't also pop
         // the menu or activate something on the very next frame)
@@ -88,7 +118,7 @@ class InputHandler {
 
         // Priority 2b: Achievements overlay — ESC closes it (not the menu)
         if (this.scene.achievementsVisible) {
-            const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
+            const escPressed = this.held(this.escKey) && !this.lastKeyState.esc;
             if (escPressed && this.scene.achievementsCloseCallback) this.scene.achievementsCloseCallback();
             this.lastKeyState.esc = this.escKey.isDown;
             return;
@@ -96,7 +126,7 @@ class InputHandler {
 
         // Priority 2b2: Map overlay — ESC closes it (not the menu)
         if (this.scene.mapVisible) {
-            const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
+            const escPressed = this.held(this.escKey) && !this.lastKeyState.esc;
             if (escPressed && this.scene.mapCloseCallback) this.scene.mapCloseCallback();
             this.lastKeyState.esc = this.escKey.isDown;
             return;
@@ -140,9 +170,9 @@ class InputHandler {
      * Handle input when dialogue is visible
      */
     handleDialogueInput() {
-        const spacePressed = this.spaceKey.isDown && !this.lastKeyState.space;
-        const enterPressed = this.enterKey.isDown && !this.lastKeyState.enter;
-        const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
+        const spacePressed = this.held(this.spaceKey) && !this.lastKeyState.space;
+        const enterPressed = this.held(this.enterKey) && !this.lastKeyState.enter;
+        const escPressed = this.held(this.escKey) && !this.lastKeyState.esc;
 
         // ESC to close dialogue
         if (escPressed) {
@@ -162,7 +192,7 @@ class InputHandler {
      * Handle input when credits are visible
      */
     handleCreditsInput() {
-        const escPressed = this.escKey.isDown && !this.lastKeyState.esc;
+        const escPressed = this.held(this.escKey) && !this.lastKeyState.esc;
         if (escPressed && this.scene.creditsCloseCallback) {
             this.scene.creditsCloseCallback();
         }
@@ -173,7 +203,7 @@ class InputHandler {
      * Handle ESC key for menu toggle
      */
     handleMenuToggle() {
-        if (this.escKey.isDown && !this.lastKeyState.esc) {
+        if (this.held(this.escKey) && !this.lastKeyState.esc) {
             this.scene.menuManager.toggle();
         }
         this.lastKeyState.esc = this.escKey.isDown;
@@ -183,9 +213,9 @@ class InputHandler {
      * Handle menu navigation input
      */
     handleMenuInput() {
-        const upHeld = this.wKey.isDown || this.cursors.up.isDown;
-        const downHeld = this.sKey.isDown || this.cursors.down.isDown;
-        const confirmHeld = this.spaceKey.isDown || this.enterKey.isDown;
+        const upHeld = this.held(this.wKey) || this.held(this.cursors.up);
+        const downHeld = this.held(this.sKey) || this.held(this.cursors.down);
+        const confirmHeld = this.held(this.spaceKey) || this.held(this.enterKey);
 
         // W / up - previous option
         if (upHeld && !this.lastKeyState.up) {
@@ -203,9 +233,9 @@ class InputHandler {
         }
 
         // Update key states for menu navigation
-        this.lastKeyState.up = upHeld;
-        this.lastKeyState.down = downHeld;
-        this.lastKeyState.space = confirmHeld;
+        this.lastKeyState.up = this.wKey.isDown || this.cursors.up.isDown;
+        this.lastKeyState.down = this.sKey.isDown || this.cursors.down.isDown;
+        this.lastKeyState.space = this.spaceKey.isDown || this.enterKey.isDown;
     }
 
     /**
@@ -222,17 +252,17 @@ class InputHandler {
         const t = (this.scene.touchControls && this.scene.touchControls.enabled)
             ? this.scene.touchControls.state : null;
 
-        const leftHeld  = this.cursors.left.isDown  || this.aKey.isDown || (t && t.left);
-        const rightHeld = this.cursors.right.isDown || this.dKey.isDown || (t && t.right);
-        const upHeld    = this.cursors.up.isDown    || this.wKey.isDown || (t && t.up);
-        const downHeld  = this.cursors.down.isDown  || this.sKey.isDown || (t && t.down);
+        const leftHeld  = this.held(this.cursors.left)  || this.held(this.aKey) || (t && t.left);
+        const rightHeld = this.held(this.cursors.right) || this.held(this.dKey) || (t && t.right);
+        const upHeld    = this.held(this.cursors.up)    || this.held(this.wKey) || (t && t.up);
+        const downHeld  = this.held(this.cursors.down)  || this.held(this.sKey) || (t && t.down);
 
         // Check if any directional input is currently held (arrows, WASD, or touch)
         const anyKeyHeld = leftHeld || rightHeld || upHeld || downHeld;
 
         // Update last key states
-        this.lastKeyState.up = upHeld;
-        this.lastKeyState.down = downHeld;
+        this.lastKeyState.up = this.cursors.up.isDown || this.wKey.isDown;
+        this.lastKeyState.down = this.cursors.down.isDown || this.sKey.isDown;
 
         // If any directional input is held, move based on ALL currently held dirs
         if (anyKeyHeld) {

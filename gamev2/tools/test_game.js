@@ -2325,6 +2325,55 @@ const tests = {
         const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
         assert.ok(/if \(viewW < this\.scale\.width\) \{\s*const cols = this\.roomManager\.contentColumns\(roomKey\)/.test(src));
     },
+    'a key tapped between two frames is still read on the next one (#195)'() {
+        load('systems/InputHandler.js');
+        // a Phaser key as the handler uses it: isDown, and a 'down' event on keydown
+        const key = () => ({ isDown: false, on(ev, fn) { this[ev] = fn; } });
+        const press = (k) => { k.isDown = true; k.down(); };
+        const tap = (k) => { press(k); k.isDown = false; };          // keydown + keyup inside one frame
+        const calls = [];
+        const scene = {
+            input: { keyboard: { createCursorKeys: () => ({ up: key(), down: key(), left: key(), right: key() }), addKey: key } },
+            dialogueManager: { visible: false, isVisible() { return this.visible; }, advance: () => calls.push('advance'), close: () => calls.push('close') },
+            menuManager: { visible: false, isVisible() { return this.visible; }, toggle() { this.visible = !this.visible; calls.push('toggle'); },
+                selectPrevious: () => calls.push('prev'), selectNext: () => calls.push('next'), activate: () => calls.push('activate') },
+            player: { isMoving: false, startMovement: (x, y) => calls.push(`move ${x},${y}`) },
+            roomManager: { isTransitioning: false },
+        };
+        ctx.Phaser = { Input: { Keyboard: { KeyCodes: {} } } };
+        ctx.__scene = scene;
+        const ih = game('new InputHandler(__scene)');
+        ih.setupKeys();
+        const frame = () => { calls.length = 0; ih.handleInput(); return calls.join(' | '); };
+
+        assert.strictEqual(frame(), '');
+        tap(ih.dKey);
+        assert.strictEqual(frame(), 'move 1,0', 'a sub-frame D tap takes one step');
+        assert.strictEqual(frame(), '', 'and only one');
+        tap(ih.escKey);
+        assert.strictEqual(frame(), 'toggle', 'a sub-frame ESC tap opens the menu');
+        assert.strictEqual(frame(), '', 'once');
+        tap(ih.cursors.down); assert.strictEqual(frame(), 'next');
+        tap(ih.wKey); assert.strictEqual(frame(), 'prev');
+        tap(ih.enterKey); assert.strictEqual(frame(), 'activate');
+        tap(ih.escKey); assert.strictEqual(frame(), 'toggle');
+        assert.strictEqual(scene.menuManager.visible, false);
+        scene.dialogueManager.visible = true;
+        tap(ih.spaceKey); assert.strictEqual(frame(), 'advance');
+        tap(ih.spaceKey); assert.strictEqual(frame(), 'advance', 'two taps on consecutive frames are two presses');
+        tap(ih.escKey); assert.strictEqual(frame(), 'close');
+        scene.dialogueManager.visible = false;
+        // a held key is still one press, and a tap nobody may act on is dropped, not saved up
+        press(ih.escKey);
+        assert.strictEqual(frame(), 'toggle'); assert.strictEqual(frame(), '');
+        ih.escKey.isDown = false; assert.strictEqual(frame(), '');
+        tap(ih.escKey); assert.strictEqual(frame(), 'toggle');
+        scene.trainTravel = { riding: true };
+        tap(ih.escKey); tap(ih.aKey);
+        assert.strictEqual(frame(), '');
+        scene.trainTravel.riding = false;
+        assert.strictEqual(frame(), '', 'a tap during a train ride does not fire after it');
+    },
 };
 
 let failed = 0;
