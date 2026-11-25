@@ -147,7 +147,8 @@ def unmapped_author_warning(post_id, author, authors=None):
 
 # landmark tile-key prefix -> spot label offered to the model:
 #   (prefix, label[, stand][, options])
-# `stand` is the cell to stand on, relative to the first matching tile.
+# `stand` is the cell to stand on, relative to the matching tile — the first
+# one in the room whose stand cell is free, else the first (see find_spots).
 # options:
 #   'rooms': (room keys)  the label names one place, so only these rooms offer
 #                         it — other rooms built from the same sprites do not
@@ -257,9 +258,18 @@ def find_spots(cfg):
 
     Outdoor rooms offer the ordinary landmarks. A station room offers only
     landmarks flagged 'indoors', and `interior` rooms (konbini, izakaya) offer
-    nothing — see landmark_applies."""
-    spots = {}
+    nothing — see landmark_applies.
+
+    A landmark is anchored on its first matching tile. One with a `stand`
+    offset moves on to the first tile whose stand cell is in the open: free
+    to stand on (walkable_near returns it unchanged) and with no building
+    drawn across it. So a tree that stands against a building does not send
+    its visitor round the back (issue #189: Market's first sakura has the
+    7-Eleven where its visitor would stand, its second the roof of a
+    high-rise); with no such tile the first match stays."""
+    spots, settled = {}, set()
     for room_key, room in overworld_rooms(cfg).items():
+        behind = None   # the room's cells behind a sprite, worked out when first asked for
         landmarks = [(prefix, label, stand)
                      for prefix, label, stand, options in map(landmark_fields, LANDMARKS)
                      if landmark_applies(cfg, room_key, options)]
@@ -268,9 +278,18 @@ def find_spots(cfg):
             for xy, key in tiles.items():
                 for prefix, label, (dx, dy) in landmarks:
                     spot_id = f'{room_key} · {label}'
-                    if key.startswith(prefix) and spot_id not in spots:
-                        x, y = map(int, xy.split(','))
-                        spots[spot_id] = (room_key, x + dx, y + dy)
+                    if not key.startswith(prefix) or spot_id in settled:
+                        continue
+                    x, y = map(int, xy.split(','))
+                    cell = (x + dx, y + dy)
+                    if (dx, dy) != (0, 0) and behind is None:
+                        behind = overhead_cells(cfg, room_key, standing=True)
+                    # no stand cell to judge, or this one is in the open
+                    if (dx, dy) == (0, 0) or (cell not in behind and walkable_near(cfg, room_key, *cell) == cell):
+                        settled.add(spot_id)
+                    elif spot_id in spots:
+                        continue
+                    spots[spot_id] = (room_key, *cell)
     return spots
 
 
@@ -290,18 +309,23 @@ def room_cells(cfg, room_key):
     return cells_w, cells_h, floored, blocked
 
 
-def overhead_cells(cfg, room_key):
+def overhead_cells(cfg, room_key, standing=False):
     """(x, y) of every cell of a room that an overhead sprite is drawn across:
     a canopy, roof, gate beam or lamp head on a layer with z >= 7 (Tops), which
     the game draws over whoever stands there (RoomManager's overheadBias), so
     an author placed on one is hidden behind it (issue #183).
+
+    With `standing`, also every cell of a sprite that stands on the ground
+    (z >= 2: a building, a statue). Those are drawn over whoever is behind
+    them too — the roof rows of a tall building carry no collider — and
+    find_spots keeps a landmark's standing cell off them (issue #189).
 
     A sprite's size in cells comes from its spriteMetadata anchor, which is
     the centre of its top-left cell (anchorX 0.1667 = three cells wide)."""
     meta = cfg.get('spriteMetadata', {})
     cells = set()
     for layer in cfg['rooms'][room_key].get('layers', []):
-        if layer.get('z', 0) < 7:
+        if layer.get('z', 0) < (2 if standing else 7):
             continue
         for xy, key in decode_tiles(cfg, layer).items():
             x, y = map(int, xy.split(','))

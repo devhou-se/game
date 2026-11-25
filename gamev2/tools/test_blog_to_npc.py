@@ -378,6 +378,30 @@ def test_spots(cfg):
     under = {(canopy[0] + i, canopy[1] + j) for i in range(3) for j in range(2)}
     assert under <= b.overhead_cells(cfg, 'Inaka'), sorted(under - b.overhead_cells(cfg, 'Inaka'))
     assert by_room['Inaka']['the sakura trees'] == (canopy[0] + 1, canopy[1] + 3)
+    # a landmark with a stand cell is anchored on a tile whose stand cell is in
+    # the open, where the room has one — Market's first sakura has the 7-Eleven
+    # in front of its trunk and its second the roof of a high-rise, which sent
+    # the visitor round the back of the store (#189)
+    def sprite_cell(room_key, layer_name, prefix):
+        return {(x, y) for layer in cfg['rooms'][room_key]['layers'] if layer['name'] == layer_name
+                for xy, key in b.decode_tiles(cfg, layer).items() if key.startswith(prefix)
+                for x, y in [map(int, xy.split(','))]}
+    for room_key, at in by_room.items():
+        if 'the sakura trees' not in at:
+            continue
+        x, y = at['the sakura trees']
+        assert (x - 1, y - 3) in sprite_cell(room_key, 'Tops', 'sakura-large-top'), (room_key, x, y)
+        stands = [(cx + 1, cy + 3) for cx, cy in sprite_cell(room_key, 'Tops', 'sakura-large-top')]
+        behind = b.overhead_cells(cfg, room_key, standing=True)
+        in_open = [c for c in stands if c not in behind and b.walkable_near(cfg, room_key, *c) == c]
+        assert not in_open or (x, y) in in_open, f'{room_key}: sakura spot ({x},{y}) is not in the open, {in_open} are'
+    market = by_room['Market']['the sakura trees']
+    assert b.walkable_near(cfg, 'Market', *market) == market
+    store = next(iter(sprite_cell('Market', 'Collidables', 'seven-eleven')))
+    assert not (store[0] - 1 <= market[0] <= store[0] + 3 and store[1] - 1 <= market[1] <= store[1] + 3), (market, store)
+    assert {(store[0] + i, store[1] + j) for i in range(3) for j in range(4)} <= b.overhead_cells(cfg, 'Market', standing=True)
+    assert b.overhead_cells(cfg, 'Market') < b.overhead_cells(cfg, 'Market', standing=True)
+    # ... and with nowhere in the open the first tile stays (Inaka, above)
     # the 7-Eleven's visitor stands on the pavement at its front, beside the
     # door — not behind the store, nor on the cell shoppers step out onto (#184)
     stores = [room_key for room_key in by_room if 'the 7-Eleven' in by_room[room_key]]
@@ -490,7 +514,9 @@ def test_city_reach(cfg):
 def test_landmark_rules():
     """landmark_applies on a made-up world: outdoors, a station, an interior."""
     cfg = {'rooms': {'Machi': {}, 'Other': {}, 'MachiStation': {}, 'Shop': {'interior': True}},
-           'stations': {'MachiStation': {}}}
+           'stations': {'MachiStation': {}},
+           # find_spots weighs a stand cell against the room's floor (#189)
+           'game': {'gridSize': 64, 'worldWidth': 640, 'worldHeight': 640}}
     plain, lane, platform = {}, {'rooms': ('Machi',)}, {'indoors': True}
     assert [b.landmark_applies(cfg, r, plain) for r in cfg['rooms']] == [True, True, False, False]
     assert [b.landmark_applies(cfg, r, lane) for r in cfg['rooms']] == [True, False, False, False]
