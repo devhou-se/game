@@ -296,6 +296,22 @@ class WorldModel {
             }
         }
 
+        // True when (x, y) is walkable and part of a real walking area rather than a sealed
+        // pocket: a flood from it finds at least 12 cells.
+        const opensOut = (x, y) => {
+            if (!walkable(x, y)) return false;
+            const seen = new Set([K(x, y)]), queue = [[x, y]];
+            while (queue.length && seen.size < 12) {
+                const [cx, cy] = queue.shift();
+                for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) {
+                    if (seen.has(K(nx, ny)) || !walkable(nx, ny)) continue;
+                    seen.add(K(nx, ny));
+                    queue.push([nx, ny]);
+                }
+            }
+            return seen.size >= 12;
+        };
+
         const errors = {}, warns = {};
         const push = (bag, kind, item) => (bag[kind] = bag[kind] || []).push(item);
 
@@ -325,6 +341,10 @@ class WorldModel {
             const foot = !machine.has(K(x, y + 1));
             const cabinet = !foot && !machine.has(K(x, y + 2));
             if ((foot || cabinet) && !colliders.has(c)) push(errors, 'vending-walkable', `${c} (${foot ? 'foot' : 'cabinet'})`);
+            // ...and it is used by bumping that foot from the cell in front (issue #137), so
+            // the cell under the foot must be walkable and lead somewhere (a walled-in pocket
+            // in front of a machine is no use either).
+            if (foot && !opensOut(x, y + 1)) push(errors, 'vending-no-front', `${c} (front ${K(x, y + 1)})`);
         }
 
         const covered = new Set();

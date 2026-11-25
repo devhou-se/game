@@ -230,10 +230,11 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   cabinet - with the foot cell walkable the player stood on the machine's lower half. Both
   the foot and the cabinet cell above it collide (the empty top cell of a tall machine
   stays walk-behind); the vending rule matches both tiles, so the bump that opens the shop
-  is on the foot, from the cell in front. Two Market machines, (22,26) and (23,26), have a
-  wall in front and are used from the side. The `vending-white` / `vending-red` prefabs
-  carry both colliders; `node tools/play.js lint` fails a room with `vending-walkable`
-  otherwise, and `python3 tools/seal_vending.py [Room ...] [--dry-run]` repairs room data
+  is on the foot, from the cell in front - which must be walkable and lead somewhere (issue
+  #137: lint error `vending-no-front`; the roof-top row 27 in front of Market's (22,26) and
+  (23,26) is a walk-behind strip for that, the roof is solid from row 28). The
+  `vending-white` / `vending-red` prefabs carry both colliders; `node tools/play.js lint`
+  fails a room with `vending-walkable` otherwise, and `python3 tools/seal_vending.py [Room ...] [--dry-run]` repairs room data
   (it refuses to seal a cell holding a transporter or a dated NPC). Keep NPC spots and
   door arrivals off the cell in front of a machine's cabinet.
 - **Don Takote** (issue #91): every `discount-store` facade has a shop floor -
