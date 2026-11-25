@@ -155,7 +155,10 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   generator rebuilds its room from scratch, so a change made only in
   `config.json` is dropped the next time it runs. `python3
   tools/check_generators.py` runs every room generator in a scratch copy and
-  fails if `config.json` would change, naming the rooms and cells. Make a
+  fails if `config.json` would change, naming the rooms and cells. The same
+  run re-seeds every room with `config_to_tiled.py` and fails if a committed
+  `tiled/*.tmj` would change, and (with a Pillow python3) checks that the art /
+  prefab tools still rebuild `assets/sprites` and `tiled/prefabs` (#186). Make a
   surgical change (config edit + `config_to_tiled.py <Room>`) AND mirror it in
   the generator source, then run the check. Generators keep what they do not
   own — NPCs, Machi's ad signage, a 7-Eleven door wired by

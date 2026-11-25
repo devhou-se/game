@@ -17,6 +17,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import blog_to_npc as b  # noqa: E402
+import check_generators  # noqa: E402
 import config_to_tiled as c2t  # noqa: E402
 import post_photos  # noqa: E402
 
@@ -927,6 +928,32 @@ def test_tiled_ids_stable():
         assert kid == prev and new == max(prev.values()) + 1, name
 
 
+def test_tiled_maps_in_sync():
+    """check_generators covers the Tiled maps: every room's committed .tmj is
+    what config_to_tiled writes for it, and a map that drifted is named (#186)."""
+    cg = check_generators
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+    rooms = cg.tiled_rooms(root)
+    assert 'Tokyo' in rooms and 'Machi' in rooms and len(rooms) >= 30, rooms
+    assert cg.TILED in cg.CHECKS and set(cg.GENERATORS) < set(cg.CHECKS)
+    assert cg.check([cg.TILED], root) == {}, 'a tiled/*.tmj is out of step with config.json'
+    # restore() names what a tool changed / added / removed and puts it back
+    with tempfile.TemporaryDirectory() as tmp:
+        a, w = os.path.join(tmp, 'a'), os.path.join(tmp, 'w')
+        for base in (a, w):
+            for rel in cg.OUTPUTS:
+                os.makedirs(os.path.join(base, rel))
+            for rel, text in (('tiled/one.tmj', '1'), ('tiled/two.tmj', '2')):
+                open(os.path.join(base, rel), 'w').write(text)
+        assert cg.restore(a, w) == []
+        open(os.path.join(w, 'tiled/one.tmj'), 'w').write('edited')
+        os.remove(os.path.join(w, 'tiled/two.tmj'))
+        open(os.path.join(w, 'assets/sprites/new.png'), 'w').write('x')
+        assert cg.restore(a, w) == ['tiled/one.tmj changed', 'tiled/two.tmj REMOVED',
+                                    'assets/sprites/new.png ADDED']
+        assert cg.restore(a, w) == [] and open(os.path.join(w, 'tiled/one.tmj')).read() == '1'
+
+
 if __name__ == '__main__':
     config = b.load_config()
     test_trim_line()
@@ -945,4 +972,5 @@ if __name__ == '__main__':
     test_trips(config)
     test_shipped_dialogue(config)
     test_tiled_ids_stable()
+    test_tiled_maps_in_sync()
     print('ok')

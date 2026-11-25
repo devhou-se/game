@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""check_generators.py — a room generator re-run on an unchanged world must
-leave config.json byte-identical (issue #107).
+"""check_generators.py — a generator re-run on an unchanged world must leave
+what is committed byte-identical: config.json for the room generators (issue
+#107), the Tiled maps for config_to_tiled.py, and the sprites and prefabs for
+the art tools (issue #186).
 
 The generated rooms also collect edits their generator did not make: the blog
 pipeline's NPC states, a shop door wired by another generator, a surgical fix
@@ -10,12 +12,22 @@ scratch copy of the project (the real config.json is never written), and
 fails if the copy's config.json changed — naming the rooms and cells, so the
 edit can be folded back into the generator (or kept by it, the way NPCs are).
 
+The same holds one step on: `config_to_tiled` re-seeds every room that has a
+tiled/<room>.tmj and fails if a map changed (a config edit whose map was not
+re-seeded, or a map edited by hand), and each art / prefab tool must rebuild
+the committed assets/sprites and tiled/prefabs. Whatever a tool writes under
+OUTPUTS is compared, so a room generator that touched a sprite fails too.
+
 Run from gamev2/:  python3 tools/check_generators.py [generator ...]
-                   python3 tools/check_generators.py generate_osaka
+                   python3 tools/check_generators.py generate_osaka config_to_tiled
 
 Exit 0 when every generator reproduces the committed world, 1 otherwise.
-Needs no Pillow. A new room generator belongs in GENERATORS.
+The room generators and config_to_tiled need no Pillow. The art tools do:
+without it they are listed as skipped, not as ok — run the check with a
+python3 that has Pillow to cover them. A new room generator belongs in
+GENERATORS, a new art tool in ART_TOOLS.
 """
+import filecmp
 import json
 import os
 import shutil
@@ -31,8 +43,64 @@ GENERATORS = [
     'generate_sapporo', 'generate_asahikawa',
     'generate_konbinis', 'generate_discount_stores', 'generate_stations',
 ]
-# what a generator reads, relative to gamev2/ (config.json is copied per run)
-INPUTS = ['tools', 'tiled/prefabs', 'assets/sprites']
+# config_to_tiled.py, run over every room that has a committed tiled/*.tmj
+TILED = 'config_to_tiled'
+# Tools that draw sprites / prefabs (and register them in config.json). They
+# need Pillow; the extract_* ones read the Godot project's ../Assets, and
+# extract_city also a Japanese system font (see generate_ads.find_font).
+ART_TOOLS = [
+    'make_prefabs', 'generate_hokkaido', 'generate_tsutenkaku',
+    'generate_discount_art', 'generate_cooler_art', 'make_snow_tiles',
+    'make_road_tiles', 'extract_city', 'extract_dotonbori', 'extract_shrine',
+    'extract_street', 'extract_train', 'extract_train_interior',
+]
+CHECKS = GENERATORS + [TILED] + ART_TOOLS
+# what a tool reads and may write, relative to gamev2/ — copied to the scratch
+# project once (plus config.json), compared and put back after every run
+OUTPUTS = ['tiled', 'assets/sprites']
+INPUTS = ['tools'] + OUTPUTS
+
+
+def have_pillow():
+    try:
+        import PIL  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def tiled_rooms(root='.'):
+    """Rooms of config.json that have a committed tiled/<room>.tmj."""
+    rooms = json.load(open(os.path.join(root, 'config.json')))['rooms']
+    return [r for r in rooms if os.path.exists(os.path.join(root, 'tiled', r.lower() + '.tmj'))]
+
+
+def files_under(base, rel):
+    """Paths (relative to base) of every file under base/rel."""
+    out = set()
+    for d, dirs, names in os.walk(os.path.join(base, rel)):
+        dirs[:] = [x for x in dirs if x != '__pycache__']
+        out.update(os.path.relpath(os.path.join(d, n), base) for n in names)
+    return out
+
+
+def restore(root, work):
+    """Differences under OUTPUTS between the scratch project and the committed
+    one, as ['tiled/x.tmj changed', ...] — and the scratch copy put back the
+    way it was, so the next tool starts from the committed files."""
+    out = []
+    for rel in OUTPUTS:
+        a, b = files_under(root, rel), files_under(work, rel)
+        for f in sorted(a | b):
+            src, dst = os.path.join(root, f), os.path.join(work, f)
+            if f not in a:
+                out.append(f'{f} ADDED')
+                os.remove(dst)
+            elif f not in b or not filecmp.cmp(src, dst, shallow=False):
+                out.append(f'{f} ' + ('changed' if f in b else 'REMOVED'))
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.copyfile(src, dst)
+    return out
 
 
 def describe(before, after, limit=8):
@@ -79,15 +147,23 @@ def check(names, root='.'):
     Returns {generator: [difference, ...]} for the ones that are not a no-op."""
     committed = open(os.path.join(root, 'config.json')).read()
     failures = {}
-    with tempfile.TemporaryDirectory(prefix='check_generators_') as work:
+    with tempfile.TemporaryDirectory(prefix='check_generators_') as top:
+        # the scratch project sits one level down so that ../Assets (the Godot
+        # art the extract_* tools cut sprites from) resolves beside it
+        work = os.path.join(top, 'gamev2')
+        godot_art = os.path.abspath(os.path.join(root, '..', 'Assets'))
+        if os.path.isdir(godot_art):
+            os.symlink(godot_art, os.path.join(top, 'Assets'))
         for rel in INPUTS:
             shutil.copytree(os.path.join(root, rel), os.path.join(work, rel),
                             ignore=shutil.ignore_patterns('__pycache__'))
         scratch = os.path.join(work, 'config.json')
         for name in names:
             open(scratch, 'w').write(committed)
-            run = subprocess.run([sys.executable, f'tools/{name}.py'], cwd=work,
+            args = tiled_rooms(work) if name == TILED else []
+            run = subprocess.run([sys.executable, f'tools/{name}.py'] + args, cwd=work,
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            files = restore(root, work)     # also after a crash: it may have written some
             if run.returncode != 0:
                 last = (run.stdout.strip().splitlines() or ['no output'])[-1]
                 failures[name] = [f'exited {run.returncode}: {last}']
@@ -95,26 +171,40 @@ def check(names, root='.'):
             regenerated = open(scratch).read()
             if regenerated != committed:
                 failures[name] = describe(json.loads(committed), json.loads(regenerated))
+            if files:
+                more = [f'+{len(files) - 12} more file(s)'] if len(files) > 12 else []
+                failures[name] = failures.get(name, []) + files[:12] + more
     return failures
 
 
 def main(argv):
-    names = [a[:-3] if a.endswith('.py') else a for a in argv] or GENERATORS
-    unknown = [n for n in names if n not in GENERATORS]
+    names = [a[:-3] if a.endswith('.py') else a for a in argv] or CHECKS
+    unknown = [n for n in names if n not in CHECKS]
     if unknown:
-        print(f'unknown generator(s) {unknown}; expected some of {GENERATORS}')
+        print(f'unknown generator(s) {unknown}; expected some of {CHECKS}')
         return 2
-    failures = check(names)
+    skipped = [] if have_pillow() else [n for n in names if n in ART_TOOLS]
+    failures = check([n for n in names if n not in skipped])
+    what = lambda n: ('the Tiled maps' if n == TILED else
+                      'the sprites and prefabs' if n in ART_TOOLS else 'config.json')
     for name in names:
-        if name not in failures:
-            print(f'ok    {name}.py reproduces config.json')
-            continue
-        print(f'DRIFT {name}.py would change config.json:')
-        for line in failures[name]:
-            print(f'        {line}')
+        if name in skipped:
+            print(f'skip  {name}.py needs Pillow - NOT checked')
+        elif name not in failures:
+            print(f'ok    {name}.py reproduces {what(name)}')
+        else:
+            crashed = failures[name][0].startswith('exited ')
+            print(f'FAIL  {name}.py did not finish:' if crashed else
+                  f'DRIFT {name}.py would change {what(name)}:')
+            for line in failures[name]:
+                print(f'        {line}')
     if failures:
         print('\nA generator no longer rebuilds the committed world. Fold the difference into the\n'
-              'generator (or have it keep what it does not own) - do not re-run it over the room.')
+              'generator (or have it keep what it does not own) - do not re-run it over the room.\n'
+              'For a Tiled map: python3 tools/config_to_tiled.py <Room> after the config edit.')
+    if skipped:
+        print(f'\n{len(skipped)} art tool(s) not checked: this python3 has no Pillow. Run the check '
+              'with one that does.')
     return 1 if failures else 0
 
 
