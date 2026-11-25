@@ -543,7 +543,10 @@ class WorldModel {
         const covered = new Set();
         for (const o of objects) for (const [cx, cy] of o.cells) { covered.add(K(cx, cy)); covered.add(K(cx, cy - 1)); }
         const sortedColliders = [...colliders].map(c => c.split(',').map(Number)).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-        for (const [x, y] of sortedColliders) if (!covered.has(K(x, y))) push(warns, 'stray-collision', K(x, y));
+        // (a bare collider no walkable cell touches is not stray: it fills ground nobody can get
+        // to - the yard behind the Tokyo shrine hall, issue #196 - so nobody is ever put there)
+        const walledIn = (x, y) => ![[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]].some(([nx, ny]) => reachable.has(K(nx, ny)));
+        for (const [x, y] of sortedColliders) if (!covered.has(K(x, y)) && !walledIn(x, y)) push(warns, 'stray-collision', K(x, y));
 
         for (const o of objects) {
             if (o.layer !== 'Collidables') continue;

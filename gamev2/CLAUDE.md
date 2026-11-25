@@ -634,6 +634,10 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   `play.js check` reports every room's lint errors too (`WorldModel.lintProblems`, issue #178), so a
   store cut off from its door shows up there as `KonbiniMarket1: lint shop-no-front: ...`.
   `check` exits 1 when it lists any problem, like `lint` (issue #188), so a script or CI step can gate on it.
+  The Tokyo city has no open cell that cannot be walked to (issue #196): the yard behind the Tokyo
+  shrine hall, the floor under Market's wing roofs and the odd cell boxed in by bushes or lanterns carry
+  a `gk_blank` collider, so nothing can place anyone there (unit-tested on the stitched city). Lint's
+  `stray-collision` skips a bare collider that no walkable cell touches, which is what those are.
   `generate_konbinis.py` lays a store out as coolers | walkway | aisle | walkway | (aisle | walkway) |
   counter row: a two-cell `office-fridge` pushes the aisles down a row, the last aisle stops two rows
   short of the counter row (one on the row above it closed the ring and sealed the back of the store

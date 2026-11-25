@@ -1591,6 +1591,19 @@ const tests = {
         const city = world.lint('TokyoCity');
         assert.strictEqual(JSON.stringify(city.errors), '{}');
         assert.deepStrictEqual([city.width, city.height], [rm.cities.TokyoCity.width, rm.cities.TokyoCity.height]);
+        // no open cell of the city is cut off (#196): the yard behind the Tokyo shrine hall and the
+        // floor under Market's wing roofs are solid, and lint does not call those colliders stray
+        const solid = new Set(), pockets = [];
+        for (const l of rm.rooms.TokyoCity.layers) if (l.collision) for (const xy of Object.keys(l.tiles)) solid.add(xy);
+        for (const l of rm.rooms.TokyoCity.layers) {
+            if (l.name !== 'Floor') continue;
+            for (const xy of Object.keys(l.tiles)) {
+                const [x, y] = xy.split(',').map(Number);
+                if (!solid.has(xy) && rm.checkBoundary(x, y, 'TokyoCity') && !reach.TokyoCity.has(xy)) pockets.push(world.spot('TokyoCity', x, y));
+            }
+        }
+        assert.deepStrictEqual(pockets, []);
+        assert.strictEqual(JSON.stringify(city.warns), '{}');
         assert.ok(world.drawOrder('TokyoCity').some(t => /^tree-3-top/.test(t.key)), 'the woods are part of the render');
         assert.ok(world.npcsIn('TokyoCity').every(n => n.homeRoom && rm.checkBoundary(n.gridX, n.gridY, 'TokyoCity')));
         assert.strictEqual(world.npcsIn('TokyoCity').length, ['Tokyo', 'Market', 'Palace', 'Park', 'Machi'].reduce((n, k) => n + world.npcsIn(k).length, 0));
