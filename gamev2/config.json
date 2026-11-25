@@ -18101,15 +18101,6 @@
           "sprite": "damian_front",
           "states": {
             "2025-11-03": {
-              "dialogue": [
-                "Rainy day in Toyama, woke up late and wandered around looking for coffee and breakfast near the station.",
-                "Climbed the city hall observation tower after that - the view made the wet walk worth it.",
-                "Then I hunted down Toyama's famous black ramen. So salty, so much soy sauce, no regrets.",
-                "Ended the night quiet - sushi near the station, dessert and beer for the walk home. Shirakawa-go tomorrow, can't wait!"
-              ],
-              "gridX": 10,
-              "gridY": 20,
-              "photo": "587",
               "present": false
             },
             "2025-11-05": {
@@ -38299,15 +38290,6 @@
               "present": false
             },
             "2025-11-01": {
-              "dialogue": [
-                "Left Sendai early, snapped a photo of the crossing where Damian jaywalked on day one. Evidence secured.",
-                "Caught a tram to the accommodation, tried not to compare it to Melbourne's. It lost anyway.",
-                "Sushi that wasn't a train, mediocre omurice, then a pub crawl through Roppongi. Balanced diet.",
-                "Best part was a cafe owner telling DJ stories. Bye for now, I need a nap before dealer's choice."
-              ],
-              "gridX": 1,
-              "gridY": 5,
-              "photo": "540",
               "present": false
             },
             "2025-11-02": {

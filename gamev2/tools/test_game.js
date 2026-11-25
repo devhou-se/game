@@ -162,6 +162,23 @@ const tests = {
         assert.strictEqual(rooms.TokyoStation.name, 'Tokyo Station');
     },
 
+    'a dated state that marks an NPC absent carries no placement'() {
+        // tools/blog_to_npc.py PLACEMENT_KEYS: a leftover photo is still preloaded, leftover dialogue reads as a post
+        const placementKeys = ['gridX', 'gridY', 'dialogue', 'photo', 'voice', 'drunk', 'posts'];
+        const rooms = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).rooms;
+        const stale = [];
+        for (const [key, room] of Object.entries(rooms)) {
+            for (const npc of room.npcs || []) {
+                for (const [date, st] of Object.entries(npc.states || {})) {
+                    if (st.present !== false) continue;
+                    const left = placementKeys.filter((k) => k in st);
+                    if (left.length) stale.push(`${key} ${npc.name} ${date}: ${left.join(', ')}`);
+                }
+            }
+        }
+        assert.deepStrictEqual(stale, []);
+    },
+
     'the retired office-bin sprite is gone, and nothing still points at its palette slot'() {
         const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
         const key = 'office-bin_0_0';
