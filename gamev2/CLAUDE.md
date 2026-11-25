@@ -502,8 +502,8 @@ creator's composite (head / torso / legs / beard donors + recolours), run offlin
   (damian's hem), the stray outline of the head donor's own high sleeve (james, side frame 1), mouth-interior
   pixels recoloured as hair (dylan — a moustache that flickers with the walk cycle), and an open shoulder
   line where the head donor's shoulders are narrower than the top worn.
-- **Avoid `dylan` as a top donor** for baked sprites: his shirt is a see-through checker (alternate pixels
-  are transparent in the source art), which shows the ground through a light recolour.
+- **`dylan` as a top donor**: his shirt is a two-teal checker (both teals are in `DONORS.dylan.top`), so a
+  recolour keeps the checker as two shades. It is solid: a unit test keeps every donor sprite hole-free.
 - **Replacing an interim set with real art**: drop the ten hand-drawn PNGs over the generated ones (same file
   names, same 64x64 template as the rest of the cast) and delete that name from `LOOKS`, or the next run
   overwrites them. Nothing else changes. Generated sets are cast, not creator donors (`DONORS` holds the
