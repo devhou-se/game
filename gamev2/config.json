@@ -43030,11 +43030,6 @@
       "loop": true,
       "scale": 1
     },
-    "office-bin_0_0": {
-      "anchorX": 0.5,
-      "anchorY": 0.5,
-      "frameCount": 1
-    },
     "office-boxes-large_0_0": {
       "anchorX": 0.1667,
       "anchorY": 0.25,

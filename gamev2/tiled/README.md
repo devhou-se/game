@@ -206,7 +206,7 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   Tokyo hall (without it one eave corner drew over the hallway and the other
   under it, by creation order).
 - **No rubbish bins** (issue #19): `node tools/play.js lint` fails with `rubbish-bin` if ANY room places a bin / dumpster /
-  trash-can sprite (it scans the whole config and every `tiled/*.tmj` on every run, whatever `--room` says). The interior pack's `office-bin` is retired -
+  trash-can sprite (it scans the whole config and every `tiled/*.tmj` on every run, whatever `--room` says). The interior pack's `office-bin` is retired (no PNG, no `spriteMetadata`; only its positional `tilePalette` slot remains) -
   use `izakaya-stool_0_0` for a seat and a plant / `office-watercooler` for a corner filler.
 - **Traffic lights are one 1x3 sprite whose map key is the green frame** (`traffic-light_0_0`);
   `src/TrafficLights.js` swaps the texture at runtime, so never place the `-amber` / `-stop` / `-stop-blink`

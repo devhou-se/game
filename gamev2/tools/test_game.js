@@ -126,6 +126,24 @@ const tests = {
         assert.strictEqual(rooms.TokyoStation.name, 'Tokyo Station');
     },
 
+    'the retired office-bin sprite is gone, and nothing still points at its palette slot'() {
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const key = 'office-bin_0_0';
+        assert.ok(!(key in cfg.spriteMetadata), 'still in spriteMetadata (loaded at boot, offered in the editor)');
+        assert.ok(!(key in (cfg.tileNames || {})), 'still in tileNames');
+        assert.ok(!fs.existsSync(path.join(GV2, 'assets', 'sprites', key + '.png')), 'the PNG is still there');
+        // tilePalette is positional: the slot stays so every later index keeps its meaning
+        const slot = cfg.tilePalette.indexOf(key);
+        assert.ok(slot >= 0, 'the palette slot was removed: every later tile index has shifted');
+        for (const [name, room] of Object.entries(cfg.rooms)) {
+            for (const layer of room.layers || []) {
+                for (const [xy, t] of Object.entries(layer.tiles || {})) {
+                    assert.ok(t !== slot && t !== key, `${name} ${layer.name} @${xy} places the retired ${key}`);
+                }
+            }
+        }
+    },
+
     'dialogue hint names the keys, or the touch controls'() {
         const hintText = game('DialogueManager.hintText');
         assert.strictEqual(hintText(false, ''), 'SPACE/ENTER: continue | ESC: close');
