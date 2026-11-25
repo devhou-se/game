@@ -15,7 +15,7 @@ const ctx = vm.createContext({
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
-    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'systems/NPCManager.js'].forEach(load);
+    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'systems/NPCManager.js', 'systems/UIScale.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
 // A Shop with no Phaser behind it: the save blob comes from (and goes to) `store`.
@@ -586,6 +586,18 @@ const tests = {
             }
         }
         assert.ok(seen > 10, 'found the hint lines');
+    },
+
+    'a toast slides off the overlay panel it would cover, when there is room'() {
+        const clearOf = game('UIScale.clearOf');
+        const toast = { x0: 310, y0: 856, x1: 970, y1: 904 };          // 48px tall, authored near the bottom
+        const showdown = { x0: 13, y0: 76, x1: 1267, y1: 884 };        // 844x390: 76px strips over and under
+        assert.strictEqual(clearOf(toast, showdown, 960), 42, 'centred in the strip under the panel');
+        assert.strictEqual(clearOf({ ...toast, y0: 100, y1: 148 }, showdown, 960), -86, 'the strip over it when that is nearer');
+        assert.strictEqual(clearOf(toast, { ...showdown, y1: 940 }, 960), -842, 'over it when the strip under is too thin');
+        assert.strictEqual(clearOf(toast, { ...showdown, y0: 12, y1: 948 }, 960), 0, 'stays put when the panel fills the canvas');
+        assert.strictEqual(clearOf(toast, { ...showdown, y1: 850 }, 960), 0, 'stays put when it covers nothing');
+        assert.strictEqual(clearOf(toast, { ...showdown, x1: 300 }, 960), 0, 'beside the panel is not on it');
     },
 
     'outside the trip the game opens on a trip day, and cycles through them'() {

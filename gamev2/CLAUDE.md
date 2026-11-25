@@ -869,7 +869,10 @@ windows (canvas at 1:1 or larger, no touch controls) are untouched by all of it.
     overlay and must stay on the world camera (the debug grid, flag labels and stats text — otherwise
     the collision tint stops lining up with the world on any window under 960px tall);
     `obj.uiFloat = true` for something magnified but belonging to no overlay (the shop toast): it
-    never moves or shrinks the overlay it appears over and stays where it was authored on the canvas.
+    never moves or shrinks the overlay it appears over and stays where it was authored on the canvas —
+    except that a float which would cover the open overlay's content slides into the strip under (or
+    over) the panel when one is tall enough to hold it (`UIScale.clearOf`; a panel that fills the
+    canvas height leaves no strip, and the toast stays put over it).
   - The magnification applies to ANY window showing the canvas below 1:1, not only phones: a
     1440x800 laptop draws overlays at 1.2x. Only windows of 1280x960 and up are untouched.
   - An overlay that already fills the canvas cannot be magnified; its text can use

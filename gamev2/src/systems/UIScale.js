@@ -24,7 +24,9 @@
  *    which must line up with the world).
  *  - `uiFloat`      magnified with the overlays but not part of anyone's
  *    content (the toast): it never moves or shrinks the overlay it appears
- *    over, and is kept where it was authored on the canvas.
+ *    over, and is kept where it was authored on the canvas — unless that
+ *    is on top of the overlay's content and there is room beside it, in
+ *    which case it slides just off the panel (see `clearOf`).
  *
  * Overlays otherwise need no code for this. Phaser hit-tests through the zoomed
  * camera, so clicks and taps on overlay rows keep working. The two things
@@ -90,7 +92,7 @@ class UIScale {
                 if (!o._uiHome) o._uiHome = { x: o.x, y: o.y };
                 o.setPosition(o._uiHome.x, o._uiHome.y).setScale(1);
                 const f = UIScale.bounds(o, main);
-                if (f) { floats.push(o); floatBox = floatBox ? UIScale.union(floatBox, f) : f; }
+                if (f) { floats.push(o); o._uiHome.box = f; floatBox = floatBox ? UIScale.union(floatBox, f) : f; }
                 continue;
             }
             const b = UIScale.bounds(o, main);
@@ -130,10 +132,20 @@ class UIScale {
         }
 
         // floats stay where they were authored on the canvas, at the overlay's
-        // zoom (less if that would make them wider than the canvas)
+        // zoom (less if that would make them wider than the canvas) — moved
+        // off the overlay's content when they would cover it and there is room
+        const panel = alone ? null : {
+            x0: fit.offsetX + box.x0 * fit.zoom, y0: fit.offsetY + box.y0 * fit.zoom,
+            x1: fit.offsetX + box.x1 * fit.zoom, y1: fit.offsetY + box.y1 * fit.zoom,
+        };
         for (const o of floats) {
-            const s = Math.min(1, (W - 2 * UIScale.MARGIN) / (o.width * fit.zoom));
-            o.setScale(s).setPosition((o._uiHome.x - fit.offsetX) / fit.zoom, (o._uiHome.y - fit.offsetY) / fit.zoom);
+            const home = o._uiHome, s = Math.min(1, (W - 2 * UIScale.MARGIN) / (o.width * fit.zoom));
+            const k = s * fit.zoom, f = home.box;    // the float's own canvas box, grown about its home
+            const dy = panel ? UIScale.clearOf({
+                x0: home.x + (f.x0 - home.x) * k, y0: home.y + (f.y0 - home.y) * k,
+                x1: home.x + (f.x1 - home.x) * k, y1: home.y + (f.y1 - home.y) * k,
+            }, panel, H) : 0;
+            o.setScale(s).setPosition((home.x - fit.offsetX) / fit.zoom, (home.y + dy - fit.offsetY) / fit.zoom);
         }
 
         const changed = !this.active || fit.zoom !== this.zoom ||
@@ -181,6 +193,21 @@ class UIScale {
         };
         const x = axis(box.x0, box.x1, W), y = axis(box.y0, box.y1, H);
         return { zoom, offsetX: x.offset, offsetY: y.offset, originX: x.origin, originY: y.origin };
+    }
+
+    /**
+     * How far down (+) or up (-) the canvas box `f` must move so it no longer
+     * covers `panel`: into the strip under or over the panel, centred in it,
+     * whichever is the shorter trip. 0 when it covers nothing, or when
+     * neither strip of the H-tall canvas is tall enough to hold it.
+     */
+    static clearOf(f, panel, H) {
+        if (f.x1 <= panel.x0 || f.x0 >= panel.x1 || f.y1 <= panel.y0 || f.y0 >= panel.y1) return 0;
+        const h = f.y1 - f.y0, mid = (f.y0 + f.y1) / 2;
+        const moves = [[panel.y1, H], [0, panel.y0]]
+            .filter(([lo, hi]) => hi - lo >= h)
+            .map(([lo, hi]) => (lo + hi) / 2 - mid);
+        return moves.length ? moves.reduce((a, b) => (Math.abs(b) < Math.abs(a) ? b : a)) : 0;
     }
 
     static union(a, b) {
