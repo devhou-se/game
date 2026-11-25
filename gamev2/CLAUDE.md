@@ -158,7 +158,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   `tools/play.js` and `tools/blog_to_npc.py` read the district data and never see a patch.
 - **Merge** — `src/systems/CityStitcher.js` (`build`): layers, objects, signage and door transporters are
   translated into merged cells (the union's top-left is 0,0 — Machi is at 0,22, Tokyo at 48,1, Market at
-  106,0); the 16 hidden seam transporters (target = a sibling district) are dropped; `RoomManager.rooms`
+  106,0); the 22 hidden seam transporters (target = a sibling district) are dropped; `RoomManager.rooms`
   gets the city next to its districts, which stay as data and are never entered. **`config.rooms` is not
   touched** — it still has exactly the authored rooms, so `tools/blog_to_npc.py`, the world map, the
   generators and the seam transporters themselves are unchanged.
@@ -197,7 +197,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   is up, which covers sprites coming back from the pool; `Intro.whereFriendsAre` asks `roomManager.npcsIn(room)`
   (a district's own `rooms[...].npcs` is empty once it is stitched).
 - **Tools** — `tools/play.js`, `tools/world-model.js` (lint / render / check) and `/studio/` model rooms from
-  `config.json` + the `.tmj` files and do not stitch: there Tokyo is still five rooms joined by the 16 seam
+  `config.json` + the `.tmj` files and do not stitch: there Tokyo is still five rooms joined by the 22 seam
   transporters, i.e. what `?stitch=0` plays. `play.js check` / `lint` therefore keep guarding the districts
   one map at a time; the stitched room itself is only checked by `tools/sync_cities.py --check` and the game.
 - **`?stitch=0`** is the safety valve: no cities, the five districts are separate rooms joined by the fade

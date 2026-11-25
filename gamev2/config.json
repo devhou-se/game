@@ -21076,6 +21076,30 @@
           "targetY": 1
         },
         {
+          "gridX": 54,
+          "gridY": 47,
+          "hidden": true,
+          "targetRoom": "Palace",
+          "targetX": 54,
+          "targetY": 1
+        },
+        {
+          "gridX": 55,
+          "gridY": 47,
+          "hidden": true,
+          "targetRoom": "Palace",
+          "targetX": 55,
+          "targetY": 1
+        },
+        {
+          "gridX": 56,
+          "gridY": 47,
+          "hidden": true,
+          "targetRoom": "Palace",
+          "targetX": 56,
+          "targetY": 1
+        },
+        {
           "gridX": 48,
           "gridY": 29,
           "hidden": true,
@@ -27271,6 +27295,30 @@
           "hidden": true,
           "targetRoom": "Market",
           "targetX": 1,
+          "targetY": 46
+        },
+        {
+          "gridX": 54,
+          "gridY": 0,
+          "hidden": true,
+          "targetRoom": "Market",
+          "targetX": 54,
+          "targetY": 46
+        },
+        {
+          "gridX": 55,
+          "gridY": 0,
+          "hidden": true,
+          "targetRoom": "Market",
+          "targetX": 55,
+          "targetY": 46
+        },
+        {
+          "gridX": 56,
+          "gridY": 0,
+          "hidden": true,
+          "targetRoom": "Market",
+          "targetX": 56,
           "targetY": 46
         },
         {

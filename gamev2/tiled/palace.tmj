@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 11,
- "nextobjectid": 17,
+ "nextobjectid": 20,
  "properties": [
   {
    "name": "gv2room",
@@ -10343,6 +10343,117 @@
      "id": 14,
      "name": "transporter",
      "point": true,
+     "x": 3488.0,
+     "y": 32.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Market"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 54
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 46
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 15,
+     "name": "transporter",
+     "point": true,
+     "x": 3552.0,
+     "y": 32.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Market"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 55
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 46
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 16,
+     "name": "transporter",
+     "point": true,
+     "x": 3616.0,
+     "y": 32.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Market"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 56
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 46
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 17,
+     "name": "transporter",
+     "point": true,
      "x": 2464.0,
      "y": 1376.0,
      "width": 0,
@@ -10377,7 +10488,7 @@
      ]
     },
     {
-     "id": 15,
+     "id": 18,
      "name": "transporter",
      "point": true,
      "x": 2528.0,
@@ -10414,7 +10525,7 @@
      ]
     },
     {
-     "id": 16,
+     "id": 19,
      "name": "boundary",
      "x": 0,
      "y": 0,

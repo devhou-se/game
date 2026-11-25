@@ -905,6 +905,16 @@ const tests = {
         assert.strictEqual(roofs, 2, 'found both red shrine roofs');
     },
 
+    "Palace's east road crosses into Market and back when the city is not stitched"() {
+        // the road over the east level crossing (54..56) needs its own seam transporters, like the west road's
+        const rooms = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).rooms;
+        const seam = (from, x, y) => rooms[from].transporters.find(t => t.gridX === x && t.gridY === y);
+        for (const x of [0, 1, 54, 55, 56]) {
+            assert.deepStrictEqual(seam('Palace', x, 0), { gridX: x, gridY: 0, hidden: true, targetRoom: 'Market', targetX: x, targetY: 46 });
+            assert.deepStrictEqual(seam('Market', x, 47), { gridX: x, gridY: 47, hidden: true, targetRoom: 'Palace', targetX: x, targetY: 1 });
+        }
+    },
+
     'the headless world model is stopped by collision tiles, like the game'() {
         const WorldModel = game('WorldModel');
         // a 4x3 room: a wall tile at 2,1 on a collision layer, a rug at 1,2 on a plain one
