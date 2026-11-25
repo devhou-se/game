@@ -74,7 +74,13 @@ GMAP=[('floor','Floor',0,False),('overfloor','Over Floor',1,False),
       ('overworld-noncollidables','Non-Collidables',4,False),('julia-tmp','Julia',4,False),
       ('overworld-collidables','Collidables',5,True),('other-tmp','Other',6,False)]
 
-tsmap,layers=parse_scene(ROOT+'/Scenes/tokyo/tokyo_outside.tscn')
+# The Godot scene to port, relative to the repo root (default = the Tokyo
+# overworld every ported room came from). NB Scenes/osaka/osaka_outside.tscn is
+# NOT a different city: it is an older copy of the Tokyo overworld, so the Osaka
+# room is generated instead (tools/generate_osaka.py).
+SCENE=os.environ.get('PORT_SCENE','Scenes/tokyo/tokyo_outside.tscn')
+print('scene:',SCENE)
+tsmap,layers=parse_scene(os.path.join(ROOT,SCENE))
 tilesets={i:parse_tileset(p) for i,p in tsmap.items()}
 byl={n:(t,c) for n,t,c in layers}
 

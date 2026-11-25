@@ -88,8 +88,8 @@ prefabs and let a generator lay out the room.
 The pipeline that produced all four rooms is committed in `tools/`:
 
 1. `tools/render_rect.py RX0 RX1 RY0 RY1 out.png` — render a candidate rect
-   of the Godot overworld (`Scenes/tokyo/tokyo_outside.tscn`) to pick a
-   district's bounds.
+   of the Godot overworld (`Scenes/tokyo/tokyo_outside.tscn`, or the scene
+   named by `PORT_SCENE`) to pick a district's bounds.
 2. `PORT_ROOM=<Name> PORT_RECT="RX0,RX1,RY0,RY1" python3 tools/doport.py` —
    port that rect `.tscn → config.json` room (slices atlas tiles into
    `assets/sprites/`, builds layers/collision/Y-sort data, merges into the
@@ -100,6 +100,13 @@ The pipeline that produced all four rooms is committed in `tools/`:
 Once seeded, Tiled is the editor — don't hand-edit the generated `.tmj` back
 into config. (The repo-root `tools/parse_godot_scene.py` scripts are an older
 stale v1 pipeline; prefer `doport.py`.)
+
+## Rendering a map without the Tiled app
+
+`python3 tools/render_room.py <Room> out.png [--scale 0.5] [--colliders]` draws
+`tiled/<room>.tmj` with Pillow in the game's own draw order (feet Y-sort, Tops
+bias) — use it wherever these docs say `tmxrasterizer` if Tiled isn't
+installed. `tools/make_worldmap.py` falls back to it automatically.
 
 ## Gotcha ledger
 
@@ -119,6 +126,16 @@ stale v1 pipeline; prefer `doport.py`.)
 - **Track rows in ported rooms are sealed cell-by-cell** (`gk_blank` under
   the `train-track` Over Floor sprite). A road crossing the tracks needs its
   two cells unsealed — that's a level crossing, precedent exists.
+- **`Scenes/osaka/osaka_outside.tscn` is not Osaka** — it is an older copy of
+  the Tokyo overworld (garden, market, Tokyo Station placeholder). The Osaka
+  room is generated (`tools/generate_osaka.py`). `doport.py` / `render_rect.py`
+  accept `PORT_SCENE=<repo-relative .tscn>` should a real second scene appear.
+- **`seal_tracks.py` with no arguments re-seals Palace's level crossing**
+  (cells 0,5 and 1,5). Pass the rooms you mean: `seal_tracks.py Osaka`.
+- **One tile per cell per layer**: a big landmark sprite occupies only its
+  top-left cell on `Collidables`, so a lantern post stamped on that exact cell
+  is silently replaced (its collider stays). Keep small props off the top-left
+  cell of tall sprites.
 - **`tmxrasterizer` draws collider markers and Meta pins** — red boxes/pins
   in renders are debug art, not in-game visuals.
 - A probe that prints `?` for "any sprite" hides colliders stacked under

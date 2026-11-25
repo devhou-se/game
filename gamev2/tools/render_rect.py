@@ -3,7 +3,7 @@ import sys
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'render_godot.py')).read().split("render(ROOT")[0])
 RX0,RX1,RY0,RY1=[int(a) for a in sys.argv[1:5]]
 out=sys.argv[5]
-tscn=ROOT+'/Scenes/tokyo/tokyo_outside.tscn'
+tscn=os.path.join(ROOT,os.environ.get('PORT_SCENE','Scenes/tokyo/tokyo_outside.tscn'))  # same env var as doport.py
 tsmap,layers=parse_scene(tscn)
 tilesets={tid:parse_tileset(p) for tid,p in tsmap.items()}
 CS=32; W=(RX1-RX0+1)*CS; H=(RY1-RY0+1)*CS

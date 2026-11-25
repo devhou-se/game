@@ -72,6 +72,26 @@ PREFABS = {
     # (Born inverted and overlapping — the spire rendered mid-structure.)
     'pagoda-small': dict(w=2, h=6, sprites=[('Tops', 0, 0, 'red-pagoda-small-top_0_0'), ('Collidables', 0, 3, 'red-pagoda-small-base_0_0')],
                          colliders=[(x, y) for x in (0, 1) for y in (3, 4, 5)], doors=[]),
+    # ---- Osaka landmarks (one big sprite each; art from tools/extract_dotonbori.py
+    #      and tools/generate_tsutenkaku.py). All sit on Collidables so they Y-sort
+    #      by their feet: solid at the base, walk-behind above it. -----------------
+    # Dotonbori entrance arch: only the two posts collide (columns 0 and 7), so
+    # the street runs straight under the sign through columns 1-6.
+    'dotonbori-arch':  dict(w=8, h=6, sprites=[('Collidables', 0, 0, 'dotonbori-arch_0_0')],
+                            colliders=[(x, y) for x in (0, 7) for y in (4, 5)], doors=[]),
+    # The oval ferris wheel: the two truss legs (columns 2-3 and 8-9) and the
+    # boarding gate between them collide; the rest of the ring is overhead.
+    'dotonbori-wheel': dict(w=12, h=12, sprites=[('Collidables', 0, 0, 'dotonbori-wheel_0_0')],
+                            colliders=[(x, y) for x in (2, 3, 8, 9) for y in (9, 10, 11)] + [(4, 10), (5, 10)], doors=[]),
+    # Tsutenkaku Tower: the legs and the body over the archway collide; the two
+    # cells in the archway mouth stay open so you can step in under the tower.
+    # The colliders follow the splay of the legs (row 9 = where they leave the
+    # deck, cols 2-5; rows 10-11 cols 1-6; the feet span all 8) so there is no
+    # invisible wall on the empty plaza beside them.
+    'tsutenkaku':      dict(w=8, h=13, sprites=[('Collidables', 0, 0, 'tsutenkaku_0_0')],
+                            colliders=[(x, 9) for x in range(2, 6)]
+                                      + [(x, y) for x in range(1, 7) for y in (10, 11)]
+                                      + [(x, 12) for x in range(8) if x not in (3, 4)], doors=[]),
 }
 
 

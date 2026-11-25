@@ -273,6 +273,41 @@ NPC dialogue can be read aloud. A resolved NPC state carrying `"voice": <voiceId
   totals ElevenLabs would bill for.
 - **Not live yet**: no API key or cloned voice ids exist, so no state has a `voice` and the game is silent.
 
+### Featured locations / landmarks (issue #17)
+
+Named landmarks are ordinary multi-cell sprites on a room's `Collidables` layer (Y-sorted by their feet:
+solid at the base, walk-behind above), each wrapped in a prefab so generators can `b.stamp()` them:
+
+| Landmark | Room | Sprite key | Art |
+|---|---|---|---|
+| Tokyo Tower | Palace (feet continue into Park) | `tokyo-tower_0_0` | line-art placeholder (ported from Godot) |
+| Tokyo Station | Palace | `tokyo-station_0_0` | line-art placeholder (ported from Godot) |
+| Tsutenkaku Tower | Osaka | `tsutenkaku_0_0` | line-art placeholder drawn by `tools/generate_tsutenkaku.py` |
+| Dotonbori entrance arch | Osaka | `dotonbori-arch_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
+| Dotonbori ferris wheel | Osaka | `dotonbori-wheel_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
+
+- **Osaka** (`tools/generate_osaka.py`, 50x40) is a generated town reachable only by train, like Yukimura:
+  station house -> arch over the main street -> the canal bridge -> Tsutenkaku on its plaza, with the ferris
+  wheel on the north bank. The tower stands on the street's axis, so a shrub garden fills the ground behind
+  it and the street forks round (otherwise the player walks hidden behind the sprite for ten cells); the
+  platform-edge fence and the continuous border hedges keep the player off the ballast and out from behind
+  the fences. `OsakaStation` is registered in `tools/generate_stations.py`
+  (`STATIONS` / `TOWN_DOORS`) and so in config `stations`; Osaka sits detached in `devhouse.world`.
+  The legacy `Scenes/osaka/osaka_outside.tscn` is an old copy of the Tokyo overworld, not Osaka — do not
+  port it (`tools/doport.py` / `render_rect.py` do take `PORT_SCENE=<path>` for a genuinely different scene).
+- **Adding a landmark**: put a cell-aligned PNG in `assets/sprites/` (register `spriteMetadata` with
+  `anchorX = 32/width`, `anchorY = 32/height`, plus `tileNames`), add a prefab spec to
+  `tools/make_prefabs.py` (colliders = the base cells only), stamp it from the room generator, and add it to
+  `LANDMARKS` in `tools/blog_to_npc.py` so blog NPCs can be placed there. A landmark entry may carry a third
+  element `(dx, dy)`: the cell, relative to the sprite's top-left, where a visitor stands (tall sprites'
+  own cell is their tip, not their foot).
+- **World map without Tiled**: `tools/make_worldmap.py` uses `tmxrasterizer` when Tiled is installed and
+  otherwise (or with `--pil`) draws the rooms itself via `tools/render_room.py`, which is also the
+  "look at the render" step for a new room: `python3 tools/render_room.py <Room> out.png [--scale .5] [--colliders]`.
+- `tools/generate_stations.py` keeps an existing station room's NPCs (the blog pipeline parks dated NPC
+  states there), and `tools/seal_tracks.py` takes room names — run it bare and it re-seals Palace's level
+  crossing.
+
 ## Asset Generation
 
 Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/`:

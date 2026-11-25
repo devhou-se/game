@@ -74,6 +74,15 @@ LANDMARKS = [
     ('blue-bell', 'the temple bell'),
     ('sakura-large-top', 'the sakura trees'),
     ('white-vending-machine-top', 'the vending machines'),
+    # Named landmarks. These are single sprites many cells tall, whose tile
+    # cell is their top-left corner (the tip of a tower) — so each carries the
+    # cell, relative to that corner, where someone visiting it would stand:
+    # on the ground at its foot, clear of doorways and archways.
+    ('tokyo-tower_', 'Tokyo Tower', (9, 14)),          # beside the east leg
+    ('tokyo-station_', 'Tokyo Station', (24, 9)),      # the forecourt, east of the door
+    ('tsutenkaku_', 'Tsutenkaku Tower', (5, 14)),      # the plaza in front of it
+    ('dotonbori-arch_', 'the Dotonbori arch', (2, 6)),  # just through the arch
+    ('dotonbori-wheel_', 'the Dotonbori ferris wheel', (6, 12)),   # the canal bank below it
 ]
 
 MODEL = 'claude-sonnet-5'
@@ -113,11 +122,12 @@ def find_spots(cfg):
         for layer in room.get('layers', []):
             tiles = decode_tiles(cfg, layer)
             for xy, key in tiles.items():
-                for prefix, label in LANDMARKS:
+                for prefix, label, *stand in LANDMARKS:
                     spot_id = f'{room_key} · {label}'
                     if key.startswith(prefix) and spot_id not in spots:
                         x, y = map(int, xy.split(','))
-                        spots[spot_id] = (room_key, x, y)
+                        dx, dy = stand[0] if stand else (0, 0)
+                        spots[spot_id] = (room_key, x + dx, y + dy)
     return spots
 
 

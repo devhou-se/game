@@ -9,13 +9,18 @@ destination picker (src/StationPicker.js); the ride itself is animated by
 src/TrainTravel.js using the config `stations` registry written here.
 
 Stations:
-  TokyoStation — behind the Tokyo Station facade in the Palace room
-  InakaStation — inside Inaka's station house
+  TokyoStation    — behind the Tokyo Station facade in the Palace room
+  InakaStation    — inside Inaka's station house
+  YukimuraStation — inside Yukimura's station house
+  OsakaStation    — inside Osaka's station house
 
 Also carves the Palace facade door and removes the old direct platform
-portals (superseded by the train). Idempotent. Run from gamev2/ AFTER
-generate_inaka.py. Then: qa_port + config_to_tiled for TokyoStation,
-InakaStation, Palace (and Inaka if regenerated).
+portals (superseded by the train). Idempotent, and safe to re-run on the live
+config: a station room that already exists keeps its NPCs (the blog pipeline
+parks dated NPC states in station rooms). Run from gamev2/ AFTER the town
+generators (generate_inaka.py / generate_yukimura.py / generate_osaka.py).
+Then: qa_port + config_to_tiled for every *Station room and Palace (and any
+town you regenerated).
 """
 import roomgen as rg
 from roomgen import rect
@@ -70,17 +75,21 @@ STATIONS = {
     'InakaStation':    {'label': 'Inaka',         'town': 'Inaka',    'train': 'train-green'},
     # Yukimura — the snowy village, on the same branch line as Inaka (green).
     'YukimuraStation': {'label': 'Yukimura',      'town': 'Yukimura', 'train': 'train-green'},
+    # Osaka — the second city, a main-line stop like Tokyo (orange).
+    'OsakaStation':    {'label': 'Osaka',         'town': 'Osaka',    'train': 'train-orange'},
 }
 TOWN_DOORS = {          # townRoom: (hidden door cell into the station, exit cell outside)
     'TokyoStation':    {'door': [27, 9], 'exit': [27, 10]},
     'InakaStation':    {'door': [29, 9], 'exit': [29, 10]},
     'YukimuraStation': {'door': [29, 9], 'exit': [29, 10]},
+    'OsakaStation':    {'door': [24, 9], 'exit': [24, 10]},
 }
 
 for key, st in STATIONS.items():
     b = station_interior(st['train'])
     exit_cell = TOWN_DOORS[key]['exit']
-    cfg['rooms'][key] = b.room(key, transporters=[
+    prev = cfg['rooms'].get(key, {})
+    cfg['rooms'][key] = b.room(key, npcs=prev.get('npcs', []), transporters=[
         rg.transporter(mx, my, st['town'], exit_cell[0], exit_cell[1], hidden=True)
         for (mx, my) in DOOR_MATS
     ])

@@ -18,6 +18,11 @@ NOT need to be to scale — draw any graphic (hand-drawn, parchment, whatever),
 describe where each room sits on it, set "custom": true, and this tool will
 refuse to overwrite your work (--force overrides).
 
+The image is rasterized by Tiled's `tmxrasterizer` when the Tiled app is
+installed, and otherwise (or with --pil) by a Pillow renderer that draws the
+same rooms from their .tmj files (tools/render_room.py) — so the tool runs on
+a machine without Tiled. Needs Pillow either way.
+
 RE-RUN whenever exterior rooms change (unless custom). Run from gamev2/.
 """
 import json, os, subprocess, sys, tempfile
@@ -41,17 +46,33 @@ miny = min(m['y'] for m in world['maps'])
 world_w = max(m['x'] + m['width'] for m in world['maps']) - minx
 world_h = max(m['y'] + m['height'] for m in world['maps']) - miny
 
-tmp = tempfile.mktemp(suffix='.png')
 size = TARGET_W if world_w >= world_h else int(TARGET_W * world_h / world_w)
-# hide the collision markers — they'd wash the minimap red
-subprocess.run([RAST, '--size', str(size), '--hide-layer', 'Colliders',
-                os.path.abspath(WORLD), tmp], check=True)
-
 from PIL import Image
-im = Image.open(tmp)
+if os.path.exists(RAST) and '--pil' not in sys.argv:
+    tmp = tempfile.mktemp(suffix='.png')
+    # hide the collision markers — they'd wash the minimap red
+    subprocess.run([RAST, '--size', str(size), '--hide-layer', 'Colliders',
+                    os.path.abspath(WORLD), tmp], check=True)
+    im = Image.open(tmp).convert('RGB')
+    os.unlink(tmp)
+else:
+    # No Tiled on this machine (or --pil): draw the same picture with Pillow —
+    # every room rendered by tools/render_room.py (the game's own draw order,
+    # colliders and Meta pins left out) and pasted at its world position.
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from render_room import render_tmj
+    k = size / max(world_w, world_h)
+    im = Image.new('RGB', (round(world_w * k), round(world_h * k)), (0, 0, 0))
+    for m in world['maps']:
+        room_im = render_tmj(os.path.join(os.path.dirname(WORLD), m['fileName']),
+                             sprite_meta=cfg.get('spriteMetadata', {}))
+        # size from the far edge, not the width, so neighbours meet without a seam
+        x0, y0 = round((m['x'] - minx) * k), round((m['y'] - miny) * k)
+        x1, y1 = round((m['x'] + m['width'] - minx) * k), round((m['y'] + m['height'] - miny) * k)
+        im.paste(room_im.convert('RGB').resize((x1 - x0, y1 - y0), Image.NEAREST), (x0, y0))
+    print('tmxrasterizer not used — rendered with Pillow (tools/render_room.py)')
 os.makedirs(OUT_DIR, exist_ok=True)
-im.convert('RGB').save(f'{OUT_DIR}/world-map.png', optimize=True)
-os.unlink(tmp)
+im.save(f'{OUT_DIR}/world-map.png', optimize=True)
 scale = im.width / world_w
 
 rooms = {}
