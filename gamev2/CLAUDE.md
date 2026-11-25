@@ -24,6 +24,13 @@ python3 -m http.server 8000
 ```
 Then navigate to `http://localhost:8000` in your browser.
 
+**Option 3: No browser (for agents)**
+`node tools/play.js <command>` plays the game as text: it loads the real map, collision and NPC-date
+code from `src/` into Node, with no Phaser and no dependencies. Walk, talk to NPCs, follow teleports,
+ride trains, time travel, inspect cells, and run `check` to confirm the world is still playable after a
+map change. `node tools/play.js help` lists the commands; the `play-game` skill
+(`.claude/skills/play-game/SKILL.md`) is the full guide, including what the tool cannot do.
+
 ## Architecture
 
 ### File Structure
