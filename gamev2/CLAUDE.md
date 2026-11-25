@@ -31,6 +31,17 @@ ride trains, time travel, inspect cells, and run `check` to confirm the world is
 map change. `node tools/play.js help` lists the commands; the `play-game` skill
 (`.claude/skills/play-game/SKILL.md`) is the full guide, including what the tool cannot do.
 
+## Studio
+
+`studio/` is a read-only view of the whole world for developers, served at `/studio/` (locally
+`http://localhost:8000/studio/`, live at `game.devhou.se/studio/`). It lays every room out together and
+overlays collision, unreachable cells, teleports (arrows to their targets), train links, interactions and
+where each person stands on a chosen day. Click a cell for its tiles, what a bump does, the NPC's lines
+and photo, and the `play.js` command that puts you there. Maps are still edited in Tiled.
+
+It has no logic of its own: `tools/world-model.js` (rooms, collision, NPC dates, interactions, the
+problem survey) is shared with `tools/play.js`, so the page and the terminal tool always agree.
+
 ## Architecture
 
 ### File Structure

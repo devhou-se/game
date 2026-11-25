@@ -147,8 +147,12 @@ free of Phaser calls at load time and in the parts the tool uses
 `src/utils/Interactions.js` is the one table of what a bump opens: add a rule
 there and the game, `look`, `map` and `inspect` all pick it up.
 
-One thing is still mirrored by hand in `tools/play.js` and must be updated with
-the game: which NPCs exist for a date and character (`npcsIn`), from
-`GameScene.syncNpcPresence`.
+One thing is still mirrored by hand and must be updated with
+the game: which NPCs exist for a date and character (`npcsIn` in
+`tools/world-model.js`), from `GameScene.syncNpcPresence`.
 
-A new command is one entry in `COMMANDS` plus a line in `help`.
+The world itself (rooms, movement, pathfinding, NPC presence, the `check`
+survey) lives in `tools/world-model.js`, which the studio page
+(`gamev2/studio/`, served at `/studio/`) loads too. Change behaviour there and
+both follow; `play.js` is only the command layer. A new command is one entry in
+`COMMANDS` plus a line in `help`.
