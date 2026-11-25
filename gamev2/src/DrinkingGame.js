@@ -212,13 +212,13 @@ class DrinkingGame {
         if (this.state !== 'playing') return;
         if (this.opponent === 'bailey') {
             // The finish event is registered before Bailey's final timed bonus.
-            // Reconcile bonuses earned by elapsed time so a 15-second round
-            // reliably awards the tenth bonus at the buzzer.
-            const elapsed = this.scene.time.now >= this.deadline
-                ? this.durationMs
-                : Math.max(0, this.scene.time.now - this.startedAt);
+            // Reconcile the bonuses a whole round earns so a 15-second round
+            // reliably awards the tenth at the buzzer. Only the round timer
+            // gets here, and it fires on smoothed frame deltas that can leave
+            // time.now a hair short of the deadline — so the round length
+            // is the elapsed time, not the clock (issue #132).
             const earned = Math.min(DrinkingGame.BAILEY_MAX_BONUS,
-                Math.floor(elapsed / DrinkingGame.BAILEY_BONUS_MS));
+                Math.floor(this.durationMs / DrinkingGame.BAILEY_BONUS_MS));
             const missing = Math.max(0, earned - this.baileyBonus);
             this.baileyBonus += missing;
             this.opponentScore += missing;

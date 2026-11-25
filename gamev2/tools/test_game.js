@@ -532,6 +532,13 @@ const tests = {
             // the Bailey mirror: as Damian you always lose by ten, and it costs the stake
             assert.strictEqual(round(i, 5000, 'win', { player: 'damian' }), 0 - o.stake, `${o.id} vs Bailey`);
         });
+        // the buzzer can ring with the clock a hair short of the deadline: Bailey still finds all ten (#132)
+        const early = showdownWith(5000, 'damian').g;
+        early.begin();
+        for (let i = 0; i < 40; i++) early.press();
+        early.scene.time.now = early.deadline - 3;
+        early.finish();
+        assert.deepStrictEqual([early.playerScore, early.opponentScore, early.baileyBonus], [40, 50, 10]);
         // a stake the wallet cannot cover is never taken: the pick stays on the friendly round
         assert.strictEqual(round(2, 1999, 'lose'), 0);
         assert.strictEqual(round(1, 499, 'win'), 100);
