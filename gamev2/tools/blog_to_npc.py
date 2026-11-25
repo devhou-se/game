@@ -78,7 +78,7 @@ import os
 import re
 import sys
 
-from post_photos import import_post_photo
+from post_photos import import_post_photo, prune_photos
 from post_voice import prune_voices, voice_dialogue
 
 # GitHub login -> NPC name (must exist in config, or be creatable from
@@ -874,6 +874,7 @@ def main():
                 save_config(cfg)
                 print('config.json updated')
             prune_voices(cfg)
+            prune_photos(cfg)
         return 0
 
     if args.backfill_posts:
@@ -944,6 +945,7 @@ def main():
         save_config(cfg)
         print('config.json updated')
         prune_voices(cfg)   # clip sets the new config no longer points at
+        prune_photos(cfg)   # prints whose state lost its placement
     return 0
 
 

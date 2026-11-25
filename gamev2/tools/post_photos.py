@@ -23,6 +23,7 @@ IMAGE_MD = re.compile(r'!\[[^\]]*\]\((https?://[^)\s]+)\)')
 IMAGE_TAG = re.compile(r'<img[^>]+src=["\'](https?://[^"\']+)["\']', re.IGNORECASE)
 
 MAX_DOWNLOAD_BYTES = 30 * 1024 * 1024
+PHOTO_DIR = 'assets/photos'
 
 
 def first_image_url(content):
@@ -60,7 +61,7 @@ def download(url):
         raise
 
 
-def import_post_photo(post, out_dir='assets/photos', dry_run=False):
+def import_post_photo(post, out_dir=PHOTO_DIR, dry_run=False):
     """Download + pixelize the post's first photo. Returns the photo id
     (the post id — assets/photos/<id>.png) or None."""
     url = first_image_url(post.get('content'))
@@ -97,3 +98,38 @@ def import_post_photo(post, out_dir='assets/photos', dry_run=False):
 
     print(f'  photo: {url} -> {dest}')
     return photo_id
+
+
+def referenced_photos(node):
+    """Every "photo" id named anywhere in a config (base NPC defs + states)."""
+    found = set()
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == 'photo' and isinstance(value, (str, int)) and not isinstance(value, bool):
+                found.add(str(value))
+            else:
+                found |= referenced_photos(value)
+    elif isinstance(node, list):
+        for value in node:
+            found |= referenced_photos(value)
+    return found
+
+
+def prune_photos(cfg, out_dir=PHOTO_DIR):
+    """Delete prints no state in the config points at any more (a later
+    same-day post's photo won, the NPC left the room, --reset) so superseded
+    photos are not deployed forever. Only <id>.png files are considered.
+    Returns the removed ids."""
+    if not os.path.isdir(out_dir):
+        return []
+    keep = referenced_photos(cfg)
+    removed = []
+    for name in sorted(os.listdir(out_dir)):
+        photo_id, ext = os.path.splitext(name)
+        path = os.path.join(out_dir, name)
+        if ext == '.png' and os.path.isfile(path) and not os.path.islink(path) and photo_id not in keep:
+            os.unlink(path)
+            removed.append(photo_id)
+    if removed:
+        print(f'photo: removed {len(removed)} superseded print(s): {", ".join(removed)}')
+    return removed

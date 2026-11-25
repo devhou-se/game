@@ -642,6 +642,9 @@ NPC dialogue can be read aloud. A resolved NPC state carrying `"voice": <voiceId
   After every config write `prune_voices()` deletes clip directories no state references any more, so the
   pipeline workflow must commit `gamev2/assets/voice` (additions and deletions, e.g. `git add -A`) together
   with `config.json` — a recorded `voice` whose clips were not deployed 404s on every line.
+  `prune_photos()` (`tools/post_photos.py`) does the same for `assets/photos/<id>.png` prints no state names
+  any more (a later same-day post's photo won, the NPC left the room, `--reset`), so `gamev2/assets/photos`
+  must be committed the same way; `test_blog_to_npc.py` fails on an orphaned or missing print.
 - **Backfill**: `python3 tools/blog_to_npc.py --voice-backfill [--dry-run]` voices existing dated states
   that have dialogue but no voice (no LLM call, no placement). `--dry-run` prints the line/character
   totals ElevenLabs would bill for.

@@ -12,10 +12,12 @@ import copy
 import io
 import os
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import blog_to_npc as b  # noqa: E402
 import config_to_tiled as c2t  # noqa: E402
+import post_photos  # noqa: E402
 
 
 def test_trim_line():
@@ -385,6 +387,32 @@ def test_shipped_posts(cfg):
                 where = f'{room_key} {npc["name"]} {date}'
                 assert sum(p['lines'] for p in made_by) == len(st['dialogue']), where
                 assert all(str(p['id']) == p['id'] for p in made_by), where
+def test_photos(cfg):
+    """Every shipped print is referenced and every referenced print exists;
+    prune_photos removes exactly the prints no state points at."""
+    shipped = {os.path.splitext(f)[0] for f in os.listdir(post_photos.PHOTO_DIR)
+               if f.endswith('.png')}
+    wanted = post_photos.referenced_photos(cfg)
+    assert shipped - wanted == set(), f'orphaned photos: {sorted(shipped - wanted)}'
+    assert wanted - shipped == set(), f'missing photos: {sorted(wanted - shipped)}'
+
+    fake = {'rooms': {'A': {'npcs': [
+        {'name': 'Bailey', 'photo': '1', 'states': {
+            '2031-01-01': {'photo': '2'}, '2031-01-02': {'photo': None},
+            '2031-01-03': {'photo': 3}}}]}}}
+    assert post_photos.referenced_photos(fake) == {'1', '2', '3'}
+    with tempfile.TemporaryDirectory() as tmp:
+        for name in ('1.png', '2.png', '3.png', '4.png', '5.png', 'README.md'):
+            open(os.path.join(tmp, name), 'w').close()
+        os.mkdir(os.path.join(tmp, '6.png'))
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            assert post_photos.prune_photos(fake, tmp) == ['4', '5']
+            assert post_photos.prune_photos(fake, tmp) == []
+        assert 'removed 2 superseded' in out.getvalue()
+        assert sorted(os.listdir(tmp)) == ['1.png', '2.png', '3.png', '6.png', 'README.md']
+    assert post_photos.prune_photos(fake, os.path.join(tmp, 'gone')) == []
+
+
 def test_authors(cfg):
     """Blog author login -> NPC: mapped authors resolve (any case), placeholder
     entries can never match, and an unmapped author's post is skipped with a
@@ -506,6 +534,7 @@ if __name__ == '__main__':
     test_post_source(config)
     test_backfill_posts()
     test_shipped_posts(config)
+    test_photos(config)
     test_authors(config)
     test_shipped_dialogue(config)
     test_tiled_ids_stable()
