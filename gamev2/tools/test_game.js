@@ -486,6 +486,17 @@ const tests = {
         }
     },
 
+    'the avenue runs up to the Tokyo/Market crossroads as road, not a strip of pavement (#194)'() {
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const rows = ['road-edge-top_0_0', 'road-div-horizontal_0_0', 'road-edge-bottom_0_0'];
+        for (const [room, xs, y0] of [['Tokyo', [54, 55, 56], 41], ['Market', [2, 3, 4], 42], ['Market', [52, 53, 57, 58], 42]]) {
+            const floor = cfg.rooms[room].layers.find((l) => l.name === 'Floor').tiles;
+            for (const x of xs) {
+                rows.forEach((want, dy) => assert.strictEqual(cfg.tilePalette[floor[`${x},${y0 + dy}`]], want, `${room} ${x},${y0 + dy}`));
+            }
+        }
+    },
+
     'no store has floor its furniture seals off (#182)'() {
         const { world } = worldWith(true);
         const stores = Object.keys(world.config.rooms).filter((k) => /^(Konbini|DonTakote|Izakaya)/.test(k));

@@ -281,6 +281,8 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   in. Park's west road is half in the woods, so `cities.TokyoCity.backdrop.edges` gives it its kerb
   beside `road-plain` as well and a `road-corner-sw` beside the bottom kerb. Idempotent; a new junction
   is one more entry (then `config_to_tiled.py` for the districts and `make_worldmap.py`).
+  `ARMS` in the same tool lays a stretch of an east-west road the port paved over as road (issue #194:
+  two cells of brick across the avenue either side of the Tokyo/Market crossroads).
 - **`?stitch=0`** is the safety valve: no cities, the five districts are separate rooms joined by the fade
   transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).
 - **Adding a district / a second city**: place the map in `devhouse.world` so the shared road lines up,

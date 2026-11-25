@@ -23,6 +23,11 @@ them. Sides are as the district reads ON ITS OWN (`?stitch=0`); where the
 stitched city opens a side that the lone map closes (Park's top row, which
 Palace's roads run into), config `cities.TokyoCity.patch` opens it.
 
+ARMS lists stretches of an east-west road that the port paved over (issue
+#194: two cells of brick across the avenue on either side of the Tokyo/Market
+crossroads, which no other arm of any junction has). Each is laid as the road
+it interrupts: kerb / centre line / kerb, up to the box.
+
 Idempotent. Edits config.json only: follow with
     python3 tools/config_to_tiled.py Tokyo Market Park
     /Library/Developer/CommandLineTools/usr/bin/python3 tools/make_worldmap.py
@@ -52,6 +57,13 @@ JUNCTIONS = {
         (54, 39, 'S'),      # bottom-right: the east road ends on the south road
     ],
 }
+
+# district -> [(x, y, cells)]: an east-west road, rows y..y+2, columns x..x+cells-1
+ARMS = {
+    'Tokyo': [(55, 41, 2)],     # west of the Tokyo/Market crossroads
+    'Market': [(2, 42, 2)],     # east of it
+}
+ARM = ['road-edge-top_0_0', 'road-div-horizontal_0_0', 'road-edge-bottom_0_0']
 
 PLAIN = 'road-plain_0_0'
 EDGE = {'N': 'road-edge-top_0_0', 'S': 'road-edge-bottom_0_0', 'W': 'road-edge-left_0_0', 'E': 'road-edge-right_0_0'}
@@ -83,6 +95,13 @@ def main():
         w, h = room['worldWidth'] // 64, room['worldHeight'] // 64
         floor = next(L for L in room['layers'] if L['name'] == 'Floor')['tiles']
         changed = []
+        for (x0, y0, cells) in ARMS.get(name, []):
+            for dy in range(3):
+                for x in range(x0, x0 + cells):
+                    want = pidx(ARM[dy])
+                    if floor.get(f'{x},{y0 + dy}') != want:
+                        floor[f'{x},{y0 + dy}'] = want
+                        changed.append(f'{x},{y0 + dy}')
         for (x0, y0, closed) in boxes:
             for dy in range(3):
                 for dx in range(3):
