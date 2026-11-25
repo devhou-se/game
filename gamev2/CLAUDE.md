@@ -41,6 +41,11 @@ touch buttons cancelling their touch, which post a dialogue line is captioned wi
 trips (which NPCs exist on a date, where a player starts, what the intro says, Time Travel's trip jump).
 When a fix lives in a Phaser-side class, pull the decision into a static function there and add a case.
 
+`python3 tools/check_generators.py [generator ...]` checks that the room generators still rebuild the
+committed world: it runs each one in a scratch copy and fails, naming the rooms and cells, if `config.json`
+would change (issue #107, see "Generated rooms stay regenerable"). Run it after any edit to a generated
+room or to a generator; it takes two seconds and needs no Pillow.
+
 ## Studio
 
 `studio/` is a read-only view of the whole world for developers, served at `/studio/` (locally
@@ -959,6 +964,38 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 - **World map without Tiled**: `tools/make_worldmap.py` uses `tmxrasterizer` when Tiled is installed and
   otherwise (or with `--pil`) draws the rooms itself via `node tools/play.js render`, which is also the
   "look at the render" step for a new room: `node tools/play.js render <Room> out.png [--scale .5] [--colliders]`.
+- **Re-homing a placement** (issue #121): `python3 tools/blog_to_npc.py --rehome <NPC> <YYYY-MM-DD>
+  "<Room> · <label>" [--dry-run]` (repeatable) moves an existing placement to another spot with no LLM call
+  — `rehome()` hands the day's dialogue, photo, voice and `posts` to `apply()`, so the room left behind
+  keeps a bare `present: false`, the new room gets a hidden base def if needed and later history is
+  re-checked. Use it instead of hand-editing a cross-room move. Seven placements made on a station platform
+  before #73, for posts about somewhere else, were moved this way (Karuizawa apple pie and Shirakawa-go to
+  Yukimura, the Lake Biwa rides to Inaka, the castles to Machi's pagoda, the izakaya night and Hakata
+  ramen to Market's 7-Eleven); the travel-day posts stay on their platforms. The cell is free for the
+  whole stay (`occupied_during`: from that date until the NPC's next placement, or until a later trip or
+  stay starts everyone from its base again — `trip_window`), not just on the day — history is not always
+  written in date order — and `process_post` uses the same check.
+  `test_blog_to_npc.py` also checks the shipped history: each NPC is in at most one room on any dated
+  day, and no two share a cell.
+- **Generated rooms stay regenerable** (issue #107): a room generator re-run on an unchanged world leaves
+  `config.json` byte-identical, and `python3 tools/check_generators.py` fails when one would not. That
+  holds for `generate_machi`, `_inaka`, `_yukimura`, `_osaka`, `_sapporo`, `_asahikawa`, `_konbinis`,
+  `_discount_stores` and `_stations`, each run on its own:
+  - a town generator ends with `b.finish()` (`roomgen.Builder`), which runs the picket-fence and
+    solid-track passes itself — `fix_fences.py` / `seal_tracks.py` are the same code
+    (`roomgen.picket_fences` / `roomgen.seal_tracks`) for a room named on the command line, and are no
+    longer a step to remember after a town generator;
+  - it keeps what it does not own from the room as it stands: NPCs (the blog pipeline's states), Machi's
+    ad `signage`, and a 7-Eleven door wired by `generate_konbinis.py` (`roomgen.kept_door`; with none to
+    keep, on a first build, the door is sealed until `generate_konbinis.py <Host>` runs). Doors are listed in
+    the order the room already has them (`roomgen.kept_order`; the shop generators replace their door in
+    place), so a first build followed by the shop generators also passes the check.
+  So a generated room may be changed either way — edit the generator and re-run it, or make a surgical
+  edit (`/adjust-game`, `stamp_prefab.py`) **and mirror it in the generator** — and the check tells you if
+  the two have come apart. Never leave it failing: a generator that has drifted silently drops the hand
+  edit the next time someone runs it. (That is what had happened to `generate_machi.py`: it wiped the blog
+  NPCs, the signage and the stitched city's gate colliders, and resurrected the legacy `Konbini` room.)
+  Ported rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth.
 - `tools/generate_stations.py` keeps an existing station room's NPCs (the blog pipeline parks dated NPC
   states there), and `tools/seal_tracks.py` takes room names; a track cell with a road under it (Palace's level
   crossing) is left open.
@@ -1041,7 +1078,7 @@ pipeline has placed someone there.
   interior is `generate_discount_stores.py Sapporo`.)
 - **Build order**: `generate_hokkaido.py`, `make_prefabs.py`, `generate_sapporo.py`,
   `generate_asahikawa.py`, `generate_konbinis.py Sapporo`, `generate_discount_stores.py Sapporo`,
-  `generate_stations.py`, `fix_fences.py Sapporo Asahikawa`, `seal_tracks.py Sapporo Asahikawa`, then
+  `generate_stations.py` (the towns fence and seal themselves - `b.finish()`), then
   `config_to_tiled.py Sapporo Asahikawa SapporoStation AsahikawaStation KonbiniSapporo1 DonTakoteSapporo`
   (it takes any number of rooms and fails, writing nothing, on a name that is not a room - #102) and
   `node tools/play.js lint <Room>` (lint reads the Tiled map).

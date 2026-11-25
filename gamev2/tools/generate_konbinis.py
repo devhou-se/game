@@ -8,8 +8,8 @@ deterministic — seeded by host room + building position — so regenerating
 without moving buildings reproduces the exact same interiors.
 
 Interiors are furnished with the office/interior pack sliced into
-assets/sprites/office-*.png. The Machi 7-Eleven that already leads to the
-hand-made 'Konbini' room is left untouched.
+assets/sprites/office-*.png. The legacy hand-made 'Konbini' room, if one is
+still in the config, is dropped: Machi's store is KonbiniMachi1.
 
 Run from gamev2/:  python3 tools/generate_konbinis.py [Host ...]
 Then:              python3 tools/config_to_tiled.py <each new room + hosts>

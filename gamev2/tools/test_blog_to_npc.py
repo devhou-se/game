@@ -168,6 +168,127 @@ def test_same_day_posts(base_cfg):
     assert ids(st) == ['9'] and len(st['dialogue']) == 2 and 'post 9' in st['dialogue'][0]
 
 
+def rooms_on(cfg, npc_name, date):
+    """Overworld rooms the game shows the NPC in on date: resolved inside the
+    date's trip window, as the game does (whereabouts, below, with cells)."""
+    window = b.trip_window(cfg, date)
+    return [room_key for room_key, room in b.overworld_rooms(cfg).items()
+            if b.npc_in_room(room, npc_name)
+            and b.resolve_pos(b.npc_in_room(room, npc_name), date, window)[0]]
+
+
+def test_rehome(base_cfg):
+    """--rehome moves a placement to another spot and keeps what the post gave
+    it; the room left behind and the later history stay consistent (#121)."""
+    cfg = copy.deepcopy(base_cfg)
+    spots = b.find_spots(cfg)
+    platform = 'TokyoStation · the platform'
+    outdoor = [s for s, (room_key, _, _) in sorted(spots.items()) if not b.is_indoors(cfg, room_key)]
+    target = outdoor[0]
+    target_room = spots[target][0]
+    later = next(s for s in outdoor if spots[s][0] != target_room)
+    d1, d2, d3 = '2031-03-04', '2031-03-05', '2031-03-06'
+
+    place(cfg, post(1, date=d1), platform, spots)           # Bailey, on the platform
+    place(cfg, post(2, date=d3), later, spots)              # ... who moves on two days later
+    assert b.placement_room(cfg, 'Bailey', d1) == 'TokyoStation'
+    assert b.stay_end(cfg, 'Bailey', d1) == d3 and b.stay_end(cfg, 'Bailey', d3) is None
+    before = dict(b.npc_in_room(cfg['rooms']['TokyoStation'], 'Bailey')['states'][d1])
+
+    # someone else is already recorded as arriving at the same landmark the
+    # next day, while Bailey would still be standing there
+    place(cfg, post(3, author='jughents', date=d2), target, spots)
+    julia = b.resolve_pos(b.npc_in_room(cfg['rooms'][target_room], 'Julia'), d2, b.trip_window(cfg, d2))[1:]
+    assert julia not in b.occupied_cells(cfg, target_room, d1, 'Bailey')     # one day alone would miss her
+    assert julia in b.occupied_during(cfg, target_room, d1, 'Bailey')
+
+    # ... but a later trip's days are not part of the stay: that trip starts
+    # everyone from its base again, so a devhouse 2 placement is not there
+    trip_cfg = copy.deepcopy(base_cfg)
+    old_day, new_day = '2025-11-17', '2027-02-20'
+    assert b.trip_window(trip_cfg, new_day)['from'] > old_day
+    was = b.occupied_during(trip_cfg, target_room, old_day, 'Dylan')
+    place(trip_cfg, post(4, author='jughents', date=new_day), target, spots)
+    assert b.npc_in_room(trip_cfg['rooms'][target_room], 'Julia')['states'][new_day]['present'] is True
+    assert b.occupied_during(trip_cfg, target_room, old_day, 'Dylan') == was
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        changes = b.rehome(cfg, 'Bailey', d1, target, spots)
+    assert changes[0].startswith(f'Bailey {d1}: TokyoStation'), changes[0]
+    assert b.placement_room(cfg, 'Bailey', d1) == target_room
+    st = b.npc_in_room(cfg['rooms'][target_room], 'Bailey')['states'][d1]
+    cell = (st['gridX'], st['gridY'])
+    assert st['present'] is True and cell != julia, (cell, julia)
+    assert cell == b.walkable_near(cfg, target_room, *spots[target][1:],
+                                   b.occupied_during(cfg, target_room, d1, 'Bailey'))
+    for key in ('dialogue', 'posts', 'photo'):                               # the post's content went along
+        assert st.get(key) == before.get(key), key
+    assert st['posts'][0]['id'] == '1' and len(st['dialogue']) == 2
+    # the platform keeps nothing but "absent", and each day has her in one room
+    assert b.npc_in_room(cfg['rooms']['TokyoStation'], 'Bailey')['states'][d1] == {'present': False}
+    assert rooms_on(cfg, 'Bailey', d1) == [target_room]
+    assert rooms_on(cfg, 'Bailey', d2) == [target_room]
+    assert rooms_on(cfg, 'Bailey', d3) == [spots[later][0]]
+
+    # within a room it is a plain move; again leaves it where it is
+    with contextlib.redirect_stdout(io.StringIO()):
+        b.rehome(cfg, 'Bailey', d1, target, spots)
+    again = b.npc_in_room(cfg['rooms'][target_room], 'Bailey')['states'][d1]
+    assert (again['gridX'], again['gridY']) == cell and again['dialogue'] == before['dialogue']
+
+    # nothing to move, or nowhere to move it: refused, config untouched
+    snapshot = json.dumps(cfg, sort_keys=True)
+    for args in (('Bailey', '2031-01-01', target), ('Bailey', d1, 'Nowhere · the moon'),
+                 ('Nobody', d1, target)):
+        try:
+            b.rehome(cfg, *args, spots)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f'rehome{args} should have been refused')
+    assert json.dumps(cfg, sort_keys=True) == snapshot
+
+
+# issue #121: posts about somewhere else that were parked on a platform before
+# #73. The only thing pinned is that they are not back on one - a day that is
+# rebuilt (--reset, a re-run of its post) may land anywhere else, or nowhere.
+OFF_THE_PLATFORM = [('Julia', '2025-11-03'), ('Damian', '2025-11-05'), ('Dylan', '2025-11-02'),
+                    ('Dylan', '2025-11-05'), ('Bailey', '2025-11-16'), ('Dylan', '2025-11-01'),
+                    ('Julia', '2025-11-12')]
+
+
+def test_shipped_whereabouts(cfg):
+    """config.json's history is consistent across rooms: on every dated day
+    each NPC is present in at most one room and no two share a cell; and the
+    #121 placements are outdoors, with the station they left saying absent."""
+    rooms = b.overworld_rooms(cfg)
+    dates = sorted({d for room in rooms.values() for n in room.get('npcs', []) for d in n.get('states', {})}
+                   | {d for t in cfg.get('trips') or [] for d in
+                      [t['start'], t['end']] + [st['from'] for st in t.get('stays') or []]})
+    names = sorted({n['name'] for room in rooms.values() for n in room.get('npcs', [])})
+    for date in dates:
+        for name in names:
+            here = rooms_on(cfg, name, date)
+            assert len(here) <= 1, f'{name} is in {here} on {date}'
+        window = b.trip_window(cfg, date)
+        for room_key, room in rooms.items():
+            taken = {}
+            for n in room.get('npcs', []):
+                present, x, y = b.resolve_pos(n, date, window)
+                if present:
+                    assert (x, y) not in taken, f'{room_key} {date}: {n["name"]} and {taken[(x, y)]} share {(x, y)}'
+                    taken[(x, y)] = n['name']
+    for name, date in OFF_THE_PLATFORM:
+        for station in cfg['stations']:
+            npc = b.npc_in_room(cfg['rooms'][station], name)
+            assert npc is None or npc.get('states', {}).get(date, {'present': False}) == {'present': False}, \
+                f'{name} {date}: {station} holds the placement again'
+        room_key = b.placement_room(cfg, name, date)
+        if room_key is not None:
+            assert not b.is_indoors(cfg, room_key), f'{name} {date} ({room_key})'
+            assert rooms_on(cfg, name, date) == [room_key], f'{name} {date} ({room_key})'
+
+
 def test_merge_same_day():
     p10, p11 = {'id': '10', 'lines': 2}, {'id': '11', 'lines': 1}
     earlier = {'dialogue': ['a', 'b'], 'photo': '10', 'posts': [p10], 'drunk': True}
@@ -744,6 +865,8 @@ if __name__ == '__main__':
     test_trim_line()
     test_merge_same_day()
     test_same_day_posts(config)
+    test_rehome(config)
+    test_shipped_whereabouts(config)
     test_landmark_rules()
     test_spots(config)
     test_city_reach(config)

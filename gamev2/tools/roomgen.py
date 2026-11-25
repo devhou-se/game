@@ -53,6 +53,87 @@ def rect(x0, y0, x1, y1):
     return [(x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)]
 
 
+PICKET_LEFT, PICKET_MID, PICKET_RIGHT = ('fence-garden-outside_2_5',
+                                         'fence-garden-outside_3_5',
+                                         'fence-garden-outside_4_5')
+
+
+def picket_fences(layers):
+    """Rewrite every horizontal run of fence-barriers_* tiles (what
+    Builder.fence() lays: crowd-barrier pieces that read as junk when cycled)
+    into the fence-garden-outside picket set - left end, middle pieces, right
+    end. Colliders are untouched (the cells are already solid).
+
+    layers is {layer name: {'x,y': palette index}}. Returns {layer name: cells
+    re-fenced}. Shared by Builder.finish() and tools/fix_fences.py."""
+    done = {}
+    for name, tiles in layers.items():
+        cells = sorted(tuple(map(int, xy.split(','))) for xy, idx in tiles.items()
+                       if _pal[idx].startswith('fence-barriers'))
+        if not cells:
+            continue
+        cellset = set(cells)
+        for (x, y) in cells:
+            has_l, has_r = (x - 1, y) in cellset, (x + 1, y) in cellset
+            piece = PICKET_MID if (has_l and has_r) else PICKET_LEFT if not has_l else PICKET_RIGHT
+            tiles[f'{x},{y}'] = pidx(piece)
+        done[name] = len(cells)
+    return done
+
+
+def seal_tracks(layers, keep_open=()):
+    """Put a gk_blank collider on every train-track cell. keep_open cells (a
+    station room's `board` cells) stay walkable, and so does a track cell whose
+    Floor tile is a road (`road-*`): that is a level crossing.
+
+    layers is {layer name: {'x,y': palette index}} and must hold 'Colliders'.
+    Returns (cells sealed, cells kept open). Shared by Builder.finish() and
+    tools/seal_tracks.py."""
+    keep_open = {tuple(c) for c in keep_open}
+    track_cells = set()
+    for name, tiles in layers.items():
+        for xy, idx in tiles.items():
+            cell = tuple(map(int, xy.split(',')))
+            if _pal[idx].startswith('train-track'):
+                track_cells.add(cell)
+            elif name == 'Floor' and _pal[idx].startswith('road-'):
+                keep_open.add(cell)                 # a road over the track is a level crossing
+    added = 0
+    for (x, y) in sorted(track_cells - keep_open):
+        key = f'{x},{y}'
+        if key not in layers['Colliders']:
+            layers['Colliders'][key] = pidx('gk_blank')
+            added += 1
+    return added, len(keep_open)
+
+
+def kept_door(prev, cell, prefix):
+    """The transporter a previous build of a room has on `cell`, if it leads
+    into an interior another generator owns (a room named `prefix`...,
+    e.g. 'Konbini' for generate_konbinis.py) that still exists - else None.
+
+    A town generator rebuilds its room from scratch, so without this a re-run
+    would drop the shop door that the interior's generator wired afterwards.
+    prev is the room as it is in config.json before the rebuild ({} if new)."""
+    for t in prev.get('transporters', []):
+        if (t['gridX'], t['gridY']) == tuple(cell) and t['targetRoom'].startswith(prefix) \
+                and t['targetRoom'] in _cfg['rooms']:
+            return t
+    return None
+
+
+def kept_order(prev, transporters):
+    """`transporters` in the order the previous build of the room lists them
+    (anything new goes last, in the order given). The same doors in another
+    order are the same room, but not the same bytes: generate_konbinis.py
+    appends the door it wires, so a generator that put a kept door anywhere
+    else would reorder the list on its next run (issue #107)."""
+    where = {(t['gridX'], t['gridY'], t['targetRoom']): i
+             for i, t in enumerate(prev.get('transporters', []))}
+    return sorted(transporters,
+                  key=lambda t: where.get((t['gridX'], t['gridY'], t['targetRoom']), len(where)))
+
+
 class Builder:
     def __init__(self, w, h):
         assert w >= 20 and h >= 15, 'room must be at least 20x15 cells (1280x960 camera viewport)'
@@ -147,6 +228,16 @@ class Builder:
         self.put('Collidables', x, y, 'blue-shrine-platform-base_0_0')
         for dx in (0, 1):
             for dy in (0, 1): self.solid(x + dx, y + dy)
+
+    def finish(self):
+        """The two passes every outdoor generated room needs before room():
+        real picket fences for the fence() runs and solid train tracks - the
+        same code tools/fix_fences.py and tools/seal_tracks.py run on a named
+        room. Call it last, once everything is placed; a town generator that
+        does is complete on its own and a re-run of it on an unchanged world
+        leaves config.json byte-identical (tools/check_generators.py)."""
+        picket_fences(self.L)
+        seal_tracks(self.L)
 
     def validate(self):
         missing = [_pal[i] for lay in self.L.values() for i in lay.values()

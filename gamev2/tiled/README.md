@@ -151,12 +151,18 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
 
 ## Gotcha ledger
 
-- **`generate_machi.py` is out of sync with the live config** — Machi has
-  accumulated hand/pipeline edits the generator doesn't know about (blog-NPC
-  dated states, ad signage, hidden seam transporters as data). Re-running it
-  wholesale WIPES those and resurrects the legacy `Konbini` room. Until the
-  generator learns them, make Machi changes surgically (config edit +
-  `config_to_tiled.py Machi`) and mirror the intent in the generator source.
+- **A generated room and its generator must agree** (issue #107) — a
+  generator rebuilds its room from scratch, so a change made only in
+  `config.json` is dropped the next time it runs. `python3
+  tools/check_generators.py` runs every room generator in a scratch copy and
+  fails if `config.json` would change, naming the rooms and cells. Make a
+  surgical change (config edit + `config_to_tiled.py <Room>`) AND mirror it in
+  the generator source, then run the check. Generators keep what they do not
+  own — NPCs, Machi's ad signage, a 7-Eleven door wired by
+  `generate_konbinis.py` — and run their own fence / track passes
+  (`b.finish()`), so each is a no-op on its own. `generate_machi.py` used to be
+  the exception (a re-run wiped the blog NPCs and signage and resurrected the
+  legacy `Konbini` room); it is back in step.
 - **World seams are road-aligned by design** (`devhouse.world`): every
   adjacent room pair draws the same connecting road on both sides of the
   seam. A crossing is just hidden transporters on the edge cells of that road

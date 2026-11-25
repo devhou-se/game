@@ -224,9 +224,17 @@ def main(argv):
         for layer in host['layers']:
             if layer.get('collision'):
                 layer['tiles'].pop(f'{dx},{dy}', None)
-        host['transporters'] = [t for t in host.get('transporters', [])
-                                if (t['gridX'], t['gridY']) != (dx, dy)]
-        host['transporters'].append(rg.transporter(dx, dy, store['key'], *ARRIVE, hidden=True))
+        # replace the door's transporter where it already sits (append only a
+        # new one): a re-run must leave config.json byte-identical (issue #107)
+        door = rg.transporter(dx, dy, store['key'], *ARRIVE, hidden=True)
+        ts = host.setdefault('transporters', [])
+        at = [i for i, t in enumerate(ts) if (t['gridX'], t['gridY']) == (dx, dy)]
+        if at:
+            ts[at[0]] = door
+            for i in reversed(at[1:]):
+                del ts[i]
+        else:
+            ts.append(door)
         built.append(store['key'])
         print(f"built  {store['key']} ({store['name']}) - door {store['door']} in {store['host']}")
     rg.save_config(cfg)

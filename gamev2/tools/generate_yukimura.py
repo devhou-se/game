@@ -22,8 +22,6 @@ Run from gamev2/:
     python3 tools/generate_hokkaido.py            # only if dirt-snow-autotile_* is missing
     python3 tools/generate_yukimura.py
     python3 tools/generate_stations.py            # builds YukimuraStation + registry
-    python3 tools/fix_fences.py Yukimura          # MANDATORY (b.fence)
-    python3 tools/seal_tracks.py Yukimura         # MANDATORY (rail line)
     python3 tools/config_to_tiled.py Yukimura YukimuraStation
     node tools/play.js lint Yukimura YukimuraStation
 """
@@ -136,6 +134,7 @@ james = rg.make_npc('James', 'james', 14, 15, [
 ])
 
 # isolated: the ONLY way out is the station house door into YukimuraStation.
+b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 cfg['rooms']['Yukimura'] = b.room('Yukimura', npcs=cfg['rooms'].get('Yukimura', {}).get('npcs') or [james], transporters=[
     rg.transporter(station_door[0], station_door[1], 'YukimuraStation', 11, 11, hidden=True),
 ])

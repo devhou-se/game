@@ -26,8 +26,6 @@ Run from gamev2/:
     python3 tools/make_prefabs.py
     python3 tools/generate_asahikawa.py
     python3 tools/generate_stations.py            # builds AsahikawaStation + registry
-    python3 tools/fix_fences.py Asahikawa         # MANDATORY (b.fence)
-    python3 tools/seal_tracks.py Asahikawa        # MANDATORY (rail line)
     node tools/play.js lint Asahikawa          (and AsahikawaStation)
     python3 tools/config_to_tiled.py Asahikawa AsahikawaStation
 """
@@ -131,6 +129,7 @@ for x in range(18, 35):
 # isolated: the ONLY way out is the station house door into AsahikawaStation.
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) - keep them.
 prev = cfg['rooms'].get('Asahikawa', {})
+b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 cfg['rooms']['Asahikawa'] = b.room('Asahikawa', npcs=prev.get('npcs', []), transporters=[
     rg.transporter(station_door[0], station_door[1], 'AsahikawaStation', 11, 11, hidden=True),
 ])

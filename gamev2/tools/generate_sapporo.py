@@ -26,18 +26,18 @@ or the TV Tower's thin mast is ever between the player and the camera.
 
 Landmark art is drawn by tools/generate_hokkaido.py. Deterministic and
 idempotent: rebuilds rooms.Sapporo from scratch each run, keeping any NPCs the
-blog pipeline has placed there. The konbini door is wired by
-generate_konbinis.py, which must therefore run after this.
+blog pipeline has placed there and the konbini door generate_konbinis.py wired
+(on a first build there is none to keep: the door is sealed until that runs).
+Fences and tracks are finished here (b.finish()), so a re-run on an unchanged
+world changes nothing - tools/check_generators.py (issue #107).
 
 Run from gamev2/:
     python3 tools/generate_hokkaido.py            # sprites (needs Pillow)
     python3 tools/make_prefabs.py
     python3 tools/generate_sapporo.py
-    python3 tools/generate_konbinis.py Sapporo    # KonbiniSapporo1 + its door
+    python3 tools/generate_konbinis.py Sapporo    # KonbiniSapporo1 + its door (first build, or the store moved)
     python3 tools/generate_discount_stores.py Sapporo   # DonTakoteSapporo (door wired here)
     python3 tools/generate_stations.py            # builds SapporoStation + registry
-    python3 tools/fix_fences.py Sapporo           # MANDATORY (b.fence)
-    python3 tools/seal_tracks.py Sapporo          # MANDATORY (rail line)
     node tools/play.js lint Sapporo            (and SapporoStation, KonbiniSapporo1)
     python3 tools/config_to_tiled.py Sapporo SapporoStation KonbiniSapporo1 DonTakoteSapporo
 """
@@ -143,7 +143,7 @@ b.stamp('lantern-red', 36, 17); b.stamp('lantern-red', 42, 17)
 b.stamp('shrub-small-snow', 34, 12); b.stamp('shrub-small-snow', 43, 12)
 b.stamp('tree-snow', 34, 13)
 KONBINI = (44, 15)
-b.stamp('seven-eleven', *KONBINI)                     # door wired by generate_konbinis.py
+konbini_door = b.stamp('seven-eleven', *KONBINI, seal=False)[0]   # wired by generate_konbinis.py; kept below
 b.stamp('sign-7-11', 47, 17)
 b.stamp('house-red', 49, 9)
 b.stamp('tree-snow', 45, 9); b.stamp('tree-snow', 40, 7)
@@ -212,10 +212,18 @@ for x in range(23, 37):
 # konbini and the discount store lead to their own interiors and back).
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) - keep them.
 prev = cfg['rooms'].get('Sapporo', {})
-cfg['rooms']['Sapporo'] = b.room('Sapporo', npcs=prev.get('npcs', []), transporters=[
+# the konbini door keeps the transporter generate_konbinis.py wired onto it;
+# with none to keep (a first build) it is sealed until that runs
+konbini_entry = rg.kept_door(prev, konbini_door, 'Konbini')
+if not konbini_entry:
+    b.solid(*konbini_door)
+b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
+# (listed in the order they already are: generate_konbinis.py appends its door)
+cfg['rooms']['Sapporo'] = b.room('Sapporo', npcs=prev.get('npcs', []), transporters=rg.kept_order(prev, [
     rg.transporter(station_door[0], station_door[1], 'SapporoStation', 11, 11, hidden=True),
+] + ([konbini_entry] if konbini_entry else []) + [
     don.door_transporter('Sapporo', store_door),
-])
+]))
 
 rg.save_config(cfg)
 print(f'Sapporo {W}x{H}; station house door at {station_door} -> SapporoStation; '

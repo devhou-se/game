@@ -7634,6 +7634,30 @@
           "present": false,
           "sprite": "dylan_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
+            "2025-11-02": {
+              "dialogue": [
+                "Day one of biking Lake Biwa, and I nearly left the shop without my helmet!",
+                "No offline maps, so I just vibed it along the Yodogawa river toward \u014ctsu.",
+                "Ended up on the wrong side of the lake and got dumped onto surprise hills, biggest climb of my life, Strava gave me a medal for it.",
+                "Downhill after that though, bike just carried me straight to Biwa. Worth it."
+              ],
+              "gridX": 4,
+              "gridY": 9,
+              "photo": "568",
+              "posts": [
+                {
+                  "id": "568",
+                  "lines": 4,
+                  "title": "The Mighty Hills of Otanacho",
+                  "url": "https://blog.devhou.se/568/"
+                }
+              ],
+              "present": true,
+              "voice": null
+            },
             "2025-11-03": {
               "dialogue": [
                 "Woke up dreading the day, fixed a flat tyre in the rain under some sad excuse for shade, and then the wind tried to throw me into a railing.",
@@ -7675,7 +7699,25 @@
               "present": true
             },
             "2025-11-05": {
-              "present": false
+              "dialogue": [
+                "Started the day riding through Nagahama farmland, tunnel views over the lake, monkeys chasing me for photos, all good stuff.",
+                "Then my back tyre popped. Fixed it. Popped again two minutes later. Wrong size spare, of course.",
+                "Walk of shame back to Takashima, but hey, I'm near a station now, so tomorrow's a train hunt for proper tubes in Kyoto.",
+                "Not stranded, just... rerouted. Mostly hoping."
+              ],
+              "gridX": 19,
+              "gridY": 6,
+              "photo": "636",
+              "posts": [
+                {
+                  "id": "636",
+                  "lines": 4,
+                  "title": "Stranded in Takashima",
+                  "url": "https://blog.devhou.se/636/"
+                }
+              ],
+              "present": true,
+              "voice": null
             },
             "2025-11-07": {
               "dialogue": [
@@ -7739,6 +7781,9 @@
           "present": false,
           "sprite": "julia_front",
           "states": {
+            "2025-11-03": {
+              "present": false
+            },
             "2025-11-05": {
               "dialogue": [
                 "Shirakawa-go was unreal, mountains like a green-brown-gold rainbow, snow dusted on the peaks.",
@@ -8541,25 +8586,11 @@
           "present": false,
           "sprite": "dylan_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-02": {
-              "dialogue": [
-                "Day one of biking Lake Biwa, and I nearly left the shop without my helmet!",
-                "No offline maps, so I just vibed it along the Yodogawa river toward \u014ctsu.",
-                "Ended up on the wrong side of the lake and got dumped onto surprise hills, biggest climb of my life, Strava gave me a medal for it.",
-                "Downhill after that though, bike just carried me straight to Biwa. Worth it."
-              ],
-              "gridX": 1,
-              "gridY": 5,
-              "photo": "568",
-              "posts": [
-                {
-                  "id": "568",
-                  "lines": 4,
-                  "title": "The Mighty Hills of Otanacho",
-                  "url": "https://blog.devhou.se/568/"
-                }
-              ],
-              "present": true
+              "present": false
             },
             "2025-11-03": {
               "present": false
@@ -8568,24 +8599,7 @@
               "present": false
             },
             "2025-11-05": {
-              "dialogue": [
-                "Started the day riding through Nagahama farmland, tunnel views over the lake, monkeys chasing me for photos, all good stuff.",
-                "Then my back tyre popped. Fixed it. Popped again two minutes later. Wrong size spare, of course.",
-                "Walk of shame back to Takashima, but hey, I'm near a station now, so tomorrow's a train hunt for proper tubes in Kyoto.",
-                "Not stranded, just... rerouted. Mostly hoping."
-              ],
-              "gridX": 1,
-              "gridY": 5,
-              "photo": "636",
-              "posts": [
-                {
-                  "id": "636",
-                  "lines": 4,
-                  "title": "Stranded in Takashima",
-                  "url": "https://blog.devhou.se/636/"
-                }
-              ],
-              "present": true
+              "present": false
             },
             "2025-11-07": {
               "present": false
@@ -16387,7 +16401,25 @@
               "present": false
             },
             "2025-11-16": {
-              "present": false
+              "dialogue": [
+                "Okayama's castle was a letdown, but Himeji lived up to the hype completely.",
+                "I've got a photo holding it up like a tiny toy, it's bigger than it looks, I promise.",
+                "Yashuk tried to pay a panty gacha machine like it owed him yen coins. Tragic.",
+                "Bought myself a chef's knife in Kappabashi as a reward for surviving this trip. Bye for now!"
+              ],
+              "gridX": 23,
+              "gridY": 19,
+              "photo": "769",
+              "posts": [
+                {
+                  "id": "769",
+                  "lines": 4,
+                  "title": "Okayama, Himeji, Osaka, Tokyo",
+                  "url": "https://blog.devhou.se/769/"
+                }
+              ],
+              "present": true,
+              "voice": null
             },
             "2025-11-18": {
               "present": false
@@ -20933,7 +20965,25 @@
               "present": false
             },
             "2025-11-12": {
-              "present": false
+              "dialogue": [
+                "Last day in Fukuoka started slow, too many drinks the night before, but Hakata ramen fixed that fast.",
+                "We wandered past the sumo dojo, sipped coffee, then hunted down a bar just to watch sumo on TV, harder than you'd think.",
+                "Yakitori for dinner, pool around the corner, and somehow I got a business card inviting me to train for a float festival next June.",
+                "Tomorrow it's Kyoto for me, Okayama for everyone else. Devhouse Fukuoka chapter closed, what a run."
+              ],
+              "gridX": 21,
+              "gridY": 26,
+              "photo": "746",
+              "posts": [
+                {
+                  "id": "746",
+                  "lines": 4,
+                  "title": "Last day in Fukuoka",
+                  "url": "https://blog.devhou.se/746/"
+                }
+              ],
+              "present": true,
+              "voice": null
             }
           }
         },
@@ -21056,6 +21106,55 @@
               "present": false
             },
             "2025-11-18": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "dylan_front",
+            "left": "",
+            "right": "dylan_side",
+            "up": "dylan_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 10,
+          "gridY": 20,
+          "name": "Dylan",
+          "present": false,
+          "sprite": "dylan_front",
+          "states": {
+            "2025-11-01": {
+              "dialogue": [
+                "Two days, one izakaya, a hundred lemon sours, and a karaoke bar that never closed - Tokyo, thank you.",
+                "We scoured four donkis across three cities for costumes and ended up as cops, don't ask about the Pitbulls.",
+                "Confessed the next day I led us home on maps, not memory, sorry Gloria, and sorry Mr. Worldwide bar hoppers.",
+                "Off to Osaka solo now, saving my legs for a week around Lake Biwa - catch you from the saddle."
+              ],
+              "gridX": 10,
+              "gridY": 20,
+              "photo": "549",
+              "posts": [
+                {
+                  "id": "549",
+                  "lines": 4,
+                  "title": "Tilted Tokyo",
+                  "url": "https://blog.devhou.se/549/"
+                }
+              ],
+              "present": true,
+              "voice": null
+            },
+            "2025-11-02": {
+              "present": false
+            },
+            "2025-11-05": {
               "present": false
             }
           }
@@ -27683,6 +27782,9 @@
           "present": false,
           "sprite": "damian_front",
           "states": {
+            "2025-11-05": {
+              "present": false
+            },
             "2025-11-06": {
               "dialogue": [
                 "Started the day in Nagamachi, the old samurai district, walls and houses everywhere.",
@@ -27769,6 +27871,9 @@
           "present": false,
           "sprite": "julia_front",
           "states": {
+            "2025-11-03": {
+              "present": false
+            },
             "2025-11-07": {
               "dialogue": [
                 "Started the day with self-roasted coffee, then walked straight into the samurai district houses, tourists and all.",
@@ -41825,24 +41930,7 @@
               "present": false
             },
             "2025-11-16": {
-              "dialogue": [
-                "Okayama's castle was a letdown, but Himeji lived up to the hype completely.",
-                "I've got a photo holding it up like a tiny toy, it's bigger than it looks, I promise.",
-                "Yashuk tried to pay a panty gacha machine like it owed him yen coins. Tragic.",
-                "Bought myself a chef's knife in Kappabashi as a reward for surviving this trip. Bye for now!"
-              ],
-              "gridX": 1,
-              "gridY": 6,
-              "photo": "769",
-              "posts": [
-                {
-                  "id": "769",
-                  "lines": 4,
-                  "title": "Okayama, Himeji, Osaka, Tokyo",
-                  "url": "https://blog.devhou.se/769/"
-                }
-              ],
-              "present": true
+              "present": false
             },
             "2025-11-18": {
               "present": false
@@ -41897,24 +41985,7 @@
               "present": false
             },
             "2025-11-01": {
-              "dialogue": [
-                "Two days, one izakaya, a hundred lemon sours, and a karaoke bar that never closed - Tokyo, thank you.",
-                "We scoured four donkis across three cities for costumes and ended up as cops, don't ask about the Pitbulls.",
-                "Confessed the next day I led us home on maps, not memory, sorry Gloria, and sorry Mr. Worldwide bar hoppers.",
-                "Off to Osaka solo now, saving my legs for a week around Lake Biwa - catch you from the saddle."
-              ],
-              "gridX": 1,
-              "gridY": 6,
-              "photo": "549",
-              "posts": [
-                {
-                  "id": "549",
-                  "lines": 4,
-                  "title": "Tilted Tokyo",
-                  "url": "https://blog.devhou.se/549/"
-                }
-              ],
-              "present": true
+              "present": false
             },
             "2025-11-02": {
               "present": false
@@ -42053,24 +42124,7 @@
               "present": false
             },
             "2025-11-12": {
-              "dialogue": [
-                "Last day in Fukuoka started slow, too many drinks the night before, but Hakata ramen fixed that fast.",
-                "We wandered past the sumo dojo, sipped coffee, then hunted down a bar just to watch sumo on TV, harder than you'd think.",
-                "Yakitori for dinner, pool around the corner, and somehow I got a business card inviting me to train for a float festival next June.",
-                "Tomorrow it's Kyoto for me, Okayama for everyone else. Devhouse Fukuoka chapter closed, what a run."
-              ],
-              "gridX": 1,
-              "gridY": 5,
-              "photo": "746",
-              "posts": [
-                {
-                  "id": "746",
-                  "lines": 4,
-                  "title": "Last day in Fukuoka",
-                  "url": "https://blog.devhou.se/746/"
-                }
-              ],
-              "present": true
+              "present": false
             }
           }
         }
@@ -44076,7 +44130,25 @@
               "present": true
             },
             "2025-11-03": {
-              "present": false
+              "dialogue": [
+                "Worst hotel coffee of my life this morning, so we hunted down Karuizawa's famous apple pie instead. Two kinds, both incredible.",
+                "Then our Shinkansen to Toyama was delayed 35 minutes! Didn't know that could even happen here.",
+                "Toyama greeted us with torrential rain and a marathon blocking half the city, so naturally we got ginormous beers.",
+                "Glass museum by tram, brewery to hide from the rain, hamburg steak for dinner, taxi home in a downpour. That's a day!"
+              ],
+              "gridX": 19,
+              "gridY": 6,
+              "photo": "583",
+              "posts": [
+                {
+                  "id": "583",
+                  "lines": 4,
+                  "title": "Apple pies",
+                  "url": "https://blog.devhou.se/583/"
+                }
+              ],
+              "present": true,
+              "voice": null
             },
             "2025-11-04": {
               "present": false
@@ -44145,7 +44217,25 @@
               "present": true
             },
             "2025-11-05": {
-              "present": false
+              "dialogue": [
+                "Started the day with ryokan breakfast, an onsen, and Shirakawa-go wrapped in morning fog. Gorgeous.",
+                "Bus to Kanazawa was quick, katsu udon was 850 yen and huge, cheap and good.",
+                "Yasuku got sick so it was just me, Julia, and Bailey for yakitori, ran into Gloria, bought all-you-can-drink and wrecked Dylan's counter. Seven cups deep.",
+                "Ended the night with whiskey at a bar. Tomorrow we explore Kanazawa properly, ja ne."
+              ],
+              "gridX": 4,
+              "gridY": 12,
+              "photo": "635",
+              "posts": [
+                {
+                  "id": "635",
+                  "lines": 4,
+                  "title": "\u767d\u5ddd\u90f7\u304b\u3089\u91d1\u6ca2\u307e\u3067",
+                  "url": "https://blog.devhou.se/635/"
+                }
+              ],
+              "present": true,
+              "voice": null
             },
             "2025-11-06": {
               "present": false
@@ -44917,24 +45007,7 @@
           "sprite": "julia_front",
           "states": {
             "2025-11-03": {
-              "dialogue": [
-                "Worst hotel coffee of my life this morning, so we hunted down Karuizawa's famous apple pie instead. Two kinds, both incredible.",
-                "Then our Shinkansen to Toyama was delayed 35 minutes! Didn't know that could even happen here.",
-                "Toyama greeted us with torrential rain and a marathon blocking half the city, so naturally we got ginormous beers.",
-                "Glass museum by tram, brewery to hide from the rain, hamburg steak for dinner, taxi home in a downpour. That's a day!"
-              ],
-              "gridX": 1,
-              "gridY": 5,
-              "photo": "583",
-              "posts": [
-                {
-                  "id": "583",
-                  "lines": 4,
-                  "title": "Apple pies",
-                  "url": "https://blog.devhou.se/583/"
-                }
-              ],
-              "present": true
+              "present": false
             },
             "2025-11-04": {
               "present": false
@@ -44983,24 +45056,7 @@
           "sprite": "damian_front",
           "states": {
             "2025-11-05": {
-              "dialogue": [
-                "Started the day with ryokan breakfast, an onsen, and Shirakawa-go wrapped in morning fog. Gorgeous.",
-                "Bus to Kanazawa was quick, katsu udon was 850 yen and huge, cheap and good.",
-                "Yasuku got sick so it was just me, Julia, and Bailey for yakitori, ran into Gloria, bought all-you-can-drink and wrecked Dylan's counter. Seven cups deep.",
-                "Ended the night with whiskey at a bar. Tomorrow we explore Kanazawa properly, ja ne."
-              ],
-              "gridX": 1,
-              "gridY": 5,
-              "photo": "635",
-              "posts": [
-                {
-                  "id": "635",
-                  "lines": 4,
-                  "title": "\u767d\u5ddd\u90f7\u304b\u3089\u91d1\u6ca2\u307e\u3067",
-                  "url": "https://blog.devhou.se/635/"
-                }
-              ],
-              "present": true
+              "present": false
             },
             "2025-11-06": {
               "present": false

@@ -51,6 +51,7 @@ checks are `python3 tools/test_blog_to_npc.py`):
   python3 tools/blog_to_npc.py --payload post.json [--dry-run] [--mock]
   python3 tools/blog_to_npc.py --voice-backfill [--dry-run]
   python3 tools/blog_to_npc.py --backfill-posts posts.json [--dry-run]
+  python3 tools/blog_to_npc.py --rehome Julia 2025-11-12 "Market · the vending machines" [--dry-run]
 
 --voice-backfill makes no LLM call and places nobody: it speaks every existing
 dated state that has dialogue but no voice (a state with "drunk": true gets
@@ -62,6 +63,11 @@ characters it would send, which is the number ElevenLabs bills on.
 post title and url on states that were placed before those were recorded.
 posts.json is a list of {"id", "title", "url"} (optionally "author" and
 "date" too — see backfill_posts for how a state is matched to its post).
+
+--rehome moves a placement that already exists to another spot (issue #121:
+history placed on a station platform, before the rule above, for a post that
+is not about the station). No LLM call: the day's dialogue, photo, voice and
+post captions go along unchanged — see rehome. Repeat the flag to move several.
 
 post.json is the blog payload: {"post_id", "title", "author", "date",
 "content"} and optionally "url" (the post's page; recorded when present) —
@@ -606,6 +612,49 @@ def occupied_cells(cfg, room_key, date, exclude_name):
     return occ
 
 
+def placement_room(cfg, npc_name, date):
+    """The room that holds this NPC's placement dated `date`, or None."""
+    for room_key, room in overworld_rooms(cfg).items():
+        st = (npc_in_room(room, npc_name) or {}).get('states', {}).get(date)
+        if st and st.get('present') is not False and 'gridX' in st:
+            return room_key
+    return None
+
+
+def stay_end(cfg, npc_name, date):
+    """The date of this NPC's next placement after `date`, in any room — the
+    day they leave a spot taken on `date` — or None if they never move on."""
+    later = [d for room in overworld_rooms(cfg).values()
+             for d, st in (npc_in_room(room, npc_name) or {}).get('states', {}).items()
+             if d > date and 'gridX' in st]
+    return min(later) if later else None
+
+
+def occupied_during(cfg, room_key, date, exclude_name):
+    """Cells other NPCs stand on in room_key at any time while exclude_name
+    would be standing there: from `date` until their next placement, or until
+    the placement stops applying (a later trip, or a later stay of its trip,
+    starts everyone from its base again — trip_window).
+
+    occupied_cells answers for one day. History is not always written in date
+    order (a backfill, a re-homed placement), so someone may already be
+    recorded as arriving on a later day while this NPC is still here."""
+    end = stay_end(cfg, exclude_name, date)
+
+    def still_here(d):
+        window = trip_window(cfg, d)
+        return (end is None or d < end) and (window is None or window['from'] <= date)
+
+    days = {date}
+    for n in cfg['rooms'][room_key].get('npcs', []):
+        if n['name'].lower() != exclude_name.lower():
+            days.update(d for d in n.get('states', {}) if d > date and still_here(d))
+    occ = set()
+    for d in days:
+        occ |= occupied_cells(cfg, room_key, d, exclude_name)
+    return occ
+
+
 def hidden_base_def(name, x, y):
     """An NPC definition that doesn't exist until a dated state says so."""
     base = name.lower()
@@ -770,6 +819,33 @@ def repair_presence(cfg, npc_name, from_date, active_room):
     return changes
 
 
+def rehome(cfg, npc_name, date, spot_id, spots):
+    """Move the placement `npc_name` has on `date` to another spot, keeping
+    everything the post gave it (dialogue, photo, voice, drunk, posts).
+    Returns the change lines, like apply(). Raises ValueError when there is
+    nothing to move or nowhere to stand.
+
+    The room they leave gets the bare `present: false` a normal move leaves
+    behind, the new room a hidden base def if they were never there, and the
+    later history is re-checked (repair_presence) — it is apply() with the
+    old state's content. The cell is one nobody else stands on for as long
+    as they stay (occupied_during)."""
+    if spot_id not in spots:
+        raise ValueError(f'unknown spot {spot_id!r}')
+    from_room = placement_room(cfg, npc_name, date)
+    if from_room is None:
+        raise ValueError(f'{npc_name} has no placement dated {date}')
+    room_key, ax, ay = spots[spot_id]
+    cell = walkable_near(cfg, room_key, ax, ay, occupied_during(cfg, room_key, date, npc_name))
+    if cell is None:
+        raise ValueError(f'no walkable cell near {spot_id}')
+    # a copy: when the spot is in another room apply() strips the old state
+    old = dict(npc_in_room(cfg['rooms'][from_room], npc_name)['states'][date])
+    return [f'{npc_name} {date}: {from_room} ({old["gridX"]},{old["gridY"]}) -> {spot_id} {cell}'] + \
+        apply(cfg, npc_name, date, room_key, cell[0], cell[1], old.get('dialogue', []),
+              old.get('photo'), old.get('voice'), old.get('drunk') is True, old.get('posts'))
+
+
 def report_usage(usage):
     """Per-post token counts and a projected cost, for planning at scale."""
     if usage is None:
@@ -836,7 +912,7 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
         return None, usage
 
     room_key, ax, ay = spots[spot_id]
-    occ = occupied_cells(cfg, room_key, date, npc_name)
+    occ = occupied_during(cfg, room_key, date, npc_name)
     cell = walkable_near(cfg, room_key, ax, ay, occ)
     if cell is None:
         print(f'#{post.get("post_id")}: no walkable cell near {spot_id} — skipped')
@@ -982,6 +1058,9 @@ def main():
     src.add_argument('--backfill-posts', metavar='POSTS_JSON',
                      help='fill post title/url into existing states from a JSON list of '
                           '{id, title, url[, author, date]} (no LLM, no placement)')
+    src.add_argument('--rehome', nargs=3, action='append', metavar=('NPC', 'DATE', 'SPOT'),
+                     help='move an existing placement to another spot, e.g. --rehome Julia 2025-11-12 '
+                          '"Market · the 7-Eleven" (no LLM; dialogue, photo and voice go along; repeatable)')
     ap.add_argument('--reset', action='store_true', help='clear all NPC states + hidden defs before placing (backfill)')
     ap.add_argument('--dry-run', action='store_true', help='generate + place, but do not write config')
     ap.add_argument('--mock', action='store_true', help='skip the LLM (canned response)')
@@ -1016,6 +1095,24 @@ def main():
         if args.dry_run:
             print('dry run — config.json not written')
         elif changed:
+            save_config(cfg)
+            print('config.json updated')
+        return 0
+
+    if args.rehome:
+        if args.reset:
+            ap.error('--reset cannot be combined with --rehome')
+        cfg = load_config()
+        spots = find_spots(cfg)
+        for npc_name, date, spot_id in args.rehome:
+            try:
+                for line in rehome(cfg, npc_name, date, spot_id, spots):
+                    print(line if line.startswith(npc_name) else f'  {line}')
+            except ValueError as e:
+                ap.error(f'--rehome {npc_name} {date}: {e}')
+        if args.dry_run:
+            print('dry run — config.json not written')
+        else:
             save_config(cfg)
             print('config.json updated')
         return 0

@@ -56,8 +56,6 @@ Run from gamev2/:
     python3 tools/generate_osaka.py
     python3 tools/generate_discount_stores.py Osaka   # DonTakoteOsaka (the door is wired here)
     python3 tools/generate_stations.py            # builds OsakaStation + registry
-    python3 tools/fix_fences.py Osaka             # MANDATORY (b.fence)
-    python3 tools/seal_tracks.py Osaka            # MANDATORY (rail line)
     python3 tools/config_to_tiled.py Osaka OsakaStation DonTakoteOsaka
     node tools/play.js lint Osaka OsakaStation DonTakoteOsaka
     python3 tools/make_worldmap.py
@@ -270,6 +268,7 @@ for x in range(10, 27):
 # discount store's door leads to its own interior and back).
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) — keep them.
 prev = cfg['rooms'].get('Osaka', {})
+b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 cfg['rooms']['Osaka'] = b.room('Osaka', npcs=prev.get('npcs', []), transporters=[
     rg.transporter(station_door[0], station_door[1], 'OsakaStation', 11, 11, hidden=True),
     don.door_transporter('Osaka', store_door),

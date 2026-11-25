@@ -12,9 +12,7 @@ Deterministic and idempotent: rebuilds rooms.Inaka and rooms.Izakaya from
 scratch each run while preserving Inaka's dated blog NPC history.
 
 Run from gamev2/:  python3 tools/generate_inaka.py
-Then:              python3 tools/fix_fences.py Inaka
-                   python3 tools/seal_tracks.py Inaka
-                   python3 tools/config_to_tiled.py Inaka Izakaya
+Then:              python3 tools/config_to_tiled.py Inaka Izakaya     (fences and tracks are done here: b.finish())
                    node tools/play.js lint Inaka Izakaya
                    node tools/play.js check
                    python3 tools/make_worldmap.py          (after editing devhouse.world)
@@ -95,6 +93,7 @@ for x in range(12, 32):
 
 # ---- wiring: station house + lakeside farmhouse interiors ---------------------
 # (the actual train ride happens inside the station — see generate_stations.py)
+b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 cfg['rooms']['Inaka'] = b.room('Inaka', npcs=inaka_npcs, transporters=[
     {'gridX': station_door[0], 'gridY': station_door[1],
      'targetRoom': 'InakaStation', 'targetX': 11, 'targetY': 11, 'hidden': True},

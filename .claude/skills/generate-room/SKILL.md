@@ -47,13 +47,20 @@ substitute the closest available prefab rather than inventing sprites.
   `wall_stone` / `wall_panel` (1x2 solid wall segments, for interiors),
   `counter`. New composite objects belong in the prefab library: add a spec to
   `tools/make_prefabs.py`, rerun it, and the object is editable in Tiled.
-- **Two helpers are broken-as-generated and REQUIRE a post-pass (see §5) — a
-  recurring bug when skipped:** `b.fence()` lays disconnected crowd-barrier art
-  (fix with `tools/fix_fences.py <Room>` → real pickets), and `train-track`
-  tiles (rail corridors) are *walkable* as laid (fix with
-  `tools/seal_tracks.py <Room>` → solid; station board cells and road level
-  crossings are kept open). If your room has a fence or a
-  railway, you are not done until both passes have run.
+- **Two helpers are broken-as-laid, so end the generator with `b.finish()`
+  (just before `b.room(...)`) — a recurring bug when skipped:** `b.fence()`
+  lays disconnected crowd-barrier art and `train-track` tiles (rail corridors)
+  are *walkable* as laid. `b.finish()` turns the fence runs into real pickets
+  and makes the rail solid (road level crossings stay open). The same passes
+  exist as `tools/fix_fences.py <Room>` / `tools/seal_tracks.py <Room>` for a
+  room that was not built by a generator (and for station rooms, whose board
+  cells `seal_tracks.py` keeps open).
+- **The generator must stay able to rebuild the room** (issue #107): keep what
+  you do not own from the existing room (`prev.get('npcs', [])` — the blog
+  pipeline's states; `rg.kept_door` for a konbini door), add the generator to
+  `GENERATORS` in `tools/check_generators.py`, and make sure `python3
+  tools/check_generators.py` passes — a re-run on an unchanged world must leave
+  `config.json` byte-identical.
 
 ## 3. Write the generator script
 
@@ -99,26 +106,19 @@ Composition principles that make rooms read well:
 ## 5. Build loop (iterate at least twice on looks)
 
 ```
-python3 tools/generate_<slug>.py
-# --- MANDATORY post-passes (edit config.json, so run BEFORE config_to_tiled) ---
-python3 tools/fix_fences.py <Name>            # ONLY if the room calls b.fence():
-                                              # broken barriers -> real pickets
-python3 tools/seal_tracks.py <Name>           # ONLY if the room has train-track
-                                              # tiles: makes the rail solid
-# ------------------------------------------------------------------------------
-python3 tools/config_to_tiled.py <Name>       # + every room fix_fences/seal_tracks
-                                              #   or a transporter edit touched
+python3 tools/generate_<slug>.py              # ends with b.finish(): pickets + solid rail
+python3 tools/check_generators.py             # a second run must change nothing
+python3 tools/config_to_tiled.py <Name>       # + every room a transporter edit touched
 node tools/play.js lint <Name>                # must reach 0 errors; fix warnings
 node tools/play.js check                      # doors, arrivals and NPCs still reachable
 node tools/play.js render <Name> /tmp/<name>.png --scale 0.5
 ```
 `lint`, `check` and `render` read the Tiled map, as the game does, so they
 only see a change after `config_to_tiled`.
-`fix_fences.py`/`seal_tracks.py` are not optional polish — a fence or railway
-that skips them ships **broken art** or a **walkable railway** (this has bitten
-us before). They edit `config.json`, so they must run before `config_to_tiled`.
-Re-running the generator re-breaks both, so re-run these passes (then
-`config_to_tiled`) after ANY regeneration.
+`b.finish()` is not optional polish — a fence or railway without it ships
+**broken art** or a **walkable railway** (this has bitten us before). Because
+the generator does it itself, a regeneration needs nothing afterwards but
+`config_to_tiled`.
 
 LOOK at the render. Fix what reads badly (empty slabs, floating objects,
 disconnected paths, banding floors). Known traps: `pagoda-floor` is a blue
@@ -147,7 +147,7 @@ Serve `gamev2/` (a server is usually already on :8000, else
   on visually-solid and visually-open cells (`checkTileCollision` returns
   `false` when a cell is blocked, so `!` = "is solid"). If the room has a
   railway or fences, EXPLICITLY probe a `train-track` cell and a fence cell —
-  both must be solid — to catch a forgotten `seal_tracks`/`fix_fences`;
+  both must be solid — to catch a forgotten `b.finish()`;
 - screenshot the room's key vistas and actually look at them.
 
 ## 7. Ship
