@@ -87,9 +87,20 @@ class CharacterSelect {
             CharacterCreator.applyToPlayer(this.scene, data);
             return;
         }
+        CharacterSelect.become(this.scene, name);
+    }
+
+    /**
+     * Become a cast member: persist the choice and swap the live player.
+     * Shared by the roster above and the CharacterCreator's name Easter egg
+     * (type a cast member's name as your own). Leaves any saved custom
+     * creation alone — only the `gamev2_character` mode changes.
+     */
+    static become(scene, name) {
+        if (!CharacterSelect.available(scene.config).includes(name)) return false;
         try { localStorage.setItem('gamev2_character', name); } catch (e) { /* play on */ }
 
-        const scene = this.scene, key = `${name}_front`;
+        const key = `${name}_front`;
         // keep spriteMetadata directional for the new base key (idempotent —
         // the NPC casts of these sprites already set the same mapping)
         const meta = scene.spriteSystem.spriteMetadata[key];
@@ -100,6 +111,8 @@ class CharacterSelect {
         }
 
         const p = scene.player;
+        // drop a custom character's name (CharacterCreator.applyToPlayer set it)
+        scene.config.player.name = p.name = 'Player';
         p.baseSpriteKey = key;
         p.isDirectional = true;
         p.currentDirection = 'none';        // force the texture swap below
@@ -109,6 +122,7 @@ class CharacterSelect {
         // back the one you stopped being
         scene.syncNpcPresence();
         if (scene.syncPlayerNameLabel) scene.syncPlayerNameLabel();
+        return true;
     }
 
     handleInput() {

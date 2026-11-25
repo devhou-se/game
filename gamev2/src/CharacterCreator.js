@@ -23,6 +23,11 @@
  * character. The creation persists in localStorage and is rebuilt from the
  * base sprites on boot. Shown automatically on first ever play; afterwards
  * via Menu → Create Character (or the custom row in Menu → Character).
+ *
+ * Easter egg: name yourself after one of us (a cast member with a sprite
+ * set — see castMatch) and you play AS them instead: the preview flips to
+ * their sprite, the part rows lock, and START hands over to
+ * CharacterSelect.become. A saved creation is left untouched.
  */
 class CharacterCreator {
     // Per-donor palette slots, measured from the actual sprite frames. The
@@ -429,6 +434,11 @@ class CharacterCreator {
         this.data.colors = this.data.colors || {};
         this.view = 0;
         this.selectedRow = 0;
+        // a creation saved under one of our names (before the egg existed)
+        // opens as itself: the egg only arms once the name box is edited
+        this.eggArmed = true;
+        this.eggArmed = !this.castMatch();
+        this.paintedCast = null;
         const JD = Phaser.Input.Keyboard.JustDown;
         Object.values(this.keys).forEach(k => JD(k)); // swallow stale presses
         this.visible = true;
@@ -439,6 +449,7 @@ class CharacterCreator {
         if (!this.visible) return;
         this.visible = false;
         try { localStorage.setItem(CharacterCreator.SEEN_KEY, '1'); } catch (e) { /* fine */ }
+        if (this.preview) this.scene.tweens.killTweensOf(this.preview);
         this.objs.forEach(o => o.destroy());
         this.objs = [];
         this.swatchRows = [];
@@ -457,7 +468,27 @@ class CharacterCreator {
         if (onClose) onClose();
     }
 
+    /**
+     * The Easter egg: the cast member whose name was typed as the player's
+     * own (whole name, trimmed, any case), or null. Only people with a sprite
+     * set qualify — exactly the Menu → Character roster.
+     */
+    castMatch() {
+        const typed = ((this.data && this.data.name) || '').trim().toLowerCase();
+        if (!typed || !this.eggArmed || !window.CharacterSelect) return null;
+        return CharacterSelect.available(this.scene.config).includes(typed) ? typed : null;
+    }
+
     confirm() {
+        const cast = this.castMatch();
+        if (cast) {
+            // play as one of us: the same swap as Menu → Character. Nothing
+            // is saved, so an earlier creation survives for switching back.
+            this.hide();
+            CharacterSelect.become(this.scene, cast);
+            if (this.scene.shop) this.scene.shop.toast(`You are ${cast.charAt(0).toUpperCase() + cast.slice(1)}!`);
+            return;
+        }
         const data = this.data;
         data.name = (data.name || '').trim().slice(0, 12);
         CharacterCreator.save(data);
@@ -466,6 +497,7 @@ class CharacterCreator {
     }
 
     randomise() {
+        if (this.castMatch()) return; // the look is locked to that person
         const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
         this.data.parts = {
             hair: pick(this.donors),
@@ -493,7 +525,7 @@ class CharacterCreator {
         if (JD(k.enter) || JD(k.space)) return this.confirm();
         if (JD(k.r)) return this.randomise();
         const n = this.rowDefs.length;
-        if (!n) return;
+        if (!n || this.castMatch()) return; // rows are locked to that person
         if (JD(k.up) || JD(k.w)) { this.selectedRow = (this.selectedRow - 1 + n) % n; this.paint(); }
         if (JD(k.down) || JD(k.s)) { this.selectedRow = (this.selectedRow + 1) % n; this.paint(); }
         if (JD(k.left) || JD(k.a)) this.cycle(-1);
@@ -503,7 +535,7 @@ class CharacterCreator {
     /** Left/right on the selected row: previous/next donor or swatch. */
     cycle(step) {
         const row = this.rowDefs[this.selectedRow];
-        if (!row) return;
+        if (!row || this.castMatch()) return;
         if (row.kind === 'donor') {
             const options = row.optional ? [null, ...row.donors] : row.donors;
             const i = options.indexOf(this.data.parts[row.part]);
@@ -588,6 +620,8 @@ class CharacterCreator {
         mkViewArrow(px + 60, -1);
         mkViewArrow(px + 200, 1);
         this.viewLabel = text(px + 130, py + 340, 'FRONT', '16px', { color: '#888888' });
+        // shown only while the typed name is one of ours (see castMatch)
+        this.castHint = text(px + 130, py + 384, '', '18px', { bold: true, color: '#ffe97f' });
 
         // name (a real DOM input so typing works on desktop AND mobile)
         text(px + 250, py + 88, 'NAME', '20px', { bold: true, originX: 0 });
@@ -610,13 +644,18 @@ class CharacterCreator {
         this.donorValues = {};
         this.swatchRows = [];
         let y = py + 136;
+        const firstRowObj = objs.length;
         this.rowDefs.forEach((row, rowIndex) => {
             if (row.kind === 'donor') {
                 this.rowLabels.push(text(px + 250, y, row.label, '20px', { bold: true, originX: 0 }));
                 const mk = (x, step) => {
                     const a = text(x, y, step < 0 ? '‹' : '›', '26px', { bold: true, color: '#aaaaaa' });
                     a.setInteractive({ useHandCursor: true });
-                    a.on('pointerdown', () => { this.selectedRow = rowIndex; this.cycle(step); });
+                    a.on('pointerdown', () => {
+                        if (this.castMatch()) return;
+                        this.selectedRow = rowIndex;
+                        this.cycle(step);
+                    });
                 };
                 mk(px + 440, -1);
                 mk(px + 662, 1);
@@ -639,6 +678,7 @@ class CharacterCreator {
                     r.setDepth(2002);
                     r.setInteractive({ useHandCursor: true });
                     r.on('pointerdown', () => {
+                        if (this.castMatch()) return;
                         this.selectedRow = rowIndex;
                         this.data.colors[row.slot] = hex;
                         this.paint();
@@ -651,6 +691,9 @@ class CharacterCreator {
             }
         });
 
+        // everything a name match locks: the part/colour rows (+ RANDOM below)
+        this.lockable = objs.slice(firstRowObj);
+
         // buttons
         const btn = (x, label, cb) => {
             const b = scene.add.rectangle(x, py + ph - 66, 190, 44, 0x2b2b2b);
@@ -660,12 +703,12 @@ class CharacterCreator {
             b.setInteractive({ useHandCursor: true });
             b.on('pointerdown', cb);
             objs.push(b);
-            text(x, py + ph - 66, label, '20px', { bold: true });
+            return [b, text(x, py + ph - 66, label, '20px', { bold: true })];
         };
-        btn(px + 360, 'RANDOM (R)', () => this.randomise());
+        this.lockable.push(...btn(px + 360, 'RANDOM (R)', () => this.randomise()));
         btn(px + 570, 'START ▶', () => this.confirm());
 
-        text(W / 2, py + ph - 24, '↑/↓ pick a row · ←/→ change it · ENTER: play · ESC: cancel', '14px', { color: '#888888' });
+        this.footer = text(W / 2, py + ph - 24, '', '14px', { color: '#888888' });
 
         this.paint();
     }
@@ -676,6 +719,27 @@ class CharacterCreator {
         const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
         if (this.viewLabel) this.viewLabel.setText(this.views[this.view].toUpperCase());
 
+        // named after one of us: the rows give way to that person
+        const cast = this.castMatch();
+        const justMatched = cast && cast !== this.paintedCast;
+        this.paintedCast = cast;
+        (this.lockable || []).forEach(o => o.setAlpha(cast ? 0.25 : 1));
+        if (this.castHint) this.castHint.setText(cast ? `hey, it's ${cap(cast)}!` : '');
+        if (this.footer) {
+            this.footer.setText(cast
+                ? `play as ${cap(cast)} · ENTER: play · ESC: cancel`
+                : '↑/↓ pick a row · ←/→ change it · ENTER: play · ESC: cancel');
+        }
+        // a little hop on the match, so it lands even when the sprite barely
+        // changes (the default composite is all-James)
+        if (justMatched && this.preview) {
+            this.scene.tweens.killTweensOf(this.preview);
+            this.preview.setScale(2);
+            this.scene.tweens.add({
+                targets: this.preview, scale: { from: 2.6, to: 2 }, duration: 260, ease: 'Back.easeOut',
+            });
+        }
+
         for (const part of ['hair', 'top', 'legs', 'beard']) {
             const v = this.donorValues[part];
             if (v) v.setText(this.data.parts[part] ? cap(this.data.parts[part]) : 'None');
@@ -683,7 +747,7 @@ class CharacterCreator {
 
         // donor + colour rows of one section share a label object — highlight
         // the label when EITHER of its rows is selected
-        const selectedLabel = this.rowLabels[this.selectedRow];
+        const selectedLabel = cast ? null : this.rowLabels[this.selectedRow];
         this.rowLabels.forEach(l => l.setFill(l === selectedLabel ? '#ffff00' : '#ffffff'));
 
         this.rowDefs.forEach((row, i) => {
@@ -713,11 +777,19 @@ class CharacterCreator {
         const view = this.views[this.view];
         // side sheets idle on frame 1 (feet together); front/back on frame 0
         const frame = view === 'side' ? 1 : 0;
-        const canvas = CharacterCreator.composeFrame(scene, this.data, view, frame);
-        if (!canvas) return;
-        const key = `__creator_preview_${this.previewCounter++}`;
-        scene.textures.addCanvas(key, canvas);
-        this.preview.setTexture(key);
+        // a name match previews that cast member's own sprite, untouched
+        const cast = this.castMatch();
+        const castKey = cast ? `${cast}_${view}_frame_${frame}` : null;
+        let key = null;
+        if (castKey && scene.textures.exists(castKey)) {
+            this.preview.setTexture(castKey);
+        } else {
+            const canvas = CharacterCreator.composeFrame(scene, this.data, view, frame);
+            if (!canvas) return;
+            key = `__creator_preview_${this.previewCounter++}`;
+            scene.textures.addCanvas(key, canvas);
+            this.preview.setTexture(key);
+        }
         if (this.previewKey && scene.textures.exists(this.previewKey)) {
             scene.textures.remove(this.previewKey);
         }
@@ -739,7 +811,12 @@ class CharacterCreator {
             'text-align:center', "font-family:'PixelOperatorMono',monospace",
             'outline:none',
         ].join(';');
-        el.addEventListener('input', () => { this.data.name = el.value; });
+        el.addEventListener('input', () => {
+            this.data.name = el.value;
+            this.eggArmed = true;
+            // repaint only when the name starts/stops matching a cast member
+            if (this.castMatch() !== this.paintedCast) this.paint();
+        });
         // keep typed keys (arrows, R, space, enter…) away from Phaser
         el.addEventListener('keydown', (e) => {
             e.stopPropagation();

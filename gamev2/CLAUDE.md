@@ -186,6 +186,23 @@ frame and the title line-up use that texture instead of the sprite when it exist
 `assets/portraits/README.md` (240x200 window, 6:5; 240x200, 120x100 or 48x40 PNGs scale cleanly).
 No hand-drawn portraits exist yet — everything shown today is derived from the overworld sprites.
 
+### Playing as the Cast: Character Menu and the Name Easter Egg (issues #15, #45)
+
+`src/CharacterSelect.js` (Menu → Character) swaps the player to a cast member with a full sprite set
+(`CharacterSelect.available(config)`: james, bailey, damian, dylan, julia). The whole swap lives in ONE
+place, `CharacterSelect.become(scene, name)`: it writes `localStorage.gamev2_character = <name>`, swaps the
+live player sprite, and calls `syncNpcPresence()` (that person's NPC leaves the world) and
+`syncPlayerNameLabel()`. `CharacterSelect.applySaved` restores it on reload.
+
+`src/CharacterCreator.js` (first-run, or Menu → Create Character) has an Easter egg on top of that: type one
+of those names as your own (`castMatch()` — whole name, trimmed, case-insensitive; "baileyx" and the
+sprite-less credits names Gloria/Yashuk do nothing) and the live preview flips to that person's own sprite,
+the part/colour rows and RANDOM dim and lock, and a "hey, it's Bailey!" hint appears; it all reverts as soon
+as the name stops matching. A creation that was already saved under one of those names opens as itself
+(`eggArmed` is false until the name box is edited). START/ENTER then calls `CharacterSelect.become` and toasts "You are Bailey!"
+instead of saving a composite. It deliberately skips `CharacterCreator.save()`, so an earlier creation in
+`gamev2_custom_character` survives and is still offered as the custom row in Menu → Character.
+
 ### Voiced Dialogue (text-to-speech)
 
 NPC dialogue can be read aloud. A resolved NPC state carrying `"voice": <voiceId>` (passed through
