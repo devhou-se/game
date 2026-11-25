@@ -93,6 +93,15 @@ any collider cell another standing sprite still covers.
 The city buildings (`highrise-*`, `discount-store`, `machiya-*`) come from `tools/extract_city.py` - see
 "Generic city buildings" in `gamev2/CLAUDE.md`.
 
+The Hokkaido prefabs (`sapporo-clock-tower`, `sapporo-tv-tower`, `asahikawa-bridge`, `ramen-banner`) are
+drawn by `tools/generate_hokkaido.py` - see "Hokkaido: Sapporo and Asahikawa" in `gamev2/CLAUDE.md`.
+`asahikawa-bridge` is the pattern for a flat multi-cell sprite laid over water: a `Non-Collidables` object
+whose sprite carries a negative `depthBias` in `config.json` `spriteMetadata` (an `Over Floor` object would
+be drawn under the `Water` tiles).
+
+`devhouse.world` also holds the train-only towns at detached offsets: Yukimura and Osaka to the west,
+Sapporo and Asahikawa to the north.
+
 ## Adding a new room
 
 1. Copy an existing `.tmj` (or seed one from a config room with

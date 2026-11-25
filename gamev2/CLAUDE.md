@@ -364,6 +364,8 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Tsutenkaku Tower | Osaka | `tsutenkaku_0_0` | line-art placeholder drawn by `tools/generate_tsutenkaku.py` |
 | Dotonbori entrance arch | Osaka | `dotonbori-arch_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
 | Dotonbori ferris wheel | Osaka | `dotonbori-wheel_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
+| Sapporo Clock Tower | Sapporo | `sapporo-clock-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
+| Sapporo TV Tower | Sapporo | `sapporo-tv-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
 
 - **Osaka** (`tools/generate_osaka.py`, 50x40) is a generated town reachable only by train, like Yukimura:
   station house -> arch over the main street -> the canal bridge -> Tsutenkaku on its plaza, with the ferris
@@ -386,6 +388,53 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 - `tools/generate_stations.py` keeps an existing station room's NPCs (the blog pipeline parks dated NPC
   states there), and `tools/seal_tracks.py` takes room names — run it bare and it re-seals Palace's level
   crossing.
+
+### Hokkaido: Sapporo and Asahikawa (issue #43)
+
+Two generated towns reachable only by train (`SapporoStation`, `AsahikawaStation` in
+`tools/generate_stations.py`; both sit detached to the north in `devhouse.world`). Base rooms have no NPCs -
+the blog pipeline places people there.
+
+- **Sapporo** (`tools/generate_sapporo.py`, 56x43) is the one town on a street GRID: two east-west streets
+  (rows 20-22, 31-33) and three north-south (columns 14-16, 30-32 the station avenue, 44-46), `road-plain`
+  asphalt where they cross (roads are ordinary walkable Floor tiles). North of the first street: the
+  high-rise row + discount store (west), the station plaza, the **Clock Tower** on its paving and the
+  konbini (`KonbiniSapporo1`). Between the streets: **Odori Park**, a strip of snow trees and lanterns with a
+  path down the middle, closed at the east end by the **TV Tower**. South: houses on a lane and a
+  frozen-pond corner. The high-rises stand shoulder to shoulder with a hedge closing the ground behind
+  them, and both landmarks collide along their silhouettes (see their prefab comments): the Clock
+  Tower is solid up to its pyramid roof (only the roof tip is walk-behind) and the TV Tower up to the top
+  of its lattice (only the thin mast is), so the tower's shaft closes Kita-Odori's roadway at columns
+  49-50 and you pass it on the north pavement. Nobody is fully hidden behind either landmark (on the pavement at (49-50,19) the foot of the mast covers half the player).
+- **Asahikawa** (`tools/generate_asahikawa.py`, 42x32) is the small day-trip town: **ramen alley** (three
+  machiya under red `ramen-banner` nobori), a frozen **river** running bank to bank with one timber
+  **bridge**, and on the south bank a torii, the blue shrine and cottages. The river is laid by hand
+  (`ice-pond-autotile` edge-n / center / edge-s rows, solid) because `Builder.pond` is two rows tall.
+- **Art**: `tools/generate_hokkaido.py` (needs Pillow) draws the Clock Tower, TV Tower, bridge, banner and
+  `road-plain` - at half size, pixel-doubled, in the GuttyKreum palette with a 1px ink outline, so they sit
+  at the 2x scale of the building crops. They are not line-art placeholders. The LimeZu `Tileset_53_MV`
+  clock tower was rejected (16px art - pixels twice the size - and more saturated). `--preview out.png`
+  writes a contact sheet. It also derives the `dirt-snow-autotile` family (9 roles) from
+  `dirt-outside-autotile` by swapping the green grass fringe for a snow bank - use it for dirt paths on
+  snow ground (Asahikawa does; Yukimura still uses the grass-fringed original).
+- **Flat sprites over water**: `Over Floor` and `Water` share one fixed depth, so a multi-cell sprite on
+  `Over Floor` is drawn UNDER water tiles. The bridge therefore sits on `Non-Collidables` with
+  `spriteMetadata.depthBias: -200` (written by `generate_hokkaido.py`'s `FLAT` table): above every ground
+  layer, below everything Y-sorted, so the player walks on it. Its cells are simply left out of the
+  river's colliders.
+- **Konbini interiors per host**: `tools/generate_konbinis.py [Host ...]` - with host names it (re)builds
+  only those hosts' stores (`generate_konbinis.py Sapporo`), leaving every other konbini room untouched.
+  `generate_sapporo.py` re-seals the door, so run it after every Sapporo regeneration.
+- **Build order**: `generate_hokkaido.py`, `make_prefabs.py`, `generate_sapporo.py`,
+  `generate_asahikawa.py`, `generate_konbinis.py Sapporo`, `generate_stations.py`,
+  `fix_fences.py Sapporo Asahikawa`, `seal_tracks.py Sapporo Asahikawa`, then `node tools/play.js lint <Room>` and
+  `config_to_tiled.py` once per room (it takes ONE room name): Sapporo, Asahikawa, SapporoStation,
+  AsahikawaStation, KonbiniSapporo1.
+- Blog NPCs can be sent to `the Sapporo Clock Tower`, `the Sapporo TV Tower`, `the bridge over the frozen
+  river`, `ramen alley` and `the frozen pond` (`LANDMARKS` in `tools/blog_to_npc.py`), besides the generic
+  shrine / torii / 7-Eleven / vending spots.
+- A room missing from `assets/map/world-map.json` is fine: the Map overlay still opens (no dot, "you are
+  here: <room>") and `TrainTravel.dirTo` treats it as x=0. Re-run `tools/make_worldmap.py` to add new rooms.
 
 ### Generic city buildings: high-rises, the discount store, machiya (issue #18)
 

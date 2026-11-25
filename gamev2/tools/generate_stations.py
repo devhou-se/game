@@ -13,12 +13,14 @@ Stations:
   InakaStation    — inside Inaka's station house
   YukimuraStation — inside Yukimura's station house
   OsakaStation    — inside Osaka's station house
+  SapporoStation / AsahikawaStation — inside the Hokkaido station houses
 
 Also carves the Palace facade door and removes the old direct platform
 portals (superseded by the train). Idempotent, and safe to re-run on the live
 config: a station room that already exists keeps its NPCs (the blog pipeline
 parks dated NPC states in station rooms). Run from gamev2/ AFTER the town
-generators (generate_inaka.py / generate_yukimura.py / generate_osaka.py).
+generators (generate_inaka.py / generate_yukimura.py / generate_osaka.py /
+generate_sapporo.py / generate_asahikawa.py).
 Then: config_to_tiled, then play.js lint, for every *Station room and Palace (and any
 town you regenerated).
 """
@@ -77,12 +79,18 @@ STATIONS = {
     'YukimuraStation': {'label': 'Yukimura',      'town': 'Yukimura', 'train': 'train-green'},
     # Osaka — the second city, a main-line stop like Tokyo (orange).
     'OsakaStation':    {'label': 'Osaka',         'town': 'Osaka',    'train': 'train-orange'},
+    # Hokkaido (issue #43): Sapporo is a main-line city stop (orange), Asahikawa
+    # the day trip up the branch line from it (green).
+    'SapporoStation':   {'label': 'Sapporo',   'town': 'Sapporo',   'train': 'train-orange'},
+    'AsahikawaStation': {'label': 'Asahikawa', 'town': 'Asahikawa', 'train': 'train-green'},
 }
 TOWN_DOORS = {          # townRoom: (hidden door cell into the station, exit cell outside)
     'TokyoStation':    {'door': [27, 9], 'exit': [27, 10]},
     'InakaStation':    {'door': [29, 9], 'exit': [29, 10]},
     'YukimuraStation': {'door': [29, 9], 'exit': [29, 10]},
     'OsakaStation':    {'door': [24, 9], 'exit': [24, 10]},
+    'SapporoStation':   {'door': [34, 9], 'exit': [34, 10]},
+    'AsahikawaStation': {'door': [32, 9], 'exit': [32, 10]},
 }
 
 for key, st in STATIONS.items():

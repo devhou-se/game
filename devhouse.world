@@ -55,6 +55,20 @@
       "y": 4288,
       "width": 3200,
       "height": 2560
+    },
+    {
+      "fileName": "gamev2/tiled/sapporo.tmj",
+      "x": 256,
+      "y": -3264,
+      "width": 3584,
+      "height": 2752
+    },
+    {
+      "fileName": "gamev2/tiled/asahikawa.tmj",
+      "x": 4352,
+      "y": -3520,
+      "width": 2688,
+      "height": 2048
     }
   ],
   "onlyShowAdjacentMaps": false,

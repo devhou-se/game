@@ -11,19 +11,25 @@ Interiors are furnished with the office/interior pack sliced into
 assets/sprites/office-*.png. The Machi 7-Eleven that already leads to the
 hand-made 'Konbini' room is left untouched.
 
-Run from gamev2/:  python3 tools/generate_konbinis.py
+Run from gamev2/:  python3 tools/generate_konbinis.py [Host ...]
 Then:              python3 tools/config_to_tiled.py <each new room + hosts>
                    node tools/play.js lint <each new room + hosts>
 """
 import hashlib
 import random
 import struct
+import sys
 
 import roomgen as rg
 
 cfg = rg.load_config()
 
-HOSTS = ['Machi', 'Market', 'Park']
+# Rooms whose 7-Elevens get an interior. Name hosts on the command line to
+# (re)build only theirs - e.g. `generate_konbinis.py Sapporo` after regenerating
+# Sapporo - and leave every other store's room exactly as it is.
+ALL_HOSTS = ['Machi', 'Market', 'Park', 'Sapporo']
+HOSTS = sys.argv[1:] or ALL_HOSTS
+assert all(h in ALL_HOSTS for h in HOSTS), f'unknown host; expected some of {ALL_HOSTS}'
 SEVEN = 'seven-eleven_0_0'
 DOOR_DX, DOOR_DY = 1, 3      # door cell relative to the building's top-left
 

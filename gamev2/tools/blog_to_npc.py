@@ -95,6 +95,12 @@ LANDMARKS = [
     ('dotonbori-arch_', 'the Dotonbori arch', (2, 6)),  # just through the arch
     ('dotonbori-wheel_', 'the Dotonbori ferris wheel', (6, 12)),   # the canal bank below it
     ('discount-store_', 'the Don Takote discount store', (2, 8)),  # outside its doors
+    # Hokkaido (issue #43)
+    ('sapporo-clock-tower_', 'the Sapporo Clock Tower', (2, 8)),   # the pavement at its porch
+    ('sapporo-tv-tower_', 'the Sapporo TV Tower', (3, 13)),        # in front of the entrance
+    ('asahikawa-bridge_', 'the bridge over the frozen river', (1, -1)),   # the north bridgehead
+    ('ramen-banner_', 'ramen alley', (-1, 2)),                     # on the lane, outside a shop
+    ('ice-pond-autotile_corner-nw', 'the frozen pond', (0, -1)),   # on the bank (the ice is solid)
 ]
 
 MODEL = 'claude-sonnet-5'

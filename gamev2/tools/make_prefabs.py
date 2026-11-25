@@ -126,6 +126,31 @@ PREFABS = {
     'machiya-black':      building(5, 5, door=2),
     'machiya-red':        building(5, 5, door=2),
     'machiya-blue':       building(5, 5, door=2),
+    # ---- Hokkaido (issue #43; art drawn by tools/generate_hokkaido.py) ---------
+    # Sapporo Clock Tower: the hall and its roof (rows 4-7) and the tower rising
+    # out of it (rows 1-3, the middle three columns - shaft and pyramid roof)
+    # collide; only the roof's tip and finial (row 0) are walk-behind, which hide
+    # nobody. The air either side of the tower is open, so nobody is walled off
+    # from snow they can see.
+    'sapporo-clock-tower': dict(w=5, h=8, sprites=[('Collidables', 0, 0, 'sapporo-clock-tower_0_0')],
+                                colliders=[(x, y) for x in range(5) for y in range(4, 8)]
+                                          + [(x, y) for x in (1, 2, 3) for y in (1, 2, 3)], doors=[(2, 7)]),
+    # Sapporo TV Tower: the colliders follow the silhouette - the base building
+    # (rows 11-12), the splayed legs (rows 9-10), the shaft with the clock and
+    # the deck (rows 5-8) and the lattice above the deck (rows 3-4: it is dense
+    # enough to hide a person). Only the mast (rows 0-2) is walk-behind.
+    'sapporo-tv-tower':    dict(w=6, h=13, sprites=[('Collidables', 0, 0, 'sapporo-tv-tower_0_0')],
+                                colliders=[(x, y) for x in (2, 3) for y in range(3, 9)]
+                                          + [(x, y) for x in range(1, 5) for y in (9, 10)]
+                                          + [(x, y) for x in range(6) for y in (11, 12)], doors=[]),
+    # The bridge over Asahikawa's frozen river: a flat deck you walk ON. It sits
+    # on Non-Collidables with a negative depthBias (spriteMetadata, written by
+    # generate_hokkaido.py) so it draws over the ice but under everyone on it.
+    'asahikawa-bridge':    dict(w=2, h=5, sprites=[('Non-Collidables', 0, 0, 'asahikawa-bridge_0_0')],
+                                colliders=[], doors=[]),
+    # A ramen shop's nobori: the pole's foot collides, the cloth is overhead.
+    'ramen-banner':        dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'ramen-banner_0_0')],
+                                colliders=[(0, 1)], doors=[]),
 }
 for _name, _spec in PREFABS.items():
     if _spec['sprites'] is None:                 # building(): one sprite named after the prefab
