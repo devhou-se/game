@@ -67,6 +67,7 @@ problem survey) is shared with `tools/play.js`, so the page and the terminal too
 - `assets/portraits/` - Optional hand-drawn character portraits (`manifest.json` + `<name>.png`, see its README)
 - `src/Voice.js` - Spoken NPC dialogue (lazy per-line audio clips) and the shared mute setting
 - `src/AmbientTrains.js` / `src/AmbientBoats.js` - Decorative passing trains and moat boats (see Ambient Traffic)
+- `src/TrafficLights.js` - Decorative traffic-signal cycle (see Street accessories)
 - `editor/` - Canvas editor for `config.json` room data (see `editor/README.md`)
 - `studio/` - Read-only view of the whole world (see Studio above)
 
@@ -476,6 +477,50 @@ sealed - none has an interior.
   `config_to_tiled.py`, `play.js lint` (it reads the Tiled map), `make_worldmap.py`.
 - Blog NPCs can be sent to `the Don Takote discount store` and `the old-town lane` (`LANDMARKS` in
   `tools/blog_to_npc.py`).
+
+### Street accessories: traffic lights, zebra crossings, kerbside props, no bins (issue #19)
+
+All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); every piece is a prefab.
+
+| Prefab | Cells | What / collision |
+|---|---|---|
+| `traffic-light` | 1x3 | Japanese signal: horizontal 3-lamp vehicle head + pedestrian head + push button on one pole. One sprite on `Collidables`: base cell solid, the two cells above walk-behind |
+| `crossing-h` / `crossing-v` | 1x3 / 3x1 | zebra crossing over a horizontal / vertical road, flat `Over Floor` paint, walkable. Origin = the road's top kerb row / left kerb column; stamp two or three side by side for a wider one |
+| `utility-pole` | 1x3 | wooden pole with a transformer; base solid |
+| `road-mirror` | 1x2 | orange convex mirror; base solid |
+| `bus-stop`, `bicycle-blue`, `bicycle-orange`, `scooter-grey`, `scooter-red`, `traffic-cone` | 1x1 | solid |
+
+- **Traffic-light art is drawn, not extracted** (`traffic_light()` in `extract_street.py`): no GuttyKreum sheet has a
+  signal, and the only one in the repo (LimeZu `Modern_Exteriors`, `Tileset_2_MV`) is a western vertical head in 16px
+  art - at game scale its pixels are twice the size of everything around it. The drawn one uses the GuttyKreum prop
+  palette on the same 2x grid. Four frames, four sprite keys: `traffic-light_0_0` (vehicles green / red man - the one
+  maps place), `-amber`, `-stop` (vehicles red / green man), `-stop-blink` (green man dark).
+- **The cycle** (`src/TrafficLights.js`, `scene.trafficLights`): purely decorative, gates nothing. Every 200ms it
+  swaps the texture of every signal sprite in `roomManager.floorSprites` to the frame of one shared wall-clock cycle
+  (`TrafficLights.PHASES`: go 6s, amber 1.6s, stop 5.2s, blink 2.4s), so all signals agree and the pedestrian lamps
+  run opposite the vehicle lamps. It keeps no room state and needs no room-change hook - it re-reads the loaded tile
+  sprites whenever that array is replaced, and checks for that every frame so a freshly loaded room never shows a
+  stale green. At night it re-lights the lit lamps with one additive Graphics above the DayNight grade
+  (`TrafficLights.LAMPS` = the lamp rectangles per frame; keep it in step with `traffic_light()` in
+  `extract_street.py` if the art changes). Test hooks: `trafficLights.phase()` and `trafficLights.clockOffset` (ms).
+- **Crossings match the road** because they are cut from the same sheet as the `road-edge-*` / `road-div-*` tiles
+  (Temples & Shrines `GK_TS_A5`). The top / left kerb tiles are the bottom / right ones flipped: the sheet's own
+  have a heavily worn second stripe that reads as a glitch in game. The Japanese City `GK_JC_A5_2` crossings are on a much darker asphalt - not those.
+- **Where**: signalled crossings in Tokyo (south road at the palace path, west road), Market (north road on the
+  temple axis, east road, south road at the torii), Palace (east road) and Park (south road, east road); props
+  scattered through those four, Machi and Osaka. Osaka has no asphalt road, so it has props but no crossing.
+  Nothing is placed in the rows / columns where Tokyo, Market, Palace and Park overlap (`devhouse.world`).
+  A signal on the north side of a road needs three free rows above the kerb - Market's north road and Tokyo's are
+  too close to the map edge, so Market's crossing has both signals on its south kerb.
+- **Placing more**: `tools/stamp_prefab.py <Room> --add traffic-light x y` (x,y = the TOP cell; the base is two rows
+  down), `--add crossing-h x y` etc.; generated rooms `b.stamp()` them (the Osaka / Machi placements are mirrored in
+  their generators).
+- **No rubbish bins, anywhere** ("definitely no rubbish bins!!" - Japanese streets have none). The `office-bin`
+  sprite is no longer placed: konbini corners get a water dispenser / plant (`generate_konbinis.py`) and the Izakaya
+  seats are `izakaya-stool_0_0` (drawn by `extract_street.py`; the stools are furniture - the drinking game's
+  `triggerCells` are the table cells and the bar still sells). `node tools/play.js lint` (tools/world-model.js) enforces it per room, and `play.js check` across ALL
+  rooms and reports an ERROR `rubbish-bin` for any placed tile whose key or tile name is a bin / dumpster / trash
+  can (`BIN_RE`), whatever `--room` was asked for. Do not extract the bins / dumpsters in the asset packs.
 
 ## Asset Generation
 

@@ -1,6 +1,8 @@
 const DIRS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 const baseOf = (key) => (key || '').replace(/_(front|back|side)$/, '');
 
+const BIN_RE = /(^|[-_])(bin|dustbin|dumpster|trash|trashcan|rubbish|garbage|litter)([-_]|$)/i;
+
 class WorldModel {
     static applyTiled(config, tmjFor) {
         for (const key of Object.keys(config.rooms)) {
@@ -289,6 +291,15 @@ class WorldModel {
         const push = (bag, kind, item) => (bag[kind] = bag[kind] || []).push(item);
 
         for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!floor.has(K(x, y))) push(errors, 'floor-hole', K(x, y));
+
+        // "definitely no rubbish bins!!" (issue #19): any bin / dumpster / trash sprite on any
+        // layer is an error, so one can never be placed again. Whole-word match between - and _,
+        // so office-cabinet is fine.
+        for (const layer of room.layers) {
+            for (const [xy, key] of Object.entries(layer.tiles || {})) {
+                if (BIN_RE.test(String(key))) push(errors, 'rubbish-bin', `${String(key)} @${xy} (${layer.name})`);
+            }
+        }
         for (const xy of colliders) {
             const [x, y] = xy.split(',').map(Number);
             if (!(x >= 0 && x < W && y >= 0 && y < H)) push(errors, 'oob-collider', xy);

@@ -2,7 +2,7 @@
 """generate_konbinis.py — procedurally generated konbini interiors (issue #23).
 
 Every 7-Eleven building in the world gets its own interior: a seeded-unique
-store room (aisle count, coolers, bins, boxes, floor style, counter side all
+store room (aisle count, coolers, corner fillers, floor style, counter side all
 derive from the store's identity), wired to its door both ways. Store ids are
 deterministic — seeded by host room + building position — so regenerating
 without moving buildings reproduces the exact same interiors.
@@ -36,7 +36,7 @@ DOOR_DX, DOOR_DY = 1, 3      # door cell relative to the building's top-left
 OFFICE_KEYS = [
     'office-shelf-snacks_0_0', 'office-shelf-drinks_0_0', 'office-shelf-glass_0_0',
     'office-freezer_0_0', 'office-cabinet_0_0', 'office-watercooler_0_0',
-    'office-clock_0_0', 'office-fridge_0_0', 'office-bin_0_0', 'office-counter2_0_0',
+    'office-clock_0_0', 'office-fridge_0_0', 'office-counter2_0_0',
     'office-register_0_0', 'office-poster-chart_0_0', 'office-poster-menu_0_0',
     'office-poster-photo_0_0', 'office-plant-a_0_0', 'office-plant-b_0_0',
     'office-boxes-large_0_0', 'office-boxes-small_0_0', 'office-wall-white_0_0',
@@ -134,11 +134,13 @@ def furnish(b, rng, x0, y0, bw, bh):
     put_solid('office-counter2_0_0', cx, cy)
     b.put('Tops', cx + 1 if side == 'left' else cx, cy, 'office-register_0_0')
 
-    # 0-2 bins in the free corners, a plant opposite the counter
+    # 0-2 corner fillers (a water dispenser, then a plant), a plant opposite the
+    # counter. NO rubbish bins - issue #19; `play.js lint` fails a room that has one.
     spots = [(right, top + 1) if side == 'left' else (left, top + 1),
              (cx + 2, cy) if side == 'left' else (cx - 1, cy)]
-    for x, y in rng.sample(spots, k=rng.randint(0, 2)):
-        put_solid('office-bin_0_0', x, y)
+    picked = sorted(rng.sample(spots, k=rng.randint(0, 2)))
+    for (x, y), key in zip(picked, ('office-watercooler_0_0', 'office-plant-b_0_0')):
+        put_solid(key, x, y)
     put_solid(rng.choice(PLANTS), right if side == 'left' else left, cy)
 
 

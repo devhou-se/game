@@ -102,6 +102,14 @@ be drawn under the `Water` tiles).
 `devhouse.world` also holds the train-only towns at detached offsets: Yukimura and Osaka to the west,
 Sapporo and Asahikawa to the north.
 
+Street accessories (issue #19) come from `tools/extract_street.py` - see "Street accessories" in
+`gamev2/CLAUDE.md`: `traffic-light` (1x3, give stamp_prefab the TOP cell; the base two rows down is the solid
+one), `crossing-h` / `crossing-v` (zebra crossing on `Over Floor`, origin on the road's top / left kerb cell),
+`utility-pole`, `road-mirror`, `bus-stop`, `bicycle-blue|orange`, `scooter-grey|red`, `traffic-cone`:
+
+    python3 tools/stamp_prefab.py Park --add crossing-h 25 39 --add crossing-h 26 39 \
+        --add traffic-light 24 36 --add traffic-light 27 40
+
 ## Adding a new room
 
 1. Copy an existing `.tmj` (or seed one from a config room with
@@ -195,6 +203,15 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   so it wins the depth tie with the `temple-hallway` roofs either side of the
   Tokyo hall (without it one eave corner drew over the hallway and the other
   under it, by creation order).
+- **No rubbish bins** (issue #19): `node tools/play.js lint` fails with `rubbish-bin` if ANY room places a bin / dumpster /
+  trash-can sprite (it scans the whole config and every `tiled/*.tmj` on every run, whatever `--room` says). The interior pack's `office-bin` is retired -
+  use `izakaya-stool_0_0` for a seat and a plant / `office-watercooler` for a corner filler.
+- **Traffic lights are one 1x3 sprite whose map key is the green frame** (`traffic-light_0_0`);
+  `src/TrafficLights.js` swaps the texture at runtime, so never place the `-amber` / `-stop` / `-stop-blink`
+  keys in a map. A signal needs its two upper cells inside the room: on a road hugging the top map edge put both
+  signals on the south kerb.
+- **Zebra crossings come from `GK_TS_A5`** (the sheet the road tiles were cut from). The lookalikes in
+  `GK_JC_A5_2` sit on a darker asphalt and show as a dark patch on the road.
 - **`tmxrasterizer` draws collider markers and Meta pins** — red boxes/pins
   in renders are debug art, not in-game visuals.
 - A probe that prints `?` for "any sprite" hides colliders stacked under

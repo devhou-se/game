@@ -151,6 +151,27 @@ PREFABS = {
     # A ramen shop's nobori: the pole's foot collides, the cloth is overhead.
     'ramen-banner':        dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'ramen-banner_0_0')],
                                 colliders=[(0, 1)], doors=[]),
+    # ---- street accessories (issue #19; art from tools/extract_street.py) --------
+    # One sprite on Collidables each, so it Y-sorts by its feet: the bottom cell
+    # is solid, the pole / head above it is walk-behind. Maps place the green
+    # frame; src/TrafficLights.js swaps the texture through the signal cycle.
+    'traffic-light':  dict(w=1, h=3, sprites=[('Collidables', 0, 0, 'traffic-light_0_0')], colliders=[(0, 2)], doors=[]),
+    'utility-pole':   dict(w=1, h=3, sprites=[('Collidables', 0, 0, 'utility-pole_0_0')], colliders=[(0, 2)], doors=[]),
+    'road-mirror':    dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'road-mirror_0_0')], colliders=[(0, 1)], doors=[]),
+    'bus-stop':       dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'bus-stop_0_0')], colliders=[(0, 0)], doors=[]),
+    'bicycle-blue':   dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'bicycle-blue_0_0')], colliders=[(0, 0)], doors=[]),
+    'bicycle-orange': dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'bicycle-orange_0_0')], colliders=[(0, 0)], doors=[]),
+    'scooter-grey':   dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'scooter-grey_0_0')], colliders=[(0, 0)], doors=[]),
+    'scooter-red':    dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'scooter-red_0_0')], colliders=[(0, 0)], doors=[]),
+    'traffic-cone':   dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'traffic-cone_0_0')], colliders=[(0, 0)], doors=[]),
+    # Zebra crossings: flat Over Floor paint, one cell wide, spanning the three
+    # cells of a road (stamp two side by side for a wider crossing). -h crosses a
+    # horizontal road (origin = its top kerb row), -v a vertical one (origin =
+    # its left kerb column). Walkable, no collision.
+    'crossing-h':     dict(w=1, h=3, sprites=[('Over Floor', 0, 0, 'crossing-h-top_0_0'), ('Over Floor', 0, 1, 'crossing-h-mid_0_0'),
+                                              ('Over Floor', 0, 2, 'crossing-h-bottom_0_0')], colliders=[], doors=[]),
+    'crossing-v':     dict(w=3, h=1, sprites=[('Over Floor', 0, 0, 'crossing-v-left_0_0'), ('Over Floor', 1, 0, 'crossing-v-mid_0_0'),
+                                              ('Over Floor', 2, 0, 'crossing-v-right_0_0')], colliders=[], doors=[]),
 }
 for _name, _spec in PREFABS.items():
     if _spec['sprites'] is None:                 # building(): one sprite named after the prefab

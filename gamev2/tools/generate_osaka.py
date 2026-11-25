@@ -139,6 +139,13 @@ b.stamp('shrub-small', 46, 25)
 for x in (8, 13, 36, 41):
     b.stamp('lamp-blue', x, 36)
 
+# ---- street accessories (issue #19; tools/extract_street.py): bikes and a
+#      scooter outside the discount store, a bus stop on the station forecourt,
+#      a utility pole on the north bank, a scooter by the flats. Osaka has no
+#      asphalt road, so no zebra crossing / traffic lights here. ----------------
+b.stamp('bicycle-blue', 14, 17); b.stamp('bicycle-orange', 15, 17); b.stamp('scooter-grey', 18, 17)
+b.stamp('bus-stop', 21, 8); b.stamp('utility-pole', 19, 16); b.stamp('scooter-red', 8, 32)
+
 # ---- borders: hedges west / east, a fence along the south ---------------------
 #      (continuous — a gap would let the player slip round behind the fences)
 for y in range(8, 38, 2):

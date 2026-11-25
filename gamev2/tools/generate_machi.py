@@ -79,6 +79,9 @@ konbini_door = b.stamp('seven-eleven', 7, 11, seal=False)[0]
 b.stamp('sign-7-11', 10, 12)
 b.stamp('vending-white', 12, 13); b.stamp('vending-red', 14, 13); b.stamp('vending-white', 16, 13)
 b.stamp('sakura-small', 18, 12)
+# street accessories (issue #19): utility poles above the lane, parked bikes, a scooter by the konbini
+b.stamp('utility-pole', 4, 12); b.stamp('utility-pole', 36, 12)
+b.stamp('bicycle-blue', 3, 21); b.stamp('bicycle-orange', 37, 14); b.stamp('scooter-red', 10, 14)
 
 # houses (doors sealed — no interiors for these yet). Stamped a row higher than
 # the door row now that the prefab carries a wall tier above the entrance.

@@ -138,7 +138,7 @@ for x in (11, 13, 15):
     solid_furniture(ib, 'office-counter2_0_0', x, 5, 2)
 ib.put('Tops', 15, 5, 'office-register_0_0')
 for x in (11, 13, 15):
-    solid_furniture(ib, 'office-bin_0_0', x, 6)   # compact bar-stool placeholders
+    solid_furniture(ib, 'izakaya-stool_0_0', x, 6)   # bar stools (tools/extract_street.py)
 
 # Red lanterns frame the dining room.
 ib.stamp('lantern-red', 2, 3)
@@ -148,13 +148,13 @@ solid_furniture(ib, 'office-plant-b_0_0', 17, 12)
 
 # Communal tables. The sprite canvas is three cells wide but its visible table
 # and usable footprint are two, so only those two cells are solid/interactive.
-# Compact bin sprites stand in for stools, placed diagonally to leave a direct
+# Stools (never bins - issue #19) are placed diagonally to leave a direct
 # approach on both long sides instead of turning the dining area into a maze.
 TABLES = [(4, 7), (4, 11), (12, 10)]
 for tx, ty in TABLES:
     solid_furniture(ib, 'office-counter_0_0', tx, ty, 2)
     for sx, sy in ((tx, ty - 1), (tx, ty + 1)):
-        solid_furniture(ib, 'office-bin_0_0', sx, sy)
+        solid_furniture(ib, 'izakaya-stool_0_0', sx, sy)
 
 # Clear doorway mats at the bottom. Arrival is one row inside, never on an
 # exit transporter, so entering cannot bounce the player straight back out.
