@@ -15,7 +15,7 @@ const ctx = vm.createContext({
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
-    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js', 'systems/UIScale.js'].forEach(load);
+    'utils/Hints.js', 'utils/JapaneseFont.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js', 'systems/UIScale.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
 // A Shop with no Phaser behind it: the save blob comes from (and goes to) `store`.
@@ -771,6 +771,48 @@ const tests = {
         assert.strictEqual(clearOf(toast, { ...showdown, y0: 12, y1: 948 }, 960), 0, 'stays put when the panel fills the canvas');
         assert.strictEqual(clearOf(toast, { ...showdown, y1: 850 }, 960), 0, 'stays put when it covers nothing');
         assert.strictEqual(clearOf(toast, { ...showdown, x1: 300 }, 960), 0, 'beside the panel is not on it');
+    },
+
+    'the Japanese pixel font covers every family the game loads and every Japanese character it shows'() {
+        const families = game('JapaneseFont.FAMILIES'), covers = game('JapaneseFont.covers');
+        // every family GameScene.preload loads gets the Japanese face, and the font + its licence ship
+        const loaded = Array.from(fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8')
+            .matchAll(/this\.load\.font\('([^']+)'/g), (m) => m[1]);
+        assert.deepStrictEqual(Array.from(families).sort(), loaded.sort());
+        const font = fs.readFileSync(path.join(GV2, game('JapaneseFont.URL')));
+        assert.strictEqual(font.readUInt32BE(0), 0x00010000, 'a TrueType file');
+        assert.ok(fs.existsSync(path.join(GV2, 'fonts', 'DotGothic16-OFL.txt')), 'the OFL text ships beside the font');
+        assert.strictEqual(game('JapaneseFont.unicodeRange()').split(', ')[1], 'U+3000-30FF');
+        // Latin, digits, arrows and the d-pad glyphs stay with the Latin fonts
+        for (const s of ['Kanpai!', '¥1,200', '←/→ ◀ ▶ ↑/↓', '…', '', null]) assert.strictEqual(covers(s), false, String(s));
+        for (const s of ['あ', 'カ', '郷', '、', '「', '！', 'ＡＢ', 'ｶﾞ', 'from: 富山から白川郷まで']) assert.strictEqual(covers(s), true, s);
+        // whatever the dialogue wrapper treats as Japanese, the font's unicode-range takes
+        const CJK = game('DialogueManager.CJK');
+        const walk = (v) => {
+            if (typeof v === 'string') { for (const ch of v) if (CJK.test(ch)) assert.ok(covers(ch), `${ch} in ${v}`); }
+            else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+        };
+        walk(JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).rooms);
+        // retry() only acts after a failed load (loading === null), never before the first one
+        assert.strictEqual(game('JapaneseFont.loading'), undefined);
+        assert.strictEqual(game('JapaneseFont.retry({})'), undefined);
+    },
+
+    'the konbini drinks cooler fills its two cells and keeps its size and anchor'() {
+        const png = require('./png');
+        const { width, height, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', 'office-fridge_0_0.png')));
+        assert.deepStrictEqual([width, height], [64, 128]);
+        let x0 = width, x1 = -1, y0 = height, y1 = -1, glass = 0;
+        for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+            const p = (y * width + x) * 4;
+            if (data[p + 3] === 0) continue;
+            x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+            if (data[p] === 0xb3 && data[p + 1] === 0xe5 && data[p + 2] === 0xfc) glass++;      // the lit interior
+        }
+        assert.deepStrictEqual([x0, x1, y0, y1], [0, 63, 0, 127], 'art reaches every edge of the 1x2 footprint');
+        assert.ok(glass > 500, 'a lit glass door, not a blank cabinet');
+        const meta = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).spriteMetadata['office-fridge_0_0'];
+        assert.deepStrictEqual([meta.anchorX, meta.anchorY], [0.5, 0.25]);
     },
 
     'outside the trip the game opens on a trip day, and cycles through them'() {

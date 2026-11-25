@@ -18,6 +18,12 @@ class DialogueManager {
 
     /** The dialogue text's font — shared by the Text object and wrapLines' measuring. */
     static TEXT_FONT = { size: 24, family: 'PixelOperatorMono' };
+    /**
+     * Blank rows above the dialogue text's first line. Kana and kanji stand
+     * taller than the Latin font's ascent (the line box Phaser allots), so
+     * without them the top of a Japanese first line is cut off.
+     */
+    static TEXT_PAD_TOP = 4;
 
     /**
      * Characters with no spaces between words (Japanese/Chinese: kana, han,
@@ -278,12 +284,13 @@ class DialogueManager {
         this.textWidth = this.panelWidth - 60;
         this.dialogueText = this.scene.add.text(
             this.panelX + 30,
-            this.panelY + 30,
+            this.panelY + 30 - DialogueManager.TEXT_PAD_TOP,
             '',
             {
                 fontSize: `${DialogueManager.TEXT_FONT.size}px`,
                 fill: '#ffffff',
-                fontFamily: DialogueManager.TEXT_FONT.family
+                fontFamily: DialogueManager.TEXT_FONT.family,
+                padding: { top: DialogueManager.TEXT_PAD_TOP, bottom: 0 }
             }
         );
         this.dialogueText.setResolution(1);
@@ -327,6 +334,7 @@ class DialogueManager {
         this.visible = true;
         this.currentNPC = npc;
         this.currentDialogueIndex = 0;
+        JapaneseFont.retry(this.scene.game);      // a font fetch that failed earlier gets another go
 
         if (this.npcSprite) {
             this.npcSprite.destroy();

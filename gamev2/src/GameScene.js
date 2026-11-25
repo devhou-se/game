@@ -14,6 +14,8 @@ class GameScene extends Phaser.Scene {
         this.load.font('PressStart2P', 'fonts/PressStart2P-Regular.ttf');
         this.load.font('PixelOperatorMono', 'fonts/PixelOperatorMono.ttf');
         this.load.font('PixelOperatorMonoBold', 'fonts/PixelOperatorMono-Bold.ttf');
+        // Japanese glyphs for all three (2 MB, so fetched after boot, not in this queue)
+        this.load.once('complete', () => JapaneseFont.load(this.game));
 
         // Load default sprites
         this.load.image("background", "assets/background-grid.png");

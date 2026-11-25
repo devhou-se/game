@@ -120,7 +120,8 @@ def furnish(b, rng, x0, y0, bw, bh):
         b.put('Other', x, y0 + 1, rng.choice(POSTERS))
     b.put('Other', rng.choice([left, right]), y0 + 1, 'office-clock_0_0')
 
-    # one cooler run against the back wall (fridges are 2 tall)
+    # one cooler run against the back wall (office-fridge, the glass-door drinks
+    # cooler drawn by tools/generate_cooler_art.py, is 2 tall)
     run = rng.randint(2, 3)
     cx0 = rng.randint(left + 1, right - run)
     kind = rng.choice(COOLERS)

@@ -59,6 +59,7 @@ problem survey) is shared with `tools/play.js`, so the page and the terminal too
 - `src/systems/Viewport.js` - Where the canvas sits in the window and how big the touch controls are (see Small Viewports and Touch)
 - `src/systems/UIScale.js` - Magnifies overlays when the canvas is shown smaller than 1:1 (see Small Viewports and Touch)
 - `src/utils/Hints.js` - The one helper that words key hints for keyboard or touch (see Small Viewports and Touch)
+- `src/utils/JapaneseFont.js` + `fonts/` - The pixel fonts, and the Japanese face added to each of them (see Fonts and Japanese Text)
 - `src/GameScene.js` - Main game scene (room system, HUD, input handling, collision)
 - `src/Character.js` - Character movement class with grid-based tweening
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
@@ -282,6 +283,37 @@ Semi-transparent bar at top showing: `{game.title} | {room name} | {game.date}` 
 - Fixed to camera with `setScrollFactor(0)`
 - Depth 1000+ to render above game elements
 - Menu button (right-aligned) opens MenuManager on click
+
+### Fonts and Japanese Text (issue #78)
+
+The game draws text in three pixel fonts, loaded in `GameScene.preload` and used by family name
+everywhere: `PressStart2P` (HUD, title), `PixelOperatorMono` (dialogue, captions, overlays) and
+`PixelOperatorMonoBold` (name plates, labels, toasts). None has kana or kanji, and blog-derived dialogue
+and post titles are sometimes Japanese.
+
+- **One Japanese face for all three**: `fonts/DotGothic16-Regular.ttf` (SIL OFL, full JIS kana + kanji,
+  drawn on a 16px grid - credit, licence and hash in `fonts/README.md`). `src/utils/JapaneseFont.js`
+  registers it as a second `FontFace` of each family, limited by `unicode-range` to the Japanese blocks
+  (`JapaneseFont.RANGES`), so the browser picks it per character. Every existing
+  `fontFamily: 'PixelOperatorMono'`, the canvas measuring in `DialogueManager`, and the creator's DOM
+  input get Japanese glyphs with no change at the call site - **do not add a font stack or a second
+  family name for Japanese**; a new family needs only a `load.font` line and an entry in
+  `JapaneseFont.FAMILIES` (a unit test keeps the two in step). Latin text, arrows and the d-pad glyphs
+  are outside the ranges and render exactly as before; a character DotGothic16 lacks falls back to the
+  system font.
+- **Loading**: 2 MB, so it is not in the boot queue. `GameScene.preload` starts `JapaneseFont.load` when
+  the Phaser loader completes; it fetches the file once (one buffer shared by the three faces) and then
+  `JapaneseFont.refresh` redraws any Text object already showing Japanese (canvas text drawn before a font
+  is ready stays in the fallback otherwise). If the fetch fails the game warns and carries on with the
+  system font, and `JapaneseFont.retry` (called by `DialogueManager.show`) fetches again the next time a
+  dialogue opens. Kana and kanji are one em wide in both, so wrapping does not change when it arrives.
+- **Metrics**: Phaser sizes a line box from the Latin font (ascent 18px at 24px); Japanese glyphs stand
+  about 3px taller. Text with padding (name plate, caption, toasts) has room; the dialogue text has
+  `DialogueManager.TEXT_PAD_TOP` blank rows above its first line for this, and `layout()` still adds 8px
+  of leading to a line with Japanese in it so rows do not touch. An unpadded Text that may show Japanese
+  needs the same top padding - and in `PressStart2P`, whose box has no descent, a row of bottom padding.
+- Signage is not text: the ad pool and the Don Takote sign are pre-rendered sprites
+  (`tools/generate_ads.py`, `tools/extract_city.py`), so they do not use this font.
 
 ### Shop, Food and Drink (issues #12, #46, #82, #83, #84)
 
@@ -890,6 +922,12 @@ Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/
 - `generate_grid.py` - Background grid → `assets/background-grid.png`
 
 Run with: `python3 tools/generate_<type>.py`
+
+`tools/generate_cooler_art.py [--preview out.png]` draws `office-fridge_0_0`, the konbini's upright
+glass-door drinks cooler (issue #140): 1x2 cells, fully procedural (no source image or font, so a re-run is
+byte-identical), in the steel greys and glass blues of the `office-shelf-*` / `office-freezer` furniture
+and, like them, drawn at half size and pixel-doubled. Size (64x128) and anchor (0.5, 0.25) are fixed by the
+maps that already place it - change the art, not the footprint. Needs Pillow.
 
 ## Key Implementation Details
 

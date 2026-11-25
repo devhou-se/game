@@ -132,7 +132,8 @@ def furnish(b, rng):
 
     # ---- the back row, wall to wall: one wing is a run of drink coolers, the
     #      other shelving, snacks under the sign, a stock cabinet in each corner.
-    #      (Not office-fridge: that sprite is a slim grey locker, not a cooler.)
+    #      (office-freezer, one cell; office-fridge is the two-cell upright cooler
+    #      from tools/generate_cooler_art.py and is left to the konbinis.)
     for x in range(LEFT + 1, MID - 2):
         put_solid('office-freezer_0_0', mx(x), TOP)
     wing = rng.choice(SHELVES)
