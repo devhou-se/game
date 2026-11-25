@@ -20,11 +20,25 @@ substitute the closest available prefab rather than inventing sprites.
 
 ## 2. Discover the vocabulary (do not assume)
 
-- Prefabs: `ls tiled/prefabs/` — houses (blue/red/black), seven-eleven,
-  sign-7-11, shrine, torii-red, pagoda-small, bell-blue, fox-statue,
-  lantern-red, lamp-blue, sakura-large/small, tree-green, shrub-large/small,
-  vending-white/red, and whatever has been added since. Each prefab knows its
-  sprites, collision, and `door` cells.
+- Prefabs: `ls tiled/prefabs/` is the list; today it holds
+  - buildings: `house-blue/red/black`, `machiya-black/red/blue`,
+    `seven-eleven`, `discount-store`, `midrise-apartment`,
+    `highrise-yellow/blue/glass/apartment`
+  - shrine pieces: `shrine`, `torii-red`, `pagoda-small`, `bell-blue`,
+    `fox-statue`, `lantern-red`
+  - landmarks: `tsutenkaku`, `dotonbori-arch`, `dotonbori-wheel`
+  - street: `lamp-blue`, `sign-7-11`, `vending-white/red`
+  - plants: `sakura-large/small`, `tree-green`, `shrub-large/small`, and the
+    snow set `tree-snow`, `shrub-large-snow`, `shrub-small-snow`
+
+  Each prefab knows its sprites, collision, and `door` cells. To add one to a
+  room that has no generator (Tokyo, Market, Park, Palace) or whose generator
+  must not be re-run (Machi), use `tools/stamp_prefab.py` instead of a
+  generator - see `gamev2/tiled/README.md`.
+- A layer holds one tile per cell and a big sprite lives on its top-left
+  cell only, so `b.put`/`b.stamp` raise if they would replace a different
+  sprite off the Floor layer. Move one of the two; pass `replace=True` only
+  when losing the earlier sprite is what you want.
 - Floor terrains (autotiled, paint with `b.autotile`): grass, dirt-outside,
   gravel, grey-brick, brown-brick, flat-grey-brick, light-concrete (all
   `<name>-autotile`). Water via `b.pond` (exactly 2 rows tall). 2x2 flower
@@ -36,8 +50,9 @@ substitute the closest available prefab rather than inventing sprites.
 - **Two helpers are broken-as-generated and REQUIRE a post-pass (see §5) — a
   recurring bug when skipped:** `b.fence()` lays disconnected crowd-barrier art
   (fix with `tools/fix_fences.py <Room>` → real pickets), and `train-track`
-  tiles (rail corridors) are *walkable* as laid (fix with `tools/seal_tracks.py`
-  → solid, station board cells kept open). If your room has a fence or a
+  tiles (rail corridors) are *walkable* as laid (fix with
+  `tools/seal_tracks.py <Room>` → solid; station board cells and road level
+  crossings are kept open). If your room has a fence or a
   railway, you are not done until both passes have run.
 
 ## 3. Write the generator script
@@ -88,14 +103,17 @@ python3 tools/generate_<slug>.py
 # --- MANDATORY post-passes (edit config.json, so run BEFORE config_to_tiled) ---
 python3 tools/fix_fences.py <Name>            # ONLY if the room calls b.fence():
                                               # broken barriers -> real pickets
-python3 tools/seal_tracks.py                  # ONLY if the room has train-track
+python3 tools/seal_tracks.py <Name>           # ONLY if the room has train-track
                                               # tiles: makes the rail solid
 # ------------------------------------------------------------------------------
-node tools/play.js lint <Name>                # must reach 0 errors; fix warnings
 python3 tools/config_to_tiled.py <Name>       # + every room fix_fences/seal_tracks
                                               #   or a transporter edit touched
-/Applications/Tiled.app/Contents/MacOS/tmxrasterizer tiled/<name>.tmj /tmp/<name>.png
+node tools/play.js lint <Name>                # must reach 0 errors; fix warnings
+node tools/play.js check                      # doors, arrivals and NPCs still reachable
+node tools/play.js render <Name> /tmp/<name>.png --scale 0.5
 ```
+`lint`, `check` and `render` read the Tiled map, as the game does, so they
+only see a change after `config_to_tiled`.
 `fix_fences.py`/`seal_tracks.py` are not optional polish — a fence or railway
 that skips them ships **broken art** or a **walkable railway** (this has bitten
 us before). They edit `config.json`, so they must run before `config_to_tiled`.

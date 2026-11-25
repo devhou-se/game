@@ -6,11 +6,12 @@ Adds gk_blank colliders on every train-track tile cell. In station rooms the
 up into the train's doorway to board.
 
 Run from gamev2/:  python3 tools/seal_tracks.py [Room ...]
-Then play.js lint + config_to_tiled for the printed rooms.
+Then config_to_tiled, then play.js lint, for the printed rooms.
 
-Pass room names to seal only those rooms (e.g. a freshly generated town).
-With no arguments EVERY room is sealed — which also re-seals deliberate level
-crossings (Palace's road over the tracks at 0,5 / 1,5), so prefer naming rooms.
+Pass room names to seal only those rooms (e.g. a freshly generated town);
+with no arguments every room is sealed. A track cell whose Floor tile is a
+road (`road-*`) is a level crossing and stays open, like Palace's road over
+the tracks at 0,5 / 1,5.
 """
 import sys
 import roomgen as rg
@@ -25,8 +26,11 @@ for room_key, room in cfg['rooms'].items():
     track_cells = set()
     for layer in room.get('layers', []):
         for xy, idx in layer.get('tiles', {}).items():
+            cell = tuple(map(int, xy.split(',')))
             if rg._pal[idx].startswith('train-track'):
-                track_cells.add(tuple(map(int, xy.split(','))))
+                track_cells.add(cell)
+            elif layer['name'] == 'Floor' and rg._pal[idx].startswith('road-'):
+                keep_open.add(cell)                 # a road over the track is a level crossing
     if not track_cells:
         continue
     colliders = next(l for l in room['layers'] if l['name'] == 'Colliders')

@@ -12,7 +12,7 @@ Run from gamev2/ (defaults to the pre-existing generated rooms; pass room
 names to fix others, e.g. a freshly generated one):
     python3 tools/fix_fences.py                # Inaka Machi
     python3 tools/fix_fences.py Yukimura       # a specific room
-Then play.js lint + config_to_tiled for the printed rooms.
+Then config_to_tiled, then play.js lint, for the printed rooms.
 """
 import sys
 import roomgen as rg

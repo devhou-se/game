@@ -13,11 +13,11 @@ scratch each run while preserving Inaka's dated blog NPC history.
 
 Run from gamev2/:  python3 tools/generate_inaka.py
 Then:              python3 tools/fix_fences.py Inaka
-                   python3 tools/seal_tracks.py
-                   node tools/play.js lint Inaka
-                   node tools/play.js lint Izakaya
+                   python3 tools/seal_tracks.py Inaka
                    python3 tools/config_to_tiled.py Inaka
                    python3 tools/config_to_tiled.py Izakaya
+                   node tools/play.js lint Inaka Izakaya
+                   node tools/play.js check
                    python3 tools/make_worldmap.py          (after editing devhouse.world)
 """
 import random

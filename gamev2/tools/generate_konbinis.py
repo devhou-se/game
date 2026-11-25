@@ -12,8 +12,8 @@ assets/sprites/office-*.png. The Machi 7-Eleven that already leads to the
 hand-made 'Konbini' room is left untouched.
 
 Run from gamev2/:  python3 tools/generate_konbinis.py
-Then:              node tools/play.js lint <each new room + hosts>
-                   python3 tools/config_to_tiled.py <each new room + hosts>
+Then:              python3 tools/config_to_tiled.py <each new room + hosts>
+                   node tools/play.js lint <each new room + hosts>
 """
 import hashlib
 import random
@@ -213,5 +213,5 @@ for store in stores:
           f"{cfg['rooms'][store['key']]['worldHeight'] // 64}")
 
 rg.save_config(cfg)
-print(f"\n{len(new_rooms)} interiors written. Now run play.js lint + config_to_tiled for:")
+print(f"\n{len(new_rooms)} interiors written. Now run config_to_tiled, then play.js lint, for:")
 print('  ' + ' '.join(new_rooms + HOSTS))

@@ -20,10 +20,14 @@ next regen or breaks determinism.
   regenerate the room's `.tmj`. Never hand-edit config.json for these; a
   re-run would wipe your change. NPC changes for these rooms go in the
   generator too (`rg.make_npc(..., states=...)`), not `npc_state.py`.
-- **Ported rooms** (Tokyo, Market, Park, Palace — no generator): config.json
-  is the map source; edit it with a small python script (serialization is
-  ALWAYS `json.dumps(cfg, indent=2, sort_keys=True)`, NO trailing newline),
-  then `python3 tools/config_to_tiled.py <Room>`.
+- **Ported rooms** (Tokyo, Market, Park, Palace — no generator) and Machi
+  (its generator must not be re-run): config.json is the map source. Add or
+  remove a prefab with `python3 tools/stamp_prefab.py <Room> --add <prefab> X Y`
+  / `--remove <prefab> X Y` (`--dry-run` first), which refuses a placement
+  that would bury an NPC, eat a door or cut off part of the map. For anything
+  a prefab cannot express, edit config.json with a small python script
+  (serialization is ALWAYS `json.dumps(cfg, indent=2, sort_keys=True)`, NO
+  trailing newline). Then `python3 tools/config_to_tiled.py <Room>`.
 - **Prefab art/collision/doors** (`tiled/prefabs/*.tmj`, seeded by
   `tools/make_prefabs.py`): change the spec in make_prefabs.py and re-run it
   (keeps the file regenerable), then re-run every generator that stamps that
@@ -74,11 +78,13 @@ If sprite sizes differ when swapping A→B, re-anchor so the FEET line up
 
 ## 4. Verify like generate-room does (never skip)
 
-1. `node tools/play.js lint <Room>` for every touched room — 0 errors.
-2. `python3 tools/config_to_tiled.py <Room>` for every touched room (and any
-   room whose transporters changed).
-3. Render before/after: `/Applications/Tiled.app/Contents/MacOS/tmxrasterizer
-   tiled/<room>.tmj /tmp/after.png` — LOOK at it; confirm the change reads
+1. `python3 tools/config_to_tiled.py <Room>` for every touched room (and any
+   room whose transporters changed). The next steps read the Tiled map, as the
+   game does, so they only see your change after this.
+2. `node tools/play.js lint <Room>` for every touched room — 0 errors — and
+   `node tools/play.js check` — no problems.
+3. Render before/after: `node tools/play.js render <Room> /tmp/after.png
+   --scale 0.5` — LOOK at it; confirm the change reads
    visually and nothing else shifted.
 4. In-browser (server usually on :8000): rooms load with zero console errors;
    config<->tmj parity IDENTICAL; walk to the changed spot (held-key events,

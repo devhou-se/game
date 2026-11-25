@@ -19,8 +19,10 @@ Run from gamev2/:
     python3 tools/make_prefabs.py
     python3 tools/generate_yukimura.py
     python3 tools/generate_stations.py            # builds YukimuraStation + registry
-    node tools/play.js lint Yukimura       (and --room YukimuraStation)
+    python3 tools/fix_fences.py Yukimura          # MANDATORY (b.fence)
+    python3 tools/seal_tracks.py Yukimura         # MANDATORY (rail line)
     python3 tools/config_to_tiled.py Yukimura      (and YukimuraStation)
+    node tools/play.js lint Yukimura YukimuraStation
 """
 import random
 import roomgen as rg
