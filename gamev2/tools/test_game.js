@@ -15,7 +15,7 @@ const ctx = vm.createContext({
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
-    'utils/Hints.js', 'utils/JapaneseFont.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js', 'systems/UIScale.js'].forEach(load);
+    'utils/Hints.js', 'utils/JapaneseFont.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js', 'systems/UIScale.js', '../tools/world-model.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
 // A Shop with no Phaser behind it: the save blob comes from (and goes to) `store`.
@@ -813,6 +813,19 @@ const tests = {
         assert.ok(glass > 500, 'a lit glass door, not a blank cabinet');
         const meta = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).spriteMetadata['office-fridge_0_0'];
         assert.deepStrictEqual([meta.anchorX, meta.anchorY], [0.5, 0.25]);
+    },
+
+    'lint reachability starts where the player arrives, not at a fixed cell'() {
+        const walkedFrom = game('WorldModel.walkedFrom');
+        // A sealed 1-cell pocket at 0,0 (the old seed), a 2x3 hall, and a 2-cell closet.
+        const cells = new Set(['0,0', '2,0', '3,0', '2,1', '3,1', '2,2', '3,2', '6,0', '6,1']);
+        const sorted = (set) => [...set].sort().join(' ');
+        const hall = '2,0 2,1 2,2 3,0 3,1 3,2';
+        assert.strictEqual(sorted(walkedFrom(cells, [[3, 2]])), hall, 'floods from the arrival cell');
+        assert.strictEqual(sorted(walkedFrom(cells, [[3, 2], [6, 1]])), hall + ' 6,0 6,1', 'every arrival counts');
+        assert.strictEqual(sorted(walkedFrom(cells, [[5, 5]])), hall, 'a blocked arrival falls back to the largest area');
+        assert.strictEqual(sorted(walkedFrom(cells, [])), hall, 'so does a room nothing leads to');
+        assert.strictEqual(walkedFrom(new Set(), [[0, 0]]).size, 0);
     },
 
     'outside the trip the game opens on a trip day, and cycles through them'() {

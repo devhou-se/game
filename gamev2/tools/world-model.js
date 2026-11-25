@@ -229,6 +229,54 @@ class WorldModel {
         return seen;
     }
 
+    // Every cell the game can put the player on in `roomKey`: the spawn, where a transporter
+    // from any room drops them, and the station platform a train arrives at.
+    arrivals(roomKey) {
+        const cells = [];
+        const p = this.config.player;
+        if (p.startRoom === roomKey) cells.push([p.startX, p.startY]);
+        for (const r of Object.values(this.roomManager.rooms)) {
+            for (const t of r.transporters) if (t.targetRoom === roomKey) cells.push([t.targetX, t.targetY]);
+        }
+        const st = (this.config.stations || {})[roomKey];
+        if (st && st.arrive) cells.push([st.arrive[0], st.arrive[1]]);
+        return cells;
+    }
+
+    // The cells of `walkable` (a Set of "x,y") a player can walk to (issue #142): everything
+    // connected to an arrival cell, or the largest connected area when no arrival is walkable
+    // (a room nothing leads to yet). Seeding from one fixed cell instead lands in a sealed
+    // pocket in most rooms.
+    static walkedFrom(walkable, arrivals) {
+        const flood = (start, seen) => {
+            const queue = [start];
+            seen.add(start);
+            for (let i = 0; i < queue.length; i++) {
+                const [x, y] = queue[i].split(',').map(Number);
+                for (const nb of [(x + 1) + ',' + y, (x - 1) + ',' + y, x + ',' + (y + 1), x + ',' + (y - 1)]) {
+                    if (seen.has(nb) || !walkable.has(nb)) continue;
+                    seen.add(nb);
+                    queue.push(nb);
+                }
+            }
+            return queue;
+        };
+        const reached = new Set();
+        for (const [x, y] of arrivals || []) {
+            const c = x + ',' + y;
+            if (walkable.has(c) && !reached.has(c)) flood(c, reached);
+        }
+        if (reached.size) return reached;
+        const seen = new Set();
+        let best = [];
+        for (const c of walkable) {
+            if (seen.has(c)) continue;
+            const region = flood(c, seen);
+            if (region.length > best.length) best = region;
+        }
+        return new Set(best);
+    }
+
     drawOrder(roomKey) {
         const room = this.roomManager.rooms[roomKey];
         const meta = this.config.spriteMetadata || {};
@@ -277,24 +325,9 @@ class WorldModel {
             this.roomManager.isPointInPolygon(x + 0.5, y + 0.5, room.boundary);
         const walkable = (x, y) => x >= 0 && x < W && y >= 0 && y < H && floor.has(K(x, y)) && !colliders.has(K(x, y)) && inside(x, y);
 
-        let seed = [this.config.player.startX || 0, this.config.player.startY || 0];
-        if (!walkable(...seed)) {
-            const first = [...floor].map(c => c.split(',').map(Number)).sort((a, b) => a[0] - b[0] || a[1] - b[1]).find(c => walkable(...c));
-            if (first) seed = first;
-        }
-        const reachable = new Set();
-        if (walkable(...seed)) {
-            const queue = [seed];
-            reachable.add(K(...seed));
-            while (queue.length) {
-                const [cx, cy] = queue.shift();
-                for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) {
-                    if (reachable.has(K(nx, ny)) || !walkable(nx, ny)) continue;
-                    reachable.add(K(nx, ny));
-                    queue.push([nx, ny]);
-                }
-            }
-        }
+        const walkCells = new Set();
+        for (const c of floor) if (walkable(...c.split(',').map(Number))) walkCells.add(c);
+        const reachable = WorldModel.walkedFrom(walkCells, this.arrivals(roomKey));
 
         // True when (x, y) is walkable and part of a real walking area rather than a sealed
         // pocket: a flood from it finds at least 12 cells.
