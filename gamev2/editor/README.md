@@ -1,140 +1,40 @@
-# Game Editor
+# World Editor
 
-A visual editor for editing your Phaser grid game configuration.
+A canvas editor for the room data in `config.json`, served at `/editor/`
+(`python3 -m http.server 8000`, then `http://localhost:8000/editor/`).
 
-## Features
+It draws a room with the game's depth rules and has four tools:
 
-- **Visual Grid Editor**: Click to place NPCs, objects, and transporters with actual game sprites
-- **WYSIWYG Interface**: See exactly what your game will look like with real sprites and background
-- **Room Management**: Create, delete, and switch between rooms
-- **NPC Editor**: Add NPCs with custom names, sprites, and multi-line dialogue
-- **Object Placement**: Add blocking objects to create obstacles
-- **Transporter System**: Create portals between rooms with visual targeting
-- **Sprite Management**: Upload and manage custom sprites
-- **Config Import/Export**: Load existing configs and save your changes
-- **Live Preview**: See changes in real-time with actual game graphics
+- **Inspect** - click a cell to list every tile on it, with layer, depth and collision.
+- **Collision** - paint or erase solid cells on the `Colliders` layer.
+- **Transporter** - place a transporter, or click one to edit its target room, target cell and hidden flag.
+- **Spawn** - set the player's start cell.
 
-## How to Use
+The left panel switches rooms, changes a room's size in cells, and toggles
+layers, the collision overlay and the grid. Wheel zooms; shift-drag or
+middle-drag pans.
 
-### Opening the Editor
+## Saving
 
-1. Start a local server in the project root:
-   ```bash
-   python3 -m http.server 8000
-   ```
+**Save config.json** downloads the edited file; replace `gamev2/config.json`
+with it. The game loads rooms from `tiled/*.tmj`, so a change made here only
+shows up in the game after:
 
-2. Navigate to: `http://localhost:8000/editor/`
+```bash
+python3 tools/config_to_tiled.py <Room>
+node tools/play.js lint <Room>
+```
 
-The editor will automatically load your existing `config.json` from the parent directory.
+## Files
 
-### Interface Overview
+- `index.html` - the page and its load order
+- `app.js` - bootstrap and the tool registry
+- `core/Config.js` - load, model and save the config
+- `core/Depth.js` - the game's render geometry and depth maths; keep in step with `src/systems/RoomManager.js`
+- `core/Textures.js` - loads the tile PNGs
+- `render/RoomCanvas.js` - the canvas, pan and zoom, overlays
+- `panels/` - room, layer, inspector and properties panels
+- `styles/editor2.css` - the stylesheet
 
-#### Left Sidebar
-- **Game Settings**: Edit global game properties (title, date, grid size, world dimensions)
-- **Current Room**: Select room to edit, add new rooms, or delete rooms
-- **Tool**: Choose what to place on the grid
-  - **Select**: Click items to edit their properties
-  - **Add NPC**: Click grid cells to place NPCs
-  - **Add Object**: Click to place blocking obstacles
-  - **Add Transporter**: Click to create room portals
-  - **Set Player Start**: Click to set player spawn point
-  - **Edit Boundary**: Define custom room boundaries (polygons)
-- **Properties**: Edit selected item properties
-
-#### Center Canvas
-- Visual representation showing the actual game background and sprites
-- Click to place items or select them
-- **Drag-and-drop**: Click and drag selected items to reposition them on the grid
-- Shows exactly what the game will look like (WYSIWYG)
-- **Mouse Controls**:
-  - Left click: Place/select items
-  - Click + drag: Move selected items
-  - Shift + drag: Pan the view
-  - Mouse wheel: Zoom in/out
-- **Keyboard Shortcuts**:
-  - Delete/Backspace: Remove selected item (or boundary vertex when in Edit Boundary mode)
-
-#### Right Sidebar
-- **Sprites**: View and upload sprite images
-- Click "Upload Sprite" to add new sprite images
-
-### Workflow
-
-1. **Load Your Config**
-   - Click "Load Config" to import an existing config.json
-   - Or start with the default template
-
-2. **Edit Rooms**
-   - Select a room from the dropdown
-   - Click "Add Room" to create new rooms
-   - Use "Delete Room" to remove unwanted rooms
-
-3. **Place Items**
-   - Select a tool (NPC, Object, Transporter, Player Start)
-   - Click on the grid to place items
-   - Switch to "Select" tool to edit existing items
-
-4. **Edit Properties**
-   - Click an item with the Select tool
-   - Edit properties in the left sidebar (changes apply instantly)
-   - For NPCs: Click "Edit Dialogue" to add/edit conversation lines
-   - For Transporters: Change target room and destination
-   - Drag items on the grid to reposition them visually
-
-5. **Save Your Work**
-   - Click "Save Config" to download config.json
-   - Replace the game's config.json with your new file
-
-## Boundary Editor
-
-The **Edit Boundary** tool allows you to create custom polygon-shaped boundaries for rooms, restricting where players can move.
-
-### How to Use
-
-1. Select the **Edit Boundary** tool from the left sidebar
-2. The current room's boundary will display as a green polygon with numbered vertices
-3. **Add vertices**: Click anywhere on the grid to add a new boundary point
-4. **Move vertices**: Click and drag green circles to reposition boundary points
-5. **Delete vertices**:
-   - **Right-click** on a vertex to delete it
-   - **Hover** over a vertex and press **Delete** or **Backspace**
-   - Hovered vertices turn **cyan/blue** so you know which one you're about to delete
-6. **Save**: Boundaries save automatically when you edit them
-
-### Visual Indicators
-
-- **Green circles**: Normal boundary vertices
-- **Cyan/blue circles with glow**: Hovered vertex (will be deleted if you right-click or press Delete)
-- **Yellow circles**: Currently selected/dragging vertex
-- **Numbers**: Vertex index (0, 1, 2, etc.)
-- **Green lines**: Boundary polygon edges
-
-### Notes
-
-- Polygons must have at least 3 vertices (triangles)
-- Players cannot move outside the boundary polygon
-- By default, rooms have rectangular boundaries matching the world size
-- Boundaries define valid movement areas - cells with centers inside the polygon are accessible
-
-## Tips
-
-- **Drag-and-Drop**: Select an item and drag it to quickly reposition it on the grid
-- **Live Editing**: All property changes apply immediately - you'll see updates in real-time
-- **Center-Relative Positioning**: Items use center-relative offsets by default, making it easy to keep layouts centered
-- **Grid Coordinates**: Hover over the grid to see coordinates in the bottom info bar
-- **Transporters**: Edit target room and position in the properties panel to create working portals
-- **Dialogue**: NPCs can have multiple dialogue lines - click "Edit Dialogue" to manage them
-- **Player Start**: Each room can be a player start location, but only one is active (set in config)
-- **Visual Feedback**: Selected items show a white border, making it easy to see what you're editing
-- **Boundary Editing**: Use custom boundaries to create interesting room shapes like L-shapes, hexagons, or irregular polygons
-
-## Exporting Sprites
-
-The editor can manage sprites, but you'll need to manually save uploaded sprites to your `assets/` folder for the game to load them.
-
-## Troubleshooting
-
-- **Config won't load**: Make sure you're running from a web server (not file://)
-- **Sprites not showing**: Upload sprites through the editor or ensure they exist in `../assets/`
-- **Can't place items**: Make sure you've selected a tool other than "Select"
-- **Grid not visible**: Check that world dimensions are set correctly in Game Settings
+To look at the whole world rather than edit one room, use the read-only
+studio at `/studio/`.

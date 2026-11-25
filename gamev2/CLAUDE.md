@@ -63,31 +63,14 @@ problem survey) is shared with `tools/play.js`, so the page and the terminal too
 - `assets/portraits/` - Optional hand-drawn character portraits (`manifest.json` + `<name>.png`, see its README)
 - `src/Voice.js` - Spoken NPC dialogue (lazy per-line audio clips) and the shared mute setting
 - `src/AmbientTrains.js` / `src/AmbientBoats.js` - Decorative passing trains and moat boats (see Ambient Traffic)
-- `editor/` - Visual editor for editing game configuration
-  - `editor/index.html` - Entry point for the visual editor (access at `/editor/`)
-  - `editor/GridEditor.js` - Main editor grid and placement logic
-  - `editor/ConfigManager.js` - Config loading/saving functionality
-  - `editor/editor.js` - Editor UI and interaction handling
+- `editor/` - Canvas editor for `config.json` room data (see `editor/README.md`)
+- `studio/` - Read-only view of the whole world (see Studio above)
 
 ### Visual Editor
 
-A WYSIWYG visual editor is available for editing game configuration without manually editing JSON. Access it by running a local server and navigating to `/editor/`:
-
-```bash
-python3 -m http.server 8000
-# Navigate to http://localhost:8000/editor/
-```
-
-**Features:**
-- Visual grid editing with actual game sprites and background
-- Room management (create, delete, switch between rooms)
-- NPC placement and dialogue editing
-- Object placement for obstacles
-- Transporter system with visual targeting
-- Custom boundary polygon editing (define non-rectangular room shapes)
-- Sprite management and upload
-- Config import/export
-- Drag-and-drop item repositioning
+`/editor/` edits one room of `config.json` at a time: inspect a cell, paint collision, place and edit
+transporters, set the spawn, resize the room. It saves by downloading a new `config.json`. The game loads
+rooms from `tiled/*.tmj`, so run `python3 tools/config_to_tiled.py <Room>` after replacing the file.
 
 ### Core Constants (config.json)
 
