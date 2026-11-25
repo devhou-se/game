@@ -12,6 +12,9 @@
  *   character's name label fades to LABEL_ALPHA with them. Both come back
  *   when the character steps out.
  *
+ * A building that is one sprite fades whole. So does a roof laid from tiles
+ * (issue #172): a tile of it brings the rest of that roof with it (roof()).
+ *
  * It is cheap: only the player and the NPCs on camera are tested, only when
  * one has moved, and only against the art of the 4-cell chunks they stand in
  * (RoomManager.artNear — the same buckets tile streaming uses) plus the
@@ -139,9 +142,54 @@ class Occlusion {
         let total = 0;
         for (let i = 0; i < points; i++) total += covered[i];
         if (total / points <= Occlusion.HIDDEN) return found;
-        // the pieces that matter fade; one that clips a corner stays solid
-        for (const [rec, n] of counts) if (n >= 2) found.hits.push(rec);
+        // the pieces that matter fade; one that clips a corner stays solid.
+        // A piece of a tile-laid roof brings the rest of that roof with it.
+        const hits = new Set();
+        for (const [rec, n] of counts) {
+            if (n < 2) continue;
+            const roof = this.roof(rec);
+            if (roof) for (const part of roof) hits.add(part);
+            else hits.add(rec);
+        }
+        found.hits = [...hits];
         return found;
+    }
+
+    /**
+     * The whole roof a record is a tile of (issue #172), or null: every
+     * roof-part record (Occlusion.ROOF_PARTS, on an overhead layer) that
+     * touches it directly or through other parts — Market's hall, its gate
+     * and each wing are one roof each, as a house roof is one sprite. Worked
+     * out the first time one of its tiles hides somebody, by walking outward
+     * through the chunk buckets (RoomManager.artNear), and kept on the
+     * records, which last as long as the room does: no room scan, ever.
+     */
+    roof(rec) {
+        if (rec.roof !== undefined) return rec.roof;
+        if (!Occlusion.isRoofPart(rec)) return (rec.roof = null);
+        const rm = this.scene.roomManager;
+        const roof = rec.roof = [rec];
+        for (let i = 0; i < roof.length; i++) {
+            const a = roof[i];
+            for (const b of rm.artNear(a.left - 1, a.top - 1, a.left + a.width, a.top + a.height)) {
+                if (b.roof !== undefined || !Occlusion.isRoofPart(b) || !Occlusion.touching(a, b)) continue;
+                b.roof = roof;
+                roof.push(b);
+            }
+        }
+        return roof;
+    }
+
+    /** Is a record one tile of a roof that is laid from several? */
+    static isRoofPart(rec) {
+        return !!rec.layer && rec.layer.z >= 7 && Occlusion.ROOF_PARTS.test(rec.key);
+    }
+
+    /** Do two records' rectangles overlap or share a length of edge (a corner alone is not enough)? */
+    static touching(a, b) {
+        const dx = Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left);
+        const dy = Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top);
+        return (dx > 0 && dy >= 0) || (dy > 0 && dx >= 0);
     }
 
     /** Is a record's art opaque at a world pixel? */
@@ -186,6 +234,13 @@ Occlusion.LABEL_ALPHA = 0.6;
 Occlusion.FADE_MS = 160;
 /** Hidden = more than this share of the body's sample points is covered. */
 Occlusion.HIDDEN = 0.5;
+/**
+ * The sprite families roofs are LAID from, a tile at a time (the Market hall,
+ * gate and wings; the Tokyo shrine hall with its hallways and end pagodas).
+ * Their touching tiles fade as one roof. Roofs that are a single sprite
+ * (house roofs, a lone shrine roof) already do, and tree crowns never group.
+ */
+Occlusion.ROOF_PARTS = /^(red-centre-roof|red-pagoda-roofs|red-small-pagoda-top|red-shrine-top-parts|temple-hallway|pagoda-roof|shrine-top)_\d+_\d+$/;
 /** Body sample points, in pixels from the sprite's centre (a character fills one 64px cell). */
 Occlusion.SAMPLE_X = [-14, 0, 14];
 Occlusion.SAMPLE_Y = [-20, -6, 8, 22];

@@ -99,10 +99,12 @@ scale = im.width / world_w
 # their union and the seam patches applied (issue #146). `play.js render
 # <City>` builds that room with the game's own stitcher, so the map cannot
 # drift from it; it is pasted over the city's bounding box, whichever
-# rasterizer drew the rooms underneath. Towns the world file places inside
-# that box (Inaka and Osaka sit in the crook of Tokyo's L) are then drawn
-# again on top, so the wood only fills what no room covers. The room rects
-# below are unchanged.
+# rasterizer drew the rooms underneath. The train-only towns stand CLEAR of
+# that box in the world file (issue #174: Inaka and Osaka used to sit in the
+# crook of Tokyo's L and Yukimura on its corner, so the map showed them as
+# clearings in Tokyo's woods, though nobody can walk to them). Should one be
+# moved back inside it, it is still drawn again on top so nothing is hidden,
+# and the tool says so. The room rects below are unchanged.
 by_file = {os.path.basename(m['fileName'])[:-4]: m for m in world['maps']}
 for city_key, city in (cfg.get('cities') or {}).items():
     members = [by_file[m['room'].lower()] for m in city.get('rooms', []) if m['room'].lower() in by_file]
@@ -116,8 +118,10 @@ for city_key, city in (cfg.get('cities') or {}).items():
     for name in inside:
         m = by_file[name]
         paste_render(im, name, m['x'], m['y'], m['width'], m['height'], scale)
-    print(f'{city_key}: stitched city (woods and all) drawn over its {len(members)} districts'
-          + (f'; {", ".join(sorted(inside))} redrawn on top' if inside else ''))
+    print(f'{city_key}: stitched city (woods and all) drawn over its {len(members)} districts')
+    if inside:
+        print(f'warn: {", ".join(sorted(inside))} overlap {city_key}\'s box in {WORLD} and will show inside its '
+              f'woodland on the map - move them clear of x {cx0}..{cx1}, y {cy0}..{cy1}', file=sys.stderr)
 
 os.makedirs(OUT_DIR, exist_ok=True)
 im.save(f'{OUT_DIR}/world-map.png', optimize=True)

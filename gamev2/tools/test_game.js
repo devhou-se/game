@@ -438,6 +438,87 @@ const tests = {
         assert.strictEqual(name(tiles('Tokyo', 'Floor')['2,43']), 'road-corner-sw_0_0', 'the junction box has its corner');
     },
 
+    'road junctions are plain boxes: no kerb across a joining road, no centre line through one (#179)'() {
+        const { world } = worldWith(true);
+        const city = world.roomManager.rooms.TokyoCity;
+        const road = {};
+        for (const layer of city.layers) {
+            if (layer.z >= 2 || layer.collision) continue;
+            for (const [xy, key] of Object.entries(layer.tiles)) if (/^road-/.test(key)) road[xy] = key.replace(/_0_0$/, '');
+        }
+        const at = (x, y) => road[`${x},${y}`] || '';
+        const bad = [];
+        let lines = 0;
+        for (const xy of Object.keys(road)) {
+            const [x, y] = xy.split(',').map(Number), t = road[xy];
+            if (t === 'road-div-vertical') {
+                lines++;
+                for (const ny of [y - 1, y + 1]) {
+                    if (/^road-(edge-(top|bottom)|div-horizontal)$/.test(at(x, ny))) bad.push(`${xy}: the line meets ${at(x, ny)} at ${x},${ny}`);
+                }
+            }
+            if (t === 'road-div-horizontal') {
+                lines++;
+                for (const nx of [x - 1, x + 1]) {
+                    if (/^road-(edge-(left|right)|div-vertical)$/.test(at(nx, y))) bad.push(`${xy}: the line meets ${at(nx, y)} at ${nx},${y}`);
+                }
+            }
+        }
+        assert.ok(lines > 500, `the city's roads were read (${lines} centre-line cells)`);
+        assert.deepStrictEqual(bad, []);
+        // a bend has its mitred outer corner: Tokyo's north-west one, and Park's south-west one,
+        // whose west kerb and corner stand in the woods (cities.backdrop.edges)
+        const rm = world.roomManager;
+        const nw = rm.resolve('Tokyo', 2, 2), sw = rm.resolve('Park', 0, 41);
+        assert.strictEqual(at(nw.x, nw.y), 'road-corner-nw');
+        assert.strictEqual(at(nw.x + 1, nw.y + 1), 'road-plain');
+        assert.strictEqual(at(sw.x - 1, sw.y), 'road-corner-sw');
+        assert.strictEqual(at(sw.x - 1, sw.y - 1), 'road-edge-left');
+        // on its own (?stitch=0) Park's top row is the far kerb of a T-junction; stitched, Palace's
+        // roads run into it and the patch opens it
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const park = cfg.rooms.Park.layers.find((l) => l.name === 'Floor').tiles;
+        for (const x of [0, 1, 54, 55, 56]) {
+            assert.strictEqual(cfg.tilePalette[park[`${x},0`]], 'road-edge-top_0_0', `Park ${x},0`);
+            const c = rm.resolve('Park', x, 0);
+            assert.strictEqual(at(c.x, c.y), 'road-plain', `stitched Park ${x},0`);
+        }
+    },
+
+    'no store has floor its furniture seals off (#182)'() {
+        const { world } = worldWith(true);
+        const stores = Object.keys(world.config.rooms).filter((k) => /^(Konbini|DonTakote|Izakaya)/.test(k));
+        assert.ok(stores.length >= 14, stores.join());
+        for (const k of stores) assert.strictEqual(JSON.stringify(world.lint(k).errors), '{}', k);
+        // the corner filler stands on the back row, never one row below it with the corner cell boxed in
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        let dispensers = 0;
+        for (const k of stores.filter((k) => k.startsWith('Konbini'))) {
+            const room = cfg.rooms[k], top = Math.min(...room.boundary.map((p) => p[1]));
+            const layer = room.layers.find((l) => l.name === 'Collidables').tiles;
+            for (const [xy, t] of Object.entries(layer)) {
+                if (cfg.tilePalette[t] !== 'office-watercooler_0_0') continue;
+                dispensers++;
+                const y = Number(xy.split(',')[1]), bottom = Math.max(...room.boundary.map((p) => p[1])) - 2;
+                assert.ok(y === top || y === bottom, `${k}: water dispenser at ${xy} is on neither the back row (${top}) nor the counter row (${bottom})`);
+            }
+        }
+        assert.ok(dispensers >= 5, `saw ${dispensers} water dispensers`);
+        // ...and the dispenser leaves no one-cell nook beside it on the back row either (between it
+        // and the coolers, or between it and the side wall)
+        for (const k of stores.filter((k) => k.startsWith('Konbini'))) {
+            const room = cfg.rooms[k], xs = room.boundary.map((p) => p[0]);
+            const top = Math.min(...room.boundary.map((p) => p[1])), x0 = Math.min(...xs), x1 = Math.max(...xs) - 1;
+            const layer = room.layers.find((l) => l.name === 'Collidables').tiles;
+            const free = (x) => x >= x0 && x <= x1 && !(`${x},${top}` in layer);
+            const dispenser = (x) => cfg.tilePalette[layer[`${x},${top}`]] === 'office-watercooler_0_0';
+            for (let x = x0; x <= x1; x++) {
+                if (!free(x) || !(dispenser(x - 1) || dispenser(x + 1))) continue;
+                assert.ok(free(x - 1) || free(x + 1), `${k}: back-row cell ${x},${top} is a one-cell nook beside the dispenser`);
+            }
+        }
+    },
+
     'a dated state that marks an NPC absent carries no placement'() {
         // tools/blog_to_npc.py PLACEMENT_KEYS: a leftover photo is still preloaded, leftover dialogue reads as a post
         const placementKeys = ['gridX', 'gridY', 'dialogue', 'photo', 'voice', 'drunk', 'posts'];
@@ -1147,6 +1228,36 @@ const tests = {
         assert.strictEqual(walkedFrom(new Set(), [[0, 0]]).size, 0);
     },
 
+    'the train-only towns stand clear of the city and its woodland on the world map (#174)'() {
+        // the Map draws a stitched city over its whole bounding box, woods included: a town placed
+        // inside that box showed as a clearing in Tokyo's woods, though you cannot walk to it
+        const config = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const map = JSON.parse(fs.readFileSync(path.join(GV2, 'assets', 'map', 'world-map.json'), 'utf8'));
+        const world = JSON.parse(fs.readFileSync(path.join(GV2, '..', 'devhouse.world'), 'utf8'));
+        const placed = Object.fromEntries(world.maps.map((m) => [path.basename(m.fileName, '.tmj'), m]));
+        for (const [key, city] of Object.entries(config.cities)) {
+            const members = city.rooms.map((r) => r.room);
+            for (const [name, rects] of [['world-map.json', map.rooms],
+                ['devhouse.world', Object.fromEntries(Object.keys(map.rooms).map((k) => {
+                    const m = placed[k.toLowerCase()];
+                    return [k, { x: m.x, y: m.y, w: m.width, h: m.height }];
+                }))]]) {
+                const box = members.map((k) => rects[k]);
+                const x0 = Math.min(...box.map((r) => r.x)), y0 = Math.min(...box.map((r) => r.y));
+                const x1 = Math.max(...box.map((r) => r.x + r.w)), y1 = Math.max(...box.map((r) => r.y + r.h));
+                const inside = Object.keys(rects).filter((k) => !members.includes(k)).filter((k) => {
+                    const r = rects[k];
+                    return r.x < x1 - 0.5 && r.x + r.w > x0 + 0.5 && r.y < y1 - 0.5 && r.y + r.h > y0 + 0.5;
+                });
+                assert.deepStrictEqual(inside, [], `${name}: inside ${key}'s box`);
+            }
+        }
+        // and the map image has room for them: the JSON's rects all lie on it
+        for (const [k, r] of Object.entries(map.rooms)) {
+            assert.ok(r.x >= 0 && r.y >= 0 && r.x + r.w <= map.width + 0.5 && r.y + r.h <= map.height + 0.5, k);
+        }
+    },
+
     'studio stacks overlapping districts the way the stitched city does: the later one on top'() {
         const stackOrder = game('WorldModel.stackOrder');
         const cities = { C: { rooms: [{ room: 'Tokyo' }, { room: 'Market' }, { room: 'Gone' }, { room: 'Palace' }, { room: 'Park' }] } };
@@ -1610,6 +1721,56 @@ const tests = {
         scene.roomManager.artNear = () => [];
         frames(1);
         assert.strictEqual(oc.fading.size, 0);
+    },
+
+    'a roof laid from tiles fades whole, one building at a time (#172)'() {
+        const { world, run } = worldWith(true);
+        const RoomManager = run('RoomManager'), Occlusion = run('Occlusion');
+        const scene = {
+            GRID_SIZE: 64, config: world.config,
+            textures: { exists: (k) => world.exists(k), getFrame: (k) => ({ realWidth: world.cells(k)[0] * 64, realHeight: world.cells(k)[1] * 64 }) },
+            getSpriteConfig: (k) => world.config.spriteMetadata[k] || { anchorX: 0.5, anchorY: 0.5 },
+            add: { sprite: () => { const s = { alpha: 1, setAlpha(a) { s.alpha = a; return s; } }; for (const f of ['setOrigin', 'setScale', 'setDepth', 'setData', 'destroy']) s[f] = () => s; return s; } },
+            cache: { json: { get: () => null } },
+        };
+        const rm = scene.roomManager = new RoomManager(scene);
+        rm.rooms = world.roomManager.rooms;
+        const oc = new Occlusion(scene);
+        const cells = (roof) => roof.map(r => `${r.gridX},${r.gridY}`);
+        const at = (x, y) => rm.tileRecords.find(r => r.layer.name === 'Tops' && r.gridX === x && r.gridY === y);
+
+        rm.currentRoom = 'Market';
+        rm.loadFloorTiles();
+        // the hall: every roof tile of it, and nothing of the gate eight rows south
+        const hall = oc.roof(at(23, 10));
+        assert.ok(hall.length > 60, `the hall's roof is ${hall.length} tiles`);
+        assert.ok(hall.every(r => r.gridY <= 15 && r.gridX >= 22 && r.gridX <= 33), cells(hall).join(' '));
+        assert.strictEqual(oc.roof(at(28, 7)), hall, 'the ridge tile belongs to the same roof');
+        const gate = oc.roof(at(27, 21)), west = oc.roof(at(21, 30)), east = oc.roof(at(32, 30));
+        assert.strictEqual(new Set([hall, gate, west, east]).size, 4, 'four buildings, four roofs');
+        assert.ok(cells(gate).includes('20,24') && cells(gate).includes('34,21'), 'the gate with both its pavilions');
+        assert.ok(west.every(r => r.gridX <= 24 && r.gridY >= 27) && east.every(r => r.gridX >= 31 && r.gridY >= 27));
+        // one sprite is its own roof; a tree crown, a lantern and the ground are nobody's
+        assert.strictEqual(oc.roof(at(42, 9)), null, 'the single-sprite shrine roof');
+        assert.strictEqual(oc.roof(rm.tileRecords.find(r => r.key.startsWith('sakura-large-top'))), null);
+        assert.strictEqual(oc.roof(rm.tileRecords.find(r => r.layer.name === 'Floor')), null);
+        // someone behind one tile of it fades the lot
+        const who = { sprite: { x: 24 * 64 + 32, y: 10 * 64 + 32, depth: at(23, 10).depth - 20, visible: true } };
+        oc.mask = () => ({ w: 1, h: 1, bits: [1] });
+        const hits = oc.look(who).hits;
+        assert.strictEqual(hits.length, hall.length);
+        assert.ok(hall.every(r => hits.includes(r)));
+        // corners that only meet at a point are not one roof
+        const rec = (left, top) => ({ left, top, width: 64, height: 64 });
+        assert.ok(Occlusion.touching(rec(0, 0), rec(64, 0)) && Occlusion.touching(rec(0, 0), rec(32, 32)));
+        assert.ok(!Occlusion.touching(rec(0, 0), rec(64, 64)) && !Occlusion.touching(rec(0, 0), rec(128, 0)));
+
+        // Tokyo's shrine hall: the roof, its six hallways and the two end pagodas
+        rm.currentRoom = 'Tokyo';
+        rm.loadFloorTiles();
+        const shrine = oc.roof(at(28, 14));
+        assert.strictEqual(shrine.length, 9, cells(shrine).join(' '));
+        assert.strictEqual(oc.roof(at(40, 15)), shrine);
     },
 
     'outside the trip the game opens on a trip day, and cycles through them'() {

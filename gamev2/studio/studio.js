@@ -139,9 +139,9 @@ function layout(keys, worldMap) {
         rowH = Math.max(rowH, h);
     }
     // bottom first. Districts shown side by side (?stitch=0) stack the way the stitched city does:
-    // the later one on top (WorldModel.stackOrder). A city's woodland fills its whole bounding box,
-    // and other towns sit inside that box on the world map (Inaka and Osaka, in the crook of
-    // Tokyo's L): cities are drawn first, under them
+    // the later one on top (WorldModel.stackOrder). A city's woodland fills its whole bounding box:
+    // cities are drawn first, so a town the world map ever places inside that box (none does since
+    // issue #174) is still on top of the woods
     const stacked = WorldModel.stackOrder(m.config, keys);
     S.order = stacked.filter(k => S.rooms[k].members).concat(stacked.filter(k => !S.rooms[k].members));
 }

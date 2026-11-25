@@ -526,6 +526,18 @@ class WorldModel {
             }
         }
 
+        // ...and a store has no floor its furniture has sealed off (issue #182): a filler
+        // under the corner beside the cooler run left the corner cell a walkable pocket
+        // nobody could step into, which reads as a gap in the fittings. (A cell some art
+        // stands over - the head of a lantern whose foot is solid - is not bare floor.)
+        if (fixtures.length) {
+            const dressed = new Set();
+            for (const o of objects) for (const [cx, cy] of o.cells) dressed.add(K(cx, cy));
+            for (const c of [...walkCells].sort()) {
+                if (!fromDoor.has(c) && !dressed.has(c)) push(errors, 'shop-sealed-floor', c);
+            }
+        }
+
         const covered = new Set();
         for (const o of objects) for (const [cx, cy] of o.cells) { covered.add(K(cx, cy)); covered.add(K(cx, cy - 1)); }
         const sortedColliders = [...colliders].map(c => c.split(',').map(Number)).sort((a, b) => a[0] - b[0] || a[1] - b[1]);

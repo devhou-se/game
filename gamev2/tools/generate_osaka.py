@@ -20,6 +20,8 @@ From the station you walk south down the main street:
           as the room's one `waterways` entry, which is what gives it ambient
           boats (src/AmbientBoats.js): they sail in from off the map, pass
           UNDER the bridge deck (the `under` columns) and out the other side.
+          The deck has a stone parapet each side and throws a shadow on the
+          water (issue #180).
           South of it, CANAL-SIDE AVENUE runs east-west across the whole town.
 
 The ROADS (issues #106, #151): the main street is four cells of roadway
@@ -51,6 +53,7 @@ Run from gamev2/:
     python3 tools/generate_tsutenkaku.py
     python3 tools/extract_street.py               # traffic light, crossing, kerb props
     python3 tools/make_road_tiles.py              # lane + corner road pieces (Pillow)
+    python3 tools/make_bridge_tiles.py            # the bridge's parapet + shadow (Pillow)
     python3 tools/generate_discount_art.py        # the discount store's interior signage
     python3 tools/make_prefabs.py
     python3 tools/generate_osaka.py
@@ -194,6 +197,16 @@ for x in [x for x in range(W) if not DECK_X0 <= x <= DECK_X1]:
     for y in range(CANAL_Y0, CANAL_Y1 + 1):
         role = 'edge-n' if y == CANAL_Y0 else 'edge-s' if y == CANAL_Y1 else 'center'
         b.put('Water', x, y, f'pond-autotile_{role}'); b.solid(x, y)
+# the deck reads as a bridge (issue #180; tools/make_bridge_tiles.py): a stone
+# parapet down each side of it over the water - a strip on the outer edge of
+# the pavement cell, not solid, so the two-cell pavement (#139) keeps its width -
+# and the deck's shadow on the water against it. A boat sails into the shadow
+# before it goes under.
+for y in range(CANAL_Y0, CANAL_Y1 + 1):
+    b.put('Non-Collidables', DECK_X0, y, 'bridge-parapet-w_0_0')
+    b.put('Non-Collidables', DECK_X1, y, 'bridge-parapet-e_0_0')
+    b.put('Non-Collidables', DECK_X0 - 1, y, 'bridge-shade-w_0_0')
+    b.put('Non-Collidables', DECK_X1 + 1, y, 'bridge-shade-e_0_0')
 # south bridgehead: the lanterns stand on the bank, their heads against the water
 b.stamp('lantern-red', DECK_X0 - 1, CANAL_Y1); b.stamp('lantern-red', DECK_X1 + 1, CANAL_Y1)
 

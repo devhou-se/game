@@ -67,7 +67,7 @@ In that five-room view, where a city's districts overlap on the map (Palace / Pa
 district in the city's `rooms` list is drawn on top and takes the click, as in the stitched city
 (`WorldModel.stackOrder`). Click the selected cell again for the room underneath (`WorldModel.stackPick`):
 that is how the covered seam transporters (Palace 38..39,21, Market 54..56,47) are inspected - and, in the
-stitched view, the city's woodland under a town that sits inside its box (Inaka, Osaka).
+stitched view, the city's woodland under a town that sits inside its box (none does since issue #174).
 
 It has no logic of its own: `tools/world-model.js` (rooms, collision, NPC dates, interactions, the
 problem survey) is shared with `tools/play.js`, so the page and the terminal tool always agree.
@@ -264,6 +264,18 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   (kerb down column 2, `road-corner-sw` at `(2,43)`, `road-plain` inside). It is district data in both
   maps, so `?stitch=0` shows the same gate. The lower lantern stands on `(1,44)`: a lantern is two cells
   tall and one cell further north its head hung over the lane.
+- **Road junctions are plain boxes** (issue #179): the port drew every three-cell road straight through
+  each junction, so a joining road's mouth was closed by the other road's kerb and its centre line ran
+  on into the junction. **`python3 tools/square_junctions.py`** lays each of the twelve 3x3 boxes in
+  Tokyo, Market and Park the way #147 laid the west gate: `road-plain` throughout, the kerb along a
+  CLOSED side (the far side of a T, the outside of a bend), a mitred `road-corner-*` where two closed
+  sides meet. `JUNCTIONS` lists them per district (top-left cell + closed sides); a box may hang over
+  the map edge - the Tokyo/Market road is half in each map - and the neighbour's entry lays the rest.
+  Sides are as the district reads on its own (`?stitch=0`): Park's top row is a kerb there, and
+  `cities.TokyoCity.patch` opens it (`Park` cells `0,0 1,0 54,0 55,0 56,0`) where Palace's roads run
+  in. Park's west road is half in the woods, so `cities.TokyoCity.backdrop.edges` gives it its kerb
+  beside `road-plain` as well and a `road-corner-sw` beside the bottom kerb. Idempotent; a new junction
+  is one more entry (then `config_to_tiled.py` for the districts and `make_worldmap.py`).
 - **`?stitch=0`** is the safety valve: no cities, the five districts are separate rooms joined by the fade
   transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).
 - **Adding a district / a second city**: place the map in `devhouse.world` so the shared road lines up,
@@ -281,7 +293,15 @@ drawn under it. `src/systems/Occlusion.js` keeps them in view with one rule for 
   and the empty corners of a tree crown do not count).
 - The pieces doing the covering **fade to 40%** (`Occlusion.ALPHA`, over `FADE_MS` = 160 ms) and come back
   when the character steps out. A building that is one sprite fades whole (Tokyo Tower, the Dotonbori arch
-  and wheel, high-rises, house roofs); a roof laid from tiles opens a window over the character. Wall signs
+  and wheel, high-rises, house roofs), and so does a roof LAID FROM TILES (issue #172: Market's hall and
+  its gate; it used to open a pale window of one to three tiles): a hit on a roof-part record
+  (`Occlusion.ROOF_PARTS` - the families roofs are laid from - on an overhead layer) brings every part
+  that touches it, directly or through other parts (`Occlusion.roof(rec)`: an edge in common, a corner
+  alone is not enough), so the hall, the gate and each wing are one roof each. A roof is worked out the
+  first time one of its tiles hides somebody, by walking outward through the chunk buckets, and kept on
+  the records (`rec.roof`), which last as long as the room: no room scan at load or per frame (0.5 ms for
+  the hall's 68 tiles, once). Tree crowns never group; add a family to `ROOF_PARTS` when a new roof is
+  laid from tiles. Wall signs
   (`roomManager.signArt`) fade the same way.
 - The character's **name label fades with them** (to `LABEL_ALPHA` = 60%, as much as the character shows
   through art at 40%) instead of floating over the roof at full strength. A label whose character stops being
@@ -443,7 +463,13 @@ their route in the room's map data rather than in coordinates, have no collision
     does; any other end is closed and the boat fades in / out there. On a waterway longer than the screen
     the boat sets off just out of view rather than from the far end. In a stitched city a district's
     waterways are moved to the district's place. **Osaka's Dotonbori canal** is the one declared waterway
-    today (rows 20-22, the whole width of the map, `under` columns 21-28). Frozen water (Asahikawa's river,
+    today (rows 20-22, the whole width of the map, `under` columns 21-28). Its deck is dressed as a
+    bridge (issue #180; `tools/make_bridge_tiles.py`, Pillow): `bridge-parapet-w|e` is a stone coping on
+    the outer 14px of the deck's edge cells - not solid, so the two-cell pavement keeps its width - and
+    `bridge-shade-w|e` is the deck's shadow on the water cell beside it. They lie flat on
+    `Non-Collidables` with `depthBias: -200` (the `asahikawa-bridge` recipe: over the Water layer and a
+    passing boat, under everyone standing), and the shade is translucent, so `clearWater` does not
+    count it as scenery hiding the canal. Frozen water (Asahikawa's river,
     Yukimura's pond) declares none, so it gets no boats.
   Runs too short for a boat to travel `MIN_TRAVEL` (128px, so a run is at least four cells for either
   hull - the three-cell pockets between the moat's rocks get none) are dropped. On a closed run a boat
@@ -558,7 +584,12 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   (it refuses to seal a cell holding a transporter or a dated NPC). The same goes for the fixtures
   INSIDE a store (issue #152): a shelf or cooler is bumped from the cell below it, so lint fails with
   `shop-no-front` when any column of a konbini / Don Takote shelf or cooler has no walkable cell under
-  it that the door leads to (the till, against the front wall, needs any reachable side).
+  it that the door leads to (the till, against the front wall, needs any reachable side), and with
+  `shop-sealed-floor` when a store has bare floor the door does not lead to (issue #182: the corner
+  water dispenser stood one row below the back wall and boxed in the corner cell above it, beside the
+  cooler run - `generate_konbinis.py` now stands it in the back corner, and where that would leave a
+  single cell between it and the coolers the run grows one unit to meet it, so the back row has no
+  one-cell nook on either side of it).
   `play.js check` reports every room's lint errors too (`WorldModel.lintProblems`, issue #178), so a
   store cut off from its door shows up there as `KonbiniMarket1: lint shop-no-front: ...`.
   `check` exits 1 when it lists any problem, like `lint` (issue #188), so a script or CI step can gate on it.
@@ -969,9 +1000,12 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   landmark and it tells you if a spot is mislabelled, unreachable, or lands on a station's doors.
 - **The world map shows the stitched city** (issue #146): after the rooms are drawn, `tools/make_worldmap.py`
   renders each config `cities` entry with `node tools/play.js render <City>` — the room the game plays,
-  woodland and seam patches included — and pastes it over the city's bounding box, then redraws the towns
-  the world file places inside that box (Inaka, Osaka, Yukimura) on top. `world-map.json` is unchanged (the
-  five district rects), so the "You" marker, NPC dots and map-click travel work as before. Regenerate
+  woodland and seam patches included — and pastes it over the city's bounding box. **The train-only towns
+  stand clear of that box in `devhouse.world`** (issue #174: Yukimura above Machi, Inaka and Osaka in a
+  column west of it; they used to sit inside the box and showed as clearings in Tokyo's woods). The tool
+  warns if a town is ever placed back inside (it is still redrawn on top), and `tools/test_game.js` fails.
+  Widening the world costs nothing on the Map screen while it stays wider than about 1.47:1 - the
+  overlay is height-limited. `world-map.json` keeps the same contract (one rect per room), so the "You" marker, NPC dots and map-click travel work as before. Regenerate
   `assets/map` with the tool whenever a district, `cities.<City>.backdrop` or `patch` changes.
 - **World map without Tiled**: `tools/make_worldmap.py` uses `tmxrasterizer` when Tiled is installed and
   otherwise (or with `--pil`) draws the rooms itself via `node tools/play.js render`, which is also the

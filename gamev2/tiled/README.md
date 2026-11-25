@@ -99,7 +99,9 @@ drawn by `tools/generate_hokkaido.py` - see "Hokkaido: Sapporo and Asahikawa" in
 whose sprite carries a negative `depthBias` in `config.json` `spriteMetadata` (an `Over Floor` object would
 be drawn under the `Water` tiles).
 
-`devhouse.world` also holds the train-only towns at detached offsets: Yukimura and Osaka to the west,
+`devhouse.world` also holds the train-only towns at detached offsets, all CLEAR of the stitched city's
+bounding box (the Map draws the city's woodland over that whole box - issue #174): Yukimura above Machi,
+Inaka and Osaka in a column to the west,
 Sapporo and Asahikawa to the north.
 
 Street accessories (issue #19) come from `tools/extract_street.py` - see "Street accessories" in
@@ -240,6 +242,15 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   two-kerb corner pieces `road-corner-nw|ne|sw|se` (a road's square end, the outer corner of a
   junction box) come from `tools/make_road_tiles.py`, which derives them from the sheet's own road
   tiles. An odd-width road uses `road-div-vertical` / `road-div-horizontal` as before.
+- **A road junction is a plain 3x3 box** (issues #147 / #179): `road-plain` inside, the kerb only along
+  a side no road leaves by, a `road-corner-*` on the outside of a bend. Never run `road-edge-*` across
+  the mouth of a joining road or a centre line into the box. The ported districts' boxes are listed
+  in `tools/square_junctions.py` (idempotent: add the junction there and re-run it); generators lay
+  theirs by hand (Osaka's avenue, Sapporo).
+- **A bridge deck over water gets a parapet and a shadow** (issue #180): `bridge-parapet-w|e` on the
+  deck's two edge cells and `bridge-shade-w|e` on the water cells beside them, all on
+  `Non-Collidables` (flat sprites with a negative `depthBias`, from `tools/make_bridge_tiles.py`). No
+  colliders: the coping is the outer 14px of the cell. They are for a deck that runs north-south.
 - **Water is navigable only where a room says so**: `rooms.<Room>.waterways` in config.json
   (written by the generator - see "Ambient Traffic" in `gamev2/CLAUDE.md`) gives a canal its
   boats; `under` names the cells where a bridge deck crosses, and those cells must be plain
@@ -250,7 +261,8 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
 - **A shop fixture needs the cell under it** (issue #152): shelves and coolers are bumped from
   the cell below, the till from any side. `play.js lint` fails a store with `shop-no-front`
   otherwise; `generate_konbinis.py` keeps a walkway row under every fixture row (and two free
-  rows above the counter row, or the back of the store is sealed off).
+  rows above the counter row, or the back of the store is sealed off). A filler never boxes in bare
+  floor either (`shop-sealed-floor`, issue #182): the corner water dispenser stands on the back row.
 - **GuttyKreum sheets are 2x, not 4x**: one 32px RPG Maker tile is one 64px cell (the ported houses are
   pixel-identical 2x crops). Only the Dotonbori arch / ferris wheel were extracted at 4x, as oversized
   landmarks. A building extracted at 4x gets a two-cell-wide door and pixels twice the size of its neighbours.

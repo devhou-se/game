@@ -157,11 +157,24 @@ def furnish(b, rng, x0, y0, bw, bh):
 
     # 0-2 corner fillers (a water dispenser, then a plant), a plant opposite the
     # counter. NO rubbish bins - issue #19; `play.js lint` fails a room that has one.
-    spots = [(right, top + 1) if side == 'left' else (left, top + 1),
+    # The back one stands in the back corner, against the wall (issue #182): a row
+    # lower it left the corner cell above it a one-cell dead end beside the
+    # cooler run. Where the corner would leave a single cell between it and the
+    # coolers, the run grows one unit to meet it - a one-cell nook is a dead
+    # end whichever side of the dispenser it falls on. The coolers still keep
+    # off the side columns and are used from the row below, so no fixture's
+    # front cell is taken.
+    if side == 'left':
+        back, gap = right, (right - 1 if right - (cx0 + run) == 1 else None)
+    else:
+        back, gap = left, (left + 1 if cx0 - 1 - left == 1 else None)
+    spots = [(back, top),
              (cx + 2, cy) if side == 'left' else (cx - 1, cy)]
     picked = sorted(rng.sample(spots, k=rng.randint(0, 2)))
     for (x, y), key in zip(picked, ('office-watercooler_0_0', 'office-plant-b_0_0')):
         put_solid(key, x, y)
+    if gap is not None and (back, top) in picked:
+        put_solid(kind, gap, top)
     put_solid(rng.choice(PLANTS), right if side == 'left' else left, cy)
 
 

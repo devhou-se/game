@@ -97,7 +97,10 @@ windows(92, 56, 164, 76, 8)
 shape([(104, 44), (152, 44), (164, 56), (92, 56)])   # roof
 d.rectangle([116, 34, 140, 44], fill=WHITE, outline=BLACK)   # lantern room
 d.rectangle([124, 16, 132, 34], fill=WHITE, outline=BLACK)   # mast base
-d.line([(CX, 1), (CX, 16)], fill=BLACK)                      # mast
+# a short one (issue #181): the sprite's top row lies on the first row of paving
+# south of the avenue, whose rim reads as the avenue's kerb - a mast drawn from
+# the very top of the sprite poked onto it
+d.line([(CX, 9), (CX, 16)], fill=BLACK)                      # mast
 
 big = im.resize((W * 2, H * 2), Image.NEAREST)
 big.save(f'assets/sprites/{KEY}.png')
