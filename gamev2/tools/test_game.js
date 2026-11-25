@@ -560,6 +560,27 @@ const tests = {
         assert.ok(toastMs(game('Fishing.catchMessage')({ name: 'Unagi', value: 520 }, '¥520')) > 3000);
     },
 
+    'touch hints name both d-pad axes: up/down is the d-pad, left/right its arrows'() {
+        const text = game('Hints.text');
+        const touch = { touchControls: { enabled: true } };
+        const shopLine = '↑/↓ pick · ←/→ quantity · ESC step away';
+        assert.strictEqual(text({}, shopLine), shopLine, 'the keyboard wording is untouched');
+        assert.strictEqual(text(touch, shopLine), 'd-pad pick · ◀ ▶ quantity · B step away');
+        assert.strictEqual(text(touch, '←/→: stake · SPACE/ENTER: start · ESC: leave'), '◀ ▶: stake · A: start · B: leave');
+        // no hint in the game is left with a keyboard arrow once touch has reworded it
+        const fs = require('fs'), path = require('path');
+        const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap(e =>
+            e.isDirectory() ? walk(path.join(d, e.name)) : e.name.endsWith('.js') ? [path.join(d, e.name)] : []);
+        let seen = 0;
+        for (const f of walk(path.join(__dirname, '..', 'src'))) {
+            for (const m of fs.readFileSync(f, 'utf8').matchAll(/Hints\.text\([^,]+,\s*(?:[^'`]*\?\s*)?'([^']*)'/g)) {
+                seen++;
+                assert.ok(!/[←→↑↓]/.test(text(touch, m[1])), `${path.basename(f)}: ${text(touch, m[1])}`);
+            }
+        }
+        assert.ok(seen > 10, 'found the hint lines');
+    },
+
     'outside the trip the game opens on a trip day, and cycles through them'() {
         const defaultGameDate = game('defaultGameDate');
         const dates = ['2025-10-02', '2025-10-03', '2025-11-18'];

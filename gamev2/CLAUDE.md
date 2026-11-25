@@ -876,7 +876,7 @@ windows (canvas at 1:1 or larger, no touch controls) are untouched by all of it.
     `scene.uiScale.textSize('14px')` instead (the map's labels do — up to 1.6x).
 - **Hint wording — `src/utils/Hints.js`.** Write the hint for the keyboard and pass it through
   `Hints.text(scene, 'SPACE/ENTER: start · ESC: leave')`; with touch controls on it comes back as
-  `A: start · B: leave` (SPACE/ENTER → A, ESC → B, ↑/↓ and arrows / WASD → d-pad, SHIFT → sprint, click → tap).
+  `A: start · B: leave` (SPACE/ENTER → A, ESC → B, ↑/↓ and arrows / WASD → d-pad, ←/→ → ◀ ▶, SHIFT → sprint, click → tap).
   `{ tap: true }` for overlays where a tap anywhere confirms (dialogue, intro): `TAP or A`. Use
   `Hints.touch(scene)` rather than testing `touchControls.enabled`. Never hand-write a touch string.
 - **A touch on a control stays on the control.** Phaser listens for touches on the whole window, so

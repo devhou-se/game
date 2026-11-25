@@ -9,6 +9,8 @@
  *   SPACE, ENTER   -> A            ESC       -> B
  *   ↑/↓, W/S       -> d-pad        SHIFT     -> sprint  (SHIFT+ENTER -> hold sprint + A)
  *   click          -> tap          WASD / arrows, arrows -> d-pad
+ *   ←/→            -> ◀ ▶          (the d-pad's own left / right glyphs, so a line
+ *                                   with both axes never reads "d-pad ... d-pad")
  *
  * `{ tap: true }` is for overlays where a tap anywhere does what SPACE /
  * ENTER does (dialogue, intro): their confirm key reads "TAP or A".
@@ -42,6 +44,7 @@ Hints.RULES = [
     [/\bSHIFT\b/g, 'sprint'],
     [/\b(?:WASD\s*\/\s*arrows|arrows\s*\/\s*WASD)\b/g, 'd-pad'],
     [/↑\s*\/\s*↓|\bW\s*\/\s*S\b|\barrows\b/g, 'd-pad'],
+    [/←\s*\/\s*→/g, '◀ ▶'],
     [/\bclick\b/g, 'tap'],
     [/\bClick\b/g, 'Tap'],
 ];
