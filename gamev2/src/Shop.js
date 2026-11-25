@@ -586,7 +586,8 @@ class Shop {
             return o;
         };
 
-        this.titleText = text(W / 2, py + 34, inv ? 'ITEMS' : venue.title + (selling ? ' · SELL' : ''), '32px', true);
+        const roomConfig = this.scene.config.rooms[this.scene.roomManager.currentRoom];
+        this.titleText = text(W / 2, py + 34, inv ? 'ITEMS' : Shop.titleFor(this.kind, roomConfig) + (selling ? ' · SELL' : ''), '32px', true);
         text(px + pw - 18, py + 34, this.fmt(this.money), '24px', true, '#ffd700', 1);
 
         if (!this.stock.length) {
@@ -730,6 +731,14 @@ Shop.VENUES = {
     snacks:  { title: 'SNACKS',          sells: i => (i.where === 'vending' || i.where === 'counter') && Shop.categoryOf(i) === 'food' },
     izakaya: { title: 'IZAKAYA',         sells: i => i.where === 'izakaya', buys: true, grills: true },
 };
+
+/**
+ * The title over a venue's list. A room's `shopTitle` renames its counter
+ * list (the Don Takote stores sell by the konbini rules but are no konbini);
+ * its shelves and machines keep their own.
+ */
+Shop.titleFor = (kind, roomConfig) =>
+    (kind === 'counter' && roomConfig && roomConfig.shopTitle) || Shop.VENUES[kind].title;
 
 /**
  * Everything an item's `effect` can do (besides `secs`, how long it lasts).

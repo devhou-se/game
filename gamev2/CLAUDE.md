@@ -237,7 +237,8 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   (it refuses to seal a cell holding a transporter or a dated NPC). Keep NPC spots and
   door arrivals off the cell in front of a machine's cabinet.
 - **Don Takote** (issue #91): every `discount-store` facade has a shop floor -
-  `DonTakoteMarket`, `DonTakoteOsaka`, `DonTakoteSapporo` (HUD: `Don Takote · Osaka`), built
+  `DonTakoteMarket`, `DonTakoteOsaka`, `DonTakoteSapporo` (HUD: `Don Takote · Osaka`; the room's
+  `shopTitle: "DON TAKOTE"` titles the till's list instead of `KONBINI` - `Shop.titleFor`), built
   by `tools/generate_discount_stores.py [Host ...]` on the konbini pattern. 27x19 room, one
   fixed floor plan (so a town generator can wire its door without running it first): the
   facade's own sign on a yellow back wall, a wall-to-wall back row (drink coolers one side,

@@ -199,6 +199,7 @@ def build_interior(store):
         [MAT[0], MAT_Y + 1], [MAT[0], BOTTOM + 1], [LEFT, BOTTOM + 1],
     ]
     room['interior'] = True          # a shop (Interactions.js), and no day/night grade inside
+    room['shopTitle'] = 'DON TAKOTE'  # the till's list is not titled KONBINI (Shop.titleFor, #136)
     return room
 
 

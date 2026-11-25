@@ -4005,6 +4005,7 @@
       "name": "Don Takote \u00b7 Market",
       "npcs": [],
       "objects": [],
+      "shopTitle": "DON TAKOTE",
       "transporters": [
         {
           "gridX": 12,
@@ -4880,6 +4881,7 @@
       "name": "Don Takote \u00b7 Osaka",
       "npcs": [],
       "objects": [],
+      "shopTitle": "DON TAKOTE",
       "transporters": [
         {
           "gridX": 12,
@@ -5755,6 +5757,7 @@
       "name": "Don Takote \u00b7 Sapporo",
       "npcs": [],
       "objects": [],
+      "shopTitle": "DON TAKOTE",
       "transporters": [
         {
           "gridX": 12,

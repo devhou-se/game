@@ -417,6 +417,22 @@ const tests = {
         assert.ok(/old boot.*throw it back/.test(msg(byId('old-boot'), '¥0')));
     },
 
+    "a room's shopTitle renames its counter list: the Don Takote tills say DON TAKOTE, konbinis KONBINI (#136)"() {
+        const rooms = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).rooms;
+        const titleFor = game('Shop.titleFor');
+        const stores = Object.keys(rooms).filter(k => k.startsWith('DonTakote'));
+        assert.ok(stores.length >= 3);
+        for (const k of stores) {
+            assert.strictEqual(titleFor('counter', rooms[k]), 'DON TAKOTE', k);
+            assert.strictEqual(titleFor('drinks', rooms[k]), 'DRINKS', 'shelves keep their own title');
+            assert.strictEqual(titleFor('vending', rooms[k]), 'VENDING MACHINE');
+        }
+        const konbini = Object.keys(rooms).find(k => k.startsWith('Konbini'));
+        assert.strictEqual(titleFor('counter', rooms[konbini]), 'KONBINI');
+        assert.strictEqual(titleFor('izakaya', rooms.Izakaya), 'IZAKAYA');
+        assert.strictEqual(titleFor('counter', undefined), 'KONBINI');
+    },
+
     'a fish is only eaten grilled, as a food effect, and the first rare one is an achievement'() {
         const CATCHES = Array.from(game('Fishing.CATCHES'));
         const { shop, toasts } = shopWith({ money: 200, items: {} });
