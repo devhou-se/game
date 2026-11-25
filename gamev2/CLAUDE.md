@@ -246,6 +246,12 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   `tools/blog_to_npc.py` has no node at hand, so it carries a ten-line port of "who sits where, later room
   owns the overlap" (`city_districts` / `city_reachable`); `tools/test_blog_to_npc.py` pins it to
   `play.js reach` for every cell of every room.
+- **The west gate** (issue #147): where Machi's dirt path meets Tokyo (Tokyo cells `(0..1, 41..42)`, Machi
+  `(47, 20..21)`) the lane is a two-cell brick apron between the lantern pair, Machi's path runs out through
+  the gate instead of ending in a rounded cap, and Tokyo's road corner beside it is a square junction box
+  (kerb down column 2, `road-corner-sw` at `(2,43)`, `road-plain` inside). It is district data in both
+  maps, so `?stitch=0` shows the same gate. The lower lantern stands on `(1,44)`: a lantern is two cells
+  tall and one cell further north its head hung over the lane.
 - **`?stitch=0`** is the safety valve: no cities, the five districts are separate rooms joined by the fade
   transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).
 - **Adding a district / a second city**: place the map in `devhouse.world` so the shared road lines up,
@@ -405,29 +411,51 @@ their route in the room's map data rather than in coordinates, have no collision
     an end of track that is not at the room's edge is "closed", and the train fades in / out standing on
     the rails there. The depth rule uses the district's own row and is then moved down by the district's
     offset (`span.lift`), so the Palace train sits at the same place in the draw order as it does unstitched.
-- **`AmbientBoats`** - any room with straight moat tiles (today: the Tokyo moat) gets a boat. A "run" is a
-  line of consecutive cells holding the same plain `moat-<north|south|east|west>` tile; `-rocks` tiles,
-  corner pieces and gaps end a run, so a boat never crosses rocks, the bridge gap in the south moat or the
-  stone bank. Runs too short for a boat to travel `MIN_TRAVEL` are dropped. The open-water strip inside the
-  tile is measured from the tile image itself (`waterBand`: the longest stretch of the dominant colour
-  across the middle of the tile), so no per-tile offsets are hard-coded. A boat fades in at one end of a
-  run, drifts to the other at `SPEED` with a small bob and fades out - it cannot leave by the screen edge
-  the way a train does. Runs with a boat's length of water on camera (below the HUD bar) are preferred.
+- **`AmbientBoats`** - a room gets boats from its waterways, which it finds in the map data in two ways:
+  - **moat tiles** (the Tokyo moat): a "run" is a line of consecutive cells holding the same plain
+    `moat-<north|south|east|west>` tile; `-rocks` tiles, corner pieces and gaps end a run, so a boat never
+    crosses rocks, the bridge gap in the south moat or the stone bank. The open-water strip inside the tile
+    is measured from the tile image itself (`waterBand`: the longest stretch of the dominant colour across
+    the middle of the tile), so no per-tile offsets are hard-coded.
+  - **a room's `waterways` list** in config.json (issue #61; written by the room's generator, so any water
+    tile family can be navigable): `{"axis": "h"|"v", "from", "to", "row"|"col", "rows"|"cols", "under": [[a, b], ...]}`
+    in cells, inclusive - `from`..`to` along the channel, `rows` wide from `row`. The open water across it
+    is measured from the tiles of one cross-section (`stackBand`: the pixel rows that are water along the
+    whole tile, so a rock rim that bulges anywhere stays outside). **`under`** lists the cells where a
+    bridge deck lies over the channel: the boat carries on beneath and is cropped at the deck's edge
+    (`hideUnder`), invisible while wholly under it - so it passes under the bridge and under whoever is
+    standing on it, with no depth juggling (the deck is ordinary Floor; the boat is never drawn on it).
+    An end on the room's edge is **open**: the boat sails in from off the map and out again, as a train
+    does; any other end is closed and the boat fades in / out there. On a waterway longer than the screen
+    the boat sets off just out of view rather than from the far end. In a stitched city a district's
+    waterways are moved to the district's place. **Osaka's Dotonbori canal** is the one declared waterway
+    today (rows 20-22, the whole width of the map, `under` columns 21-28). Frozen water (Asahikawa's river,
+    Yukimura's pond) declares none, so it gets no boats.
+  Runs too short for a boat to travel `MIN_TRAVEL` (128px, so a run is at least four cells for either
+  hull - the three-cell pockets between the moat's rocks get none) are dropped. On a closed run a boat
+  fades in at one end, drifts to the other at `SPEED` with a small bob and fades out. Runs with a boat's
+  length plus `MIN_TRAVEL` of water on camera (below the HUD bar) are preferred, so a boat is not spent on
+  a sliver of a run at the screen's edge.
   Depth is `calculateLayerDepth(1) + 1`: above the flat ground/water layers, below everything Y-sorted.
   Because scenery standing on the near bank is drawn over the water, `clearWater()` narrows each run's band
   to the lanes that room sprites of higher depth leave in view (a lane covered for more than `COVER_LIMIT`
-  of the run is hidden) and the run is dropped if what is left is narrower than a boat. That is why Tokyo's
-  north moat has no boats: the `blue-wall-short` palace wall hides the lower half of its channel. Tokyo ends
-  up with 8 runs (5 south, 1 west, 2 east). A tree crown overhanging one end of a run is allowed.
+  of the run is hidden). **What is left decides which boats fit** (`fit()` -> `run.hulls`, issue #62):
+  `AmbientBoats.HULLS` has the `punt` (116x44px) and the one-man `skiff` (80x28px), and a livery names its
+  hull. Tokyo's north moat shows only a 32px lane above the `blue-wall-short` palace wall (the wall hides
+  the lower half of the channel), so its three runs carry skiffs only - a boat is never drawn half behind
+  the wall; the south, east and west moat take both. A tree crown overhanging one end of a run is allowed.
 - **Boat art is procedural** (`AmbientBoats.buildTexture`): no boat sprite exists, so each livery
-  (`AmbientBoats.LIVERIES`: `wood`, `lacquer`, `white`) is drawn to a canvas on the tile art's 4x pixel
-  grid, once per facing, under the key `boat-<livery>-<right|left|down|up>`. `ensureTexture()` only draws a
-  key that is not already loaded, so real art replaces it by loading a sprite under the same key (keep it
-  within `AmbientBoats.size()`, or update `ART`, since run fitting uses that size).
+  (`AmbientBoats.LIVERIES`: `wood`, `lacquer`, `white` on the punt; `skiff`, `skiffGreen` on the skiff) is
+  drawn to a canvas on the tile art's 4x pixel grid, once per facing, under the key
+  `boat-<livery>-<right|left|down|up>`. `ensureTexture()` only draws a key that is not already loaded, so
+  real art replaces it by loading a sprite under the same key (keep it within `AmbientBoats.size(hull)`, or
+  update `HULLS`, since run fitting uses that size).
 - **Testing** - both expose `cross()` to send one immediately (a no-op in a room with no track / no water):
   `game.scene.keys.GameScene.ambientTrains.cross()` / `.ambientBoats.cross(run, dir, livery)` (all optional;
-  `run` is an entry of `ambientBoats.runs`, `dir` is `1` or `-1`). A new water tile family needs its name
-  added to `AmbientBoats.WATER_TILE`; ponds are not waterways.
+  `run` is an entry of `ambientBoats.runs`, `dir` is `1` or `-1`; a livery whose hull does not fit the run
+  is replaced by one that does). To make new water navigable, declare it in the room's `waterways` (above)
+  from its generator; `AmbientBoats.WATER_TILE` is only for self-describing straight channel tiles like
+  the moat. An ordinary pond is not a waterway.
 
 ### HUD System
 
@@ -513,7 +541,15 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   (23,26) is a walk-behind strip for that, the roof is solid from row 28). The
   `vending-white` / `vending-red` prefabs carry both colliders; `node tools/play.js lint`
   fails a room with `vending-walkable` otherwise, and `python3 tools/seal_vending.py [Room ...] [--dry-run]` repairs room data
-  (it refuses to seal a cell holding a transporter or a dated NPC). Keep NPC spots and
+  (it refuses to seal a cell holding a transporter or a dated NPC). The same goes for the fixtures
+  INSIDE a store (issue #152): a shelf or cooler is bumped from the cell below it, so lint fails with
+  `shop-no-front` when any column of a konbini / Don Takote shelf or cooler has no walkable cell under
+  it that the door leads to (the till, against the front wall, needs any reachable side).
+  `generate_konbinis.py` lays a store out as coolers | walkway | aisle | walkway | (aisle | walkway) |
+  counter row: a two-cell `office-fridge` pushes the aisles down a row, the last aisle stops two rows
+  short of the counter row (one on the row above it closed the ring and sealed the back of the store
+  off from the door - `KonbiniMarket1` and `KonbiniMarket3` were like that), and a five-row store gets
+  the one-cell freezer instead of the fridge. Keep NPC spots and
   door arrivals off the cell in front of a machine's cabinet.
 - **Don Takote** (issue #91): every `discount-store` facade has a shop floor -
   `DonTakoteMarket`, `DonTakoteOsaka`, `DonTakoteSapporo` (HUD: `Don Takote · Osaka`; the room's
@@ -878,11 +914,12 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Sapporo Clock Tower | Sapporo | `sapporo-clock-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
 | Sapporo TV Tower | Sapporo | `sapporo-tv-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
 
-- **Osaka** (`tools/generate_osaka.py`, 50x40) is a generated town reachable only by train, like Yukimura:
-  station house -> arch over the main street -> the canal bridge -> Tsutenkaku on its plaza, with the ferris
-  wheel on the north bank. The main street is the town's one asphalt road (issue #106, see Street
-  accessories) and the discount store by the arch opens into `DonTakoteOsaka` (issue #91, see Shop). The tower stands on the street's axis, so a shrub garden fills the ground behind
-  it and the street forks round (otherwise the player walks hidden behind the sprite for ten cells); the
+- **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reachable only by train, like Yukimura:
+  station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
+  plaza, with the ferris wheel on the north bank. The Dotonbori canal (rows 20-22) runs the whole width of
+  the map under the bridge and carries the ambient boats (issue #61, see Ambient Traffic); the main street
+  and the avenue are its asphalt roads (issues #106 / #151, see Street accessories) and the discount store by the arch opens into `DonTakoteOsaka` (issue #91, see Shop). The tower stands on the street's axis, so a shrub garden fills the ground behind
+  it and the street forks round at the avenue (otherwise the player walks hidden behind the sprite for ten cells); the
   platform-edge fence and the continuous border hedges keep the player off the ballast and out from behind
   the fences. `OsakaStation` is registered in `tools/generate_stations.py`
   (`STATIONS` / `TOWN_DOORS`) and so in config `stations`; Osaka sits detached in `devhouse.world`.
@@ -1026,8 +1063,8 @@ see Shop, Food and Drink).
 |---|---|---|
 | `highrise-yellow` (ochre office block) | 4x8 | Market (15,22), Palace (48,6) |
 | `highrise-blue` (blue-grey office block) | 5x11 | Osaka (3,7) |
-| `highrise-glass` (curtain-wall tower) | 4x10 | Osaka (42,22) |
-| `highrise-apartment` (tiled-balcony flats) | 5x8 | Osaka (3,24) |
+| `highrise-glass` (curtain-wall tower) | 4x10 | Osaka (42,29) |
+| `highrise-apartment` (tiled-balcony flats) | 5x8 | Osaka (3,30) |
 | `midrise-apartment` (the same block, two floors lower) | 5x6 | Palace (40,10), feet on the forecourt edge |
 | `discount-store` (the "Don Quijote") | 5x8 | Market (46,22), Osaka (13,9) by the Dotonbori arch, Sapporo (16,11) - each with an interior |
 | `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Machi (4/9/14,17): the old-town lane |
@@ -1083,15 +1120,21 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
 - **Where**: signalled crossings in Tokyo (south road at the palace path, west road), Market (north road on the
   temple axis, east road, south road at the torii), Palace (east road), Park (south road, east road) and Osaka
   (the main street, between the arch and the bridge); props scattered through those, and Machi.
-- **Osaka's road** (issue #106, `generate_osaka.py`): the main street's middle four columns (23-26, rows 11-22)
-  are asphalt - `road-edge-left`, two `road-plain`, `road-edge-right` - with the dark brick either side as its
-  pavement; it starts a row below the station door and ends at the tower's garden. It is four cells wide, not
-  the usual three, because the arch's opening and the tower's archway are both an even number of cells, so
-  only an even road sits on their axis; it therefore has no centre line, and its crossing is the `crossing-v`
-  tiles laid by hand with the middle one repeated (the prefab is three cells). The crossing is on row 18 and
+- **Osaka's roads** (issues #106 / #151, `generate_osaka.py`): the **main street** is columns 23-26 from row
+  11 to the avenue - `road-edge-left`, `road-lane-left`, `road-lane-right`, `road-edge-right` - with the dark
+  brick either side as its pavement. It ends square a row below the station door (`road-corner-nw`, two
+  `road-edge-top`, `road-corner-ne`), runs under the arch and over the bridge, and meets **Canal-side
+  Avenue** (rows 25-27, the standard `road-edge-top` / `road-div-horizontal` / `road-edge-bottom`, pavements
+  on rows 24 and 28) at a T-junction whose box is `road-plain`, as in Sapporo. The avenue runs from one edge
+  of the map to the other, through a gap in the border hedge at both ends. The street is four cells wide,
+  not the usual three, **on purpose**: the arch's opening is four cells and the arch is the landmark, so
+  the road keeps its axis and gets its centre line from the two lane tiles, which carry half the line each
+  on their shared edge. Those, and the mitred two-kerb corners (`road-corner-nw|ne|sw|se`), are derived
+  from the sheet's own road tiles by **`tools/make_road_tiles.py`** (Pillow; no new art). The crossing is the `crossing-v`
+  tiles laid by hand with the middle one repeated (the prefab is three cells). It is on row 18 and
   both signals stand just south of it at the bridgehead (bases `(22,19)` and `(27,19)`): north of it their
   heads would be lost in the arch's side boards. The pavement is one cell either side of the road
-  but two on the bridge (columns 21-22 and 27-28, rows 19-22; the canal's ponds stop at columns 20 and 29), so
+  but two on the bridge (columns 21-22 and 27-28, rows 19-23; the canal's water stops at columns 20 and 29), so
   there is a way round the signal posts without stepping into the road (issue #139). The bus stop stands on the kerb at `(21,11)`.
   Nothing is placed in the rows / columns where Tokyo, Market, Palace and Park overlap (`devhouse.world`).
   A signal on the north side of a road needs three free rows above the kerb - Market's north road and Tokyo's are

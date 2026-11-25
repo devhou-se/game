@@ -7,14 +7,27 @@
  * and fades out again (a moat is a closed channel, so unlike a train a boat
  * cannot leave by the screen edge).
  *
- * Waterways come from the map DATA, never from coordinates: a "run" is a line
- * of consecutive cells holding the same plain `moat-<side>` tile. Rock tiles,
- * corner pieces and gaps (the bridge over Tokyo's south moat) end a run, so a
- * boat never crosses rocks, a bridge or the stone bank. The strip of open
- * water inside the tile is measured from the tile's own pixels (waterBand),
- * so the boat sits in the water whatever the tile's bank art looks like, and
- * water hidden behind scenery standing in front of it is left out
+ * Waterways come from the map DATA, never from coordinates, in two ways:
+ *   - moat tiles: a "run" is a line of consecutive cells holding the same
+ *     plain `moat-<side>` tile. Rock tiles, corner pieces and gaps (the bridge
+ *     over Tokyo's south moat) end a run, so a boat never crosses rocks, a
+ *     bridge or the stone bank;
+ *   - a room's `waterways` list in config.json (issue #61), written by the
+ *     room's generator: `{ axis: 'h'|'v', from, to, row|col, rows|cols,
+ *     under: [[a, b], ...] }` in cells - a canal or river of any water tiles,
+ *     `from`..`to` along it and `rows` (or `cols`) wide. `under` lists the
+ *     cells where a bridge deck lies over the water: the boat carries on
+ *     beneath and is not drawn there (cropped at the deck's edge), so it goes
+ *     under the bridge and under whoever stands on it. An end on the room's
+ *     edge is open - the boat comes in from off the map, as a train does.
+ *     Frozen water simply declares no waterway.
+ * The strip of open water is measured from the tiles' own pixels (waterBand /
+ * stackBand), so the boat sits in the water whatever the bank art looks like,
+ * and water hidden behind scenery standing in front of it is left out
  * (clearWater), so a boat is never half covered by a wall on the near bank.
+ * What is left decides which hulls fit (AmbientBoats.HULLS): Tokyo's north
+ * moat shows only a 32px lane above the palace wall, which takes the skiff
+ * and not the punt (issue #62).
  *
  * Boats are decoration only: no collision, no interaction. They draw one step
  * above the flat ground/water layers and below everything Y-sorted.
@@ -65,10 +78,9 @@ class AmbientBoats {
             }
         }
 
-        const size = AmbientBoats.size();
         for (const line of Object.values(lines)) {
             const band = this.waterBand(line.key, line.axis);
-            if (!band || band[1] - band[0] < size.across) continue;   // channel too narrow
+            if (!band) continue;
 
             // where the tile's sprite sits relative to its cell (see RoomManager.loadLayer)
             const tex = scene.textures.get(line.key).getSourceImage();
@@ -83,19 +95,126 @@ class AmbientBoats {
                 if (i < line.cells.length && line.cells[i] === line.cells[i - 1] + 1) continue;
                 const from = line.cells[start] * GS + alongOff;
                 const to = line.cells[i - 1] * GS + alongOff + alongSize;
-                if (to - from >= size.along + AmbientBoats.MIN_TRAVEL) {
-                    // keep only the water that scenery standing in front leaves in view
-                    const run = this.clearWater({
-                        axis: line.axis, from, to,
-                        band0: line.cross * GS + crossOff + band[0],
-                        band1: line.cross * GS + crossOff + band[1],
-                    });
-                    if (run.band1 - run.band0 >= size.across) runs.push(run);
-                }
+                // keep only the water that scenery standing in front leaves in view
+                const whole = {
+                    axis: line.axis, from, to,
+                    band0: line.cross * GS + crossOff + band[0],
+                    band1: line.cross * GS + crossOff + band[1],
+                };
+                const run = this.fit(whole) && this.fit(this.clearWater(whole));
+                if (run) runs.push(run);
                 start = i;
             }
         }
+        return runs.concat(this.declaredRuns(roomKey));
+    }
+
+    /**
+     * A run with the hulls it can carry (`hulls`: keys of AmbientBoats.HULLS
+     * narrow and short enough for it), or null when no boat fits at all.
+     */
+    fit(run) {
+        const hulls = Object.keys(AmbientBoats.HULLS).filter(hull => {
+            const size = AmbientBoats.size(hull);
+            return run.band1 - run.band0 >= size.across && run.to - run.from >= size.along + AmbientBoats.MIN_TRAVEL;
+        });
+        return hulls.length ? Object.assign(run, { hulls }) : null;
+    }
+
+    /**
+     * The waterways a room declares in config.json (`rooms.<Room>.waterways`,
+     * see the header) as runs. In a stitched city each district's list is
+     * moved to the district's place. A run gets `under` (pixel spans along it
+     * where a bridge hides the boat) and `open` ([start, end]: that end is on
+     * the room's edge, so the boat sails in / out there instead of fading).
+     */
+    declaredRuns(roomKey) {
+        const scene = this.scene;
+        const GS = scene.GRID_SIZE;
+        const room = scene.roomManager.rooms[roomKey];
+        const configRooms = (scene.config && scene.config.rooms) || {};
+        const members = room.city ? room.city.members : [{ key: roomKey, x: 0, y: 0 }];
+        const runs = [];
+        for (const m of members) {
+            for (const w of ((configRooms[m.key] || {}).waterways || [])) {
+                const h = w.axis !== 'v';
+                const cross0 = (h ? w.row + m.y : w.col + m.x), n = (h ? w.rows : w.cols) || 1;
+                const off = h ? m.x : m.y;
+                const under = (w.under || []).map(([a, b]) => [(a + off) * GS, (b + 1 + off) * GS]);
+                // measure the water across the channel on the first cell no bridge covers
+                let sample = w.from + off;
+                while (under.some(([a, b]) => sample * GS >= a && sample * GS < b)) sample++;
+                const stack = [];
+                for (let i = 0; i < n; i++) stack.push(this.groundTile(room, h ? sample : cross0 + i, h ? cross0 + i : sample));
+                const band = this.stackBand(stack, h ? 'h' : 'v');
+                if (!band) continue;
+                const from = (w.from + off) * GS, to = (w.to + 1 + off) * GS;
+                const length = h ? room.worldWidth : room.worldHeight;
+                const run = this.fit(this.clearWater({
+                    axis: h ? 'h' : 'v', from, to, under,
+                    open: [from <= 0, to >= length],
+                    band0: cross0 * GS + band[0], band1: cross0 * GS + band[1],
+                }));
+                if (run) runs.push(run);
+            }
+        }
         return runs;
+    }
+
+    /** The topmost flat (ground / water) tile drawn on a cell: its texture key, or null. */
+    groundTile(room, x, y) {
+        let key = null;
+        for (const layer of (room.layers || [])) {
+            if (layer.collision || (layer.z || 0) >= 2) continue;
+            const k = (layer.tiles || {})[`${x},${y}`];
+            if (k && this.scene.textures.exists(k)) key = k;
+        }
+        return key;
+    }
+
+    /**
+     * The open water across a channel several tiles wide: `keys` are the tiles
+     * of one cross-section, bank to bank, drawn a cell each. Returns [start,
+     * end) pixel offsets from the first tile's edge: the longest run of pixel
+     * rows (columns, for a 'v' channel) that are the water colour along the
+     * WHOLE tile, so a rock rim that bulges anywhere in the tile is outside
+     * it. Null when a tile is missing or no water is found.
+     */
+    stackBand(keys, axis) {
+        if (!keys.length || keys.some(k => !k)) return null;
+        const id = axis + '|' + keys.join('|');
+        if (id in this.bandCache) return this.bandCache[id];
+        const GS = this.scene.GRID_SIZE, STEP = AmbientBoats.ART.PX;
+        const masks = keys.map(k => this.alphaMask(k));
+        let best = null;
+        if (masks.every(Boolean)) {
+            const at = (mask, along, across) => {       // cell pixels -> texture pixel colour
+                const x = Math.floor((axis === 'h' ? along : across) / GS * mask.width);
+                const y = Math.floor((axis === 'h' ? across : along) / GS * mask.height);
+                const i = (y * mask.width + x) * 4;
+                return mask.data[i + 3] === 255 ? (mask.data[i] << 16) | (mask.data[i + 1] << 8) | mask.data[i + 2] : -1;
+            };
+            const count = {};
+            const lines = [];                            // per pixel line across: the colours along the tile
+            masks.forEach(mask => {
+                for (let c = 0; c < GS; c++) {
+                    const line = [];
+                    for (let a = STEP / 2; a < GS; a += STEP) {
+                        const v = at(mask, a, c);
+                        line.push(v);
+                        if (v >= 0) count[v] = (count[v] || 0) + 1;
+                    }
+                    lines.push(line);
+                }
+            });
+            const water = Number(Object.keys(count).sort((a, b) => count[b] - count[a])[0]);
+            for (let i = 0, start = -1; i <= lines.length; i++) {
+                if (i < lines.length && lines[i].every(v => v === water)) { if (start < 0) start = i; continue; }
+                if (start >= 0 && (!best || i - start > best[1] - best[0])) best = [start, i];
+                start = -1;
+            }
+        }
+        return (this.bandCache[id] = best);
     }
 
     /**
@@ -218,17 +337,18 @@ class AmbientBoats {
     }
 
     /**
-     * Runs with a boat's length of water on camera (so a boat is not wasted
-     * off-screen), else all. The strip under the HUD bar does not count as on
-     * camera.
+     * Runs with enough water on camera for a boat to be seen travelling - its
+     * own length plus MIN_TRAVEL, so one is not wasted off-screen or on a
+     * sliver of a run at the screen's edge - else all. The strip under the HUD
+     * bar does not count as on camera.
      */
     candidateRuns() {
         const cam = this.scene.cameras.main;
         const view = cam.worldView;
         const top = view.y + (typeof UI !== 'undefined' ? UI.HUD_HEIGHT : 0) / cam.zoom;
-        const need = AmbientBoats.size().along;
         const seen = this.runs.filter(r => {
             const h = r.axis === 'h';
+            const need = Math.min(...r.hulls.map(hull => AmbientBoats.size(hull).along)) + AmbientBoats.MIN_TRAVEL;
             const along = Math.min(r.to, h ? view.right : view.bottom) - Math.max(r.from, h ? view.x : top);
             return along >= need && r.band0 >= (h ? top : view.x) && r.band1 <= (h ? view.bottom : view.right);
         });
@@ -239,7 +359,8 @@ class AmbientBoats {
      * One boat along one run, end to end. All three arguments are optional
      * (random when omitted) — tests and the console pass them to stage a
      * particular crossing: `run` is an entry of this.runs, `dir` is +1
-     * (right/down) or -1 (left/up), `livery` a key of AmbientBoats.LIVERIES.
+     * (right/down) or -1 (left/up), `livery` a key of AmbientBoats.LIVERIES
+     * (ignored when its hull does not fit the run).
      */
     cross(run, dir, livery) {
         const scene = this.scene;
@@ -251,7 +372,8 @@ class AmbientBoats {
         const pick = (list) => list[Math.floor(Math.random() * list.length)];
         run = run || pick(this.candidateRuns());
         dir = dir || (Math.random() < 0.5 ? 1 : -1);
-        livery = AmbientBoats.LIVERIES[livery] ? livery : pick(Object.keys(AmbientBoats.LIVERIES));
+        const fits = Object.keys(AmbientBoats.LIVERIES).filter(l => run.hulls.includes(AmbientBoats.hullOf(l)));
+        livery = fits.includes(livery) ? livery : pick(fits);
 
         const facing = run.axis === 'h' ? (dir > 0 ? 'right' : 'left') : (dir > 0 ? 'down' : 'up');
         const key = this.ensureTexture(livery, facing);
@@ -259,10 +381,30 @@ class AmbientBoats {
         const along = run.axis === 'h' ? boat.width : boat.height;
         const across = run.axis === 'h' ? boat.height : boat.width;
 
-        // travel between the run's ends (whole sprite stays inside the run),
-        // on a lane somewhere in the open water
-        const a0 = run.from + along / 2, a1 = run.to - along / 2;
-        const start = dir > 0 ? a0 : a1, end = dir > 0 ? a1 : a0;
+        // travel between the run's ends, on a lane somewhere in the open water.
+        // At a closed end the whole sprite stays inside the run and fades; at
+        // an open one (the room's edge) it starts / finishes just off the map.
+        const open = run.open || [false, false];
+        const a0 = run.from + (open[0] ? -along / 2 : along / 2);
+        const a1 = run.to + (open[1] ? along / 2 : -along / 2);
+        let start = dir > 0 ? a0 : a1;
+        const end = dir > 0 ? a1 : a0;
+        let fadeIn = !open[dir > 0 ? 0 : 1];
+        const fadeOut = !open[dir > 0 ? 1 : 0];
+        // a waterway longer than the screen: do not make the player wait while
+        // the boat crosses water nobody can see - it sets off just out of view
+        const view = scene.cameras.main.worldView;
+        const lo = (run.axis === 'h' ? view.x : view.y) - along;
+        const hi = (run.axis === 'h' ? view.right : view.bottom) + along;
+        if (lo < run.to && hi > run.from) {
+            // (not when that would leave it less than MIN_TRAVEL to go: a run
+            // that ends just outside the view keeps its whole length)
+            const near = dir > 0 ? lo : hi;
+            if ((dir > 0 ? near > start : near < start) && Math.abs(end - near) >= AmbientBoats.MIN_TRAVEL) {
+                start = near;
+                fadeIn = false;
+            }
+        }
         const slack = Math.max(0, (run.band1 - run.band0 - across) / 2 - AmbientBoats.BANK_GAP);
         const lane = (run.band0 + run.band1) / 2 + (Math.random() * 2 - 1) * slack;
         const dist = Math.abs(end - start);
@@ -277,7 +419,8 @@ class AmbientBoats {
             const bob = Math.sin(elapsed / AmbientBoats.BOB_PERIOD * Math.PI * 2) * AmbientBoats.BOB;
             if (run.axis === 'h') boat.setPosition(a, lane + bob);
             else boat.setPosition(lane + bob, a);
-            boat.setAlpha(Math.min(1, t * dist / fade, (1 - t) * dist / fade));
+            boat.setAlpha(Math.min(1, fadeIn ? t * dist / fade : 1, fadeOut ? (1 - t) * dist / fade : 1));
+            this.hideUnder(boat, run, a, along);
         };
         place(0, 0);
 
@@ -293,6 +436,26 @@ class AmbientBoats {
                 this.schedule(15000 + Math.random() * 25000);
             },
         });
+    }
+
+    /**
+     * Draw only the part of the boat that is not under a bridge: the sprite is
+     * cropped at the deck's edge (the larger piece, should a deck be shorter
+     * than the boat) and hidden while it is wholly underneath.
+     */
+    hideUnder(boat, run, a, along) {
+        if (!run.under || !run.under.length) return;
+        const lo = a - along / 2, hi = a + along / 2;
+        let pieces = [[lo, hi]];
+        for (const [u0, u1] of run.under) {
+            pieces = pieces.flatMap(([p0, p1]) => (u1 <= p0 || u0 >= p1) ? [[p0, p1]]
+                : [[p0, Math.min(p1, u0)], [Math.max(p0, u1), p1]].filter(([q0, q1]) => q1 - q0 > 0));
+        }
+        const piece = pieces.sort((p, q) => (q[1] - q[0]) - (p[1] - p[0]))[0];
+        boat.setVisible(!!piece);
+        if (!piece) return;
+        if (run.axis === 'h') boat.setCrop(piece[0] - lo, 0, piece[1] - piece[0], boat.height);
+        else boat.setCrop(0, piece[0] - lo, boat.width, piece[1] - piece[0]);
     }
 
     clear() {
@@ -312,10 +475,15 @@ class AmbientBoats {
         return key;
     }
 
-    /** On-screen size of a boat sprite: `along` its heading, `across` it. */
-    static size() {
-        const A = AmbientBoats.ART;
-        return { along: (A.WAKE + A.LENGTH + 2) * A.PX, across: (A.BEAM + 2) * A.PX };
+    /** On-screen size of a boat sprite of one hull: `along` its heading, `across` it. */
+    static size(hull = 'punt') {
+        const A = AmbientBoats.HULLS[hull], PX = AmbientBoats.ART.PX;
+        return { along: (A.WAKE + A.LENGTH + 2) * PX, across: (A.BEAM + 2) * PX };
+    }
+
+    /** The hull a livery is painted on. */
+    static hullOf(livery) {
+        return (AmbientBoats.LIVERIES[livery] || {}).hull || 'punt';
     }
 
     /**
@@ -327,8 +495,8 @@ class AmbientBoats {
      * whichever way the boat points.
      */
     static buildTexture(livery, facing) {
-        const A = AmbientBoats.ART;
         const pal = AmbientBoats.LIVERIES[livery];
+        const A = Object.assign({ PX: AmbientBoats.ART.PX }, AmbientBoats.HULLS[AmbientBoats.hullOf(livery)]);
         const U = A.WAKE + A.LENGTH + 2, V = A.BEAM + 2;       // 1px margin all round
         const mid = (V - 1) / 2;
         const grid = [];                                        // grid[u][v] = colour | undefined
@@ -353,12 +521,17 @@ class AmbientBoats {
                 else grid[u][v] = (hu(u) % 4 === 2) ? pal.deckDark : pal.deck;   // plank seams
             }
         }
-        const deck0 = mid - 2, deck1 = mid + 2;                 // deck rows inside the rim
+        // everything aboard is sized off the widest half-beam: 4 on the punt
+        // (the figures below are drawn for it), 2 on the skiff
+        const half = Math.max(...A.HALF_BEAM);
+        const inner = half - 2;                                 // deck half-width inside outline + rim
+        const deck0 = mid - inner, deck1 = mid + inner;         // deck rows inside the rim
+        const narrow = (dv) => Math.sign(dv) * Math.round(Math.abs(dv) * half / 4);
 
         // wake: ripples spreading out behind the stern
         for (const [h, dv, a] of [[-1, -3, 0.9], [-1, 3, 0.9], [-2, 0, 0.9], [-3, -2, 0.7], [-3, 2, 0.7],
                                   [-4, 0, 0.5], [-5, -3, 0.4], [-5, 3, 0.4]]) {
-            put(h, mid + dv, `rgba(142,194,250,${a})`);
+            if (h >= -A.WAKE) put(h, mid + narrow(dv), `rgba(142,194,250,${a})`);
         }
 
         // seat thwarts
@@ -367,9 +540,10 @@ class AmbientBoats {
         }
 
         // seated passengers: shoulders across the beam, head in the middle
+        const shoulder = Math.max(1, inner);
         (pal.passengers || []).forEach(([h, robe, hair]) => {
-            for (let v = mid - 2; v <= mid + 2; v++) { put(h, v, robe); put(h + 1, v, robe); }
-            for (let v = mid - 1; v <= mid + 1; v++) { put(h, v, hair); put(h + 1, v, hair); }
+            for (let v = mid - shoulder; v <= mid + shoulder; v++) { put(h, v, robe); put(h + 1, v, robe); }
+            for (let v = mid - shoulder + 1; v <= mid + shoulder - 1; v++) { put(h, v, hair); put(h + 1, v, hair); }
         });
 
         // roofed cabin (yakatabune): tiled roof with a ridge and corner lanterns
@@ -385,13 +559,15 @@ class AmbientBoats {
         }
 
         // boatman at the stern under a straw hat, sculling pole trailing in the wake
-        for (const [h, dv] of [[0, 2], [-1, 2], [-2, 3], [-3, 3], [-4, 4]]) put(h, mid + dv, pal.pole);
-        const bh = 3;
-        for (let dh = -2; dh <= 2; dh++) {
-            for (let dv = -2; dv <= 2; dv++) {
-                if (Math.abs(dh) === 2 && Math.abs(dv) === 2) continue;
+        for (const [h, dv] of [[0, 2], [-1, 2], [-2, 3], [-3, 3], [-4, 4]]) {
+            if (h >= -A.WAKE) put(h, mid + Math.max(1, dv - (4 - half)), pal.pole);
+        }
+        const bh = A.HAT + 1, R = A.HAT;                        // hat radius: 2 on the punt, 1 on the skiff
+        for (let dh = -R; dh <= R; dh++) {
+            for (let dv = -R; dv <= R; dv++) {
+                if (R > 1 && Math.abs(dh) === R && Math.abs(dv) === R) continue;
                 const ring = Math.max(Math.abs(dh), Math.abs(dv));
-                put(bh + dh, mid + dv, ring === 2 ? pal.hatDark : (ring === 1 ? pal.hat : pal.hatLight));
+                put(bh + dh, mid + dv, ring === R ? pal.hatDark : (ring === 0 ? pal.hatLight : pal.hat));
             }
         }
 
@@ -426,21 +602,38 @@ class AmbientBoats {
 AmbientBoats.WATER_TILE = /^moat-(north|south|east|west)_/;
 
 AmbientBoats.SPEED = 0.03;        // px/ms — a lazy punt, ~half a tile a second
-AmbientBoats.MIN_TRAVEL = 96;     // a run must let a boat move at least this far (px)
+AmbientBoats.MIN_TRAVEL = 128;    // a run must let a boat move at least this far (px): four cells for either hull
 AmbientBoats.FADE = 56;           // px of travel spent fading in / out at each end
 AmbientBoats.BOB = 1.5;           // px of sway across the heading
 AmbientBoats.BOB_PERIOD = 2600;   // ms per sway
 AmbientBoats.BANK_GAP = 4;        // px kept clear between hull and bank when picking a lane
 AmbientBoats.COVER_LIMIT = 0.25;  // a lane hidden by scenery for more than this share of a run is not open water
 
-/** Boat geometry in art pixels (PX screen pixels each, matching the 16px-native tiles at 64px). */
-AmbientBoats.ART = {
-    PX: 4,
-    WAKE: 5,          // wake drawn behind the stern
-    LENGTH: 22,       // stern to bow
-    BEAM: 9,          // widest point
-    // half-width of the hull at each step from stern (0) to bow (LENGTH-1)
-    HALF_BEAM: [3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 2, 2, 1, 0],
+/** One art pixel is PX screen pixels, matching the 16px-native tiles at 64px. */
+AmbientBoats.ART = { PX: 4 };
+
+/**
+ * Hull shapes, in art pixels. A run takes every hull that fits its open water
+ * (AmbientBoats.fit), so a narrow lane still gets a boat.
+ */
+AmbientBoats.HULLS = {
+    // the pleasure punt: 116 x 44px on screen
+    punt: {
+        WAKE: 5,          // wake drawn behind the stern
+        LENGTH: 22,       // stern to bow
+        BEAM: 9,          // widest point
+        HAT: 2,           // radius of the boatman's straw hat
+        // half-width of the hull at each step from stern (0) to bow (LENGTH-1)
+        HALF_BEAM: [3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 2, 2, 1, 0],
+    },
+    // a one-man skiff for narrow water: 80 x 28px (Tokyo's north moat, issue #62)
+    skiff: {
+        WAKE: 4,
+        LENGTH: 14,
+        BEAM: 5,
+        HAT: 1,
+        HALF_BEAM: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0],
+    },
 };
 
 /** Liveries: hull colours plus what is aboard. Colours sit in the tile art's palette range. */
@@ -464,6 +657,20 @@ AmbientBoats.LIVERIES = {
         hat: '#e2c275', hatLight: '#f3d890', hatDark: '#9c7a3c', pole: '#d8c89a',
         thwarts: [8, 16],
         passengers: [[11, '#e0b354', '#2b2236']],
+    },
+    // skiffs: a lone boatman, one with a basket of the day's catch amidships
+    skiff: {
+        hull: 'skiff',
+        outline: '#3b2a26', rim: '#b9774a', deck: '#8f5c3c', deckDark: '#7a4c33',
+        hat: '#e2c275', hatLight: '#f3d890', hatDark: '#9c7a3c', pole: '#d8c89a',
+        thwarts: [7],
+        passengers: [[8, '#c9b48a', '#7fa3c4']],
+    },
+    skiffGreen: {
+        hull: 'skiff',
+        outline: '#1f3330', rim: '#5f9c7c', deck: '#c9a66b', deckDark: '#a88650',
+        hat: '#e2c275', hatLight: '#f3d890', hatDark: '#9c7a3c', pole: '#d8c89a',
+        thwarts: [6, 10],
     },
 };
 

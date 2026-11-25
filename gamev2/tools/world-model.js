@@ -489,6 +489,43 @@ class WorldModel {
             if (foot && !opensOut(x, y + 1)) push(errors, 'vending-no-front', `${c} (front ${K(x, y + 1)})`);
         }
 
+        // Shop fixtures inside a store (issue #152): a shelf or cooler is used by bumping it
+        // from the cell in front, so the cell under EVERY column of its footprint must be
+        // walkable and reachable from the door (a two-cell fridge with an aisle of shelves
+        // touching its foot could only be bumped from the side, and the middle of a run not
+        // at all). The till stands against the front wall: any reachable side will do.
+        // "Reachable" here is walked from the room's doors, which is how a shopper gets in.
+        const roomConfig = this.config.rooms[roomKey] || {};
+        const fixtures = !roomConfig.interior ? [] :
+            Interactions.all(room, roomConfig, { sizeOf: (key) => this.cells(key), venues: Shop.VENUES, group: 'shop' });
+        const fromDoor = new Set();
+        if (fixtures.length) {
+            const queue = room.transporters.map(t => [t.gridX, t.gridY]).filter(c => walkable(...c));
+            for (const c of queue) fromDoor.add(K(...c));
+            while (queue.length) {
+                const [cx, cy] = queue.shift();
+                for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) {
+                    if (fromDoor.has(K(nx, ny)) || !walkable(nx, ny)) continue;
+                    fromDoor.add(K(nx, ny));
+                    queue.push([nx, ny]);
+                }
+            }
+        }
+        for (const f of fixtures) {
+            const till = f.kind !== 'drinks' && f.kind !== 'snacks';   // the konbini counter, a venue's bar
+            const sides = [];
+            for (let a = 0; a < f.w; a++) sides.push([f.x + a, f.y + f.h], [f.x + a, f.y - 1]);
+            for (let b = 0; b < f.h; b++) sides.push([f.x - 1, f.y + b], [f.x + f.w, f.y + b]);
+            if (till) {
+                if (!sides.some(([sx, sy]) => fromDoor.has(K(sx, sy)))) push(errors, 'shop-no-front', `${nm(f.key)} @${K(f.x, f.y)} (no reachable side)`);
+                continue;
+            }
+            for (let a = 0; a < f.w; a++) {
+                const front = K(f.x + a, f.y + f.h);
+                if (!fromDoor.has(front)) push(errors, 'shop-no-front', `${nm(f.key)} @${K(f.x + a, f.y)} (front ${front})`);
+            }
+        }
+
         const covered = new Set();
         for (const o of objects) for (const [cx, cy] of o.cells) { covered.add(K(cx, cy)); covered.add(K(cx, cy - 1)); }
         const sortedColliders = [...colliders].map(c => c.split(',').map(Number)).sort((a, b) => a[0] - b[0] || a[1] - b[1]);

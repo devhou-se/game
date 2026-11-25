@@ -15,13 +15,21 @@ From the station you walk south down the main street:
           west an office block, a townhouse and the DISCOUNT STORE (the "Don
           Quijote", issue #18 - its door leads into DonTakoteOsaka, issue #91);
           the oval FERRIS WHEEL to the east
-  middle  the Dotonbori canal, crossed by the street (the bridge)
+  middle  the Dotonbori CANAL (issue #61): three rows of water from one edge
+          of the map to the other, under the street's bridge. It is declared
+          as the room's one `waterways` entry, which is what gives it ambient
+          boats (src/AmbientBoats.js): they sail in from off the map, pass
+          UNDER the bridge deck (the `under` columns) and out the other side.
+          South of it, CANAL-SIDE AVENUE runs east-west across the whole town.
 
-The main street is Osaka's one asphalt ROAD (issue #106): four cells of roadway
-(columns 23-26) between brick pavements, from below the station forecourt,
-under the arch and over the bridge to the tower's garden, with a signalled
-zebra crossing between the arch and the bridge. Roads are ordinary walkable
-floor - there is no traffic.
+The ROADS (issues #106, #151): the main street is four cells of roadway
+(columns 23-26) between brick pavements - a kerb, two lanes with the centre
+line on the boundary between them (tools/make_road_tiles.py), a kerb. It ends
+square just below the station forecourt, runs under the arch, over a signalled
+zebra crossing and the bridge, and meets the avenue at a T-junction in front
+of the tower's garden. The avenue is the standard three-cell road (kerb, centre
+line, kerb) and leaves town through the hedge at both ends. Roads are ordinary
+walkable floor - there is no traffic.
 
   south   Shinsekai: TSUTENKAKU TOWER on the street's axis, standing on its
           own plaza, townhouses, an apartment block and a glass tower either
@@ -42,6 +50,7 @@ Run from gamev2/:
     python3 tools/extract_city.py                 # high-rises + discount store
     python3 tools/generate_tsutenkaku.py
     python3 tools/extract_street.py               # traffic light, crossing, kerb props
+    python3 tools/make_road_tiles.py              # lane + corner road pieces (Pillow)
     python3 tools/generate_discount_art.py        # the discount store's interior signage
     python3 tools/make_prefabs.py
     python3 tools/generate_osaka.py
@@ -60,7 +69,15 @@ import generate_discount_stores as don
 
 cfg = rg.load_config()
 
-W, H = 50, 40
+W, H = 50, 46
+# Rows, north to south: rail 3-5, station 6-8, the north bank's paving 9-18,
+# grass bank 19, CANAL 20-22, grass bank 23, the AVENUE (pavement 24, road 25-27,
+# pavement 28), Shinsekai from 29. S is how far Shinsekai sits below where it was
+# drawn before the avenue went in (issue #151): its rows below are written as
+# their old numbers + S.
+CANAL_Y0, CANAL_Y1 = 20, 22
+AVENUE_Y = 25                    # top kerb row of the three-cell avenue
+S = 6
 b = rg.Builder(W, H)
 rng = random.Random(17)
 FLAT = {'center'}
@@ -91,26 +108,43 @@ station_door = b.stamp('house-blue', 23, 4, seal=False)[0]   # door -> OsakaStat
 # ---- ground: light paving on the north bank, warm brick in Shinsekai, and the
 #      darker main street running station -> arch -> bridge -> tower ------------
 b.autotile('grey-brick-autotile', rect(2, 9, 47, 18))
-b.autotile('brown-brick-autotile', rect(2, 23, 47, 37))
+b.autotile('brown-brick-autotile', rect(2, 23 + S, 47, 37 + S))
 # the street's pavement is one cell either side of the road; on the bridge
-# (rows 19-22) it is two, so there is a way round the signal posts that stand
-# on the kerb at the bridgehead without stepping into the road (issue #139)
-b.autotile('flat-grey-brick-autotile', rect(22, 10, 27, 22) + rect(21, 19, 28, 22))
-b.autotile('light-concrete-autotile', rect(18, 32, 31, 37))  # the tower's plaza
+# (rows 19-23, bank to bank) it is two, so there is a way round the signal posts
+# that stand on the kerb at the bridgehead without stepping into the road (issue
+# #139). The avenue's pavements are one cell too, and run out to the map's edge
+# with it. One region, so the paving has no seam where the streets meet.
+DECK_X0, DECK_X1 = 21, 28
+b.autotile('flat-grey-brick-autotile',
+           rect(22, 10, 27, AVENUE_Y - 1) + rect(DECK_X0, 19, DECK_X1, AVENUE_Y - 1)
+           + rect(0, AVENUE_Y - 1, W - 1, AVENUE_Y + 3))
+b.autotile('light-concrete-autotile', rect(18, 32 + S, 31, 37 + S))  # the tower's plaza
 
-# ---- the road (issue #106): the main street's middle four columns are asphalt,
-#      the dark brick either side is its pavement. It starts a row below the
-#      station door (you step out onto paving, not into the road) and ends at the
-#      tower's garden, where the street forks. Four wide, not the usual three
-#      (edge / centre line / edge): the arch's opening and the tower's archway
-#      are both an even number of cells, so only an even road sits on their axis.
+# ---- the roads (issues #106, #151). The main street's middle four columns are
+#      asphalt, the dark brick either side is its pavement. It ends square a row
+#      below the station door (you step out onto paving, not into the road) and
+#      runs south to the avenue. Four wide, not the usual three (edge / centre
+#      line / edge): the arch's opening is four cells and the arch is the
+#      landmark, so the road keeps its axis and gets its centre line from the
+#      two lane tiles, which carry half the line each on their shared edge.
 ROAD_X0, ROAD_X1 = 23, 26
-ROAD_Y0, ROAD_Y1 = 11, 22
-for y in range(ROAD_Y0, ROAD_Y1 + 1):
+ROAD_Y0 = 11
+b.put('Floor', ROAD_X0, ROAD_Y0, 'road-corner-nw_0_0')
+for x in range(ROAD_X0 + 1, ROAD_X1):
+    b.put('Floor', x, ROAD_Y0, 'road-edge-top_0_0')
+b.put('Floor', ROAD_X1, ROAD_Y0, 'road-corner-ne_0_0')
+for y in range(ROAD_Y0 + 1, AVENUE_Y):
     b.put('Floor', ROAD_X0, y, 'road-edge-left_0_0')
-    for x in range(ROAD_X0 + 1, ROAD_X1):
-        b.put('Floor', x, y, 'road-plain_0_0')
+    b.put('Floor', ROAD_X0 + 1, y, 'road-lane-left_0_0')
+    b.put('Floor', ROAD_X1 - 1, y, 'road-lane-right_0_0')
     b.put('Floor', ROAD_X1, y, 'road-edge-right_0_0')
+# Canal-side Avenue: the standard three-cell road from one edge of the map to
+# the other, with the street's mouth a plain junction box (as in Sapporo)
+for x in range(W):
+    junction = ROAD_X0 <= x <= ROAD_X1
+    b.put('Floor', x, AVENUE_Y, 'road-plain_0_0' if junction else 'road-edge-top_0_0')
+    b.put('Floor', x, AVENUE_Y + 1, 'road-plain_0_0' if junction else 'road-div-horizontal_0_0')
+    b.put('Floor', x, AVENUE_Y + 2, 'road-edge-bottom_0_0')
 
 # the zebra crossing, between the arch and the bridge, on the row the canal-bank
 # lamps stand on: it joins the west bank's shops to the ferris wheel. The
@@ -121,6 +155,7 @@ for y in range(ROAD_Y0, ROAD_Y1 + 1):
 CROSSING_Y = 18
 b.put('Over Floor', ROAD_X0, CROSSING_Y, 'crossing-v-left_0_0')
 for x in range(ROAD_X0 + 1, ROAD_X1):
+    b.put('Floor', x, CROSSING_Y, 'road-plain_0_0')       # the centre line stops for the stripes
     b.put('Over Floor', x, CROSSING_Y, 'crossing-v-mid_0_0')
 b.put('Over Floor', ROAD_X1, CROSSING_Y, 'crossing-v-right_0_0')
 b.stamp('traffic-light', ROAD_X0 - 1, CROSSING_Y - 1)     # 1x3: base on row 19
@@ -151,38 +186,47 @@ b.stamp('lamp-blue', 31, 18); b.stamp('lamp-blue', 46, 18)
 b.stamp('shrub-small', 46, 10); b.stamp('shrub-small', 46, 13)
 b.stamp('sakura-small', 30, 13); b.stamp('sakura-small', 2, 16)
 
-# ---- the Dotonbori canal, bridged by the main street --------------------------
-b.pond(2, 20, 20)                                  # one cell short of the road's pavement each
-b.pond(29, 20, 47)                                 # side: the bridge deck is 8 wide (#139)
-b.stamp('lantern-red', 20, 22); b.stamp('lantern-red', 29, 22)   # south bridgehead (clear of
-                                                                 # the tower's own top-left cell)
+# ---- the Dotonbori canal (issue #61): open water three rows wide, from one
+#      edge of the map to the other - rock rim along both banks, no end caps -
+#      interrupted only by the bridge deck (eight cells: the road and two cells
+#      of pavement each side, #139). The water tiles stop at the deck's edge;
+#      the `waterways` entry at the bottom of this file tells AmbientBoats the
+#      channel carries on under it.
+for x in [x for x in range(W) if not DECK_X0 <= x <= DECK_X1]:
+    for y in range(CANAL_Y0, CANAL_Y1 + 1):
+        role = 'edge-n' if y == CANAL_Y0 else 'edge-s' if y == CANAL_Y1 else 'center'
+        b.put('Water', x, y, f'pond-autotile_{role}'); b.solid(x, y)
+# south bridgehead: the lanterns stand on the bank, their heads against the water
+b.stamp('lantern-red', DECK_X0 - 1, CANAL_Y1); b.stamp('lantern-red', DECK_X1 + 1, CANAL_Y1)
 
 # ---- Shinsekai: Tsutenkaku on the axis of the street, on its plaza ------------
-TOWER = (21, 23)
+TOWER = (21, 23 + S)
 b.stamp('tsutenkaku', *TOWER)
 # The tower garden: the tower is 13 cells tall and stands on the street's axis,
 # so without this the main street would run BEHIND it and hide the player for
 # ten cells. A thicket fills the ground behind the shaft and deck; the street
-# forks at the bridgehead and passes either side of it down to the plaza.
-for gy in range(24, 32, 2):
+# forks at the avenue and passes either side of it down to the plaza.
+for gy in range(24 + S, 32 + S, 2):
     for gx in range(22, 28, 2):
         for cx, cy in rect(gx, gy, gx + 1, gy + 1):
             b.put('Floor', cx, cy, 'grass-autotile_center')
         b.stamp('shrub-large', gx, gy)
-b.stamp('lantern-red', 19, 35); b.stamp('lantern-red', 30, 35)
+b.stamp('lantern-red', 19, 35 + S); b.stamp('lantern-red', 30, 35 + S)
 for i, (px, py) in enumerate([(19, 33), (30, 33), (22, 37), (27, 37), (20, 37), (29, 37)]):
-    b.paver(px, py, i)
-b.stamp('highrise-apartment', 3, 24); b.stamp('house-black', 10, 26)       # feet on row 31
-b.stamp('house-blue', 37, 26); b.stamp('highrise-glass', 42, 22)
-b.stamp('vending-red', 14, 29); b.stamp('vending-white', 35, 29)
-b.stamp('lantern-red', 9, 31); b.stamp('lantern-red', 41, 31)
-b.stamp('sakura-large', 16, 26); b.stamp('sakura-large', 31, 26)   # flanking the tower
-b.stamp('sakura-large', 3, 33); b.stamp('sakura-large', 44, 33)
-b.stamp('sakura-small', 15, 34); b.stamp('sakura-small', 34, 34)
-b.stamp('shrub-small', 17, 30); b.stamp('shrub-small', 32, 30)
-b.stamp('shrub-small', 46, 25)
+    b.paver(px, py + S, i)
+b.stamp('highrise-apartment', 3, 24 + S); b.stamp('house-black', 10, 26 + S)       # feet on row 31 + S
+# (the glass tower stands a row lower than its neighbours: its two walk-behind
+#  roof rows would otherwise lie on the avenue's pavement)
+b.stamp('house-blue', 37, 26 + S); b.stamp('highrise-glass', 42, 23 + S)
+b.stamp('vending-red', 14, 29 + S); b.stamp('vending-white', 35, 29 + S)
+b.stamp('lantern-red', 9, 31 + S); b.stamp('lantern-red', 41, 31 + S)
+b.stamp('sakura-large', 16, 26 + S); b.stamp('sakura-large', 31, 26 + S)   # flanking the tower
+b.stamp('sakura-large', 3, 33 + S); b.stamp('sakura-large', 44, 33 + S)
+b.stamp('sakura-small', 15, 34 + S); b.stamp('sakura-small', 34, 34 + S)
+b.stamp('shrub-small', 17, 30 + S); b.stamp('shrub-small', 32, 30 + S)
+b.stamp('shrub-small', 46, 25 + S)
 for x in (8, 13, 36, 41):
-    b.stamp('lamp-blue', x, 36)
+    b.stamp('lamp-blue', x, 36 + S)
 
 # ---- street accessories (issue #19; tools/extract_street.py): bikes and a
 #      scooter outside the discount store (clear of its door at column 15), the
@@ -190,23 +234,27 @@ for x in (8, 13, 36, 41):
 #      north bank, a scooter by the flats. The zebra crossing and its signals
 #      are with the road, above. -----------------------------------------------
 b.stamp('bicycle-blue', 13, 17); b.stamp('bicycle-orange', 14, 17); b.stamp('scooter-grey', 18, 17)
-b.stamp('bus-stop', 21, 11); b.stamp('utility-pole', 19, 16); b.stamp('scooter-red', 8, 32)
+b.stamp('bus-stop', 21, 11); b.stamp('utility-pole', 19, 16); b.stamp('scooter-red', 8, 32 + S)
 
 # ---- borders: hedges west / east, a fence along the south ---------------------
 #      (continuous — a gap would let the player slip round behind the fences)
-for y in range(8, 38, 2):
+#      The hedge is two cells deep and solid on every row except the canal's
+#      (water, solid anyway) and the avenue's five (pavement, road, pavement),
+#      where the street leaves town: you can walk it to the edge of the map.
+for y in list(range(8, CANAL_Y0, 2)) + list(range(AVENUE_Y + 5, H - 2, 2)):
     b.stamp('shrub-large', 0, y); b.stamp('shrub-large', W - 2, y)
-b.stamp('shrub-small', 0, 38); b.stamp('shrub-small', W - 1, 38)
+for y in (CANAL_Y1 + 1, AVENUE_Y + 4):                # the bank row, and the odd row below the avenue
+    for x in (0, 1, W - 2, W - 1):
+        b.stamp('shrub-small', x, y)
+b.stamp('shrub-small', 0, H - 2); b.stamp('shrub-small', W - 1, H - 2)
 for y in (6, 7):
     b.stamp('shrub-small', 0, y); b.stamp('shrub-small', W - 1, y)
 for i, x in enumerate(range(1, W - 1)):
-    b.fence(x, 38, i)
+    b.fence(x, H - 2, i)
 
 # ---- greenery on the canal banks ----------------------------------------------
 for i in range(60):
-    sx, sy = rng.randrange(2, W - 2), rng.choice((19, 22))
-    if 42 <= sx <= 45 and sy == 22:               # under the glass tower's roof line
-        continue
+    sx, sy = rng.randrange(2, W - 2), rng.choice((CANAL_Y0 - 1, CANAL_Y1 + 1))
     if all(f'{sx},{sy}' not in b.L[n] for n in
            ('Collidables', 'Colliders', 'Over Floor', 'Other', 'Water', 'Tops')) \
        and rg._pal[b.L['Floor'][f'{sx},{sy}']].startswith('grass'):
@@ -226,6 +274,12 @@ cfg['rooms']['Osaka'] = b.room('Osaka', npcs=prev.get('npcs', []), transporters=
     rg.transporter(station_door[0], station_door[1], 'OsakaStation', 11, 11, hidden=True),
     don.door_transporter('Osaka', store_door),
 ])
+# the canal is navigable (src/AmbientBoats.js): cells, inclusive. `under` is the
+# bridge deck - a boat is not drawn there, so it passes beneath the street.
+cfg['rooms']['Osaka']['waterways'] = [
+    {'axis': 'h', 'row': CANAL_Y0, 'rows': CANAL_Y1 - CANAL_Y0 + 1, 'from': 0, 'to': W - 1,
+     'under': [[DECK_X0, DECK_X1]]},
+]
 
 rg.save_config(cfg)
 print(f'Osaka {W}x{H}; station house door at {station_door} -> OsakaStation; '

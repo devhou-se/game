@@ -304,6 +304,140 @@ const tests = {
         }
     },
 
+    'Osaka: the canal is a declared waterway, open water except under the bridge, and the streets have centre lines'() {
+        // #61: AmbientBoats sails the room's `waterways`; #151: the four-cell street's line is the lane pair's shared edge
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
+        const room = cfg.rooms.Osaka;
+        const layer = (n) => (room.layers.find((l) => l.name === n) || {}).tiles || {};
+        const floor = layer('Floor'), water = layer('Water'), colliders = layer('Colliders');
+        assert.strictEqual(room.waterways.length, 1);
+        const w = room.waterways[0];
+        assert.deepStrictEqual([w.axis, w.from, w.to], ['h', 0, room.worldWidth / 64 - 1], 'the canal runs edge to edge');
+        const under = (x) => w.under.some(([a, b]) => x >= a && x <= b);
+        for (let x = w.from; x <= w.to; x++) {
+            for (let y = w.row; y < w.row + w.rows; y++) {
+                const xy = `${x},${y}`;
+                if (under(x)) {
+                    assert.ok(!(xy in water) && !(xy in colliders), `bridge deck cell ${xy} is walkable paving, not water`);
+                } else {
+                    assert.ok(name(water[xy]).startsWith('pond-autotile_') && xy in colliders, `canal cell ${xy} is solid water`);
+                    assert.ok(!/corner|edge-[ew]/.test(name(water[xy])), `canal cell ${xy} is an end cap: the channel is not open`);
+                }
+            }
+        }
+        const rows = Object.keys(floor).filter((xy) => name(floor[xy]) === 'road-lane-left_0_0').map((xy) => xy.split(',').map(Number));
+        assert.ok(rows.length >= 12, 'the main street is a street, not a stub');
+        for (const [x, y] of rows) {
+            assert.deepStrictEqual([name(floor[`${x - 1},${y}`]), name(floor[`${x + 1},${y}`]), name(floor[`${x + 2},${y}`])],
+                ['road-edge-left_0_0', 'road-lane-right_0_0', 'road-edge-right_0_0'], `street row ${y}: kerb, lane | lane, kerb`);
+        }
+        const lines = Object.keys(floor).filter((xy) => name(floor[xy]) === 'road-div-horizontal_0_0').map((xy) => Number(xy.split(',')[0]));
+        assert.ok(lines.includes(0) && lines.includes(room.worldWidth / 64 - 1), 'the avenue leaves town at both edges');
+        for (const key of ['road-lane-left_0_0', 'road-lane-right_0_0', 'road-corner-nw_0_0', 'road-corner-ne_0_0', 'road-corner-sw_0_0']) {
+            assert.ok(key in cfg.spriteMetadata && fs.existsSync(path.join(GV2, 'assets', 'sprites', key + '.png')), `${key} is loadable`);
+        }
+    },
+
+    'a boat is picked to fit the water left in view, and is cut off at a bridge deck'() {
+        // #62: the north moat shows a 32px lane above the palace wall - skiff only; #61: `under` spans hide the boat
+        load('AmbientBoats.js');
+        const boats = game('Object.create(AmbientBoats.prototype)');
+        const run = (width, length) => boats.fit({ axis: 'h', from: 0, to: length, band0: 100, band1: 100 + width });
+        assert.deepStrictEqual(Array.from(run(50, 400).hulls), ['punt', 'skiff']);
+        assert.deepStrictEqual(Array.from(run(32, 400).hulls), ['skiff'], 'a narrow lane takes the skiff');
+        assert.strictEqual(run(24, 400), null, 'no boat is squeezed into less water than its beam');
+        assert.strictEqual(run(50, 150), null, 'nor into a run it could not travel along');
+        for (const livery of Object.keys(game('AmbientBoats.LIVERIES'))) {
+            assert.ok(game('AmbientBoats.HULLS')[game('AmbientBoats.hullOf')(livery)], `${livery} is painted on a known hull`);
+        }
+        const boat = { width: 116, height: 44, visible: true, crop: null,
+            setVisible(v) { this.visible = v; }, setCrop(x, y, w, h) { this.crop = [x, y, w, h]; } };
+        const deck = { axis: 'h', under: [[1000, 1500]] };
+        boats.hideUnder(boat, deck, 500, 116);
+        assert.deepStrictEqual([boat.visible, boat.crop], [true, [0, 0, 116, 44]], 'clear of the bridge: drawn whole');
+        boats.hideUnder(boat, deck, 990, 116);
+        assert.deepStrictEqual([boat.visible, boat.crop], [true, [0, 0, 68, 44]], 'bow under the deck: cut at its edge');
+        boats.hideUnder(boat, deck, 1250, 116);
+        assert.strictEqual(boat.visible, false, 'wholly under the deck: not drawn');
+        boats.hideUnder(boat, deck, 1520, 116);
+        assert.deepStrictEqual([boat.visible, boat.crop], [true, [38, 0, 78, 44]], 'stern still under the deck');
+    },
+
+    'every shelf, cooler and till in a konbini or Don Takote can be bumped from a free cell the door leads to'() {
+        // #152: a fixture is used from the cell below it (the till, against the front wall, from any side)
+        load('utils/Interactions.js');
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
+        const sizeOf = (key) => {
+            const b = fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png'));
+            return [Math.max(1, Math.round(b.readUInt32BE(16) / 64)), Math.max(1, Math.round(b.readUInt32BE(20) / 64))];
+        };
+        const inside = (poly, px, py) => {
+            let hit = false;
+            for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+                const [xi, yi] = poly[i], [xj, yj] = poly[j];
+                if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) hit = !hit;
+            }
+            return hit;
+        };
+        const bad = [];
+        let stores = 0, fixtures = 0;
+        for (const [key, room] of Object.entries(cfg.rooms)) {
+            if (!/^(Konbini|DonTakote)/.test(key)) continue;
+            stores++;
+            const layers = room.layers.map((l) => ({ name: l.name, collision: l.collision,
+                tiles: Object.fromEntries(Object.entries(l.tiles).map(([xy, t]) => [xy, name(t)])) }));
+            const solid = new Set(layers.filter((l) => l.collision).flatMap((l) => Object.keys(l.tiles)));
+            const open = (x, y) => !solid.has(`${x},${y}`) && inside(room.boundary, x + 0.5, y + 0.5);
+            const reach = new Set(), todo = room.transporters.map((t) => [t.gridX, t.gridY]);
+            todo.forEach((c) => reach.add(c.join()));
+            while (todo.length) {
+                const [x, y] = todo.pop();
+                for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+                    if (open(nx, ny) && !reach.has(`${nx},${ny}`)) { reach.add(`${nx},${ny}`); todo.push([nx, ny]); }
+                }
+            }
+            for (const f of game('Interactions.all')({ layers }, room, { sizeOf, group: 'shop' })) {
+                fixtures++;
+                if (f.kind === 'counter') {
+                    const sides = [];
+                    for (let a = 0; a < f.w; a++) sides.push([f.x + a, f.y - 1], [f.x + a, f.y + f.h]);
+                    sides.push([f.x - 1, f.y], [f.x + f.w, f.y]);
+                    if (!sides.some(([x, y]) => reach.has(`${x},${y}`))) bad.push(`${key}: till @${f.x},${f.y}`);
+                    continue;
+                }
+                for (let a = 0; a < f.w; a++) {
+                    if (!reach.has(`${f.x + a},${f.y + f.h}`)) bad.push(`${key}: ${f.key} @${f.x + a},${f.y} has no free cell in front`);
+                }
+            }
+        }
+        assert.ok(stores >= 13 && fixtures > 150, `expected every store and its fixtures, saw ${stores} / ${fixtures}`);
+        assert.deepStrictEqual(bad, []);
+    },
+
+    'Tokyo west gate: the lane to Machi is paved, clear of lanterns, and meets the dirt path square'() {
+        // #147: the lantern's top used to hang over the lane and the asphalt butted into Machi's rounded path end
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
+        const tiles = (room, n) => (cfg.rooms[room].layers.find((l) => l.name === n) || {}).tiles || {};
+        const seam = cfg.rooms.Tokyo.transporters.filter((t) => t.targetRoom === 'Machi');
+        assert.deepStrictEqual(seam.map((t) => [t.gridX, t.gridY]), [[0, 41], [0, 42]]);
+        for (const y of [41, 42]) {
+            for (const x of [0, 1, 2]) {
+                for (const n of ['Tops', 'Collidables', 'Other', 'Colliders']) {
+                    assert.ok(!(`${x},${y}` in tiles('Tokyo', n)), `Tokyo ${x},${y}: ${n} tile on the lane`);
+                }
+                // a sprite one cell down whose top row lands on the lane (the lantern head)
+                assert.ok(!name(tiles('Tokyo', 'Tops')[`${x},${y}`]).startsWith('red-lanterns'), `lantern head over ${x},${y}`);
+            }
+            assert.ok(name(tiles('Tokyo', 'Floor')[`0,${y}`]).startsWith('flat-grey-brick'), 'the gate is a paved apron');
+            assert.ok(name(tiles('Tokyo', 'Floor')[`2,${y}`]).startsWith('road-edge-left'), 'the road keeps its kerb past the gate');
+            assert.ok(/^gravel-autotile_edge-[ns]$/.test(name(tiles('Machi', 'Floor')[`47,${y - 21}`])), 'the path runs out through the gate');
+        }
+        assert.strictEqual(name(tiles('Tokyo', 'Floor')['2,43']), 'road-corner-sw_0_0', 'the junction box has its corner');
+    },
+
     'a dated state that marks an NPC absent carries no placement'() {
         // tools/blog_to_npc.py PLACEMENT_KEYS: a leftover photo is still preloaded, leftover dialogue reads as a post
         const placementKeys = ['gridX', 'gridY', 'dialogue', 'photo', 'voice', 'drunk', 'posts'];

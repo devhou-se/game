@@ -223,8 +223,25 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   builds `DonTakote<Host>` and wires the facade door (door = column 2 of the bottom row; the cell
   in front of it must stay free - no bicycle, no NPC spot). Osaka and Sapporo wire the door in their
   own generators (`seal=False` + `don.door_transporter`), Market gets it surgically from the script.
-- **Osaka's road is four cells wide** (issue #106): `crossing-v` is a three-cell prefab, so its
-  crossing is the same tiles laid by hand in `generate_osaka.py` with the middle one repeated.
+- **Osaka's main street is four cells wide** (issues #106 / #151), because the arch's opening is:
+  `crossing-v` is a three-cell prefab, so its crossing is the same tiles laid by hand in
+  `generate_osaka.py` with the middle one repeated, and its centre line is the pair
+  `road-lane-left` / `road-lane-right` (half the line each, on their shared edge), which stops for the
+  crossing's stripes (`road-plain` under the two middle crossing cells). Those and the
+  two-kerb corner pieces `road-corner-nw|ne|sw|se` (a road's square end, the outer corner of a
+  junction box) come from `tools/make_road_tiles.py`, which derives them from the sheet's own road
+  tiles. An odd-width road uses `road-div-vertical` / `road-div-horizontal` as before.
+- **Water is navigable only where a room says so**: `rooms.<Room>.waterways` in config.json
+  (written by the generator - see "Ambient Traffic" in `gamev2/CLAUDE.md`) gives a canal its
+  boats; `under` names the cells where a bridge deck crosses, and those cells must be plain
+  walkable floor with NO water tile (the boat is cut off at the deck's edge). Osaka's canal is laid
+  by hand in `generate_osaka.py` (three rows, edge to edge, `edge-n` / `center` / `edge-s` - the pond
+  set has no `edge-w`, so a channel wider than two rows must not have a west end cap). Moat tiles
+  need no declaration. Frozen water gets no entry.
+- **A shop fixture needs the cell under it** (issue #152): shelves and coolers are bumped from
+  the cell below, the till from any side. `play.js lint` fails a store with `shop-no-front`
+  otherwise; `generate_konbinis.py` keeps a walkway row under every fixture row (and two free
+  rows above the counter row, or the back of the store is sealed off).
 - **GuttyKreum sheets are 2x, not 4x**: one 32px RPG Maker tile is one 64px cell (the ported houses are
   pixel-identical 2x crops). Only the Dotonbori arch / ferris wheel were extracted at 4x, as oversized
   landmarks. A building extracted at 4x gets a two-cell-wide door and pixels twice the size of its neighbours.

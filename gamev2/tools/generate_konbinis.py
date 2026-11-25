@@ -125,11 +125,23 @@ def furnish(b, rng, x0, y0, bw, bh):
     run = rng.randint(2, 3)
     cx0 = rng.randint(left + 1, right - run)
     kind = rng.choice(COOLERS)
+    # THE FRONT-CELL RULE (issue #152): a cooler or shelf is used by bumping it from
+    # the cell below it, so the row under every fixture stays a walkway -
+    #   coolers | walkway | aisle | walkway | (aisle | walkway) | counter row.
+    # A two-cell cooler therefore pushes the aisles down a row, and the last aisle
+    # stops two rows short of the counter row: one on the row above it had the
+    # counter and the corner plant under its ends, which closed the ring and
+    # left the back of the store sealed off from the door. The smallest store
+    # (five floor rows) has no room for a two-cell cooler AND an aisle, so it
+    # gets the one-cell freezer. `play.js lint` enforces it (shop-no-front).
+    if png_size(kind)[1] > 64 and bottom - top < 5:
+        kind = 'office-freezer_0_0'
+    deep = max(1, round(png_size(kind)[1] / 64))
     for dx in range(run):
         put_solid(kind, cx0 + dx, top)
 
     # 1-2 short aisles, side columns always left as the walkway ring
-    aisle_rows = [top + 2 + 2 * i for i in range(2) if top + 2 + 2 * i <= bottom - 1]
+    aisle_rows = [y for y in (top + deep + 1, top + deep + 3) if y <= bottom - 2]
     for y in aisle_rows[:rng.randint(1, 2)]:
         theme = rng.choice(SHELVES)
         for x in range(left + 1, right):

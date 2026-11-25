@@ -52,9 +52,9 @@
     {
       "fileName": "gamev2/tiled/osaka.tmj",
       "x": -3072,
-      "y": 4288,
+      "y": 3904,
       "width": 3200,
-      "height": 2560
+      "height": 2944
     },
     {
       "fileName": "gamev2/tiled/sapporo.tmj",
