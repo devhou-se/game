@@ -105,7 +105,8 @@ Sapporo and Asahikawa to the north.
 Street accessories (issue #19) come from `tools/extract_street.py` - see "Street accessories" in
 `gamev2/CLAUDE.md`: `traffic-light` (1x3, give stamp_prefab the TOP cell; the base two rows down is the solid
 one), `crossing-h` / `crossing-v` (zebra crossing on `Over Floor`, origin on the road's top / left kerb cell),
-`utility-pole`, `road-mirror`, `bus-stop`, `bicycle-blue|orange`, `scooter-grey|red`, `traffic-cone`:
+`utility-pole`, `road-mirror`, `bus-stop`, `bicycle-blue|orange`, `scooter-grey|red`, `traffic-cone`
+(`vending-white` / `vending-red` are 1x2 and solid on both cells - issue #101):
 
     python3 tools/stamp_prefab.py Park --add crossing-h 25 39 --add crossing-h 26 39 \
         --add traffic-light 24 36 --add traffic-light 27 40
@@ -168,8 +169,23 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   the Tokyo overworld (garden, market, Tokyo Station placeholder). The Osaka
   room is generated (`tools/generate_osaka.py`). `doport.py` / `render_rect.py`
   accept `PORT_SCENE=<repo-relative .tscn>` should a real second scene appear.
-- **`seal_tracks.py` with no arguments re-seals Palace's level crossing**
-  (cells 0,5 and 1,5). Pass the rooms you mean: `seal_tracks.py Osaka`.
+- **Pass `seal_tracks.py` the rooms you mean**: `seal_tracks.py Osaka`. (It leaves a track cell with a
+  road under it open, which is what keeps Palace's level crossing - cells 0,3 and 1,3 - walkable.)
+- **Palace's track is row 3, not row 5** (issue #63): behind Tokyo Station's roof line, where the
+  station sprite's two empty top rows let the rails and the whole ambient train show, passing behind
+  the domes. On row 5 the track ran into the building's side half way up and the train was a strip of
+  roof above it. If the station art is ever replaced, keep the track on a row its top leaves clear.
+- **A vending machine is solid down to its foot** (issue #101): cabinet tile + foot tile, colliders on
+  BOTH (the two lowest cells of the column). The foot tile is only the cabinet's last 14-18px, so an
+  open foot cell puts the player on top of the machine. `play.js lint` fails with `vending-walkable`;
+  `python3 tools/seal_vending.py [Room ...]` adds the missing colliders to room data, and the
+  `vending-white` / `vending-red` prefabs already carry them. The shop opens from the cell in front.
+- **The discount store has an interior** (issue #91): `tools/generate_discount_stores.py [Host ...]`
+  builds `DonTakote<Host>` and wires the facade door (door = column 2 of the bottom row; the cell
+  in front of it must stay free - no bicycle, no NPC spot). Osaka and Sapporo wire the door in their
+  own generators (`seal=False` + `don.door_transporter`), Market gets it surgically from the script.
+- **Osaka's road is four cells wide** (issue #106): `crossing-v` is a three-cell prefab, so its
+  crossing is the same tiles laid by hand in `generate_osaka.py` with the middle one repeated.
 - **GuttyKreum sheets are 2x, not 4x**: one 32px RPG Maker tile is one 64px cell (the ported houses are
   pixel-identical 2x crops). Only the Dotonbori arch / ferris wheel were extracted at 4x, as oversized
   landmarks. A building extracted at 4x gets a two-cell-wide door and pixels twice the size of its neighbours.

@@ -7,7 +7,8 @@
  * TrainTravel train, and a passer-by would drive straight through it.
  *
  * Same conventions as the parked train: livery from config `stations`,
- * origin (0,0), bottom edge sitting on the track bed, depth 48.
+ * origin (0,0), bottom edge sitting on the track bed, depth 48 (lower when the
+ * track row is above row 4, so a player on a level crossing stays on top).
  */
 class AmbientTrains {
     constructor(scene) {
@@ -62,7 +63,10 @@ class AmbientTrains {
 
         this.active = scene.add.image(fromX, (this.row + 1) * GS - tex.height, key);
         this.active.setOrigin(0, 0);
-        this.active.setDepth(48);   // over the tracks, under nearby standing objects
+        // over the tracks, under nearby standing objects - and under a player standing on the
+        // track row (a level crossing), whose depth is (row + 1) * 10 + 5. 48 everywhere the
+        // track is on row 4 or lower; Palace's is row 3 (issue #63), so 44 there.
+        this.active.setDepth(Math.min(48, (this.row + 1) * 10 + 4));
 
         this.tween = scene.tweens.add({
             targets: this.active, x: toX,

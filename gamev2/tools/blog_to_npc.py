@@ -161,9 +161,9 @@ LANDMARKS = [
     ('tokyo-tower_', 'Tokyo Tower', (9, 14)),          # beside the east leg
     ('tokyo-station_', 'Tokyo Station', (24, 9)),      # the forecourt, east of the door
     ('tsutenkaku_', 'Tsutenkaku Tower', (5, 14)),      # the plaza in front of it
-    ('dotonbori-arch_', 'the Dotonbori arch', (2, 6)),  # just through the arch
+    ('dotonbori-arch_', 'the Dotonbori arch', (0, 6)),  # through the arch, on the west pavement clear of the road and its signal (#106)
     ('dotonbori-wheel_', 'the Dotonbori ferris wheel', (6, 12)),   # the canal bank below it
-    ('discount-store_', 'the Don Takote discount store', (2, 8)),  # outside its doors
+    ('discount-store_', 'the Don Takote discount store', (3, 8)),  # beside its doors (in front is where shoppers step out, #91)
     # Hokkaido (issue #43)
     ('sapporo-clock-tower_', 'the Sapporo Clock Tower', (2, 8)),   # the pavement at its porch
     ('sapporo-tv-tower_', 'the Sapporo TV Tower', (3, 13)),        # in front of the entrance

@@ -1,6 +1,7 @@
 const DIRS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 const baseOf = (key) => (key || '').replace(/_(front|back|side)$/, '');
 
+const VENDING_RE = /vending-machine/;   // same test as the vending rule in src/utils/Interactions.js
 const BIN_RE = /(^|[-_])(bin|dustbin|dumpster|trash|trashcan|rubbish|garbage|litter)([-_]|$)/i;
 
 class WorldModel {
@@ -311,6 +312,19 @@ class WorldModel {
         for (const xy of colliders) {
             const [x, y] = xy.split(',').map(Number);
             if (!(x >= 0 && x < W && y >= 0 && y < H)) push(errors, 'oob-collider', xy);
+        }
+
+        // A vending machine is solid down to its foot (issue #101): the foot tile is the last
+        // few pixels of the cabinet, so a walkable foot cell lets the player stand on the
+        // machine. The two lowest cells of every machine column must collide (the empty top
+        // cell of a tall machine is walk-behind). tools/seal_vending.py repairs a room.
+        const machine = new Set();
+        for (const o of objects) if (VENDING_RE.test(String(o.key))) for (const [cx, cy] of o.cells) machine.add(K(cx, cy));
+        for (const c of [...machine].sort()) {
+            const [x, y] = c.split(',').map(Number);
+            const foot = !machine.has(K(x, y + 1));
+            const cabinet = !foot && !machine.has(K(x, y + 2));
+            if ((foot || cabinet) && !colliders.has(c)) push(errors, 'vending-walkable', `${c} (${foot ? 'foot' : 'cabinet'})`);
         }
 
         const covered = new Set();

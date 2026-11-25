@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 11,
- "nextobjectid": 139,
+ "nextobjectid": 140,
  "properties": [
   {
    "name": "gv2room",
@@ -17626,9 +17626,9 @@
     0,
     23,
     0,
-    0,
-    0,
+    23,
     0,
+    23,
     0,
     0,
     23,
@@ -17903,9 +17903,9 @@
     0,
     23,
     23,
-    0,
     0,
-    0,
+    23,
+    23,
     0,
     0,
     0,
@@ -18234,7 +18234,7 @@
     23,
     23,
     23,
-    23,
+    0,
     23,
     23,
     0,
@@ -19434,12 +19434,12 @@
     23,
     23,
     0,
-    0,
-    0,
+    23,
     0,
     0,
     0,
     0,
+    23,
     23,
     23,
     23,
@@ -19721,6 +19721,43 @@
     },
     {
      "id": 138,
+     "name": "transporter",
+     "point": true,
+     "x": 1184.0,
+     "y": 1184.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "DonTakoteSapporo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 13
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 13
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 139,
      "name": "boundary",
      "x": 0,
      "y": 0,

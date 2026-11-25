@@ -34,14 +34,16 @@ Run from gamev2/:
     python3 tools/make_prefabs.py
     python3 tools/generate_sapporo.py
     python3 tools/generate_konbinis.py Sapporo    # KonbiniSapporo1 + its door
+    python3 tools/generate_discount_stores.py Sapporo   # DonTakoteSapporo (door wired here)
     python3 tools/generate_stations.py            # builds SapporoStation + registry
     python3 tools/fix_fences.py Sapporo           # MANDATORY (b.fence)
     python3 tools/seal_tracks.py Sapporo          # MANDATORY (rail line)
     node tools/play.js lint Sapporo            (and SapporoStation, KonbiniSapporo1)
-    python3 tools/config_to_tiled.py Sapporo SapporoStation KonbiniSapporo1
+    python3 tools/config_to_tiled.py Sapporo SapporoStation KonbiniSapporo1 DonTakoteSapporo
 """
 import roomgen as rg
 from roomgen import rect
+import generate_discount_stores as don
 
 cfg = rg.load_config()
 
@@ -114,11 +116,13 @@ for sx in (WEST, AVENUE, EAST):
     crossing(sx, KITA); crossing(sx, MINAMI)
 
 # ---- west of the avenue: the business district, shoulder to shoulder, feet on
-#      row 18 so the row reads as one street front (doors sealed - no interiors) -
+#      row 18 so the row reads as one street front. Doors sealed - no interiors -
+#      except the discount store's, which opens into DonTakoteSapporo (issue #91;
+#      tools/generate_discount_stores.py builds the shop floor) -----------------
 b.stamp('highrise-blue', 2, 8)
 b.stamp('highrise-glass', 7, 9)
 b.stamp('highrise-apartment', 11, 11)
-b.stamp('discount-store', 16, 11)
+store_door = b.stamp('discount-store', 16, 11, seal=False)[0]
 # a hedge from the platform fence down to the store's shoulder: the ground behind
 # the towers (and under their roof lines) is not somewhere to wander
 for y in (7, 9, 11):
@@ -204,11 +208,13 @@ for x in range(23, 37):
     if f'{x},5' not in b.L['Colliders']:
         b.fence(x, 5, x)
 
-# isolated: the ONLY way out is the station house door into SapporoStation.
+# isolated: the ONLY way out is the station house door into SapporoStation (the
+# konbini and the discount store lead to their own interiors and back).
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) - keep them.
 prev = cfg['rooms'].get('Sapporo', {})
 cfg['rooms']['Sapporo'] = b.room('Sapporo', npcs=prev.get('npcs', []), transporters=[
     rg.transporter(station_door[0], station_door[1], 'SapporoStation', 11, 11, hidden=True),
+    don.door_transporter('Sapporo', store_door),
 ])
 
 rg.save_config(cfg)

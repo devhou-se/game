@@ -149,7 +149,22 @@ their route in the room's map data rather than in coordinates, have no collision
 3-10s after you enter a room and another every 15-40s after it finishes.
 
 - **`AmbientTrains`** - any room with `train-track*` tiles that is not a `stations` room (Palace, Inaka,
-  Yukimura) gets a train running the topmost track row, off-screen edge to off-screen edge, depth 48.
+  Yukimura, Osaka, Sapporo, Asahikawa) gets a train running the topmost track row, off-screen edge to
+  off-screen edge, depth `min(48, (row + 1) * 10 + 4)` - 48 for a track on row 4 or lower, and always just
+  under a player standing on the track row (feet depth `(row + 1) * 10 + 5`), so on a level crossing the
+  player is drawn over the passing train in every room.
+  - **Palace's track is row 3, behind Tokyo Station's roof line** (issue #63). The station sprite
+    (rows 2-9, depth 100) is drawn over the train, and its top two rows are empty apart from the domes and
+    the centre gable, so on row 3 the rails show along the back of the roof and the whole train runs on
+    them, passing behind the domes. It used to be row 5, which is half way up the building: the train was
+    a strip of roof sliding along above the station with no rails under it. It is a map change; the
+    only code change is the depth rule above (44 on row 3, so the player on the crossing is not drawn
+    under the train). The level crossing is the west road's two cells, `(0,3)` and `(1,3)` (left
+    unsealed, as `seal_tracks.py` does for any track cell over a road); the track still closes the east
+    road. **`(2,2)` must stay open**: with the lantern on `(2,1)` and the track sealed from column 2
+    east, it is the only way from the west road into the strip behind the station (rows 0-2) - do not
+    put a cone or prop there. From the forecourt the camera cannot reach row 3 - the train is seen from
+    the west road, the yards beside the station (rows 4-7) or the strip behind it.
 - **`AmbientBoats`** - any room with straight moat tiles (today: the Tokyo moat) gets a boat. A "run" is a
   line of consecutive cells holding the same plain `moat-<north|south|east|west>` tile; `-rocks` tiles,
   corner pieces and gaps end a run, so a boat never crosses rocks, the bridge gap in the south moat or the
@@ -180,7 +195,8 @@ Semi-transparent bar at top showing: `{game.title} | {room name} | {game.date}` 
 - The room segment is the room's display `name` from config, never its key (`GameScene.hudRoomName()`, the
   one place that decides it; falls back to the key for a room with no name). Generated interiors get a
   human name from their generator: `7-Eleven · Sapporo` (`generate_konbinis.py` `store_name()`, numbered
-  only where a host has several stores: `7-Eleven · Market 3`), `Sapporo Station` (`generate_stations.py`
+  only where a host has several stores: `7-Eleven · Market 3`), `Don Takote · Osaka`
+  (`generate_discount_stores.py` `store_name()`), `Sapporo Station` (`generate_stations.py`
   `station_name()`). Nothing reads `room.name` as an identifier - room keys are the identifiers.
 - Title and date loaded from `config.json`
 - Uses `window.devicePixelRatio` for retina display text rendering
@@ -196,17 +212,49 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 
 | Bump | Opens (`Shop.VENUES`) |
 |------|-----------------------|
-| any `vending-machine*` tile, any room | `vending` — items with `where: 'vending'` |
+| any `vending-machine*` tile, any room (bump the machine's foot from the cell in front) | `vending` — items with `where: 'vending'` |
 | `office-counter*` in a konbini | `counter` — every vending + counter item |
 | `office-shelf-drinks` / `-shelf-glass` / `office-fridge` / `office-freezer` in a konbini | `drinks` — the drinks only |
 | `office-shelf-snacks` in a konbini | `snacks` — the food only |
 | `office-counter2*` (the bar) in a room with `"shopMenu": "izakaya"` | `izakaya` — items with `where: 'izakaya'` |
 
-- A "konbini" is any room with `interior: true` and `shopEnabled !== false`. The
+- A "konbini" is any room with `interior: true` and `shopEnabled !== false` — the
+  7-Eleven interiors and the Don Takote discount stores (below). The
   Izakaya is `shopEnabled: false` + `shopMenu: "izakaya"` (set in
   `tools/generate_inaka.py`): its shelves and tables stay furniture, only the bar
   sells, and the drinking game's `triggerCells` are checked first so they never
   open a menu.
+- **Vending machines are solid down to their foot** (issue #101). A machine is a cabinet
+  tile over a foot tile (`*-vending-machine-top*` over `-bottom` / `-base*`; the tall ones
+  are a 1x2 cabinet sprite over a base), and the foot is only the last 14-18px of the
+  cabinet - with the foot cell walkable the player stood on the machine's lower half. Both
+  the foot and the cabinet cell above it collide (the empty top cell of a tall machine
+  stays walk-behind); the vending rule matches both tiles, so the bump that opens the shop
+  is on the foot, from the cell in front. Two Market machines, (22,26) and (23,26), have a
+  wall in front and are used from the side. The `vending-white` / `vending-red` prefabs
+  carry both colliders; `node tools/play.js lint` fails a room with `vending-walkable`
+  otherwise, and `python3 tools/seal_vending.py [Room ...] [--dry-run]` repairs room data
+  (it refuses to seal a cell holding a transporter or a dated NPC). Keep NPC spots and
+  door arrivals off the cell in front of a machine's cabinet.
+- **Don Takote** (issue #91): every `discount-store` facade has a shop floor -
+  `DonTakoteMarket`, `DonTakoteOsaka`, `DonTakoteSapporo` (HUD: `Don Takote · Osaka`), built
+  by `tools/generate_discount_stores.py [Host ...]` on the konbini pattern. 27x19 room, one
+  fixed floor plan (so a town generator can wire its door without running it first): the
+  facade's own sign on a yellow back wall, a wall-to-wall back row (drink coolers one side,
+  shelving the other), three ranks of shelves either side of a centre aisle, cartons of
+  stock in the front corners, one till by the three-cell door mat. What is seeded per store
+  (host + door cell) is the stock, the floor and which side the till is on. It adds no shop
+  code: `interior: true` makes it a konbini to `Interactions.js`, so the counter, shelves
+  and coolers sell through the rows above (the buy list is still titled KONBINI). The
+  signage (`don-takote-sign` / `-wall` / `-wall-top` / `-pop-yen` / `-pop-sale`) is cut from
+  the facade sprite by `tools/generate_discount_art.py` (Pillow, no font needed).
+  **Doors**: `generate_osaka.py` and `generate_sapporo.py` stamp the facade with
+  `seal=False` and add `don.door_transporter(host, door)` themselves, so regenerating the
+  town keeps the shop open; Market is ported, so `generate_discount_stores.py` lifts the
+  one door collider and adds the transporter there (and does the same, idempotently, for
+  the generated hosts). The cell in front of the door must be free - the script asserts it.
+  A new host: stamp the facade, add the host to `ALL_HOSTS`, run the script, then
+  `config_to_tiled.py` for the store room and the host.
 - **Catalogue**: `Shop.DEFAULT_ITEMS` (or `config.json` `shop.items`, which replaces
   it wholesale). Each item: `id` (a save-file key — don't rename), `name`, `price`,
   `where`, `category` (`drink` | `food` | `gear`), `desc`, `icon`, and `effect` or
@@ -529,7 +577,8 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 
 - **Osaka** (`tools/generate_osaka.py`, 50x40) is a generated town reachable only by train, like Yukimura:
   station house -> arch over the main street -> the canal bridge -> Tsutenkaku on its plaza, with the ferris
-  wheel on the north bank. The tower stands on the street's axis, so a shrub garden fills the ground behind
+  wheel on the north bank. The main street is the town's one asphalt road (issue #106, see Street
+  accessories) and the discount store by the arch opens into `DonTakoteOsaka` (issue #91, see Shop). The tower stands on the street's axis, so a shrub garden fills the ground behind
   it and the street forks round (otherwise the player walks hidden behind the sprite for ten cells); the
   platform-edge fence and the continuous border hedges keep the player off the ballast and out from behind
   the fences. `OsakaStation` is registered in `tools/generate_stations.py`
@@ -632,12 +681,15 @@ the blog pipeline places people there.
   river's colliders.
 - **Konbini interiors per host**: `tools/generate_konbinis.py [Host ...]` - with host names it (re)builds
   only those hosts' stores (`generate_konbinis.py Sapporo`), leaving every other konbini room untouched.
-  `generate_sapporo.py` re-seals the door, so run it after every Sapporo regeneration.
+  `generate_sapporo.py` re-seals the konbini door, so run it after every Sapporo regeneration. (The
+  discount store's door is wired by `generate_sapporo.py` itself and survives a regeneration; its
+  interior is `generate_discount_stores.py Sapporo`.)
 - **Build order**: `generate_hokkaido.py`, `make_prefabs.py`, `generate_sapporo.py`,
-  `generate_asahikawa.py`, `generate_konbinis.py Sapporo`, `generate_stations.py`,
-  `fix_fences.py Sapporo Asahikawa`, `seal_tracks.py Sapporo Asahikawa`, then `node tools/play.js lint <Room>` and
-  `config_to_tiled.py Sapporo Asahikawa SapporoStation AsahikawaStation KonbiniSapporo1` (it takes any
-  number of rooms and fails, writing nothing, on a name that is not a room - #102).
+  `generate_asahikawa.py`, `generate_konbinis.py Sapporo`, `generate_discount_stores.py Sapporo`,
+  `generate_stations.py`, `fix_fences.py Sapporo Asahikawa`, `seal_tracks.py Sapporo Asahikawa`, then
+  `config_to_tiled.py Sapporo Asahikawa SapporoStation AsahikawaStation KonbiniSapporo1 DonTakoteSapporo`
+  (it takes any number of rooms and fails, writing nothing, on a name that is not a room - #102) and
+  `node tools/play.js lint <Room>` (lint reads the Tiled map).
 - Blog NPCs can be sent to `the Sapporo Clock Tower`, `the Sapporo TV Tower`, `the bridge over the frozen
   river`, `ramen alley` and `the frozen pond` (`LANDMARKS` in `tools/blog_to_npc.py`), besides the generic
   shrine / torii / 7-Eleven / vending spots.
@@ -649,7 +701,8 @@ the blog pipeline places people there.
 Street buildings beyond the ported houses / konbini / shrines. Each is ONE sprite on `Collidables` wrapped in
 a prefab (`building()` in `tools/make_prefabs.py`): solid from the ground up, with only the top two rows (the
 roof line) walk-behind, as behind a house roof - so the player is never lost behind a tower. Doors are
-sealed - none has an interior.
+sealed and lead nowhere, except the discount store's, which opens into its Don Takote shop floor (issue #91,
+see Shop, Food and Drink).
 
 | Prefab | Cells | Placed in |
 |---|---|---|
@@ -658,7 +711,7 @@ sealed - none has an interior.
 | `highrise-glass` (curtain-wall tower) | 4x10 | Osaka (42,22) |
 | `highrise-apartment` (tiled-balcony flats) | 5x8 | Osaka (3,24) |
 | `midrise-apartment` (the same block, two floors lower) | 5x6 | Palace (40,10), feet on the forecourt edge |
-| `discount-store` (the "Don Quijote") | 5x8 | Market (46,22), Osaka (13,9) by the Dotonbori arch |
+| `discount-store` (the "Don Quijote") | 5x8 | Market (46,22), Osaka (13,9) by the Dotonbori arch, Sapporo (16,11) - each with an interior |
 | `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Machi (4/9/14,17): the old-town lane |
 
 - **Art** is assembled by `tools/extract_city.py` from the GuttyKreum RPG Maker tile kits in `../Assets/GuttyKreum`
@@ -710,8 +763,16 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
   (Temples & Shrines `GK_TS_A5`). The top / left kerb tiles are the bottom / right ones flipped: the sheet's own
   have a heavily worn second stripe that reads as a glitch in game. The Japanese City `GK_JC_A5_2` crossings are on a much darker asphalt - not those.
 - **Where**: signalled crossings in Tokyo (south road at the palace path, west road), Market (north road on the
-  temple axis, east road, south road at the torii), Palace (east road) and Park (south road, east road); props
-  scattered through those four, Machi and Osaka. Osaka has no asphalt road, so it has props but no crossing.
+  temple axis, east road, south road at the torii), Palace (east road), Park (south road, east road) and Osaka
+  (the main street, between the arch and the bridge); props scattered through those, and Machi.
+- **Osaka's road** (issue #106, `generate_osaka.py`): the main street's middle four columns (23-26, rows 11-22)
+  are asphalt - `road-edge-left`, two `road-plain`, `road-edge-right` - with the dark brick either side as its
+  pavement; it starts a row below the station door and ends at the tower's garden. It is four cells wide, not
+  the usual three, because the arch's opening and the tower's archway are both an even number of cells, so
+  only an even road sits on their axis; it therefore has no centre line, and its crossing is the `crossing-v`
+  tiles laid by hand with the middle one repeated (the prefab is three cells). The crossing is on row 18 and
+  both signals stand just south of it at the bridgehead (bases `(22,19)` and `(27,19)`): north of it their
+  heads would be lost in the arch's side boards. The bus stop stands on the kerb at `(21,11)`.
   Nothing is placed in the rows / columns where Tokyo, Market, Palace and Park overlap (`devhouse.world`).
   A signal on the north side of a road needs three free rows above the kerb - Market's north road and Tokyo's are
   too close to the map edge, so Market's crossing has both signals on its south kerb.

@@ -76,10 +76,16 @@ PREFABS = {
     'seven-eleven': dict(w=3, h=4, sprites=[('Collidables', 0, 0, 'seven-eleven_0_0')],
                          colliders=[(x, y) for x in range(3) for y in range(4) if (x, y) != (1, 3)], doors=[(1, 3)]),
     'sign-7-11':    dict(w=1, h=2, sprites=[('Tops', 0, 0, '7-11-sign-left_0_0')], colliders=[(0, 1)], doors=[]),
+    # A vending machine is two tiles: the cabinet (top) and its foot (bottom - the
+    # last 14px of the cabinet). BOTH cells collide: with only the cabinet solid
+    # the player stood on the foot, drawn over the machine's lower half (#101).
+    # The shop opens by bumping either cell (Interactions.js matches both tiles),
+    # so you buy from the cell in front of the foot. `play.js lint` enforces it
+    # (`vending-walkable`); tools/seal_vending.py repairs a room's data.
     'vending-white': dict(w=1, h=2, sprites=[('Other', 0, 0, 'white-vending-machine-top_0_0'), ('Other', 0, 1, 'white-vending-machine-bottom_0_0')],
-                          colliders=[(0, 0)], doors=[]),
+                          colliders=[(0, 0), (0, 1)], doors=[]),
     'vending-red':  dict(w=1, h=2, sprites=[('Other', 0, 0, 'red-vending-machine-top_0_0'), ('Other', 0, 1, 'red-vending-machine-bottom_0_0')],
-                         colliders=[(0, 0)], doors=[]),
+                         colliders=[(0, 0), (0, 1)], doors=[]),
     'bell-blue':    dict(w=2, h=4, sprites=[('Tops', 0, 0, 'blue-bell-top_0_0'), ('Collidables', 0, 2, 'bell-blue-baseless_0_0')],
                          colliders=[(0, 2), (1, 2)], doors=[]),
     'fox-statue':   dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'fox-statue-base-1_0_0')], colliders=[(0, 1)], doors=[]),
