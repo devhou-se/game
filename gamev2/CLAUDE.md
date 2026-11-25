@@ -860,7 +860,9 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
   only an even road sits on their axis; it therefore has no centre line, and its crossing is the `crossing-v`
   tiles laid by hand with the middle one repeated (the prefab is three cells). The crossing is on row 18 and
   both signals stand just south of it at the bridgehead (bases `(22,19)` and `(27,19)`): north of it their
-  heads would be lost in the arch's side boards. The bus stop stands on the kerb at `(21,11)`.
+  heads would be lost in the arch's side boards. The pavement is one cell either side of the road
+  but two on the bridge (columns 21-22 and 27-28, rows 19-22; the canal's ponds stop at columns 20 and 29), so
+  there is a way round the signal posts without stepping into the road (issue #139). The bus stop stands on the kerb at `(21,11)`.
   Nothing is placed in the rows / columns where Tokyo, Market, Palace and Park overlap (`devhouse.world`).
   A signal on the north side of a road needs three free rows above the kerb - Market's north road and Tokyo's are
   too close to the map edge, so Market's crossing has both signals on its south kerb.

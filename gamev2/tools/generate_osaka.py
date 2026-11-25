@@ -92,7 +92,10 @@ station_door = b.stamp('house-blue', 23, 4, seal=False)[0]   # door -> OsakaStat
 #      darker main street running station -> arch -> bridge -> tower ------------
 b.autotile('grey-brick-autotile', rect(2, 9, 47, 18))
 b.autotile('brown-brick-autotile', rect(2, 23, 47, 37))
-b.autotile('flat-grey-brick-autotile', rect(22, 10, 27, 22))
+# the street's pavement is one cell either side of the road; on the bridge
+# (rows 19-22) it is two, so there is a way round the signal posts that stand
+# on the kerb at the bridgehead without stepping into the road (issue #139)
+b.autotile('flat-grey-brick-autotile', rect(22, 10, 27, 22) + rect(21, 19, 28, 22))
 b.autotile('light-concrete-autotile', rect(18, 32, 31, 37))  # the tower's plaza
 
 # ---- the road (issue #106): the main street's middle four columns are asphalt,
@@ -149,8 +152,8 @@ b.stamp('shrub-small', 46, 10); b.stamp('shrub-small', 46, 13)
 b.stamp('sakura-small', 30, 13); b.stamp('sakura-small', 2, 16)
 
 # ---- the Dotonbori canal, bridged by the main street --------------------------
-b.pond(2, 20, 21)
-b.pond(28, 20, 47)
+b.pond(2, 20, 20)                                  # one cell short of the road's pavement each
+b.pond(29, 20, 47)                                 # side: the bridge deck is 8 wide (#139)
 b.stamp('lantern-red', 20, 22); b.stamp('lantern-red', 29, 22)   # south bridgehead (clear of
                                                                  # the tower's own top-left cell)
 

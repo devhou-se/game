@@ -209,6 +209,30 @@ const tests = {
         assert.deepStrictEqual(crossings.Palace.sort(), ['0,3', '1,3', '54,3', '55,3', '56,3'], 'west and east roads cross the track');
     },
 
+    'Osaka: both pavements pass the signal posts at the bridgehead without the road'() {
+        // the posts stand on the kerb at (22,19) and (27,19); the bridge pavement is two cells wide round them (#139)
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
+        const layer = (n) => (cfg.rooms.Osaka.layers.find((l) => l.name === n) || {}).tiles || {};
+        const floor = layer('Floor'), colliders = layer('Colliders');
+        const open = (xy) => xy in floor && !(xy in colliders) && !name(floor[xy]).startsWith('road-');
+        const reach = (from, to) => {
+            const seen = new Set([from]), todo = [from];
+            while (todo.length) {
+                const [x, y] = todo.pop().split(',').map(Number);
+                if (y < 17 || y > 23) continue;                    // round the post, not round the town
+                for (const n of [`${x + 1},${y}`, `${x - 1},${y}`, `${x},${y + 1}`, `${x},${y - 1}`]) {
+                    if (open(n) && !seen.has(n)) { seen.add(n); todo.push(n); }
+                }
+            }
+            return seen.has(to);
+        };
+        for (const x of [22, 27]) {
+            assert.ok(`${x},19` in colliders, `signal post base at ${x},19`);
+            assert.ok(reach(`${x},18`, `${x},22`), `pavement at column ${x} is cut off by its signal post`);
+        }
+    },
+
     'a dated state that marks an NPC absent carries no placement'() {
         // tools/blog_to_npc.py PLACEMENT_KEYS: a leftover photo is still preloaded, leftover dialogue reads as a post
         const placementKeys = ['gridX', 'gridY', 'dialogue', 'photo', 'voice', 'drunk', 'posts'];
