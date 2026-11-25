@@ -15,6 +15,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import blog_to_npc as b  # noqa: E402
+import config_to_tiled as c2t  # noqa: E402
 
 
 def test_trim_line():
@@ -464,6 +465,37 @@ def test_shipped_dialogue(cfg):
                     assert len(line) < b.MAX_LINE_CHARS or line[-1] in '.!?…。！？', where
 
 
+def test_tiled_ids_stable():
+    """config_to_tiled keeps every sprite's tile id when a room gains or loses
+    sprites, so a map change does not renumber the whole .tmj (#108)."""
+    import json
+    # a fresh room is numbered in sorted order, as before
+    assert c2t.assign_ids({'b', 'a', 'c'}, {}) == {'a': 0, 'b': 1, 'c': 2}
+    # a new sprite goes after the highest id, wherever it sorts
+    prev = {'b': 0, 'd': 1, 'f': 2}
+    assert c2t.assign_ids({'a', 'b', 'd', 'e', 'f'}, prev) == {'b': 0, 'd': 1, 'f': 2, 'a': 3, 'e': 4}
+    # a dropped sprite leaves a gap; nothing else moves and no id is shared
+    kid = c2t.assign_ids({'b', 'f', 'z'}, prev)
+    assert kid == {'b': 0, 'f': 2, 'z': 3}, kid
+    # the image path round-trips to the key, collider marker included
+    assert c2t.sprite_key('../assets/sprites/collider-marker.png') == 'gk_blank'
+    assert c2t.sprite_key('../assets/sprites/gravel-autotile_edge-n.png') == 'gravel-autotile_edge-n'
+    assert c2t.previous_ids('tiled/no-such-room.tmj') == {}
+    # every shipped map: ids unique, and re-deriving them from the file itself
+    # with one extra sprite leaves all existing ids alone
+    tiled = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tiled')
+    for name in sorted(os.listdir(tiled)):
+        if not name.endswith('.tmj'):
+            continue
+        path = os.path.join(tiled, name)
+        tiles = json.load(open(path))['tilesets'][0]['tiles']
+        prev = c2t.previous_ids(path)
+        assert len(prev) == len(tiles) == len(set(prev.values())), name
+        kid = c2t.assign_ids(set(prev) | {'!new-sprite'}, prev)
+        new = kid.pop('!new-sprite')
+        assert kid == prev and new == max(prev.values()) + 1, name
+
+
 if __name__ == '__main__':
     config = b.load_config()
     test_trim_line()
@@ -476,4 +508,5 @@ if __name__ == '__main__':
     test_shipped_posts(config)
     test_authors(config)
     test_shipped_dialogue(config)
+    test_tiled_ids_stable()
     print('ok')

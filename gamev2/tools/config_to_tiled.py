@@ -22,6 +22,12 @@ Usage:  python3 tools/config_to_tiled.py [RoomName ...]   (default: Tokyo)
 Any number of rooms may be named; each is written to tiled/<roomname>.tmj.
 An unknown room name is an error (exit 2) and nothing is written, so a typo
 cannot leave a stale .tmj behind unnoticed.
+
+Tile ids are stable across re-runs: a sprite keeps the id it has in the
+existing tiled/<roomname>.tmj and new sprites are numbered after the highest
+one, so adding a sprite to a room changes only the cells that use it (plus one
+tileset entry) instead of renumbering every gid in the file. Ids of sprites a
+room no longer uses are simply dropped (image-collection ids may have gaps).
 """
 import json, struct, os, sys, re, hashlib
 import autotile
@@ -40,6 +46,32 @@ def props(d):
         out.append({'name': n, 'type': t, 'value': v})
     return out
 
+def sprite_key(image):
+    """Tileset image path -> sprite key (the inverse of how convert writes it)."""
+    k = os.path.basename(image)[:-len('.png')]
+    return 'gk_blank' if k == 'collider-marker' else k
+
+def previous_ids(path):
+    """{sprite key: tile id} of the tileset in an existing .tmj ({} if none)."""
+    try:
+        tiles = json.load(open(path))['tilesets'][0]['tiles']
+    except (OSError, ValueError, LookupError, TypeError):
+        return {}
+    ids = {}
+    for t in sorted(tiles, key=lambda t: t['id']):
+        ids.setdefault(sprite_key(t['image']), t['id'])
+    return ids
+
+def assign_ids(keys, prev):
+    """Tile id per sprite key: keep the id each key already has in `prev`,
+    number the new keys (in sorted order) after the highest id kept."""
+    kid = {k: prev[k] for k in keys if k in prev}
+    nxt = max(kid.values(), default=-1) + 1
+    for k in sorted(k for k in keys if k not in kid):
+        kid[k] = nxt
+        nxt += 1
+    return kid
+
 def convert(cfg, room_name):
     """Write tiled/<room_name lowercased>.tmj for one room of the loaded config."""
     pal = cfg['tilePalette']
@@ -48,9 +80,11 @@ def convert(cfg, room_name):
     W = (room.get('worldWidth') or cfg['game']['worldWidth']) // GS
     H = (room.get('worldHeight') or cfg['game']['worldHeight']) // GS
 
-    keys = sorted({keyof(idx) for L in room['layers'] for idx in L['tiles'].values()})
+    out = f'tiled/{room_name.lower()}.tmj'
+    keys = {keyof(idx) for L in room['layers'] for idx in L['tiles'].values()}
+    kid = assign_ids(keys, previous_ids(out))    # tile id within the tileset
+    keys = sorted(keys, key=kid.get)             # tileset order = id order
     sizes = {k: png_size(f'assets/sprites/{k}.png') for k in keys}
-    kid = {k: i for i, k in enumerate(keys)}     # tile id within the tileset
     FIRST = 1                                     # firstgid
 
     tileset = {
@@ -147,7 +181,6 @@ def convert(cfg, room_name):
         'tilesets': [tileset], 'layers': layers}
 
     os.makedirs('tiled', exist_ok=True)
-    out = f'tiled/{room_name.lower()}.tmj'
     json.dump(tmj, open(out, 'w'), indent=1)
     print(f'wrote {out}: {W}x{H} cells, {len(keys)} tiles, {len(layers)} Tiled layers')
 

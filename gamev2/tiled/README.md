@@ -134,6 +134,8 @@ The pipeline that produced all four rooms is committed in `tools/`:
 3. `python3 tools/config_to_tiled.py <Name> [<Other> ...]` — seed `tiled/<name>.tmj`. It takes any
    number of rooms (name every room the generator or its post-passes touched) and exits 2, writing
    nothing, if a name is not a room in `config.json` (room keys are case-sensitive).
+   Re-running it on an existing map keeps every sprite's tile id (new sprites are numbered after the
+   highest one), so a map change shows up in the `.tmj` diff as just the cells that changed.
 4. `node tools/play.js lint <Name>` — QA gate (it reads the Tiled map); fix any ERRORs before shipping.
 
 Once seeded, Tiled is the editor — don't hand-edit the generated `.tmj` back
