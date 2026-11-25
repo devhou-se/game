@@ -370,6 +370,8 @@ picker underline, and the default date only lands there once it has a post. `blo
   they have posts, and a row under the grid names every trip (the selected day's is lit). A click / tap
   on a name, or SHIFT + left/right (touch: hold the sprint pill and press ◀ ▶), jumps to that trip's
   first day with posts, or its first day when it has none (`Trips.jump` / `Trips.landing`). No new key.
+  The legend under the grid (`DatePicker.legend`) explains each mark: dot = blog post, underline = trip
+  (only when the config has trips), gold = today.
 
 **Adding a trip**: add it to `trips`; give its base cast NPC definitions in the room(s) they are based
 in, marked with `trip` (and `stay` when the trip has stays) — the shape `tools/generate_cast.py`

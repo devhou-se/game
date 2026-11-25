@@ -14,7 +14,7 @@ const ctx = vm.createContext({
     window: { dispatchEvent: (e) => fired.push(e.type + ':' + e.code) },
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
-['utils/ConfigCodec.js', 'systems/TiledAdapter.js', 'utils/Trips.js', 'utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
+['utils/ConfigCodec.js', 'systems/TiledAdapter.js', 'utils/Trips.js', 'utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DatePicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
     'utils/Hints.js', 'utils/JapaneseFont.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js', 'systems/UIScale.js',
     'systems/RoomManager.js', 'systems/CollisionSystem.js', '../tools/world-model.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
@@ -1004,6 +1004,19 @@ const tests = {
             }
         }
         assert.ok(seen > 10, 'found the hint lines');
+    },
+
+    'the Time Travel legend explains every mark on a day, the trip underline included'() {
+        const legend = game('DatePicker.legend');
+        assert.ok(/underline = trip/.test(legend(true)[0]), 'trip days are underlined, and the legend says so');
+        assert.ok(!/underline/.test(legend(false)[0]), 'no trips, nothing underlined, nothing to explain');
+        for (const hasTrips of [true, false]) {
+            const [marks, keys] = legend(hasTrips);
+            assert.ok(/dot = blog post/.test(marks) && /gold = today/.test(marks));
+            assert.ok(/arrows: day\/week/.test(keys) && /ESC: close/.test(keys));
+            // 16px PixelOperatorMono is 8.8px a character: 52 fit the 480px panel with a margin
+            for (const line of [marks, keys]) assert.ok(line.length <= 52, `${line.length} chars: ${line}`);
+        }
     },
 
     'a toast slides off the overlay panel it would cover, when there is room'() {

@@ -199,8 +199,21 @@ class DatePicker {
 
         if (tripRow) this.renderTrips(text, cx, py + ph - 78 - tripRow, selIso);
         text(cx, py + ph - 78, `viewing: ${formatGameDate(selIso)}`, '18px', true, '#33cc66');
-        text(cx, py + ph - 50, Hints.text(scene, 'dot = blog post · gold = today · arrows: day/week'), '16px', false, '#888888');
-        text(cx, py + ph - 26, Hints.text(scene, 'ENTER/click: travel · ESC: close'), '16px', false, '#888888');
+        const [marksLine, keysLine] = DatePicker.legend(this.trips.length > 0);
+        text(cx, py + ph - 50, marksLine, '16px', false, '#888888');
+        text(cx, py + ph - 26, Hints.text(scene, keysLine), '16px', false, '#888888');
+    }
+
+    /**
+     * The two legend lines under the grid: what the marks on a day mean
+     * (the underline only when the config has trips to underline), then the
+     * keys. Each has to fit the 480px panel — 52 characters at 16px.
+     */
+    static legend(hasTrips) {
+        return [
+            'dot = blog post · ' + (hasTrips ? 'underline = trip · ' : '') + 'gold = today',
+            'arrows: day/week · ENTER/click: travel · ESC: close',
+        ];
     }
 
     /**
