@@ -128,7 +128,7 @@ const COMMANDS = {
             'dates                      days that have blog content',
             'date <YYYY-MM-DD|today>    time travel',
             'as <name>                  play as a cast member (their NPC leaves the world)',
-            'check                      transporter targets, NPC placement, unreachable rooms',
+            'check                      transporter targets and unreachable rooms, plus NPC placement on every content day',
             'lint [room]...             map QA: floor holes, missing or stray colliders, tree and overhang layering',
             'render <room> <out.png>    draw a room to a PNG [--scale 0.5] [--colliders]',
             'reset                      back to the spawn point, today',
@@ -297,7 +297,9 @@ const COMMANDS = {
         return `${k}: ${img.width}x${img.height}px -> ${file}`;
     },
     check(w) {
-        const { problems } = w.survey();
+        const dates = [...contentChangeDates(w.config)];
+        if (!dates.includes(w.date)) dates.push(w.date);
+        const { problems } = w.survey(dates.sort());
         if (!problems.length) return 'no problems found';
         return problems.map(q => `${q.room}${q.x === undefined ? '' : ` ${q.x},${q.y}`}: ${q.text}`).join('\n') + `\n${problems.length} problems`;
     },

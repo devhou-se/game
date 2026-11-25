@@ -365,7 +365,8 @@ class WorldModel {
         return { room: roomKey, width: W, height: H, objects: objects.length, colliders: colliders.size, floor: floor.size, errors, warns };
     }
 
-    survey() {
+    survey(dates) {
+        dates = dates || [this.date];
         const problems = [];
         const reach = {};
         const saved = this.state();
@@ -395,12 +396,25 @@ class WorldModel {
             for (const t of this.room.transporters) {
                 if (!reach[k].has(t.gridX + ',' + t.gridY)) problems.push({ room: k, x: t.gridX, y: t.gridY, text: `transporter to ${t.targetRoom} cannot be walked to` });
             }
-            for (const n of this.room.npcs) {
-                const near = 'nsew'.split('').some(d => reach[k].has((n.gridX + DIRS[d][0]) + ',' + (n.gridY + DIRS[d][1])));
-                if (this.blocked.has(n.gridX + ',' + n.gridY)) problems.push({ room: k, x: n.gridX, y: n.gridY, text: `${n.name} stands on a collider (${this.date})` });
-                else if (!near) problems.push({ room: k, x: n.gridX, y: n.gridY, text: `${n.name} cannot be walked up to (${this.date})` });
+        }
+        const seen = new Set();
+        for (const date of dates) {
+            this.date = date;
+            for (const k of Object.keys(this.config.rooms)) {
+                if (!arrivals[k]) continue;
+                this.enter(k, arrivals[k][0].x, arrivals[k][0].y);
+                for (const n of this.room.npcs) {
+                    const id = `${k} ${n.gridX},${n.gridY} ${n.name}`;
+                    if (seen.has(id)) continue;
+                    const near = 'nsew'.split('').some(d => reach[k].has((n.gridX + DIRS[d][0]) + ',' + (n.gridY + DIRS[d][1])));
+                    const bad = this.blocked.has(n.gridX + ',' + n.gridY) ? 'stands on a collider' : !near ? 'cannot be walked up to' : null;
+                    if (!bad) continue;
+                    seen.add(id);
+                    problems.push({ room: k, x: n.gridX, y: n.gridY, date, text: `${n.name} ${bad} (${date})` });
+                }
             }
         }
+        this.date = saved.date;
         this.enter(saved.room, saved.x, saved.y);
         return { problems, reach };
     }
