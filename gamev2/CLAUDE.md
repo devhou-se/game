@@ -188,7 +188,7 @@ Semi-transparent bar at top showing: `{game.title} | {room name} | {game.date}` 
 - Depth 1000+ to render above game elements
 - Menu button (right-aligned) opens MenuManager on click
 
-### Shop, Food and Drink (issues #12, #46)
+### Shop, Food and Drink (issues #12, #46, #82, #83, #84)
 
 `src/Shop.js` owns the yen wallet, the inventory, the buy/items overlays and the
 food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteraction`
@@ -209,9 +209,23 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   open a menu.
 - **Catalogue**: `Shop.DEFAULT_ITEMS` (or `config.json` `shop.items`, which replaces
   it wholesale). Each item: `id` (a save-file key — don't rename), `name`, `price`,
-  `where`, `category` (`drink` | `food` | `gear`), `desc`, and `effect` or
+  `where`, `category` (`drink` | `food` | `gear`), `desc`, `icon`, and `effect` or
   `permanent`. Keep `desc` truthful — the use toast is generated from the `effect`
-  numbers by `effectSummary()`, so the two are read side by side.
+  numbers by `effectSummary()`, so the two are read side by side. The fish
+  (`category: 'fish'`, see below) are appended to whichever catalogue is in use.
+- **Icons** (`src/ItemIcons.js`, issue #82): every item has a 16x16 pixel icon, shown
+  at 2x on a small slot square in the buy / sell lists, the Items screen and the HUD
+  effect chips. They are drawn in code, data-first: `icon: { shape, colors }` names
+  a pixel map in `ItemIcons.SHAPES` (16 strings of 16 characters: `.` transparent,
+  `o` outline, `w` white, `e` silver, `k` grey, and the item's own `a` body / `b`
+  shade / `c` `d` accents) and fills in its colours. An item with no `icon` gets
+  `ItemIcons.DEFAULTS[category]`. Textures are made once, keyed `item-<id>`.
+  **Real art needs no code change**: drop `<id>.png` in `assets/items/` and list the
+  id in `assets/items/manifest.json` — it is preloaded under the same key and
+  `ItemIcons.ensure()` only draws what is missing (see `assets/items/README.md`).
+  `node tools/test_game.js` checks every item has a distinct, well-formed icon; look
+  at new ones in a list before shipping them — the panels are dark, which is what
+  the slot square is for.
 - **Effects are additive buffs only** (no hunger/energy stat, nothing gates
   movement). The keys an `effect` may carry are listed in `Shop.EFFECT_KINDS`:
   `speed`, `scramble`, `steady` (read by `InputHandler` via `movementModifier()`),
@@ -234,17 +248,61 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 - Expired effects are queued in `shop.woreOff` and toasted ("X wore off") by the
   250ms chip timer once no other toast or shop overlay is up, so the message is
   never lost. Against Bailey the showdown banner says he matches the head start.
+- **Fish are items** (issue #83). `Fishing.CATCHES` is the one table: `id`, `name`,
+  `odds`, `value`, plus `desc`, `icon` and `grilled` (an effect). `Shop.fishItems()`
+  turns every catch worth something into a catalogue item (`category: 'fish'`,
+  `sell: value`, `effect: grilled`, `effectName: 'Grilled <name>'`, sold nowhere).
+  A landed fish goes into the bag through `shop.addCatch(c)` — the wallet is not
+  touched — and the toast says what it was, that it is in the bag and what it sells
+  for. A catch worth nothing (the old boot) is thrown back with a toast and never
+  becomes an item. `shop.caught` counts landings per species and feeds the
+  **Big Catch** achievement (`AchievementManager.fishingProgress()`: land a rare
+  fish, `Fishing.isRare` = worth `Fishing.RARE_VALUE` or more).
+- **Selling**: a venue with `buys: true` in `Shop.VENUES` (the konbini `counter`, the
+  `izakaya` bar — not vending machines or the shelves) gets one more row under its
+  items, `sell your catch ›`. ENTER on it flips the same panel to the SELL list (the
+  fish held, their price, ←/→ quantity up to what is held, ENTER sells, the row
+  `‹ back to the menu` returns); `shop.mode` is `'buy'` or `'sell'` and
+  `refreshStock()` rebuilds the list for it. A venue with `grills: true` (the
+  izakaya) also offers SHIFT+ENTER / `[ grill & eat ]`: one fish is eaten for its
+  `grilled` effect in the FOOD slot. A raw fish cannot be used from the Items screen
+  (the toast says where to take it). `Shop.sellValue(item, qty)` is the price; items
+  without `sell` are worth nothing, so a shop never buys its own stock back. No new
+  key bindings.
 - **Save blob** `localStorage.gamev2_shop`:
-  `{ v: 2, money, items: {id: count}, effects: {drink|food: {id, until}}, used: {id: count} }`.
+  `{ v: 3, money, items: {id: count}, effects: {drink|food: {id, until}}, used: {id: count}, caught: {id: count} }`.
   `until` is an absolute epoch-ms expiry, so buffs survive reloads and room changes
   and lapse on time; on load it is clamped to the item's own duration and effects
-  for unknown items are dropped. The issue #12 blob (`{money, items}`) loads as-is.
+  for unknown items are dropped. Older blobs load as-is and are rewritten as v3 on
+  the next save: the issue #12 one (`{money, items}`) and v2 (no `caught`, no fish)
+  — the wallet is never changed by loading.
   `used` counts consumption and feeds two achievements in
   `AchievementManager.consumptionProgress()`: **Taste Tester** (use every
   consumable) and **Regular Customer** (25 uses), both listed in the Achievements
   overlay.
 - Test hook: `scene.shop.clockOffset` (ms) fast-forwards the shop's clock so a
   test can expire a buff without waiting.
+- **Nomikai showdown stake** (`src/DrinkingGame.js`, issue #84). The ready screen has
+  a stake row from `DrinkingGame.STAKES` — `FRIENDLY` (stake 0, wins ¥100 on the
+  house), `SMALL TAB` (¥500) and `BIG TAB` (¥2,000), each `{ id, label, stake,
+  winnings }` — picked with ←/→ (A/D, the touch d-pad) or a click/tap. A stake the
+  wallet does not cover is greyed and cannot be picked — trying to (→ or a tap) toasts
+  what it needs and what the wallet holds; the last pick is remembered
+  while it is still affordable. The line under it says what is at risk and what the
+  pool is. Money moves like this, and nowhere else: the stake leaves the wallet in
+  `begin()`; a win pays `DrinkingGame.pool(option, prizeBonus)` = stake +
+  winnings × bonus (so Karaage's +50% applies to the winnings, never the stake); a
+  draw returns the stake; a loss pays nothing more, so it costs exactly the stake;
+  ESC mid-round (`leave()`) forfeits the stake with a toast; ESC on the ready screen
+  or the result costs nothing. The result screen leaves on ENTER / ESC, and on
+  SPACE (the touch A button) once `DrinkingGame.RESULT_GRACE_MS` has passed, so the
+  last mashes of a round do not dismiss it. The effect hooks are unchanged (`headStart` and
+  `prizeBonus` are locked in when the round starts) and so is the Bailey rule: when
+  the player is Damian, Bailey mirrors every press and the head start and wins by
+  his ten bonus gulps, so any stake put up against him is lost.
+- `node tools/test_game.js` covers the pure parts of all of this without a browser:
+  icons, sell values, catches into the bag, save migration, stake / pool maths and a
+  whole stubbed round at every stake (win, lose, draw, walk-out, vs Bailey).
 
 ### Title Screen and Character Portraits (issue #9)
 

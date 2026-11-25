@@ -3,7 +3,9 @@
  *
  * Buy the fishing rod at any konbini counter, then bump into any pond edge
  * to cast: the bobber plops in, ripples... and when the "!" flashes you have
- * a beat to press SPACE. Catches pay out on the spot — boots pay nothing.
+ * a beat to press SPACE. A fish goes into the bag (menu → Items) as an item,
+ * one per species (issue #83): sell it at a konbini counter or the izakaya
+ * bar, or have the izakaya grill it. An old boot is thrown straight back.
  * ESC (or a miss) ends the session; bump the pond again to recast.
  *
  * No new art: the bobber and ripples are drawn Graphics, the "!" is text.
@@ -91,13 +93,14 @@ class Fishing {
         let acc = 0;
         const table = Fishing.catchTable(this.scene.shop.buff('fishLuck'));
         const c = table.find(f => (acc += f.odds) > roll) || table[0];
-        if (c.value > 0) {
-            this.scene.shop.money += c.value;
-            this.scene.shop.save();
-            this.scene.updateHUD();
+        const shop = this.scene.shop;
+        const message = Fishing.catchMessage(c, shop.fmt(c.value));
+        this.finish(true, message);
+        const fresh = shop.addCatch(c);
+        if (fresh.length) {
+            // let the catch toast be read in full first, then celebrate
+            this.scene.time.delayedCall(Shop.toastMs(message), () => shop.toast(`★ achievement: ${fresh.join(' + ')}`));
         }
-        this.finish(true, c.value > 0 ? `${c.name}! the fishmonger pays ${this.scene.shop.fmt(c.value)}`
-                                      : `${c.name}... worthless.`);
     }
 
     finish(caught, message) {
@@ -129,24 +132,53 @@ class Fishing {
     }
 }
 
-/** The catch table — odds sum to 1. */
+/**
+ * The catch table — odds sum to 1. `value` is what a shop pays for one; a
+ * catch worth nothing is junk and never reaches the bag. Everything else
+ * becomes an inventory item (Shop.fishItems): `id` is its save-file key —
+ * don't rename — `desc` and `icon` show in the lists, and `grilled` is the
+ * food-slot effect the izakaya's grill gives it (same keys as any item's
+ * `effect`, see Shop.EFFECT_KINDS).
+ */
 Fishing.CATCHES = [
-    { name: 'an old boot', odds: 0.12, value: 0 },
-    { name: 'Funa',        odds: 0.45, value: 80 },
-    { name: 'Koi',         odds: 0.30, value: 240 },
-    { name: 'Unagi',       odds: 0.10, value: 520 },
-    { name: 'GOLDEN KOI',  odds: 0.03, value: 1500 },
+    { id: 'old-boot',   name: 'an old boot', odds: 0.12, value: 0 },
+    { id: 'funa',       name: 'Funa',        odds: 0.45, value: 80,
+      desc: 'a small pond carp. grilled: speed +10% for 2 min.',
+      grilled: { speed: 1.1, secs: 120 },
+      icon: { shape: 'fish', colors: { a: '#9fb2c4', b: '#6f8499', c: '#cfdbe6' } } },
+    { id: 'koi',        name: 'Koi',         odds: 0.30, value: 240,
+      desc: 'a handsome one. grilled: speed +20% for 3 min.',
+      grilled: { speed: 1.2, secs: 180 },
+      icon: { shape: 'fish', colors: { a: '#fff4ea', b: '#e2cdbd', c: '#f0642d' } } },
+    { id: 'unagi',      name: 'Unagi',       odds: 0.10, value: 520,
+      desc: 'a fat eel. grilled: speed +40% for 3 min.',
+      grilled: { speed: 1.4, secs: 180 },
+      icon: { shape: 'eel', colors: { a: '#7fa36a', b: '#f2e6a8' } } },
+    { id: 'golden-koi', name: 'Golden Koi',  odds: 0.03, value: 1500,
+      desc: 'it glitters. grilled: showdown winnings +100%, speed +30%. 5 min.',
+      grilled: { speed: 1.3, prizeBonus: 2, secs: 300 },
+      icon: { shape: 'fish-rare', colors: { a: '#ffd23a', b: '#d99a12', c: '#fff3a8' } } },
 ];
+
+/** A catch worth this much or more is a rare one (luck favours them; the Big Catch achievement). */
+Fishing.RARE_VALUE = 500;
+
+Fishing.isRare = (c) => c.value >= Fishing.RARE_VALUE;
+
+/** What the toast says about a landed catch: what it is and where it went. */
+Fishing.catchMessage = (c, price) => c.value > 0
+    ? `${c.name}! it's in your bag — sells for ${price} at a konbini counter or the izakaya`
+    : `${c.name}... you throw it back.`;
 
 /**
  * The catch table for a luck multiplier (1 = plain). Luck above 1 takes the
  * worthless catches off the table and multiplies the odds of the rare ones
- * (worth ¥500+), then renormalizes so the odds still sum to 1.
+ * (Fishing.isRare), then renormalizes so the odds still sum to 1.
  */
 Fishing.catchTable = (luck) => {
     if (!(luck > 1)) return Fishing.CATCHES;
     const lucky = Fishing.CATCHES.filter(f => f.value > 0)
-        .map(f => Object.assign({}, f, { odds: f.odds * (f.value >= 500 ? luck : 1) }));
+        .map(f => Object.assign({}, f, { odds: f.odds * (Fishing.isRare(f) ? luck : 1) }));
     const total = lucky.reduce((sum, f) => sum + f.odds, 0);
     return lucky.map(f => Object.assign({}, f, { odds: f.odds / total }));
 };

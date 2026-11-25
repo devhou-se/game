@@ -122,6 +122,26 @@ class AchievementManager {
         ];
     }
 
+    /**
+     * Fishing achievement (issue #83), from the shop's `caught` counters:
+     *   Big Catch — land a rare fish (Fishing.isRare: Unagi, Golden Koi)
+     */
+    fishingProgress() {
+        const shop = this.scene.shop;
+        if (!shop || typeof Fishing === 'undefined') return [];
+        const rare = Fishing.CATCHES.filter(Fishing.isRare);
+        const landed = rare.reduce((sum, c) => sum + (shop.caught[c.id] || 0), 0);
+        return [
+            { name: 'Big Catch', desc: `Land a rare fish (${rare.map(c => c.name).join(' or ')})`,
+              value: Math.min(landed, 1), total: 1, complete: landed >= 1 },
+        ];
+    }
+
+    /** Every achievement the shop's save feeds, in the order the overlay lists them. */
+    itemProgress() {
+        return this.consumptionProgress().concat(this.fishingProgress());
+    }
+
     /** Record a tile the player has stepped on. */
     markVisited(room, x, y) {
         if (!room) return;

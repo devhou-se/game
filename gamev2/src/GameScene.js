@@ -41,6 +41,16 @@ class GameScene extends Phaser.Scene {
             for (const ad of (data.ads || [])) this.load.image(ad.key, `assets/ads/${ad.file}`);
         });
 
+        // Item icon art (issue #82): a PNG listed here replaces the icon
+        // ItemIcons would otherwise draw — see assets/items/README.md
+        this.load.json('itemIconManifest', `assets/items/manifest.json?t=${Date.now()}`);
+        this.load.once('filecomplete-json-itemIconManifest', (key, type, data) => {
+            const ids = Array.isArray(data && data.icons) ? data.icons : [];
+            for (const id of ids) {
+                if (typeof id === 'string' && /^[\w-]+$/.test(id)) this.load.image(`item-${id}`, `assets/items/${id}.png?t=${Date.now()}`);
+            }
+        });
+
         // Hand-drawn character portraits (issue #9): only the names listed in
         // the manifest are requested, so a character without art never 404s.
         // Dialogue and the title screen use `portrait-<name>` when it exists
@@ -497,7 +507,7 @@ class GameScene extends Phaser.Scene {
     showAchievements() {
         if (this.achievementsVisible) return;   // only one overlay at a time
         const cam = this.cameras.main, W = cam.width, H = cam.height;
-        const extra = this.achievementManager.consumptionProgress();   // food & drink (issue #46)
+        const extra = this.achievementManager.itemProgress();   // food & drink (issue #46), fishing (#83)
         const pw = 560, ph = 260 + extra.length * 64 + (extra.length ? 14 : 0), px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = [];
         const overlay = this.add.graphics();

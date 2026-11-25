@@ -12,6 +12,14 @@
  * HUD) and are used from there, or straight from the buy list with
  * SHIFT+ENTER ("buy & use now").
  *
+ * Fish caught at a pond are inventory items too (issue #83): a konbini
+ * counter and the izakaya bar buy them — the last row of their list switches
+ * the panel to SELL and back — and the izakaya will also grill one for a
+ * food effect (SHIFT+ENTER there).
+ *
+ * Every row, and every active-effect chip, carries the item's icon
+ * (ItemIcons, issue #82).
+ *
  * Every consumable has an effect. Effects are additive buffs only — nothing
  * here ever slows or gates the player. One DRINK effect and one FOOD effect
  * can be active at once: using the same item again refreshes its timer, a
@@ -27,7 +35,8 @@ class Shop {
     constructor(scene) {
         this.scene = scene;
         this.STORE_KEY = 'gamev2_shop';
-        this.visible = false;      // buy overlay
+        this.visible = false;      // buy / sell overlay
+        this.mode = 'buy';         // which list that overlay shows: 'buy' | 'sell'
         this.invVisible = false;   // inventory overlay
         this.objs = [];
         this.rows = [];
@@ -38,7 +47,9 @@ class Shop {
         this.clockOffset = 0;      // ms added to the clock — tests fast-forward buffs with it
 
         const cfg = scene.config.shop || {};
-        this.catalogue = cfg.items || Shop.DEFAULT_ITEMS;
+        // the fish are always in the catalogue, whatever config sells
+        const sold = cfg.items || Shop.DEFAULT_ITEMS;
+        this.catalogue = sold.concat(Shop.fishItems().filter(f => !sold.some(i => i.id === f.id)));
         this.startingMoney = cfg.startingMoney != null ? cfg.startingMoney : 5000;
 
         const K = Phaser.Input.Keyboard.KeyCodes;
@@ -49,11 +60,12 @@ class Shop {
         this.load();
 
         // active-effect chips, stacked under the right end of the HUD bar:
-        // one per slot, each with a live countdown
+        // one per slot, each with the item's icon and a live countdown
         const chip = (color) => {
             const t = scene.add.text(scene.cameras.main.width - 12, 0, '', {
                 fontSize: '14px', fill: color, fontFamily: 'PressStart2P',
-                backgroundColor: 'rgba(0,0,0,0.6)', padding: { x: 8, y: 6 },
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                padding: { left: Shop.CHIP_PAD + ItemIcons.SLOT, right: Shop.CHIP_PAD, y: 12 },
             });
             t.setOrigin(1, 0);
             t.setScrollFactor(0);
@@ -63,6 +75,7 @@ class Shop {
             return t;
         };
         this.effectChips = { drink: chip('#66ff88'), food: chip('#ffcc66') };
+        this.chipIcons = {};       // slot -> [slot square, icon] drawn inside that chip
         scene.time.addEvent({ delay: 250, loop: true, callback: () => this.updateEffectChip() });
         this.updateEffectChip();
     }
@@ -73,10 +86,18 @@ class Shop {
         let y = 48;   // just under the 40px HUD bar
         for (const slot of Shop.SLOTS) {
             const chip = this.effectChips[slot], fx = this.effects[slot];
+            let icon = this.chipIcons[slot];
+            if (icon) icon.forEach(o => o.setVisible(!!fx));
             if (!fx) { chip.setVisible(false); continue; }
             chip.setText(`${fx.name} ${this.fmtTime(fx.until - this.now())}`);
             chip.setY(y);
             chip.setVisible(true);
+            // the icon fills the chip's left padding
+            const item = this.itemById(fx.id) || fx;
+            if (!icon) icon = this.chipIcons[slot] = ItemIcons.add(this.scene, item, 0, 0, 1002);
+            const key = ItemIcons.ensure(this.scene, item);
+            if (icon[1].texture.key !== key) icon[1].setTexture(key).setDisplaySize(ItemIcons.DISPLAY, ItemIcons.DISPLAY);
+            icon.forEach(o => o.setPosition(chip.x - chip.width + chip.height / 2, y + chip.height / 2));
             y += chip.height + 4;
         }
     }
@@ -88,9 +109,11 @@ class Shop {
 
     /**
      * Read the save blob. Tolerates every older shape: the issue #12 blob was
-     * just `{money, items}` — effects and the consumption counters default
-     * to empty, unknown item ids are kept (the catalogue may bring them back)
-     * and junk counts are dropped.
+     * just `{money, items}`, v2 added effects and the consumption counters,
+     * v3 the fish (they are plain `items`) and the `caught` counters. Whatever
+     * is missing defaults to empty and the wallet is never touched, unknown
+     * item ids are kept (the catalogue may bring them back) and junk counts
+     * are dropped.
      */
     load() {
         let raw = {};
@@ -109,6 +132,7 @@ class Shop {
         this.money = typeof raw.money === 'number' && isFinite(raw.money) ? Math.max(0, raw.money) : this.startingMoney;
         this.items = counts(raw.items);   // id -> count owned
         this.used = counts(raw.used);     // id -> times consumed (achievements)
+        this.caught = counts(raw.caught); // fish id -> times landed (achievements)
 
         // effects are saved as {id, until}; the numbers come back from the
         // catalogue, and an expiry can never be further off than the item lasts
@@ -127,7 +151,7 @@ class Shop {
         for (const slot in this.effects) effects[slot] = { id: this.effects[slot].id, until: this.effects[slot].until };
         try {
             localStorage.setItem(this.STORE_KEY, JSON.stringify({
-                v: 2, money: this.money, items: this.items, effects, used: this.used }));
+                v: 3, money: this.money, items: this.items, effects, used: this.used, caught: this.caught }));
         } catch (e) { /* private mode etc — play on without persistence */ }
     }
 
@@ -142,7 +166,25 @@ class Shop {
     itemById(id) { return this.catalogue.find(i => i.id === id); }
 
     /** Everything that can be eaten or drunk (the achievement denominator). */
-    consumables() { return this.catalogue.filter(i => !i.permanent); }
+    consumables() { return this.catalogue.filter(i => ['drink', 'food'].includes(Shop.categoryOf(i))); }
+
+    /** What the player holds that a shop will pay for (the fish). */
+    sellable() { return this.catalogue.filter(i => i.sell > 0 && this.items[i.id]); }
+
+    /**
+     * A landed catch (a Fishing.CATCHES row) goes into the bag — junk worth
+     * nothing does not. Returns the names of any achievements it completed.
+     */
+    addCatch(c) {
+        if (!(c.value > 0) || !this.itemById(c.id)) return [];
+        const achievements = this.scene.achievementManager;
+        const done = () => achievements ? achievements.fishingProgress().filter(a => a.complete).map(a => a.name) : [];
+        const before = done();
+        this.items[c.id] = (this.items[c.id] || 0) + 1;
+        this.caught[c.id] = (this.caught[c.id] || 0) + 1;
+        this.save();
+        return done().filter(name => !before.includes(name));
+    }
 
     // ---------------- world interaction ----------------
 
@@ -173,7 +215,8 @@ class Shop {
     // ---------------- effects ----------------
 
     makeEffect(item, until) {
-        return Object.assign({}, item.effect, { id: item.id, name: item.name, slot: Shop.slotOf(item), until });
+        return Object.assign({}, item.effect,
+            { id: item.id, name: item.effectName || item.name, slot: Shop.slotOf(item), until });
     }
 
     /**
@@ -243,11 +286,15 @@ class Shop {
         return `${parts.join(', ')} for ${this.fmtTime((item.effect.secs || 0) * 1000)}`;
     }
 
-    use(id) {
+    /** Use one of an item. A fish is only eaten `grilled` (the izakaya's sell list). */
+    use(id, opts) {
         if (!this.items[id]) return;
         const item = this.itemById(id);
         if (!item) return;
         if (item.permanent) return this.toast(`${item.name}: ${item.desc}`);
+        if (Shop.categoryOf(item) === 'fish' && !(opts && opts.grilled)) {
+            return this.toast(`${item.name}: sell it at a konbini counter or the izakaya (${this.fmt(item.sell)}) — the izakaya grills it too`);
+        }
         this.items[id]--;
         if (!this.items[id]) delete this.items[id];
 
@@ -263,7 +310,7 @@ class Shop {
             this.effects[slot] = this.makeEffect(item, this.now() + (item.effect.secs || 0) * 1000);
             this.updateEffectChip();
         }
-        this.toast(`${item.name}: ${this.effectSummary(item)}${note}`);
+        this.toast(`${item.effectName || item.name}: ${this.effectSummary(item)}${note}`);
         this.save();
 
         if (achievements) {
@@ -280,7 +327,7 @@ class Shop {
         const p = this.scene.player.sprite;
         if (this._gulp) { this._gulp.stop(); p.setScale(this._gulpScale); }
         this._gulpScale = p.scale;
-        p.setTint(item.category === 'food' ? 0xffe0a0 : 0xaaffcc);
+        p.setTint(Shop.slotOf(item) === 'food' ? 0xffe0a0 : 0xaaffcc);
         this._gulp = this.scene.tweens.add({
             targets: p, scale: { from: this._gulpScale * 1.35, to: this._gulpScale },
             duration: 280, ease: 'Back.easeOut',
@@ -296,21 +343,55 @@ class Shop {
         if (this.isVisible()) return;
         const venue = Shop.VENUES[kind];
         if (!venue) return;
+        if (!this.catalogue.some(venue.sells)) return;
         this.kind = kind;
-        this.stock = this.catalogue.filter(venue.sells);
-        if (!this.stock.length) return;
+        this.mode = 'buy';
         this.selected = 0;
         this.qty = 1;
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
         // swallow the bump keypress (a held direction must not change the quantity)
         [k.enter, k.space, k.esc, k.left, k.right, k.a, k.d, k.up, k.down, k.w, k.s].forEach(JD);
         this.visible = true;
+        this.refreshStock();
         this.render();
     }
 
-    /** Most of the selected item the wallet (and the 9 cap) allows. */
+    selling() { return this.visible && this.mode === 'sell'; }
+
+    /**
+     * What the open list holds: the venue's menu, the player's fish (sell
+     * mode) or everything owned (Items). A venue that buys gets one more row
+     * under its items — `switchRow` — that flips the panel between the two.
+     */
+    refreshStock() {
+        const venue = Shop.VENUES[this.kind];
+        const onItem = this.selected < (this.stock || []).length;
+        if (this.invVisible) this.stock = Object.keys(this.items).map(id => this.itemById(id)).filter(Boolean);
+        else this.stock = this.selling() ? this.sellable() : this.catalogue.filter(venue.sells);
+        this.switchRow = this.invVisible || !venue.buys ? null : (this.selling()
+            ? { label: '‹ back to the menu', desc: 'buy something instead' }
+            : { label: 'sell your catch ›', desc: venue.grills ? 'the bar buys fish — and grills them' : 'the counter buys fish' });
+        // a row that went (the last of a fish sold) leaves the selection on an
+        // item while there is one, not on the switch row under them
+        const last = onItem && this.stock.length ? this.stock.length - 1 : this.rowCount() - 1;
+        this.selected = Math.max(0, Math.min(this.selected, last));
+    }
+
+    /** Selectable rows: the items, then the buy/sell switch. */
+    rowCount() { return this.stock.length + (this.switchRow ? 1 : 0); }
+
+    setMode(mode) {
+        this.mode = mode;
+        this.selected = 0;
+        this.qty = 1;
+        this.repaint();
+    }
+
+    /** Most of the selected item the wallet (and the 9 cap) allows — or, selling, all you hold. */
     maxQty(item) {
-        if (!item || item.permanent) return 1;
+        if (!item) return 1;
+        if (this.selling()) return Math.max(1, this.items[item.id] || 0);
+        if (item.permanent) return 1;
         return Math.max(1, Math.min(9, Math.floor(this.money / item.price)));
     }
 
@@ -338,15 +419,51 @@ class Shop {
         this.repaint();
     }
 
+    // ---------------- selling (issue #83) ----------------
+
+    /** Sell `qty` of the selected fish to the venue. */
+    sell() {
+        const item = this.stock[this.selected];
+        const qty = item ? Math.min(this.qty, this.items[item.id] || 0) : 0;
+        if (!qty) return;
+        const gain = Shop.sellValue(item, qty);
+        this.money += gain;
+        this.items[item.id] -= qty;
+        if (!this.items[item.id]) delete this.items[item.id];
+        this.save();
+        this.scene.updateHUD();
+        this.toast(`sold ${qty > 1 ? qty + '× ' : ''}${item.name} for ${this.fmt(gain)}`);
+        this.qty = 1;
+        this.repaint();
+    }
+
+    /** Have the venue grill one of the selected fish, and eat it. */
+    grill() {
+        const item = this.stock[this.selected];
+        if (!item || !Shop.VENUES[this.kind].grills) return;
+        this.use(item.id, { grilled: true });
+        this.qty = 1;
+        this.repaint();
+    }
+
+    /** ENTER / SPACE in the buy or sell list (SHIFT held: the second action). */
+    confirm(shift) {
+        if (this.selected >= this.stock.length) {
+            return this.switchRow ? this.setMode(this.selling() ? 'buy' : 'sell') : undefined;
+        }
+        if (!this.selling()) return this.buy(shift);
+        return shift && Shop.VENUES[this.kind].grills ? this.grill() : this.sell();
+    }
+
     // ---------------- inventory overlay ----------------
 
     showInventory() {
         if (this.isVisible()) return;
-        this.stock = Object.keys(this.items).map(id => this.itemById(id)).filter(Boolean);
         this.selected = 0;
         const JD = Phaser.Input.Keyboard.JustDown;
         JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
         this.invVisible = true;
+        this.refreshStock();
         this.render();
     }
 
@@ -368,6 +485,7 @@ class Shop {
         this.objs = [];
         this.rows = [];
         this.descText = this.qtyText = this.totalText = this.useNowText = this.titleText = null;
+        this.stepper = [];
     }
 
     select(i) {
@@ -381,10 +499,11 @@ class Shop {
         if (JD(k.esc)) return this.hide();
         // both confirm keys must be consumed, or a held one fires next frame
         const enter = JD(k.enter), space = JD(k.space);
-        if (enter || space) return this.visible ? this.buy(k.shift.isDown) : this.useSelected();
-        if (!this.stock.length) return;
-        if (JD(k.up) || JD(k.w)) this.select((this.selected - 1 + this.stock.length) % this.stock.length);
-        if (JD(k.down) || JD(k.s)) this.select((this.selected + 1) % this.stock.length);
+        if (enter || space) return this.visible ? this.confirm(k.shift.isDown) : this.useSelected();
+        const n = this.rowCount();
+        if (!n) return;
+        if (JD(k.up) || JD(k.w)) this.select((this.selected - 1 + n) % n);
+        if (JD(k.down) || JD(k.s)) this.select((this.selected + 1) % n);
         if (this.visible) {
             if (JD(k.left) || JD(k.a)) this.setQty(this.qty - 1);
             if (JD(k.right) || JD(k.d)) this.setQty(this.qty + 1);
@@ -397,15 +516,27 @@ class Shop {
         this.hide();
         this.visible = wasShop;
         this.invVisible = wasInv;
+        this.refreshStock();
         this.render();
     }
 
     paint() {
-        this.rows.forEach((r, i) => r.setFill(i === this.selected ? '#ffff00' : '#ffffff'));
+        this.rows.forEach((r, i) => r.setFill(i === this.selected ? '#ffff00' : (r.restFill || '#ffffff')));
         const item = this.stock[this.selected];
-        if (!item) return;
+        // the quantity stepper and buttons belong to an item, not the switch row
+        (this.stepper || []).forEach(o => o.setVisible(!!item));
+        if (!item) {
+            if (this.descText && this.switchRow && this.rowCount()) this.descText.setText(this.switchRow.desc);
+            return;
+        }
         if (this.descText) this.descText.setText(item.desc);
-        if (this.qtyText) {
+        if (!this.qtyText) return;
+        if (this.selling()) {
+            this.qtyText.setText(`×${this.qty}`);
+            this.totalText.setText(`total +${this.fmt(Shop.sellValue(item, this.qty))}`);
+            this.totalText.setFill('#ffd700');
+            this.useNowText.setText(Shop.VENUES[this.kind].grills ? '[ grill & eat ]' : '');
+        } else {
             const cost = item.price * (item.permanent ? 1 : this.qty);
             this.qtyText.setText(item.permanent ? '×1' : `×${this.qty}`);
             this.totalText.setText(`total ${this.fmt(cost)}`);
@@ -416,10 +547,16 @@ class Shop {
 
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
-        const inv = this.invVisible;
-        const n = Math.max(1, this.stock.length);
+        const inv = this.invVisible, selling = this.selling(), venue = Shop.VENUES[this.kind];
+        // an empty list says so on its first line; the switch row goes under it
+        const lead = this.stock.length ? 0 : 1;
+        const n = Math.max(1, lead + this.rowCount());
         const active = inv ? this.activeEffects() : [];
-        const pw = 640, ph = (inv ? 210 + (active.length ? 30 : 0) : 250) + n * 44;
+        // rows are 44px until the list would run off the screen (the Items
+        // screen with nearly every item and every fish), then they close up
+        const chrome = inv ? 210 + (active.length ? 30 : 0) : 250;
+        const rowH = Math.max(ItemIcons.SLOT + 2, Math.min(44, Math.floor((H - 16 - chrome) / n)));
+        const pw = 640, ph = chrome + n * rowH;
         const px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = this.objs;
 
@@ -449,18 +586,26 @@ class Shop {
             return o;
         };
 
-        this.titleText = text(W / 2, py + 34, inv ? 'ITEMS' : Shop.VENUES[this.kind].title, '32px', true);
+        this.titleText = text(W / 2, py + 34, inv ? 'ITEMS' : venue.title + (selling ? ' · SELL' : ''), '32px', true);
         text(px + pw - 18, py + 34, this.fmt(this.money), '24px', true, '#ffd700', 1);
 
         if (!this.stock.length) {
-            text(W / 2, py + 108, 'nothing yet — find a vending machine', '20px', false, '#888888');
+            text(W / 2, py + (inv ? 108 : 92), inv ? 'nothing yet — find a vending machine'
+                : 'nothing to sell — catch a fish at a pond', '20px', false, '#888888');
         }
 
+        const nameX = px + 30 + ItemIcons.SLOT + 10;
         this.rows = this.stock.map((item, i) => {
-            const y = py + 92 + i * 44;
+            const y = py + 92 + i * rowH;
             const owned = this.items[item.id] || 0;
-            const row = text(px + 30, y, inv ? `${item.name}  ×${owned}` : item.name, '24px', true, '#ffffff', 0);
-            if (!inv) {
+            objs.push(...ItemIcons.add(scene, item, px + 30 + ItemIcons.SLOT / 2, y, 2002));
+            const row = text(nameX, y, inv ? `${item.name}  ×${owned}` : item.name, '24px', true, '#ffffff', 0);
+            if (selling) {
+                text(px + pw - 150, y, `have ×${owned}`, '20px', false, '#88aa88', 1);
+                text(px + pw - 30, y, this.fmt(item.sell), '24px', false, '#ffd700', 1);
+            } else if (inv) {
+                if (item.sell > 0) text(px + pw - 30, y, `sells ${this.fmt(item.sell)}`, '20px', false, '#88aa88', 1);
+            } else {
                 // what you already carry, and whether the wallet stretches to it
                 const soldOut = item.permanent && owned;
                 if (owned) text(px + pw - 150, y, item.permanent ? 'owned' : `have ×${owned}`, '20px', false, '#88aa88', 1);
@@ -476,12 +621,21 @@ class Shop {
                 // and buttons sit under the rows, and a mouse travelling down
                 // to them would drag the selection to the last row. Click
                 // picks a row; clicking the picked row (or [ buy ]) buys it.
-                row.on('pointerdown', () => (i === this.selected ? this.buy(false) : this.select(i)));
+                // The sell list works the same way.
+                row.on('pointerdown', () => (i === this.selected ? this.confirm(false) : this.select(i)));
             }
             return row;
         });
+        if (this.switchRow) {
+            const i = this.stock.length;
+            const row = text(px + 30, py + 92 + (lead + i) * rowH, this.switchRow.label, '24px', true, '#66ddff', 0);
+            row.restFill = '#66ddff';
+            row.setInteractive({ useHandCursor: true });
+            row.on('pointerdown', () => { this.selected = i; this.confirm(false); });
+            this.rows.push(row);
+        }
 
-        let y = py + 92 + n * 44 + 6;
+        let y = py + 92 + n * rowH + 6;
         this.descText = text(W / 2, y, '', '18px', false, '#9999aa');
         if (inv) {
             if (active.length) {
@@ -492,15 +646,24 @@ class Shop {
             text(W / 2, py + ph - 28, Hints.text(scene, '↑/↓ + ENTER: use · ESC: close'), '16px', false, '#888888');
         } else {
             // quantity stepper + total, and the mouse/touch route to "buy & use now"
+            // (in the sell list the same widgets sell, and grill at the izakaya)
             y += 40;
-            button(text(px + 30, y, '‹', '28px', true, '#ffffff', 0), () => this.setQty(this.qty - 1));
-            this.qtyText = text(px + 74, y, '', '24px', true, '#ffffff');
-            button(text(px + 104, y, '›', '28px', true, '#ffffff', 0), () => this.setQty(this.qty + 1));
-            this.totalText = text(px + 140, y, '', '20px', false, '#ffd700', 0);
-            this.useNowText = button(text(px + pw - 30, y, '', '20px', true, '#66ff88', 1), () => this.buy(true));
-            button(text(px + pw - 222, y, '[ buy ]', '20px', true, '#ffffff', 1), () => this.buy(false));
-            text(W / 2, py + ph - 52, Hints.text(scene, '↑/↓ pick · ←/→ quantity · ESC step away'), '16px', false, '#888888');
-            text(W / 2, py + ph - 28, Hints.text(scene, 'ENTER buy · SHIFT+ENTER buy & use now'), '16px', false, '#888888');
+            this.stepper = [
+                button(text(px + 30, y, '‹', '28px', true, '#ffffff', 0), () => this.setQty(this.qty - 1)),
+                this.qtyText = text(px + 74, y, '', '24px', true, '#ffffff'),
+                button(text(px + 104, y, '›', '28px', true, '#ffffff', 0), () => this.setQty(this.qty + 1)),
+                this.totalText = text(px + 140, y, '', '20px', false, '#ffd700', 0),
+                this.useNowText = button(text(px + pw - 30, y, '', '20px', true, '#66ff88', 1), () => this.confirm(true)),
+                button(text(px + pw - 222, y, selling ? '[ sell ]' : '[ buy ]', '20px', true, '#ffffff', 1), () => this.confirm(false)),
+            ];
+            if (!this.stock.length) {
+                // nothing to sell: the only row is the way back
+                text(W / 2, py + ph - 28, Hints.text(scene, 'ENTER back to the menu · ESC step away'), '16px', false, '#888888');
+            } else {
+                text(W / 2, py + ph - 52, Hints.text(scene, '↑/↓ pick · ←/→ quantity · ESC step away'), '16px', false, '#888888');
+                text(W / 2, py + ph - 28, Hints.text(scene, !selling ? 'ENTER buy · SHIFT+ENTER buy & use now'
+                    : venue.grills ? 'ENTER sell · SHIFT+ENTER grill & eat one' : 'ENTER sell'), '16px', false, '#888888');
+            }
         }
         this.paint();
     }
@@ -519,11 +682,14 @@ class Shop {
         o.uiFloat = true;   // UIScale: magnified, but never moves the overlay it appears over
         this._toast = o;
         this.scene.tweens.add({
-            targets: o, alpha: 0, delay: Math.max(1800, msg.length * 45), duration: 400,
+            targets: o, alpha: 0, delay: Shop.toastMs(msg), duration: 400,
             onComplete: () => { if (this._toast === o) this._toast = null; o.destroy(); },
         });
     }
 }
+
+/** How long a toast stays up before it fades — longer lines get longer. */
+Shop.toastMs = (msg) => Math.max(1800, String(msg).length * 45);
 
 /** Effect slots: one drink and one food effect can be active at a time. */
 Shop.SLOTS = ['drink', 'food'];
@@ -531,20 +697,38 @@ Shop.SLOTS = ['drink', 'food'];
 /** Category of an item — older catalogues (config `shop.items`) may omit it. */
 Shop.categoryOf = (item) => item.category || (item.permanent ? 'gear' : (item.effect ? 'drink' : 'food'));
 
-/** The slot an item's effect occupies. */
-Shop.slotOf = (item) => Shop.categoryOf(item) === 'food' ? 'food' : 'drink';
+/** The slot an item's effect occupies (a grilled fish is food). */
+Shop.slotOf = (item) => ['food', 'fish'].includes(Shop.categoryOf(item)) ? 'food' : 'drink';
+
+/** Gap between a HUD effect chip's icon slot, its text and its right edge. */
+Shop.CHIP_PAD = 8;
+
+/** What a shop pays for `qty` of an item — nothing for one it does not buy. */
+Shop.sellValue = (item, qty) => Math.max(0, Math.floor((item && item.sell) || 0)) * Math.max(0, Math.floor(qty || 0));
+
+/**
+ * The fish as catalogue items, one per species worth anything, straight from
+ * Fishing.CATCHES (the one value table): `sell` is the catch's value and the
+ * `effect` is what it does grilled. They are sold nowhere (no `where`).
+ */
+Shop.fishItems = () => (typeof Fishing === 'undefined' ? [] : Fishing.CATCHES)
+    .filter(c => c.value > 0)
+    .map(c => ({ id: c.id, name: c.name, category: 'fish', sell: c.value, desc: c.desc,
+                 effect: c.grilled, effectName: `Grilled ${c.name}`, icon: c.icon }));
 
 /**
  * What each bump opens: a title and a filter over the catalogue. Items say
  * where they are sold with `where`: 'vending' (machines + konbini),
  * 'counter' (konbini only) or a venue id such as 'izakaya' (that bar only).
+ * A venue with `buys` also pays for the player's fish (the SELL list), and
+ * one with `grills` will cook one on the spot.
  */
 Shop.VENUES = {
     vending: { title: 'VENDING MACHINE', sells: i => i.where === 'vending' },
-    counter: { title: 'KONBINI',         sells: i => i.where === 'vending' || i.where === 'counter' },
+    counter: { title: 'KONBINI',         sells: i => i.where === 'vending' || i.where === 'counter', buys: true },
     drinks:  { title: 'DRINKS',          sells: i => (i.where === 'vending' || i.where === 'counter') && Shop.categoryOf(i) === 'drink' },
     snacks:  { title: 'SNACKS',          sells: i => (i.where === 'vending' || i.where === 'counter') && Shop.categoryOf(i) === 'food' },
-    izakaya: { title: 'IZAKAYA',         sells: i => i.where === 'izakaya' },
+    izakaya: { title: 'IZAKAYA',         sells: i => i.where === 'izakaya', buys: true, grills: true },
 };
 
 /**
@@ -568,37 +752,53 @@ Shop.EFFECT_KINDS = {
 
 /**
  * The catalogue. config.json `shop.items` overrides it wholesale. Ids are
- * save-file keys — rename one and saved inventories lose it.
+ * save-file keys — rename one and saved inventories lose it. `icon` picks a
+ * pixel map and its colours (ItemIcons.SHAPES); without one the item gets its
+ * category's default. The fish are added to whichever catalogue is in use
+ * (Shop.fishItems).
  */
 Shop.DEFAULT_ITEMS = [
     // --- drinks ---
     { id: 'zone-energy',   name: 'Zone Energy',   price: 300, where: 'vending', category: 'drink',
+      icon: { shape: 'can', colors: { a: '#7b4dff', b: '#4a2bb0', c: '#35218a', d: '#ffe14a' } },
       desc: 'speed +50% for 30s', effect: { speed: 1.5, secs: 30 } },
     { id: 'vodka-redbull', name: 'Vodka Redbull', price: 800, where: 'vending', category: 'drink',
+      icon: { shape: 'can', colors: { a: '#2f5fc4', b: '#1f3f8a', c: '#d8dde6', d: '#e23a3a' } },
       desc: 'speed +100% for 20s. direction: negotiable.', effect: { speed: 2, secs: 20, scramble: 0.2 } },
     { id: 'green-tea',     name: 'Green Tea',     price: 160, where: 'vending', category: 'drink',
+      icon: { shape: 'bottle', colors: { a: '#8fcf5a', b: '#5f9a35', c: '#f3f7e6', d: '#2f7a2f' } },
       desc: 'calm. speed +20% for 60s, and it settles a wobbly drink.', effect: { speed: 1.2, secs: 60 } },
     { id: 'canned-coffee', name: 'Canned Coffee', price: 220, where: 'vending', category: 'drink',
+      icon: { shape: 'can-short', colors: { a: '#8a5630', b: '#5c371d', c: '#f1dfb0', d: '#8a5630' } },
       desc: 'the long haul: speed +30% for 90s.', effect: { speed: 1.3, secs: 90 } },
     { id: 'ramune',        name: 'Ramune',        price: 240, where: 'counter', category: 'drink',
+      icon: { shape: 'ramune', colors: { a: '#9fe3f2', b: '#5fb5cc', c: '#2a7fd0', d: '#ffffff' } },
       desc: 'steady hands: fishing strike window +80% for 2 min.', effect: { fishWindow: 1.8, secs: 120 } },
     { id: 'highball',      name: 'Highball',      price: 500, where: 'izakaya', category: 'drink',
+      icon: { shape: 'glass', colors: { a: '#e9b44c', b: '#c48a2a', c: '#fff6da', d: '#f5e04a' } },
       desc: 'speed +60% for 40s. a little wobbly.', effect: { speed: 1.6, secs: 40, scramble: 0.1 } },
     { id: 'nama-beer',     name: 'Nama Beer',     price: 600, where: 'izakaya', category: 'drink',
-      desc: 'warmed up: start the nomikai showdown 8 gulps ahead. 90s.', effect: { headStart: 8, secs: 90 } },
+      icon: { shape: 'mug', colors: { a: '#f2b632', b: '#c98a14' } },
+      desc: 'start the nomikai showdown 8 gulps ahead (Bailey keeps pace). 90s.', effect: { headStart: 8, secs: 90 } },
     // --- food ---
     { id: 'onigiri',       name: 'Onigiri',       price: 180, where: 'counter', category: 'food',
+      icon: { shape: 'onigiri', colors: { a: '#1f3327' } },
       desc: 'tuna mayo. fish bite twice as fast for 2 min.', effect: { fishBite: 0.5, secs: 120 } },
     { id: 'melon-pan',     name: 'Melon Pan',     price: 250, where: 'counter', category: 'food',
+      icon: { shape: 'bun', colors: { a: '#f0d27a', b: '#c99a3c', d: '#b5802c' } },
       desc: 'lucky crumbs: no old boots, double the rare fish. 2 min.', effect: { fishLuck: 2, secs: 120 } },
     { id: 'nikuman',       name: 'Nikuman',       price: 320, where: 'counter', category: 'food',
+      icon: { shape: 'nikuman', colors: { a: '#e6dcc8', b: '#cbbfa8' } },
       desc: 'warm and filling: speed +15% for 2 min, on top of any drink.', effect: { speed: 1.15, secs: 120 } },
     { id: 'edamame',       name: 'Edamame',       price: 280, where: 'izakaya', category: 'food',
+      icon: { shape: 'pods', colors: { a: '#7cc24a', b: '#4f8a2c' } },
       desc: 'soaks it up: drinks cannot make you wobble for 2 min.', effect: { steady: true, secs: 120 } },
     { id: 'karaage',       name: 'Karaage',       price: 450, where: 'izakaya', category: 'food',
+      icon: { shape: 'nuggets', colors: { a: '#c9772e', b: '#8f4d1a', c: '#eaa85a' } },
       desc: 'fried courage: nomikai showdown winnings +50% for 3 min.', effect: { prizeBonus: 1.5, secs: 180 } },
     // --- gear ---
     { id: 'fishing-rod',   name: 'Fishing Rod',   price: 1200, where: 'counter', category: 'gear',
+      icon: { shape: 'rod', colors: { a: '#c98f4a', b: '#7a4a22', d: '#e23a3a' } },
       desc: 'bump into any pond to cast. reusable forever.', permanent: true },
 ];
 
