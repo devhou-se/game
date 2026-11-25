@@ -253,6 +253,10 @@ class DialogueManager {
 
         const dialogue = this.currentNPC.dialogue[this.currentDialogueIndex];
         this.dialogueText.setText(dialogue);
+
+        // Speak the line (replaces the previous line's clip; a no-op for
+        // NPCs without a voice — see src/Voice.js)
+        this.scene.voice.playLine(this.currentNPC.voice, this.currentDialogueIndex);
     }
 
     advance() {
@@ -274,6 +278,7 @@ class DialogueManager {
         this.visible = false;
         this.currentNPC = null;
         this.currentDialogueIndex = 0;
+        this.scene.voice.stop();
 
         // Destroy NPC sprite
         if (this.npcSprite) {

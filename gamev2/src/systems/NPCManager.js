@@ -34,6 +34,7 @@ class NPCManager {
         });
         npc.stationary = !!options.stationary;
         npc.photo = options.photo || null;   // blog-post photo id (assets/photos/<id>.png)
+        npc.voice = options.voice || null;   // spoken-dialogue clip set (assets/voice/<id>/<line>.mp3)
         this.characters.push(npc);
 
         // Add dialogue if provided

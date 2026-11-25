@@ -51,7 +51,9 @@ if args.delete:
     print(f'deleted state {args.date}')
 else:
     st = states.setdefault(args.date, {})
-    if args.dialogue: st['dialogue'] = args.dialogue
+    if args.dialogue:
+        st['dialogue'] = args.dialogue
+        st.pop('voice', None)   # spoken clips belong to the old lines (re-voice with blog_to_npc.py --voice-backfill)
     if args.pos:
         x, y = map(int, args.pos.split(','))
         st['gridX'], st['gridY'] = x, y

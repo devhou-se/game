@@ -37,6 +37,7 @@ Then navigate to `http://localhost:8000` in your browser.
 - `src/Character.js` - Character movement class with grid-based tweening
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
+- `src/Voice.js` - Spoken NPC dialogue (lazy per-line audio clips) and the shared mute setting
 - `editor/` - Visual editor for editing game configuration
   - `editor/index.html` - Entry point for the visual editor (access at `/editor/`)
   - `editor/GridEditor.js` - Main editor grid and placement logic
@@ -118,6 +119,42 @@ Semi-transparent bar at top showing: `{game.title} | {currentRoom} | {game.date}
 - Fixed to camera with `setScrollFactor(0)`
 - Depth 1000+ to render above game elements
 - Menu button (right-aligned) opens MenuManager on click
+
+### Voiced Dialogue (text-to-speech)
+
+NPC dialogue can be read aloud. A resolved NPC state carrying `"voice": <voiceId>` (passed through
+`syncNpcPresence` → `NPCManager.spawnNPC` exactly like `"photo"`) has one clip per dialogue line at
+`assets/voice/<voiceId>/<lineIndex>.mp3` (0-based index into that state's `dialogue`).
+
+- **Client** (`src/Voice.js`, `scene.voice`): `DialogueManager.updateText()` calls `voice.playLine()` as each
+  line is shown (which stops the previous line's clip) and `close()` calls `voice.stop()`. Clips are NOT
+  preloaded — the source is set at dialogue time on ONE shared `HTMLAudioElement`, which is created and
+  unlocked (10 ms of silence played inside the first key press / tap, capture-phase listeners removed once
+  it succeeds) because `playLine()` runs from Phaser's update loop and iOS Safari only lets a
+  gesture-played element start from there (the unlock is untested on a real iOS device). An NPC without `voice`, a clip
+  that fails to load/decode, or a rejected `play()` is a silent no-op (the only trace of a 404 is the
+  browser's own network log line, which is why the pipeline never records a partial clip set).
+- **Mute**: the ESC menu's `Voices: ON/OFF` row (flips in place, menu stays open) persists in localStorage
+  `gamev2_voice_muted` (`'1'` = muted; default ON). It is the game's shared audio setting — other audio
+  features should read `scene.voice.isMuted()` / subscribe with `scene.voice.onMuteChange(fn)`.
+- **State merging**: clips belong to the exact lines they were generated from, so in `resolveNpc` a state
+  that sets `dialogue` without naming `voice` clears the inherited voice (and `tools/npc_state.py --dialogue`
+  drops a state's `voice`).
+- **Pipeline** (`tools/post_voice.py`, called by `tools/blog_to_npc.py` after the photo import): with
+  `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_<NPC>` (e.g. `ELEVENLABS_VOICE_BAILEY`, `_DAMIAN`, `_DYLAN`,
+  `_JULIA`) set, each dialogue line is POSTed to the ElevenLabs text-to-speech REST API (stdlib `urllib`)
+  and the dated state gets `"voice": "<npc>-<date>-<hash>"`. Optional: `ELEVENLABS_VOICE_<NPC>_DRUNK` (used
+  when the LLM's new `drunk` boolean says the post reads as drunk; the state then also carries
+  `"drunk": true`) and `ELEVENLABS_MODEL` (default `eleven_multilingual_v2`). Best-effort like photos:
+  unconfigured or failing, it logs one `voice: ... — skipped` line and the placement lands with
+  `"voice": null`. A clip set is all-or-nothing, and an unchanged re-run reuses the clips on disk.
+  After every config write `prune_voices()` deletes clip directories no state references any more, so the
+  pipeline workflow must commit `gamev2/assets/voice` (additions and deletions, e.g. `git add -A`) together
+  with `config.json` — a recorded `voice` whose clips were not deployed 404s on every line.
+- **Backfill**: `python3 tools/blog_to_npc.py --voice-backfill [--dry-run]` voices existing dated states
+  that have dialogue but no voice (no LLM call, no placement). `--dry-run` prints the line/character
+  totals ElevenLabs would bill for.
+- **Not live yet**: no API key or cloned voice ids exist, so no state has a `voice` and the game is silent.
 
 ## Asset Generation
 

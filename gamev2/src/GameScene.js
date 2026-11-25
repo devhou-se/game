@@ -217,6 +217,7 @@ class GameScene extends Phaser.Scene {
             this.inputHandler.setupKeys();
 
             // Create managers
+            this.voice = new Voice();   // spoken dialogue + the shared mute setting
             this.menuManager = new MenuManager(this);
             this.datePicker = new DatePicker(this);
             this.stationPicker = new StationPicker(this);
@@ -306,6 +307,7 @@ class GameScene extends Phaser.Scene {
                         dialogue: resolved.dialogue,
                         stationary: resolved.stationary,
                         photo: resolved.photo,
+                        voice: resolved.voice,
                     });
                     const here = roomKey === this.roomManager.currentRoom;
                     npc.sprite.setVisible(here);

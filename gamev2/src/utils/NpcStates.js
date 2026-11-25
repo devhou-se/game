@@ -22,6 +22,12 @@
  * assets/photos/<id>.png by tools/blog_to_npc.py, hung in a frame beside the
  * author in the dialogue box. The pipeline writes photo on every placement
  * (null when the post had none) so an older photo never bleeds forward.
+ *
+ * Likewise "voice": <voice id> — spoken clips for that state's dialogue, one
+ * per line at assets/voice/<id>/<line index>.mp3 (tools/post_voice.py, played
+ * by src/Voice.js). Clips belong to the exact dialogue they were generated
+ * from, so a state that changes the dialogue without naming a voice clears
+ * it rather than inheriting clips for lines that are no longer said.
  */
 function gameDate() {
     const p = new URLSearchParams(location.search).get('date');
@@ -38,7 +44,10 @@ function resolveNpc(npcConfig, date) {
     delete merged.states;
     // ISO dates compare correctly as strings
     for (const d of Object.keys(npcConfig.states).sort()) {
-        if (d <= date) Object.assign(merged, npcConfig.states[d]);
+        if (d > date) continue;
+        const state = npcConfig.states[d];
+        Object.assign(merged, state);
+        if ('dialogue' in state && !('voice' in state)) merged.voice = null;
     }
     if (merged.present === false) return null;
     return merged;

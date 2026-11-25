@@ -35,6 +35,9 @@ class MenuManager {
             { text: 'Time Travel', action: () => this.scene.datePicker.show() },
             { text: 'Map', action: () => this.scene.showMap() },
             { text: 'Controls', action: () => this.scene.showControls() },
+            // a setting, not a screen: flips in place and the menu stays open
+            { label: () => `Voices: ${this.scene.voice.isMuted() ? 'OFF' : 'ON'}`,
+              action: () => this.scene.voice.toggleMuted(), keepOpen: true },
             { text: 'Credits', action: () => this.scene.showCredits() }
         ];
 
@@ -77,7 +80,7 @@ class MenuManager {
             const optionText = this.scene.add.text(
                 this.scene.cameras.main.width / 2,
                 startY + (index * spacing),
-                option.text,
+                option.label ? option.label() : option.text,
                 {
                     fontSize: '32px',
                     fill: '#ffffff',
@@ -95,6 +98,8 @@ class MenuManager {
             this.options.push({
                 textObject: optionText,
                 action: option.action,
+                label: option.label,
+                keepOpen: !!option.keepOpen,
                 index: index
             });
 
@@ -125,7 +130,10 @@ class MenuManager {
         this.overlay.setVisible(true);
         this.container.setVisible(true);
         this.titleText.setVisible(true);
-        this.options.forEach(option => option.textObject.setVisible(true));
+        this.options.forEach(option => {
+            if (option.label) option.textObject.setText(option.label());
+            option.textObject.setVisible(true);
+        });
         this.selectedIndex = 0;
         this.updateSelection();
     }
@@ -158,7 +166,11 @@ class MenuManager {
         const selectedOption = this.options[this.selectedIndex];
         if (selectedOption) {
             selectedOption.action();
-            this.hide();
+            if (selectedOption.keepOpen) {
+                selectedOption.textObject.setText(selectedOption.label());
+            } else {
+                this.hide();
+            }
         }
     }
 

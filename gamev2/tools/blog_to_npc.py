@@ -13,9 +13,30 @@ print (tools/post_photos.py) and the dated state carries "photo": <post_id>,
 which the dialogue box hangs in a frame next to the author. Photo import is
 best-effort — a failed photo never blocks the placement.
 
+The dialogue can also be spoken: when ELEVENLABS_API_KEY and a voice id for
+the author (ELEVENLABS_VOICE_<NPC>, e.g. ELEVENLABS_VOICE_BAILEY) are set,
+each line is sent to ElevenLabs text-to-speech (tools/post_voice.py — see its
+docstring for every env var), saved to assets/voice/<voice id>/<line>.mp3,
+and the dated state carries "voice": <voice id>, which the dialogue box plays
+line by line. The LLM also says whether the post reads as drunk; a drunk post
+is recorded as "drunk": true and spoken in ELEVENLABS_VOICE_<NPC>_DRUNK when
+that optional second voice is set. Voice is best-effort too — unconfigured or
+failing, it logs a line and the placement lands silent.
+Clip directories that no state references any more are deleted after each
+config write, so whoever runs this must commit gamev2/assets/voice (additions
+AND deletions) together with config.json — a recorded "voice" whose clips were
+not deployed 404s on every line.
+
 Run from gamev2/ (normally by the www-jp game-npc-pipeline workflow):
 
   python3 tools/blog_to_npc.py --payload post.json [--dry-run] [--mock]
+  python3 tools/blog_to_npc.py --voice-backfill [--dry-run]
+
+--voice-backfill makes no LLM call and places nobody: it speaks every existing
+dated state that has dialogue but no voice (a state with "drunk": true gets
+the drunk voice), so history placed before voices existed can be voiced once
+the ElevenLabs env is configured. With --dry-run it only reports the lines and
+characters it would send, which is the number ElevenLabs bills on.
 
 post.json is the blog payload: {"post_id", "title", "author", "date",
 "content"} — author is the GitHub login. Needs ANTHROPIC_API_KEY unless
@@ -31,6 +52,7 @@ import os
 import sys
 
 from post_photos import import_post_photo
+from post_voice import prune_voices, voice_dialogue
 
 # GitHub login -> NPC name (must exist in config, or be creatable from
 # <name>_front/_back/_side sprites)
@@ -132,13 +154,13 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
 
 
 def generate(post, npc_name, spot_ids, mock=False):
-    """Claude Sonnet turns the post into ({spot, dialogue}, usage). usage is
-    None for --mock, else the response.usage token counts."""
+    """Claude Sonnet turns the post into ({spot, dialogue, drunk}, usage).
+    usage is None for --mock, else the response.usage token counts."""
     if mock:
         return {'spot': spot_ids[0], 'dialogue': [
             f"I just wrote about {post['title']}!",
             'Come read it on the blog.',
-        ]}, None
+        ], 'drunk': False}, None
 
     import anthropic
     # generous retries: fresh/low-tier accounts have small per-minute limits
@@ -149,8 +171,9 @@ def generate(post, npc_name, spot_ids, mock=False):
         'properties': {
             'spot': {'type': 'string', 'enum': spot_ids},
             'dialogue': {'type': 'array', 'items': {'type': 'string'}},
+            'drunk': {'type': 'boolean'},
         },
-        'required': ['spot', 'dialogue'],
+        'required': ['spot', 'dialogue', 'drunk'],
         'additionalProperties': False,
     }
 
@@ -166,7 +189,11 @@ def generate(post, npc_name, spot_ids, mock=False):
         'quip.\n\n'
         'Spot rules: choose the location that best matches the post\'s '
         'content or mood (e.g. a post about trains near the station room, '
-        'food near the 7-Eleven, reflection near the shrine or pond).'
+        'food near the 7-Eleven, reflection near the shrine or pond).\n\n'
+        'Drunk rule: set drunk to true only when the post itself reads as if '
+        'it was written drunk (slurred or rambling prose, typos played for '
+        'laughs, the author saying so) — it picks the voice the dialogue is '
+        'read aloud in. A sober post about drinking is false.'
     )
 
     user = (
@@ -255,10 +282,12 @@ def hidden_base_def(name, x, y):
     }
 
 
-def apply(cfg, npc_name, date, target_room, x, y, dialogue, photo=None):
+def apply(cfg, npc_name, date, target_room, x, y, dialogue, photo=None,
+          voice=None, drunk=False):
     """Dated states: appear at the spot in the target room, vanish elsewhere.
-    `photo` is always written (null when the post had none) so state merging
-    never carries an older post's photo forward into a photo-less post."""
+    `photo` and `voice` are always written (null when the post had none) so
+    state merging never carries an older post's photo or spoken clips forward.
+    `drunk` is kept so --voice-backfill can pick the right voice later."""
     changes = []
     for room_key, room in overworld_rooms(cfg).items():
         npc = npc_in_room(room, npc_name)
@@ -269,9 +298,14 @@ def apply(cfg, npc_name, date, target_room, x, y, dialogue, photo=None):
                 changes.append(f'{room_key}: added hidden base def')
             st = npc.setdefault('states', {}).setdefault(date, {})
             st.update({'present': True, 'gridX': x, 'gridY': y,
-                       'dialogue': dialogue, 'photo': photo})
+                       'dialogue': dialogue, 'photo': photo, 'voice': voice})
+            if drunk:
+                st['drunk'] = True
+            else:
+                st.pop('drunk', None)
             changes.append(f'{room_key}: present at ({x},{y}) from {date}'
-                           + (f' with photo {photo}' if photo else ''))
+                           + (f' with photo {photo}' if photo else '')
+                           + (f' with voice {voice}' if voice else ''))
         elif npc is not None:
             st = npc.setdefault('states', {}).setdefault(date, {})
             st['present'] = False
@@ -383,7 +417,10 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
     for line in dialogue:
         print(f'  » {line}')
     photo = import_post_photo(post, dry_run=dry_run)
-    for c in apply(cfg, npc_name, date, room_key, cell[0], cell[1], dialogue, photo):
+    drunk = result.get('drunk') is True
+    voice = voice_dialogue(npc_name, date, dialogue, drunk=drunk, dry_run=dry_run)
+    for c in apply(cfg, npc_name, date, room_key, cell[0], cell[1], dialogue,
+                   photo, voice, drunk):
         print(f'  {c}')
     record = {
         'post_id': post.get('post_id'),
@@ -392,8 +429,35 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
         'spot': spot_id.split(' · ', 1)[-1],   # "the vending machines"
         'date': date,
         'photo': bool(photo),
+        'voice': bool(voice),
     }
     return record, usage
+
+
+def voice_backfill(cfg, dry_run=False):
+    """Speak every dated state that has dialogue but no voice. Only the blog
+    authors' NPCs have voices. Returns the number of states voiced."""
+    voiced = pending = lines = chars = 0
+    for room_key, room in cfg['rooms'].items():
+        for npc in room.get('npcs', []):
+            if npc['name'] not in AUTHOR_NPCS.values():
+                continue
+            for date, st in sorted(npc.get('states', {}).items()):
+                dialogue = st.get('dialogue')
+                if not dialogue or st.get('voice'):
+                    continue
+                pending += 1
+                lines += len(dialogue)
+                chars += sum(len(line) for line in dialogue)
+                print(f'{room_key} {npc["name"]} {date}: {len(dialogue)} lines')
+                voice = voice_dialogue(npc['name'], date, dialogue,
+                                       drunk=st.get('drunk') is True, dry_run=dry_run)
+                if voice:
+                    st['voice'] = voice
+                    voiced += 1
+    print(f'voice backfill: {pending} unvoiced state(s), {lines} lines, {chars} chars'
+          f' · {voiced} {"would be voiced" if dry_run else "voiced"}')
+    return voiced
 
 
 def main():
@@ -401,11 +465,27 @@ def main():
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument('--payload', help='single blog post payload JSON file')
     src.add_argument('--payloads-dir', help='directory of payload JSONs — processed in date order (backfill)')
+    src.add_argument('--voice-backfill', action='store_true',
+                     help='speak existing dated states that have dialogue but no voice (no LLM, no placement)')
     ap.add_argument('--reset', action='store_true', help='clear all NPC states + hidden defs before placing (backfill)')
     ap.add_argument('--dry-run', action='store_true', help='generate + place, but do not write config')
     ap.add_argument('--mock', action='store_true', help='skip the LLM (canned response)')
     ap.add_argument('--summary-out', help='write a JSON summary of placements (for the issue comment)')
     args = ap.parse_args()
+
+    if args.voice_backfill:
+        if args.reset:
+            ap.error('--reset cannot be combined with --voice-backfill')
+        cfg = load_config()
+        voiced = voice_backfill(cfg, dry_run=args.dry_run)
+        if args.dry_run:
+            print('dry run — config.json not written')
+        else:
+            if voiced:
+                save_config(cfg)
+                print('config.json updated')
+            prune_voices(cfg)
+        return 0
 
     if args.payload:
         posts = [json.load(open(args.payload))]
@@ -457,6 +537,7 @@ def main():
     elif records or args.reset:
         save_config(cfg)
         print('config.json updated')
+        prune_voices(cfg)   # clip sets the new config no longer points at
     return 0
 
 
