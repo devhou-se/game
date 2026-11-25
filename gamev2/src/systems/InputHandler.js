@@ -115,6 +115,7 @@ class InputHandler {
         // overlay must not read as a fresh press and pop the main menu open
         // on the very next frame.
         const overlays = [
+            this.scene.intro && this.scene.intro.isVisible() && this.scene.intro,
             this.scene.stationPicker && this.scene.stationPicker.isVisible() && this.scene.stationPicker,
             this.scene.shop && this.scene.shop.isVisible() && this.scene.shop,
             this.scene.characterSelect && this.scene.characterSelect.isVisible() && this.scene.characterSelect,

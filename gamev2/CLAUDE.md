@@ -38,6 +38,7 @@ Then navigate to `http://localhost:8000` in your browser.
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
 - `src/TitleScreen.js` - Title / splash screen shown at boot (cast line-up, press SPACE / tap to start)
+- `src/Intro.js` - New-player intro (who devhouse is, controls as keycaps, where to start); replayable from the menu as How to Play
 - `assets/portraits/` - Optional hand-drawn character portraits (`manifest.json` + `<name>.png`, see its README)
 - `src/Voice.js` - Spoken NPC dialogue (lazy per-line audio clips) and the shared mute setting
 - `editor/` - Visual editor for editing game configuration
@@ -140,6 +141,35 @@ the HTML loader.
   consumes it — a date hop lands straight back in the world, while a manual refresh of that URL shows the
   title again. Any future in-game action that reloads the page should set the same flag.
 
+### New-Player Intro (issue #39)
+
+`src/Intro.js` (`scene.intro`): a three-page overlay in the usual panel style (depth 2000-2003).
+1. **Welcome to devhouse** — the friends (names parsed from `config.credits` "Role: Name" lines), the
+   Japan trip, NPC lines coming from the trip's blog posts, and the HUD date picking the day ("Time Travel
+   in the menu" to visit a day of the trip — the default date is today's, which is not a trip day, so the
+   copy must not imply the player starts on one).
+2. **How to play** — move / sprint / interact / talk / menu drawn as keycaps; when
+   `touchControls.enabled` the same rows are drawn as the on-screen d-pad, sprint pill and A / B buttons,
+   plus a one-line keyboard reminder (touch controls are also on for touchscreen laptops).
+3. **Where to start** — there is no quest system, so it points at real things: the friends around
+   Tokyo (same word as page 1), exploring, and Paint the Board (with the live progress bar from `achievementManager`).
+
+Fishing controls and map travel are **deliberately absent** (fishing is learned when a rod is bought; map
+travel is a debug feature) — keep them out when editing the copy.
+- **Input**: SPACE / ENTER (touch A) or a tap anywhere turns the page and the last page closes it; ESC
+  (touch B) skips the lot. It is the first entry in `InputHandler`'s overlay list, so nothing moves or
+  opens underneath, and `DebugManager.onBacktick` ignores the debug chord while it is up.
+- **Boot flow is strictly sequential, never stacked**: loader → title → (first visit) character creator →
+  intro → world. `CharacterCreator.show({ onClose })` runs the callback once from `hide()` — confirmed or
+  cancelled — and `GameScene.create()` uses it to open the intro.
+- **Gate**: localStorage `gamev2_intro_seen`. `Intro.shouldAutoShow(firstVisit)` sets it to `pending` when a
+  first visit begins (so a reload half way through the creator or the intro still gets the intro) and
+  `hide()` sets it to `1` (finished or skipped). A returning player — a character already saved, key absent
+  — is never shown it automatically, and a Time Travel reload does not replay it.
+- **`?nointro=1`** suppresses the automatic showing (and leaves the gate untouched) — combine with
+  `?notitle=1` in tests that start from a fresh profile. Tests that pre-seed `gamev2_character` never see it.
+- **How to Play** in the ESC menu replays it at any time (`scene.intro.show()`).
+
 **Dialogue portrait** (`DialogueManager.showPortrait`): the speaker is shown dating-sim style as a large
 bust in the same wooden frame as the blog photo (`drawFrame`, shared by both), standing on the panel's
 top-left corner with the name plate bridging frame and panel. The blog-photo frame keeps the top-right;
@@ -224,6 +254,7 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC).
 - **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
 - **Dialogue**: SPACE/ENTER advances, ESC closes
 - **Title screen**: SPACE/ENTER/ESC or a tap starts the game (`?notitle=1` skips the screen)
+- **Intro**: SPACE/ENTER or a tap turns the page, ESC skips (`?nointro=1` skips the first-visit intro)
 - **Hidden debug menu**: triple-press backtick (``` within a second) — rows for
   the grid view/inspector, the N/E/X flag keys, map-click travel, a time-of-day
   pin (AUTO/day/dusk/night/dawn, same effect as `?tod=`), exact wallet amount

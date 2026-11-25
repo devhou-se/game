@@ -246,6 +246,7 @@ class GameScene extends Phaser.Scene {
             this.characterSelect = new CharacterSelect(this);
             this.characterCreator = new CharacterCreator(this);
             this.titleScreen = new TitleScreen(this);
+            this.intro = new Intro(this);
             this.dayNight = new DayNight(this);
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
@@ -261,11 +262,17 @@ class GameScene extends Phaser.Scene {
             if (window.hideLoader) window.hideLoader();
 
             // title screen first (every load; ?notitle=1 skips it), then on
-            // the first ever visit: make your own character before you set off
+            // the first ever visit: make your own character before you set
+            // off, and once the creator closes (confirmed or not) the intro
+            // (?nointro=1 skips it) — strictly one after the other
             const begin = () => {
-                if (CharacterCreator.shouldAutoShow()) {
-                    this.characterCreator.show({ firstRun: true });
+                const firstVisit = CharacterCreator.shouldAutoShow();
+                const intro = Intro.shouldAutoShow(firstVisit) ? () => this.intro.show({ firstRun: true }) : null;
+                if (firstVisit) {
+                    this.characterCreator.show({ firstRun: true, onClose: intro });
+                    if (this.characterCreator.isVisible()) return;
                 }
+                if (intro) intro();
             };
             if (TitleScreen.shouldShow()) {
                 this.titleScreen.show(begin);

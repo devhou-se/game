@@ -112,6 +112,8 @@ class DebugManager {
         // the title screen owns all input; don't open the menu hidden behind it
         const title = this.scene.titleScreen;
         if (title && title.isVisible()) { this._backtickTimes = []; return; }
+        // ...nor on top of the new-player intro
+        if (this.scene.intro && this.scene.intro.isVisible()) { this._backtickTimes = []; return; }
         const now = Date.now();
         this._backtickTimes = this._backtickTimes.filter(t => now - t < 900);
         this._backtickTimes.push(now);

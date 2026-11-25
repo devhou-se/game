@@ -419,6 +419,7 @@ class CharacterCreator {
     show(opts = {}) {
         if (this.visible || !this.donors.length) return;
         this.firstRun = !!opts.firstRun;
+        this.onClose = opts.onClose || null; // run once, after the creator is gone
         const saved = CharacterCreator.load();
         this.data = saved ? JSON.parse(JSON.stringify(saved)) : {
             name: '',
@@ -451,6 +452,9 @@ class CharacterCreator {
             this.scene.textures.remove(this.previewKey);
             this.previewKey = null;
         }
+        const onClose = this.onClose;
+        this.onClose = null;
+        if (onClose) onClose();
     }
 
     confirm() {
