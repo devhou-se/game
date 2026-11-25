@@ -1341,6 +1341,19 @@ const tests = {
         for (const k of Object.keys(byRoom)) assert.strictEqual(Array.from(legacyReach[k]).sort().join(' '), Array.from(byRoom[k]).sort().join(' '), k);
     },
 
+    'check reports every room\'s lint errors: a store cut off from its door'() {
+        assert.strictEqual(JSON.stringify(worldWith(true).world.lintProblems()), '[]', 'the committed world is lint-clean');
+        // wall off the row inside KonbiniMarket1's door: transporters and NPCs are still
+        // fine, so the survey sees nothing, but no shelf can be walked up to
+        const cut = worldWith(true, (config) => {
+            const room = config.rooms.KonbiniMarket1, y = room.transporters[0].gridY - 2;
+            for (let x = 0; x < room.worldWidth / 64; x++) room.layers.find(l => l.collision).tiles[x + ',' + y] = 'gk_blank';
+        }).world;
+        const problems = cut.lintProblems();
+        assert.ok(problems.length && problems.every(q => q.room === 'KonbiniMarket1'), JSON.stringify(problems));
+        assert.ok(problems.some(q => /^lint shop-no-front: \d+ \(/.test(q.text)), JSON.stringify(problems));
+    },
+
     'a cell two districts share is walkable by the later district\'s map'() {
         // the same case tools/test_blog_to_npc.py makes for the python port: Palace is listed
         // after Market, so a collider on Palace's copy of their shared row closes that cell

@@ -552,6 +552,8 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   INSIDE a store (issue #152): a shelf or cooler is bumped from the cell below it, so lint fails with
   `shop-no-front` when any column of a konbini / Don Takote shelf or cooler has no walkable cell under
   it that the door leads to (the till, against the front wall, needs any reachable side).
+  `play.js check` reports every room's lint errors too (`WorldModel.lintProblems`, issue #178), so a
+  store cut off from its door shows up there as `KonbiniMarket1: lint shop-no-front: ...`.
   `generate_konbinis.py` lays a store out as coolers | walkway | aisle | walkway | (aisle | walkway) |
   counter row: a two-cell `office-fridge` pushes the aisles down a row, the last aisle stops two rows
   short of the counter row (one on the row above it closed the ring and sealed the back of the store

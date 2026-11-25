@@ -145,7 +145,7 @@ const COMMANDS = {
             'trips                      the trips, and where a player starts on the current date',
             'start [new]                go where the game starts a returning (or a new) player on the current date',
             'as <name>                  play as a cast member (their NPC leaves the world)',
-            'check                      transporter targets and unreachable rooms, plus NPC placement and player starts on every content and trip day (stitched, then ?stitch=0)',
+            'check                      transporter targets and unreachable rooms, NPC placement and player starts on every content and trip day, and every room\'s lint errors (stitched, then ?stitch=0)',
             'lint [room]...             map QA: floor holes, missing or stray colliders, tree and overhang layering (a district, or a whole city)',
             'render <room> <out.png>    draw a room - or a stitched city, woods and all - to a PNG [--scale 0.5] [--colliders]',
             'reach [room]...            JSON: the cells of each room that can be walked to, in its own coordinates',
@@ -363,12 +363,13 @@ const COMMANDS = {
         if (!dates.includes(w.date)) dates.push(w.date);
         dates.sort();
         const line = (q) => (q.where ? q.where + (q.where.startsWith(q.room + ' ') ? '' : ` (${q.room} ${q.x},${q.y})`) : q.room) + `: ${q.text}`;
-        const lines = w.survey(dates).problems.map(line);
+        // ...and the map lint's errors for every room: a store cut off from its door passes the survey
+        const lines = w.survey(dates).problems.concat(w.lintProblems()).map(line);
         // the world as the game plays it, then - when that is stitched - the separate rooms
         // ?stitch=0 falls back to (their seam teleports exist nowhere else)
         if (w.stitched && Object.keys(w.roomManager.cities).length) {
             const legacy = newWorld(w.state(), false);
-            for (const q of legacy.survey(dates).problems) if (!lines.includes(line(q))) lines.push('[--stitch=0] ' + line(q));
+            for (const q of legacy.survey(dates).problems.concat(legacy.lintProblems())) if (!lines.includes(line(q))) lines.push('[--stitch=0] ' + line(q));
         }
         if (!lines.length) return 'no problems found';
         return lines.join('\n') + `\n${lines.length} problems`;

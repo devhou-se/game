@@ -132,8 +132,9 @@ node tools/play.js check
 ```
 
 It reports transporters that target a missing room, arrivals that land on a
-blocked cell, transporters nobody can walk to, rooms nothing leads to, and
-NPCs standing on a collider or boxed in. NPCs are checked for the current
+blocked cell, transporters nobody can walk to, rooms nothing leads to,
+NPCs standing on a collider or boxed in, and every room's `lint` errors (as
+`Room: lint <kind>: ...`, e.g. a store cut off from its door). NPCs are checked for the current
 date only, so set `date` first when the change is about a particular day.
 
 `lint` is the map QA gate (it replaced `qa_port.py`): floor holes, solid objects

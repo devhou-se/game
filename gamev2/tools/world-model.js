@@ -600,6 +600,24 @@ class WorldModel {
     }
 
     /**
+     * Every room's lint ERRORS as `check` problems, one per room and kind (issue #178): a
+     * store whose shelves are cut off from its door (`shop-no-front`) has sound transporters
+     * and NPCs, so only the map lint sees it. Warnings stay with `lint`.
+     *   [{ room, text: "lint shop-no-front: 3 (Shelf @5,6 (front 5,7); ...)" }]
+     */
+    lintProblems() {
+        const problems = [];
+        for (const room of Object.keys(this.roomManager.rooms)) {
+            const { errors } = this.lint(room);
+            for (const kind of Object.keys(errors).sort()) {
+                const items = errors[kind];
+                problems.push({ room, text: `lint ${kind}: ${items.length} (${items.slice(0, 3).join('; ')}${items.length > 3 ? '; ...' : ''})` });
+            }
+        }
+        return problems;
+    }
+
+    /**
      * Walk the world the way the game plays it. Rooms are RUNTIME rooms (a
      * stitched city stands in for its districts, in city cells):
      *   problems: [{ room, x, y, where: "Market 5,3" (the district's own cell), text, date }]
