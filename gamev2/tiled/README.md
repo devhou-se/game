@@ -164,6 +164,26 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   or a torii straddling the road (legs collide, top on Tops). Never build a
   crossing as a door-band "building"; transit must continue in the walking
   direction.
+- **The Tokyo districts are stitched into one map at runtime** (config
+  `cities`, `src/systems/CityStitcher.js` — see "Stitched cities" in
+  `gamev2/CLAUDE.md`). The five maps stay separate files and you keep
+  editing them one at a time, in their own cell coordinates, but in the game:
+  - the seam transporters are ignored (keep them: `?stitch=0` and the tools
+    use them) and the player simply walks across, so **whatever stands on a
+    map's edge is now visible from the neighbour** — an edge fence, a
+    half-drawn road, a sprite hanging over the border;
+  - where two maps overlap (Tokyo/Market 1 column, Market/Palace 1 row,
+    Palace/Park 4 rows) only the LATER map in `cities.<City>.rooms` is drawn
+    and collides; the other map's tiles on those cells are dropped. Edit the
+    owner's copy (Market's column 0, Palace's row 0, Park's rows 0-3);
+  - a tile that only reads wrong with the neighbour in view (a road corner
+    where the road now carries straight on) can be fixed for the stitched
+    game alone with `cities.<City>.patch` in config.json
+    (`{district: {layer: {"x,y": tile | null}}}`) instead of a map edit;
+  - a map's position comes from `devhouse.world`. After moving or resizing a
+    district there run `python3 tools/sync_cities.py` (then
+    `tools/make_worldmap.py`) — the game refuses to stitch a city whose
+    offsets disagree with the world map and falls back to separate rooms.
 - **Track rows in ported rooms are sealed cell-by-cell** (`gk_blank` under
   the `train-track` Over Floor sprite). A road crossing the tracks needs its
   two cells unsealed — that's a level crossing, precedent exists.

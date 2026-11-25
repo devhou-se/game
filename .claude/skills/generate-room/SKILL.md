@@ -127,6 +127,9 @@ band badly — interiors want `light-concrete-autotile`.
 
 For outdoor rooms, add the map to `devhouse.world` at a sensible non-
 overlapping offset (64px cells; align connecting roads across the seam).
+A room that should be walked into from Tokyo with no fade must also be listed
+in config `cities` (then `python3 tools/sync_cities.py`) — see "Stitched
+cities" in `gamev2/CLAUDE.md`; otherwise it stays a separate room.
 Interiors stay out of the world file.
 
 ## 6. Verify by playing (never skip)

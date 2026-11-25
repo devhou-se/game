@@ -7,6 +7,12 @@
  * computed by a flood-fill from each room's starting position (spawn for the
  * start room, the transporter arrival cell for the others) — so unreachable
  * unblocked tiles don't inflate the total.
+ *
+ * Districts of a stitched city (issues #40/#41) are still counted and saved
+ * per district in the district's own cells, so progress from before the
+ * stitch stays valid — but they are flood-filled together as the one map they
+ * now are, and a cell two districts share counts once, for the district that
+ * draws it (computeCityReachable).
  */
 class AchievementManager {
     constructor(scene) {
@@ -99,6 +105,11 @@ class AchievementManager {
             }
             this.reachable[rk] = reach;
         }
+
+        const rm = this.scene.roomManager;
+        for (const city of Object.values((rm && rm.cities) || {})) {
+            this.computeCityReachable(city, seeds);
+        }
     }
 
     /**
@@ -148,6 +159,58 @@ class AchievementManager {
         const set = this.painted[room] || (this.painted[room] = new Set());
         const k = `${x},${y}`;
         if (!set.has(k)) { set.add(k); this.save(); }
+    }
+
+    /**
+     * A stitched city is ONE walkable map: flood it whole (from every
+     * district's seeds), then hand each reached cell to the district that
+     * owns it, in that district's own coordinates.
+     */
+    computeCityReachable(city, seeds) {
+        const rm = this.scene.roomManager;
+        const floor = new Set(), coll = new Set();
+        for (const layer of (rm.rooms[city.key].layers || [])) {
+            for (const pos in layer.tiles) {
+                if (layer.name === 'Floor') floor.add(pos);
+                if (layer.collision) coll.add(pos);
+            }
+        }
+        const walkable = (x, y) => floor.has(`${x},${y}`) && !coll.has(`${x},${y}`) &&
+            rm.checkBoundary(x, y, city.key);
+
+        const reach = new Set();
+        const q = [];
+        const add = (x, y) => {
+            const k = `${x},${y}`;
+            if (!reach.has(k) && walkable(x, y)) { reach.add(k); q.push([x, y]); }
+        };
+        for (const m of city.members) {
+            for (const [sx, sy] of (seeds[m.key] || [])) add(sx + m.x, sy + m.y);
+        }
+        if (!q.length) {
+            for (const k of floor) { const [x, y] = k.split(',').map(Number); add(x, y); if (q.length) break; }
+        }
+        while (q.length) {
+            const [x, y] = q.pop();
+            add(x + 1, y); add(x - 1, y); add(x, y + 1); add(x, y - 1);
+        }
+
+        for (const m of city.members) this.reachable[m.key] = new Set();
+        for (const k of reach) {
+            const [x, y] = k.split(',').map(Number);
+            const at = rm.districtsAt(x, y, city.key)[0];
+            this.reachable[at.room].add(`${at.x},${at.y}`);
+        }
+
+        // a shared cell painted (before the stitch) only in the district that
+        // no longer owns it is the owner's now too
+        for (const m of city.members) {
+            for (const k of (this.painted[m.key] || [])) {
+                const [x, y] = k.split(',').map(Number);
+                const at = rm.districtsAt(x + m.x, y + m.y, city.key)[0];
+                if (at && at.room !== m.key) this.markVisited(at.room, at.x, at.y);
+            }
+        }
     }
 
     /** Progress for "Paint the board": overall + per-room (painted∩reachable / reachable). */

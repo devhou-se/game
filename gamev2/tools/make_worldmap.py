@@ -33,6 +33,15 @@ OUT_DIR = 'assets/map'
 META = f'{OUT_DIR}/world-map.json'
 TARGET_W = 1400
 
+# the game stitches the districts in config `cities` together using cell
+# offsets copied from the world file — refuse to go on if they disagree.
+# Checked FIRST, before the hand-made-map exit below: with custom art the
+# game cannot re-check the offsets against world-map.json at boot, so this
+# (and `sync_cities.py --check`) is the only guard left.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import sync_cities
+sync_cities.check()
+
 if os.path.exists(META) and '--force' not in sys.argv:
     if json.load(open(META)).get('custom'):
         sys.exit('world-map.json is marked "custom": true (hand-made art) — not overwriting. Use --force.')

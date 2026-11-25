@@ -342,10 +342,12 @@ class Intro {
         const friends = new Set(this.members().map(n => n.toLowerCase()));
         // the travelling cast only: a dated NPC (config `states`) that is in
         // the live room today — not a fixture like the izakaya's opponent
-        const live = (s.roomManager && s.roomManager.rooms) || {};
+        // (asked through npcsIn: a district of a stitched city keeps its
+        // NPCs in the city room, under the district's name)
+        const live = (key) => (s.roomManager ? s.roomManager.npcsIn(key) : []);
         const rooms = Object.entries(s.config.rooms || {})
             .filter(([key, r]) => (r.npcs || []).some(n => n.states && friends.has(String(n.name).toLowerCase())
-                && ((live[key] && live[key].npcs) || []).some(o => o.name === n.name)))
+                && live(key).some(o => o.npc.name === n.name)))
             .map(([key]) => key)
             .slice(0, 3);   // a few places to head for, not an itinerary
         if (!rooms.length || !start || rooms.includes(start)) {

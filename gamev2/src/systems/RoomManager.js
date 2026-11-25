@@ -13,7 +13,101 @@ class RoomManager {
         this.transporterSprites = [];
         this.transporterLabels = [];
         this.objectSprites = [];
-        this.floorSprites = [];
+        this.floorSprites = [];      // the tile sprites + signs that exist right now
+
+        // Cities (issues #40/#41): districts stitched into one room at load —
+        // see CityStitcher. Empty when ?stitch=0 or config has no `cities`.
+        this.cities = {};            // cityKey -> planned city
+        this.memberOf = {};          // district room key -> { city, member }
+
+        // Everything the current room draws, as data (see loadFloorTiles)
+        this.tileRecords = [];       // one per tile: where, what, depth, bounds, live sprite
+        this.blockedCells = new Set();   // "x,y" of every collision-layer tile
+        this.signSprites = [];
+        this.liveTiles = new Set();  // records that currently have a sprite
+        this.spritePool = [];        // hidden sprites of retired streamed tiles, for reuse
+        this.depthScale = 1;
+        this.streamed = false;       // true: sprites exist only near the camera
+        this.chunks = null;
+        this.activeChunks = null;
+    }
+
+    // ------------------------------------------------------------ cities
+
+    /**
+     * Stitch every city in config `cities` into one runtime room, registered
+     * under the city's key next to its districts (which stay in `rooms` as
+     * data but are never entered). Call after initializeRooms().
+     */
+    setupCities(config, worldMap) {
+        if (typeof CityStitcher === 'undefined' || !CityStitcher.enabled()) return;
+        this.cities = CityStitcher.plan(config, worldMap);
+        for (const city of Object.values(this.cities)) {
+            this.rooms[city.key] = CityStitcher.build(city, this.rooms, this.scene.GRID_SIZE);
+            for (const member of city.members) this.memberOf[member.key] = { city, member };
+            console.log(`[stitch] city "${city.key}": ${city.members.map(m => m.key).join(' + ')} ` +
+                `-> one ${city.width}x${city.height} room`);
+        }
+    }
+
+    /**
+     * Where a (room, cell) really is at runtime. Config data, door
+     * transporters and train arrivals all still say ('Market', x, y); when
+     * Market is a district of a stitched city that is the city room at the
+     * district's offset. Anything else comes back unchanged.
+     */
+    resolve(roomKey, x, y) {
+        const at = this.memberOf[roomKey];
+        if (!at) return { room: roomKey, x, y };
+        return { room: at.city.key, x: x + at.member.x, y: y + at.member.y };
+    }
+
+    /**
+     * The inverse: every district containing a cell of a room (the current
+     * one unless named), in that district's own coordinates — the owner (the
+     * one whose tiles are drawn there) first. In an ordinary room: just the
+     * room and the cell.
+     */
+    districtsAt(x, y, roomKey = this.currentRoom) {
+        const city = this.rooms[roomKey] && this.rooms[roomKey].city;
+        if (!city) return [{ room: roomKey, x, y }];
+        const out = [];
+        for (let i = city.members.length - 1; i >= 0; i--) {
+            const m = city.members[i];
+            if (x >= m.x && x < m.x + m.w && y >= m.y && y < m.y + m.h) {
+                out.push({ room: m.key, x: x - m.x, y: y - m.y });
+            }
+        }
+        return out;
+    }
+
+    /** The district owning a cell, in its own coordinates (the room itself outside a city). */
+    localize(x, y) {
+        return this.districtsAt(x, y)[0] || { room: this.currentRoom, x, y };
+    }
+
+    /**
+     * The room key everything district-specific should use: the district the
+     * player is standing in inside a city, otherwise the current room.
+     */
+    currentDistrict() {
+        const p = this.scene.player;
+        return p ? this.localize(p.gridX, p.gridY).room : this.currentRoom;
+    }
+
+    /** NPCs standing in a room or district, as { npc, x, y } in that room's own coordinates. */
+    npcsIn(roomKey) {
+        const at = this.resolve(roomKey, 0, 0);
+        const room = this.rooms[at.room];
+        if (!room) return [];
+        return room.npcs
+            .filter(npc => at.room === roomKey || npc.homeRoom === roomKey)
+            .map(npc => ({ npc, x: npc.gridX - at.x, y: npc.gridY - at.y }));
+    }
+
+    /** Y-sorted depth for the current room (a stitched city squeezes its rows — see CityStitcher.build). */
+    yDepth(depth) {
+        return depth * this.depthScale;
     }
 
     /**
@@ -141,14 +235,22 @@ class RoomManager {
     }
 
     /**
-     * Load floor tiles for the current room
+     * Load floor tiles for the current room.
+     *
+     * Every tile is first indexed as a RECORD (cell, sprite key, depth, pixel
+     * bounds) and its collision noted in `blockedCells`; sprites are made from
+     * records. An ordinary room makes them all at once, as it always did. A
+     * stitched city (~20k tiles) is STREAMED: records are bucketed into
+     * CHUNK-cell squares and only those near the camera have a sprite
+     * (updateStreaming, every frame). `?cull=0` turns streaming off.
      */
     loadFloorTiles() {
-        // Clear existing floor sprites
-        this.floorSprites.forEach(sprite => sprite.destroy());
-        this.floorSprites = [];
+        this.clearFloorTiles();
 
         const room = this.rooms[this.currentRoom];
+        this.depthScale = room.depthScale || 1;
+        this.streamed = !!room.stitched &&
+            new URLSearchParams(window.location.search).get('cull') !== '0';
 
         // Support both old format (room.floor) and new format (room.layers)
         if (room.layers) {
@@ -167,7 +269,37 @@ class RoomManager {
             console.warn(`Room ${this.currentRoom} has no floor or layers data`);
         }
 
+        if (this.streamed) {
+            this.buildChunks();
+            this.updateStreaming();
+        } else {
+            for (const rec of this.tileRecords) this.spawnTile(rec);
+        }
+
         this.placeSignage(room);
+        this.refreshFloorSprites();
+    }
+
+    /** Destroy the current room's tile sprites and signs and forget its records. */
+    clearFloorTiles() {
+        for (const rec of this.liveTiles) rec.sprite.destroy();
+        this.spritePool.forEach(sprite => sprite.destroy());
+        this.signSprites.forEach(sprite => sprite.destroy());
+        this.spritePool = [];
+        this.tileRecords = [];
+        this.blockedCells = new Set();
+        this.signSprites = [];
+        this.liveTiles = new Set();
+        this.floorSprites = [];
+        this.chunks = null;
+        this.activeChunks = null;
+    }
+
+    /** floorSprites = every tile sprite that exists right now, then the signs. */
+    refreshFloorSprites() {
+        const sprites = [];
+        for (const rec of this.liveTiles) sprites.push(rec.sprite);
+        this.floorSprites = sprites.concat(this.signSprites);
     }
 
     /**
@@ -189,23 +321,22 @@ class RoomManager {
             img.setOrigin(0, 0);
             // mounted on a wall band: feet-based depth of the sign's bottom
             // row, +1 so it draws just over the band it hangs on
-            img.setDepth((spot.gridY + ad.h) * 10 + 1);
-            this.floorSprites.push(img);
+            img.setDepth(this.yDepth((spot.gridY + ad.h) * 10 + 1));
+            this.signSprites.push(img);
         }
     }
 
     /**
-     * Load a single tilemap layer
+     * Index a single tilemap layer: one record per tile (and its collision).
      * @param {Object} layer - Layer configuration object
      */
     loadLayer(layer) {
         const tiles = layer.tiles || {};
+        const GS = this.scene.GRID_SIZE;
         let skippedCount = 0;
 
         for (const [key, spriteKey] of Object.entries(tiles)) {
             const [gridX, gridY] = key.split(',').map(Number);
-            const pixelX = gridX * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
-            const pixelY = gridY * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
 
             // Check if the sprite texture exists
             if (!this.scene.textures.exists(spriteKey)) {
@@ -216,14 +347,8 @@ class RoomManager {
                 continue;
             }
 
-            const sprite = this.scene.add.sprite(pixelX, pixelY, spriteKey);
-
-            // Apply sprite configuration
             const spriteConfig = this.scene.getSpriteConfig(spriteKey);
-            sprite.setOrigin(spriteConfig.anchorX, spriteConfig.anchorY);
-            if (spriteConfig.scale !== 1) {
-                sprite.setScale(spriteConfig.scale);
-            }
+            const frame = this.scene.textures.getFrame(spriteKey);
 
             // Depth: ground layers (z<2: floor/over-floor/water) render flat and
             // below everything via fixed negative depths. Everything that
@@ -236,24 +361,178 @@ class RoomManager {
             if (layer.z < 2) {
                 spriteDepth = this.calculateLayerDepth(layer.z);
             } else {
-                const GS = this.scene.GRID_SIZE;
-                const heightCells = Math.max(1, Math.round(sprite.height / GS));
+                const heightCells = Math.max(1, Math.round(frame.realHeight / GS));
                 const feetRow = gridY + heightCells;
                 const overheadBias = layer.z >= 7 ? 11 : 0;
                 // optional per-sprite depth nudge (e.g. a tall building lowered so the
                 // player stays visible on its steps and only disappears in the doorway)
-                spriteDepth = feetRow * 10 + overheadBias + (spriteConfig.depthBias || 0);
+                spriteDepth = this.yDepth(feetRow * 10 + overheadBias + (spriteConfig.depthBias || 0));
             }
-            sprite.setDepth(spriteDepth);
+            // Equal depths draw in creation order, which for a whole room is
+            // layer-then-tile order. Streamed sprites are created whenever
+            // their chunk comes into range, so that order is baked into the
+            // depth instead (far smaller than any real depth step).
+            if (this.streamed) spriteDepth += this.tileRecords.length * 1e-6;
 
-            // Store collision info on sprite
-            sprite.setData('layerCollision', layer.collision);
-            sprite.setData('layerZ', layer.z);
-            sprite.setData('gridX', gridX);
-            sprite.setData('gridY', gridY);
-
-            this.floorSprites.push(sprite);
+            const scale = spriteConfig.scale || 1;
+            const x = gridX * GS + GS / 2, y = gridY * GS + GS / 2;
+            const width = frame.realWidth * scale, height = frame.realHeight * scale;
+            this.tileRecords.push({
+                key: spriteKey, layer, gridX, gridY, x, y,
+                config: spriteConfig,
+                depth: spriteDepth,
+                // what sprite.getBounds() would report, without needing the sprite
+                left: x - spriteConfig.anchorX * width,
+                top: y - spriteConfig.anchorY * height,
+                width, height,
+                sprite: null,
+            });
+            if (layer.collision) this.blockedCells.add(key);
         }
+    }
+
+    /**
+     * Give a tile record its sprite: a new one, or — while streaming — one a
+     * retired tile handed back (retireTile), re-dressed.
+     */
+    spawnTile(rec) {
+        let sprite = this.spritePool.pop();
+        if (sprite) {
+            sprite.setTexture(rec.key);
+            sprite.setPosition(rec.x, rec.y);
+            sprite.addToDisplayList();
+        } else {
+            sprite = this.scene.add.sprite(rec.x, rec.y, rec.key);
+        }
+
+        // Apply sprite configuration
+        sprite.setOrigin(rec.config.anchorX, rec.config.anchorY);
+        sprite.setScale(rec.config.scale || 1);
+        sprite.setDepth(rec.depth);
+
+        // Store collision info on sprite
+        sprite.setData('layerCollision', rec.layer.collision);
+        sprite.setData('layerZ', rec.layer.z);
+        sprite.setData('gridX', rec.gridX);
+        sprite.setData('gridY', rec.gridY);
+
+        rec.sprite = sprite;
+        this.liveTiles.add(rec);
+    }
+
+    /**
+     * Everything the room draws that has a place and a depth, whether or not
+     * its sprite exists right now: { key, depth, left, top, width, height }
+     * (world pixels). AmbientBoats uses it to see what hides the water.
+     */
+    standingArt() {
+        const extra = [...this.signSprites, ...this.objectSprites].map(sprite => {
+            const b = sprite.getBounds();
+            return { key: sprite.texture.key, depth: sprite.depth, left: b.x, top: b.y, width: b.width, height: b.height };
+        });
+        return this.tileRecords.concat(extra);
+    }
+
+    /**
+     * Take a streamed tile's sprite away. It is kept for the next spawnTile,
+     * but off the scene's display (and update) list, so a pooled sprite costs
+     * the renderer nothing.
+     */
+    retireTile(rec) {
+        rec.sprite.removeFromDisplayList();
+        this.spritePool.push(rec.sprite);
+        rec.sprite = null;
+        this.liveTiles.delete(rec);
+    }
+
+    /** True when a collision-layer tile sits on the cell. */
+    isBlocked(gridX, gridY) {
+        return this.blockedCells.has(`${gridX},${gridY}`);
+    }
+
+    // ------------------------------------------------------------ streaming
+
+    /** Bucket every record into each CHUNK-cell square its art touches. */
+    buildChunks() {
+        const size = RoomManager.CHUNK * this.scene.GRID_SIZE;
+        this.chunks = new Map();
+        for (const rec of this.tileRecords) {
+            rec.cx0 = Math.floor(rec.left / size);
+            rec.cy0 = Math.floor(rec.top / size);
+            rec.cx1 = Math.floor((rec.left + rec.width - 1) / size);
+            rec.cy1 = Math.floor((rec.top + rec.height - 1) / size);
+            for (let cy = rec.cy0; cy <= rec.cy1; cy++) {
+                for (let cx = rec.cx0; cx <= rec.cx1; cx++) {
+                    const id = `${cx},${cy}`;
+                    let list = this.chunks.get(id);
+                    if (!list) this.chunks.set(id, list = []);
+                    list.push(rec);
+                }
+            }
+        }
+    }
+
+    /**
+     * The chunks that must have sprites: whatever the camera shows now or
+     * will after catching up with the player (it trails by the deadzone, and
+     * is not centred yet right after a room swap), plus a margin so nothing
+     * is created inside the view.
+     */
+    streamRect() {
+        const cam = this.scene.cameras.main, p = this.scene.player.sprite;
+        const size = RoomManager.CHUNK * this.scene.GRID_SIZE;
+        const margin = RoomManager.STREAM_MARGIN * this.scene.GRID_SIZE;
+        const hw = cam.width / 2 / cam.zoom, hh = cam.height / 2 / cam.zoom;
+        let cx = cam.scrollX + cam.width / 2, cy = cam.scrollY + cam.height / 2;
+        // a camera nowhere near the player (boot, before it starts following)
+        // is about to jump to him — only he matters
+        if (Math.abs(cx - p.x) > hw || Math.abs(cy - p.y) > hh) { cx = p.x; cy = p.y; }
+        return {
+            x0: Math.floor((Math.min(cx, p.x) - hw - margin) / size),
+            y0: Math.floor((Math.min(cy, p.y) - hh - margin) / size),
+            x1: Math.floor((Math.max(cx, p.x) + hw + margin) / size),
+            y1: Math.floor((Math.max(cy, p.y) + hh + margin) / size),
+        };
+    }
+
+    /**
+     * Give the tiles of chunks that came into range a sprite and take it away
+     * from those whose art no longer touches a chunk in range (retired first,
+     * so the newcomers reuse their sprites). Cheap when the chunk
+     * range has not changed (every frame the player stands still or walks
+     * within a chunk). No-op in rooms that are not streamed.
+     */
+    updateStreaming() {
+        if (!this.streamed || !this.chunks) return;
+        const r = this.streamRect(), prev = this.activeChunks;
+        if (prev && r.x0 === prev.x0 && r.y0 === prev.y0 && r.x1 === prev.x1 && r.y1 === prev.y1) return;
+        this.activeChunks = r;
+
+        const inside = (q, cx, cy) => q && cx >= q.x0 && cx <= q.x1 && cy >= q.y0 && cy <= q.y1;
+        if (prev) {
+            for (let cy = prev.y0; cy <= prev.y1; cy++) {
+                for (let cx = prev.x0; cx <= prev.x1; cx++) {
+                    if (inside(r, cx, cy)) continue;
+                    for (const rec of (this.chunks.get(`${cx},${cy}`) || [])) {
+                        if (!rec.sprite) continue;
+                        // a big sprite stays while any chunk it touches is in range
+                        if (rec.cx1 >= r.x0 && rec.cx0 <= r.x1 && rec.cy1 >= r.y0 && rec.cy0 <= r.y1) continue;
+                        this.retireTile(rec);
+                    }
+                }
+            }
+        }
+        for (let cy = r.y0; cy <= r.y1; cy++) {
+            for (let cx = r.x0; cx <= r.x1; cx++) {
+                if (inside(prev, cx, cy)) continue;
+                for (const rec of (this.chunks.get(`${cx},${cy}`) || [])) {
+                    if (!rec.sprite) this.spawnTile(rec);
+                }
+            }
+        }
+        // a long jump (map travel) retires far more than it respawns
+        while (this.spritePool.length > RoomManager.POOL_MAX) this.spritePool.pop().destroy();
+        this.refreshFloorSprites();
     }
 
     /**
@@ -321,6 +600,10 @@ class RoomManager {
      * so the room can change invisibly and the train never flashes on the platform.
      */
     applyRoomSwap(newRoom, targetX, targetY) {
+        // legacy targets — ('Market', x, y) from a konbini door, a station
+        // exit, the map — land in the stitched city at the district's offset
+        ({ room: newRoom, x: targetX, y: targetY } = this.resolve(newRoom, targetX, targetY));
+
         // Hide current room NPCs and their labels
         const oldRoom = this.rooms[this.currentRoom];
         oldRoom.npcs.forEach(npc => {
@@ -403,10 +686,19 @@ class RoomManager {
      * Check if position is within room boundary
      * @param {number} gridX - Grid X coordinate
      * @param {number} gridY - Grid Y coordinate
+     * @param {string} [roomKey] - Room to test (default: the current room)
      * @returns {boolean} True if position is within boundary
      */
-    checkBoundary(gridX, gridY) {
-        const room = this.rooms[this.currentRoom];
+    checkBoundary(gridX, gridY, roomKey = this.currentRoom) {
+        const room = this.rooms[roomKey];
+        if (room && room.city) {
+            // a stitched city: inside ANY district's own boundary — the
+            // woodland between the districts is scenery
+            return this.districtsAt(gridX, gridY, roomKey).some(at => {
+                const boundary = this.rooms[at.room].boundary;
+                return !boundary || this.isPointInPolygon(at.x + 0.5, at.y + 0.5, boundary);
+            });
+        }
         if (!room || !room.boundary) {
             return true;
         }
@@ -414,3 +706,9 @@ class RoomManager {
         return this.isPointInPolygon(gridX + 0.5, gridY + 0.5, room.boundary);
     }
 }
+
+/** Streaming grain: chunks are CHUNK x CHUNK cells; sprites exist STREAM_MARGIN cells beyond the view. */
+RoomManager.CHUNK = 4;
+RoomManager.STREAM_MARGIN = 3;
+/** Most hidden sprites kept for reuse between chunk changes. */
+RoomManager.POOL_MAX = 600;

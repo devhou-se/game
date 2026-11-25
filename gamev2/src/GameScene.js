@@ -189,11 +189,22 @@ class GameScene extends Phaser.Scene {
 
             // Initialize rooms
             this.roomManager.initializeRooms(this.config, centerGridX, centerGridY, maxGridX, maxGridY);
-            this.roomManager.currentRoom = this.config.player.startRoom;
+
+            // Cities (issues #40/#41): the districts listed in config `cities`
+            // are stitched into ONE continuous room (?stitch=0 keeps them
+            // apart). Everything that names a district — the start position
+            // here, NPC homes, door targets — goes through roomManager.resolve
+            this.roomManager.setupCities(this.config, this.cache.json.get('worldMap'));
+            this.achievementManager.computeReachable();
 
             // Create player
-            const playerStartX = this.config.player.startX !== null ? this.config.player.startX : centerGridX;
-            const playerStartY = this.config.player.startY !== null ? this.config.player.startY : centerGridY;
+            const start = this.roomManager.resolve(
+                this.config.player.startRoom,
+                this.config.player.startX !== null ? this.config.player.startX : centerGridX,
+                this.config.player.startY !== null ? this.config.player.startY : centerGridY);
+            this.roomManager.currentRoom = start.room;
+            const playerStartX = start.x;
+            const playerStartY = start.y;
 
             this.player = new Character(this, playerStartX, playerStartY, this.config.player.sprite, {
                 gridSize: this.GRID_SIZE,
@@ -336,16 +347,21 @@ class GameScene extends Phaser.Scene {
         const centerGridY = Math.floor(this.WORLD_HEIGHT / this.GRID_SIZE / 2);
 
         for (const roomKey in this.config.rooms) {
-            const room = this.roomManager.rooms[roomKey];
+            // NPCs are authored per room in that room's own coordinates; a
+            // district of a stitched city keeps its NPCs in the city room, at
+            // the district's offset (homeRoom remembers which district)
+            const home = this.roomManager.resolve(roomKey, 0, 0);
+            const room = this.roomManager.rooms[home.room];
+            const member = (this.roomManager.memberOf[roomKey] || {}).member;
             for (const raw of this.config.rooms[roomKey].npcs) {
                 const resolved = resolveNpc(raw, npcDate);
                 const shouldExist = !!resolved && baseOf(resolved.sprite) !== played &&
                     (!resolved.drinkingGameOpponent || baseOf(resolved.sprite) === drinkingOpponent);
-                const idx = room.npcs.findIndex(n => n.name === raw.name);
+                const idx = room.npcs.findIndex(n => n.name === raw.name && n.homeRoom === roomKey);
 
                 if (shouldExist && idx === -1) {
-                    const gx = resolved.gridX !== null ? resolved.gridX : centerGridX + resolved.gridOffsetX;
-                    const gy = resolved.gridY !== null ? resolved.gridY : centerGridY + resolved.gridOffsetY;
+                    const gx = home.x + (resolved.gridX !== null ? resolved.gridX : centerGridX + resolved.gridOffsetX);
+                    const gy = home.y + (resolved.gridY !== null ? resolved.gridY : centerGridY + resolved.gridOffsetY);
                     const npc = this.npcManager.spawnNPC(gx, gy, resolved.sprite, resolved.name, {
                         dialogue: resolved.dialogue,
                         stationary: resolved.stationary,
@@ -353,7 +369,16 @@ class GameScene extends Phaser.Scene {
                         voice: resolved.voice,
                         posts: resolved.posts,
                     });
-                    const here = roomKey === this.roomManager.currentRoom;
+                    npc.homeRoom = roomKey;
+                    if (member) {
+                        // wandering stops at the district's edge, as it did
+                        // when the district was a room of its own
+                        npc.minGridX = Math.max(npc.minGridX, member.x);
+                        npc.minGridY = Math.max(npc.minGridY, member.y);
+                        npc.maxGridX = Math.min(npc.maxGridX, member.x + member.w - 1);
+                        npc.maxGridY = Math.min(npc.maxGridY, member.y + member.h - 1);
+                    }
+                    const here = home.room === this.roomManager.currentRoom;
                     npc.sprite.setVisible(here);
                     if (npc.nameLabel) npc.nameLabel.setVisible(here);
                     room.npcs.push(npc);
@@ -479,10 +504,11 @@ class GameScene extends Phaser.Scene {
     /**
      * What the HUD calls the room the player is in: its display `name` from
      * config ("7-Eleven · Sapporo", "Sapporo Station"), never the bare room
-     * key unless the room has no name.
+     * key unless the room has no name. Inside a stitched city that is the
+     * district underfoot (`hudDistrict`; update() re-asks when it changes).
      */
     hudRoomName() {
-        const key = this.roomManager.currentRoom;
+        const key = this.hudDistrict = this.roomManager.currentDistrict();
         const room = this.config.rooms[key];
         return (room && room.name) || key;
     }
@@ -677,11 +703,13 @@ class GameScene extends Phaser.Scene {
 
         // an interior isn't ON the map — the player is marked at its entrance
         // (where the interior's exit transporter lands in the overworld)
-        const here = this.roomManager.currentRoom;
+        // (in a stitched city: the district underfoot, in its own cells)
+        const at = this.roomManager.localize(this.player.gridX, this.player.gridY);
+        const here = at.room;
         let markRoom = meta.rooms[here] && here;
-        let markX = this.player.gridX, markY = this.player.gridY;
+        let markX = at.x, markY = at.y;
         if (!markRoom) {
-            const exit = (this.config.rooms[here].transporters || [])
+            const exit = ((this.config.rooms[here] || {}).transporters || [])
                 .find(t => meta.rooms[t.targetRoom]);
             if (exit) { markRoom = exit.targetRoom; markX = exit.targetX; markY = exit.targetY; }
         }
@@ -695,10 +723,8 @@ class GameScene extends Phaser.Scene {
 
         // every NPC in overworld rooms, at their live (dated, wandering) position
         for (const roomName in meta.rooms) {
-            const rRoom = this.roomManager.rooms[roomName];
-            if (!rRoom) continue;
-            for (const npc of rRoom.npcs) {
-                const [mx, my] = cellToMap(meta.rooms[roomName], npc.gridX, npc.gridY);
+            for (const { npc, x, y } of this.roomManager.npcsIn(roomName)) {
+                const [mx, my] = cellToMap(meta.rooms[roomName], x, y);
                 mkDot(mx, my, 0x66bbff, 4);
                 placeLabel(mx, my - 15, npc.name, '14px', false, '#aaddff');
             }
@@ -814,6 +840,17 @@ class GameScene extends Phaser.Scene {
      * @param {number} targetGridY - Target grid Y position
      */
     checkNPCInteraction(targetGridX, targetGridY) {
+        // A held key bumps the same cell every frame, and the shop check
+        // below scans every tile of the room — a whole city's worth once the
+        // districts are stitched. There (only: every other room, and all of
+        // ?stitch=0, behaves as it always did) re-checking the same bump
+        // every 150ms feels the same and keeps leaning on a wall cheap.
+        const bump = `${this.roomManager.currentRoom}|${this.player.gridX},${this.player.gridY}>${targetGridX},${targetGridY}`;
+        const city = this.roomManager.rooms[this.roomManager.currentRoom].stitched;
+        if (city && bump === this._bump && this.time.now - this._bumpAt < 150) return;
+        this._bump = bump;
+        this._bumpAt = this.time.now;
+
         // The Izakaya's configured table owns the bump before generic
         // counter/shop detection sees its placeholder furniture.
         if (this.drinkingGame && !this.dialogueManager.isVisible() &&
@@ -907,6 +944,9 @@ class GameScene extends Phaser.Scene {
             this.player.settleIdle();
         }
         this.roomManager.rooms[this.roomManager.currentRoom].npcs.forEach(npc => npc.settleIdle());
+        // a stitched city only keeps the tile sprites near the camera
+        this.roomManager.updateStreaming();
+        if (this.dayNight) this.dayNight.cullGlows();   // ...and the lamp halos
         this.npcManager.updateLabels();
         if (this.playerNameLabel && this.player) {
             this.playerNameLabel.setPosition(
@@ -922,7 +962,14 @@ class GameScene extends Phaser.Scene {
             const k = this.player.gridX + ',' + this.player.gridY;
             if (this._paintCell !== k) {
                 this._paintCell = k;
-                this.achievementManager.markVisited(this.roomManager.currentRoom, this.player.gridX, this.player.gridY);
+                // painted per district, in the district's own cells — so
+                // progress saved before the city was stitched still counts
+                // (a cell two districts share is painted in both)
+                for (const at of this.roomManager.districtsAt(this.player.gridX, this.player.gridY)) {
+                    this.achievementManager.markVisited(at.room, at.x, at.y);
+                }
+                // walking into another district of a stitched city
+                if (this.hudText && this.roomManager.currentDistrict() !== this.hudDistrict) this.updateHUD();
             }
         }
     }
@@ -934,7 +981,7 @@ class GameScene extends Phaser.Scene {
      */
     updateCharacterDepths() {
         const GS = this.GRID_SIZE;
-        const feetDepth = (sprite) => ((sprite.y + GS / 2) / GS) * 10 + 5;
+        const feetDepth = (sprite) => this.roomManager.yDepth(((sprite.y + GS / 2) / GS) * 10 + 5);
         // While riding, TrainTravel owns the player's depth (it renders him in the
         // train doorway, above the train, as he steps off) — don't sink him back.
         if (this.player && !(this.trainTravel && this.trainTravel.riding))

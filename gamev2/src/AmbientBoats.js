@@ -149,12 +149,14 @@ class AmbientBoats {
         const x0 = h ? run.from : run.band0, y0 = h ? run.band0 : run.from;
         const x1 = h ? run.to : run.band1, y1 = h ? run.band1 : run.to;
 
-        const rm = scene.roomManager;
-        for (const sprite of [...(rm.floorSprites || []), ...(rm.objectSprites || [])]) {
-            if (!sprite.active || !sprite.visible || sprite.depth <= boatDepth) continue;
-            const b = sprite.getBounds();
+        // every piece of art the room draws, as data — not the live sprites:
+        // a stitched city only has sprites near the camera
+        for (const art of scene.roomManager.standingArt()) {
+            if (art.depth <= boatDepth) continue;
+            const b = { x: art.left, y: art.top, width: art.width, height: art.height,
+                        right: art.left + art.width, bottom: art.top + art.height };
             if (b.right <= x0 || b.x >= x1 || b.bottom <= y0 || b.y >= y1) continue;
-            const mask = this.alphaMask(sprite.texture.key);
+            const mask = this.alphaMask(art.key);
             if (!mask) continue;
             for (let l = 0; l < lanes; l++) {
                 for (let s = 0; s < steps; s++) {

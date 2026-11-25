@@ -274,6 +274,13 @@ class DebugManager {
         return this.flags.find(f => f.room === room && f.x === x && f.y === y);
     }
 
+    /** Where a flag sits in the room on screen (a district's flag shows in its stitched city), or null. */
+    flagCell(f) {
+        const rm = this.scene.roomManager;
+        const at = rm.resolve(f.room, f.x, f.y);
+        return at.room === rm.currentRoom ? at : null;
+    }
+
     /** List every tile occupying a cell, formatted like the inspector. */
     tilesAt(gx, gy) {
         const GS = this.scene.GRID_SIZE;
@@ -297,12 +304,15 @@ class DebugManager {
         const GS = this.scene.GRID_SIZE;
         const gx = Math.floor(pointer.worldX / GS);
         const gy = Math.floor(pointer.worldY / GS);
-        const room = this.scene.roomManager.currentRoom;
+        // flags name the room map to fix, so inside a stitched city they are
+        // kept per district in the district's own cells
+        const at = this.scene.roomManager.localize(gx, gy);
         const hits = this.tilesAt(gx, gy);
-        this.lastCell = { x: gx, y: gy, room, tiles: hits };
-        const flag = this.findFlag(room, gx, gy);
+        this.lastCell = { x: at.x, y: at.y, room: at.room, tiles: hits };
+        const flag = this.findFlag(at.room, at.x, at.y);
         const noteLine = flag ? `\n>> NOTE: ${flag.note || '(flagged)'}` : '';
-        this.info = `cell (${gx},${gy})\n` + (hits.length ? hits.join('\n') : '(empty)') + noteLine;
+        const where = (at.x !== gx || at.y !== gy) ? `  = ${at.room} (${at.x},${at.y})` : '';
+        this.info = `cell (${gx},${gy})${where}\n` + (hits.length ? hits.join('\n') : '(empty)') + noteLine;
         console.log('[debug] cell', gx, gy, hits);
     }
 
@@ -357,9 +367,11 @@ class DebugManager {
         this.flagLabels.forEach(l => l.destroy());
         this.flagLabels = [];
         if (!this.visible) return;
-        const GS = this.scene.GRID_SIZE, room = this.scene.roomManager.currentRoom;
-        this.flags.filter(f => f.room === room).forEach(f => {
-            const label = this.scene.add.text(f.x * GS + 2, f.y * GS - 2, f.note || '(flag)', {
+        const GS = this.scene.GRID_SIZE;
+        this.flags.forEach(f => {
+            const at = this.flagCell(f);
+            if (!at) return;
+            const label = this.scene.add.text(at.x * GS + 2, at.y * GS - 2, f.note || '(flag)', {
                 fontSize: '12px', fill: '#ffff00', fontFamily: 'monospace',
                 backgroundColor: 'rgba(0,0,0,0.75)', padding: { x: 2, y: 1 }
             });
@@ -375,8 +387,8 @@ class DebugManager {
     update() {
         if (!this.visible) return;
         const s = this.scene, GS = s.GRID_SIZE, cam = s.cameras.main, p = s.player;
-        const room = s.roomManager.currentRoom;
-        const roomFlags = this.flags.filter(f => f.room === room).length;
+        const room = s.roomManager.currentDistrict();
+        const roomFlags = this.flags.filter(f => this.flagCell(f)).length;
         const recent = this.flags.slice(-4).map(f => `  ${f.room} ${f.x},${f.y}: ${f.note || '(flag)'}`).join('\n');
         this.text.setText([
             'DEBUG  ( ``` = menu | click = inspect )',
@@ -408,8 +420,9 @@ class DebugManager {
         this.overlay.fillStyle(0xffff00, 0.35);
         this.overlay.lineStyle(2, 0xffff00, 0.9);
         this.flags.forEach(f => {
-            if (f.room !== room) return;
-            const px = f.x * GS, py = f.y * GS;
+            const at = this.flagCell(f);
+            if (!at) return;
+            const px = at.x * GS, py = at.y * GS;
             if (px < x1 && px + GS > x0 && py < y1 && py + GS > y0) {
                 this.overlay.fillRect(px, py, GS, GS);
                 this.overlay.strokeRect(px, py, GS, GS);

@@ -74,14 +74,19 @@ class DayNight {
     buildGlows(roomKey) {
         const GS = this.scene.GRID_SIZE;
         const cells = new Set();
-        for (const layer of (this.scene.roomManager.rooms[roomKey].layers || [])) {
+        const rm = this.scene.roomManager;
+        const owner = (x, y) => (rm.districtsAt(x, y, roomKey)[0] || {}).room;
+        for (const layer of (rm.rooms[roomKey].layers || [])) {
             for (const [xy, key] of Object.entries(layer.tiles || {})) {
                 if (/lamp-post|-lanterns/.test(key)) cells.add(xy);
             }
         }
         for (const xy of cells) {
             const [gx, gy] = xy.split(',').map(Number);
-            if (cells.has(`${gx},${gy - 1}`)) continue;   // lower half of a stack
+            // lower half of a stack — unless the cell above belongs to another
+            // district of a stitched city: that is the foot of the neighbour's
+            // lantern, standing right above this one's top
+            if (cells.has(`${gx},${gy - 1}`) && owner(gx, gy - 1) === owner(gx, gy)) continue;
 
             const g = this.scene.add.graphics();
             // stepped radial falloff — reads as a soft halo in the pixel look
@@ -93,6 +98,22 @@ class DayNight {
             g.setBlendMode(Phaser.BlendModes.ADD);
             g.setDepth(955);   // over the night grade, under the HUD
             this.glows.push(g);
+        }
+        this.cullGlows();
+    }
+
+    /**
+     * Only the halos near the camera are drawn (called every frame from
+     * GameScene.update). A halo is a Graphics object, re-tessellated on every
+     * frame it is visible, and a stitched city has a few hundred lamps.
+     */
+    cullGlows() {
+        if (!this.glows.length) return;
+        const cam = this.scene.cameras.main, pad = this.scene.GRID_SIZE * 4;
+        const hw = cam.width / 2 / cam.zoom + pad, hh = cam.height / 2 / cam.zoom + pad;
+        const cx = cam.scrollX + cam.width / 2, cy = cam.scrollY + cam.height / 2;
+        for (const g of this.glows) {
+            g.setVisible(Math.abs(g.x - cx) < hw && Math.abs(g.y - cy) < hh);
         }
     }
 

@@ -1,4 +1,68 @@
 {
+  "cities": {
+    "TokyoCity": {
+      "backdrop": {
+        "edges": [
+          {
+            "beside": "^road-(div-vertical|edge-top)",
+            "dx": -1,
+            "tile": "road-edge-left_0_0"
+          }
+        ],
+        "extend": "^train-track",
+        "extendClear": 4,
+        "extendStop": 5,
+        "floor": "grass-autotile_center",
+        "shrub": "shrub-small-circle_0_0",
+        "tree": {
+          "base": "tree-3-base-shadow_0_0",
+          "top": "tree-3-top_0_0"
+        }
+      },
+      "drop": {
+        "Park": [
+          "tokyo-tower-feet"
+        ]
+      },
+      "name": "Tokyo",
+      "patch": {
+        "Park": {
+          "Floor": {
+            "0,0": "road-div-vertical_0_0",
+            "1,0": "road-edge-right_0_0",
+            "1,1": "road-edge-right_0_0"
+          }
+        }
+      },
+      "rooms": [
+        {
+          "room": "Tokyo",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "room": "Market",
+          "x": 58,
+          "y": 0
+        },
+        {
+          "room": "Palace",
+          "x": 58,
+          "y": 47
+        },
+        {
+          "room": "Park",
+          "x": 58,
+          "y": 65
+        },
+        {
+          "room": "Machi",
+          "x": -48,
+          "y": 22
+        }
+      ]
+    }
+  },
   "credits": [
     "devhou dot se",
     "",
@@ -15562,6 +15626,7 @@
             "46,26": 229,
             "46,5": 229,
             "46,8": 229,
+            "47,19": 230,
             "5,28": 214,
             "5,4": 188,
             "6,14": 252,
@@ -15932,7 +15997,9 @@
             "47,15": 288,
             "47,17": 288,
             "47,18": 288,
+            "47,19": 288,
             "47,2": 288,
+            "47,22": 288,
             "47,23": 288,
             "47,24": 288,
             "47,26": 288,

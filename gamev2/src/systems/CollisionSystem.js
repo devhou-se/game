@@ -93,17 +93,13 @@ class CollisionSystem {
      * @returns {boolean} True if no collision
      */
     checkTileCollision(cellsToCheck) {
-        for (let tile of this.scene.roomManager.floorSprites) {
-            const tileCollision = tile.getData('layerCollision');
-            if (tileCollision) {
-                const tileGridX = tile.getData('gridX');
-                const tileGridY = tile.getData('gridY');
-
-                for (let cell of cellsToCheck) {
-                    if (tileGridX === cell.x && tileGridY === cell.y) {
-                        return false;
-                    }
-                }
+        // one set lookup per cell (RoomManager.blockedCells, built with the
+        // room) — not a scan of every tile sprite, and independent of which
+        // sprites exist: a stitched city only keeps those near the camera
+        const rm = this.scene.roomManager;
+        for (let cell of cellsToCheck) {
+            if (rm.isBlocked(cell.x, cell.y)) {
+                return false;
             }
         }
         return true;

@@ -132,6 +132,78 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
 Position system supports both absolute grid coordinates (`gridX`/`gridY`) or center-relative offsets (`gridOffsetX`/`gridOffsetY`).
 
 Room transitions use camera fade effects (250ms fade out, 250ms hold, 250ms fade in) and block input during transition via `isTransitioning` flag.
+Walking between the districts of a stitched city (below) is NOT a room transition.
+
+### Stitched cities: one continuous Tokyo (issues #40 / #41)
+
+Tokyo, Market, Palace, Park and Machi are still five Tiled maps and five room keys in `config.json` — but at
+load they are merged into ONE runtime room, `TokyoCity`, so you walk between them with no fade, no input
+block and no reload, and the next district is on screen before you reach it. Inaka, Yukimura, Osaka, Sapporo and
+Asahikawa were always single maps; interiors and trains keep their fade.
+
+- **Data** — config `cities`: `{"TokyoCity": {"name", "rooms": [{"room", "x", "y"}...], "drop", "patch", "backdrop"}}`.
+  `rooms` lists the districts with their world-cell offsets, copied from `../devhouse.world` (not deployed)
+  by **`python3 tools/sync_cities.py`** (`--check` exits 1 on any disagreement; `tools/make_worldmap.py`
+  runs the check first, even when the map art is `custom`, and at boot `CityStitcher.plan` re-checks the offsets against `assets/map/world-map.json`
+  — a city that fails is reported with `console.error` and its districts stay separate rooms). The list
+  ORDER matters: a later room owns the cells it overlaps with an earlier one (Tokyo/Market share a column,
+  Market/Palace a row, Palace/Park four rows), and the loser's tiles and colliders there are left out.
+  `drop` removes art a neighbour already draws (Park's `tokyo-tower-feet` copy of the Palace tower's base).
+  `patch` = `{district: {layer name: {"x,y": tile | null}}}` (district cells) touches up single tiles in
+  the stitched room only, without editing the map: Park's top-left road corner becomes the straight road
+  Palace's west road now carries through it. Anything that changes where you can STAND belongs in the
+  district's own map instead (the two grass cells beside Machi's east gate, which only the seam teleport
+  used to keep you off, have their collider in `machi.tmj`): `findWalkableNear`, `?stitch=0`,
+  `tools/play.js` and `tools/blog_to_npc.py` read the district data and never see a patch.
+- **Merge** — `src/systems/CityStitcher.js` (`build`): layers, objects, signage and door transporters are
+  translated into merged cells (the union's top-left is 0,0 — Machi is at 0,22, Tokyo at 48,1, Market at
+  106,0); the 16 hidden seam transporters (target = a sibling district) are dropped; `RoomManager.rooms`
+  gets the city next to its districts, which stay as data and are never entered. **`config.rooms` is not
+  touched** — it still has exactly the authored rooms, so `tools/blog_to_npc.py`, the world map, the
+  generators and the seam transporters themselves are unchanged.
+- **Coordinates** — everything authored stays district-local. `roomManager.resolve(room, x, y)` maps a
+  legacy `('Market', x, y)` to the city room (used by `applyRoomSwap`, so konbini exits, the station exit,
+  train arrivals and map travel land correctly with no data edits; by `syncNpcPresence` for NPC homes and
+  dated-state positions; by the player start). The inverse is `roomManager.localize(x, y)` /
+  `districtsAt(x, y)` and **`roomManager.currentDistrict()`** — use that, not `currentRoom`, for anything
+  per district: the HUD name (updates as you cross), `AchievementManager` (painted and counted per district
+  in district cells, so old saves stay valid; a shared cell counts once, for its owner), the map's "You"
+  marker and NPC dots (`roomManager.npcsIn(room)`), debug flags. `npc.homeRoom` is an NPC's district and its
+  wander box is clamped to it. Code that scans `rooms[currentRoom].layers` (shop, fishing, glows, ambient
+  traffic, clocks) just works: the city's layers are the merged ones.
+- **The woods** — the union is L-shaped and the camera is clamped to its bounding box, so every cell no
+  district covers is filled by `CityStitcher.buildBackdrop` from config `backdrop`: grass, unevenly spaced
+  trees, shrubs, the missing kerb of the road down Palace's west side (`edges`), and the Palace railway
+  carried on west through a cutting (`extend`; it stops `extendStop` cells short of Machi so the wood
+  closes over its end). It is scenery: `RoomManager.checkBoundary` only admits
+  district cells. Backdrop layers are named `Backdrop ...`, never `Floor`.
+- **Depth** — Y-sorted depth is 10 per row, and 109 rows would climb past the name labels (900) and the HUD
+  (1000), so a city has a `depthScale` (0.77). Anything Y-sorted must go through **`roomManager.yDepth()`**
+  (tiles, signage, characters and the ambient train do).
+- **Performance** — `RoomManager.loadFloorTiles` indexes every tile as a record (`tileRecords`: cell, key,
+  depth, pixel bounds) and collision as a set (`blockedCells`; `CollisionSystem` does one lookup per cell
+  instead of scanning every sprite). A city (~25k tiles with the woods) is **streamed**: records are
+  bucketed in 4-cell chunks and only those within 3 cells of the view have a sprite
+  (`updateStreaming`, every frame; retired sprites are pooled OFF the display list), about 1,100 at a time versus ~4,300 for the
+  old Tokyo room. `floorSprites` is therefore "the sprites that exist now" — read `tileRecords` /
+  `standingArt()` when you need the whole room (AmbientBoats does). Night lamp halos are culled the same
+  way (`DayNight.cullGlows`). A held key against a wall re-runs the bump checks (`GameScene.checkNPCInteraction`,
+  whose shop check scans every tile of the room) at most every 150ms for the same cell, not every frame — in a stitched city only; every other room
+  (and all of `?stitch=0`) checks every frame as before.
+- **Systems that re-read the room** — `TrafficLights` rebuilds its signal list whenever `floorSprites` is
+  replaced (every chunk change), so signals streamed in are put on the current phase before they scroll into
+  view and its night glow follows them; `UIScale`'s overlay camera re-filters the display list every frame it
+  is up, which covers sprites coming back from the pool; `Intro.whereFriendsAre` asks `roomManager.npcsIn(room)`
+  (a district's own `rooms[...].npcs` is empty once it is stitched).
+- **Tools** — `tools/play.js`, `tools/world-model.js` (lint / render / check) and `/studio/` model rooms from
+  `config.json` + the `.tmj` files and do not stitch: there Tokyo is still five rooms joined by the 16 seam
+  transporters, i.e. what `?stitch=0` plays. `play.js check` / `lint` therefore keep guarding the districts
+  one map at a time; the stitched room itself is only checked by `tools/sync_cities.py --check` and the game.
+- **`?stitch=0`** is the safety valve: no cities, the five districts are separate rooms joined by the fade
+  transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).
+- **Adding a district / a second city**: place the map in `devhouse.world` so the shared road lines up,
+  add it to `cities.<City>.rooms`, run `tools/sync_cities.py` and `tools/make_worldmap.py`. Keep the hidden
+  seam transporters in the maps — `?stitch=0` and the tools still use them.
 
 **Boundary System:**
 - Each room can define a custom polygon boundary to restrict player movement
@@ -166,6 +238,10 @@ their route in the room's map data rather than in coordinates, have no collision
     `(2,1)` and the track sealed from column 2 to the east road, it is the only way from the west
     road into the strip behind the station (rows 0-2) - do not put a cone or prop there. From the forecourt the camera cannot reach row 3 - the train is seen from
     the west road, the yards beside the station (rows 4-7) or the strip behind it.
+  - In the stitched city the Palace track runs on west through the woods and ends in them, short of Machi:
+    an end of track that is not at the room's edge is "closed", and the train fades in / out standing on
+    the rails there. The depth rule uses the district's own row and is then moved down by the district's
+    offset (`span.lift`), so the Palace train sits at the same place in the draw order as it does unstitched.
 - **`AmbientBoats`** - any room with straight moat tiles (today: the Tokyo moat) gets a boat. A "run" is a
   line of consecutive cells holding the same plain `moat-<north|south|east|west>` tile; `-rocks` tiles,
   corner pieces and gaps end a run, so a boat never crosses rocks, the bridge gap in the south moat or the
@@ -199,6 +275,8 @@ Semi-transparent bar at top showing: `{game.title} | {room name} | {game.date}` 
   only where a host has several stores: `7-Eleven · Market 3`), `Don Takote · Osaka`
   (`generate_discount_stores.py` `store_name()`), `Sapporo Station` (`generate_stations.py`
   `station_name()`). Nothing reads `room.name` as an identifier - room keys are the identifiers.
+- Inside the stitched city the "room" is the district underfoot (`roomManager.currentDistrict()`, kept in
+  `hudDistrict`), so the segment changes as you cross from one district into the next
 - Title and date loaded from `config.json`
 - Uses `window.devicePixelRatio` for retina display text rendering
 - Fixed to camera with `setScrollFactor(0)`
@@ -812,7 +890,8 @@ Run with: `python3 tools/generate_<type>.py`
 
 ### Collision Detection
 All intermediate cells in movement path are checked for:
-- Room boundaries (polygon containment check)
+- Room boundaries (polygon containment check; in a stitched city: inside any district's boundary)
+- Collision-layer tiles (`roomManager.isBlocked(x, y)` — a set lookup)
 - Objects (static obstacles)
 - Stationary character positions
 - Moving character destinations
