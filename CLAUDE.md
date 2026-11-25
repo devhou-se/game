@@ -4,81 +4,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Godot 3.6 game project that runs at https://devhou.se. It's a 2D pixel art game with a unique blog-to-NPC integration system where blog posts are automatically converted into game NPCs with AI-generated personalities and voice synthesis.
+The live game is the browser game in **`gamev2/`**, served at https://game.devhou.se. It is a 2D pixel-art
+grid game built with Phaser, with no build step, in which blog posts from the devhouse trips become dated NPCs
+you can walk up to and talk to.
 
-## Technology Stack
+**Read `gamev2/CLAUDE.md` before working on the game.** It is the real guide: architecture, the map and
+world tooling, the blog-to-NPC pipeline, fonts, phones, trips, and the checks to run.
 
-- **Engine**: Godot 3.6 with Mono/C# support
-- **Languages**: C# (.NET Framework 4.7.2) and GDScript
-- **Build Target**: HTML5/Web (WASM export)
-- **Deployment**: Firebase Hosting (project: devhouse-80936)
-- **CI/CD**: GitHub Actions
+The repository root also holds the original **Godot 3.6** project (`project.godot`, `Scenes/`, `Scripts/`,
+`Assets/`, `game.sln`). It is legacy: it is no longer built or deployed, and nothing in `gamev2/` runs it.
+`gamev2/` still reads art from `Assets/` through its asset tools, so do not delete or reorganise that folder.
+Leave the rest of the Godot project alone unless you are asked to work on it.
 
-## Common Development Commands
+## Where things are
 
-### Running the Game
+- `gamev2/` — the game: `index.html`, `src/` (JavaScript), `config.json` (rooms, NPCs, trips), `tiled/`
+  (Tiled maps generated from the config), `assets/`, `tools/` (generators, checks, the blog pipeline),
+  `studio/` and `editor/` (in-browser tools).
+- `devhouse.world` — the Tiled world file that places the rooms; `tools/sync_cities.py` keeps it in step.
+- `.claude/skills/` — project skills for playing the game from a terminal and for generating or adjusting rooms.
+- Blog posts come from the separate `devhou-se/www-jp` repository, whose workflows call the NPC pipeline here.
+
+## Running and checking the game
+
 ```bash
-# Open in Godot Editor
-godot project.godot
-
-# Or run directly
-godot --main-pack project.godot
+cd gamev2
+python3 -m http.server 8000        # then open http://localhost:8000
+node tools/test_game.js            # unit tests, no browser
+python3 tools/test_blog_to_npc.py  # blog pipeline tests
+node tools/play.js check           # is the world still playable?
+python3 tools/check_generators.py  # do the generators still reproduce the committed world?
 ```
-
-### Building for Web
-```bash
-# Export to HTML5 (requires configured export templates)
-godot --export "HTML5" ./public/index.html
-```
-
-### Local Testing
-The game runs on port configured by Godot editor. Main entry point is `res://Scenes/menu.tscn`.
-
-## Architecture Overview
-
-### Core Systems
-
-1. **Scene Hierarchy**
-   - `menu.tscn` - Main menu entry point
-   - `Main.tscn` - Primary game scene controller
-   - `tokyo_overworld.tscn` - Main game world
-   - `Player.tscn` - Player character
-   - `NPC.tscn` - Non-player characters
-   - `Character.tscn` - Base character template
-
-2. **Global State Management**
-   - `Global.cs` - Singleton autoload managing game state
-   - Handles scene transitions, game data, and shared resources
-
-3. **Mixed Language Architecture**
-   - C# scripts (`.cs`) for core game logic and systems
-   - GDScript (`.gd`) for environmental effects and simpler components
-   - Both languages interoperate through Godot's node system
-
-4. **NPC System**
-   - NPCs have dynamic dialogue with 180+ collision responses
-   - Can check "Bailey Butler office status" via API
-   - Blog integration creates NPCs from blog posts using:
-     - OpenAI API for personality generation
-     - ElevenLabs for voice synthesis
-     - Google Cloud Storage for audio assets
-
-### Key Script Responsibilities
-
-- `GameController.cs` - Main game loop and state management
-- `NPC.cs` - NPC behavior, interactions, and dialogue system
-- `Character.cs/gd` - Base character movement and animations
-- `Player.cs` - Player-specific controls and interactions
-- `DayNightCycle.gd` - Environmental time system
-- `WindController.gd` - Wind effects system
-
-## Development Notes
-
-- Window size is 1280x720 with 2D stretch mode
-- Touch input is emulated from mouse events
-- The project uses both C# and GDScript - ensure changes maintain compatibility
-- Assets are organized by type: sprites in `/Assets/16x16/`, tiles in `/Assets/Tiles/`
-- Scene files (`.tscn`) should be edited in Godot editor, not manually
 
 ## Git Workflow
 
@@ -91,9 +47,8 @@ When making commits:
 
 ## CI/CD Pipeline
 
-The project automatically builds and deploys on push to master branch:
-1. Uses `barichello/godot-ci:mono-3.6` Docker image
-2. Exports to HTML5 format
-3. Deploys to Firebase Hosting
-
-Manual deployment can be triggered via workflow dispatch in GitHub Actions.
+- **Deploy GameV2 Canvas** (`.github/workflows/firebase-hosting-gamev2.yml`) deploys `gamev2/` to Firebase
+  Hosting (project `devhouse-80936`, target `devhouse-game-canvas`) on every push to master that touches
+  `gamev2/**`, and can be run by hand. The run is green only if the live site serves the commit.
+- **Deploy Godot Game (retired)** (`firebase-hosting-merge.yml`) is manual-dispatch only and is kept in case
+  the old Godot build is ever needed.
