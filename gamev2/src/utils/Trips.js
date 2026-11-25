@@ -21,7 +21,11 @@
  * default Trips.LEAD): a post from the travel days on the way there is that
  * trip's, not the last word of the one before. On those lead-in days only
  * people who have posted are anywhere — the trip's base NPCs stand at the
- * base from its first day.
+ * base from its first day. Nobody has arrived, and the game says so (issue
+ * #164, leadIn): the HUD counts the days down ("devhouse 3 in 8 days", or
+ * "in 8d" where the line is tight), the
+ * intro says when and where the trip starts, and a player with nobody to
+ * stand next to starts at the trip's first base, where they will arrive.
  *
  *   - which NPCs exist and which dated states apply (windowFor, used by
  *     resolveNpc in NpcStates.js): a base NPC marked `"trip": "<id>"` is
@@ -32,9 +36,10 @@
  *     blog post moves its author as usual.
  *   - the day a visitor opens on (defaultDate): today while a trip is on,
  *     otherwise a day of the most recent trip that has posts.
- *   - where a player starts (startFor), who the intro names and where it
- *     says they are (memberNames, membersByRoom, whereText), the HUD date
- *     (dateLabel) and the Time Travel picker (jump).
+ *   - where a player starts (startFor: beside the group, new player or
+ *     returning — issue #166), who the intro names and where it says they
+ *     are (memberNames, membersByRoom, whereText), the HUD date (dateLabel)
+ *     and the Time Travel picker (jump).
  *
  * Everything here is a pure function of the config and a date, so
  * tools/test_game.js, tools/play.js and the studio run the same rules the
@@ -124,6 +129,49 @@ class Trips {
         return !npc.stay || !!(window.stay && window.stay.room === npc.stay);
     }
 
+    /**
+     * The lead-in a date is in (issue #164): { trip, days, stay } — the trip
+     * that has opened but not started, how many days until it does, and its
+     * first base — or null on any other day. The same days windowFor calls
+     * `early`: nobody is standing at the base yet.
+     */
+    static leadIn(trips, date) {
+        const w = Trips.windowFor(trips, date);
+        if (!w || !w.early) return null;
+        return { trip: w.trip, days: Trips.dayNumber(w.trip.start) - Trips.dayNumber(date), stay: Trips.stayFor(w.trip, w.trip.start) };
+    }
+
+    /** The trip `today` is in the lead-in of — opened, not started — or null. */
+    static upcoming(trips, today) {
+        const lead = Trips.leadIn(trips, today);
+        return lead ? lead.trip : null;
+    }
+
+    /** "February 18": a day without its year, for a sentence. */
+    static dayText(iso) {
+        return formatGameDate(iso).replace(/ \d+$/, '');
+    }
+
+    /** 1 -> "tomorrow", 8 -> "in 8 days". */
+    static inDays(n) {
+        return n === 1 ? 'tomorrow' : `in ${n} days`;
+    }
+
+    /**
+     * The intro's sentence for a lead-in day — "devhouse 3 starts here in
+     * Sapporo on February 18." — or '' on any other day. The place is the
+     * trip's first base by its display name (else where the trip goes), and
+     * "here" when that is the room the player is standing in.
+     */
+    static arrivalText(config, date, here) {
+        const lead = Trips.leadIn(Trips.of(config), date);
+        if (!lead) return '';
+        const room = lead.stay && lead.stay.room, def = room && config.rooms && config.rooms[room];
+        const place = def ? (def.name || room) : lead.trip.where;
+        const where = place ? ` ${def && room === here ? 'here ' : ''}in ${place}` : '';
+        return `${lead.trip.name} starts${where} on ${Trips.dayText(lead.trip.start)}.`;
+    }
+
     /** The content days that belong to a trip, sorted (every dated day belongs to exactly one). */
     static daysOf(trips, trip, dates) {
         return dates.filter(d => Trips.forDate(trips, d).id === trip.id).sort();
@@ -157,7 +205,9 @@ class Trips {
      * NPCs are standing where the group is staying. Otherwise today is
      * cycled over the content days of the most recent trip that has any
      * (falling back to the first trip with posts when none has opened yet),
-     * so the two trips are never read as one fifteen-month span. With no
+     * so the two trips are never read as one fifteen-month span. Once that
+     * trip is over only its own days (start to end) are cycled, when it
+     * has any: not a post from the road in the days before it. With no
      * dated content at all, today.
      */
     static defaultDate(today, dates, trips) {
@@ -169,7 +219,11 @@ class Trips {
             const t = Trips.forDate(trips, list[0]);
             if ((t.opens || t.start) <= today) days = list;
         }
-        return Trips.cycle(today, days);
+        // a trip that is over is shown by its own days: a post from the road
+        // in its lead-in ("devhouse 3 in 6 days") is not a day to open on
+        const trip = Trips.forDate(trips, days[0]);
+        const own = trip && today > trip.end ? days.filter(d => Trips.during(trip, d)) : [];
+        return Trips.cycle(today, own.length ? own : days);
     }
 
     /** "bailey" -> "Bailey". */
@@ -230,9 +284,20 @@ class Trips {
      * `here` the room the player is standing in. People in the player's own
      * room are named; other rooms are listed (three at most — a few places
      * to head for, not an itinerary).
+     *
+     * `arrival` is arrivalText's sentence on a lead-in day (issue #164): with
+     * nobody anywhere it is the answer — they have not arrived yet — and
+     * with somebody who has posted from the road it follows where they are.
      */
-    static whereText(groups, here) {
-        if (!groups.length) return 'They are out and about.';
+    static whereText(groups, here, arrival) {
+        const text = Trips.placesText(groups, here);
+        if (!arrival) return text || 'They are out and about.';
+        return text ? `${text} ${arrival}` : `They have not arrived yet: ${arrival}`;
+    }
+
+    /** whereText's sentence about the people who are somewhere; '' with nobody. */
+    static placesText(groups, here) {
+        if (!groups.length) return '';
         const names = (g) => g.members.map(m => m.name).sort((a, b) => a.localeCompare(b));
         const mine = groups.find(g => g.room === here);
         const others = groups.filter(g => g.room !== here);
@@ -260,8 +325,10 @@ class Trips {
     }
 
     /**
-     * Where a returning player starts on `date`: where the group is staying
-     * (the stay's cell), else the trip's home, else config.player's start.
+     * The trip's own cell on `date`: where the group is staying (the stay's
+     * cell — the first stay on a lead-in day), else the trip's home, else
+     * config.player's start. Where a player starts when there is nobody to
+     * stand next to (startFor).
      */
     static homeFor(config, date) {
         const trip = Trips.forDate(Trips.of(config), date);
@@ -298,24 +365,23 @@ class Trips {
      * Where the player starts on `date` — { room, x, y }, the same terms a
      * door target is written in.
      *
-     * A returning player (`opts.newPlayer` false) always starts at the
-     * trip's home for that date, wherever the cast is: nothing about their
-     * game moves because the cast did.
-     *
-     * A NEW player starts where they can meet someone (issues #96, #59): the
+     * Every player — new (issues #96, #59) or returning, after a reload or
+     * a Time Travel hop (issue #166: there is no saved position to restore,
+     * and the trip's home has nobody near it on most days) — starts where
+     * they can meet someone: the
      * room with the most members on that date — a tie goes to the room
      * fewest doors and train rides from home (so the home room itself
      * first), then config order — and never counting `opts.played`, the
      * member they are playing as. In the home room they stand on the home
      * cell when somebody is within NEAR cells of it; otherwise on the
      * walkable cell closest to the group that can be walked to from the
-     * room's arrivals (see standNear). Nobody anywhere, or no such cell:
-     * the home.
+     * room's arrivals (see standNear). Nobody anywhere (a lead-in day
+     * nobody has posted on: the home is the base they will arrive at), or
+     * no such cell: the home.
      */
     static startFor(config, date, opts) {
         const home = Trips.homeFor(config, date);
-        if (!opts || !opts.newPlayer) return home;
-        const groups = Trips.membersByRoom(config, date, { played: opts.played });
+        const groups = Trips.membersByRoom(config, date, { played: opts && opts.played });
         if (!groups.length) return home;
         const hops = Trips.hopsFrom(config, home.room);
         const far = (g) => (g.room in hops ? hops[g.room] : Infinity);
@@ -440,7 +506,11 @@ class Trips {
 
     /**
      * The HUD's date: "devhouse 3 · February 20 2027" on one of a trip's own
-     * days, the bare date on any other. `format` is formatGameDate.
+     * days, "devhouse 3 in 8 days · February 10 2027" on a lead-in day
+     * (issue #164: the reason the base is empty — "devhouse 3 in 8d · …",
+     * then "devhouse 3 soon · …", where the count does not fit), the bare
+     * date on any other. `format`
+     * is formatGameDate.
      *
      * `fits(label)`, when given, says whether a label has room in the HUD:
      * the trip's name is dropped when it does not (a long room name such as
@@ -450,9 +520,17 @@ class Trips {
     static dateLabel(trips, iso, format, fits) {
         const trip = Trips.forDate(trips, iso);
         const bare = format(iso);
-        if (!Trips.during(trip, iso)) return bare;
+        const lead = Trips.leadIn(trips, iso);
+        if (!lead && !Trips.during(trip, iso)) return bare;
+        const ok = (label) => !fits || fits(label);
+        if (lead) {
+            // the count, then shorter ways to say it, then nothing
+            const label = [Trips.inDays(lead.days), `in ${lead.days}d`, 'soon']
+                .map(when => `${trip.name} ${when} · ${bare}`).find(ok);
+            return label || bare;
+        }
         const full = `${trip.name} · ${bare}`;
-        return !fits || fits(full) ? full : bare;
+        return ok(full) ? full : bare;
     }
 
     /**

@@ -1944,7 +1944,7 @@ const tests = {
         assert.deepStrictEqual([w.trip.id, w.early, w.from], ['devhouse3', true, '2027-02-04']);
         assert.strictEqual(T.windowFor(trips, '2027-02-18').early, false);
         assert.strictEqual(T.windowFor(trips, '2025-09-01').early, false, 'before the first trip is not a lead-in');
-        assert.strictEqual(T.during(trips[1], '2027-02-10'), false, 'not a trip day: no HUD prefix, no underline');
+        assert.strictEqual(T.during(trips[1], '2027-02-10'), false, 'not a trip day: no underline, and the HUD counts down to it instead');
         // a post on the way there is a devhouse 3 day, and leaves devhouse 2's days — and today's default — alone
         const withPost = d2.concat('2027-02-10');
         assert.deepStrictEqual(Array.from(T.daysOf(trips, trips[0], withPost)), d2);
@@ -1955,6 +1955,11 @@ const tests = {
         assert.strictEqual(defaultGameDate('2027-02-12', withPost, trips), '2027-02-10', 'in the lead-in, with a post: that post');
         assert.strictEqual(defaultGameDate('2027-02-12', d2, trips), defaultGameDate('2027-02-12', d2, []), 'in the lead-in, no post: devhouse 2');
         assert.strictEqual(defaultGameDate('2027-02-18', withPost, trips), '2027-02-18');
+        // once the trip is over it is shown by its own days, never the day on the road before it
+        const after = withPost.concat('2027-02-19', '2027-02-26');
+        assert.deepStrictEqual(['2027-03-01', '2027-03-02', '2027-03-03', '2027-03-04'].map(t => defaultGameDate(t, after, trips)),
+            ['2027-02-19', '2027-02-26', '2027-02-19', '2027-02-26']);
+        assert.strictEqual(defaultGameDate('2027-03-01', withPost, trips), '2027-02-10', 'unless that is all there is');
         assert.strictEqual(T.jump(trips, '2025-11-02', 1, withPost), '2027-02-18', 'Time Travel lands on a day of the trip itself');
         // the post places its author on the lead-in days; from day one everyone is at the base
         const base = { name: 'Sam', sprite: 'sam_front', gridX: 21, gridY: 27, dialogue: ['base'], trip: 'devhouse3', stay: 'Sapporo',
@@ -1967,12 +1972,79 @@ const tests = {
         assert.strictEqual(at(away, '2026-11-25'), 'old');
     },
 
+    'the lead-in days say the trip has not started: HUD countdown, intro, and a start at the base to come (#164)'() {
+        const config = realConfig(), T = game('Trips'), trips = T.of(config), fmt = game('formatGameDate');
+        const lead = (d) => { const l = T.leadIn(trips, d); return l && [l.trip.id, l.days, l.stay.room]; };
+        assert.deepStrictEqual(lead('2027-02-04'), ['devhouse3', 14, 'Sapporo']);
+        assert.deepStrictEqual(lead('2027-02-17'), ['devhouse3', 1, 'Sapporo']);
+        for (const d of ['2027-02-03', '2027-02-18', '2027-02-26', '2027-03-01', '2025-09-01', '2025-11-02']) assert.strictEqual(lead(d), null, d);
+        assert.strictEqual(T.upcoming(trips, '2027-02-10').id, 'devhouse3');
+        assert.strictEqual(T.upcoming(trips, '2027-02-18'), null);
+        assert.strictEqual(T.upcoming(trips, '2026-11-25'), null);
+        // the HUD: a countdown, "soon" where the count does not fit, the bare date where nothing does
+        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt), 'devhouse 3 in 8 days · February 10 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-17', fmt), 'devhouse 3 tomorrow · February 17 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, (l) => !/in 8 days/.test(l)), 'devhouse 3 in 8d · February 10 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, (l) => !/in 8/.test(l)), 'devhouse 3 soon · February 10 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-17', fmt, (l) => !/tomorrow/.test(l)), 'devhouse 3 in 1d · February 17 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, () => false), 'February 10 2027');
+        // in Sapporo with the starting wallet (16px a character, see the HUD test below) the short count is what fits
+        const inSapporo = (label) => 10 + 16 * `${config.game.title} | Sapporo | ${label} | ¥5,000`.length <= 1280 - 10 - 64 - 20;
+        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, inSapporo), 'devhouse 3 in 8d · February 10 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-04', fmt, inSapporo), 'devhouse 3 in 14d · February 4 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-03', fmt), 'February 3 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-03-01', fmt), 'March 1 2027');
+        // nobody is anywhere, so everyone starts at the base the group will arrive at
+        for (const d of ['2027-02-04', '2027-02-10', '2027-02-17']) {
+            assert.strictEqual(T.membersByRoom(config, d).length, 0, d);
+            for (const played of [undefined, 'james', 'khoi']) {
+                assert.deepStrictEqual({ ...T.startFor(config, d, { played }) }, { room: 'Sapporo', x: 33, y: 12 }, d);
+            }
+        }
+        // the intro: page 1 says when it starts, page 3 where — and not to "walk into one"
+        assert.strictEqual(T.arrivalText(config, '2027-02-10', 'Sapporo'), 'devhouse 3 starts here in Sapporo on February 18.');
+        assert.strictEqual(T.arrivalText(config, '2027-02-10', 'Tokyo'), 'devhouse 3 starts in Sapporo on February 18.');
+        assert.strictEqual(T.arrivalText(config, '2027-02-18', 'Sapporo'), '');
+        assert.strictEqual(T.arrivalText(config, '2025-11-02', 'Tokyo'), '');
+        const meet = game('Intro.meetCopy');
+        const arrival = T.arrivalText(config, '2027-02-10', 'Sapporo');
+        assert.strictEqual(meet([], 'Sapporo', arrival),
+            'They have not arrived yet: devhouse 3 starts here in Sapporo on February 18. Have a look around before they get here.');
+        assert.strictEqual(meet(T.membersByRoom(config, '2027-02-20'), 'Sapporo', ''), 'Today everyone is here in Sapporo. Walk into one to say hello.');
+        assert.strictEqual(meet([], 'Tokyo', ''), 'They are out and about. Go and find one to say hello.');
+        const welcome = game('Intro.welcomeCopy');
+        const early = welcome(config, '2027-02-10', '2027-02-10');
+        assert.strictEqual(early[0], 'devhouse is a group of friends: Bailey, Damian, Dylan, Julia, Khoi, Sam and Xander.');
+        assert.strictEqual(early[1], 'devhouse 3, their trip to Hokkaido, starts on February 18. This is the little world they will be walking around.');
+        assert.ok(/once they start writing/.test(early[2]));
+        // a real visitor that week is shown a devhouse 2 day: it says the next trip is about to start
+        const d2day = welcome(config, '2025-11-11', '2027-02-10');
+        assert.ok(/^This is devhouse 2, their trip to Japan: .* devhouse 3 starts on February 18\.$/.test(d2day[1]), d2day[1]);
+        assert.ok(!/starts on/.test(welcome(config, '2025-11-11', '2026-11-25')[1]), 'not months ahead');
+        assert.ok(!/starts on/.test(welcome(config, '2025-11-11', '2027-02-20')[1]), 'not once it has started');
+
+        // somebody posts from the road: they are placed, the player starts beside them, and the intro says both
+        const posted = JSON.parse(JSON.stringify(config));
+        posted.rooms.Tokyo.npcs.push({ name: 'Sam', sprite: 'sam_front', gridX: 30, gridY: 36, dialogue: [], present: false,
+            states: { '2027-02-12': { present: true, dialogue: ['At the airport.'] } } });
+        const groups = T.membersByRoom(posted, '2027-02-13');
+        assert.strictEqual(groups.map(g => `${g.room}: ${g.members.map(m => m.name).join()}`).join('; '), 'Tokyo: Sam');
+        const spot = T.startFor(posted, '2027-02-13', { played: 'james' });
+        assert.strictEqual(spot.room, 'Tokyo');
+        assert.ok(Math.max(Math.abs(spot.x - 30), Math.abs(spot.y - 36)) <= 6, `${spot.x},${spot.y}`);
+        assert.deepStrictEqual({ ...T.startFor(posted, '2027-02-13', { played: 'sam' }) }, { room: 'Sapporo', x: 33, y: 12 }, 'playing Sam: nobody else is anywhere');
+        assert.strictEqual(meet(groups, 'Tokyo', T.arrivalText(posted, '2027-02-13', 'Tokyo')),
+            'Today Sam is here in Tokyo. devhouse 3 starts in Sapporo on February 18. Walk into Sam to say hello.');
+        assert.deepStrictEqual({ ...T.startFor(posted, '2027-02-11', { played: 'james' }) }, { room: 'Sapporo', x: 33, y: 12 }, 'the day before the post');
+        assert.deepStrictEqual({ ...T.startFor(posted, '2027-02-18', { played: 'james' }) }, { room: 'Sapporo', x: 33, y: 12 }, 'day one: the lead-in post is history');
+    },
+
     'the HUD drops the trip name rather than run under the menu button, in every room (#118)'() {
         const config = realConfig(), T = game('Trips'), trips = T.of(config), fmt = game('formatGameDate');
         // the HUD's metrics: PixelOperatorMono at 16px is 16px a character; 1280 wide, 10px padding, "menu" right-aligned
         const CH = 16, PAD = 10, MENU_LEFT = 1280 - PAD - 4 * CH;
         const right = (room, label, money) => PAD + CH * `${config.game.title} | ${room} | ${label} | ${money}`.length;
-        const days = [...game('contentChangeDates')(config)].sort().concat('2027-02-20', '2027-02-26', '2026-11-25');
+        const days = [...game('contentChangeDates')(config)].sort().concat('2027-02-20', '2027-02-26', '2026-11-25', '2027-02-04', '2027-02-17');
         let dropped = 0, kept = 0;
         for (const def of Object.values(config.rooms)) {
             for (const iso of days) {
@@ -1982,6 +2054,7 @@ const tests = {
                     assert.ok(fits(label), `${def.name} on ${iso} with ${money}: "${label}" ends at ${right(def.name, label, money)}`);
                     assert.ok(label.endsWith(fmt(iso)));
                     if (T.during(T.forDate(trips, iso), iso)) (label === fmt(iso) ? dropped++ : kept++);
+                    else if (T.leadIn(trips, iso)) assert.ok(label === fmt(iso) || /^devhouse 3 (in 14 days|in 14d|tomorrow|in 1d|soon) · /.test(label), label);
                     else assert.strictEqual(label, fmt(iso));
                 }
             }
@@ -2077,7 +2150,7 @@ const tests = {
         assert.strictEqual(resolveNpc(north, '2030-01-06', []).gridX, 1);
     },
 
-    'a returning player starts at the trip home; a new one next to the cast, never counting who they play (#96, #59)'() {
+    'a player, new or returning, starts next to the cast, never counting who they play (#96, #59, #166)'() {
         const config = realConfig(), startFor = game('Trips.startFor'), byRoom = game('Trips.membersByRoom');
         const near = (spot, date, played) => {
             const g = byRoom(config, date, { played }).find(r => r.room === spot.room);
@@ -2086,9 +2159,9 @@ const tests = {
         const days = [...game('contentChangeDates')(config)].filter(d => d < '2027').sort();
         let moved = 0;
         for (const date of days) {
-            // returning: Tokyo, as ever
-            assert.deepStrictEqual({ ...startFor(config, date, { newPlayer: false }) }, { room: 'Tokyo', x: 29, y: 38 }, date);
-            assert.deepStrictEqual({ ...startFor(config, date) }, { room: 'Tokyo', x: 29, y: 38 }, date);
+            // a returning player is started exactly as a new one is (#166), and with no opts at all
+            assert.deepStrictEqual({ ...startFor(config, date, { newPlayer: false }) }, { ...startFor(config, date, { newPlayer: true }) }, date);
+            assert.deepStrictEqual({ ...startFor(config, date) }, { ...startFor(config, date, { played: undefined }) }, date);
             for (const played of [undefined, 'james', 'bailey', 'damian', 'dylan', 'julia']) {
                 const spot = startFor(config, date, { newPlayer: true, played });
                 const anyone = byRoom(config, date, { played }).length > 0;
@@ -2124,7 +2197,7 @@ const tests = {
         assert.ok(game('Trips.hopsFrom')(realConfig(), 'Tokyo').Inaka > game('Trips.hopsFrom')(realConfig(), 'Tokyo').Palace, 'a train ride is further than next door');
         assert.deepStrictEqual({ ...startFor(tiny, '2030-01-02', { newPlayer: true, played: 'ann' }) }, { room: 'B', x: 5, y: 5 },
             'Bob is walled in: the nearest cell that can be walked to');
-        assert.deepStrictEqual({ ...startFor(tiny, '2030-01-02', { newPlayer: false, played: 'ann' }) }, { room: 'A', x: 1, y: 1 });
+        assert.deepStrictEqual({ ...startFor(tiny, '2030-01-02', { played: 'ann' }) }, { room: 'B', x: 5, y: 5 }, 'returning or new');
         tiny.rooms.B.npcs = [];
         assert.deepStrictEqual({ ...startFor(tiny, '2030-01-02', { newPlayer: true, played: 'ann' }) }, { room: 'A', x: 1, y: 1 }, 'nobody else anywhere: home');
         // company: a member within NEAR cells of a cell, not counting who you play (resettleNewPlayer's guard)

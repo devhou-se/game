@@ -805,6 +805,128 @@ def test_authors(cfg):
         b.AUTHOR_NPCS.update(saved)
 
 
+def test_post_date(cfg):
+    """A post's day is the day where the trip is, when the trip says how far
+    ahead of UTC that is (issue #119); otherwise the UTC date, as ever."""
+    day = lambda when, c=cfg: b.post_date(c, {'date': when})
+    trip = next(t for t in cfg['trips'] if t['id'] == 'devhouse3')
+    assert trip.get('utcOffset') == 9, 'devhouse 3 is in Japan'
+    assert all('utcOffset' not in t for t in cfg['trips'] if t['id'] == 'devhouse2'), \
+        'devhouse 2 history was written with UTC dates: an offset would re-date a re-run post'
+    # 08:30 in Asahikawa on the day the group moves there: UTC still says the 24th
+    assert day('2027-02-24T23:30:00Z') == '2027-02-25'
+    assert day('2027-02-24T14:59:59Z') == '2027-02-24' and day('2027-02-24T15:00:00Z') == '2027-02-25'
+    # the first morning of the trip, and a post from the road in the lead-in
+    assert day('2027-02-17T23:15:00+00:00') == '2027-02-18'
+    assert day('2027-02-11T20:00:00Z') == '2027-02-12'
+    # the first hours of the first lead-in day are still devhouse 2's day in UTC
+    assert day('2027-02-03T16:00:00Z') == '2027-02-04' and day('2027-02-03T14:59:00Z') == '2027-02-03'
+    # any zone is the same moment
+    assert day('2027-02-18T08:15:00+09:00') == '2027-02-18' and day('2027-02-18T10:15:00+11:00') == '2027-02-18'
+    # nothing to convert: a bare date, a time with no zone, a trip with no offset, no trips
+    assert day('2027-02-20') == '2027-02-20' and day('2027-02-20T23:30:00') == '2027-02-20'
+    assert day('2025-11-11T23:30:00Z') == '2025-11-11'
+    assert day('2027-02-24T23:30:00Z', {'trips': []}) == '2027-02-24'
+    assert day('2027-02-24T23:30:00Z', {'trips': [dict(trip, utcOffset=True)]}) == '2027-02-24'
+    assert day('2027-02-24T23:30:00Z', {'trips': [dict(trip, utcOffset=-10)]}) == '2027-02-24'
+    assert day(None) == '' and day('2027-02-2') == '2027-02-2'
+    # … and what is not a date is skipped, not placed under a made-up day
+    spots = b.find_spots(cfg)
+    for bad in (None, '2027-02-2', 'next Tuesday', '2027-02-30T99:00:00Z'):
+        work, out = copy.deepcopy(cfg), io.StringIO()
+        with contextlib.redirect_stdout(out):
+            record, _ = b.process_post(work, dict(post(1), date=bad), spots, sorted(spots), mock=True, dry_run=True)
+        assert record is None and work == cfg and 'bad date' in out.getvalue(), (bad, out.getvalue())
+    # … by the backfill too: an impossible day is not a day to match a state on
+    assert b.post_date(cfg, {'date': '2027-02-30T01:00:00Z'}) == '2027-02-30' and not b.is_day('2027-02-30')
+    # end to end: the early-morning post lands on the Asahikawa day
+    work = copy.deepcopy(cfg)
+    record = place(work, dict(post(2), date='2027-02-24T23:30:00Z'), 'Asahikawa · the shrine', spots)
+    assert record['date'] == '2027-02-25', record
+    assert [r for r, st in placements(work, 'Bailey', '2027-02-25') if st.get('present')] == ['Asahikawa']
+    assert placements(work, 'Bailey', '2027-02-24') == []
+
+
+def test_mock_steer(cfg):
+    """--mock takes its spot, lines and drunk flag from the payload's "mock"
+    (tools/rehearse_blog.py sends each post where it is about)."""
+    ids_ = ['A · one', 'B · two']
+    plain, usage = b.generate(post(1), 'Bailey', ids_, mock=True)
+    assert usage is None and plain['spot'] == 'A · one' and plain['drunk'] is False and len(plain['dialogue']) == 2
+    steered, _ = b.generate(dict(post(1), mock={'spot': 'B · two', 'dialogue': ['hi'], 'drunk': True, 'other': 1}),
+                            'Bailey', ids_, mock=True)
+    assert steered == {'spot': 'B · two', 'dialogue': ['hi'], 'drunk': True}, steered
+    part, _ = b.generate(dict(post(1), mock={'drunk': True}), 'Bailey', ids_, mock=True)
+    assert part == dict(plain, drunk=True)
+    assert b.generate(dict(post(1), mock='B · two'), 'Bailey', ids_, mock=True)[0] == plain
+    # a steered spot that is not on offer is refused like any model answer
+    work, spots, out = copy.deepcopy(cfg), b.find_spots(cfg), io.StringIO()
+    with contextlib.redirect_stdout(out):
+        record, _ = b.process_post(work, dict(post(3), mock={'spot': 'Nowhere · at all'}), spots, sorted(spots),
+                                   mock=True, dry_run=True)
+    assert record is None and work == cfg and 'unusable content' in out.getvalue()
+
+
+def test_not_in_the_way(cfg):
+    """A placement never seals off part of the map or the people in it
+    (issue #119: Asahikawa's ramen alley is one cell wide)."""
+    # walls_in on a hand-drawn lane: x 0..6 on row 1, an alcove at (3,0), a yard 2x2 at the east end
+    lane = {(x, 1) for x in range(7)} | {(3, 0)} | {(5, 2), (6, 2)}
+    assert b.walls_in((2, 1), lane), 'the middle of a one-cell lane'
+    assert not b.walls_in((3, 0), lane), 'the alcove off it'
+    assert not b.walls_in((0, 1), lane), 'the end of a dead end seals nothing'
+    assert not b.walls_in((6, 2), lane) and not b.walls_in((6, 1), lane), 'the yard can be walked round'
+    assert b.walls_in((4, 1), lane), 'the mouth of the yard'
+    assert b.walls_in((3, 0), {(3, 0)}), 'nowhere to be walked up to from'
+    open_ground = {(x, y) for x in range(5) for y in range(5)}
+    assert not any(b.walls_in(c, open_ground) for c in open_ground)
+    cross = {(2, y) for y in range(5)} | {(x, 2) for x in range(5)}
+    assert b.walls_in((2, 2), cross), 'the middle of a crossroads'
+
+    # walkable_near on the same lane as a room: the landmark's cell is the lane, so the alcove it is
+    floor = {f'{x},{y}': 'f' for x, y in lane}
+    tiny = {'game': {'gridSize': 64, 'worldWidth': 7 * 64, 'worldHeight': 3 * 64},
+            'rooms': {'A': {'layers': [{'name': 'Floor', 'tiles': floor}],
+                            'transporters': [{'gridX': 0, 'gridY': 1, 'targetRoom': 'A', 'targetX': 1, 'targetY': 1}]}}}
+    assert b.walkable_near(tiny, 'A', 3, 1) == (3, 0)
+    # with somebody in the alcove already the next person goes where they wall nobody in
+    second = b.walkable_near(tiny, 'A', 3, 1, {(3, 0)})
+    assert second in {(5, 2), (6, 2), (6, 1), (5, 1)}, second
+    # … and never beside someone whose only way to be reached is that cell
+    corner = {'game': tiny['game'], 'rooms': {'A': {
+        'layers': [{'name': 'Floor', 'tiles': {f'{x},{y}': 'f' for x in range(7) for y in range(3)}},
+                   {'name': 'Walls', 'collision': True, 'tiles': {'5,1': 'w', '6,1': 'w', '5,0': 'w'}}],
+        'transporters': tiny['rooms']['A']['transporters']}}}
+    # (6,0) is a pocket nobody can get to; (6,2) is reached along row 2 only
+    assert b.walkable_near(corner, 'A', 6, 0) != (6, 0)
+    assert b.walkable_near(corner, 'A', 5, 2, {(6, 2)}) != (5, 2), 'would leave (6,2) unreachable'
+
+    # the shipped map: a post about ramen alley stands in a doorway, and the alley stays one walk
+    spots = b.find_spots(cfg)
+    room, x, y = spots['Asahikawa · ramen alley']
+    region = b.walk_region(cfg, room)
+    assert b.walls_in((x, y), region), 'the alley is no longer one cell wide: this test wants a new example'
+    taken = set()
+    for _ in b.AUTHOR_NPCS:
+        cell = b.walkable_near(cfg, room, x, y, taken)
+        assert cell is not None and not b.walls_in(cell, region - taken), (cell, sorted(taken))
+        taken.add(cell)
+    # every spot, seven deep: nobody walls anything in, and everyone can be walked up to
+    for spot_id, (room, x, y) in sorted(spots.items()):
+        region, taken = b.walk_region(cfg, room), set()
+        for _ in b.AUTHOR_NPCS:
+            cell = b.walkable_near(cfg, room, x, y, taken)
+            assert cell is not None, f'{spot_id}: nowhere left to stand with {sorted(taken)} taken'
+            assert not b.walls_in(cell, region - taken), (spot_id, cell)
+            taken.add(cell)
+        for cx, cy in taken:
+            assert any(n in region and n not in taken for n in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1))), \
+                f'{spot_id}: {(cx, cy)} cannot be walked up to with {sorted(taken)} there'
+    # Odori Park is a spot of its own, on the path down the middle of the park
+    assert spots['Sapporo · Odori Park'][0] == 'Sapporo' and 26 <= spots['Sapporo · Odori Park'][2] <= 27, spots['Sapporo · Odori Park']
+    assert [s for s in spots if s.endswith('· Odori Park')] == ['Sapporo · Odori Park']
+
+
 def test_shipped_dialogue(cfg):
     """Nothing in config.json is over the limit or cut mid-word at it."""
     for room_key, room in cfg['rooms'].items():
@@ -993,6 +1115,9 @@ if __name__ == '__main__':
     test_photos(config)
     test_authors(config)
     test_trips(config)
+    test_post_date(config)
+    test_mock_steer(config)
+    test_not_in_the_way(config)
     test_shipped_dialogue(config)
     test_tiled_ids_stable()
     test_tiled_maps_in_sync()

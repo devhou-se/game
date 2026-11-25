@@ -337,7 +337,8 @@ of the config and a date; `tools/play.js`, the studio and `tools/test_game.js` r
     "members": ["bailey", "damian", "dylan", "julia", "khoi", "sam", "xander"],
     "home": { "room": "Sapporo", "x": 33, "y": 12 },
     "stays": [ { "from": "2027-02-18", "room": "Sapporo", "x": 33, "y": 12 },
-               { "from": "2027-02-25", "room": "Asahikawa", "x": 31, "y": 12 } ] }
+               { "from": "2027-02-25", "room": "Asahikawa", "x": 31, "y": 12 } ],
+    "utcOffset": 9 }
 ]
 ```
 
@@ -345,6 +346,9 @@ of the config and a date; `tools/play.js`, the studio and `tools/test_game.js` r
 separate list and is not read for any of this). `stays` is optional: where the group is based from each
 date. Give every stay its `x`, `y`: one without a cell is ignored as a start (the player lands at the
 trip's `home`, possibly a room away from the cast) and `play.js check` reports it. devhouse 2's dates are the span of its blog posts.
+`utcOffset` (hours ahead of UTC where the group is; optional) is read by the blog pipeline only: a trip
+that has it dates its posts by the clock there (`blog_to_npc.post_date`, see The blog rehearsal below).
+devhouse 2 has none on purpose — its history was written with UTC dates, and an offset would re-date a re-run post.
 
 **The trip a game date belongs to** (`Trips.forDate`) is the latest one that has OPENED by then — the
 days after a trip still belong to it — or the first trip for a date before them all. A trip opens
@@ -353,9 +357,29 @@ the way there is that trip's content day, not the previous trip's (it would othe
 trip's cycle and shift the between-trips default date). On those lead-in days (`windowFor(...).early`)
 the previous trip is history and the new trip's base NPCs are not standing anywhere yet — only people
 who have posted since it opened are placed — and from the trip's first day the lead-in posts are history
-too and everyone is at the base. A lead-in day is not a trip day (`Trips.during`): no HUD prefix, no
-picker underline, and the default date only lands there once it has a post. `blog_to_npc.py`
-(`trip_window`, `TRIP_LEAD`) mirrors the rule. The trip decides:
+too and everyone is at the base. A lead-in day is not a trip day (`Trips.during`): no
+picker underline, and the default date only lands there once it has a post. Once the trip is over the
+default date cycles over the trip's own days only (`Trips.defaultDate`), so a post from the road is never
+the day a later visitor opens on (unless it is all the trip has). `blog_to_npc.py`
+(`trip_window`, `TRIP_LEAD`) mirrors the rule.
+
+**The lead-in says so** (issue #164, `Trips.leadIn(trips, date)` → `{ trip, days, stay }` or null): nobody
+has arrived, and an empty base with no explanation read as a bug. On a lead-in day
+- the HUD counts down — `devhouse 3 in 8 days · February 10 2027`, shortened to `in 8d`, then `soon`, then
+  the bare date as the line runs out of room (`Trips.dateLabel`; in Sapporo with the starting ¥5,000 it is
+  `in 8d`) — for new and returning players alike;
+- the intro's page 1 reads "devhouse 3, their trip to Hokkaido, starts on February 18. This is the little
+  world they will be walking around." (`Intro.tripCopy(..., starts)`), and page 3 "They have not arrived
+  yet: devhouse 3 starts here in Sapporo on February 18. Have a look around before they get here."
+  (`Trips.arrivalText` → `Trips.whereText(groups, here, arrival)` → `Intro.meetCopy`). When somebody has
+  posted from the road it is "Today Bailey is here in Palace. devhouse 3 starts in Sapporo on February 18.
+  Walk into Bailey to say hello." (one person is walked into by name; "Go and find one to say hello." when
+  nobody is placed on an ordinary day);
+- the player starts at the trip's first base (the first stay's cell, Sapporo 33,12) — where they will
+  arrive — unless somebody has posted, in which case beside them, like any other day (`Trips.startFor`).
+A real visitor on those days is still shown a day of the trip before (the default game date); page 1
+then ends "… devhouse 3 starts on February 18." (`Trips.upcoming(trips, today)`), and stops saying so the
+day the trip starts. Days before the FIRST trip are not a lead-in (they show its base cast). The trip decides:
 
 - **Who exists** (`Trips.windowFor` → `resolveNpc(npc, date, trips)`). A base NPC marked `"trip": "<id>"`
   is there only on that trip's dates, and with `"stay": "<room>"` only while the group is based in that
@@ -373,20 +397,25 @@ picker underline, and the default date only lands there once it has a post. `blo
   Resolution of every NPC on every devhouse 2 day was compared before and after the change: identical,
   apart from the three new members being absent.
 - **The default game date** — see Default game date above.
-- **Where the player starts** (`Trips.startFor(config, date, { newPlayer, played })` → `{ room, x, y }`,
+- **Where the player starts** (`Trips.startFor(config, date, { played })` → `{ room, x, y }`,
   the same terms a door target is written in — a DISTRICT cell (`Tokyo 29,38`, `Machi 22,10`), never a
   stitched-city one: `GameScene.startPosition()` is the one caller and puts the player there through
-  `roomManager.resolve`, so the start is the same cell with `?stitch=0`; "the room" below is the district. A
-  RETURNING player starts at the trip's home for that date (the stay's cell, else `home`, else
-  `config.player.startRoom/X/Y`) whatever the cast is doing — there is no saved position, so this is the
-  spot they have always started from. A NEW player (`Intro.isNewPlayer()`: the intro not finished yet)
-  starts where there is someone to talk to: the room with the most members that day, never counting the
+  `roomManager.resolve`, so the start is the same cell with `?stitch=0`; "the room" below is the district.
+  EVERY player — new (#96, #59) or returning, after a reload or a Time Travel hop (#166) — starts where
+  there is someone to talk to: the room with the most members that day, never counting the
   member they are playing as; a tie goes to the room fewest doors / train rides from home
   (`Trips.hopsFrom`), then config order. In the home room they stand on the home cell when somebody is
   within `Trips.NEAR` (6) cells; otherwise on the cell nearest the group, at least two cells from
   everyone, that can be walked to from the room's arrivals (`Trips.standNear`: Floor tile, no collider,
   inside the boundary, not a door). On every devhouse 2 post day, as any character, that is within 6
-  cells of someone (unit-tested). `CharacterSelect.become` calls `GameScene.resettleNewPlayer()`: a new
+  cells of someone (unit-tested). "Home" (`Trips.homeFor`) is the trip's own cell for the date — the
+  stay's cell (the first stay's on a lead-in day), else `home`, else `config.player.startRoom/X/Y` — and
+  is where a player lands when nobody is anywhere (a lead-in day with no posts) or no cell can be found.
+  Why not the trip home for returning players, as it was until #166: there is no saved position to
+  restore, the home has nobody near it on most devhouse 2 days (Tokyo 29,38 while the cast is in Machi),
+  and a Time Travel hop is made to see that day's people. Saving the last position was the alternative; it
+  would put a returning player in a room the cast left weeks of game time ago after every date change.
+  `CharacterSelect.become` calls `GameScene.resettleNewPlayer()`: a
   player who has not taken a step and has just become the only member near their start cell (the
   creator's name Easter egg, or Menu → Character) is moved to wherever `startFor` says now. With
   somebody still within `Trips.NEAR` cells (`Trips.hasCompany`) they stay exactly where they are, and
@@ -394,7 +423,9 @@ picker underline, and the default date only lands there once it has a post. `blo
   through `resolve`).
   `config.player.startRoom/X/Y` — what the editor's Spawn tool writes — is now only the fallback for a
   config with no trips (and the reachability seed in `AchievementManager` / `world-model.js`): to move
-  where the game opens, edit the trip's `home` / `stays` cell.
+  where the game opens, edit the trip's `home` / `stays` cell. The headless model (`tools/play.js`) still
+  OPENS a session on the trip's own cell (`Trips.homeFor`: Tokyo 29,38 on a devhouse 2 day), the same
+  place every day, which is what a script wants; `play.js start` goes where the game puts a player.
 - **The intro** — who devhouse is (`Intro.cast`: `CharacterSelect.lineup` of the trip's members, alphabetical —
   the cast row draws them and the sentence under it names them), which trip this is and whether it is on right now (`Intro.welcomeCopy`), and where everyone
   is today (`Trips.membersByRoom` + `Trips.whereText`).
@@ -413,7 +444,7 @@ in, marked with `trip` (and `stay` when the trip has stays) — the shape `tools
 `base_npc` writes; keep the lines neutral, they are what people say until their first post. Then
 `node tools/play.js check` (it surveys every day of every trip: base NPCs must be walkable-up-to, and
 every home / stay cell and every new-player start must be a free cell that leads somewhere) and
-`node tools/play.js trips` / `start [new]` to see where a player lands on the current `date`.
+`node tools/play.js trips` / `start` to see where a player lands on the current `date`.
 
 **Boundary System:**
 - Each room can define a custom polygon boundary to restrict player movement
@@ -751,7 +782,8 @@ the HTML loader.
    devhouse 2, their trip to Japan" otherwise); NPC lines coming from the blog posts ("once they start
    writing" for a trip with no posts yet); and the HUD date picking the day ("Time Travel in the menu" to
    visit another day or another trip — the game always opens on a trip day, see the default game date
-   under `npcs`).
+   under `npcs`). On a lead-in day it says when the trip starts instead, and in the real days before a
+   trip it adds "devhouse 3 starts on February 18." (issue #164, see Trips).
 2. **How to play** — move / sprint / interact / talk / menu drawn as keycaps (the interact row also
    lists what a bump starts: people, shops, trains, the izakaya); when
    `touchControls.enabled` the same rows are drawn as the on-screen d-pad, sprint pill and A / B buttons,
@@ -760,7 +792,7 @@ the HTML loader.
    → `Trips.whereText`: the ones in the room — the district, in a stitched city — the player is standing in are named — "Today Bailey, Damian
    and Julia are here in Machi, and Dylan is in Inaka.", "Today everyone is here in Sapporo." — and
    other rooms are listed by display name, three at most; whoever the player is playing as is not
-   counted), exploring, and Paint the Board (with the live progress bar from `achievementManager`).
+   counted; on a lead-in day "They have not arrived yet: …", `Intro.meetCopy`), exploring, and Paint the Board (with the live progress bar from `achievementManager`).
 
 Fishing controls and map travel are **deliberately absent** (fishing is learned when a rod is bought; map
 travel is a debug feature) — keep them out when editing the copy.
@@ -776,10 +808,10 @@ travel is a debug feature) — keep them out when editing the copy.
   — is never shown it automatically, and a Time Travel reload does not replay it.
 - **`?nointro=1`** suppresses the automatic showing (and leaves the gate untouched) — combine with
   `?notitle=1` in tests that start from a fresh profile. Tests that pre-seed `gamev2_character` never see it.
-  NOTE: `?nointro=1` does not make a fresh profile a returning player — `Intro.isNewPlayer()` ignores it,
-  so an UNSEEDED profile still gets the new-player start next to the cast (e.g. Machi 22,10 on
-  2025-11-11), not the trip home. A test that assumes the Tokyo 29,38 spawn must seed
-  `gamev2_character` (and so be a returning player).
+  NOTE: every profile, seeded or not, starts next to the cast of the game date (e.g. Machi 22,10 on
+  2025-11-11) since #166 — there is no fixed Tokyo 29,38 spawn any more. A test that needs a known cell
+  must pin the date (`?date=`) and read `Trips.startFor`, or move the player itself
+  (`roomManager.switchRoomInstant`).
 - **How to Play** in the ESC menu replays it at any time (`scene.intro.show()`). It is the only controls
   reference: the separate Controls menu entry and overlay (#38) were folded into page 2 (#55), so a new
   global binding or bump interaction is documented there.
@@ -1006,6 +1038,42 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   skipping the reachability filter. `python3
   tools/test_blog_to_npc.py` checks all of this over every room in `config.json`: add a room or a
   landmark and it tells you if a spot is mislabelled, unreachable, or lands on a station's doors.
+  **Never in the way** (issue #119, `walls_in`): an NPC is solid, so the cell must also leave everything
+  that could be walked to still walkable — not the middle of a one-cell lane, the mouth of a dead end or
+  the cell in front of a door — and must not take the only cell a neighbour could be walked up to from.
+  Asahikawa's `ramen alley` is one cell wide: its standing cell (10,15) is refused and the author stands in
+  the shop doorway beside it (9,14); before the rule a ramen post sealed off the west half of the alley,
+  Sam's base spot included. `walk_region` is the whole stitched city for a district, so a walk that leaves
+  the district and comes back counts.
+- **The blog rehearsal** (issue #119): `python3 tools/rehearse_blog.py [--keep DIR] [-v]` (`--keep` takes a new or empty
+  directory, or one an earlier rehearsal kept — it refuses anything else, and anything in or around `gamev2/`) runs
+  `blog_to_npc.py` end to end the way the www-jp `game-npc-pipeline` workflow does (one `--payload … --mock
+  --summary-out …` per post) for a devhouse 3's worth of synthetic posts — all seven members, Sapporo and
+  Asahikawa days, a lead-in post, a day trip, two posts on one day, photos, voices, a drunk post, posts
+  published before 09:00 in Japan, a re-run — in a SCRATCH directory, never the committed `config.json` or
+  assets (both are fingerprinted before and after). Nothing leaves the machine: `--mock` for the LLM, local
+  stand-ins for the photo download and the ElevenLabs call, `anthropic` un-importable, every socket connect
+  refused and counted. The result is checked against the written config AND through the game's own code
+  (`node tools/play.js --config=<scratch>/config.json`: every NPC resolved on every day from 4 Feb to 1 Mar
+  2027, plus `check`). Run it after touching `blog_to_npc.py`, a Hokkaido map, the trips or the cast.
+  What it needs from the tools:
+  - `--mock` is steerable: a payload's `"mock": {"spot", "dialogue", "drunk"}` overrides the canned
+    response (ignored without `--mock`), so a rehearsed post goes to the landmark it is "about".
+  - `node tools/play.js --config=<file>` plays another config against this checkout's maps and sprites,
+    with its own session file.
+  - **Posts are dated by the day in Japan** (`post_date`, the trip's `utcOffset`): the payload's `date` is
+    GitHub's `createdAt`, in UTC, and the pipeline used to keep its first ten characters — so a post
+    written before 09:00 in Japan was dated the day before, and on the two days the game starts everyone
+    afresh (18 Feb, and 25 Feb when the base moves to Asahikawa) it was history before it was published.
+  - The new members' logins are still placeholders (`AUTHOR_NPCS`): the rehearsal proves such a post is
+    skipped with the warning, then maps made-up `rehearsal-<name>` logins in memory only. A real login is
+    used as soon as it is filled in. The run ends with a TO DO line while any placeholder remains.
+  - `Sapporo · Odori Park` is a spot (the park's lanterns, `rooms: ('Sapporo',)`): the six landmarks issue
+    #119 names all have one.
+  - The photo print is rendered for real only where `tools/requirements-photos.txt` is installed
+    (opencv-contrib: `cv2.saliency`); elsewhere a stand-in writes the 160×144 print and the summary line
+    says so. Serve a kept scratch directory to a browser (route `config.json`, `assets/photos/9*.png`,
+    `assets/voice/`) to see the result in the game.
 - **The world map shows the stitched city** (issue #146): after the rooms are drawn, `tools/make_worldmap.py`
   renders each config `cities` entry with `node tools/play.js render <City>` — the room the game plays,
   woodland and seam patches included — and pastes it over the city's bounding box. **The train-only towns

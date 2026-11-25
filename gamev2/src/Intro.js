@@ -65,8 +65,9 @@ class Intro {
     /**
      * Is this a new player — one the intro has been (or is about to be)
      * offered to and who has not finished it? Same test as shouldAutoShow,
-     * without `?nointro` and without touching the gate. GameScene asks
-     * before it places the player (Trips.startFor).
+     * without `?nointro` and without touching the gate. GameScene keeps
+     * the answer as `scene.newPlayer`; where a player starts no longer
+     * depends on it (issue #166: everyone starts beside the cast).
      */
     static isNewPlayer() {
         try {
@@ -140,12 +141,17 @@ class Intro {
         const trip = Trips.forDate(trips, date);
         const names = Trips.list(Intro.cast(config, date).map(Trips.displayName));
         const live = Trips.live(trips, today);
+        const lead = Trips.leadIn(trips, date);
         const [about, lines] = Intro.tripCopy(trip,
             !!trip && !!live && live.id === trip.id && Trips.during(trip, date),
-            !trip || Trips.daysOf(trips, trip, [...contentChangeDates(config)]).length > 0);
+            !trip || Trips.daysOf(trips, trip, [...contentChangeDates(config)]).length > 0,
+            lead ? Trips.dayText(trip.start) : null);
+        // a visitor in the days before a trip is shown a day of the one
+        // before (defaultGameDate): say that the next is about to start
+        const next = Trips.upcoming(trips, today);
         return [
             `devhouse is a group of friends${names ? `: ${names}` : ''}.`,
-            about,
+            next && next !== trip ? `${about} ${next.name} starts on ${Trips.dayText(next.start)}.` : about,
             lines,
             // the game always opens on a day of a trip (today's, or the one
             // today cycles onto — NpcStates.defaultGameDate), so Time Travel
@@ -157,9 +163,12 @@ class Intro {
     /**
      * Page 1's sentences about the trip, from data: which trip the game
      * date is on, where it went, and whether anyone has posted from it yet.
+     * `starts` ("February 18") is given on a lead-in day (issue #164): the
+     * trip has not started and nobody is there yet.
      */
-    static tripCopy(trip, live, posted) {
+    static tripCopy(trip, live, posted, starts) {
         const about = !trip ? 'Their trip to Japan is now a little world you can walk around.'
+            : starts ? `${trip.name}${trip.where ? `, their trip to ${trip.where},` : ''} starts on ${starts}. This is the little world they will be walking around.`
             : live ? `They are on ${trip.name} right now${trip.where ? `, in ${trip.where}` : ''}, and it is a little world you can walk around.`
             : `This is ${trip.name}${trip.where ? `, their trip to ${trip.where}` : ''}: a little world you can walk around.`;
         const lines = posted
@@ -378,15 +387,29 @@ class Intro {
      * Where the friends are on the game date, for page 3 (Trips.whereText):
      * the ones in the room the player is standing in are named, the other
      * rooms are listed by their display names (the HUD shows those). Whoever
-     * the player is playing as is not one of "them".
+     * the player is playing as is not one of "them". On a lead-in day
+     * (issue #164) it says when and where the trip starts, and with nobody
+     * to walk into yet the invitation is to look around.
      */
     whereFriendsAre() {
         const s = this.scene;
         const played = Trips.baseOf((s.player && s.player.baseSpriteKey) || s.config.player.sprite);
         // "here" is the district the player stands in: config rooms are the
         // districts, a stitched city is only where they are drawn
-        return Trips.whereText(Trips.membersByRoom(s.config, gameDate(), { played }),
-            s.roomManager ? s.roomManager.currentDistrict() : null);
+        const here = s.roomManager ? s.roomManager.currentDistrict() : null;
+        return Intro.meetCopy(Trips.membersByRoom(s.config, gameDate(), { played }), here,
+            Trips.arrivalText(s.config, gameDate(), here));
+    }
+
+    /** Page 3's "Meet the friends" body: where they are, and what to do about it. */
+    static meetCopy(groups, here, arrival) {
+        const where = Trips.whereText(groups, here, arrival);
+        const members = groups.reduce((all, g) => all.concat(g.members), []);
+        // one person is walked into by name, and nobody at all has to be found first
+        const invite = !members.length ? (arrival ? 'Have a look around before they get here.' : 'Go and find one to say hello.')
+            : members.length === 1 ? `Walk into ${members[0].name} to say hello.`
+            : 'Walk into one to say hello.';
+        return `${where} ${invite}`;
     }
 
     /** Page 3: something to go and do. */
@@ -396,7 +419,7 @@ class Intro {
         const p = this.scene.achievementManager ? this.scene.achievementManager.paintProgress() : null;
         const items = [
             ['Meet the friends',
-                `${this.whereFriendsAre()} Walk into one to say hello.`],
+                this.whereFriendsAre()],
             ['Have a wander',
                 'Streets, shops, stations, the countryside. See what is out there.'],
             ['Paint the Board',

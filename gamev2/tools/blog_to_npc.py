@@ -72,7 +72,17 @@ post captions go along unchanged — see rehome. Repeat the flag to move several
 post.json is the blog payload: {"post_id", "title", "author", "date",
 "content"} and optionally "url" (the post's page; recorded when present) —
 author is the GitHub login. Needs ANTHROPIC_API_KEY unless --mock (canned
-LLM response, for testing the placement plumbing).
+LLM response, for testing the placement plumbing). With --mock a payload may
+steer the canned response with "mock": {"spot", "dialogue", "drunk"} (any of
+them), which is how tools/rehearse_blog.py — the dress rehearsal of this
+whole path, in a scratch copy of config.json — sends each post to the
+landmark it is about. "mock" is ignored without --mock.
+
+The post's day (post_date): "date" is the moment the post was published, in
+UTC as GitHub gives it. A trip with "utcOffset" (hours; devhouse 3 has 9,
+Japan) dates its posts by the clock where the group is, so a post written at
+8 in the morning in Sapporo is that day's and not the day before's. A trip
+without one (devhouse 2) keeps the UTC date its history was written with.
 
 Cross-room moves rely on resolveNpc semantics: an NPC definition whose base
 has "present": false stays hidden until a dated state sets present true, so
@@ -189,6 +199,10 @@ LANDMARKS = [
     # Hokkaido (issue #43)
     ('sapporo-clock-tower_', 'the Sapporo Clock Tower', (2, 8)),   # the pavement at its porch
     ('sapporo-tv-tower_', 'the Sapporo TV Tower', (3, 13)),        # in front of the entrance
+    # the park has no sprite of its own: its lanterns do it (the first one's
+    # base, west end of the middle block), and the visitor stands on the
+    # path down the middle (issue #119)
+    ('red-lanterns_4_1', 'Odori Park', (0, 1), {'rooms': ('Sapporo',)}),
     ('asahikawa-bridge_', 'the bridge over the frozen river', (1, -1)),   # the north bridgehead
     ('ramen-banner_', 'ramen alley', (-1, 2)),                     # on the lane, outside a shop
     ('ice-pond-autotile_corner-nw', 'the frozen pond', (0, -1)),   # on the bank (the ice is solid)
@@ -423,6 +437,43 @@ def reachable_cells(cfg, room_key):
     return seen
 
 
+def walk_region(cfg, room_key):
+    """Every cell a player can walk to, in room_key's coordinates — for a
+    district of a stitched city the whole city's (so cells of its neighbours
+    lie outside the room's own bounds): where a walk that leaves the district
+    and comes back may go. None for a room with no way in (reachable_cells)."""
+    districts = city_districts(cfg, room_key)
+    if not districts:
+        return reachable_cells(cfg, room_key)
+    ox, oy = next((d[1], d[2]) for d in districts if d[0] == room_key)
+    by_room = city_reachable(cfg, districts)
+    return {(x + dx - ox, y + dy - oy) for room, dx, dy, _, _ in districts for x, y in by_room[room]}
+
+
+def walls_in(cell, free):
+    """Would somebody standing on `cell` be in the way? `free` is the set of
+    cells that can be walked on with everyone else where they are (it holds
+    `cell`). An NPC is solid, so they are in the way when nobody could walk
+    up to them, or when the cells around them stop being one walk: a lane
+    one cell wide, the mouth of a dead end, the cell in front of a door —
+    whatever lies beyond would be sealed off, people standing there
+    included (issue #119: a post about ramen alley put its author in the
+    middle of the alley, and nobody could reach the far end of it)."""
+    x, y = cell
+    around = [c for c in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)) if c in free]
+    if not around:
+        return True
+    want, seen, todo = set(around[1:]), {cell, around[0]}, [around[0]]
+    while todo and want:
+        cx, cy = todo.pop()
+        for c in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+            if c in free and c not in seen:
+                seen.add(c)
+                want.discard(c)
+                todo.append(c)
+    return bool(want)
+
+
 def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
     """Nearest cell someone can stand on and be walked up to: floored,
     uncollided, not a transporter, not an occupied cell (the test of
@@ -438,18 +489,36 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
     sprite that stands on the ground (standing=True: the head of a statue or
     a vending machine, which only collide at the base). Only when no open
     cell is in range does one of those do — inside a sprite before under a
-    roof."""
+    roof.
+
+    Nor a cell where they would be in the way (walls_in): everything that
+    could be walked to before can be walked to with them standing there, and
+    nobody already there — `occupied` — is left with no cell to be walked up
+    to from."""
     cells_w, cells_h, floored, blocked = room_cells(cfg, room_key)
     portals = {f"{t['gridX']},{t['gridY']}" for t in cfg['rooms'][room_key].get('transporters', [])}
     reachable = reachable_cells(cfg, room_key)
     overhead = overhead_cells(cfg, room_key)
     behind = overhead_cells(cfg, room_key, standing=True)
+    region = walk_region(cfg, room_key)
+    free = None if region is None else region - set(occupied)
 
     def ok(x, y):
         key = f'{x},{y}'
-        return (0 <= x < cells_w and 0 <= y < cells_h and key in floored
+        if not (0 <= x < cells_w and 0 <= y < cells_h and key in floored
                 and key not in blocked and key not in portals and (x, y) not in occupied
-                and (reachable is None or (x, y) in reachable))
+                and (reachable is None or (x, y) in reachable)):
+            return False
+        if free is None:
+            return True
+        if walls_in((x, y), free):
+            return False
+        # a neighbour who could only be walked up to from this cell
+        for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if n in occupied and not any(c in free and c != (x, y) for c in
+                                         ((n[0] + 1, n[1]), (n[0] - 1, n[1]), (n[0], n[1] + 1), (n[0], n[1] - 1))):
+                return False
+        return True
 
     inside = covered = None
     for rad in range(0, 12):
@@ -472,10 +541,14 @@ def generate(post, npc_name, spot_ids, mock=False):
     """Claude Sonnet turns the post into ({spot, dialogue, drunk}, usage).
     usage is None for --mock, else the response.usage token counts."""
     if mock:
-        return {'spot': spot_ids[0], 'dialogue': [
+        canned = {'spot': spot_ids[0], 'dialogue': [
             f"I just wrote about {post['title']}!",
             'Come read it on the blog.',
-        ], 'drunk': False}, None
+        ], 'drunk': False}
+        steer = post.get('mock')
+        if isinstance(steer, dict):
+            canned.update({k: steer[k] for k in canned if k in steer})
+        return canned, None
 
     import anthropic
     # generous retries: fresh/low-tier accounts have small per-minute limits
@@ -636,6 +709,59 @@ def trip_window(cfg, date):
         return {'trip': trip, 'stay': stay, 'early': True, 'from': opens(trip)}
     return {'trip': trip, 'stay': stay, 'early': False,
             'from': stay['from'] if stay and stay['from'] > trip['start'] else trip['start']}
+
+
+def is_day(text):
+    """Is `text` a real calendar day written YYYY-MM-DD?"""
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', text or ''):
+        return False
+    try:
+        datetime.date.fromisoformat(text)
+    except ValueError:
+        return False
+    return True
+
+
+def post_date(cfg, post):
+    """The day a post belongs to, 'YYYY-MM-DD' ('' or a short string when
+    the payload has no usable date — the caller skips those).
+
+    "date" is the moment of publishing; GitHub gives it in UTC
+    ('2027-02-24T23:30:00Z'). When the trip that moment belongs to carries
+    "utcOffset" (hours ahead of UTC where the group is), the day is the one
+    on the clock there — 08:30 on the 25th in Japan, in that example, which
+    matters most on the days the game starts everyone afresh (a trip's first
+    day, the day the group moves base: dated the day before, the post would
+    be history by the morning it was written). A trip with no "utcOffset", a
+    bare date, or a time with no zone: the first ten characters, as ever."""
+    raw = str(post.get('date') or '').strip()
+    day = raw[:10]
+    if len(raw) <= 10:
+        return day
+    try:
+        at = datetime.datetime.fromisoformat(raw.replace('Z', '+00:00').replace('z', '+00:00'))
+    except ValueError:
+        return day
+    if at.tzinfo is None:
+        return day
+    utc = at.astimezone(datetime.timezone.utc)
+
+    def local(trip):
+        offset = trip.get('utcOffset')
+        if isinstance(offset, bool) or not isinstance(offset, (int, float)):
+            return None
+        return (utc + datetime.timedelta(hours=offset)).date().isoformat()
+
+    # a trip that owns the day on its own clock wins: the first hours of its
+    # first lead-in day are still the day before in UTC, which is the trip
+    # before's (and that one may keep UTC days)
+    for trip in cfg.get('trips') or []:
+        there = local(trip) if isinstance(trip, dict) else None
+        window = trip_window(cfg, there) if there else None
+        if window and window['trip'] is trip:
+            return there
+    window = trip_window(cfg, utc.date().isoformat())
+    return (local(window['trip']) if window else None) or day
 
 
 def resolve_pos(npc, date, window=None):
@@ -973,8 +1099,8 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
             print(f'::warning title=Blog author has no NPC::{warning}')
         return None, None
 
-    date = str(post.get('date', ''))[:10]
-    if len(date) != 10:
+    date = post_date(cfg, post)
+    if not is_day(date):
         print(f'#{post.get("post_id")}: bad date {post.get("date")!r} — skipped')
         return None, None
 
@@ -1071,8 +1197,8 @@ def backfill_posts(cfg, entries):
             continue
         by_id[str(e['id'])] = e
         npc_name = AUTHOR_NPCS.get(str(e.get('author') or '').lower())
-        date = str(e.get('date') or '')[:10]
-        if npc_name and len(date) == 10:
+        date = post_date(cfg, e)
+        if npc_name and is_day(date):
             by_day.setdefault((npc_name, date), []).append(e)
 
     changed = unmatched = 0

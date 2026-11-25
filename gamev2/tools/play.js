@@ -7,8 +7,11 @@ const crypto = require('crypto');
 const png = require('./png');
 
 const GV2 = path.dirname(__dirname);
-const SESSION = path.join(os.tmpdir(), 'gamev2-play-' +
-    crypto.createHash('sha1').update(GV2).digest('hex').slice(0, 8) + '.json');
+// `--config=<file>` plays another config.json (a scratch copy, e.g. the blog dress rehearsal's)
+// against this checkout's maps and sprites; it keeps its own session.
+let CONFIG = path.join(GV2, 'config.json');
+const sessionFile = () => path.join(os.tmpdir(), 'gamev2-play-' +
+    crypto.createHash('sha1').update(CONFIG === path.join(GV2, 'config.json') ? GV2 : CONFIG).digest('hex').slice(0, 8) + '.json');
 
 const ctx = vm.createContext({ console, URLSearchParams, location: { search: '' } });
 for (const f of ['utils/ConfigCodec.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'systems/TiledAdapter.js',
@@ -57,7 +60,7 @@ function roomKey(world, name) {
 let STITCH = true;
 
 function newWorld(state, stitch = STITCH) {
-    const config = decodeConfig(JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')));
+    const config = decodeConfig(JSON.parse(fs.readFileSync(CONFIG, 'utf8')));
     WorldModel.applyTiled(config, (key) => {
         const file = path.join(GV2, 'tiled', key.toLowerCase() + '.tmj');
         return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
@@ -143,7 +146,7 @@ const COMMANDS = {
             'dates                      days that have blog content',
             'date <YYYY-MM-DD|today>    time travel; today is the day the game opens on',
             'trips                      the trips, and where a player starts on the current date',
-            'start [new]                go where the game starts a returning (or a new) player on the current date',
+            'start                      go where the game starts a player on the current date (beside the cast)',
             'as <name>                  play as a cast member (their NPC leaves the world)',
             'check                      transporter targets and unreachable rooms, NPC placement and player starts on every content and trip day, and every room\'s lint errors (stitched, then ?stitch=0); exits 1 when it finds a problem',
             'lint [room]...             map QA: floor holes, missing or stray colliders, tree and overhang layering (a district, or a whole city)',
@@ -155,6 +158,7 @@ const COMMANDS = {
             'Coordinates are always a room\'s own (a district\'s inside the stitched Tokyo city; cells of a neighbour are just past its edge).',
             'State persists between runs. With no arguments, commands are read from stdin, one per line.',
             '--stitch=0 (anywhere on the command line) models what ?stitch=0 plays: the districts as separate rooms joined by seam teleports.',
+            '--config=<file> plays another config.json (a scratch copy) against this checkout\'s maps and sprites, with its own session.',
         ].join('\n');
     },
     where: (w) => where(w),
@@ -291,12 +295,14 @@ const COMMANDS = {
         const lines = w.trips.map(t => `${t.id.padEnd(10)} ${t.start} to ${t.end}  ${t.name}, ${t.where || '?'}: ${t.members.join(' ')}` +
             t.stays.map(s => `\n             from ${s.from} based in ${s.room}`).join(''));
         const trip = Trips.forDate(w.trips, w.date);
-        lines.push(`on ${w.date}${trip ? ` (${trip.name})` : ''}: a returning player starts at ${fmt(WorldModel.startFor(w.config, w.date))}, ` +
-            `a new one at ${fmt(WorldModel.startFor(w.config, w.date, { newPlayer: true, played: w.as }))}`);
+        const lead = Trips.leadIn(w.trips, w.date);
+        lines.push(`on ${w.date}${trip ? ` (${trip.name}${lead ? ` ${Trips.inDays(lead.days)}` : ''})` : ''}: ` +
+            `a player starts at ${fmt(WorldModel.startFor(w.config, w.date, { played: w.as }))}` +
+            ` (the trip's own cell is ${fmt(Trips.homeFor(w.config, w.date))})`);
         return lines.join('\n');
     },
-    start(w, [who]) {
-        const s = WorldModel.startFor(w.config, w.date, { newPlayer: who === 'new', played: w.as });
+    start(w) {
+        const s = WorldModel.startFor(w.config, w.date, { played: w.as });
         w.enter(s.room, s.x, s.y);
         return where(w);
     },
@@ -384,10 +390,13 @@ const COMMANDS = {
 
 function main() {
     const argv = process.argv.slice(2).filter(a => {
+        const config = /^--config=(.+)$/.exec(a);
+        if (config) { CONFIG = path.resolve(config[1]); return false; }
         if (!/^--(stitch=0|no-stitch)$/.test(a)) return true;
         STITCH = false;
         return false;
     });
+    const SESSION = sessionFile();
     const lines = argv.length ? [argv.join(' ')] : fs.readFileSync(0, 'utf8').split('\n');
     let state = null;
     try { state = JSON.parse(fs.readFileSync(SESSION, 'utf8')); } catch (e) {}

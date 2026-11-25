@@ -200,8 +200,9 @@ class GameScene extends Phaser.Scene {
             this.roomManager.setupCities(this.config, this.cache.json.get('worldMap'));
             this.achievementManager.computeReachable();
 
-            // where the game date's trip starts a player (see startPosition):
-            // a district cell, like a door target, so through resolve
+            // where the game date's trip starts a player (see startPosition:
+            // beside the cast, new player or not): a district cell, like a
+            // door target, so through resolve
             this.newPlayer = Intro.isNewPlayer();
             this.bootStart = this.startPosition();
             const start = this.roomManager.resolve(this.bootStart.room, this.bootStart.x, this.bootStart.y);
@@ -317,13 +318,13 @@ class GameScene extends Phaser.Scene {
 
     /**
      * Where this player starts on the game date — { room, x, y } in the same
-     * terms as a door target (Trips.startFor): the home of the date's trip
-     * for a returning player, next to the cast for a new one. Never the
-     * member the player is playing as.
+     * terms as a door target (Trips.startFor): next to the cast, new
+     * player or returning (issue #166), and the home of the date's trip
+     * when nobody is anywhere. Never the member the player is playing as.
      */
     startPosition() {
         const sprite = (this.player && this.player.baseSpriteKey) || this.config.player.sprite;
-        const at = Trips.startFor(this.config, gameDate(), { newPlayer: this.newPlayer, played: Trips.baseOf(sprite) });
+        const at = Trips.startFor(this.config, gameDate(), { played: Trips.baseOf(sprite) });
         // a start with no cell (config.player.startX/Y null) is the middle of the world
         return {
             room: at.room,
@@ -339,17 +340,18 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
-     * A new player who has not moved yet is put where startPosition() says
+     * A player who has not moved yet is put where startPosition() says
      * now, when becoming one of the cast (the first-run creator's name
      * Easter egg, or Menu → Character before taking a step) left the place
      * they were started in with nobody to talk to. With somebody still near
-     * they stay put. CharacterSelect.become calls this; for anyone else,
-     * and once the player has taken a step (see update), it does nothing.
+     * they stay put. CharacterSelect.become calls this; once the player has
+     * taken a step (see update) it does nothing. (Named for the new player
+     * it was written for, #59; a returning one starts beside the cast too
+     * since #166.)
      */
     resettleNewPlayer() {
         const from = this.bootStart, rm = this.roomManager;
-        if (!this.newPlayer || !from) return;
-        if (!this.playerIsAt(from)) return;
+        if (!from || !this.playerIsAt(from)) return;
         const played = Trips.baseOf(this.player.baseSpriteKey);
         if (Trips.hasCompany(this.config, gameDate(), from.room, from.x, from.y, played)) return;
         const to = this.startPosition();
@@ -547,13 +549,20 @@ class GameScene extends Phaser.Scene {
         const long = `${this.config.game.title} | ${room} | `, short = `${room} | `;
         const trip = named !== bare;
         // with the whole canvas to itself the bar is always the one authored row
+        // the longest trip-led date that fits after `lead` — on a lead-in day the
+        // countdown shortens ("in 8 days", "in 8d", "soon", issue #164) before
+        // the trip's name is dropped — else the bare date
+        const row = (lead) => {
+            const label = trip ? Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate,
+                (l) => fits(lead, l, 2 * pad)) : bare;
+            return label !== bare ? fits(lead, label, 2 * pad) : fits(lead, bare, pad);
+        };
         let rows = 1;
-        if (!(trip && fits(long, named, 2 * pad)) && !fits(long, bare, pad) && !full &&
-            !(trip && fits(short, named, 2 * pad)) && !fits(short, bare, pad)) {
+        if (!row(long) && !full && !row(short)) {
             rows = 2;
             JapaneseFont.fit(this.hudText.setText(room));
-            this.hudDateText.setText(named);
-            if (pad + this.hudDateText.width + this.hudMoneyText.width + pad > width) this.hudDateText.setText(bare);
+            this.hudDateText.setText(Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate,
+                (l) => pad + this.hudDateText.setText(l).width + this.hudMoneyText.width + pad <= width));
         }
         const rowHeight = rows === 1 ? UI.HUD_HEIGHT : UI.HUD_ROW_HEIGHT;
 

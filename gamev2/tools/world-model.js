@@ -39,8 +39,8 @@ class WorldModel {
         return defaultGameDate(todayIso(), [...contentChangeDates(config)].sort(), Trips.of(config));
     }
 
-    // Where the game puts a player on `date` (Trips.startFor): the trip's home for a
-    // returning player, next to the cast for a new one.
+    // Where the game puts a player on `date` (Trips.startFor): next to the cast, or the
+    // trip's own cell when nobody is anywhere.
     static startFor(config, date, opts) {
         return Trips.startFor(config, date, opts);
     }
@@ -70,7 +70,9 @@ class WorldModel {
 
         this.trips = Trips.of(config);
         const date = (state && state.date) || WorldModel.defaultDate(config);
-        const s = Object.assign(WorldModel.startFor(config, date), {
+        // a session opens on the trip's own cell — the same place every day, which is what a
+        // script wants; `start` (play.js) goes where the game puts a player, beside the cast
+        const s = Object.assign(Trips.homeFor(config, date), {
             date, as: baseOf(config.player.sprite),
         }, state || {});
         this.date = s.date;
@@ -680,7 +682,13 @@ class WorldModel {
             start(trip.home, `${trip.name} home`);
             for (const stay of trip.stays) start(stay, `${trip.name} stay`);
         }
-        for (const date of dates) start(WorldModel.startFor(this.config, date, { newPlayer: true }), `new-player start (${date})`);
+        // … as the default sprite, and as each member of the day's trip (never counted as company)
+        for (const date of dates) {
+            const trip = Trips.forDate(this.trips, date);
+            for (const played of [undefined, ...((trip && trip.members) || [])]) {
+                start(WorldModel.startFor(this.config, date, { played }), `player start (${date}${played ? `, as ${played}` : ''})`);
+            }
+        }
         for (const k of keys) {
             for (const t of rooms[k].transporters) {
                 if (!rooms[t.targetRoom]) problem(k, t.gridX, t.gridY, `targets missing room "${t.targetRoom}"`);
