@@ -76,8 +76,10 @@ b.stamp('shrub-small', 16, 12); b.stamp('shrub-small', 23, 15)
 b.flowers(8, 14); b.flowers(22, 11); b.flowers(33, 22)
 
 # ---- borders ------------------------------------------------------------------
-for y in range(9, 24, 3):
+for y in range(9, 24, 2):
     b.stamp('shrub-large', 0, y); b.stamp('shrub-large', 38, y)
+for y in (6, 7, 8, 25):
+    b.stamp('shrub-small', 0, y); b.stamp('shrub-small', 39, y)
 for x in (2, 7, 13, 18, 23, 28, 33):
     b.stamp('sakura-large', x, 23)       # south sakura line (trunks on row 25)
 
@@ -87,6 +89,10 @@ for i in range(12):
     if all(f'{sx},{sy}' not in b.L[n] for n in ('Collidables', 'Colliders', 'Over Floor', 'Other', 'Water')) \
        and rg._pal[b.L['Floor'][f'{sx},{sy}']].startswith('grass'):
         b.plants(sx, sy, i)
+
+for x in range(12, 32):
+    if f'{x},5' not in b.L['Colliders']:
+        b.fence(x, 5, x)
 
 # ---- wiring: station house + lakeside farmhouse interiors ---------------------
 # (the actual train ride happens inside the station — see generate_stations.py)
@@ -127,6 +133,7 @@ for x, key in zip(range(11, 17), [
         'office-shelf-drinks_0_0', 'office-shelf-glass_0_0',
         'office-shelf-drinks_0_0', 'office-shelf-glass_0_0']):
     ib.put('Other', x, 3, key)
+    ib.solid(x, 3)
 for x in (11, 13, 15):
     solid_furniture(ib, 'office-counter2_0_0', x, 5, 2)
 ib.put('Tops', 15, 5, 'office-register_0_0')
@@ -165,7 +172,7 @@ for opponent in (damian, bailey):
     opponent['stationary'] = True
 
 outside = (izakaya_door[0], izakaya_door[1] + 1)
-izakaya = ib.room('Izakaya', npcs=[damian, bailey], transporters=[
+izakaya = ib.room('Izakaya', npcs=cfg['rooms'].get('Izakaya', {}).get('npcs') or [damian, bailey], transporters=[
     rg.transporter(9, 13, 'Inaka', outside[0], outside[1], hidden=True),
     rg.transporter(10, 13, 'Inaka', outside[0], outside[1], hidden=True),
 ])

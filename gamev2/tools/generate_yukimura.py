@@ -92,6 +92,11 @@ for y in (8, 12, 16, 20):
 for y in range(9, 25, 4):
     b.stamp('shrub-small-snow', 2, y)
     b.stamp('shrub-small-snow', W - 3, y)
+for y in (8, 12, 16, 20):
+    b.stamp('shrub-large-snow', 0, y); b.stamp('shrub-large-snow', W - 2, y)
+for y in (6, 7, 11, 15, 19, 23, 24, 25, 26):
+    for x in (0, 1, W - 2, W - 1):
+        b.stamp('shrub-small-snow', x, y)
 # south treeline + fence, with a gap where the approach fades into the forest
 for x in range(3, W - 3, 4):
     if 21 <= x <= 26:
@@ -101,6 +106,8 @@ for i, x in enumerate(range(3, W - 3)):
     if 22 <= x <= 25:            # the approach peters out into the trees here
         continue
     b.fence(x, 26, i)
+for x in (2, W - 3, 21, 26):
+    b.stamp('shrub-small-snow', x, 26 if x in (2, W - 3) else 27)
 
 # ---- scattered snow shrubs / plants for texture on the open field -------------
 for i in range(10):
@@ -110,6 +117,10 @@ for i in range(10):
        and rg._pal[b.L['Floor'][f'{sx},{sy}']].startswith('snow'):
         b.stamp('shrub-small-snow', sx, sy)
 
+for x in range(12, 32):
+    if f'{x},5' not in b.L['Colliders']:
+        b.fence(x, 5, x)
+
 # ---- a lone villager ----------------------------------------------------------
 james = rg.make_npc('James', 'james', 14, 15, [
     "Oh — a visitor. We don't get many, all the way out here.",
@@ -118,7 +129,7 @@ james = rg.make_npc('James', 'james', 14, 15, [
 ])
 
 # isolated: the ONLY way out is the station house door into YukimuraStation.
-cfg['rooms']['Yukimura'] = b.room('Yukimura', npcs=[james], transporters=[
+cfg['rooms']['Yukimura'] = b.room('Yukimura', npcs=cfg['rooms'].get('Yukimura', {}).get('npcs') or [james], transporters=[
     rg.transporter(station_door[0], station_door[1], 'YukimuraStation', 11, 11, hidden=True),
 ])
 
