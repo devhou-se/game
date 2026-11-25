@@ -165,7 +165,9 @@ LANDMARKS = [
     ('pond-autotile_corner-nw', 'the pond'),
     ('seven-eleven', 'the 7-Eleven'),
     ('blue-bell', 'the temple bell'),
-    ('sakura-large-top', 'the sakura trees'),
+    # the canopy's tile cell is its top-left corner; the trunk is under its
+    # middle, two rows down — stand on the ground in front of the trunk (#183)
+    ('sakura-large-top', 'the sakura trees', (1, 3)),
     ('white-vending-machine-top', 'the vending machines'),
     # Machi's lane. Asahikawa's ramen alley is built from the same machiya
     # prefabs and has its own name below (issue #100)
@@ -285,6 +287,28 @@ def room_cells(cfg, room_key):
     return cells_w, cells_h, floored, blocked
 
 
+def overhead_cells(cfg, room_key):
+    """(x, y) of every cell of a room that an overhead sprite is drawn across:
+    a canopy, roof, gate beam or lamp head on a layer with z >= 7 (Tops), which
+    the game draws over whoever stands there (RoomManager's overheadBias), so
+    an author placed on one is hidden behind it (issue #183).
+
+    A sprite's size in cells comes from its spriteMetadata anchor, which is
+    the centre of its top-left cell (anchorX 0.1667 = three cells wide)."""
+    meta = cfg.get('spriteMetadata', {})
+    cells = set()
+    for layer in cfg['rooms'][room_key].get('layers', []):
+        if layer.get('z', 0) < 7:
+            continue
+        for xy, key in decode_tiles(cfg, layer).items():
+            x, y = map(int, xy.split(','))
+            m = meta.get(key, {})
+            w = max(1, round(0.5 / (m.get('anchorX') or 0.5)))
+            h = max(1, round(0.5 / (m.get('anchorY') or 0.5)))
+            cells.update((x + i, y + j) for i in range(w) for j in range(h))
+    return cells
+
+
 def city_districts(cfg, room_key):
     """The stitched city `room_key` is a district of -> [(room, x, y, w, h)] for
     every district of it, in config order, in cells from the union's top-left;
@@ -380,10 +404,15 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
     fence, not in with it. In a district of a stitched city "connected" means
     walkable in the city as the game merges it (reachable_cells). `occupied`
     is (x,y) tuples already taken by other NPCs (resolved positions, not base
-    defs — see occupied_cells)."""
+    defs — see occupied_cells).
+
+    A cell under a canopy or roof (overhead_cells) is passed over, so nobody
+    is stood where the tree hides them (issue #183); only when no open cell is
+    in range does a covered one do."""
     cells_w, cells_h, floored, blocked = room_cells(cfg, room_key)
     portals = {f"{t['gridX']},{t['gridY']}" for t in cfg['rooms'][room_key].get('transporters', [])}
     reachable = reachable_cells(cfg, room_key)
+    overhead = overhead_cells(cfg, room_key)
 
     def ok(x, y):
         key = f'{x},{y}'
@@ -391,14 +420,19 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
                 and key not in blocked and key not in portals and (x, y) not in occupied
                 and (reachable is None or (x, y) in reachable))
 
+    covered = None
     for rad in range(0, 12):
         for dx in range(-rad, rad + 1):
             for dy in range(-rad, rad + 1):
                 if max(abs(dx), abs(dy)) != rad:
                     continue
-                if ok(gx + dx, gy + dy):
-                    return gx + dx, gy + dy
-    return None
+                cell = (gx + dx, gy + dy)
+                if not ok(*cell):
+                    continue
+                if cell not in overhead:
+                    return cell
+                covered = covered or cell
+    return covered
 
 
 def generate(post, npc_name, spot_ids, mock=False):

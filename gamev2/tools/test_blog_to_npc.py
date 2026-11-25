@@ -367,7 +367,23 @@ def test_spots(cfg):
         for _ in b.AUTHOR_NPCS:
             c = b.walkable_near(cfg, room_key, x, y, taken)
             assert c in reach[room_key], f'{spot_id}: {c} (with {sorted(taken)} taken) cannot be walked to'
+            # ... or being stood under a canopy or roof, which hides them (issue #183)
+            assert c not in b.overhead_cells(cfg, room_key), f'{spot_id}: {c} is under an overhead sprite'
             taken.add(c)
+    # the sakura canopy is 3x2 from its tile cell, the trunk under its middle:
+    # the spot is the ground in front of the trunk, not the canopy's corner
+    canopy = next((x, y) for layer in cfg['rooms']['Inaka']['layers'] if layer['name'] == 'Tops'
+                  for xy, key in b.decode_tiles(cfg, layer).items() if key.startswith('sakura-large-top')
+                  for x, y in [map(int, xy.split(','))])
+    under = {(canopy[0] + i, canopy[1] + j) for i in range(3) for j in range(2)}
+    assert under <= b.overhead_cells(cfg, 'Inaka'), sorted(under - b.overhead_cells(cfg, 'Inaka'))
+    assert by_room['Inaka']['the sakura trees'] == (canopy[0] + 1, canopy[1] + 3)
+    # with nowhere open in range a covered cell still does (better hidden than unplaced)
+    roofed = copy.deepcopy(cfg)
+    tops = next(layer for layer in roofed['rooms']['Inaka']['layers'] if layer['name'] == 'Tops')
+    w, h = b.room_cells(roofed, 'Inaka')[:2]
+    tops['tiles'] = {f'{x},{y}': 'sakura-large-top_0_0' for x in range(w) for y in range(h)}
+    assert b.walkable_near(roofed, 'Inaka', *canopy) is not None
 
     # a station's platform spot keeps clear of the train doors and where you arrive
     for room_key in stations:
