@@ -315,8 +315,9 @@ and post titles are sometimes Japanese.
   needs the same top padding - and in `PressStart2P`, whose box has no descent, a row of bottom padding:
   call `JapaneseFont.fit(text)` after its text is set (and after a `setText` that may change it). It pads
   top and bottom by `padRows` (an eighth of an em) only while the text has Japanese in it, so Latin text is
-  untouched and a vertically centred Text does not move. The HUD room name, the Character screen rows and
-  the created player's name label use it (#155); the other overlay `text()` helpers show Latin only today.
+  untouched and a vertically centred Text does not move; a bottom-anchored Text in a PixelOperator face
+  (the descent already holds the glyphs) passes `{ below: false }` so its baseline does not lift. The HUD
+  room name, the Character screen rows and the created player's name label (top only) use it (#155); the other overlay `text()` helpers show Latin only today.
 - Signage is not text: the ad pool and the Don Takote sign are pre-rendered sprites
   (`tools/generate_ads.py`, `tools/extract_city.py`), so they do not use this font.
 

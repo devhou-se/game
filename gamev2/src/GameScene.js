@@ -418,8 +418,9 @@ class GameScene extends Phaser.Scene {
             this.playerNameLabel.destroy();
             this.playerNameLabel = null;
         }
-        // the name is typed by the player, so it may be Japanese
-        if (this.playerNameLabel) JapaneseFont.fit(this.playerNameLabel.setText(name));
+        // the name is typed by the player, so it may be Japanese; the label hangs from
+        // its bottom edge, so only the top grows and the name stays as close to the head
+        if (this.playerNameLabel) JapaneseFont.fit(this.playerNameLabel.setText(name), { below: false });
     }
 
     createHUD() {

@@ -67,15 +67,19 @@ class JapaneseFont {
      * are not cut off at the top (or bottom) of its canvas: padRows() above
      * and below when the text has Japanese in it, none when it has not, so
      * Latin text is drawn exactly as before. The padding is the same on both
-     * sides, so a Text anchored at its vertical centre does not move. Call it
+     * sides, so a Text anchored at its vertical centre does not move. A Text
+     * anchored at its bottom edge in a PixelOperator face (whose descent
+     * already holds the Japanese glyphs) passes `{ below: false }` to pad the
+     * top only, so its baseline stays where a Latin line has it. Call it
      * after the text is set, and again after a setText() that may change the
      * answer. A Text that already has vertical padding (name plate, toasts)
      * or handles this itself (the dialogue text) does not need it.
      */
-    static fit(text) {
-        const rows = JapaneseFont.covers(text.text) ? JapaneseFont.padRows(text.style.fontSize) : 0;
-        if (text.padding.top !== rows || text.padding.bottom !== rows) {
-            text.setPadding(text.padding.left, rows, text.padding.right, rows);
+    static fit(text, { below = true } = {}) {
+        const top = JapaneseFont.covers(text.text) ? JapaneseFont.padRows(text.style.fontSize) : 0;
+        const bottom = below ? top : 0;
+        if (text.padding.top !== top || text.padding.bottom !== bottom) {
+            text.setPadding(text.padding.left, top, text.padding.right, bottom);
         }
         return text;
     }

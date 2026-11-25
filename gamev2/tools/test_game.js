@@ -827,9 +827,13 @@ const tests = {
         const latin = fit(text('devhou.se | Shibuya | ', '16px'));
         assert.strictEqual(latin.sets, 0, 'Latin text is never touched');
         assert.strictEqual(fit(text('Kanpai 東京 ✦', '24px')).padding.top, 3);
+        // a bottom-anchored label pads the top only, so its baseline stays put
+        const label = fit(text('グミ東京', '16px'), { below: false });
+        assert.deepStrictEqual([label.padding.top, label.padding.bottom, label.sets], [2, 0, 1]);
+        assert.deepStrictEqual([fit(label, { below: false }).sets, fit(label.setText('Gumi'), { below: false }).padding.top], [1, 0]);
         // the places that show a typed name or a room name ask for it
         const src = (f) => fs.readFileSync(path.join(GV2, 'src', f), 'utf8');
-        assert.ok(/playerNameLabel\.setText\(name\)\)/.test(src('GameScene.js')) && /JapaneseFont\.fit\(this\.hudText\.setText/.test(src('GameScene.js')));
+        assert.ok(/playerNameLabel\.setText\(name\), \{ below: false \}\)/.test(src('GameScene.js')) && /JapaneseFont\.fit\(this\.hudText\.setText/.test(src('GameScene.js')));
         assert.ok(/JapaneseFont\.fit\(o\)/.test(src('CharacterSelect.js')));
     },
 
