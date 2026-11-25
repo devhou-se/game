@@ -913,7 +913,7 @@ class GameScene extends Phaser.Scene {
                 this.player.sprite.x,
                 this.player.sprite.y - this.GRID_SIZE / 2 - 5
             );
-            this.playerNameLabel.setVisible(this.player.sprite.visible);
+            this.playerNameLabel.setVisible(this.player.sprite.visible && this.npcManager.labelsShown());
         }
         this.updateCharacterDepths();
         if (this.debugManager) this.debugManager.update();

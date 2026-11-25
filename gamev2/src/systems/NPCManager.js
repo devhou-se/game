@@ -141,16 +141,27 @@ class NPCManager {
     }
 
     /**
+     * World name labels are put away while a dialogue is open: they are
+     * bright enough to read through its dimmer as a smudge beside the panel.
+     */
+    labelsShown() {
+        const dialogue = this.scene.dialogueManager;
+        return !(dialogue && dialogue.isVisible());
+    }
+
+    /**
      * Update NPC labels to follow their sprites
      */
     updateLabels() {
         const currentRoomNPCs = this.scene.roomManager.rooms[this.scene.roomManager.currentRoom].npcs;
+        const shown = this.labelsShown();
         currentRoomNPCs.forEach(npc => {
             if (npc.nameLabel) {
                 npc.nameLabel.setPosition(
                     npc.sprite.x,
                     npc.sprite.y - this.scene.GRID_SIZE / 2 - 5
                 );
+                npc.nameLabel.setVisible(shown && npc.sprite.visible);
             }
         });
     }

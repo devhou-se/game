@@ -15,7 +15,7 @@ const ctx = vm.createContext({
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
-    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js'].forEach(load);
+    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'systems/NPCManager.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
 // A Shop with no Phaser behind it: the save blob comes from (and goes to) `store`.
@@ -244,6 +244,24 @@ const tests = {
         assert.strictEqual(hintText(false, ''), 'SPACE/ENTER: continue | ESC: close');
         assert.strictEqual(hintText(false, ' (2/3)'), 'SPACE/ENTER: continue (2/3) | ESC: close');
         assert.strictEqual(hintText(true, ' (2/3)'), 'TAP: continue (2/3) | B: close');
+    },
+
+    'world name labels are put away while a dialogue is open'() {
+        const label = () => ({ visible: true, setPosition() {}, setVisible(v) { this.visible = v; } });
+        const here = { sprite: { x: 0, y: 0, visible: true }, nameLabel: label() };
+        const riding = { sprite: { x: 0, y: 0, visible: false }, nameLabel: label() };
+        const mgr = game('Object.create(NPCManager.prototype)');
+        let talking = false;
+        mgr.scene = { GRID_SIZE: 32, dialogueManager: { isVisible: () => talking },
+            roomManager: { currentRoom: 'Tokyo', rooms: { Tokyo: { npcs: [here, riding, { sprite: {} }] } } } };
+        mgr.updateLabels();
+        assert.deepStrictEqual([here.nameLabel.visible, riding.nameLabel.visible], [true, false]);
+        talking = true;
+        mgr.updateLabels();
+        assert.deepStrictEqual([here.nameLabel.visible, riding.nameLabel.visible], [false, false]);
+        talking = false;
+        mgr.updateLabels();
+        assert.deepStrictEqual([here.nameLabel.visible, riding.nameLabel.visible], [true, false]);
     },
 
     'a touch on a control is cancelled before Phaser can read it as a tap'() {
