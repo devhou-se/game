@@ -52,6 +52,35 @@ class JapaneseFont {
     }
 
     /**
+     * Blank rows a Text of this font size needs above and below a line with
+     * Japanese in it. Phaser sizes the canvas from the Latin font's ascent
+     * and descent; DotGothic16 stands about a tenth of an em taller (2.4px
+     * at 24px) and, in PressStart2P, hangs as far below a box that has no
+     * descent — so an eighth of an em, rounded up to whole pixels.
+     */
+    static padRows(fontSize) {
+        return Math.ceil(parseFloat(fontSize) / 8);
+    }
+
+    /**
+     * Give a Text object room for the Japanese it is showing, so the glyphs
+     * are not cut off at the top (or bottom) of its canvas: padRows() above
+     * and below when the text has Japanese in it, none when it has not, so
+     * Latin text is drawn exactly as before. The padding is the same on both
+     * sides, so a Text anchored at its vertical centre does not move. Call it
+     * after the text is set, and again after a setText() that may change the
+     * answer. A Text that already has vertical padding (name plate, toasts)
+     * or handles this itself (the dialogue text) does not need it.
+     */
+    static fit(text) {
+        const rows = JapaneseFont.covers(text.text) ? JapaneseFont.padRows(text.style.fontSize) : 0;
+        if (text.padding.top !== rows || text.padding.bottom !== rows) {
+            text.setPadding(text.padding.left, rows, text.padding.right, rows);
+        }
+        return text;
+    }
+
+    /**
      * Fetch the font (once) and add it to all three families, then redraw
      * the Japanese text already on screen. Resolves true when the font is
      * in use, false when it could not be loaded — the game carries on with

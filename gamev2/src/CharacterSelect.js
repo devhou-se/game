@@ -190,6 +190,7 @@ class CharacterSelect {
             const o = scene.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
                 fontFamily: bold ? 'PixelOperatorMonoBold' : 'PixelOperatorMono' });
             o.setOrigin(0.5, 0.5); o.setResolution(1);
+            JapaneseFont.fit(o);   // a created character's name may be Japanese
             o.setScrollFactor(0); o.setDepth(2002); objs.push(o); return o;
         };
         text(W / 2, py + 34, 'CHARACTER', '32px', true);

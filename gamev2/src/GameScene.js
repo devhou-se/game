@@ -418,7 +418,8 @@ class GameScene extends Phaser.Scene {
             this.playerNameLabel.destroy();
             this.playerNameLabel = null;
         }
-        if (this.playerNameLabel) this.playerNameLabel.setText(name);
+        // the name is typed by the player, so it may be Japanese
+        if (this.playerNameLabel) JapaneseFont.fit(this.playerNameLabel.setText(name));
     }
 
     createHUD() {
@@ -448,6 +449,7 @@ class GameScene extends Phaser.Scene {
         this.hudText.setScrollFactor(0);
         this.hudText.setDepth(DEPTH.HUD_TEXT);
         this.hudText.setResolution(1);
+        JapaneseFont.fit(this.hudText);
 
         this.hudDateText = this.add.text(
             UI.HUD_PADDING + this.hudText.width,
@@ -520,7 +522,7 @@ class GameScene extends Phaser.Scene {
      */
     updateHUD() {
         const hudText = `${this.config.game.title} | ${this.hudRoomName()} | `;
-        this.hudText.setText(hudText);
+        JapaneseFont.fit(this.hudText.setText(hudText));   // room for a Japanese room name
         this.hudDateText.setText(formatGameDate(gameDate()));
         this.hudDateText.setX(UI.HUD_PADDING + this.hudText.width);
         if (this.hudMoneyText) {

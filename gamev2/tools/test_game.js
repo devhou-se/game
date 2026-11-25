@@ -809,6 +809,30 @@ const tests = {
         assert.strictEqual(game('JapaneseFont.retry({})'), undefined);
     },
 
+    'a Text showing Japanese gets rows above and below its Latin line box, Latin text none'() {
+        const fit = game('JapaneseFont.fit'), rows = game('JapaneseFont.padRows');
+        // 2.4px over the 24px ascent, 1.4px under PressStart2P's 16px box: an eighth of an em covers both
+        assert.deepStrictEqual(['16px', '24px', '32px', 20].map(rows), [2, 3, 4, 3]);
+        const text = (str, fontSize, padding) => ({
+            text: str, style: { fontSize }, padding: { left: 0, right: 0, top: 0, bottom: 0, ...padding }, sets: 0,
+            setText(v) { this.text = v; return this; },
+            setPadding(left, top, right, bottom) { this.padding = { left, top, right, bottom }; this.sets++; return this; },
+        });
+        const name = text('グミ', '16px', { left: 5, right: 7 });
+        assert.strictEqual(fit(name), name, 'chains');
+        assert.deepStrictEqual({ ...name.padding }, { left: 5, top: 2, right: 7, bottom: 2 }, 'same above and below, sides kept');
+        fit(name);
+        assert.strictEqual(name.sets, 1, 'no redraw when nothing changes');
+        assert.deepStrictEqual({ ...fit(name.setText('Gumi')).padding }, { left: 5, top: 0, right: 7, bottom: 0 }, 'gone with the Japanese');
+        const latin = fit(text('devhou.se | Shibuya | ', '16px'));
+        assert.strictEqual(latin.sets, 0, 'Latin text is never touched');
+        assert.strictEqual(fit(text('Kanpai 東京 ✦', '24px')).padding.top, 3);
+        // the places that show a typed name or a room name ask for it
+        const src = (f) => fs.readFileSync(path.join(GV2, 'src', f), 'utf8');
+        assert.ok(/playerNameLabel\.setText\(name\)\)/.test(src('GameScene.js')) && /JapaneseFont\.fit\(this\.hudText\.setText/.test(src('GameScene.js')));
+        assert.ok(/JapaneseFont\.fit\(o\)/.test(src('CharacterSelect.js')));
+    },
+
     'the konbini drinks cooler fills its two cells and keeps its size and anchor'() {
         const png = require('./png');
         const { width, height, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', 'office-fridge_0_0.png')));
