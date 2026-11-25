@@ -847,6 +847,30 @@ const tests = {
         }
     },
 
+    'the red shrine roofs (Market, Park) seal the cells they hide, as the shrine prefab does'() {
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const prefab = JSON.parse(fs.readFileSync(path.join(GV2, 'tiled', 'prefabs', 'shrine.tmj'), 'utf8'));
+        const seal = prefab.layers.find((l) => l.name === 'Colliders').data;
+        let roofs = 0;
+        for (const [name, room] of Object.entries(cfg.rooms)) {
+            const solid = room.layers.find((l) => l.name === 'Colliders');
+            for (const layer of room.layers) {
+                for (const [cell, id] of Object.entries(layer.tiles)) {
+                    if (cfg.tilePalette[id] !== 'red-shrine-top_0_0') continue;
+                    roofs++;
+                    const [ox, oy] = cell.split(',').map(Number);
+                    const open = [];
+                    seal.forEach((gid, i) => {
+                        const at = `${ox + i % prefab.width},${oy + Math.floor(i / prefab.width)}`;
+                        if (gid && !(solid && at in solid.tiles)) open.push(at);
+                    });
+                    assert.deepStrictEqual(open, [], `${name}: the roof at ${cell} leaves cells behind it open`);
+                }
+            }
+        }
+        assert.strictEqual(roofs, 2, 'found both red shrine roofs');
+    },
+
     'the headless world model is stopped by collision tiles, like the game'() {
         const WorldModel = game('WorldModel');
         // a 4x3 room: a wall tile at 2,1 on a collision layer, a rug at 1,2 on a plain one
