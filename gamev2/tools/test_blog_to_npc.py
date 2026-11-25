@@ -378,6 +378,16 @@ def test_spots(cfg):
     under = {(canopy[0] + i, canopy[1] + j) for i in range(3) for j in range(2)}
     assert under <= b.overhead_cells(cfg, 'Inaka'), sorted(under - b.overhead_cells(cfg, 'Inaka'))
     assert by_room['Inaka']['the sakura trees'] == (canopy[0] + 1, canopy[1] + 3)
+    # the 7-Eleven's visitor stands on the pavement at its front, beside the
+    # door — not behind the store, nor on the cell shoppers step out onto (#184)
+    stores = [room_key for room_key in by_room if 'the 7-Eleven' in by_room[room_key]]
+    assert {'Machi', 'Market', 'Park', 'Sapporo'} <= set(stores), stores
+    for room_key in stores:
+        door = next((t['gridX'], t['gridY']) for t in cfg['rooms'][room_key]['transporters']
+                    if t['targetRoom'].startswith('Konbini')
+                    and max(abs(t['gridX'] - by_room[room_key]['the 7-Eleven'][0]), abs(t['gridY'] - by_room[room_key]['the 7-Eleven'][1])) <= 2)
+        cell = b.walkable_near(cfg, room_key, *by_room[room_key]['the 7-Eleven'])
+        assert cell == (door[0] - 1, door[1] + 1), f'{room_key}: 7-Eleven door {door}, visitor at {cell}'
     # with nowhere open in range a covered cell still does (better hidden than unplaced)
     roofed = copy.deepcopy(cfg)
     tops = next(layer for layer in roofed['rooms']['Inaka']['layers'] if layer['name'] == 'Tops')

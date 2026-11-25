@@ -163,7 +163,10 @@ LANDMARKS = [
     ('red-pagoda', 'the pagoda'),
     ('fox-statue', 'the fox statues', (0, 2)),   # 1x2, only the base collides: stand in front, not on its head
     ('pond-autotile_corner-nw', 'the pond'),
-    ('seven-eleven', 'the 7-Eleven'),
+    # 3x4, its tile cell the top-left corner and its door in the middle of the
+    # south face — stand on the pavement beside the door, not behind the store
+    # (in front of the door is where shoppers step out, #184)
+    ('seven-eleven', 'the 7-Eleven', (0, 4)),
     ('blue-bell', 'the temple bell'),
     # the canopy's tile cell is its top-left corner; the trunk is under its
     # middle, two rows down — stand on the ground in front of the trunk (#183)
