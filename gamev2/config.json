@@ -10,7 +10,6 @@
     "Slacker: Yashuk"
   ],
   "game": {
-    "date": "October 6 2025",
     "deadzoneCells": 4,
     "gridSize": 64,
     "moveDuration": 200,
@@ -1582,7 +1581,7 @@
               "dialogue": [
                 "Woke up dreading the day, fixed a flat tyre in the rain under some sad excuse for shade, and then the wind tried to throw me into a railing.",
                 "Watched a couple actually get blown over on their bikes. Not funny. Okay, a little funny.",
-                "Bailed on the north shore plan, ducked inland instead, and got smacked in the face with the most gorgeous plains and farmland view from a hill I swear wasn't su",
+                "Bailed on the north shore plan, ducked inland instead, and got smacked in the face with the most gorgeous plains and farmland view from a hill.",
                 "Ended the day flying downhill with the wind at my back, grinning like an idiot. Lake Biwa giveth and taketh."
               ],
               "gridX": 4,
@@ -1668,7 +1667,7 @@
                 "Started the day calm in an onsen overlooking the river, chilly air and all - so peaceful.",
                 "Then Kanazawa happened: udon with chain-smoking salary men in an 80s time capsule of a restaurant.",
                 "90 minutes all-you-can-drink for $18, seven rounds deep, wagyu that made it all worth it.",
-                "Ended up at a whiskey bar trying to buy cigars and accidentally guilt-tripping the poor bartender into giving me cigarettes. Going back for round two, cigars in"
+                "Ended up at a whiskey bar trying to buy cigars and accidentally guilt-tripping the poor bartender into giving me cigarettes. Going back for round two."
               ],
               "gridX": 4,
               "gridY": 9,
@@ -29555,7 +29554,7 @@
             "2025-11-09": {
               "dialogue": [
                 "Propeller plane to Fukuoka, some guy in my seat, general chaos boarding \u2014 turns out allocated seating is a myth everywhere.",
-                "Landed, saw a giant Gundam, hit the Pok\u00e9mon Centre, then paid ten bucks for hot chocolate at a Christmas market... and got a mug out of it, so honestly, worth i",
+                "Landed, saw a giant Gundam, hit the Pok\u00e9mon Centre, then paid ten bucks for hot chocolate at a Christmas market... and got a mug out of it.",
                 "Fake British pub, real happy hour, then tiny river food carts with the best food from the smallest kitchens I've ever seen.",
                 "Bailey pulled out cigarettes out of nowhere and I went to bed way too full \u2014 perfect first night in Fukuoka."
               ],

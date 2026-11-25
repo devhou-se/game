@@ -16,11 +16,118 @@ class DialogueManager {
         return m ? m[1] : null;
     }
 
+    /** The dialogue text's font — shared by the Text object and wrapLines' measuring. */
+    static TEXT_FONT = { size: 24, family: 'PixelOperatorMono' };
+
+    /**
+     * Characters with no spaces between words (Japanese/Chinese: kana, han,
+     * CJK punctuation, full-width punctuation, half-width kana). A line may
+     * break on either side of one, subject to the kinsoku rules below.
+     * Full-width letters and digits (ＡＢＣ, １２３) are left out: they spell
+     * words and numbers, which stay whole like their ASCII forms.
+     */
+    static CJK = /[\u2E80-\u2FDF\u3000-\u30FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF00-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFFEF]|[\u{20000}-\u{3FFFF}]/u;
+    /** A number stays with the counter after it: 20分間 never wraps as 20 / 分間. */
+    static DIGIT = /[0-9\uFF10-\uFF19]/;
+    /** Never start a line: closing punctuation, small kana, the long-vowel mark. */
+    static NO_LINE_START = new Set(Array.from(
+        '、。，．・：；？！ー…‥々ゝゞヽヾ゛゜）］｝」』〉》】〕〙〗’”' +
+        'ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶ' +
+        '!?,.:;)]}%'));
+    /** Never end a line: opening brackets and quotes. */
+    static NO_LINE_END = new Set(Array.from('（［｛「『〈《【〔〘〖‘“([{'));
+
+    /**
+     * Split text into the pieces a line break may fall between. Latin words
+     * (anything between spaces that is not CJK) stay whole; every CJK
+     * character is its own piece unless kinsoku glues it to a neighbour
+     * ("。" to the character before it, "「" to the one after, a counter to
+     * the number before it). `space` says
+     * the piece was preceded by whitespace in the source.
+     */
+    static breakUnits(text) {
+        const units = [];
+        let cur = '', prev = null, space = false, pendingSpace = false;
+        const flush = () => {
+            if (cur) units.push({ text: cur, space: pendingSpace });
+            cur = '';
+        };
+        for (const ch of text) {
+            if (/\s/.test(ch)) {
+                flush();
+                space = true;
+                prev = null;
+                continue;
+            }
+            const breakable = prev !== null &&
+                (DialogueManager.CJK.test(prev) || DialogueManager.CJK.test(ch)) &&
+                !DialogueManager.NO_LINE_START.has(ch) &&
+                !DialogueManager.NO_LINE_END.has(prev) &&
+                !DialogueManager.DIGIT.test(prev);
+            if (breakable) flush();
+            if (!cur) {
+                pendingSpace = space;
+                space = false;
+            }
+            cur += ch;
+            prev = ch;
+        }
+        flush();
+        return units;
+    }
+
+    /**
+     * Wrap text to lines no wider than maxWidth, as measured by
+     * `measure(string) -> px`. Breaks at spaces and at CJK break
+     * opportunities (see breakUnits), so Japanese wraps even though it has
+     * no spaces and Latin words are never cut — except a single piece wider
+     * than a whole line, which is split by character as a last resort.
+     * Explicit newlines are kept. Phaser's own word wrap only knows spaces.
+     */
+    static wrapLines(text, maxWidth, measure) {
+        const lines = [];
+        for (const paragraph of String(text).split('\n')) {
+            let line = '';
+            for (const unit of DialogueManager.breakUnits(paragraph)) {
+                const joined = line + (line && unit.space ? ' ' : '') + unit.text;
+                if (measure(joined) <= maxWidth) {
+                    line = joined;
+                    continue;
+                }
+                if (line) lines.push(line);
+                line = '';
+                for (const ch of unit.text) {   // a no-op loop when the piece fits a line
+                    if (line && measure(line + ch) > maxWidth) {
+                        lines.push(line);
+                        line = '';
+                    }
+                    line += ch;
+                }
+            }
+            lines.push(line);
+        }
+        return lines;
+    }
+
+    /**
+     * Deal wrapped lines into pages of at most maxLines, evenly (7 lines at
+     * 6 a page become 4 + 3, not 6 + 1).
+     */
+    static paginate(lines, maxLines) {
+        const pageCount = Math.max(1, Math.ceil(lines.length / maxLines));
+        const perPage = Math.ceil(lines.length / pageCount);
+        const pages = [];
+        for (let i = 0; i < lines.length; i += perPage) pages.push(lines.slice(i, i + perPage));
+        return pages.length ? pages : [[]];
+    }
+
     constructor(scene) {
         this.scene = scene;
         this.visible = false;
         this.currentNPC = null;
         this.currentDialogueIndex = 0;
+        this.pages = [[]];      // the current line, wrapped and paged (see layout)
+        this.currentPage = 0;
 
         this.createOverlay();
     }
@@ -89,16 +196,17 @@ class DialogueManager {
         this.npcNameText.setDepth(3004); // above the portrait frame it straddles
         this.npcNameText.setVisible(false);
 
-        // Dialogue text
+        // Dialogue text. Wrapped by layout() rather than Phaser's wordWrap,
+        // which only breaks on spaces (Japanese lines have none).
+        this.textWidth = this.panelWidth - 60;
         this.dialogueText = this.scene.add.text(
             this.panelX + 30,
             this.panelY + 30,
             '',
             {
-                fontSize: '24px',
+                fontSize: `${DialogueManager.TEXT_FONT.size}px`,
                 fill: '#ffffff',
-                fontFamily: 'PixelOperatorMono',
-                wordWrap: { width: this.panelWidth - 60 }
+                fontFamily: DialogueManager.TEXT_FONT.family
             }
         );
         this.dialogueText.setResolution(1);
@@ -122,6 +230,9 @@ class DialogueManager {
         this.continuePrompt.setScrollFactor(0);
         this.continuePrompt.setDepth(3002);
         this.continuePrompt.setVisible(false);
+
+        // Room for the text: from its top down to a gap above the hint line
+        this.textHeight = this.continuePrompt.y - this.continuePrompt.height / 2 - 10 - this.dialogueText.y;
 
         // Make overlay clickable to advance dialogue
         this.overlay.setInteractive(
@@ -392,21 +503,75 @@ class DialogueManager {
         }
     }
 
+    /** Pixel width of a string in the dialogue font. */
+    measure(str) {
+        if (!this.measureContext) {
+            this.measureContext = document.createElement('canvas').getContext('2d');
+        }
+        const font = DialogueManager.TEXT_FONT;
+        this.measureContext.font = `${font.size}px ${font.family}`;
+        return this.measureContext.measureText(str).width;
+    }
+
+    /** Height of n lines of dialogue text at the given line spacing. */
+    linesHeight(n, lineSpacing) {
+        if (!this.lineHeight) {
+            // Phaser's own figure for this font: the height two lines add over one
+            this.dialogueText.setLineSpacing(0);
+            const one = this.dialogueText.setText('A').height;
+            this.lineHeight = this.dialogueText.setText('A\nA').height - one;
+            this.lineBase = one - this.lineHeight;
+        }
+        return this.lineBase + n * this.lineHeight + (n - 1) * lineSpacing;
+    }
+
+    /**
+     * Fit one dialogue line into the panel: wrapped to the text width
+     * (wrapLines), then paged if it is taller than the room above the hint.
+     * Japanese gets extra leading — its glyphs fill the whole em box, so at
+     * the Latin line height consecutive rows touch.
+     */
+    layout(text) {
+        const lineSpacing = DialogueManager.CJK.test(text) ? 8 : 0;
+        const lines = DialogueManager.wrapLines(text, this.textWidth, s => this.measure(s));
+        let maxLines = 1;
+        while (this.linesHeight(maxLines + 1, lineSpacing) <= this.textHeight) maxLines++;
+        return { lineSpacing, pages: DialogueManager.paginate(lines, maxLines) };
+    }
+
+    /** Show the current dialogue line from its first page, and speak it. */
     updateText() {
         if (!this.currentNPC || !this.currentNPC.dialogue) {
             return;
         }
 
         const dialogue = this.currentNPC.dialogue[this.currentDialogueIndex];
-        this.dialogueText.setText(dialogue);
+        const { lineSpacing, pages } = this.layout(dialogue);
+        this.pages = pages;
+        this.currentPage = 0;
+        this.dialogueText.setLineSpacing(lineSpacing);
+        this.showPage();
 
         // Speak the line (replaces the previous line's clip; a no-op for
         // NPCs without a voice — see src/Voice.js)
         this.scene.voice.playLine(this.currentNPC.voice, this.currentDialogueIndex);
     }
 
+    showPage() {
+        this.dialogueText.setText(this.pages[this.currentPage].join('\n'));
+        const more = this.pages.length > 1 ? ` (${this.currentPage + 1}/${this.pages.length})` : '';
+        this.continuePrompt.setText(`SPACE/ENTER: continue${more} | ESC: close`);
+    }
+
     advance() {
         if (!this.visible || !this.currentNPC) {
+            return;
+        }
+
+        // A line too long for the panel reads on over further pages first
+        if (this.currentPage < this.pages.length - 1) {
+            this.currentPage++;
+            this.showPage();
             return;
         }
 

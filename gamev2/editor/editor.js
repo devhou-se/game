@@ -153,10 +153,6 @@ document.getElementById('game-title').addEventListener('input', (e) => {
     configManager.updateGameSettings({ title: e.target.value });
 });
 
-document.getElementById('game-date').addEventListener('input', (e) => {
-    configManager.updateGameSettings({ date: e.target.value });
-});
-
 document.getElementById('game-gridsize').addEventListener('change', (e) => {
     configManager.updateGameSettings({ gridSize: parseInt(e.target.value) });
     gridEditor.setupCanvas();

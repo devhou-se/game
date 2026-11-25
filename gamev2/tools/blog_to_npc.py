@@ -27,7 +27,15 @@ config write, so whoever runs this must commit gamev2/assets/voice (additions
 AND deletions) together with config.json — a recorded "voice" whose clips were
 not deployed 404s on every line.
 
-Run from gamev2/ (normally by the www-jp game-npc-pipeline workflow):
+Two posts by the same author on the same day share one dated state (states
+are keyed by date): the later post's spot wins and its lines are appended to
+the earlier post's, capped at MAX_DAY_LINES (oldest dropped first) — see
+merge_same_day. The state records which post each run of lines came from as
+"posts", so a re-run of a post replaces its own lines instead of stacking on
+top of itself or wiping the other post's.
+
+Run from gamev2/ (normally by the www-jp game-npc-pipeline workflow; the unit
+checks are `python3 tools/test_blog_to_npc.py`):
 
   python3 tools/blog_to_npc.py --payload post.json [--dry-run] [--mock]
   python3 tools/blog_to_npc.py --voice-backfill [--dry-run]
@@ -88,6 +96,8 @@ LANDMARKS = [
 MODEL = 'claude-sonnet-5'
 MAX_DIALOGUE_LINES = 4
 MAX_LINE_CHARS = 160
+# an author's lines for one day, when several posts share a date
+MAX_DAY_LINES = 2 * MAX_DIALOGUE_LINES
 
 # claude-sonnet-5 list price, USD per million tokens (standard, not the intro
 # rate — keeps the per-post projection conservative once intro pricing ends)
@@ -247,6 +257,52 @@ def generate(post, npc_name, spot_ids, mock=False):
     return json.loads(text), response.usage
 
 
+# a full stop after one of these is not the end of a sentence
+ABBREVIATIONS = {'mr', 'mrs', 'ms', 'dr', 'prof', 'st', 'mt', 'vs', 'approx',
+                 'e.g', 'i.e', 'a.m', 'p.m'}
+
+
+def ends_sentence(line, i):
+    """Whether the character at line[i] closes a sentence (and more text
+    follows it, which the caller is about to cut off)."""
+    ch = line[i]
+    if ch in '。！？':
+        return True
+    if ch not in '.!?…' or line[i + 1] != ' ':
+        return False
+    word = line[:i].rsplit(' ', 1)[-1].lower().lstrip('("\'“‘')
+    return not (ch == '.' and word in ABBREVIATIONS)
+
+
+def trim_line(line, limit=MAX_LINE_CHARS):
+    """One dialogue line, whitespace-normalised and at most `limit` characters
+    — never cut mid-word. An over-long line is trimmed back to its last
+    complete sentence when that keeps at least half of it; otherwise to the
+    last whole word (or, for unspaced Japanese, the last 、 clause) with an
+    ellipsis to show it trails off."""
+    line = ' '.join(line.split())
+    if len(line) <= limit:
+        return line
+    half = limit // 2
+    for i in range(limit - 1, half - 1, -1):
+        if ends_sentence(line, i):
+            return line[:i + 1]
+    head = line[:limit - 1]            # leave room for the ellipsis
+    cut = head.rfind(' ')
+    if cut < half:
+        cut = head.rfind('、')
+    if cut < half:
+        cut = len(head)                # one unbroken run: nothing better to cut at
+    return head[:cut].rstrip(' ,;:-–—、') + '…'
+
+
+def clean_dialogue(lines):
+    """The model's lines made safe for the dialogue box: blanks dropped, each
+    trimmed to MAX_LINE_CHARS on a sentence/word boundary, at most
+    MAX_DIALOGUE_LINES of them."""
+    return [trim_line(line) for line in lines if line.strip()][:MAX_DIALOGUE_LINES]
+
+
 def npc_in_room(room, name):
     return next((n for n in room.get('npcs', []) if n['name'].lower() == name.lower()), None)
 
@@ -292,12 +348,75 @@ def hidden_base_def(name, x, y):
     }
 
 
+# what a placement writes into a dated state, besides `present`
+PLACEMENT_KEYS = ('gridX', 'gridY', 'dialogue', 'photo', 'voice', 'drunk', 'posts')
+
+
+def same_day_placement(cfg, npc_name, date):
+    """The state an earlier post already placed this NPC with on `date`, or
+    None. (At most one room holds it: apply() strips the others.)"""
+    for room in overworld_rooms(cfg).values():
+        npc = npc_in_room(room, npc_name)
+        st = (npc or {}).get('states', {}).get(date)
+        if st and st.get('present') is not False and st.get('dialogue'):
+            return st
+    return None
+
+
+def merge_same_day(earlier, post_id, dialogue, photo, drunk):
+    """Fold a post into the day's existing placement, if other posts made
+    one. Returns (dialogue, photo, drunk, posts) to place with.
+
+    Dated states are keyed by date, so two posts by one author on one day
+    share a state. The post processed last wins the spot (the caller places
+    there) and the photo if it has one; its lines follow the other posts',
+    and when the day runs past MAX_DAY_LINES the oldest lines are the ones
+    dropped. The day reads as drunk if any post did (one voice speaks the
+    whole state).
+
+    "posts" on the state says which lines are whose: [{"id", "lines"}, ...]
+    in dialogue order, listing only posts that still have lines in it. A
+    re-run of a post therefore replaces just that post's own lines and keeps
+    the others'. A state from before "posts" was recorded (or one edited so
+    the counts no longer add up), or a payload without a post_id, replaces
+    the day's dialogue outright, as the pipeline always did.
+    """
+    if post_id is None:
+        return dialogue, photo, drunk, None
+    post_id = str(post_id)
+    mine = {'id': post_id, 'lines': len(dialogue)}
+    made_by = (earlier or {}).get('posts')
+    if not (isinstance(made_by, list) and made_by
+            and all(isinstance(p, dict) and isinstance(p.get('lines'), int) for p in made_by)
+            and sum(p['lines'] for p in made_by) == len(earlier['dialogue'])):
+        return dialogue, photo, drunk, [mine]
+    kept, others, at = [], [], 0
+    for p in made_by:
+        if str(p.get('id')) != post_id:
+            kept += earlier['dialogue'][at:at + p['lines']]
+            others.append(dict(p))
+        at += p['lines']
+    if not others:
+        return dialogue, photo, drunk, [mine]
+    over = len(kept) + len(dialogue) - MAX_DAY_LINES
+    if over > 0:
+        kept = kept[over:]
+        for p in others:                    # oldest first
+            gone = min(over, p['lines'])
+            p['lines'] -= gone
+            over -= gone
+    others = [p for p in others if p['lines'] > 0]
+    return (kept + dialogue, photo or earlier.get('photo'),
+            drunk or earlier.get('drunk') is True, others + [mine])
+
+
 def apply(cfg, npc_name, date, target_room, x, y, dialogue, photo=None,
-          voice=None, drunk=False):
+          voice=None, drunk=False, posts=None):
     """Dated states: appear at the spot in the target room, vanish elsewhere.
     `photo` and `voice` are always written (null when the post had none) so
     state merging never carries an older post's photo or spoken clips forward.
-    `drunk` is kept so --voice-backfill can pick the right voice later."""
+    `drunk` is kept so --voice-backfill can pick the right voice later, and
+    `posts` (which post each run of lines came from) for merge_same_day."""
     changes = []
     for room_key, room in overworld_rooms(cfg).items():
         npc = npc_in_room(room, npc_name)
@@ -313,12 +432,20 @@ def apply(cfg, npc_name, date, target_room, x, y, dialogue, photo=None,
                 st['drunk'] = True
             else:
                 st.pop('drunk', None)
+            if posts:
+                st['posts'] = posts
+            else:
+                st.pop('posts', None)
             changes.append(f'{room_key}: present at ({x},{y}) from {date}'
                            + (f' with photo {photo}' if photo else '')
                            + (f' with voice {voice}' if voice else ''))
         elif npc is not None:
             st = npc.setdefault('states', {}).setdefault(date, {})
             st['present'] = False
+            # an earlier post the same day may have placed them here: that
+            # placement moved to target_room, so nothing of it stays behind
+            for key in PLACEMENT_KEYS:
+                st.pop(key, None)
             changes.append(f'{room_key}: absent from {date}')
     changes += repair_presence(cfg, npc_name, date, target_room)
     return changes
@@ -409,8 +536,7 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
 
     result, usage = generate(post, npc_name, spot_ids, mock=mock)
     spot_id = result.get('spot')
-    dialogue = [line.strip()[:MAX_LINE_CHARS]
-                for line in result.get('dialogue', []) if line.strip()][:MAX_DIALOGUE_LINES]
+    dialogue = clean_dialogue(result.get('dialogue', []))
     if spot_id not in spots or not dialogue:
         print(f'#{post.get("post_id")}: unusable content (spot={spot_id!r}, '
               f'{len(dialogue)} lines) — skipped')
@@ -428,9 +554,16 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
         print(f'  » {line}')
     photo = import_post_photo(post, dry_run=dry_run)
     drunk = result.get('drunk') is True
+    earlier = same_day_placement(cfg, npc_name, date)
+    said = len(dialogue)
+    dialogue, photo, drunk, posts = merge_same_day(
+        earlier, post.get('post_id'), dialogue, photo, drunk)
+    if posts and len(posts) > 1:
+        print(f'  same day as post(s) {", ".join(p["id"] for p in posts[:-1])}: this spot '
+              f'wins, {len(dialogue) - said} of their line(s) kept ahead of these {said}')
     voice = voice_dialogue(npc_name, date, dialogue, drunk=drunk, dry_run=dry_run)
     for c in apply(cfg, npc_name, date, room_key, cell[0], cell[1], dialogue,
-                   photo, voice, drunk):
+                   photo, voice, drunk, posts):
         print(f'  {c}')
     record = {
         'post_id': post.get('post_id'),

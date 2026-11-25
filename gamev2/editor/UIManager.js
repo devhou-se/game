@@ -11,7 +11,6 @@ class UIManager {
 
         // Update game settings
         document.getElementById('game-title').value = config.game.title;
-        document.getElementById('game-date').value = config.game.date;
         document.getElementById('game-gridsize').value = config.game.gridSize;
         document.getElementById('game-width').value = config.game.worldWidth;
         document.getElementById('game-height').value = config.game.worldHeight;

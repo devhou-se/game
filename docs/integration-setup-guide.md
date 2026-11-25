@@ -1,5 +1,9 @@
 # Game Repository Integration Setup Guide
 
+> **Legacy document.** This guide describes the retired Godot-era integration (OpenAI + ElevenLabs + GCS,
+> GDScript NPC scripts). It is not how the live game works. The current pipeline is
+> `gamev2/tools/blog_to_npc.py`; see `integration-readme.md` for how it works today.
+
 This guide provides step-by-step instructions for implementing the www-jp blog to game integration in your Godot-based game repository. When properly configured, this system will automatically convert blog posts into interactive NPCs with dialogue and voice synthesis.
 
 ## Table of Contents
