@@ -867,6 +867,30 @@ const tests = {
         assert.strictEqual(walkedFrom(new Set(), [[0, 0]]).size, 0);
     },
 
+    'studio stacks overlapping districts the way the stitched city does: the later one on top'() {
+        const stackOrder = game('WorldModel.stackOrder');
+        const cities = { C: { rooms: [{ room: 'Tokyo' }, { room: 'Market' }, { room: 'Gone' }, { room: 'Palace' }, { room: 'Park' }] } };
+        const keys = ['Inaka', 'Market', 'Osaka', 'Palace', 'Park', 'Tokyo', 'Yukimura'];
+        assert.strictEqual(stackOrder({ cities }, keys).join(), 'Inaka,Tokyo,Osaka,Market,Palace,Park,Yukimura', 'districts take the city order, other rooms stay put');
+        assert.strictEqual(keys[1], 'Market', 'the list passed in is left alone');
+        assert.strictEqual(stackOrder({}, keys).join(), keys.join());
+        // the real world: wherever two rooms of the map overlap, the one stacked on top is the city's owner
+        const config = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const map = JSON.parse(fs.readFileSync(path.join(GV2, 'assets', 'map', 'world-map.json'), 'utf8')).rooms;
+        const order = stackOrder(config, Object.keys(config.rooms));
+        const rect = (k) => { const r = map[k], s = r.w / r.cells[0]; return { x: Math.round(r.x / s), y: Math.round(r.y / s), w: r.cells[0], h: r.cells[1] }; };
+        const rank = Object.fromEntries(Object.values(config.cities).flatMap((c) => c.rooms.map((r, i) => [r.room, i])));
+        let overlaps = 0;
+        for (const a of Object.keys(map)) for (const b of Object.keys(map)) {
+            const p = rect(a), q = rect(b);
+            if (a >= b || p.x >= q.x + q.w || q.x >= p.x + p.w || p.y >= q.y + q.h || q.y >= p.y + p.h) continue;
+            overlaps++;
+            assert.ok(a in rank && b in rank, `${a} and ${b} overlap on the map but are not districts of one city`);
+            assert.strictEqual(order.indexOf(a) < order.indexOf(b), rank[a] < rank[b], `${a} / ${b}`);
+        }
+        assert.ok(overlaps >= 3, 'Tokyo/Market, Market/Palace and Palace/Park overlap');
+    },
+
     'lint lets the player stand at a shrine roof\'s eave tips, but not under the roof'() {
         const overheadCols = game('WorldModel.overheadCols');
         assert.strictEqual(overheadCols('shrine-top', 5).join(), '1,2,3', 'the eave columns are not under the roof');

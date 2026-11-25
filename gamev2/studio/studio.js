@@ -108,7 +108,7 @@ function layout(keys, worldMap) {
         x += w + 4;
         rowH = Math.max(rowH, h);
     }
-    S.order = keys;
+    S.order = WorldModel.stackOrder(m.config, keys);
 }
 
 function renderArt(k) {
@@ -287,7 +287,7 @@ function panels() {
         b.onclick = () => p.x === undefined ? focusRoom(p.room) : select(p.room, p.x, p.y, true);
         return b;
     }));
-    $('rooms').replaceChildren(...S.order.map(k => {
+    $('rooms').replaceChildren(...Object.keys(S.model.config.rooms).map(k => {
         const r = S.rooms[k];
         const b = el('button', { className: 'row' },
             el('span', { textContent: k }),
@@ -413,7 +413,7 @@ function bind() {
         if (!was || was.moved) return;
         const box = stage.getBoundingClientRect();
         const cx = S.view.x + (e.clientX - box.left) / S.view.z, cy = S.view.y + (e.clientY - box.top) / S.view.z;
-        const k = S.order.find(k => { const r = S.rooms[k]; return cx >= r.x && cx < r.x + r.w && cy >= r.y && cy < r.y + r.h; });
+        const k = S.order.findLast(k => { const r = S.rooms[k]; return cx >= r.x && cx < r.x + r.w && cy >= r.y && cy < r.y + r.h; });
         if (k) select(k, Math.floor(cx - S.rooms[k].x), Math.floor(cy - S.rooms[k].y), false);
         else { S.selected = null; inspect(); draw(); }
     });

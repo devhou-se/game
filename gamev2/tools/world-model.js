@@ -291,6 +291,19 @@ class WorldModel {
         return cols;
     }
 
+    // `keys` with each city's districts put in the city's own order, so a later one comes later
+    // here too: where two districts overlap, the later one owns the cells (CityStitcher), and
+    // whoever lays rooms out together (the studio) draws it on top and gives it the click.
+    static stackOrder(config, keys) {
+        const order = keys.slice();
+        for (const city of Object.values(config.cities || {})) {
+            const districts = (city.rooms || []).map((r) => r.room).filter((k) => keys.includes(k));
+            const slots = districts.map((k) => keys.indexOf(k)).sort((p, q) => p - q);
+            districts.forEach((k, i) => { order[slots[i]] = k; });
+        }
+        return order;
+    }
+
     drawOrder(roomKey) {
         const room = this.roomManager.rooms[roomKey];
         const meta = this.config.spriteMetadata || {};
