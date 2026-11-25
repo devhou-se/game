@@ -413,8 +413,11 @@ function bind() {
         if (!was || was.moved) return;
         const box = stage.getBoundingClientRect();
         const cx = S.view.x + (e.clientX - box.left) / S.view.z, cy = S.view.y + (e.clientY - box.top) / S.view.z;
-        const k = S.order.findLast(k => { const r = S.rooms[k]; return cx >= r.x && cx < r.x + r.w && cy >= r.y && cy < r.y + r.h; });
-        if (k) select(k, Math.floor(cx - S.rooms[k].x), Math.floor(cy - S.rooms[k].y), false);
+        const cell = (k) => ({ room: k, x: Math.floor(cx - S.rooms[k].x), y: Math.floor(cy - S.rooms[k].y) });
+        const under = S.order.filter(k => { const r = S.rooms[k]; return cx >= r.x && cx < r.x + r.w && cy >= r.y && cy < r.y + r.h; }).map(cell);
+        // the top room takes the click; clicking the selected cell again picks the room underneath
+        const hit = WorldModel.stackPick(under, S.selected);
+        if (hit) select(hit.room, hit.x, hit.y, false);
         else { S.selected = null; inspect(); draw(); }
     });
     stage.addEventListener('wheel', (e) => {

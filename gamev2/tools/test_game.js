@@ -927,6 +927,18 @@ const tests = {
         assert.ok(overlaps >= 3, 'Tokyo/Market, Market/Palace and Palace/Park overlap');
     },
 
+    'studio: a second click on the selected cell picks the district underneath'() {
+        const stackPick = game('WorldModel.stackPick');
+        const palace = { room: 'Palace', x: 38, y: 21 }, park = { room: 'Park', x: 38, y: 3 };
+        const cells = [palace, park]; // bottom first: Park is drawn over Palace
+        assert.strictEqual(stackPick(cells, null), park, 'the top district takes the first click');
+        assert.strictEqual(stackPick(cells, { room: 'Park', x: 37, y: 3 }), park, 'a different cell selected: still the top');
+        assert.strictEqual(stackPick(cells, { ...park }), palace, 'clicking the selected cell again reaches the covered seam transporter');
+        assert.strictEqual(stackPick(cells, { ...palace }), park, 'and once more wraps back to the top');
+        assert.strictEqual(stackPick([park], { ...park }), park, 'one room: the cell stays selected');
+        assert.strictEqual(stackPick([], park), null, 'empty space selects nothing');
+    },
+
     'lint lets the player stand at a shrine roof\'s eave tips, but not under the roof'() {
         const overheadCols = game('WorldModel.overheadCols');
         assert.strictEqual(overheadCols('shrine-top', 5).join(), '1,2,3', 'the eave columns are not under the roof');

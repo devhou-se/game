@@ -45,6 +45,8 @@ where each person stands on a chosen day. Click a cell for its tiles, what a bum
 and photo, and the `play.js` command that puts you there. Maps are still edited in Tiled.
 Where a city's districts overlap on the map (Palace / Park share four rows) the later district in the city's
 `rooms` list is drawn on top and takes the click, as in the stitched city (`WorldModel.stackOrder`).
+Click the selected cell again for the district underneath (`WorldModel.stackPick`): that is how the covered
+seam transporters (Palace 38..39,21, Market 54..56,47) are inspected.
 
 It has no logic of its own: `tools/world-model.js` (rooms, collision, NPC dates, interactions, the
 problem survey) is shared with `tools/play.js`, so the page and the terminal tool always agree.

@@ -304,6 +304,14 @@ class WorldModel {
         return order;
     }
 
+    // Which of the cells stacked at one spot (bottom first, as stackOrder lists their rooms) a click
+    // picks: the top one, or, when the cell already selected is one of them, the next one down (wrapping
+    // back to the top) - so a covered district's cells, its seam transporters among them, can be reached.
+    static stackPick(cells, selected) {
+        const at = selected ? cells.findIndex((c) => c.room === selected.room && c.x === selected.x && c.y === selected.y) : -1;
+        return cells.length ? cells[at <= 0 ? cells.length - 1 : at - 1] : null;
+    }
+
     drawOrder(roomKey) {
         const room = this.roomManager.rooms[roomKey];
         const meta = this.config.spriteMetadata || {};
