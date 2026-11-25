@@ -1354,6 +1354,31 @@ const tests = {
         assert.ok(problems.some(q => /^lint shop-no-front: \d+ \(/.test(q.text)), JSON.stringify(problems));
     },
 
+    'play.js check exits 1 when it lists problems, 0 when the world is clean (#188)'() {
+        const { spawnSync } = require('child_process');
+        const os = require('os');
+        const run = (gv2) => spawnSync(process.execPath, [path.join(gv2, 'tools', 'play.js'), 'check'], { encoding: 'utf8' });
+        const clean = run(GV2);
+        assert.strictEqual(clean.stdout.trim(), 'no problems found');
+        assert.strictEqual(clean.status, 0);
+        // a copy of the model (play.js reads the world next to itself) whose player.start drifted off the first trip's home
+        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gamev2-check-'));
+        try {
+            fs.cpSync(path.join(GV2, 'src'), path.join(tmp, 'src'), { recursive: true });
+            fs.mkdirSync(path.join(tmp, 'tools'));
+            for (const f of ['play.js', 'png.js', 'world-model.js']) fs.copyFileSync(path.join(GV2, 'tools', f), path.join(tmp, 'tools', f));
+            fs.symlinkSync(path.join(GV2, 'assets'), path.join(tmp, 'assets'));
+            const config = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+            config.player.startX += 1;
+            fs.writeFileSync(path.join(tmp, 'config.json'), JSON.stringify(config));
+            const broken = run(tmp);
+            assert.ok(/^error: [^]*\n\d+ problems\n$/.test(broken.stdout), broken.stdout + broken.stderr);
+            assert.strictEqual(broken.status, 1);
+        } finally {
+            fs.rmSync(tmp, { recursive: true, force: true });
+        }
+    },
+
     'a cell two districts share is walkable by the later district\'s map'() {
         // the same case tools/test_blog_to_npc.py makes for the python port: Palace is listed
         // after Market, so a collider on Palace's copy of their shared row closes that cell

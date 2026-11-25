@@ -554,6 +554,7 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   it that the door leads to (the till, against the front wall, needs any reachable side).
   `play.js check` reports every room's lint errors too (`WorldModel.lintProblems`, issue #178), so a
   store cut off from its door shows up there as `KonbiniMarket1: lint shop-no-front: ...`.
+  `check` exits 1 when it lists any problem, like `lint` (issue #188), so a script or CI step can gate on it.
   `generate_konbinis.py` lays a store out as coolers | walkway | aisle | walkway | (aisle | walkway) |
   counter row: a two-cell `office-fridge` pushes the aisles down a row, the last aisle stops two rows
   short of the counter row (one on the row above it closed the ring and sealed the back of the store

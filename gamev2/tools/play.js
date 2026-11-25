@@ -145,7 +145,7 @@ const COMMANDS = {
             'trips                      the trips, and where a player starts on the current date',
             'start [new]                go where the game starts a returning (or a new) player on the current date',
             'as <name>                  play as a cast member (their NPC leaves the world)',
-            'check                      transporter targets and unreachable rooms, NPC placement and player starts on every content and trip day, and every room\'s lint errors (stitched, then ?stitch=0)',
+            'check                      transporter targets and unreachable rooms, NPC placement and player starts on every content and trip day, and every room\'s lint errors (stitched, then ?stitch=0); exits 1 when it finds a problem',
             'lint [room]...             map QA: floor holes, missing or stray colliders, tree and overhang layering (a district, or a whole city)',
             'render <room> <out.png>    draw a room - or a stitched city, woods and all - to a PNG [--scale 0.5] [--colliders]',
             'reach [room]...            JSON: the cells of each room that can be walked to, in its own coordinates',
@@ -372,7 +372,8 @@ const COMMANDS = {
             for (const q of legacy.survey(dates).problems.concat(legacy.lintProblems())) if (!lines.includes(line(q))) lines.push('[--stitch=0] ' + line(q));
         }
         if (!lines.length) return 'no problems found';
-        return lines.join('\n') + `\n${lines.length} problems`;
+        // like lint: a problem is a failure, so the exit code gates a script or CI step
+        throw new Error(lines.join('\n') + `\n${lines.length} problems`);
     },
     reach(w, rooms) {
         const all = w.reachByRoom(w.survey(null, { npcs: false }).reach);
