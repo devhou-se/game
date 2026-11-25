@@ -10,6 +10,7 @@ config.json.
 import contextlib
 import copy
 import io
+import json
 import os
 import sys
 import tempfile
@@ -411,6 +412,30 @@ def test_photos(cfg):
         assert 'removed 2 superseded' in out.getvalue()
         assert sorted(os.listdir(tmp)) == ['1.png', '2.png', '3.png', '6.png', 'README.md']
     assert post_photos.prune_photos(fake, os.path.join(tmp, 'gone')) == []
+
+    # a run that places nothing still prunes: a post that fails after its
+    # photo was imported must not leave the print behind
+    def fails_after_import(cfg, post, *args, **kwargs):
+        open(os.path.join(post_photos.PHOTO_DIR, '9.png'), 'w').close()
+        raise RuntimeError('boom')
+    here, argv, real = os.getcwd(), sys.argv, b.process_post
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            os.chdir(tmp)
+            os.makedirs(post_photos.PHOTO_DIR)
+            open(os.path.join(post_photos.PHOTO_DIR, '7.png'), 'w').close()
+            json.dump({'rooms': {'A': {'npcs': [{'name': 'Bailey', 'photo': '7'}]}}}, open('config.json', 'w'))
+            json.dump({'post_id': 9}, open('post.json', 'w'))
+            before = open('config.json').read()
+            b.process_post, sys.argv = fails_after_import, ['blog_to_npc.py', '--payload', 'post.json']
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                assert b.main() == 0
+            assert 'ERROR RuntimeError: boom' in out.getvalue(), out.getvalue()
+            assert os.listdir(post_photos.PHOTO_DIR) == ['7.png'], os.listdir(post_photos.PHOTO_DIR)
+            assert open('config.json').read() == before
+        finally:
+            b.process_post, sys.argv = real, argv
+            os.chdir(here)
 
 
 def test_authors(cfg):

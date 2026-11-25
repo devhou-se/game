@@ -237,7 +237,8 @@ their route in the room's map data rather than in coordinates, have no collision
     track cell over a road, with cones on `(53,4)` and `(57,4)` beside the east one - a unit test
     fails a sealed road-over-track cell in any room). **`(2,2)` must stay open**: with the lantern on
     `(2,1)` and the track sealed from column 2 to the east road, it is the only way from the west
-    road into the strip behind the station (rows 0-2) - do not put a cone or prop there. From the forecourt the camera cannot reach row 3 - the train is seen from
+    road into the strip behind the station (rows 0-2) without going round by the east crossing, the
+    strip's other entrance - do not put a cone or prop there. From the forecourt the camera cannot reach row 3 - the train is seen from
     the west road, the yards beside the station (rows 4-7) or the strip behind it.
   - In the stitched city the Palace track runs on west through the woods and ends in them, short of Machi:
     an end of track that is not at the room's edge is "closed", and the train fades in / out standing on
@@ -675,7 +676,8 @@ NPC dialogue can be read aloud. A resolved NPC state carrying `"voice": <voiceId
   pipeline workflow must commit `gamev2/assets/voice` (additions and deletions, e.g. `git add -A`) together
   with `config.json` — a recorded `voice` whose clips were not deployed 404s on every line.
   `prune_photos()` (`tools/post_photos.py`) does the same for `assets/photos/<id>.png` prints no state names
-  any more (a later same-day post's photo won, the NPC left the room, `--reset`), so `gamev2/assets/photos`
+  any more (a later same-day post's photo won, the NPC left the room, `--reset`; it also runs when a run
+  places nothing, for a post that failed after its photo was imported), so `gamev2/assets/photos`
   must be committed the same way; `test_blog_to_npc.py` fails on an orphaned or missing print.
 - **Backfill**: `python3 tools/blog_to_npc.py --voice-backfill [--dry-run]` voices existing dated states
   that have dialogue but no voice (no LLM call, no placement). `--dry-run` prints the line/character

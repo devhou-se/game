@@ -946,6 +946,10 @@ def main():
         print('config.json updated')
         prune_voices(cfg)   # clip sets the new config no longer points at
         prune_photos(cfg)   # prints whose state lost its placement
+    else:
+        # nothing placed, config untouched: a post that failed after its photo
+        # was imported has left a print no state names
+        prune_photos(load_config())
     return 0
 
 
