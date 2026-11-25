@@ -794,6 +794,16 @@ const tests = {
             else if (v && typeof v === 'object') Object.values(v).forEach(walk);
         };
         walk(JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).rooms);
+        // the studio page has its own families (CSS, not JapaneseFont.load): each Latin face has a Japanese twin
+        const faces = Array.from(fs.readFileSync(path.join(GV2, 'studio', 'index.html'), 'utf8').matchAll(/@font-face\s*{([^}]*)}/g), (m) => ({
+            key: /font-family:\s*'([^']+)'/.exec(m[1])[1] + (/font-weight:\s*bold/.test(m[1]) ? ' bold' : ''),
+            japanese: m[1].includes(path.basename(game('JapaneseFont.URL'))),
+            range: (/unicode-range:\s*([^;]+);/.exec(m[1]) || [])[1],
+        }));
+        const latin = faces.filter((f) => !f.japanese).map((f) => f.key).sort();
+        assert.ok(latin.length > 0, 'the studio declares its fonts');
+        assert.deepStrictEqual(faces.filter((f) => f.japanese).map((f) => f.key).sort(), latin);
+        for (const f of faces) assert.strictEqual(f.range, f.japanese ? game('JapaneseFont.unicodeRange()') : undefined, f.key);
         // retry() only acts after a failed load (loading === null), never before the first one
         assert.strictEqual(game('JapaneseFont.loading'), undefined);
         assert.strictEqual(game('JapaneseFont.retry({})'), undefined);
