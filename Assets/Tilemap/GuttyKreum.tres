@@ -285,7 +285,7 @@
 18/texture = ExtResource( 1 )
 18/tex_offset = Vector2( 0, 0 )
 18/modulate = Color( 1, 1, 1, 1 )
-18/region = Rect2( 1888, 96, 160, 160 )
+18/region = Rect2( 1888, 96, 160, 192 )
 18/tile_mode = 0
 18/occluder_offset = Vector2( 0, 0 )
 18/navigation_offset = Vector2( 0, 0 )

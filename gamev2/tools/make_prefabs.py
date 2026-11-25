@@ -45,8 +45,15 @@ PREFABS = {
     'shrub-small-snow': dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'shrub-small-circle-snow_0_0')], colliders=[(0, 0)], doors=[]),
     'torii-red':    dict(w=6, h=5, sprites=[('Tops', 0, 0, 'torii-red-top_0_0'), ('Collidables', 1, 3, 'torii-red-feet_0_0')],
                          colliders=[(1, 3), (4, 3), (1, 4), (4, 4)], doors=[]),
-    'shrine':       dict(w=3, h=6, sprites=[('Collidables', 0, 0, 'shrine-building_0_0')],
-                         colliders=[(x, y) for x in range(3) for y in range(5) if (x, y) != (1, 4)], doors=[(1, 4)]),
+    # The blue shrine hall, 5x8: the whole roof (re-sectioned by tools/extract_shrine.py
+    # so its eaves are not cut off) overhangs the 3-wide hall by a cell each side
+    # and two rows above it. Never place shrine-building without a roof on top —
+    # its own roof rows are a 3-cell slice that the Tops sprite is there to cover.
+    'shrine':       dict(w=5, h=8, sprites=[('Tops', 0, 0, 'shrine-top_0_0'), ('Collidables', 1, 2, 'shrine-building_0_0')],
+                         # solid: the hall, plus every cell the roof would hide a walker in (the row
+                         # behind the hall and the eave columns) — nobody vanishes under the roof
+                         colliders=[(x, y) for x in (1, 2, 3) for y in range(2, 7) if (x, y) != (2, 6)]
+                                   + [(x, 1) for x in range(5)] + [(x, y) for x in (0, 4) for y in (2, 3, 4)], doors=[(2, 6)]),
     # A GuttyKreum townhouse, top to bottom (matching the pack's promo):
     #   roof (3, with the eaves) + rafter (the window wall) + tier (the tiled
     #   awning band) + entrance (the ground-floor door). 6 cells tall.

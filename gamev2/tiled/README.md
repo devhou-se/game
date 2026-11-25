@@ -136,6 +136,24 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   top-left cell on `Collidables`, so a lantern post stamped on that exact cell
   is silently replaced (its collider stays). Keep small props off the top-left
   cell of tall sprites.
+- **A shrine hall is two sprites, and the hall alone is never complete**:
+  `shrine-building_0_0` (3x6, Collidables) is cut 3 cells wide, so its own roof
+  rows are a slice with the eaves chopped off. The whole roof is a 5x6 Tops
+  sprite — `shrine-top_0_0` (blue) or `red-shrine-top_0_0` — placed at the
+  building's cell **(-1, -2)**; it needs two free rows above the hall and a free
+  column each side. Stamp the `shrine` prefab (5x8, origin = the roof's cell)
+  rather than the building. The roof hides anyone standing behind it, so the
+  prefab also makes the cells it would hide solid (the row behind the hall and
+  the eave columns, rows 1-4 of the 5x8) and NPC spots go below the steps
+  (`blog_to_npc.py` LANDMARKS stand offset). NPCs wander 2 cells from home —
+  an open cell under a Tops roof within that box means a floating name label.
+  `tools/extract_shrine.py` re-cuts the blue roof from the atlas using the
+  rect in `Assets/Tilemap/GuttyKreum.tres` (tile `shrine-top`, 160x192 like the
+  red one — it used to be 160x160, which cut the eaves flat) and refuses a
+  section whose art touches its edge. `shrine-top_0_0` carries `depthBias: 1`
+  so it wins the depth tie with the `temple-hallway` roofs either side of the
+  Tokyo hall (without it one eave corner drew over the hallway and the other
+  under it, by creation order).
 - **`tmxrasterizer` draws collider markers and Meta pins** — red boxes/pins
   in renders are debug art, not in-game visuals.
 - A probe that prints `?` for "any sprite" hides colliders stacked under

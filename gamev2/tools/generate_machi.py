@@ -52,7 +52,7 @@ for y in range(2, 29, 3):
 b.stamp('shrub-small', 46, 19); b.stamp('shrub-small', 46, 22)
 
 # shrine precinct
-b.stamp('shrine', 23, 1)
+b.stamp('shrine', 22, 0)   # 5x8 with its roof: hall at (23,2), steps on row 7
 b.stamp('fox-statue', 21, 4); b.stamp('fox-statue', 27, 4)
 b.stamp('bell-blue', 29, 1)
 b.stamp('lantern-red', 20, 6); b.stamp('lantern-red', 28, 6)

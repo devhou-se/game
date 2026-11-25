@@ -689,7 +689,7 @@
      "id": 107,
      "image": "../assets/sprites/shrine-top_0_0.png",
      "imagewidth": 320,
-     "imageheight": 320
+     "imageheight": 384
     },
     {
      "id": 108,
@@ -20867,7 +20867,7 @@
      "x": 1792,
      "y": 896,
      "width": 320,
-     "height": 320,
+     "height": 384,
      "visible": true
     },
     {

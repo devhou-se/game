@@ -73,10 +73,12 @@ AUTHOR_NPCS = {
 
 # landmark tile-key prefix -> spot label offered to the model
 LANDMARKS = [
-    ('shrine-building', 'the shrine'),
+    # the hall's tile cell is its top-left corner, under the roof's eaves (the
+    # roof is 5x6 on Tops and hides anyone behind it) — stand below the steps
+    ('shrine-building', 'the shrine', (1, 6)),
     ('torii-red', 'the torii gate'),
     ('red-pagoda', 'the pagoda'),
-    ('fox-statue', 'the fox statues'),
+    ('fox-statue', 'the fox statues', (0, 2)),   # 1x2, only the base collides: stand in front, not on its head
     ('pond-autotile_corner-nw', 'the pond'),
     ('seven-eleven', 'the 7-Eleven'),
     ('blue-bell', 'the temple bell'),

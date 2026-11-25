@@ -420,6 +420,11 @@ cfg['tileNames']=tileNames
 for key,nm in tileNames.items():
     if nm=='shrine-building' and key in newmeta:
         newmeta[key]['depthBias']=-10
+    # The blue shrine roof ties with the temple-hallway roofs it overhangs (both
+    # Tops, same feet row): lift it one step so BOTH eave corners draw in front of
+    # the hallways instead of whichever happened to be created first.
+    if nm=='shrine-top' and key in newmeta:
+        newmeta[key]['depthBias']=1
 cfg['game']['title']='game.devhou.se'
 # Per-room size + explicit full-rect boundary (so each room sizes its own camera
 # + movement bounds; rooms can differ in size).
