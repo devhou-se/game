@@ -15,7 +15,7 @@ const ctx = vm.createContext({
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
-    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'systems/NPCManager.js'].forEach(load);
+    'utils/Hints.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'systems/NPCManager.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
 // A Shop with no Phaser behind it: the save blob comes from (and goes to) `store`.
@@ -179,6 +179,24 @@ const tests = {
         assert.deepStrictEqual(stale, []);
     },
 
+    'the title and intro line-ups show the listed devhouse members that have sprites, never james'() {
+        const lineup = game('CharacterSelect.lineup'), available = game('CharacterSelect.available');
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        assert.deepStrictEqual(cfg.members, ['bailey', 'damian', 'dylan', 'julia', 'khoi', 'sam', 'xander']);
+        assert.deepStrictEqual(Array.from(lineup(cfg)), cfg.members.slice().sort(), 'every member has a sprite set, alphabetical');
+        assert.deepStrictEqual(Array.from(available(cfg)), Array.from(available(cfg)).slice().sort(), 'Menu -> Character is alphabetical, james included');
+        assert.ok(Array.from(available(cfg)).includes('james'), 'james stays playable (Menu -> Character)');
+        assert.strictEqual(cfg.player.sprite, 'james_front', 'james stays the default player sprite');
+        // a listed name without a sprite set is skipped; an unlisted sprite set never appears
+        const set = (...names) => Object.fromEntries(names.flatMap(n => ['front', 'back', 'side'].map(d => [`${n}_${d}`, {}])));
+        const fake = { members: ['sam', 'gloria', 'james_front', 'bailey'], spriteMetadata: set('james', 'bailey', 'sam', 'custom') };
+        assert.deepStrictEqual(Array.from(lineup(fake)), ['bailey', 'sam'], 'alphabetical whatever the list order');
+        assert.deepStrictEqual(Array.from(lineup({ spriteMetadata: set('james', 'bailey') })), [], 'no list, no line-up');
+        for (const f of ['TitleScreen.js', 'Intro.js']) {
+            const src = fs.readFileSync(path.join(GV2, 'src', f), 'utf8');
+            assert.ok(src.includes('CharacterSelect.lineup('), `${f} draws CharacterSelect.lineup()`);
+        }
+    },
     'creator donor sprites have no see-through holes, and every clothing colour is in their palette'() {
         const png = require('./png');
         const donors = JSON.parse(game('JSON.stringify(CharacterCreator.DONORS)'));

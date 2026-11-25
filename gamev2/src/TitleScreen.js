@@ -46,9 +46,9 @@ class TitleScreen {
 
     isVisible() { return this.visible; }
 
-    /** Characters in the line-up: every full cast sprite set, player-default first. */
+    /** Characters in the line-up: the devhouse members (config.members) that have a sprite set. */
     cast() {
-        return CharacterSelect.available(this.scene.config);
+        return CharacterSelect.lineup(this.scene.config);
     }
 
     show(onStart) {

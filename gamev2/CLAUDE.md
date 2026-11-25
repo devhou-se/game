@@ -357,7 +357,7 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 **Title screen** (`src/TitleScreen.js`, `scene.titleScreen`): shown on every page load, after
 `window.hideLoader()` and BEFORE the first-run character creator — `GameScene.create()` passes the rest of
 the boot flow (the `CharacterCreator.shouldAutoShow()` check) as the `show(onStart)` callback. It draws the
-game title (`config.game.title`), the cast (`CharacterSelect.available()`) lined up at 5x with a small hop
+game title (`config.game.title`), the devhouse members (`CharacterSelect.lineup()`, from `config.members`) lined up with a small hop
 travelling along the line, and a blinking start prompt, at depth 9000 on an opaque backdrop the colour of
 the HTML loader.
 - SPACE / ENTER / ESC (so touch A and B too) or a tap/click anywhere dismisses it. While it is up it is
@@ -467,9 +467,13 @@ instead of saving a composite. It deliberately skips `CharacterCreator.save()`, 
 
 **The cast is data.** A cast member is a name with a full sprite set in `config.json` `spriteMetadata`
 (`<name>_front`, `_back`, `_side`; 4 + 4 + 2 frames of 64x64 in `assets/sprites/<name>_<dir>_frame_<i>.png`).
-`CharacterSelect.available(config)` derives the list, and everything reads it: Menu → Character, the title
-line-up, the intro's cast row, the creator's name Easter egg, `syncNpcPresence` (you never meet yourself) and
-`tools/play.js as <name>`. No code lists the names; do not add a list. The line-ups size themselves for any
+`CharacterSelect.available(config)` derives the list, and everything playable reads it: Menu → Character,
+the creator's name Easter egg, `syncNpcPresence` (you never meet yourself) and `tools/play.js as <name>`.
+No code lists the names. The ONE explicit list is `config.json` top-level `members` (sprite base names, in
+shown alphabetically whatever order the list is written in: bailey, damian, dylan, julia, khoi, sam, xander) — the devhouse members, read through
+`CharacterSelect.lineup(config)` by the title line-up and the intro's cast row ONLY. A listed name with no
+sprite set is skipped; a sprite set that is not listed never appears there (James is the default player
+sprite and selectable, but not a member — issue #56). The line-ups size themselves for any
 number (title: spacing and scale from the count; intro: the row closes up, then drops to 1x; the Character
 menu's rows close up when the roster outgrows the screen).
 

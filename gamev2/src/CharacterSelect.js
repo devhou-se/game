@@ -4,9 +4,10 @@
  * Swaps the player between the existing character sprite sets — anything
  * in spriteMetadata with _front, _back and _side variants (james, bailey,
  * damian, dylan, julia, and the devhouse 3 members baked by
- * tools/generate_cast.py). available() IS the cast: the title line-up, the
- * intro, the creator's name Easter egg and this menu all read it, so a new
- * sprite set joins everywhere with no code change. The choice persists in localStorage, and
+ * tools/generate_cast.py). available() IS the playable cast: the creator's
+ * name Easter egg and this menu read it, so a new sprite set joins them with
+ * no code change. The title line-up and the intro's cast row show devhouse
+ * members only: lineup(), from config.members. The choice persists in localStorage, and
  * CharacterSelect.applySaved patches config.player before the sprite
  * system boots so a returning player wakes up as their character.
  *
@@ -35,7 +36,21 @@ class CharacterSelect {
             // 'custom' is the CharacterCreator's synthetic sprite set, not a
             // cast member — it gets its own roster entry when a creation exists
             .filter(n => n !== 'custom' && sm[`${n}_back`] && sm[`${n}_side`])
-            .sort((a, b) => (a === 'james' ? -1 : b === 'james' ? 1 : a.localeCompare(b)));
+            // plain alphabetical, everyone: the default player sprite gets no
+            // special place in the roster
+            .sort((a, b) => a.localeCompare(b));
+    }
+
+    /**
+     * The devhouse members shown in the title line-up and the intro's cast
+     * row: config.members (sprite base names), in that order. A listed name
+     * with no sprite set is skipped; a sprite set that is not listed (james,
+     * the default player sprite, is not a member) never appears.
+     */
+    static lineup(config) {
+        const have = new Set(CharacterSelect.available(config));
+        // always alphabetical, whatever order config.members was written in
+        return (config.members || []).filter(n => have.has(n)).sort((a, b) => a.localeCompare(b));
     }
 
     /** Patch config.player to the saved character. Call before SpriteSystem boots. */

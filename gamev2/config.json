@@ -19,6 +19,15 @@
     "worldHeight": 2944,
     "worldWidth": 3776
   },
+  "members": [
+    "bailey",
+    "damian",
+    "dylan",
+    "julia",
+    "khoi",
+    "sam",
+    "xander"
+  ],
   "objectTypes": {
     "RedBox": {
       "description": "",

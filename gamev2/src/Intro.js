@@ -170,7 +170,7 @@ class Intro {
     drawWelcome(l) {
         const scene = this.scene;
         // the cast, small, along the top
-        const cast = CharacterSelect.available(scene.config)
+        const cast = CharacterSelect.lineup(scene.config)
             .map(name => `${name}_front`)
             .map(key => scene.textures.exists(`${key}_frame_0`) ? `${key}_frame_0` : key)
             .filter(key => scene.textures.exists(key));
@@ -306,8 +306,14 @@ class Intro {
             if (scene.textures.exists(`${key}_frame_0`)) return `${key}_frame_0`;
             return scene.textures.exists(key) ? key : null;
         };
-        const me = cast.length ? frame(cast[0]) : null;
-        const them = cast.length > 1 ? frame(cast[1]) : null;
+        // "you" is whoever the player is playing as (the default sprite, a
+        // member or a created character); "them" is a devhouse member who is
+        // not you
+        const mine = ((scene.player && scene.player.baseSpriteKey) || scene.config.player.sprite || '')
+            .replace(/_(front|back|side)$/, '');
+        const other = CharacterSelect.lineup(scene.config).find(n => n !== mine) || cast.find(n => n !== mine);
+        const me = frame(mine) || (cast.length ? frame(cast[0]) : null);
+        const them = other ? frame(other) : null;
         if (me) l.image(x + 26, cy, me, 1);
         // arrow
         g.fillStyle(0xffffff, 1);
