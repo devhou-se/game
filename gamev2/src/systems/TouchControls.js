@@ -18,6 +18,15 @@
  * Shown only on touch devices, or with `?touch=1` for desktop testing. The
  * overlay container is pointer-events:none so stray taps still reach the
  * canvas.
+ *
+ * The controls never sit on the canvas: Viewport (src/systems/Viewport.js)
+ * lays the canvas out beside or above them and sets `--tc-scale`, which
+ * shrinks the d-pad and the button cluster on small screens.
+ *
+ * A touch on a control belongs to that control alone. Phaser listens for
+ * touches on the whole window, not just the canvas, so without `swallowTouch` a tap
+ * on A would ALSO reach whatever overlay is under it as a pointer-down (and
+ * advance a dialogue twice — issue #49).
  */
 class TouchControls {
     constructor(scene) {
@@ -73,7 +82,10 @@ class TouchControls {
      * key and another by the overlay's tap handler.
      */
     static swallowTouch(el) {
-        el.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+        const swallow = (e) => { if (e.cancelable !== false) e.preventDefault(); };
+        for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) {
+            el.addEventListener(type, swallow, { passive: false });
+        }
     }
 
     _btn(label, cls, extra) {
@@ -121,7 +133,7 @@ class TouchControls {
             const r = pad.getBoundingClientRect();
             const dx = e.clientX - (r.left + r.width / 2);
             const dy = e.clientY - (r.top + r.height / 2);
-            if (Math.hypot(dx, dy) < 16) return new Set();   // centre dead zone
+            if (Math.hypot(dx, dy) < r.width * 0.09) return new Set();   // centre dead zone (16px at full size)
             const a = Math.atan2(dy, dx) * 180 / Math.PI;    // 0° = east
             const s = new Set();
             if (a > -67.5 && a < 67.5) s.add('right');
@@ -174,7 +186,10 @@ class TouchControls {
             #touch-controls .tc-padzone { position:absolute; width:174px; height:174px;
                 pointer-events:auto; touch-action:none; border-radius:24px;
                 background:rgba(12,12,18,0.22);
+                transform:scale(var(--tc-scale,1)); transform-origin:left bottom;
                 -webkit-tap-highlight-color:transparent; }
+            #touch-controls .tc-cluster { position:absolute; width:150px; height:210px;
+                transform:scale(var(--tc-scale,1)); transform-origin:right bottom; }
             #touch-controls .tc-a { width:76px; height:76px; border-radius:50%;
                 font-size:30px; font-weight:bold;
                 border-color:rgba(255,215,0,0.55); color:#ffd700; }
@@ -207,22 +222,28 @@ class TouchControls {
         Object.values(arrows).forEach(b => { b.style.pointerEvents = 'none'; pad.appendChild(b); });
         this._bindPad(pad, arrows);
 
-        // A / B cluster, bottom-right (A above-right, B below-left, GB-style)
-        const a = this._btn('A', 'tc-a',
-            'right:max(20px,env(safe-area-inset-right));bottom:calc(max(16px,env(safe-area-inset-bottom)) + 74px);');
-        const b = this._btn('B', 'tc-b',
-            'right:calc(max(20px,env(safe-area-inset-right)) + 88px);bottom:max(16px,env(safe-area-inset-bottom));');
+        // A / B cluster, bottom-right (A above-right, B below-left, GB-style),
+        // with the sprint pill above it (hold to run). One box, so the three
+        // scale together about the corner they sit in.
+        const cluster = document.createElement('div');
+        cluster.className = 'tc-cluster';
+        cluster.style.cssText =
+            'right:max(20px,env(safe-area-inset-right));' +
+            'bottom:max(16px,env(safe-area-inset-bottom));';
+        const a = this._btn('A', 'tc-a', 'right:0;bottom:74px;');
+        const b = this._btn('B', 'tc-b', 'right:88px;bottom:0;');
         this._bind(a, null, { key: ' ', code: 'Space', keyCode: 32 });
         this._bind(b, null, { key: 'Escape', code: 'Escape', keyCode: 27 });
-
-        // sprint pill above the cluster (hold to run)
-        const sprint = this._btn('»', 'tc-sprint',
-            'right:max(20px,env(safe-area-inset-right));bottom:calc(max(16px,env(safe-area-inset-bottom)) + 168px);');
+        const sprint = this._btn('»', 'tc-sprint', 'right:0;bottom:168px;');
         this._bind(sprint, 'sprint', { key: 'Shift', code: 'ShiftLeft', keyCode: 16 });
+        cluster.append(a, b, sprint);
 
-        root.append(pad, a, b, sprint);
+        root.append(pad, cluster);
         document.body.appendChild(root);
         this.root = root;
+
+        // make room for the controls beside / under the canvas
+        Viewport.apply(this.scene.game);
     }
 }
 

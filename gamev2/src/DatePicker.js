@@ -169,7 +169,7 @@ class DatePicker {
         }
 
         text(cx, py + ph - 78, `viewing: ${formatGameDate(selIso)}`, '18px', true, '#33cc66');
-        text(cx, py + ph - 50, 'dot = blog post · gold = today · arrows: day/week', '16px', false, '#888888');
-        text(cx, py + ph - 26, 'ENTER/click: travel · ESC: close', '16px', false, '#888888');
+        text(cx, py + ph - 50, Hints.text(scene, 'dot = blog post · gold = today · arrows: day/week'), '16px', false, '#888888');
+        text(cx, py + ph - 26, Hints.text(scene, 'ENTER/click: travel · ESC: close'), '16px', false, '#888888');
     }
 }

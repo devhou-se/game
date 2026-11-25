@@ -108,6 +108,8 @@ class MenuManager {
                 this.select(index);
             });
             optionText.on('pointerdown', () => {
+                // a touch has no hover before it: pick the tapped row first
+                this.select(index);
                 this.activate();
             });
         });

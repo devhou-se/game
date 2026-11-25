@@ -458,6 +458,7 @@ class CharacterCreator {
             this.nameInput.remove();
             this.nameInput = null;
             window.removeEventListener('resize', this.onResize);
+            this.scene.events.off('uiscalechange', this.onResize);
         }
         if (this.previewKey && this.scene.textures.exists(this.previewKey)) {
             this.scene.textures.remove(this.previewKey);
@@ -741,9 +742,9 @@ class CharacterCreator {
         (this.lockable || []).forEach(o => o.setAlpha(cast ? 0.25 : 1));
         if (this.castHint) this.castHint.setText(cast ? `hey, it's ${cap(cast)}!` : '');
         if (this.footer) {
-            this.footer.setText(cast
+            this.footer.setText(Hints.text(this.scene, cast
                 ? `play as ${cap(cast)} · ENTER: play · ESC: cancel`
-                : '↑/↓ pick a row · ←/→ change it · ENTER: play · ESC: cancel');
+                : '↑/↓ pick a row · ←/→ change it · ENTER: play · ESC: cancel'));
         }
         // a little hop on the match, so it lands even when the sprite barely
         // changes (the default composite is all-James)
@@ -852,6 +853,7 @@ class CharacterCreator {
         document.body.appendChild(el);
         this.nameInput = el;
         window.addEventListener('resize', this.onResize);
+        this.scene.events.on('uiscalechange', this.onResize);
         this.positionNameInput();
     }
 
@@ -864,13 +866,16 @@ class CharacterCreator {
         const sx = rect.width / this.scene.game.config.width;
         const sy = rect.height / this.scene.game.config.height;
         const { px, py } = this.layout();
-        const gx = px + 340, gy = py + 68, gw = 330, gh = 40;
+        // the panel may be magnified on small viewports (see UIScale)
+        const ui = this.scene.uiScale, zoom = ui ? ui.zoom : 1;
+        const at = ui ? ui.project(px + 340, py + 68) : { x: px + 340, y: py + 68 };
+        const gw = 330 * zoom, gh = 40 * zoom;
         const st = this.nameInput.style;
-        st.left = (rect.left + gx * sx) + 'px';
-        st.top = (rect.top + gy * sy) + 'px';
+        st.left = (rect.left + at.x * sx) + 'px';
+        st.top = (rect.top + at.y * sy) + 'px';
         st.width = (gw * sx) + 'px';
         st.height = (gh * sy) + 'px';
-        st.fontSize = (20 * sy) + 'px';
+        st.fontSize = (20 * zoom * sy) + 'px';
     }
 }
 

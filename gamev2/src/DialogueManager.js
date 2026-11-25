@@ -223,7 +223,7 @@ class DialogueManager {
         this.continuePrompt = this.scene.add.text(
             this.scene.cameras.main.width / 2,
             this.panelY + this.panelHeight - 30,
-            DialogueManager.hintText(this.scene.touchControls && this.scene.touchControls.enabled, ''),
+            Hints.text(this.scene, DialogueManager.hintText(false, ''), { tap: true }),
             {
                 fontSize: '16px',
                 fill: '#888888',
@@ -565,11 +565,14 @@ class DialogueManager {
     showPage() {
         this.dialogueText.setText(this.pages[this.currentPage].join('\n'));
         const more = this.pages.length > 1 ? ` (${this.currentPage + 1}/${this.pages.length})` : '';
-        this.continuePrompt.setText(DialogueManager.hintText(
-            this.scene.touchControls && this.scene.touchControls.enabled, more));
+        this.continuePrompt.setText(Hints.text(this.scene, DialogueManager.hintText(false, more), { tap: true }));
     }
 
-    /** The line under the dialogue text, worded for how this player advances it. */
+    /**
+     * The line under the dialogue text. Hints.text() rewords the keyboard form for
+     * touch at the call sites; the touch form here is the same wording, kept for
+     * tools/test_game.js.
+     */
     static hintText(touch, more) {
         return touch ? `TAP: continue${more} | B: close` : `SPACE/ENTER: continue${more} | ESC: close`;
     }

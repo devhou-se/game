@@ -30,6 +30,7 @@ class DebugManager {
         // World-space overlay (collision tint + flag markers); scrolls with camera
         this.overlay = scene.add.graphics();
         this.overlay.setDepth(4000);
+        this.overlay.uiScaleSkip = true;   // world-space: must stay on the world camera (UIScale)
 
         // Per-flag note labels (world space); rebuilt when flags/room change
         this.flagLabels = [];
@@ -45,6 +46,7 @@ class DebugManager {
         });
         this.text.setScrollFactor(0);
         this.text.setDepth(4001);
+        this.text.uiScaleSkip = true;
         this.text.setResolution(1);
         this.text.setVisible(this.visible);
 
@@ -363,6 +365,7 @@ class DebugManager {
             });
             label.setOrigin(0, 1);
             label.setDepth(4002);
+            label.uiScaleSkip = true;
             label.setResolution(1);
             this.flagLabels.push(label);
         });

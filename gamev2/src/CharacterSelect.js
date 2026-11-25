@@ -191,7 +191,7 @@ class CharacterSelect {
             return row;
         });
         this.paint();
-        text(W / 2, py + ph - 26, '↑/↓ + ENTER: become · ESC: stay yourself', '16px', false, '#888888');
+        text(W / 2, py + ph - 26, Hints.text(scene, '↑/↓ + ENTER: become · ESC: stay yourself'), '16px', false, '#888888');
     }
 }
 

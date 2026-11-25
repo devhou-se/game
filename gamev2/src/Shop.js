@@ -417,7 +417,6 @@ class Shop {
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
         const inv = this.invVisible;
-        const touch = !!(scene.touchControls && scene.touchControls.enabled);
         const n = Math.max(1, this.stock.length);
         const active = inv ? this.activeEffects() : [];
         const pw = 640, ph = (inv ? 210 + (active.length ? 30 : 0) : 250) + n * 44;
@@ -490,7 +489,7 @@ class Shop {
                 text(W / 2, y, 'active: ' + active.map(e => `${e.name} ${this.fmtTime(e.until - this.now())}`).join(' · '),
                      '18px', false, '#66ff88');
             }
-            text(W / 2, py + ph - 28, touch ? 'd-pad + A: use · B: close' : '↑/↓ + ENTER: use · ESC: close', '16px', false, '#888888');
+            text(W / 2, py + ph - 28, Hints.text(scene, '↑/↓ + ENTER: use · ESC: close'), '16px', false, '#888888');
         } else {
             // quantity stepper + total, and the mouse/touch route to "buy & use now"
             y += 40;
@@ -500,8 +499,8 @@ class Shop {
             this.totalText = text(px + 140, y, '', '20px', false, '#ffd700', 0);
             this.useNowText = button(text(px + pw - 30, y, '', '20px', true, '#66ff88', 1), () => this.buy(true));
             button(text(px + pw - 222, y, '[ buy ]', '20px', true, '#ffffff', 1), () => this.buy(false));
-            text(W / 2, py + ph - 52, touch ? 'd-pad pick · ←/→ quantity · B step away' : '↑/↓ pick · ←/→ quantity · ESC step away', '16px', false, '#888888');
-            text(W / 2, py + ph - 28, touch ? 'A buy · hold sprint + A buy & use now' : 'ENTER buy · SHIFT+ENTER buy & use now', '16px', false, '#888888');
+            text(W / 2, py + ph - 52, Hints.text(scene, '↑/↓ pick · ←/→ quantity · ESC step away'), '16px', false, '#888888');
+            text(W / 2, py + ph - 28, Hints.text(scene, 'ENTER buy · SHIFT+ENTER buy & use now'), '16px', false, '#888888');
         }
         this.paint();
     }
@@ -517,6 +516,7 @@ class Shop {
         });
         o.setOrigin(0.5, 0.5); o.setResolution(1);
         o.setScrollFactor(0); o.setDepth(3500);
+        o.uiFloat = true;   // UIScale: magnified, but never moves the overlay it appears over
         this._toast = o;
         this.scene.tweens.add({
             targets: o, alpha: 0, delay: Math.max(1800, msg.length * 45), duration: 400,

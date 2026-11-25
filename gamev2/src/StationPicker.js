@@ -94,6 +94,6 @@ class StationPicker {
             return row;
         });
         this.paint();
-        text(W / 2, py + ph - 26, '↑/↓ + ENTER: board · ESC: step back', '16px', false, '#888888');
+        text(W / 2, py + ph - 26, Hints.text(scene, '↑/↓ + ENTER: board · ESC: step back'), '16px', false, '#888888');
     }
 }

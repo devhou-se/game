@@ -94,10 +94,10 @@ class DrinkingGame {
         this.startedAt = this.scene.time.now;
         this.deadline = this.startedAt + this.durationMs;
         // against Bailey the head start buys nothing — say so rather than brag
-        this.statusText.setText(!headStart ? 'MASH SPACE!'
+        this.statusText.setText(Hints.text(this.scene, !headStart ? 'MASH SPACE!'
             : this.opponent === 'bailey' ? 'MASH SPACE!  BAILEY MATCHES YOUR HEAD START'
-            : `MASH SPACE!  +${headStart} HEAD START`);
-        this.hintText.setText('SPACE: drink · ESC: give up');
+            : `MASH SPACE!  +${headStart} HEAD START`));
+        this.hintText.setText(Hints.text(this.scene, 'SPACE: drink · ESC: give up'));
         this.prizeText.setText(`PRIZE POOL: ${this.prizeLabel(this.prize)}`);
         this.updateClock();
         this.paintScores();
@@ -188,7 +188,7 @@ class DrinkingGame {
             const lost = Math.abs(this.adjustWallet(-DrinkingGame.PRIZE));
             this.prizeText.setText(`PRIZE LOST  -${this.prizeLabel(lost)}`);
         }
-        this.hintText.setText('ENTER/ESC: leave · SPACE: no effect');
+        this.hintText.setText(Hints.text(this.scene, 'ENTER/ESC: leave · SPACE: no effect'));
     }
 
     clearTimers() {
@@ -275,11 +275,11 @@ class DrinkingGame {
         }
         this.barGeometry = { leftX, rightX, y: barY, width: barW, height: barH };
 
-        this.statusText = text(W / 2, py + 326, 'PRESS SPACE TO START', '26px', true, '#ffd27f');
+        this.statusText = text(W / 2, py + 326, Hints.text(scene, 'PRESS SPACE TO START'), '26px', true, '#ffd27f');
         this.rulesText = text(W / 2, py + 360,
-            'Press SPACE as many times as you can before time runs out.', '18px', false, '#dddddd');
+            Hints.text(scene, 'Press SPACE as many times as you can before time runs out.'), '18px', false, '#dddddd');
         this.prizeText = text(W / 2, py + 390, `PRIZE POOL: ${this.prizeLabel()}`, '18px', true, '#ffd700');
-        this.hintText = text(W / 2, py + 418, 'SPACE/ENTER: start · ESC: leave', '16px', false, '#999999');
+        this.hintText = text(W / 2, py + 418, Hints.text(scene, 'SPACE/ENTER: start · ESC: leave'), '16px', false, '#999999');
         this.paintScores();
     }
 

@@ -251,6 +251,7 @@ class GameScene extends Phaser.Scene {
             this.dayNight = new DayNight(this);
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
+            this.uiScale = new UIScale(this); // magnifies overlays on small viewports
 
             // Create HUD
             this.createHUD();
@@ -520,7 +521,7 @@ class GameScene extends Phaser.Scene {
             text(cx, y, (a.complete ? '★ ' : '') + a.name, '24px', true, a.complete ? '#ffd700' : '#ffffff');
             text(cx, y + 28, `${a.desc} — ${a.value}/${a.total}`, '18px', false, '#bbbbbb');
         });
-        text(cx, py + ph - 26, '(click or ESC to close)', '16px', false, '#888888');
+        text(cx, py + ph - 26, Hints.text(this, '(click or ESC to close)'), '16px', false, '#888888');
         const close = () => {
             this.achievementsVisible = false;
             this.achievementsCloseCallback = null;
@@ -597,7 +598,8 @@ class GameScene extends Phaser.Scene {
         img.on('pointerdown', (pointer, localX, localY, event) => {
             if (event) event.stopPropagation();
             if (!mapTravel) return;
-            const ix = (pointer.x - px) / s, iy = (pointer.y - py) / s;  // image px
+            // image px, from the hit point local to the image (holds under UIScale's zoom)
+            const ix = localX * meta.width / img.width, iy = localY * meta.height / img.height;
             for (const name in meta.rooms) {
                 const r = meta.rooms[name];
                 if (ix < r.x || ix >= r.x + r.w || iy < r.y || iy >= r.y + r.h) continue;
@@ -613,7 +615,7 @@ class GameScene extends Phaser.Scene {
         });
 
         const text = (x, y, t, size, bold, color, bg) => {
-            const o = this.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
+            const o = this.add.text(x, y, t, { fontSize: this.uiScale.textSize(size), fill: color || '#ffffff',
                 fontFamily: bold ? 'PixelOperatorMonoBold' : 'PixelOperatorMono',
                 backgroundColor: bg });
             o.setOrigin(0.5, 0.5); o.setResolution(1);
@@ -692,7 +694,7 @@ class GameScene extends Phaser.Scene {
             if (markRoom !== here) footer = `you are here: ${here} (in ${markRoom})`;
         }
         const travelHint = mapTravel ? '   ·   click a spot to travel there' : '';
-        text(W / 2, py + dh + 20, `${footer}${travelHint}   ·   ESC to close`, '13px', false, '#bbbbbb');
+        text(W / 2, py + dh + 20, Hints.text(this, `${footer}${travelHint}   ·   ESC to close`), '13px', false, '#bbbbbb');
 
         const close = () => {
             this.mapVisible = false;

@@ -158,8 +158,7 @@ class TitleScreen {
         }));
 
         // start prompt, blinking
-        const touch = scene.touchControls && scene.touchControls.enabled;
-        const prompt = add(text(W / 2, 800, touch ? 'TAP TO START' : 'PRESS SPACE / TAP TO START',
+        const prompt = add(text(W / 2, 800, Hints.touch(scene) ? 'TAP TO START' : 'PRESS SPACE / TAP TO START',
             '28px', 'PixelOperatorMonoBold', '#ffff00'), 2);
         let blink = 0;
         this.timers.push(scene.time.addEvent({

@@ -120,7 +120,7 @@ class Intro {
         const objs = this.objs;
         const add = (o, depth) => { o.setScrollFactor(0); o.setDepth(depth); objs.push(o); return o; };
         const pw = 920, ph = 600, px = Math.round((W - pw) / 2), py = Math.round((H - ph) / 2);
-        const touch = !!(scene.touchControls && scene.touchControls.enabled);
+        const touch = Hints.touch(scene);
 
         // dimmer: the tap target, and it swallows clicks meant for the world/HUD
         const overlay = add(scene.add.graphics(), 2000);
@@ -162,9 +162,7 @@ class Intro {
 
         const last = this.page === n - 1;
         const go = last ? (this.firstRun ? 'start' : 'close') : 'next';
-        const hint = touch
-            ? `TAP or A  ${go}` + (last ? '' : '   ·   B  skip')
-            : `SPACE  ${go}` + (last ? '' : '   ·   ESC  skip');
+        const hint = Hints.text(scene, `SPACE  ${go}` + (last ? '' : '   ·   ESC  skip'), { tap: true });
         text(W / 2, py + ph - 28, hint, '18px', false, '#888888');
     }
 

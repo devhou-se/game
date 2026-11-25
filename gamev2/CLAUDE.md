@@ -55,6 +55,9 @@ problem survey) is shared with `tools/play.js`, so the page and the terminal too
 - `tiled/*.tmj` - Room maps, authored in the Tiled editor (the map source of truth at
   runtime — see `tiled/README.md`; config.json's room layers are only a fallback)
 - `src/game.js` - Phaser game configuration (viewport: 1280×960, physics setup)
+- `src/systems/Viewport.js` - Where the canvas sits in the window and how big the touch controls are (see Small Viewports and Touch)
+- `src/systems/UIScale.js` - Magnifies overlays when the canvas is shown smaller than 1:1 (see Small Viewports and Touch)
+- `src/utils/Hints.js` - The one helper that words key hints for keyboard or touch (see Small Viewports and Touch)
 - `src/GameScene.js` - Main game scene (room system, HUD, input handling, collision)
 - `src/Character.js` - Character movement class with grid-based tweening
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
@@ -220,7 +223,7 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   hover (the stepper sits under them, so a mouse heading for it would drag the
   selection down): a click/tap picks a row, clicking the picked row buys it. Rows
   show `have ×N` and dim the price you cannot afford. Hint lines switch to A / B /
-  sprint wording when touch controls are on. No extra key bindings.
+  sprint wording when touch controls are on (`Hints.text`). No extra key bindings.
 - Expired effects are queued in `shop.woreOff` and toasted ("X wore off") by the
   250ms chip timer once no other toast or shop overlay is up, so the message is
   never lost. Against Bailey the showdown banner says he matches the head start.
@@ -549,7 +552,7 @@ Sprites are centered at: `gridPos * GRID_SIZE + GRID_SIZE/2`
 ### Input Handling
 The whole game runs on WASD/arrows + SPACE/ENTER + SHIFT, with ESC as the single
 system key — no other bindings (no T shortcut, no ,/. month keys). Touch controls
-synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC).
+synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill → SHIFT).
 - **Movement**: WASD or arrows move 1 cell, Shift doubles speed (not distance)
 - **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
 - **Dialogue**: SPACE/ENTER advances, ESC closes
@@ -567,3 +570,53 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC).
   only works when its toggle is on.
 - Input blocked when `player.isMoving` or `isTransitioning`
 - Supports diagonal movement with simultaneous key presses
+
+### Small Viewports and Touch (issues #49, #50, #57, #81, #85)
+The game always renders 1280x960; everything below is about showing that on a phone. Desktop-sized
+windows (canvas at 1:1 or larger, no touch controls) are untouched by all of it.
+
+- **Canvas layout — `src/systems/Viewport.js`.** `Viewport.apply(game)` is the only place the canvas
+  style is written (`src/game.js` calls it at boot and on every window resize; Phaser's own
+  `autoCenter` is off). Whole-integer scale when the window is big enough, exact fit otherwise. With
+  touch controls on screen the controls get their own strip of the window and **never overlap the
+  canvas**: a gutter each side (`side`, landscape phones) or a strip underneath (`bottom`, portrait
+  phones and 4:3 tablets), whichever leaves the canvas bigger; the controls shrink to as little as
+  0.75x (`--tc-scale` on `#touch-controls`) when that buys the canvas room, and further on windows
+  under 360px wide so the d-pad and the buttons never overlap each other. `Viewport.CONTROLS` holds the
+  controls' footprint — keep it in step with the stylesheet in `TouchControls._build`.
+  `Viewport.current` is the layout in force (`mode`, `scale`, `controls`, canvas rect).
+- **Overlay magnification — `src/systems/UIScale.js` (`scene.uiScale`).** Overlays are authored in
+  fixed pixels and are NOT given a second layout. When the canvas is shown below 1:1 and an overlay is
+  up, every object at **depth >= 2000** is drawn by a second camera that zooms in on the overlay's
+  content (everything except full-screen dimmers) until it is as big as on a desktop or fills the
+  canvas with a 12px margin, whichever comes first. At 844x390 that is 1.3-2.5x. Rules this puts on
+  overlay code:
+  - Overlays live at depth 2000+, world and HUD below it. A new overlay gets the zoom for free.
+  - Draw panels with Graphics `fillRect` / `strokeRect` / rounded rects / circles / triangles (their
+    extents are tracked — Graphics has no bounds of its own) or any object with `getBounds()`.
+  - Do not read raw `pointer.x` / `pointer.y` against overlay coordinates: use the handler's
+    `localX` / `localY` (the map's click-to-travel does).
+  - DOM placed over an overlay goes through `scene.uiScale.project(x, y)` and `.zoom`, and listens
+    for the scene event `'uiscalechange'` (the character creator's name input does).
+  - Two per-object opt-outs: `obj.uiScaleSkip = true` for something at depth 2000+ that is NOT an
+    overlay and must stay on the world camera (the debug grid, flag labels and stats text — otherwise
+    the collision tint stops lining up with the world on any window under 960px tall);
+    `obj.uiFloat = true` for something magnified but belonging to no overlay (the shop toast): it
+    never moves or shrinks the overlay it appears over and stays where it was authored on the canvas.
+  - The magnification applies to ANY window showing the canvas below 1:1, not only phones: a
+    1440x800 laptop draws overlays at 1.2x. Only windows of 1280x960 and up are untouched.
+  - An overlay that already fills the canvas cannot be magnified; its text can use
+    `scene.uiScale.textSize('14px')` instead (the map's labels do — up to 1.6x).
+- **Hint wording — `src/utils/Hints.js`.** Write the hint for the keyboard and pass it through
+  `Hints.text(scene, 'SPACE/ENTER: start · ESC: leave')`; with touch controls on it comes back as
+  `A: start · B: leave` (SPACE/ENTER → A, ESC → B, ↑/↓ and arrows / WASD → d-pad, SHIFT → sprint, click → tap).
+  `{ tap: true }` for overlays where a tap anywhere confirms (dialogue, intro): `TAP or A`. Use
+  `Hints.touch(scene)` rather than testing `touchControls.enabled`. Never hand-write a touch string.
+- **A touch on a control stays on the control.** Phaser listens for touches on the whole window, so
+  a tap on the A button used to reach the overlay underneath as well (dialogue advanced twice, the
+  intro skipped a page, B closed and reopened the menu). `TouchControls._own` default-prevents the
+  touch events on every control, which Phaser's window handlers respect. Any new DOM control over
+  the page needs the same.
+- **Testing**: playwright contexts with `hasTouch` at 844x390, 390x844 and 1024x768;
+  `page.touchscreen.tap` or CDP `Input.dispatchTouchEvent` for real touches (a d-pad press needs a
+  held touch, not an instant tap). `?touch=1` shows the controls with a mouse.
