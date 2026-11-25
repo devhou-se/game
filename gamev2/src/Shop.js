@@ -1,13 +1,27 @@
 /**
- * Shop — money + inventory (issue #12).
+ * Shop — money, inventory, food & drink (issues #12, #46).
  *
  * The player has a yen wallet and an inventory, both persisted in
- * localStorage. Bumping into a vending machine (any map) opens its drink
- * menu; bumping the counter inside a konbini opens the full store. Bought
- * items live in the inventory (menu → Items, or click the ¥ in the HUD) and
- * are used from there — drinks give temporary movement effects, food is
- * flavour. Same overlay idiom as the station picker: arrows/WASD + ENTER/SPACE,
- * ESC, rows clickable.
+ * localStorage. Everything starts with a bump:
+ *   - a vending machine (any map)            -> canned drinks
+ *   - a konbini counter                       -> the whole store
+ *   - a konbini drinks shelf/fridge/freezer   -> just the drinks
+ *   - a konbini snack shelf                   -> just the food
+ *   - the bar in a room with `shopMenu`       -> that venue's menu (izakaya)
+ * Bought items live in the inventory (menu → Items, or click the ¥ in the
+ * HUD) and are used from there, or straight from the buy list with
+ * SHIFT+ENTER ("buy & use now").
+ *
+ * Every consumable has an effect. Effects are additive buffs only — nothing
+ * here ever slows or gates the player. One DRINK effect and one FOOD effect
+ * can be active at once: using the same item again refreshes its timer, a
+ * different item in the same slot replaces it (the toast says what it
+ * replaced). Active effects show as chips under the HUD with the time left,
+ * and are saved with an absolute expiry so a reload keeps them.
+ *
+ * Same overlay idiom as the station picker: arrows/WASD + ENTER/SPACE, ESC,
+ * rows clickable. No extra key bindings: ←/→ picks a quantity, SHIFT is the
+ * modifier.
  */
 class Shop {
     constructor(scene) {
@@ -18,65 +32,127 @@ class Shop {
         this.objs = [];
         this.rows = [];
         this.selected = 0;
-        this.effect = null;        // { speed, scramble, until }
+        this.qty = 1;
+        this.effects = {};         // slot ('drink' | 'food') -> active effect
+        this.woreOff = [];         // names of expired effects still to be announced
+        this.clockOffset = 0;      // ms added to the clock — tests fast-forward buffs with it
 
         const cfg = scene.config.shop || {};
         this.catalogue = cfg.items || Shop.DEFAULT_ITEMS;
         this.startingMoney = cfg.startingMoney != null ? cfg.startingMoney : 5000;
 
         const K = Phaser.Input.Keyboard.KeyCodes;
-        this.keys = scene.input.keyboard.addKeys({ up: K.UP, down: K.DOWN, w: K.W, s: K.S,
-            enter: K.ENTER, space: K.SPACE, esc: K.ESC });
+        this.keys = scene.input.keyboard.addKeys({ up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT,
+            w: K.W, s: K.S, a: K.A, d: K.D,
+            enter: K.ENTER, space: K.SPACE, shift: K.SHIFT, esc: K.ESC });
 
         this.load();
 
-        // active-effect chip in the HUD (left of the menu button), with a
-        // live countdown while a drink is working
-        this.effectText = scene.add.text(scene.cameras.main.width - 100, 20, '', {
-            fontSize: '16px', fill: '#66ff88', fontFamily: 'PressStart2P',
-        });
-        this.effectText.setOrigin(1, 0.5);
-        this.effectText.setScrollFactor(0);
-        this.effectText.setDepth(1001);
-        this.effectText.setResolution(1);
-        this.effectText.setVisible(false);
+        // active-effect chips, stacked under the right end of the HUD bar:
+        // one per slot, each with a live countdown
+        const chip = (color) => {
+            const t = scene.add.text(scene.cameras.main.width - 12, 0, '', {
+                fontSize: '14px', fill: color, fontFamily: 'PressStart2P',
+                backgroundColor: 'rgba(0,0,0,0.6)', padding: { x: 8, y: 6 },
+            });
+            t.setOrigin(1, 0);
+            t.setScrollFactor(0);
+            t.setDepth(1001);
+            t.setResolution(1);
+            t.setVisible(false);
+            return t;
+        };
+        this.effectChips = { drink: chip('#66ff88'), food: chip('#ffcc66') };
         scene.time.addEvent({ delay: 250, loop: true, callback: () => this.updateEffectChip() });
+        this.updateEffectChip();
     }
 
     updateEffectChip() {
-        const fx = this.movementModifier();
-        if (!fx) { this.effectText.setVisible(false); return; }
-        const secs = Math.max(0, Math.ceil((fx.until - Date.now()) / 1000));
-        this.effectText.setText(`${fx.name} ${secs}s`);
-        this.effectText.setVisible(true);
+        this.expireEffects();
+        this.announceWoreOff();
+        let y = 48;   // just under the 40px HUD bar
+        for (const slot of Shop.SLOTS) {
+            const chip = this.effectChips[slot], fx = this.effects[slot];
+            if (!fx) { chip.setVisible(false); continue; }
+            chip.setText(`${fx.name} ${this.fmtTime(fx.until - this.now())}`);
+            chip.setY(y);
+            chip.setVisible(true);
+            y += chip.height + 4;
+        }
     }
 
     // ---------------- state ----------------
 
+    /** The shop's clock. Effects expire against this, not a frame timer. */
+    now() { return Date.now() + this.clockOffset; }
+
+    /**
+     * Read the save blob. Tolerates every older shape: the issue #12 blob was
+     * just `{money, items}` — effects and the consumption counters default
+     * to empty, unknown item ids are kept (the catalogue may bring them back)
+     * and junk counts are dropped.
+     */
     load() {
         let raw = {};
-        try { raw = JSON.parse(localStorage.getItem(this.STORE_KEY) || '{}'); } catch (e) { /* fresh */ }
-        this.money = typeof raw.money === 'number' ? raw.money : this.startingMoney;
-        this.items = raw.items || {};   // id -> count
+        try { raw = JSON.parse(localStorage.getItem(this.STORE_KEY) || '{}') || {}; } catch (e) { raw = {}; }
+        if (typeof raw !== 'object') raw = {};
+        const counts = (obj) => {
+            const out = {};
+            if (obj && typeof obj === 'object') {
+                for (const id in obj) {
+                    const n = Math.floor(Number(obj[id]));
+                    if (n > 0) out[id] = n;
+                }
+            }
+            return out;
+        };
+        this.money = typeof raw.money === 'number' && isFinite(raw.money) ? Math.max(0, raw.money) : this.startingMoney;
+        this.items = counts(raw.items);   // id -> count owned
+        this.used = counts(raw.used);     // id -> times consumed (achievements)
+
+        // effects are saved as {id, until}; the numbers come back from the
+        // catalogue, and an expiry can never be further off than the item lasts
+        this.effects = {};
+        const saved = raw.effects && typeof raw.effects === 'object' ? raw.effects : {};
+        const now = this.now();
+        for (const slot of Shop.SLOTS) {
+            const e = saved[slot], item = e && this.itemById(e.id);
+            if (!item || !item.effect || Shop.slotOf(item) !== slot || !(e.until > now)) continue;
+            this.effects[slot] = this.makeEffect(item, Math.min(e.until, now + (item.effect.secs || 0) * 1000));
+        }
     }
 
     save() {
-        try { localStorage.setItem(this.STORE_KEY, JSON.stringify({ money: this.money, items: this.items })); }
-        catch (e) { /* private mode etc — play on without persistence */ }
+        const effects = {};
+        for (const slot in this.effects) effects[slot] = { id: this.effects[slot].id, until: this.effects[slot].until };
+        try {
+            localStorage.setItem(this.STORE_KEY, JSON.stringify({
+                v: 2, money: this.money, items: this.items, effects, used: this.used }));
+        } catch (e) { /* private mode etc — play on without persistence */ }
     }
 
     fmt(n) { return '¥' + n.toLocaleString(); }
 
+    /** 45s / 1:30 — for chips, toasts and the items screen. */
+    fmtTime(ms) {
+        const secs = Math.max(0, Math.ceil(ms / 1000));
+        return secs < 60 ? `${secs}s` : `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+    }
+
     itemById(id) { return this.catalogue.find(i => i.id === id); }
+
+    /** Everything that can be eaten or drunk (the achievement denominator). */
+    consumables() { return this.catalogue.filter(i => !i.permanent); }
 
     // ---------------- world interaction ----------------
 
     /**
-     * The player bumped a blocked cell — if it's a vending machine (anywhere)
-     * or a counter (konbini interiors), open the matching store. Matching is
-     * footprint-aware: a multi-cell sprite (the 3-wide counter, a machine
-     * whose art extends past its anchor cell) opens from ANY of its cells,
-     * so every side of the desk works.
+     * The player bumped a blocked cell — if it's a vending machine (anywhere),
+     * konbini furniture (counter, shelves, fridges, freezers) or a venue's
+     * bar, open the matching list. Matching is footprint-aware: a multi-cell
+     * sprite (the 3-wide counter, the 2-tall fridge, a machine whose art
+     * extends past its anchor cell) opens from ANY of its cells, so every
+     * side works.
      */
     checkShopInteraction(gridX, gridY) {
         if (this.visible || this.invVisible) return;
@@ -84,31 +160,108 @@ class Shop {
         const room = this.scene.roomManager.rooms[roomKey];
         const roomConfig = this.scene.config.rooms[roomKey] || {};
         const interior = !!roomConfig.interior;
+        const konbini = interior && roomConfig.shopEnabled !== false;
+        const venue = interior && Shop.VENUES[roomConfig.shopMenu] ? roomConfig.shopMenu : null;
+        const kindOf = (key) => {
+            if (/vending-machine/.test(key)) return 'vending';
+            if (konbini) {
+                if (/^(blue-shrine-platform-base|office-counter)/.test(key)) return 'counter';
+                if (/^office-(shelf-drinks|shelf-glass|fridge|freezer)/.test(key)) return 'drinks';
+                if (/^office-shelf-snacks/.test(key)) return 'snacks';
+            }
+            // a venue with its own menu sells it over the bar (counter2);
+            // its tables (office-counter) stay furniture
+            if (venue && /^office-counter2/.test(key)) return venue;
+            return null;
+        };
         for (const layer of (room.layers || [])) {
             for (const xy in (layer.tiles || {})) {
                 const key = layer.tiles[xy];
-                const vending = /vending-machine/.test(key);
-                const counter = interior && roomConfig.shopEnabled !== false &&
-                    /^(blue-shrine-platform-base|office-counter)/.test(key);
-                if (!vending && !counter) continue;
+                const kind = kindOf(key);
+                if (!kind) continue;
                 const [tx, ty] = xy.split(',').map(Number);
                 const tex = this.scene.textures.exists(key)
                     ? this.scene.textures.get(key).getSourceImage() : null;
                 const w = tex ? Math.max(1, Math.round(tex.width / 64)) : 1;
                 const h = tex ? Math.max(1, Math.round(tex.height / 64)) : 1;
                 if (gridX >= tx && gridX < tx + w && gridY >= ty && gridY < ty + h) {
-                    return this.showShop(vending ? 'vending' : 'counter');
+                    return this.showShop(kind);
                 }
             }
         }
     }
 
-    // ---------------- movement effects ----------------
+    // ---------------- effects ----------------
 
-    /** Active drink effect, or null. Applied by InputHandler on each step. */
+    makeEffect(item, until) {
+        return Object.assign({}, item.effect, { id: item.id, name: item.name, slot: Shop.slotOf(item), until });
+    }
+
+    /**
+     * Drop effects that have run out. Whoever notices first (the chip timer,
+     * a step, a mini-game asking for a buff) only queues the name — the
+     * "wore off" toast is said by announceWoreOff once the screen is free.
+     */
+    expireEffects() {
+        const now = this.now();
+        let changed = false;
+        for (const slot of Shop.SLOTS) {
+            const fx = this.effects[slot];
+            if (!fx || now <= fx.until) continue;
+            delete this.effects[slot];
+            changed = true;
+            this.woreOff.push(fx.name);
+        }
+        if (changed) this.save();
+    }
+
+    /** Say what wore off — but never over another toast or an open list. */
+    announceWoreOff() {
+        if (!this.woreOff.length || this._toast || this.isVisible()) return;
+        this.toast(`${this.woreOff.join(' and ')} wore off`);
+        this.woreOff = [];
+    }
+
+    /** Active effects, drink first. */
+    activeEffects() {
+        this.expireEffects();
+        return Shop.SLOTS.map(slot => this.effects[slot]).filter(Boolean);
+    }
+
+    /**
+     * Combined movement effect, or null. Applied by InputHandler on each
+     * step: speeds multiply, and a `steady` effect cancels any wobble.
+     */
     movementModifier() {
-        if (this.effect && Date.now() > this.effect.until) this.effect = null;
-        return this.effect;
+        const fx = this.activeEffects();
+        if (!fx.length) return null;
+        const steady = fx.some(e => e.steady);
+        return {
+            speed: fx.reduce((m, e) => m * (e.speed || 1), 1),
+            scramble: steady ? 0 : Math.max(...fx.map(e => e.scramble || 0)),
+        };
+    }
+
+    /**
+     * A mini-game buff from the active effects: the product of every active
+     * value for `key` (1 when nothing is active), or the sum for the additive
+     * kinds. Fishing and the drinking game ask for theirs by name.
+     */
+    buff(key) {
+        const kind = Shop.EFFECT_KINDS[key] || {};
+        return this.activeEffects().reduce(
+            (acc, e) => e[key] == null ? acc : (kind.additive ? acc + e[key] : acc * e[key]),
+            kind.additive ? 0 : 1);
+    }
+
+    /** "speed +50% for 30s" — the numbers, straight from the item's data. */
+    effectSummary(item) {
+        if (!item.effect) return item.desc;
+        const parts = [];
+        for (const key in Shop.EFFECT_KINDS) {
+            if (item.effect[key]) parts.push(Shop.EFFECT_KINDS[key].describe(item.effect[key]));
+        }
+        return `${parts.join(', ')} for ${this.fmtTime((item.effect.secs || 0) * 1000)}`;
     }
 
     use(id) {
@@ -118,26 +271,41 @@ class Shop {
         if (item.permanent) return this.toast(`${item.name}: ${item.desc}`);
         this.items[id]--;
         if (!this.items[id]) delete this.items[id];
+
+        const achievements = this.scene.achievementManager;
+        const doneBefore = achievements ? achievements.consumptionProgress().filter(a => a.complete).map(a => a.name) : [];
+        this.used[id] = (this.used[id] || 0) + 1;
+
+        let note = '';
         if (item.effect) {
-            this.effect = {
-                name: item.name,
-                speed: item.effect.speed || 1,
-                scramble: item.effect.scramble || 0,
-                until: Date.now() + (item.effect.secs || 0) * 1000,
-            };
+            const slot = Shop.slotOf(item);
+            const old = this.activeEffects().find(e => e.slot === slot);
+            if (old) note = old.id === id ? ' (timer refreshed)' : ` (replaces ${old.name})`;
+            this.effects[slot] = this.makeEffect(item, this.now() + (item.effect.secs || 0) * 1000);
             this.updateEffectChip();
         }
-        this.toast(`${item.name}: ${item.desc}`);
+        this.toast(`${item.name}: ${this.effectSummary(item)}${note}`);
         this.save();
+
+        if (achievements) {
+            const fresh = achievements.consumptionProgress()
+                .filter(a => a.complete && !doneBefore.includes(a.name)).map(a => a.name);
+            if (fresh.length) {
+                // let the use toast land first, then celebrate (all of them)
+                this.scene.time.delayedCall(1500, () => this.toast(
+                    `★ achievement${fresh.length > 1 ? 's' : ''}: ${fresh.join(' + ')}`));
+            }
+        }
 
         // a little "gulp": the player pops and glows for a beat
         const p = this.scene.player.sprite;
-        const baseScale = p.scale;
-        p.setTint(0xaaffcc);
-        this.scene.tweens.add({
-            targets: p, scale: { from: baseScale * 1.35, to: baseScale },
+        if (this._gulp) { this._gulp.stop(); p.setScale(this._gulpScale); }
+        this._gulpScale = p.scale;
+        p.setTint(item.category === 'food' ? 0xffe0a0 : 0xaaffcc);
+        this._gulp = this.scene.tweens.add({
+            targets: p, scale: { from: this._gulpScale * 1.35, to: this._gulpScale },
             duration: 280, ease: 'Back.easeOut',
-            onComplete: () => p.clearTint(),
+            onComplete: () => { p.clearTint(); this._gulp = null; },
         });
     }
 
@@ -147,28 +315,47 @@ class Shop {
 
     showShop(kind) {
         if (this.isVisible()) return;
+        const venue = Shop.VENUES[kind];
+        if (!venue) return;
         this.kind = kind;
-        this.stock = kind === 'vending'
-            ? this.catalogue.filter(i => i.where === 'vending')
-            : this.catalogue;   // the konbini counter sells everything
+        this.stock = this.catalogue.filter(venue.sells);
         if (!this.stock.length) return;
         this.selected = 0;
-        const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);   // swallow the bump keypress
+        this.qty = 1;
+        const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
+        // swallow the bump keypress (a held direction must not change the quantity)
+        [k.enter, k.space, k.esc, k.left, k.right, k.a, k.d, k.up, k.down, k.w, k.s].forEach(JD);
         this.visible = true;
         this.render();
     }
 
-    buy() {
+    /** Most of the selected item the wallet (and the 9 cap) allows. */
+    maxQty(item) {
+        if (!item || item.permanent) return 1;
+        return Math.max(1, Math.min(9, Math.floor(this.money / item.price)));
+    }
+
+    setQty(n) {
+        const item = this.stock[this.selected];
+        this.qty = Math.max(1, Math.min(this.maxQty(item), n));
+        this.paint();
+    }
+
+    /** Buy `qty` of the selected item; with useNow, consume one on the spot. */
+    buy(useNow) {
         const item = this.stock[this.selected];
         if (!item) return;
         if (item.permanent && this.items[item.id]) return this.toast('you already have one');
-        if (this.money < item.price) return this.toast('not enough yen...');
-        this.money -= item.price;
-        this.items[item.id] = (this.items[item.id] || 0) + 1;
+        const qty = item.permanent ? 1 : this.qty;
+        const cost = item.price * qty;
+        if (this.money < cost) return this.toast(`not enough yen — that's ${this.fmt(cost)}`);
+        this.money -= cost;
+        this.items[item.id] = (this.items[item.id] || 0) + qty;
         this.save();
         this.scene.updateHUD();
-        this.toast(`bought ${item.name} — it's in your items (menu)`);
+        if (useNow && !item.permanent) this.use(item.id);
+        else this.toast(`bought ${qty > 1 ? qty + '× ' : ''}${item.name} — it's in your items (menu)`);
+        this.qty = 1;
         this.repaint();
     }
 
@@ -201,15 +388,28 @@ class Shop {
         this.objs.forEach(o => o.destroy());
         this.objs = [];
         this.rows = [];
+        this.descText = this.qtyText = this.totalText = this.useNowText = this.titleText = null;
+    }
+
+    select(i) {
+        if (i !== this.selected) this.qty = 1;
+        this.selected = i;
+        this.paint();
     }
 
     handleInput() {
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
         if (JD(k.esc)) return this.hide();
-        if (JD(k.enter) || JD(k.space)) return this.visible ? this.buy() : this.useSelected();
+        // both confirm keys must be consumed, or a held one fires next frame
+        const enter = JD(k.enter), space = JD(k.space);
+        if (enter || space) return this.visible ? this.buy(k.shift.isDown) : this.useSelected();
         if (!this.stock.length) return;
-        if (JD(k.up) || JD(k.w)) { this.selected = (this.selected - 1 + this.stock.length) % this.stock.length; this.paint(); }
-        if (JD(k.down) || JD(k.s)) { this.selected = (this.selected + 1) % this.stock.length; this.paint(); }
+        if (JD(k.up) || JD(k.w)) this.select((this.selected - 1 + this.stock.length) % this.stock.length);
+        if (JD(k.down) || JD(k.s)) this.select((this.selected + 1) % this.stock.length);
+        if (this.visible) {
+            if (JD(k.left) || JD(k.a)) this.setQty(this.qty - 1);
+            if (JD(k.right) || JD(k.d)) this.setQty(this.qty + 1);
+        }
     }
 
     repaint() {
@@ -223,14 +423,25 @@ class Shop {
 
     paint() {
         this.rows.forEach((r, i) => r.setFill(i === this.selected ? '#ffff00' : '#ffffff'));
-        if (this.descText && this.stock[this.selected]) this.descText.setText(this.stock[this.selected].desc);
+        const item = this.stock[this.selected];
+        if (!item) return;
+        if (this.descText) this.descText.setText(item.desc);
+        if (this.qtyText) {
+            const cost = item.price * (item.permanent ? 1 : this.qty);
+            this.qtyText.setText(item.permanent ? '×1' : `×${this.qty}`);
+            this.totalText.setText(`total ${this.fmt(cost)}`);
+            this.totalText.setFill(this.money >= cost ? '#ffd700' : '#aa6666');
+            this.useNowText.setText(item.permanent ? '' : '[ buy & use now ]');
+        }
     }
 
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
         const inv = this.invVisible;
+        const touch = !!(scene.touchControls && scene.touchControls.enabled);
         const n = Math.max(1, this.stock.length);
-        const pw = 600, ph = 210 + n * 44;
+        const active = inv ? this.activeEffects() : [];
+        const pw = 640, ph = (inv ? 210 + (active.length ? 30 : 0) : 250) + n * 44;
         const px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = this.objs;
 
@@ -254,9 +465,13 @@ class Shop {
             o.setOrigin(originX != null ? originX : 0.5, 0.5); o.setResolution(1);
             o.setScrollFactor(0); o.setDepth(2002); objs.push(o); return o;
         };
+        const button = (o, fn) => {
+            o.setInteractive({ useHandCursor: true });
+            o.on('pointerdown', fn);
+            return o;
+        };
 
-        const title = inv ? 'ITEMS' : (this.kind === 'vending' ? 'VENDING MACHINE' : 'KONBINI');
-        text(W / 2, py + 34, title, '32px', true);
+        this.titleText = text(W / 2, py + 34, inv ? 'ITEMS' : Shop.VENUES[this.kind].title, '32px', true);
         text(px + pw - 18, py + 34, this.fmt(this.money), '24px', true, '#ffd700', 1);
 
         if (!this.stock.length) {
@@ -265,23 +480,51 @@ class Shop {
 
         this.rows = this.stock.map((item, i) => {
             const y = py + 92 + i * 44;
-            const label = inv
-                ? `${item.name}  ×${this.items[item.id] || 0}`
-                : `${item.name}`;
-            const row = text(px + 30, y, label, '24px', true, '#ffffff', 0);
-            if (!inv) text(px + pw - 30, y, this.fmt(item.price), '24px', false,
-                           this.money >= item.price ? '#ffffff' : '#886666', 1);
+            const owned = this.items[item.id] || 0;
+            const row = text(px + 30, y, inv ? `${item.name}  ×${owned}` : item.name, '24px', true, '#ffffff', 0);
+            if (!inv) {
+                // what you already carry, and whether the wallet stretches to it
+                const soldOut = item.permanent && owned;
+                if (owned) text(px + pw - 150, y, item.permanent ? 'owned' : `have ×${owned}`, '20px', false, '#88aa88', 1);
+                text(px + pw - 30, y, this.fmt(item.price), '24px', false,
+                     soldOut ? '#555555' : (this.money >= item.price ? '#ffffff' : '#aa6666'), 1);
+            }
             row.setInteractive({ useHandCursor: true });
-            row.on('pointerover', () => { this.selected = i; this.paint(); });
-            row.on('pointerdown', () => { this.selected = i; inv ? this.useSelected() : this.buy(); });
+            if (inv) {
+                row.on('pointerover', () => this.select(i));
+                row.on('pointerdown', () => { this.select(i); this.useSelected(); });
+            } else {
+                // the buy list does NOT select on hover: the quantity stepper
+                // and buttons sit under the rows, and a mouse travelling down
+                // to them would drag the selection to the last row. Click
+                // picks a row; clicking the picked row (or [ buy ]) buys it.
+                row.on('pointerdown', () => (i === this.selected ? this.buy(false) : this.select(i)));
+            }
             return row;
         });
 
-        this.descText = text(W / 2, py + ph - 62, '', '18px', false, '#9999aa');
+        let y = py + 92 + n * 44 + 6;
+        this.descText = text(W / 2, y, '', '18px', false, '#9999aa');
+        if (inv) {
+            if (active.length) {
+                y += 30;
+                text(W / 2, y, 'active: ' + active.map(e => `${e.name} ${this.fmtTime(e.until - this.now())}`).join(' · '),
+                     '18px', false, '#66ff88');
+            }
+            text(W / 2, py + ph - 28, touch ? 'd-pad + A: use · B: close' : '↑/↓ + ENTER: use · ESC: close', '16px', false, '#888888');
+        } else {
+            // quantity stepper + total, and the mouse/touch route to "buy & use now"
+            y += 40;
+            button(text(px + 30, y, '‹', '28px', true, '#ffffff', 0), () => this.setQty(this.qty - 1));
+            this.qtyText = text(px + 74, y, '', '24px', true, '#ffffff');
+            button(text(px + 104, y, '›', '28px', true, '#ffffff', 0), () => this.setQty(this.qty + 1));
+            this.totalText = text(px + 140, y, '', '20px', false, '#ffd700', 0);
+            this.useNowText = button(text(px + pw - 30, y, '', '20px', true, '#66ff88', 1), () => this.buy(true));
+            button(text(px + pw - 222, y, '[ buy ]', '20px', true, '#ffffff', 1), () => this.buy(false));
+            text(W / 2, py + ph - 52, touch ? 'd-pad pick · ←/→ quantity · B step away' : '↑/↓ pick · ←/→ quantity · ESC step away', '16px', false, '#888888');
+            text(W / 2, py + ph - 28, touch ? 'A buy · hold sprint + A buy & use now' : 'ENTER buy · SHIFT+ENTER buy & use now', '16px', false, '#888888');
+        }
         this.paint();
-        const hint = inv ? '↑/↓ + ENTER: use · ESC: close'
-                         : '↑/↓ + ENTER: buy · ESC: step away';
-        text(W / 2, py + ph - 28, hint, '16px', false, '#888888');
     }
 
     // ---------------- toast ----------------
@@ -297,25 +540,86 @@ class Shop {
         o.setScrollFactor(0); o.setDepth(3500);
         this._toast = o;
         this.scene.tweens.add({
-            targets: o, alpha: 0, delay: 1800, duration: 400,
+            targets: o, alpha: 0, delay: Math.max(1800, msg.length * 45), duration: 400,
             onComplete: () => { if (this._toast === o) this._toast = null; o.destroy(); },
         });
     }
 }
 
-/** Starter catalogue (issue #12's examples). config.json `shop.items` overrides. */
+/** Effect slots: one drink and one food effect can be active at a time. */
+Shop.SLOTS = ['drink', 'food'];
+
+/** Category of an item — older catalogues (config `shop.items`) may omit it. */
+Shop.categoryOf = (item) => item.category || (item.permanent ? 'gear' : (item.effect ? 'drink' : 'food'));
+
+/** The slot an item's effect occupies. */
+Shop.slotOf = (item) => Shop.categoryOf(item) === 'food' ? 'food' : 'drink';
+
+/**
+ * What each bump opens: a title and a filter over the catalogue. Items say
+ * where they are sold with `where`: 'vending' (machines + konbini),
+ * 'counter' (konbini only) or a venue id such as 'izakaya' (that bar only).
+ */
+Shop.VENUES = {
+    vending: { title: 'VENDING MACHINE', sells: i => i.where === 'vending' },
+    counter: { title: 'KONBINI',         sells: i => i.where === 'vending' || i.where === 'counter' },
+    drinks:  { title: 'DRINKS',          sells: i => (i.where === 'vending' || i.where === 'counter') && Shop.categoryOf(i) === 'drink' },
+    snacks:  { title: 'SNACKS',          sells: i => (i.where === 'vending' || i.where === 'counter') && Shop.categoryOf(i) === 'food' },
+    izakaya: { title: 'IZAKAYA',         sells: i => i.where === 'izakaya' },
+};
+
+/**
+ * Everything an item's `effect` can do (besides `secs`, how long it lasts).
+ * `describe` words the number for toasts; `additive` kinds sum across the
+ * two slots, the rest multiply. Who reads them:
+ *   speed, scramble, steady  -> InputHandler (via movementModifier)
+ *   fishBite, fishWindow, fishLuck -> Fishing
+ *   headStart, prizeBonus    -> DrinkingGame
+ */
+Shop.EFFECT_KINDS = {
+    speed:      { describe: v => `speed +${Math.round((v - 1) * 100)}%` },
+    scramble:   { describe: v => `${Math.round(v * 100)}% wobble` },
+    steady:     { describe: () => 'drinks cannot make you wobble' },
+    fishBite:   { describe: v => `fish bite ${+(1 / v).toFixed(1)}× faster` },
+    fishWindow: { describe: v => `fishing strike window +${Math.round((v - 1) * 100)}%` },
+    fishLuck:   { describe: v => `no old boots, rare fish ×${v}` },
+    headStart:  { describe: v => `${v} gulps head start in the nomikai showdown`, additive: true },
+    prizeBonus: { describe: v => `nomikai showdown winnings +${Math.round((v - 1) * 100)}%` },
+};
+
+/**
+ * The catalogue. config.json `shop.items` overrides it wholesale. Ids are
+ * save-file keys — rename one and saved inventories lose it.
+ */
 Shop.DEFAULT_ITEMS = [
-    { id: 'zone-energy',   name: 'Zone Energy',   price: 300, where: 'vending',
+    // --- drinks ---
+    { id: 'zone-energy',   name: 'Zone Energy',   price: 300, where: 'vending', category: 'drink',
       desc: 'speed +50% for 30s', effect: { speed: 1.5, secs: 30 } },
-    { id: 'vodka-redbull', name: 'Vodka Redbull', price: 800, where: 'vending',
+    { id: 'vodka-redbull', name: 'Vodka Redbull', price: 800, where: 'vending', category: 'drink',
       desc: 'speed +100% for 20s. direction: negotiable.', effect: { speed: 2, secs: 20, scramble: 0.2 } },
-    { id: 'green-tea',     name: 'Green Tea',     price: 160, where: 'vending',
-      desc: 'calm. refreshing. does absolutely nothing.' },
-    { id: 'onigiri',       name: 'Onigiri',       price: 180, where: 'counter',
-      desc: 'tuna mayo. restores the will to keep walking.' },
-    { id: 'melon-pan',     name: 'Melon Pan',     price: 250, where: 'counter',
-      desc: 'neither melon nor pan. perfect.' },
-    { id: 'fishing-rod',   name: 'Fishing Rod',   price: 1200, where: 'counter',
+    { id: 'green-tea',     name: 'Green Tea',     price: 160, where: 'vending', category: 'drink',
+      desc: 'calm. speed +20% for 60s, and it settles a wobbly drink.', effect: { speed: 1.2, secs: 60 } },
+    { id: 'canned-coffee', name: 'Canned Coffee', price: 220, where: 'vending', category: 'drink',
+      desc: 'the long haul: speed +30% for 90s.', effect: { speed: 1.3, secs: 90 } },
+    { id: 'ramune',        name: 'Ramune',        price: 240, where: 'counter', category: 'drink',
+      desc: 'steady hands: fishing strike window +80% for 2 min.', effect: { fishWindow: 1.8, secs: 120 } },
+    { id: 'highball',      name: 'Highball',      price: 500, where: 'izakaya', category: 'drink',
+      desc: 'speed +60% for 40s. a little wobbly.', effect: { speed: 1.6, secs: 40, scramble: 0.1 } },
+    { id: 'nama-beer',     name: 'Nama Beer',     price: 600, where: 'izakaya', category: 'drink',
+      desc: 'warmed up: start the nomikai showdown 8 gulps ahead. 90s.', effect: { headStart: 8, secs: 90 } },
+    // --- food ---
+    { id: 'onigiri',       name: 'Onigiri',       price: 180, where: 'counter', category: 'food',
+      desc: 'tuna mayo. fish bite twice as fast for 2 min.', effect: { fishBite: 0.5, secs: 120 } },
+    { id: 'melon-pan',     name: 'Melon Pan',     price: 250, where: 'counter', category: 'food',
+      desc: 'lucky crumbs: no old boots, double the rare fish. 2 min.', effect: { fishLuck: 2, secs: 120 } },
+    { id: 'nikuman',       name: 'Nikuman',       price: 320, where: 'counter', category: 'food',
+      desc: 'warm and filling: speed +15% for 2 min, on top of any drink.', effect: { speed: 1.15, secs: 120 } },
+    { id: 'edamame',       name: 'Edamame',       price: 280, where: 'izakaya', category: 'food',
+      desc: 'soaks it up: drinks cannot make you wobble for 2 min.', effect: { steady: true, secs: 120 } },
+    { id: 'karaage',       name: 'Karaage',       price: 450, where: 'izakaya', category: 'food',
+      desc: 'fried courage: nomikai showdown winnings +50% for 3 min.', effect: { prizeBonus: 1.5, secs: 180 } },
+    // --- gear ---
+    { id: 'fishing-rod',   name: 'Fishing Rod',   price: 1200, where: 'counter', category: 'gear',
       desc: 'bump into any pond to cast. reusable forever.', permanent: true },
 ];
 

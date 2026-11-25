@@ -157,6 +157,64 @@ Semi-transparent bar at top showing: `{game.title} | {currentRoom} | {game.date}
 - Depth 1000+ to render above game elements
 - Menu button (right-aligned) opens MenuManager on click
 
+### Shop, Food and Drink (issues #12, #46)
+
+`src/Shop.js` owns the yen wallet, the inventory, the buy/items overlays and the
+food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteraction`
+→ `Shop.checkShopInteraction`, which only fires on BLOCKED cells):
+
+| Bump | Opens (`Shop.VENUES`) |
+|------|-----------------------|
+| any `vending-machine*` tile, any room | `vending` — items with `where: 'vending'` |
+| `office-counter*` in a konbini | `counter` — every vending + counter item |
+| `office-shelf-drinks` / `-shelf-glass` / `office-fridge` / `office-freezer` in a konbini | `drinks` — the drinks only |
+| `office-shelf-snacks` in a konbini | `snacks` — the food only |
+| `office-counter2*` (the bar) in a room with `"shopMenu": "izakaya"` | `izakaya` — items with `where: 'izakaya'` |
+
+- A "konbini" is any room with `interior: true` and `shopEnabled !== false`. The
+  Izakaya is `shopEnabled: false` + `shopMenu: "izakaya"` (set in
+  `tools/generate_inaka.py`): its shelves and tables stay furniture, only the bar
+  sells, and the drinking game's `triggerCells` are checked first so they never
+  open a menu.
+- **Catalogue**: `Shop.DEFAULT_ITEMS` (or `config.json` `shop.items`, which replaces
+  it wholesale). Each item: `id` (a save-file key — don't rename), `name`, `price`,
+  `where`, `category` (`drink` | `food` | `gear`), `desc`, and `effect` or
+  `permanent`. Keep `desc` truthful — the use toast is generated from the `effect`
+  numbers by `effectSummary()`, so the two are read side by side.
+- **Effects are additive buffs only** (no hunger/energy stat, nothing gates
+  movement). The keys an `effect` may carry are listed in `Shop.EFFECT_KINDS`:
+  `speed`, `scramble`, `steady` (read by `InputHandler` via `movementModifier()`),
+  `fishBite`, `fishWindow`, `fishLuck` (read by `Fishing` via `shop.buff(key)`),
+  `headStart`, `prizeBonus` (read by `DrinkingGame`, locked in when a round
+  starts; Bailey mirrors the head start, so his +10 gimmick survives), plus `secs`.
+  To add a new kind: add it to `EFFECT_KINDS` with a `describe`, then read it with
+  `shop.buff('key')` where it applies.
+- **Slots**: one `drink` effect and one `food` effect at a time (`Shop.SLOTS`, slot
+  = the item's category). The same item refreshes its timer; a different item in
+  the slot replaces it and the toast says which. Active effects show as chips
+  under the right end of the HUD bar with the time left, and in the Items screen.
+- **Buying**: ↑/↓ pick, ←/→ quantity (1-9, capped by the wallet), ENTER/SPACE buy,
+  SHIFT+ENTER/SPACE "buy & use now" (touch: hold the sprint pill and tap A; mouse:
+  the `‹ ›`, `[ buy ]` and `[ buy & use now ]` buttons). Buy-list rows do NOT select on
+  hover (the stepper sits under them, so a mouse heading for it would drag the
+  selection down): a click/tap picks a row, clicking the picked row buys it. Rows
+  show `have ×N` and dim the price you cannot afford. Hint lines switch to A / B /
+  sprint wording when touch controls are on. No extra key bindings.
+- Expired effects are queued in `shop.woreOff` and toasted ("X wore off") by the
+  250ms chip timer once no other toast or shop overlay is up, so the message is
+  never lost. Against Bailey the showdown banner says he matches the head start.
+- **Save blob** `localStorage.gamev2_shop`:
+  `{ v: 2, money, items: {id: count}, effects: {drink|food: {id, until}}, used: {id: count} }`.
+  `until` is an absolute epoch-ms expiry, so buffs survive reloads and room changes
+  and lapse on time; on load it is clamped to the item's own duration and effects
+  for unknown items are dropped. The issue #12 blob (`{money, items}`) loads as-is.
+  `used` counts consumption and feeds two achievements in
+  `AchievementManager.consumptionProgress()`: **Taste Tester** (use every
+  consumable) and **Regular Customer** (25 uses), both listed in the Achievements
+  overlay.
+- Test hook: `scene.shop.clockOffset` (ms) fast-forwards the shop's clock so a
+  test can expire a buff without waiting.
+
 ### Title Screen and Character Portraits (issue #9)
 
 **Title screen** (`src/TitleScreen.js`, `scene.titleScreen`): shown on every page load, after

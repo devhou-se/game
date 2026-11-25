@@ -484,7 +484,8 @@ class GameScene extends Phaser.Scene {
     showAchievements() {
         if (this.achievementsVisible) return;   // only one overlay at a time
         const cam = this.cameras.main, W = cam.width, H = cam.height;
-        const pw = 560, ph = 260, px = (W - pw) / 2, py = (H - ph) / 2;
+        const extra = this.achievementManager.consumptionProgress();   // food & drink (issue #46)
+        const pw = 560, ph = 260 + extra.length * 64 + (extra.length ? 14 : 0), px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = [];
         const overlay = this.add.graphics();
         overlay.fillStyle(0x000000, 0.85); overlay.fillRect(0, 0, W, H);
@@ -514,6 +515,11 @@ class GameScene extends Phaser.Scene {
         bar.lineStyle(2, 0x666666, 1); bar.strokeRect(barX, barY, barW, barH);
         objs.push(bar);
         text(cx, barY + barH + 22, `${p.percent}% painted`, '20px', true);
+        extra.forEach((a, i) => {
+            const y = barY + barH + 70 + i * 64;
+            text(cx, y, (a.complete ? '★ ' : '') + a.name, '24px', true, a.complete ? '#ffd700' : '#ffffff');
+            text(cx, y + 28, `${a.desc} — ${a.value}/${a.total}`, '18px', false, '#bbbbbb');
+        });
         text(cx, py + ph - 26, '(click or ESC to close)', '16px', false, '#888888');
         const close = () => {
             this.achievementsVisible = false;
@@ -840,7 +846,7 @@ class GameScene extends Phaser.Scene {
         if (this.drinkingGame && !this.dialogueManager.isVisible() &&
             this.drinkingGame.checkStart(targetGridX, targetGridY)) return;
         this.npcManager.checkInteraction(targetGridX, targetGridY);
-        // bumping a vending machine / konbini counter opens its store
+        // bumping a vending machine / konbini counter or shelf / izakaya bar opens its store
         if (this.shop && !this.dialogueManager.isVisible()) {
             this.shop.checkShopInteraction(targetGridX, targetGridY);
         }

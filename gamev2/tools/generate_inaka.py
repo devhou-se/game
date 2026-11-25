@@ -174,7 +174,8 @@ izakaya['boundary'] = [
     [11, 14], [9, 14], [9, 13], [2, 13],
 ]
 izakaya['interior'] = True
-izakaya['shopEnabled'] = False
+izakaya['shopEnabled'] = False   # not a konbini: its shelves and tables stay furniture...
+izakaya['shopMenu'] = 'izakaya'    # ...but the bar (office-counter2) sells the izakaya menu
 izakaya['drinkingGame'] = {
     'triggerCells': [[4, 7], [5, 7]],
     'durationMs': 15_000,

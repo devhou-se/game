@@ -35,7 +35,13 @@ class DrinkingGame {
         return name.charAt(0).toUpperCase() + name.slice(1);
     }
 
-    prizeLabel(amount = DrinkingGame.PRIZE) {
+    /** What a win pays right now — karaage (issue #46) fattens the pot. */
+    winPrize() {
+        const bonus = this.scene.shop ? this.scene.shop.buff('prizeBonus') : 1;
+        return Math.round(DrinkingGame.PRIZE * bonus);
+    }
+
+    prizeLabel(amount = this.winPrize()) {
         return this.scene.shop ? this.scene.shop.fmt(amount) : `¥${amount}`;
     }
 
@@ -78,12 +84,21 @@ class DrinkingGame {
     begin() {
         this.clearTimers();
         this.resetScores();
+        // food & drink buffs (issue #46) are locked in as the round starts:
+        // a head start in gulps (Bailey, as ever, matches it) and the pot
+        const headStart = this.scene.shop ? this.scene.shop.buff('headStart') : 0;
+        this.playerScore = headStart;
+        if (this.opponent === 'bailey') this.opponentScore = headStart;
+        this.prize = this.winPrize();
         this.state = 'playing';
         this.startedAt = this.scene.time.now;
         this.deadline = this.startedAt + this.durationMs;
-        this.statusText.setText('MASH SPACE!');
+        // against Bailey the head start buys nothing — say so rather than brag
+        this.statusText.setText(!headStart ? 'MASH SPACE!'
+            : this.opponent === 'bailey' ? 'MASH SPACE!  BAILEY MATCHES YOUR HEAD START'
+            : `MASH SPACE!  +${headStart} HEAD START`);
         this.hintText.setText('SPACE: drink · ESC: give up');
-        this.prizeText.setText(`PRIZE POOL: ${this.prizeLabel()}`);
+        this.prizeText.setText(`PRIZE POOL: ${this.prizeLabel(this.prize)}`);
         this.updateClock();
         this.paintScores();
 
@@ -159,7 +174,7 @@ class DrinkingGame {
 
         if (this.playerScore > this.opponentScore) {
             this.statusText.setText(`YOU WIN BY ${this.playerScore - this.opponentScore}!`);
-            const won = this.adjustWallet(DrinkingGame.PRIZE);
+            const won = this.adjustWallet(this.prize);
             this.prizeText.setText(`PRIZE WON  +${this.prizeLabel(won)}`);
         } else if (this.playerScore === this.opponentScore) {
             this.statusText.setText('A DRAW — KANPAI!');

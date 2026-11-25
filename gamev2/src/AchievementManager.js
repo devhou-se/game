@@ -101,6 +101,27 @@ class AchievementManager {
         }
     }
 
+    /**
+     * Food & drink achievements (issue #46), read live from the shop's
+     * consumption counters (saved in its `gamev2_shop` blob):
+     *   Taste Tester     — use every consumable in the catalogue at least once
+     *   Regular Customer — eat or drink 25 things in total
+     */
+    consumptionProgress() {
+        const shop = this.scene.shop;
+        if (!shop) return [];
+        const all = shop.consumables();
+        const tried = all.filter(i => shop.used[i.id]).length;
+        const total = all.reduce((sum, i) => sum + (shop.used[i.id] || 0), 0);
+        const goal = AchievementManager.REGULAR_CUSTOMER;
+        return [
+            { name: 'Taste Tester', desc: 'Try every food and drink',
+              value: tried, total: all.length, complete: all.length > 0 && tried >= all.length },
+            { name: 'Regular Customer', desc: `Eat or drink ${goal} things`,
+              value: Math.min(total, goal), total: goal, complete: total >= goal },
+        ];
+    }
+
     /** Record a tile the player has stepped on. */
     markVisited(room, x, y) {
         if (!room) return;
@@ -129,3 +150,5 @@ class AchievementManager {
         };
     }
 }
+
+AchievementManager.REGULAR_CUSTOMER = 25;

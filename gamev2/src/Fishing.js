@@ -60,8 +60,13 @@ class Fishing {
             targets: ripple, scale: 2.2, alpha: 0, duration: 1100, repeat: -1,
         });
 
-        this.scene.shop.toast('...');
-        this.timer = this.scene.time.delayedCall(1200 + Math.random() * 3300, () => this.bite());
+        // food & drink buffs (issue #46): quicker bites, a longer strike
+        // window, luckier catches — say which ones are helping this cast
+        const shop = this.scene.shop;
+        const helping = shop.activeEffects().filter(e => e.fishBite || e.fishWindow || e.fishLuck).map(e => e.name);
+        shop.toast(helping.length ? `... (${helping.join(' + ')} helping)` : '...');
+        this.timer = this.scene.time.delayedCall(
+            (1200 + Math.random() * 3300) * shop.buff('fishBite'), () => this.bite());
     }
 
     /** Something's on the line — a short window to strike. */
@@ -75,7 +80,8 @@ class Fishing {
         this.alert.setOrigin(0.5, 1); this.alert.setResolution(1); this.alert.setDepth(901);
         this.objs.push(this.alert);
         this.scene.tweens.add({ targets: this.bobber, y: '+=5', duration: 90, yoyo: true, repeat: 3 });
-        this.timer = this.scene.time.delayedCall(1100, () => this.finish(false, 'too slow — it got away...'));
+        this.timer = this.scene.time.delayedCall(1100 * this.scene.shop.buff('fishWindow'),
+            () => this.finish(false, 'too slow — it got away...'));
     }
 
     /** SPACE during the strike window lands whatever bit. */
@@ -84,7 +90,8 @@ class Fishing {
         if (this.state !== 'strike') return;
         const roll = Math.random();
         let acc = 0;
-        const c = Fishing.CATCHES.find(f => (acc += f.odds) > roll) || Fishing.CATCHES[0];
+        const table = Fishing.catchTable(this.scene.shop.buff('fishLuck'));
+        const c = table.find(f => (acc += f.odds) > roll) || table[0];
         if (c.value > 0) {
             this.scene.shop.money += c.value;
             this.scene.shop.save();
@@ -131,5 +138,18 @@ Fishing.CATCHES = [
     { name: 'Unagi',       odds: 0.10, value: 520 },
     { name: 'GOLDEN KOI',  odds: 0.03, value: 1500 },
 ];
+
+/**
+ * The catch table for a luck multiplier (1 = plain). Luck above 1 takes the
+ * worthless catches off the table and multiplies the odds of the rare ones
+ * (worth ¥500+), then renormalizes so the odds still sum to 1.
+ */
+Fishing.catchTable = (luck) => {
+    if (!(luck > 1)) return Fishing.CATCHES;
+    const lucky = Fishing.CATCHES.filter(f => f.value > 0)
+        .map(f => Object.assign({}, f, { odds: f.odds * (f.value >= 500 ? luck : 1) }));
+    const total = lucky.reduce((sum, f) => sum + f.odds, 0);
+    return lucky.map(f => Object.assign({}, f, { odds: f.odds / total }));
+};
 
 if (typeof window !== 'undefined') window.Fishing = Fishing;
