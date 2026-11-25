@@ -91,10 +91,10 @@ changing a prefab's collision: remove it from the rooms, re-run `make_prefabs.py
 any collider cell another standing sprite still covers.
 
 The city buildings (`highrise-*`, `discount-store`, `machiya-*`) come from `tools/extract_city.py` - see
-"Generic city buildings" in `gamev2/CLAUDE.md`.
+"Generic city buildings" in `gamev2/docs/buildings-and-street-props.md`.
 
 The Hokkaido prefabs (`sapporo-clock-tower`, `sapporo-tv-tower`, `asahikawa-bridge`, `ramen-banner`) are
-drawn by `tools/generate_hokkaido.py` - see "Hokkaido: Sapporo and Asahikawa" in `gamev2/CLAUDE.md`.
+drawn by `tools/generate_hokkaido.py` - see "Hokkaido: Sapporo and Asahikawa" in `gamev2/docs/landmarks-and-towns.md`.
 `asahikawa-bridge` is the pattern for a flat multi-cell sprite laid over water: a `Non-Collidables` object
 whose sprite carries a negative `depthBias` in `config.json` `spriteMetadata` (an `Over Floor` object would
 be drawn under the `Water` tiles).
@@ -105,7 +105,7 @@ Inaka and Osaka in a column to the west,
 Sapporo and Asahikawa to the north.
 
 Street accessories (issue #19) come from `tools/extract_street.py` - see "Street accessories" in
-`gamev2/CLAUDE.md`: `traffic-light` (1x3, give stamp_prefab the TOP cell; the base two rows down is the solid
+`gamev2/docs/buildings-and-street-props.md`: `traffic-light` (1x3, give stamp_prefab the TOP cell; the base two rows down is the solid
 one), `crossing-h` / `crossing-v` (zebra crossing on `Over Floor`, origin on the road's top / left kerb cell),
 `utility-pole`, `road-mirror`, `bus-stop`, `bicycle-blue|orange`, `scooter-grey|red`, `traffic-cone`
 (`vending-white` / `vending-red` are 1x2 and solid on both cells - issue #101):
@@ -177,7 +177,7 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   direction.
 - **The Tokyo districts are stitched into one map at runtime** (config
   `cities`, `src/systems/CityStitcher.js` — see "Stitched cities" in
-  `gamev2/CLAUDE.md`). The five maps stay separate files and you keep
+  `gamev2/docs/stitched-city.md`). The five maps stay separate files and you keep
   editing them one at a time, in their own cell coordinates, but in the game:
   - the seam transporters are ignored (keep them: `?stitch=0` uses them, and
     `play.js check` surveys that fallback too) and the player simply walks
@@ -252,7 +252,7 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   `Non-Collidables` (flat sprites with a negative `depthBias`, from `tools/make_bridge_tiles.py`). No
   colliders: the coping is the outer 14px of the cell. They are for a deck that runs north-south.
 - **Water is navigable only where a room says so**: `rooms.<Room>.waterways` in config.json
-  (written by the generator - see "Ambient Traffic" in `gamev2/CLAUDE.md`) gives a canal its
+  (written by the generator - see "Ambient Traffic" in `gamev2/docs/ambient-traffic.md`) gives a canal its
   boats; `under` names the cells where a bridge deck crosses, and those cells must be plain
   walkable floor with NO water tile (the boat is cut off at the deck's edge). Osaka's canal is laid
   by hand in `generate_osaka.py` (three rows, edge to edge, `edge-n` / `center` / `edge-s` - the pond
