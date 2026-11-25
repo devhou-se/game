@@ -384,6 +384,73 @@ def test_shipped_posts(cfg):
                 where = f'{room_key} {npc["name"]} {date}'
                 assert sum(p['lines'] for p in made_by) == len(st['dialogue']), where
                 assert all(str(p['id']) == p['id'] for p in made_by), where
+def test_authors(cfg):
+    """Blog author login -> NPC: mapped authors resolve (any case), placeholder
+    entries can never match, and an unmapped author's post is skipped with a
+    warning that names the login and where to add it."""
+    assert b.npc_for_author('baely') == 'Bailey' and b.npc_for_author(' Jughents ') == 'Julia'
+    assert b.npc_for_author('nobody-here') is None and b.npc_for_author('') is None and b.npc_for_author(None) is None
+
+    # what a login can and cannot be
+    for ok in ('baely', 'dbut2', 'a', 'a-b', 'x' * 39, 'khoi_acme', 'a-b_c', 'some-app[bot]'):
+        assert b.is_login(ok), ok
+    for bad in ('', '<khoi github login>', 'two words', 'a--b', '-a', 'a-', 'x' * 40, 'Upper', '_a', 'todo:khoi',
+                'a b', '<a>', 'a[bot]x', '[bot]'):
+        assert not b.is_login(bad), bad
+
+    # every placeholder key is unmatchable — even when a post's author field
+    # is, verbatim, the placeholder text
+    table = {'baely': 'Bailey', '<khoi github login>': 'Khoi', '<sam github login>': 'Sam'}
+    assert b.awaiting_login(table) == ['Khoi', 'Sam']
+    assert b.npc_for_author('<khoi github login>', table) is None
+    assert b.npc_for_author('khoi', table) is None                 # the NPC's name is not their login
+    assert b.awaiting_login({'baely': 'Bailey'}) == []
+    # an Enterprise Managed User login (underscore) maps like any other
+    assert b.npc_for_author('Khoi_Acme', {'khoi_acme': 'Khoi'}) == 'Khoi'
+    assert b.awaiting_login({'khoi_acme': 'Khoi'}) == []
+    for key in b.AUTHOR_NPCS:
+        assert b.is_login(key) or (key.startswith('<') and key.endswith('>')), key
+        assert b.npc_for_author(key) == (b.AUTHOR_NPCS[key] if b.is_login(key) else None), key
+
+    # every NPC the table names can be created: it has a full sprite set
+    for npc in b.AUTHOR_NPCS.values():
+        for d in ('front', 'back', 'side'):
+            assert f'{npc.lower()}_{d}' in cfg['spriteMetadata'], f'{npc}: no {d} sprite'
+
+    # the warning names the login, the file, and who is still waiting
+    w = b.unmapped_author_warning(42, 'newperson', table)
+    assert w.startswith('WARNING: #42:') and "'newperson': '<NPC name>'" in w, w
+    assert 'AUTHOR_NPCS' in w and 'blog_to_npc.py' in w and 'Khoi, Sam' in w, w
+    assert 'waiting' not in b.unmapped_author_warning(42, 'newperson', {'baely': 'Bailey'})
+
+    # end to end: an unmapped author is skipped loudly and nothing is placed;
+    # the same post under a mapped login lands
+    saved = dict(b.AUTHOR_NPCS)
+    try:
+        b.AUTHOR_NPCS.clear()
+        b.AUTHOR_NPCS.update(table)
+        work = copy.deepcopy(cfg)
+        spots = b.find_spots(work)
+        post = {'post_id': 77, 'title': 't', 'author': 'NewPerson', 'date': '2031-04-01', 'content': 'hello'}
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            record, usage = b.process_post(work, post, spots, sorted(spots), mock=True, dry_run=True)
+        assert record is None and usage is None and work == cfg
+        assert "WARNING: #77: blog author 'newperson' is not mapped" in out.getvalue(), out.getvalue()
+        assert 'still waiting for a login: Khoi, Sam' in out.getvalue(), out.getvalue()
+
+        # the login arrives: replace the placeholder and the post is placed —
+        # for someone who had no NPC in that room before (hidden base def)
+        del b.AUTHOR_NPCS['<khoi github login>']
+        b.AUTHOR_NPCS['newperson'] = 'Khoi'
+        with contextlib.redirect_stdout(io.StringIO()):
+            record, _ = b.process_post(work, post, spots, sorted(spots), mock=True, dry_run=True)
+        assert record and record['npc'] == 'Khoi' and record['date'] == '2031-04-01', record
+        here = [(r, s) for r, s in placements(work, 'Khoi', '2031-04-01') if s.get('present')]
+        assert len(here) == 1 and here[0][1]['dialogue'], here
+    finally:
+        b.AUTHOR_NPCS.clear()
+        b.AUTHOR_NPCS.update(saved)
 
 
 def test_shipped_dialogue(cfg):
@@ -407,5 +474,6 @@ if __name__ == '__main__':
     test_post_source(config)
     test_backfill_posts()
     test_shipped_posts(config)
+    test_authors(config)
     test_shipped_dialogue(config)
     print('ok')

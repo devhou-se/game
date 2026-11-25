@@ -1,9 +1,12 @@
 /**
  * CharacterSelect — pick who you play as (issue #15).
  *
- * Swaps the player between the existing character sprite sets (james,
- * bailey, damian, dylan, julia — anything in spriteMetadata with _front,
- * _back and _side variants). The choice persists in localStorage, and
+ * Swaps the player between the existing character sprite sets — anything
+ * in spriteMetadata with _front, _back and _side variants (james, bailey,
+ * damian, dylan, julia, and the devhouse 3 members baked by
+ * tools/generate_cast.py). available() IS the cast: the title line-up, the
+ * intro, the creator's name Easter egg and this menu all read it, so a new
+ * sprite set joins everywhere with no code change. The choice persists in localStorage, and
  * CharacterSelect.applySaved patches config.player before the sprite
  * system boots so a returning player wakes up as their character.
  *
@@ -147,7 +150,10 @@ class CharacterSelect {
 
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
-        const pw = 480, ph = 210 + this.chars.length * 46;
+        // rows close up when the roster is too long for the screen (a phone
+        // in landscape with the whole cast plus a created character)
+        const pitch = Math.max(30, Math.min(46, Math.floor((H - 16 - 210) / this.chars.length)));
+        const pw = 480, ph = 210 + this.chars.length * pitch;
         const px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = this.objs;
 
@@ -184,7 +190,7 @@ class CharacterSelect {
                 ? `${(CharacterCreator.load() || {}).name || 'Custom'} ✦`
                 : name.charAt(0).toUpperCase() + name.slice(1);
             const label = display + current;
-            const row = text(W / 2, py + 166 + i * 46, label, '24px', true);
+            const row = text(W / 2, py + 166 + i * pitch, label, '24px', true);
             row.setInteractive({ useHandCursor: true });
             row.on('pointerover', () => { this.selected = i; this.paint(); });
             row.on('pointerdown', () => { this.selected = i; this.confirm(); });

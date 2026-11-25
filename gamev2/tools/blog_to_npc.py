@@ -75,6 +75,7 @@ authors can hop between rooms with one hidden base def per visited room.
 import argparse
 import json
 import os
+import re
 import sys
 
 from post_photos import import_post_photo
@@ -87,7 +88,46 @@ AUTHOR_NPCS = {
     'damiante': 'Damian',
     'dbut2': 'Dylan',
     'jughents': 'Julia',
+    # Devhouse 3 (issue #117): these three have sprites and base NPCs, but
+    # their blog logins are not known yet. REPLACE each '<... github login>'
+    # key with the author's GitHub login, lower-case — e.g. 'octocat': 'Khoi'.
+    # Until then the key can never match a post (see is_login) and their posts
+    # are skipped with a warning that names the login to put here.
+    '<khoi github login>': 'Khoi',
+    '<sam github login>': 'Sam',
+    '<xander github login>': 'Xander',
 }
+
+
+def is_login(key):
+    """Could `key` be a GitHub login (as process_post sees one: lower-cased)?
+    Letters, digits, single inner hyphens, underscores (Enterprise Managed
+    User logins: 'name_shortcode') and an app's '[bot]' suffix — so a
+    placeholder key, which has spaces and angle brackets, never is one."""
+    return bool(re.fullmatch(r'[a-z0-9](?:[a-z0-9_]|-(?=[a-z0-9_])){0,38}(?:\[bot\])?', key))
+
+
+def npc_for_author(author, authors=None):
+    """NPC name for a blog author's GitHub login (any case), or None. Only
+    real logins are looked up, so a placeholder key is never an author."""
+    author = (author or '').strip().lower()
+    return (AUTHOR_NPCS if authors is None else authors).get(author) if is_login(author) else None
+
+
+def awaiting_login(authors=None):
+    """NPC names whose AUTHOR_NPCS entry is still a placeholder."""
+    authors = AUTHOR_NPCS if authors is None else authors
+    return sorted(npc for key, npc in authors.items() if not is_login(key))
+
+
+def unmapped_author_warning(post_id, author, authors=None):
+    """The line printed when a post is skipped because nobody maps its
+    author to an NPC — it has to say what to change, and where."""
+    waiting = awaiting_login(authors)
+    who = f"'{author}': '<NPC name>'" if author else "the author's GitHub login"
+    return (f'WARNING: #{post_id}: blog author {author!r} is not mapped to an NPC — post skipped. '
+            f'Add {who} to AUTHOR_NPCS in gamev2/tools/blog_to_npc.py'
+            + (f' (still waiting for a login: {", ".join(waiting)})' if waiting else '') + '.')
 
 # landmark tile-key prefix -> spot label offered to the model:
 #   (prefix, label[, stand][, options])
@@ -645,10 +685,15 @@ def reset_states(cfg):
 def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
     """Generate + place one post into cfg. Returns (record | None, usage).
     record describes the placement for the issue comment: npc, room, spot."""
-    author = (post.get('author') or '').lower()
-    npc_name = AUTHOR_NPCS.get(author)
+    author = (post.get('author') or '').strip().lower()
+    npc_name = npc_for_author(author)
     if not npc_name:
-        print(f'#{post.get("post_id")}: no NPC for {author!r} — skipped')
+        warning = unmapped_author_warning(post.get('post_id'), author)
+        print(warning)
+        if os.environ.get('GITHUB_ACTIONS'):
+            # an annotation on the workflow run, so the skip is seen without
+            # opening the log
+            print(f'::warning title=Blog author has no NPC::{warning}')
         return None, None
 
     date = str(post.get('date', ''))[:10]

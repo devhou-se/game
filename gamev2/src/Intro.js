@@ -174,7 +174,10 @@ class Intro {
             .map(name => `${name}_front`)
             .map(key => scene.textures.exists(`${key}_frame_0`) ? `${key}_frame_0` : key)
             .filter(key => scene.textures.exists(key));
-        const scale = 2, spacing = 104;
+        // however many of us there are, the row stays inside the panel: the
+        // figures close up first, then drop to 1x (a body is 42px wide)
+        const spacing = Math.min(104, Math.floor((l.pw - 120) / Math.max(1, cast.length)));
+        const scale = spacing >= 88 ? 2 : 1;
         cast.forEach((key, i) => {
             const x = Math.round(l.cx + (i - (cast.length - 1) / 2) * spacing);
             const img = l.image(x, l.py + 196, key, scale);

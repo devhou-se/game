@@ -1,10 +1,11 @@
 /**
  * CharacterCreator — make your own character (name + look).
  *
- * The cast sprites (james/bailey/damian/dylan/julia) are flat-palette pixel
- * art drawn on one shared 64×64 template: every body has the same shoulder
- * line, waist line and feet rows per animation frame. That makes real
- * mix-and-match possible without new art:
+ * The hand-drawn cast sprites (james/bailey/damian/dylan/julia — the DONORS
+ * table; the composites baked by tools/generate_cast.py are cast, but not
+ * donors) are flat-palette pixel art drawn on one shared 64×64 template:
+ * every body has the same shoulder line, waist line and feet rows per
+ * animation frame. That makes real mix-and-match possible without new art:
  *
  *   HAIR  — the head band of any cast member (their hairstyle + face)
  *   TOP   — the torso band of any cast member (their shirt, arms included)

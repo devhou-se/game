@@ -10,7 +10,7 @@ game falls back to art derived from the overworld sprites:
 ## Dropping in real art (no code change)
 
 1. Save the portrait as `assets/portraits/<name>.png`, where `<name>` is the character's sprite
-   name — the part before `_front` in its sprite key: `bailey`, `damian`, `dylan`, `james`, `julia`.
+   name — the part before `_front` in its sprite key: `bailey`, `damian`, `dylan`, `james`, `julia`, `khoi`, `sam`, `xander`.
 2. Add the name to `manifest.json`:
 
    ```json

@@ -12,7 +12,7 @@ Configuration is all environment variables:
   ELEVENLABS_API_KEY            the API key (xi-api-key)
   ELEVENLABS_VOICE_<NPC>        ElevenLabs voice id for an NPC, by upper-cased
                                 NPC name: ELEVENLABS_VOICE_BAILEY, _DAMIAN,
-                                _DYLAN, _JULIA
+                                _DYLAN, _JULIA, _KHOI, _SAM, _XANDER
   ELEVENLABS_VOICE_<NPC>_DRUNK  optional second voice id, used when the LLM
                                 judged the post to read as drunk (falls back
                                 to the sober voice when unset)

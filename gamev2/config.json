@@ -31778,7 +31778,74 @@
         }
       ],
       "name": "Sapporo",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hey, I'm Khoi.",
+            "Devhouse 3 is on: Hokkaido, in the snow. I can't wait."
+          ],
+          "directionalSprites": {
+            "down": "khoi_front",
+            "left": "",
+            "right": "khoi_side",
+            "up": "khoi_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 38,
+          "gridY": 8,
+          "name": "Khoi",
+          "sprite": "khoi_front"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hi, I'm Sam!",
+            "Sapporo first, then Asahikawa. I'm looking forward to all of it."
+          ],
+          "directionalSprites": {
+            "down": "sam_front",
+            "left": "",
+            "right": "sam_side",
+            "up": "sam_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 21,
+          "gridY": 27,
+          "name": "Sam",
+          "sprite": "sam_front"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Xander here.",
+            "Hokkaido with the devhouse crew. This should be a good one."
+          ],
+          "directionalSprites": {
+            "down": "xander_front",
+            "left": "",
+            "right": "xander_side",
+            "up": "xander_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 35,
+          "gridY": 17,
+          "name": "Xander",
+          "sprite": "xander_front"
+        }
+      ],
       "objects": [],
       "transporters": [
         {
@@ -42713,6 +42780,66 @@
       "loop": true,
       "scale": 1
     },
+    "khoi_back": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down",
+      "directions": {
+        "down": null,
+        "left": null,
+        "right": null,
+        "up": null
+      },
+      "frameCount": 4,
+      "frameRate": 10,
+      "isDirectional": false,
+      "loop": true,
+      "scale": 1
+    },
+    "khoi_front": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down",
+      "directions": {
+        "down": null,
+        "left": null,
+        "right": null,
+        "up": null
+      },
+      "frameCount": 4,
+      "frameRate": 10,
+      "isDirectional": false,
+      "loop": true,
+      "scale": 1
+    },
+    "khoi_side": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down",
+      "directions": {
+        "down": null,
+        "left": null,
+        "right": null,
+        "up": null
+      },
+      "frameCount": 2,
+      "frameRate": 10,
+      "isDirectional": false,
+      "loop": true,
+      "scale": 1
+    },
     "kirin-statue-1-bottom_0_0": {
       "anchorX": 0.1667,
       "anchorY": 0.25,
@@ -43418,6 +43545,66 @@
       "anchorY": 0.25,
       "frameCount": 1
     },
+    "sam_back": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down",
+      "directions": {
+        "down": null,
+        "left": null,
+        "right": null,
+        "up": null
+      },
+      "frameCount": 4,
+      "frameRate": 10,
+      "isDirectional": false,
+      "loop": true,
+      "scale": 1
+    },
+    "sam_front": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down",
+      "directions": {
+        "down": null,
+        "left": null,
+        "right": null,
+        "up": null
+      },
+      "frameCount": 4,
+      "frameRate": 10,
+      "isDirectional": false,
+      "loop": true,
+      "scale": 1
+    },
+    "sam_side": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down",
+      "directions": {
+        "down": null,
+        "left": null,
+        "right": null,
+        "up": null
+      },
+      "frameCount": 2,
+      "frameRate": 10,
+      "isDirectional": false,
+      "loop": true,
+      "scale": 1
+    },
     "sapporo-clock-tower_0_0": {
       "anchorX": 0.1,
       "anchorY": 0.0625,
@@ -43854,6 +44041,66 @@
       "anchorX": 0.5,
       "anchorY": 0.5,
       "frameCount": 1
+    },
+    "xander_back": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down",
+      "directions": {
+        "down": null,
+        "left": null,
+        "right": null,
+        "up": null
+      },
+      "frameCount": 4,
+      "frameRate": 10,
+      "isDirectional": false,
+      "loop": true,
+      "scale": 1
+    },
+    "xander_front": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down",
+      "directions": {
+        "down": null,
+        "left": null,
+        "right": null,
+        "up": null
+      },
+      "frameCount": 4,
+      "frameRate": 10,
+      "isDirectional": false,
+      "loop": true,
+      "scale": 1
+    },
+    "xander_side": {
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "autoFlip": {
+        "horizontal": false,
+        "vertical": false
+      },
+      "defaultDirection": "down",
+      "directions": {
+        "down": null,
+        "left": null,
+        "right": null,
+        "up": null
+      },
+      "frameCount": 2,
+      "frameRate": 10,
+      "isDirectional": false,
+      "loop": true,
+      "scale": 1
     },
     "yellow-vending-machine-base_0_0": {
       "anchorX": 0.5,
