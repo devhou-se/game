@@ -223,6 +223,16 @@ const tests = {
         assert.strictEqual(travel.cameFrom('OsakaStation'), null);
     },
 
+    'the train-ride cutscene is magnified with the world, never past the height of the view'() {
+        const scale = game('TrainTravel.cutsceneScale');
+        assert.strictEqual(scale(1, 960, 480), 1, 'desktop: as authored');
+        assert.strictEqual(scale(undefined, 960, 480), 1, 'no UIScale: as authored');
+        assert.strictEqual(scale(1.5, 960, 480), 1.5, 'tablet: as far as the world is zoomed');
+        assert.strictEqual(scale(2, 960, 480), 2, 'landscape phone: the car fills the height');
+        assert.strictEqual(scale(2, 960, 600), 1.6, 'a taller car stops at the height of the view');
+        assert.strictEqual(scale(2, 400, 480), 1, 'never shrunk');
+    },
+
     'every room has a display name for the HUD, and no interior shows its key'() {
         const rooms = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).rooms;
         for (const [key, room] of Object.entries(rooms)) {

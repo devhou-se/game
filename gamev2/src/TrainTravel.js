@@ -84,6 +84,16 @@ class TrainTravel {
         return trainKey === 'train-green' ? 'train-interior-wood' : 'train-interior-metro';
     }
 
+    /**
+     * How much the riding cutscene is magnified: as much as the world is
+     * (UIScale's worldZoom — 1 on a desktop, up to 2 on a phone), so the car
+     * stays in proportion with the platform you boarded from, but never so
+     * much that the car (carH tall as authored) is taller than the view.
+     */
+    static cutsceneScale(worldZoom, viewH, carH) {
+        return Math.max(1, Math.min(worldZoom || 1, viewH / carH));
+    }
+
     /** The riding cutscene: the inside of the car (GuttyKreum Train Interiors),
      *  the player riding in the aisle, scenery streaking past the windows. */
     buildCutscene(trainKey, dir) {
@@ -102,7 +112,9 @@ class TrainTravel {
         // ankle-height under 4x furniture. The car is wider than the screen,
         // so we frame the middle of it against the dark surround.
         const interior = scene.add.image(W / 2, H / 2, this.interiorKeyFor(trainKey)).setOrigin(0.5, 0.5);
-        interior.setScale(2);
+        // On a phone the world is zoomed in; the car is magnified to match.
+        const k = TrainTravel.cutsceneScale(scene.uiScale && scene.uiScale.worldZoom, H, interior.height * 2);
+        interior.setScale(2 * k);
         c.add(interior);
         const carTop = H / 2 - interior.displayHeight / 2, carH = interior.displayHeight;
 
@@ -111,13 +123,14 @@ class TrainTravel {
         const bandTop = carTop + carH * 0.03, bandH = carH * 0.10;
         for (let i = 0; i < 6; i++) {
             const y = bandTop + (i / 5) * bandH;
-            const streak = scene.add.rectangle(0, y, 120, 3, 0xcfe4ff, 0.45).setOrigin(0, 0.5);
-            streak.setX(dir > 0 ? -140 : W + 140);
+            const streak = scene.add.rectangle(0, y, 120 * k, 3 * k, 0xcfe4ff, 0.45).setOrigin(0, 0.5);
+            const off = 140 * k;
+            streak.setX(dir > 0 ? -off : W + off);
             c.add(streak);
             this._cutTweens.push(scene.tweens.add({
-                targets: streak, x: dir > 0 ? W + 140 : -140,
+                targets: streak, x: dir > 0 ? W + off : -off,
                 duration: 260 + (i % 3) * 110, repeat: -1, delay: i * 70,
-                onRepeat: () => streak.setX(dir > 0 ? -140 : W + 140),
+                onRepeat: () => streak.setX(dir > 0 ? -off : W + off),
             }));
         }
 
@@ -130,14 +143,14 @@ class TrainTravel {
         const standKey = scene.textures.exists(`${downKey}_frame_0`)
             ? `${downKey}_frame_0` : downKey;
         const rider = scene.add.image(W / 2, carTop + carH * 0.52, standKey)
-            .setOrigin(0.5, 1).setScale(1.5);
+            .setOrigin(0.5, 1).setScale(1.5 * k);
         // legs cropped away below the bench line — reads as sitting on the seat
         rider.setCrop(0, 0, rider.frame.width, rider.frame.height * 0.72);
         c.add(rider);
 
         // gentle rumble of the whole car
         this._cutTweens.push(scene.tweens.add({
-            targets: [interior, rider], y: '+=3', duration: 130, yoyo: true, repeat: -1,
+            targets: [interior, rider], y: `+=${3 * k}`, duration: 130, yoyo: true, repeat: -1,
         }));
 
         c.setAlpha(0);
