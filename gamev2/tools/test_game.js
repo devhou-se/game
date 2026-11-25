@@ -881,7 +881,7 @@ const tests = {
         }
     },
 
-    'the red shrine roofs (Market, Park) seal the cells they hide, as the shrine prefab does'() {
+    'every shrine roof (blue and red) seals the cells it hides, as the shrine prefab does'() {
         const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
         const prefab = JSON.parse(fs.readFileSync(path.join(GV2, 'tiled', 'prefabs', 'shrine.tmj'), 'utf8'));
         const seal = prefab.layers.find((l) => l.name === 'Colliders').data;
@@ -890,7 +890,7 @@ const tests = {
             const solid = room.layers.find((l) => l.name === 'Colliders');
             for (const layer of room.layers) {
                 for (const [cell, id] of Object.entries(layer.tiles)) {
-                    if (cfg.tilePalette[id] !== 'red-shrine-top_0_0') continue;
+                    if (!/^(red-)?shrine-top_0_0$/.test(cfg.tilePalette[id])) continue;
                     roofs++;
                     const [ox, oy] = cell.split(',').map(Number);
                     const open = [];
@@ -902,7 +902,7 @@ const tests = {
                 }
             }
         }
-        assert.strictEqual(roofs, 2, 'found both red shrine roofs');
+        assert.strictEqual(roofs, 5, 'found every shrine roof: Tokyo, Machi, Asahikawa (blue), Market, Park (red)');
     },
 
     "Palace's east road crosses into Market and back when the city is not stitched"() {
