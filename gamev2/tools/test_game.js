@@ -15,7 +15,8 @@ const ctx = vm.createContext({
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/NpcStates.js', 'TrainTravel.js', 'StationPicker.js', 'DialogueManager.js', 'systems/TouchControls.js',
-    'utils/Hints.js', 'utils/JapaneseFont.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js', 'systems/UIScale.js', '../tools/world-model.js'].forEach(load);
+    'utils/Hints.js', 'utils/JapaneseFont.js', 'ItemIcons.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js', 'systems/UIScale.js',
+    'systems/RoomManager.js', 'systems/CollisionSystem.js', '../tools/world-model.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
 // A Shop with no Phaser behind it: the save blob comes from (and goes to) `store`.
@@ -826,6 +827,25 @@ const tests = {
         assert.strictEqual(sorted(walkedFrom(cells, [[5, 5]])), hall, 'a blocked arrival falls back to the largest area');
         assert.strictEqual(sorted(walkedFrom(cells, [])), hall, 'so does a room nothing leads to');
         assert.strictEqual(walkedFrom(new Set(), [[0, 0]]).size, 0);
+    },
+
+    'the headless world model is stopped by collision tiles, like the game'() {
+        const WorldModel = game('WorldModel');
+        // a 4x3 room: a wall tile at 2,1 on a collision layer, a rug at 1,2 on a plain one
+        const config = {
+            game: { gridSize: 64, worldWidth: 256, worldHeight: 192 },
+            player: { startRoom: 'Hall', startX: 1, startY: 1, sprite: 'bailey_front' },
+            rooms: { Hall: { name: 'Hall', objects: [], transporters: [], npcs: [], layers: [
+                { name: 'floor', z: 0, tiles: { '1,2': 'rug' } },
+                { name: 'walls', z: 1, collision: true, tiles: { '2,1': 'wall' } },
+            ] } },
+        };
+        const w = new WorldModel(config, { exists: () => true, sizeOf: () => [1, 1] }, { date: '2025-10-10' });
+        assert.strictEqual(w.roomManager.isBlocked(2, 1), true, 'the room manager knows the collider');
+        assert.strictEqual(w.canStep(1, 1, 2, 1), false, 'a collision tile blocks the step');
+        assert.strictEqual(w.canStep(1, 1, 1, 2), true, 'a tile on a non-collision layer does not');
+        assert.strictEqual(w.canStep(1, 1, 0, 1), true, 'nor does bare floor');
+        assert.strictEqual(w.canStep(0, 1, -1, 1), false, 'the room edge still does');
     },
 
     'outside the trip the game opens on a trip day, and cycles through them'() {

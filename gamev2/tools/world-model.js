@@ -104,6 +104,9 @@ class WorldModel {
         this.w = (room.worldWidth || this.WORLD_WIDTH) / this.GRID_SIZE;
         this.h = (room.worldHeight || this.WORLD_HEIGHT) / this.GRID_SIZE;
         this.blocked = new Set(rm.floorSprites.map(s => s.getData('gridX') + ',' + s.getData('gridY')));
+        // what CollisionSystem.checkTileCollision asks (RoomManager.isBlocked);
+        // the game fills it as it builds a room's tiles, which never runs here
+        rm.blockedCells = this.blocked;
     }
 
     get room() { return this.roomManager.rooms[this.roomManager.currentRoom]; }
