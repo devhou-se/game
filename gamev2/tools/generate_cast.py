@@ -24,13 +24,13 @@ generated ones (same names, 64x64, same template as the rest of the cast) and
 remove that name from LOOKS so a later run does not overwrite them. No code or
 config change is needed.
 
-The compose logic is a line-for-line port of CharacterCreator.composeFrame /
-addSlot / inBeardBox; the donor palettes, the beard donors and the cut rows
-are READ from CharacterCreator.js (never copied here), so those cannot
-drift. The baked frames are NOT pixel-identical to the creator's preview of
-the same look, though: the four rules marked TIDY below remove artefacts the
-runtime creator still has. `--check` verifies the files on disk still match
-LOOKS.
+The compose logic is a line-for-line port of CharacterCreator.composePixels /
+addSlot / inBeardBox (the four rules marked TIDY included); the donor
+palettes, the beard donors and the cut rows are READ from CharacterCreator.js
+(never copied here), so those cannot drift. The baked frames are
+pixel-identical to the creator's preview of the same look — a unit test in
+tools/test_game.js composes every look with the game's code and compares.
+`--check` verifies the files on disk still match LOOKS.
 
 Run from gamev2/ with a Python that has Pillow:
 
@@ -52,8 +52,8 @@ from PIL import Image
 # name -> parts (which cast member lends the head / torso / legs / beard) and
 # colours (hex, or None to keep the donor's own). Same shape as a creation
 # saved by the character creator (`gamev2_custom_character`), so a look can
-# be designed in the game's creator and copied here (the bake then differs
-# from the creator's preview only by the TIDY rules).
+# be designed in the game's creator and copied here (the bake is what the
+# creator previews).
 #
 # INTERIM looks for the devhouse 3 members (issue #117): nobody described
 # what they look like, so these are deliberately neutral and only chosen to
@@ -204,7 +204,7 @@ def frame_path(name, d, i):
 
 
 def compose_frame(look, d, frame, tables):
-    """One frame of a look (CharacterCreator.composeFrame): legs band → torso
+    """One frame of a look (CharacterCreator.composePixels): legs band → torso
     band → head (+ trailing hair) → beard overlay, each part recoloured with
     its own donor-scoped palette map."""
     donors, beards, cuts = tables
@@ -263,9 +263,9 @@ def compose_frame(look, d, frame, tables):
                     rgb = maps[part].get((r, g, b), (r, g, b)) if recolour(x, y, c) else (r, g, b)
                     px[x, y] = rgb + (a,)
 
-    # The four TIDY rules below are the only places this differs from the
-    # creator: its runtime composite has small artefacts that a live preview
-    # forgives and a shipped sprite should not have.
+    # The four TIDY rules below (the creator has the same four) clean up
+    # what a plain band cut leaves behind when the parts come from different
+    # donors.
     mixed_top = parts['top'] != parts['hair']
 
     # LEGS: everything from the waist down, plus this donor's legs-slot
@@ -275,7 +275,7 @@ def compose_frame(look, d, frame, tables):
     # TOP: the torso band, plus this donor's top-slot pixels above the
     # shoulder line. TIDY 1: where the top donor shows its own trousers
     # inside the torso band (damian's hem) and someone else's legs are worn,
-    # the creator leaves holes — fill them with the top's colour.
+    # nothing draws those pixels — fill the holes with the top's colour.
     top_anchor = hex_to_rgb(donors[parts['top']]['top'][0])
     for y in range(top_start, bottom_start):
         for x in range(W):

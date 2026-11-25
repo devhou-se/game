@@ -269,6 +269,105 @@ const tests = {
         assert.deepStrictEqual(bad, []);
     },
 
+    'the creator composes a mixed-donor character without holes, ticks or a flickering moustache (#128)'() {
+        const png = require('./png');
+        const frames = { front: 4, back: 4, side: 2 };
+        const load = (name, dir, f) => png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', `${name}_${dir}_frame_${f}.png`)));
+        const compose = (look, dir, f) => {
+            const src = {};
+            for (const part of ['hair', 'top', 'legs', 'beard']) if (look.parts[part]) src[part] = load(look.parts[part], dir, f);
+            return game('CharacterCreator.composePixels')(src, look, dir, f);
+        };
+        const at = (img, x, y) => Array.from(img.data.subarray((y * img.width + x) * 4, (y * img.width + x) * 4 + 4));
+        // same picture: same alpha everywhere, same colour wherever something is drawn
+        const same = (a, b) => {
+            for (let i = 0; i < a.data.length; i += 4) {
+                if (a.data[i + 3] !== b.data[i + 3]) return false;
+                if (a.data[i + 3] && (a.data[i] !== b.data[i] || a.data[i + 1] !== b.data[i + 1] || a.data[i + 2] !== b.data[i + 2])) return false;
+            }
+            return true;
+        };
+        const look = (hair, top, legs, colors) => ({ parts: { hair, top, legs, beard: null },
+            colors: Object.assign({ skin: '#f6c39a', hair: '#3c2e20', top: '#3a6fd8', legs: '#2b2b33', beard: null }, colors) });
+
+        // one donor for every part, nothing recoloured: the composite IS the donor sprite (the tidy rules touch nothing)
+        for (const name of game('Object.keys(CharacterCreator.DONORS)')) {
+            const own = { parts: { hair: name, top: name, legs: name, beard: null }, colors: {} };
+            for (const [dir, n] of Object.entries(frames)) {
+                for (let f = 0; f < n; f++) {
+                    assert.ok(same(compose(own, dir, f), load(name, dir, f)), `${name}_${dir}_${f} composed from itself changed`);
+                }
+            }
+        }
+
+        // 1. damian's top over someone else's legs: his own trouser pixels in the torso band are filled, not holes
+        const cuts = JSON.parse(game('JSON.stringify(CharacterCreator.CUTS)'));
+        for (const [dir, n] of Object.entries(frames)) {
+            for (let f = 0; f < n; f++) {
+                const out = compose(look('james', 'damian', 'bailey'), dir, f), top = load('damian', dir, f);
+                for (let y = cuts[dir].top[f]; y < cuts[dir].bottom[f]; y++) {
+                    for (let x = 0; x < out.width; x++) {
+                        if (at(top, x, y)[3]) assert.ok(at(out, x, y)[3], `hole at ${x},${y} of ${dir} frame ${f}`);
+                    }
+                }
+            }
+        }
+        // 2. james's head on another top, side frame 1: the outline of his own high sleeve is gone
+        const side = compose(look('james', 'bailey', 'bailey'), 'side', 1);
+        const wearsIt = load('bailey', 'side', 1);
+        for (let y = 32; y < 36; y++) {
+            for (let x = 16; x < 20; x++) assert.ok(!at(side, x, y)[3] || at(wearsIt, x, y)[3], `stray sleeve outline at ${x},${y}`);
+        }
+        // 3. dylan's head with dyed hair: the inside of his open mouth keeps its colour in every frame
+        const dark = [0x1c, 0x15, 0x0e, 255];
+        let mouths = 0;
+        for (const [dir, f] of [['front', 1], ['front', 3], ['side', 0], ['side', 1]]) {
+            const out = compose(look('dylan', 'dylan', 'dylan', { hair: '#ff7eb6' }), dir, f), own = load('dylan', dir, f);
+            for (let p = 0; p < out.width * out.height; p++) {
+                const x = p % out.width, y = (p - x) / out.width;
+                if (at(own, x, y).join() !== '229,59,68,255') continue;      // a mouth pixel
+                for (const [nx, ny] of [[x - 2, y], [x + 2, y], [x, y - 2], [x, y + 2]]) {
+                    if (at(own, nx, ny).join() === dark.join()) { mouths++; assert.deepStrictEqual(at(out, nx, ny), dark, `${dir} ${f}: mouth interior at ${nx},${ny} dyed`); }
+                }
+            }
+        }
+        assert.ok(mouths > 0, 'dylan has no open-mouth pixels to check');
+        // 4. the shoulder line is closed: an outline pixel the top donor draws right above its own shirt is there,
+        //    however narrow the head donor's shoulders are
+        const donors = JSON.parse(game('JSON.stringify(CharacterCreator.DONORS)'));
+        const hex = (px) => '#' + px.slice(0, 3).map((v) => v.toString(16).padStart(2, '0')).join('');
+        let closed = 0;
+        for (const hair of Object.keys(donors)) {
+            for (const top of Object.keys(donors).filter((t) => t !== hair)) {
+                for (const [dir, n] of Object.entries(frames)) {
+                    for (let f = 0; f < n; f++) {
+                        const out = compose(look(hair, top, top), dir, f), t = load(top, dir, f), h = load(hair, dir, f);
+                        for (let y = cuts[dir].top[f] - 2; y < cuts[dir].top[f]; y++) {
+                            for (let x = 0; x < out.width; x++) {
+                                if (hex(at(t, x, y)) !== '#000000' || !at(t, x, y)[3] || !donors[top].top.includes(hex(at(t, x, y + 2)))) continue;
+                                assert.ok(at(out, x, y)[3], `${hair} head / ${top} top ${dir} ${f}: open shoulder line at ${x},${y}`);
+                                if (hex(at(h, x, y)) !== '#000000') closed++;      // not simply the head donor's own outline
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert.ok(closed > 0, 'no donor pair has shoulders of different widths: the check tests nothing');
+
+        // tools/generate_cast.py is a port of the same compose: the frames it baked are what the creator draws
+        const py = fs.readFileSync(path.join(__dirname, 'generate_cast.py'), 'utf8');
+        const looks = JSON.parse(py.match(/^LOOKS = (\{[\s\S]*?\n\})\n/m)[1].replace(/'/g, '"').replace(/\bNone\b/g, 'null').replace(/,(\s*[}\]])/g, '$1'));
+        assert.ok(Object.keys(looks).length > 0);
+        for (const [name, l] of Object.entries(looks)) {
+            for (const [dir, n] of Object.entries(frames)) {
+                for (let f = 0; f < n; f++) {
+                    assert.ok(same(compose(l, dir, f), load(name, dir, f)), `${name}_${dir}_frame_${f}.png is not what the creator composes for that look`);
+                }
+            }
+        }
+    },
+
     'the retired office-bin sprite is gone, and nothing still points at its palette slot'() {
         const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
         const key = 'office-bin_0_0';

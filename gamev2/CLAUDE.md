@@ -490,8 +490,8 @@ creator's composite (head / torso / legs / beard donors + recolours), run offlin
 ```
 
 - **The looks are one table**, `LOOKS` at the top of the tool (same shape as a creation saved by the
-  creator, so a look can be designed in the game and copied over; the bake differs from the creator's
-  preview only by the `TIDY` rules below). Today, all placeholders — nobody has
+  creator, so a look can be designed in the game and copied over; the bake is what the creator
+  previews). Today, all placeholders — nobody has
   described what they look like:
 
   | name | head | hair | top | legs | beard | skin |
@@ -500,11 +500,13 @@ creator's composite (head / torso / legs / beard donors + recolours), run offlin
   | sam | dylan | `#8a5a2b` light brown | bailey, `#7e4fc9` purple | julia, `#8a5a2b` brown | none | `#fdcba2` |
   | xander | james | `#b0491f` auburn | damian, `#d9d9d9` off-white | julia, `#032e48` navy | bailey's, `#b0491f` | `#f4bc8e` |
 
-- **Faithful port, read not copied**: the compose is `CharacterCreator.composeFrame` line for line, and
+- **Faithful port, read not copied**: the compose is `CharacterCreator.composePixels` line for line (the DOM-free
+  half of `composeFrame`), and
   `DONORS` / `BEARDS` / `CUTS` are parsed out of `src/CharacterCreator.js` at run time, so those tables
-  cannot drift (the tool exits if it cannot find them). The output is not pixel-identical to the creator's,
-  though: it differs in four marked `TIDY` rules that remove
-  artefacts the runtime creator still has: holes where the top donor shows its own trousers in the torso band
+  cannot drift (the tool exits if it cannot find them). The output is pixel-identical to the creator's
+  (a unit test composes every look with the game's code and compares it with the baked PNGs — change one
+  side and port it to the other). Both carry four marked `TIDY` rules that remove
+  the artefacts of a plain band cut between different donors: holes where the top donor shows its own trousers in the torso band
   (damian's hem), the stray outline of the head donor's own high sleeve (james, side frame 1), mouth-interior
   pixels recoloured as hair (dylan — a moustache that flickers with the walk cycle), and an open shoulder
   line where the head donor's shoulders are narrower than the top worn.

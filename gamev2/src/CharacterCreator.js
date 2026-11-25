@@ -277,17 +277,16 @@ class CharacterCreator {
         return ctx.getImageData(0, 0, c.width, c.height);
     }
 
+    /** The one mouth colour every cast sprite uses. */
+    static MOUTH = 0xe53b44;
+
     /**
      * Compose one frame of the creation onto a fresh canvas:
      * legs band → torso band → head (+ trailing hair) → beard overlay.
      * Each part recoloured with its own donor-scoped palette map.
      */
     static composeFrame(scene, data, dir, frame) {
-        const { parts, colors } = data;
-        const cuts = CharacterCreator.CUTS[dir];
-        const topStart = cuts.top[frame];
-        const bottomStart = cuts.bottom[frame];
-
+        const { parts } = data;
         const src = {};
         for (const part of ['hair', 'top', 'legs']) {
             src[part] = CharacterCreator.frameData(scene, `${parts[part]}_${dir}_frame_${frame}`);
@@ -296,6 +295,31 @@ class CharacterCreator {
         if (parts.beard) {
             src.beard = CharacterCreator.frameData(scene, `${parts.beard}_${dir}_frame_${frame}`);
         }
+        const { width: W, height: H, data: pixels } = CharacterCreator.composePixels(src, data, dir, frame);
+        const out = new ImageData(W, H);
+        out.data.set(pixels);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        canvas.getContext('2d').putImageData(out, 0, 0);
+        return canvas;
+    }
+
+    /**
+     * The compose itself, on plain pixel buffers (no DOM, so the unit tests
+     * and tools/generate_cast.py's port can be held to it): src is
+     * {hair, top, legs, beard?}, each {width, height, data: RGBA bytes} of
+     * that donor's frame. Returns {width, height, data}.
+     *
+     * The four TIDY rules clean up what a plain band cut leaves behind when
+     * the parts come from different donors.
+     */
+    static composePixels(src, data, dir, frame) {
+        const { parts, colors } = data;
+        const cuts = CharacterCreator.CUTS[dir];
+        const topStart = cuts.top[frame];
+        const bottomStart = cuts.bottom[frame];
         const W = src.hair.width, H = src.hair.height;
 
         // per-part recolour maps (skin applies everywhere so donors match)
@@ -322,15 +346,17 @@ class CharacterCreator {
             beard: parts.beard ? CharacterCreator.classifier(parts.beard) : null,
         };
 
-        const out = new ImageData(W, H);
-        const put = (x, y, d, i, map) => {
-            const int = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
-            const t = map[int];
+        const out = new Uint8ClampedArray(W * H * 4);
+        const drawn = (x, y) => out[(y * W + x) * 4 + 3] !== 0;
+        const rgbAt = (d, i) => (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
+        // recolour: false keeps the donor's own colour
+        const put = (x, y, d, i, map, recolour = true) => {
+            const t = recolour ? map[rgbAt(d, i)] : null;
             const o = (y * W + x) * 4;
-            out.data[o] = t ? t[0] : d[i];
-            out.data[o + 1] = t ? t[1] : d[i + 1];
-            out.data[o + 2] = t ? t[2] : d[i + 2];
-            out.data[o + 3] = d[i + 3];
+            out[o] = t ? t[0] : d[i];
+            out[o + 1] = t ? t[1] : d[i + 1];
+            out[o + 2] = t ? t[2] : d[i + 2];
+            out[o + 3] = d[i + 3];
         };
         const each = (part, fn) => {
             const d = src[part].data;
@@ -339,10 +365,29 @@ class CharacterCreator {
                 for (let x = 0; x < W; x++) {
                     const i = (y * W + x) * 4;
                     if (d[i + 3] === 0) continue;
-                    fn(x, y, d, i, c[(d[i] << 16) | (d[i + 1] << 8) | d[i + 2]]);
+                    fn(x, y, d, i, c[rgbAt(d, i)]);
                 }
             }
         };
+        // Slot of a donor pixel: '' for an opaque unclassified one (outline,
+        // eyes, mouth), null for transparent / out of frame.
+        const klass = (part, x, y) => {
+            if (x < 0 || y < 0 || x >= W || y >= H) return null;
+            const d = src[part].data, i = (y * W + x) * 4;
+            return d[i + 3] === 0 ? null : (cls[part][rgbAt(d, i)] || '');
+        };
+        // Does any donor pixel within one art pixel (the cast is drawn on a
+        // 2px grid) of (x,y) pass test(klass, y, rgbInt)?
+        const near = (part, x, y, test) => {
+            const d = src[part].data;
+            for (let ny = Math.max(0, y - 2); ny < Math.min(H, y + 3); ny++) {
+                for (let nx = Math.max(0, x - 2); nx < Math.min(W, x + 3); nx++) {
+                    if (test(klass(part, nx, ny), ny, rgbAt(d, (ny * W + nx) * 4))) return true;
+                }
+            }
+            return false;
+        };
+        const mixedTop = parts.top !== parts.hair;
 
         // LEGS: everything from the waist down, plus this donor's legs-slot
         // pixels that poke above it (damian's high shoe tops)
@@ -350,30 +395,59 @@ class CharacterCreator {
             if (c === 'hair') return;
             if (y >= bottomStart || (c === 'legs' && y >= topStart)) put(x, y, d, i, maps.legs);
         });
+        // TIDY 1: where the top donor shows its own trousers inside the torso
+        // band (damian's hem) and someone else's legs are worn, nothing draws
+        // those pixels — fill the holes with the top's colour.
+        const topAnchor = CharacterCreator.rgbInt(D[parts.top].top[0]);
+        const hem = maps.top[topAnchor] || [(topAnchor >> 16) & 255, (topAnchor >> 8) & 255, topAnchor & 255];
+        for (let y = topStart; y < bottomStart; y++) {
+            for (let x = 0; x < W; x++) {
+                if (klass('top', x, y) === 'legs' && !drawn(x, y)) out.set([hem[0], hem[1], hem[2], 255], (y * W + x) * 4);
+            }
+        }
         // TOP: the torso band (arms included — skin recolours globally), plus
         // this donor's top-slot pixels above the shoulder line (high sleeves)
         each('top', (x, y, d, i, c) => {
             if (c === 'hair' || c === 'legs') return;
             if ((y >= topStart && y < bottomStart) || (c === 'top' && y < topStart)) put(x, y, d, i, maps.top);
         });
+        // TIDY 2: the outline of the head donor's own high sleeve (james, side
+        // view) is not part of the head — with another top it is a stray tick.
+        const sleeveOutline = (x, y) => mixedTop && klass('hair', x, y) === ''
+            && near('hair', x, y, (k, ny) => k === 'top' && ny < topStart)
+            && !near('hair', x, y, (k) => k === 'skin' || k === 'hair');
+        // TIDY 3: hair-coloured pixels touching the mouth are the inside of an
+        // open mouth (dylan), not hair — recoloured they read as a moustache
+        // that comes and goes with the walk cycle. Heads with facial hair are
+        // exempt: there the pixels round the mouth really are beard.
+        const mouthInside = (x, y, c) => c === 'hair' && !CharacterCreator.BEARDS.includes(parts.hair)
+            && near('hair', x, y, (k, ny, rgb) => rgb === CharacterCreator.MOUTH);
         // HEAD: everything above the shoulder line except this donor's own
         // clothing, plus hair pixels at ANY row (long hair over the shirt)
         each('hair', (x, y, d, i, c) => {
             if (c === 'top' || c === 'legs') return;
-            if (y < topStart || c === 'hair') put(x, y, d, i, maps.hair);
+            if ((y < topStart || c === 'hair') && !sleeveOutline(x, y)) put(x, y, d, i, maps.hair, !mouthInside(x, y, c));
         });
+        // TIDY 4: close the shoulder line. The row of outline above the torso
+        // band comes from the head donor; where its shoulders are narrower
+        // than the top worn, the top's upper edge is left bare — borrow those
+        // outline pixels from the top donor.
+        if (mixedTop) {
+            for (let y = Math.max(0, topStart - 2); y < topStart; y++) {
+                for (let x = 0; x < W; x++) {
+                    if (!drawn(x, y) && klass('top', x, y) === '' && drawn(x, y + 2) && klass('top', x, y + 2) === 'top') {
+                        put(x, y, src.top.data, (y * W + x) * 4, maps.top, false);
+                    }
+                }
+            }
+        }
         // BEARD: the donor's facial-hair pixels, on top of the new face
         if (parts.beard && src.beard) {
             each('beard', (x, y, d, i, c) => {
                 if (c === 'hair' && CharacterCreator.inBeardBox(dir, frame, x, y)) put(x, y, d, i, maps.beard);
             });
         }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = W;
-        canvas.height = H;
-        canvas.getContext('2d').putImageData(out, 0, 0);
-        return canvas;
+        return { width: W, height: H, data: out };
     }
 
     /** Compose one frame and register it as a texture. Returns success. */
