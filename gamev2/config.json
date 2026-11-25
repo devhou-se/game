@@ -4766,6 +4766,14 @@
               "gridX": 4,
               "gridY": 9,
               "photo": "590",
+              "posts": [
+                {
+                  "id": "590",
+                  "lines": 4,
+                  "title": "The Plains of Shiga",
+                  "url": "https://blog.devhou.se/590/"
+                }
+              ],
               "present": true
             },
             "2025-11-04": {
@@ -4778,6 +4786,14 @@
               "gridX": 4,
               "gridY": 9,
               "photo": "615",
+              "posts": [
+                {
+                  "id": "615",
+                  "lines": 4,
+                  "title": "Ah, the serenity!",
+                  "url": "https://blog.devhou.se/615/"
+                }
+              ],
               "present": true
             },
             "2025-11-05": {
@@ -4793,6 +4809,14 @@
               "gridX": 4,
               "gridY": 9,
               "photo": "681",
+              "posts": [
+                {
+                  "id": "681",
+                  "lines": 4,
+                  "title": "Back on the road",
+                  "url": "https://blog.devhou.se/681/"
+                }
+              ],
               "present": true
             },
             "2025-11-08": {
@@ -4805,6 +4829,14 @@
               "gridX": 19,
               "gridY": 7,
               "photo": "694",
+              "posts": [
+                {
+                  "id": "694",
+                  "lines": 4,
+                  "title": "Leg Amputation",
+                  "url": "https://blog.devhou.se/694/"
+                }
+              ],
               "present": true
             }
           }
@@ -4839,6 +4871,14 @@
               "gridX": 4,
               "gridY": 10,
               "photo": "631",
+              "posts": [
+                {
+                  "id": "631",
+                  "lines": 4,
+                  "title": "The old village",
+                  "url": "https://blog.devhou.se/631/"
+                }
+              ],
               "present": true
             },
             "2025-11-06": {
@@ -4851,6 +4891,14 @@
               "gridX": 4,
               "gridY": 9,
               "photo": "653",
+              "posts": [
+                {
+                  "id": "653",
+                  "lines": 4,
+                  "title": "Onsens to cocktails",
+                  "url": "https://blog.devhou.se/653/"
+                }
+              ],
               "present": true
             },
             "2025-11-07": {
@@ -5623,6 +5671,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "568",
+              "posts": [
+                {
+                  "id": "568",
+                  "lines": 4,
+                  "title": "The Mighty Hills of Otanacho",
+                  "url": "https://blog.devhou.se/568/"
+                }
+              ],
               "present": true
             },
             "2025-11-03": {
@@ -5641,6 +5697,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "636",
+              "posts": [
+                {
+                  "id": "636",
+                  "lines": 4,
+                  "title": "Stranded in Takashima",
+                  "url": "https://blog.devhou.se/636/"
+                }
+              ],
               "present": true
             },
             "2025-11-07": {
@@ -13418,6 +13482,14 @@
               "gridX": 6,
               "gridY": 10,
               "photo": "520",
+              "posts": [
+                {
+                  "id": "520",
+                  "lines": 4,
+                  "title": "Nikka Whisky Distillery",
+                  "url": "https://blog.devhou.se/520/"
+                }
+              ],
               "present": true
             },
             "2025-11-01": {
@@ -13442,6 +13514,14 @@
               "gridX": 23,
               "gridY": 19,
               "photo": "662",
+              "posts": [
+                {
+                  "id": "662",
+                  "lines": 4,
+                  "title": "Kanazawa Castle",
+                  "url": "https://blog.devhou.se/662/"
+                }
+              ],
               "present": true
             },
             "2025-11-09": {
@@ -13454,6 +13534,14 @@
               "gridX": 24,
               "gridY": 8,
               "photo": "707",
+              "posts": [
+                {
+                  "id": "707",
+                  "lines": 4,
+                  "title": "A couple last days in Kanazawa",
+                  "url": "https://blog.devhou.se/707/"
+                }
+              ],
               "present": true
             },
             "2025-11-12": {
@@ -13527,6 +13615,14 @@
               "gridX": 29,
               "gridY": 1,
               "photo": "484",
+              "posts": [
+                {
+                  "id": "484",
+                  "lines": 4,
+                  "title": "\u677e\u5cf6\u6d77\u5cb8\u3068\u745e\u9cf3\u6bbf",
+                  "url": "https://blog.devhou.se/484/"
+                }
+              ],
               "present": true
             },
             "2025-10-28": {
@@ -13542,6 +13638,14 @@
               "gridX": 29,
               "gridY": 1,
               "photo": "509",
+              "posts": [
+                {
+                  "id": "509",
+                  "lines": 4,
+                  "title": "\u5c71\u5bfa\u3068\u30cb\u30c3\u30ab\u30a6\u30a4\u30b9\u30ad\u30fc",
+                  "url": "https://blog.devhou.se/509/"
+                }
+              ],
               "present": true
             },
             "2025-10-30": {
@@ -13575,6 +13679,14 @@
               "gridX": 23,
               "gridY": 20,
               "photo": "669",
+              "posts": [
+                {
+                  "id": "669",
+                  "lines": 4,
+                  "title": "\u6771\u8336\u5c4b\u753a",
+                  "url": "https://blog.devhou.se/669/"
+                }
+              ],
               "present": true
             },
             "2025-11-08": {
@@ -13590,6 +13702,14 @@
               "gridX": 29,
               "gridY": 1,
               "photo": "712",
+              "posts": [
+                {
+                  "id": "712",
+                  "lines": 4,
+                  "title": "\u535a\u591a\u306e\u5bfa",
+                  "url": "https://blog.devhou.se/712/"
+                }
+              ],
               "present": true
             },
             "2025-11-10": {
@@ -13605,6 +13725,14 @@
               "gridX": 25,
               "gridY": 8,
               "photo": "740",
+              "posts": [
+                {
+                  "id": "740",
+                  "lines": 4,
+                  "title": "\u592a\u5bb0\u5e9c\u5929\u6e80\u5bae",
+                  "url": "https://blog.devhou.se/740/"
+                }
+              ],
               "present": true
             },
             "2025-11-12": {
@@ -13623,6 +13751,14 @@
               "gridX": 22,
               "gridY": 7,
               "photo": "764",
+              "posts": [
+                {
+                  "id": "764",
+                  "lines": 4,
+                  "title": "\u5948\u826f",
+                  "url": "https://blog.devhou.se/764/"
+                }
+              ],
               "present": true
             },
             "2025-11-15": {
@@ -13660,6 +13796,14 @@
               "gridX": 6,
               "gridY": 10,
               "photo": "491",
+              "posts": [
+                {
+                  "id": "491",
+                  "lines": 4,
+                  "title": "Sendai day 1",
+                  "url": "https://blog.devhou.se/491/"
+                }
+              ],
               "present": true
             },
             "2025-10-29": {
@@ -13708,6 +13852,14 @@
               "gridX": 28,
               "gridY": 0,
               "photo": "727",
+              "posts": [
+                {
+                  "id": "727",
+                  "lines": 4,
+                  "title": "Fukuoka darts",
+                  "url": "https://blog.devhou.se/727/"
+                }
+              ],
               "present": true
             },
             "2025-11-12": {
@@ -17846,6 +17998,14 @@
               "gridX": 10,
               "gridY": 20,
               "photo": "515",
+              "posts": [
+                {
+                  "id": "515",
+                  "lines": 4,
+                  "title": "Whiskey and sushi",
+                  "url": "https://blog.devhou.se/515/"
+                }
+              ],
               "present": true
             },
             "2025-10-31": {
@@ -17870,6 +18030,14 @@
               "gridX": 10,
               "gridY": 20,
               "photo": "611",
+              "posts": [
+                {
+                  "id": "611",
+                  "lines": 4,
+                  "title": "Rainy Toyama",
+                  "url": "https://blog.devhou.se/611/"
+                }
+              ],
               "present": true
             },
             "2025-11-05": {
@@ -17891,6 +18059,14 @@
               "gridX": 10,
               "gridY": 20,
               "photo": "686",
+              "posts": [
+                {
+                  "id": "686",
+                  "lines": 4,
+                  "title": "Exploring Kanazawa 2",
+                  "url": "https://blog.devhou.se/686/"
+                }
+              ],
               "present": true
             },
             "2025-11-09": {
@@ -17976,6 +18152,14 @@
               "gridX": 10,
               "gridY": 21,
               "photo": "768",
+              "posts": [
+                {
+                  "id": "768",
+                  "lines": 4,
+                  "title": "\u5927\u962a",
+                  "url": "https://blog.devhou.se/768/"
+                }
+              ],
               "present": true
             }
           }
@@ -18010,6 +18194,14 @@
               "gridX": 10,
               "gridY": 20,
               "photo": "750",
+              "posts": [
+                {
+                  "id": "750",
+                  "lines": 4,
+                  "title": "Fukuoka",
+                  "url": "https://blog.devhou.se/750/"
+                }
+              ],
               "present": true
             },
             "2025-11-16": {
@@ -24118,6 +24310,14 @@
               "gridX": 21,
               "gridY": 13,
               "photo": "505",
+              "posts": [
+                {
+                  "id": "505",
+                  "lines": 4,
+                  "title": "Aoba Castle and Baseball at HUB",
+                  "url": "https://blog.devhou.se/505/"
+                }
+              ],
               "present": true
             },
             "2025-10-30": {
@@ -24182,6 +24382,14 @@
               "gridX": 21,
               "gridY": 13,
               "photo": "652",
+              "posts": [
+                {
+                  "id": "652",
+                  "lines": 4,
+                  "title": "\u91d1\u6ca2\u306e\u9577\u753a\u3068\u57ce",
+                  "url": "https://blog.devhou.se/652/"
+                }
+              ],
               "present": true
             },
             "2025-11-07": {
@@ -24212,6 +24420,14 @@
               "gridX": 21,
               "gridY": 13,
               "photo": "754",
+              "posts": [
+                {
+                  "id": "754",
+                  "lines": 4,
+                  "title": "\u59eb\u8def\u57ce",
+                  "url": "https://blog.devhou.se/754/"
+                }
+              ],
               "present": true
             },
             "2025-11-14": {
@@ -24252,6 +24468,14 @@
               "gridX": 21,
               "gridY": 13,
               "photo": "677",
+              "posts": [
+                {
+                  "id": "677",
+                  "lines": 4,
+                  "title": "Exploring Kanazawa 1",
+                  "url": "https://blog.devhou.se/677/"
+                }
+              ],
               "present": true
             },
             "2025-11-08": {
@@ -27541,6 +27765,14 @@
               "gridX": 23,
               "gridY": 3,
               "photo": "496",
+              "posts": [
+                {
+                  "id": "496",
+                  "lines": 4,
+                  "title": "\u4ed9\u53f0\u306b2\u65e5",
+                  "url": "https://blog.devhou.se/496/"
+                }
+              ],
               "present": true
             },
             "2025-10-29": {
@@ -27559,6 +27791,14 @@
               "gridX": 33,
               "gridY": 10,
               "photo": "535",
+              "posts": [
+                {
+                  "id": "535",
+                  "lines": 4,
+                  "title": "\u6c5f\u6238\u6771\u4eac\u305f\u3066\u3082\u306e\u5712",
+                  "url": "https://blog.devhou.se/535/"
+                }
+              ],
               "present": true
             },
             "2025-11-01": {
@@ -27595,6 +27835,14 @@
               "gridX": 33,
               "gridY": 10,
               "photo": "731",
+              "posts": [
+                {
+                  "id": "731",
+                  "lines": 4,
+                  "title": "\u798f\u5ca1\u30bf\u30ef\u30fc",
+                  "url": "https://blog.devhou.se/731/"
+                }
+              ],
               "present": true
             },
             "2025-11-11": {
@@ -27610,6 +27858,14 @@
               "gridX": 33,
               "gridY": 10,
               "photo": "745",
+              "posts": [
+                {
+                  "id": "745",
+                  "lines": 4,
+                  "title": "\u535a\u591a\u304b\u3089\u5ca1\u5c71\u307e\u3067",
+                  "url": "https://blog.devhou.se/745/"
+                }
+              ],
               "present": true
             },
             "2025-11-13": {
@@ -27653,6 +27909,14 @@
               "gridX": 23,
               "gridY": 4,
               "photo": "501",
+              "posts": [
+                {
+                  "id": "501",
+                  "lines": 4,
+                  "title": "Kiwi Apple Tonic",
+                  "url": "https://blog.devhou.se/501/"
+                }
+              ],
               "present": true
             },
             "2025-10-30": {
@@ -36755,6 +37019,14 @@
               "gridX": 30,
               "gridY": 22,
               "photo": "578",
+              "posts": [
+                {
+                  "id": "578",
+                  "lines": 4,
+                  "title": "Shibuya",
+                  "url": "https://blog.devhou.se/578/"
+                }
+              ],
               "present": true
             },
             "2025-11-04": {
@@ -36767,6 +37039,14 @@
               "gridX": 32,
               "gridY": 21,
               "photo": "625",
+              "posts": [
+                {
+                  "id": "625",
+                  "lines": 4,
+                  "title": "Chilling, Capybaras, Curry",
+                  "url": "https://blog.devhou.se/625/"
+                }
+              ],
               "present": true
             },
             "2025-11-05": {
@@ -36938,6 +37218,14 @@
               "gridX": 35,
               "gridY": 37,
               "photo": "545",
+              "posts": [
+                {
+                  "id": "545",
+                  "lines": 4,
+                  "title": "Last day in Tokyo",
+                  "url": "https://blog.devhou.se/545/"
+                }
+              ],
               "present": true
             },
             "2025-11-02": {
@@ -37774,6 +38062,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "519",
+              "posts": [
+                {
+                  "id": "519",
+                  "lines": 4,
+                  "title": "\u4ed9\u53f0\u304b\u3089\u6771\u4eac\u307e\u3067",
+                  "url": "https://blog.devhou.se/519/"
+                }
+              ],
               "present": true
             },
             "2025-10-31": {
@@ -37789,6 +38085,14 @@
               "gridX": 1,
               "gridY": 7,
               "photo": "544",
+              "posts": [
+                {
+                  "id": "544",
+                  "lines": 4,
+                  "title": "\u300c\u30c7\u30a3\u30fc\u30e9\u30fc\u30ba\u30c1\u30e7\u30a4\u30b9\u300d\u3092\u59cb\u3081\u3066",
+                  "url": "https://blog.devhou.se/544/"
+                }
+              ],
               "present": true
             },
             "2025-11-02": {
@@ -37801,6 +38105,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "576",
+              "posts": [
+                {
+                  "id": "576",
+                  "lines": 4,
+                  "title": "\u8efd\u4e95\u6ca2\u304b\u3089\u5bcc\u5c71\u307e\u3067",
+                  "url": "https://blog.devhou.se/576/"
+                }
+              ],
               "present": true
             },
             "2025-11-03": {
@@ -37825,6 +38137,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "693",
+              "posts": [
+                {
+                  "id": "693",
+                  "lines": 4,
+                  "title": "\u91d1\u6ca2\u304b\u3089\u798f\u5ca1\u307e\u3067",
+                  "url": "https://blog.devhou.se/693/"
+                }
+              ],
               "present": true
             },
             "2025-11-09": {
@@ -37880,6 +38200,14 @@
               "gridX": 1,
               "gridY": 6,
               "photo": "419",
+              "posts": [
+                {
+                  "id": "419",
+                  "lines": 4,
+                  "title": "\u65e5\u672c\u3078\u306e\u671f\u5f85 (\u30c7\u30d9\u30fc\u30cf\u30a6\u30b9 2)",
+                  "url": "https://blog.devhou.se/419/"
+                }
+              ],
               "present": true
             },
             "2025-10-26": {
@@ -37931,6 +38259,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "642",
+              "posts": [
+                {
+                  "id": "642",
+                  "lines": 4,
+                  "title": "Travels to Kanazawa",
+                  "url": "https://blog.devhou.se/642/"
+                }
+              ],
               "present": true
             },
             "2025-11-06": {
@@ -37952,6 +38288,14 @@
               "gridX": 1,
               "gridY": 6,
               "photo": "769",
+              "posts": [
+                {
+                  "id": "769",
+                  "lines": 4,
+                  "title": "Okayama, Himeji, Osaka, Tokyo",
+                  "url": "https://blog.devhou.se/769/"
+                }
+              ],
               "present": true
             },
             "2025-11-18": {
@@ -38016,6 +38360,14 @@
               "gridX": 1,
               "gridY": 6,
               "photo": "549",
+              "posts": [
+                {
+                  "id": "549",
+                  "lines": 4,
+                  "title": "Tilted Tokyo",
+                  "url": "https://blog.devhou.se/549/"
+                }
+              ],
               "present": true
             },
             "2025-11-02": {
@@ -38068,6 +38420,14 @@
               "gridX": 2,
               "gridY": 5,
               "photo": "480",
+              "posts": [
+                {
+                  "id": "480",
+                  "lines": 4,
+                  "title": "Travelling to Sendai",
+                  "url": "https://blog.devhou.se/480/"
+                }
+              ],
               "present": true
             },
             "2025-10-28": {
@@ -38089,6 +38449,14 @@
               "gridX": 1,
               "gridY": 6,
               "photo": "528",
+              "posts": [
+                {
+                  "id": "528",
+                  "lines": 4,
+                  "title": "Trip to Tokyo",
+                  "url": "https://blog.devhou.se/528/"
+                }
+              ],
               "present": true
             },
             "2025-11-01": {
@@ -38125,6 +38493,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "719",
+              "posts": [
+                {
+                  "id": "719",
+                  "lines": 4,
+                  "title": "Flying to Fukuoka",
+                  "url": "https://blog.devhou.se/719/"
+                }
+              ],
               "present": true
             },
             "2025-11-10": {
@@ -38140,6 +38516,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "746",
+              "posts": [
+                {
+                  "id": "746",
+                  "lines": 4,
+                  "title": "Last day in Fukuoka",
+                  "url": "https://blog.devhou.se/746/"
+                }
+              ],
               "present": true
             }
           }
@@ -40133,6 +40517,14 @@
               "gridX": 20,
               "gridY": 19,
               "photo": "572",
+              "posts": [
+                {
+                  "id": "572",
+                  "lines": 4,
+                  "title": "Karuizawa mountains",
+                  "url": "https://blog.devhou.se/572/"
+                }
+              ],
               "present": true
             },
             "2025-11-03": {
@@ -40194,6 +40586,14 @@
               "gridX": 21,
               "gridY": 19,
               "photo": "610",
+              "posts": [
+                {
+                  "id": "610",
+                  "lines": 4,
+                  "title": "\u5bcc\u5c71\u304b\u3089\u767d\u5ddd\u90f7\u307e\u3067",
+                  "url": "https://blog.devhou.se/610/"
+                }
+              ],
               "present": true
             },
             "2025-11-05": {
@@ -40976,6 +41376,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "583",
+              "posts": [
+                {
+                  "id": "583",
+                  "lines": 4,
+                  "title": "Apple pies",
+                  "url": "https://blog.devhou.se/583/"
+                }
+              ],
               "present": true
             },
             "2025-11-04": {
@@ -41034,6 +41442,14 @@
               "gridX": 1,
               "gridY": 5,
               "photo": "635",
+              "posts": [
+                {
+                  "id": "635",
+                  "lines": 4,
+                  "title": "\u767d\u5ddd\u90f7\u304b\u3089\u91d1\u6ca2\u307e\u3067",
+                  "url": "https://blog.devhou.se/635/"
+                }
+              ],
               "present": true
             },
             "2025-11-06": {
