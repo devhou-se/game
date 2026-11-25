@@ -8,7 +8,10 @@ It draws a room with the game's depth rules and has four tools:
 - **Inspect** - click a cell to list every tile on it, with layer, depth and collision.
 - **Collision** - paint or erase solid cells on the `Colliders` layer.
 - **Transporter** - place a transporter, or click one to edit its target room, target cell and hidden flag.
-- **Spawn** - set the player's start cell.
+- **Spawn** - set the player's start cell (`player.startRoom/X/Y`). Since trips are data the game starts a
+  player at the `home` (or current `stays` cell) of the game date's trip in `config.trips`; `player.start*`
+  is only the fallback for a config with no trips, and the seed the achievements / `play.js check`
+  reachability use. Moving where the game opens means editing the trip's `home` in `config.json` too.
 
 The left panel switches rooms, changes a room's size in cells, and toggles
 layers, the collision overlay and the grid. Wheel zooms; shift-drag or

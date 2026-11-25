@@ -2484,7 +2484,176 @@
         }
       ],
       "name": "Asahikawa",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hey, I'm Bailey.",
+            "Asahikawa: the last few days of devhouse 3."
+          ],
+          "directionalSprites": {
+            "down": "bailey_front",
+            "left": "",
+            "right": "bailey_side",
+            "up": "bailey_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 29,
+          "gridY": 12,
+          "name": "Bailey",
+          "sprite": "bailey_front",
+          "stay": "Asahikawa",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Damian here.",
+            "Up from Sapporo for the last few days of the trip."
+          ],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 34,
+          "gridY": 13,
+          "name": "Damian",
+          "sprite": "damian_front",
+          "stay": "Asahikawa",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hello! I'm Dylan.",
+            "Ramen alley is just over there."
+          ],
+          "directionalSprites": {
+            "down": "dylan_front",
+            "left": "",
+            "right": "dylan_side",
+            "up": "dylan_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 24,
+          "gridY": 14,
+          "name": "Dylan",
+          "sprite": "dylan_front",
+          "stay": "Asahikawa",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hi, I'm Julia!",
+            "There's a shrine on this side of the frozen river."
+          ],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 24,
+          "gridY": 22,
+          "name": "Julia",
+          "sprite": "julia_front",
+          "stay": "Asahikawa",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hey, I'm Khoi.",
+            "Asahikawa, after a week in Sapporo."
+          ],
+          "directionalSprites": {
+            "down": "khoi_front",
+            "left": "",
+            "right": "khoi_side",
+            "up": "khoi_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 13,
+          "gridY": 14,
+          "name": "Khoi",
+          "sprite": "khoi_front",
+          "stay": "Asahikawa",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hi, I'm Sam!",
+            "Asahikawa, to finish the trip."
+          ],
+          "directionalSprites": {
+            "down": "sam_front",
+            "left": "",
+            "right": "sam_side",
+            "up": "sam_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 7,
+          "gridY": 15,
+          "name": "Sam",
+          "sprite": "sam_front",
+          "stay": "Asahikawa",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Xander here.",
+            "Asahikawa. Still devhouse 3."
+          ],
+          "directionalSprites": {
+            "down": "xander_front",
+            "left": "",
+            "right": "xander_side",
+            "up": "xander_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 31,
+          "gridY": 27,
+          "name": "Xander",
+          "sprite": "xander_front",
+          "stay": "Asahikawa",
+          "trip": "devhouse3"
+        }
+      ],
       "objects": [],
       "transporters": [
         {
@@ -16124,7 +16293,8 @@
             "2025-11-08": {
               "present": false
             }
-          }
+          },
+          "trip": "devhouse2"
         },
         {
           "autoFlip": {
@@ -34612,7 +34782,7 @@
           },
           "dialogue": [
             "Hey, I'm Khoi.",
-            "Devhouse 3 is on: Hokkaido, in the snow. I can't wait."
+            "Devhouse 3 is on: Hokkaido, in the snow."
           ],
           "directionalSprites": {
             "down": "khoi_front",
@@ -34625,7 +34795,9 @@
           "gridX": 38,
           "gridY": 8,
           "name": "Khoi",
-          "sprite": "khoi_front"
+          "sprite": "khoi_front",
+          "stay": "Sapporo",
+          "trip": "devhouse3"
         },
         {
           "autoFlip": {
@@ -34647,7 +34819,9 @@
           "gridX": 21,
           "gridY": 27,
           "name": "Sam",
-          "sprite": "sam_front"
+          "sprite": "sam_front",
+          "stay": "Sapporo",
+          "trip": "devhouse3"
         },
         {
           "autoFlip": {
@@ -34669,7 +34843,105 @@
           "gridX": 35,
           "gridY": 17,
           "name": "Xander",
-          "sprite": "xander_front"
+          "sprite": "xander_front",
+          "stay": "Sapporo",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hey, I'm Bailey.",
+            "Devhouse 3: a week in Sapporo, then on to Asahikawa."
+          ],
+          "directionalSprites": {
+            "down": "bailey_front",
+            "left": "",
+            "right": "bailey_side",
+            "up": "bailey_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 30,
+          "gridY": 11,
+          "name": "Bailey",
+          "sprite": "bailey_front",
+          "stay": "Sapporo",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Damian here.",
+            "Sapporo, in the snow, with the whole devhouse."
+          ],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 36,
+          "gridY": 12,
+          "name": "Damian",
+          "sprite": "damian_front",
+          "stay": "Sapporo",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hello! I'm Dylan.",
+            "Seven of us in Hokkaido this time."
+          ],
+          "directionalSprites": {
+            "down": "dylan_front",
+            "left": "",
+            "right": "dylan_side",
+            "up": "dylan_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 24,
+          "gridY": 15,
+          "name": "Dylan",
+          "sprite": "dylan_front",
+          "stay": "Sapporo",
+          "trip": "devhouse3"
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [
+            "Hi, I'm Julia!",
+            "That's the Sapporo Clock Tower behind me."
+          ],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 39,
+          "gridY": 19,
+          "name": "Julia",
+          "sprite": "julia_front",
+          "stay": "Sapporo",
+          "trip": "devhouse3"
         }
       ],
       "objects": [],
@@ -39991,7 +40263,8 @@
               "photo": null,
               "present": true
             }
-          }
+          },
+          "trip": "devhouse2"
         },
         {
           "autoFlip": {
@@ -40084,7 +40357,8 @@
             "2025-11-15": {
               "present": false
             }
-          }
+          },
+          "trip": "devhouse2"
         },
         {
           "autoFlip": {
@@ -40173,7 +40447,8 @@
             "2025-11-12": {
               "present": false
             }
-          }
+          },
+          "trip": "devhouse2"
         }
       ],
       "objects": [],
@@ -47934,6 +48209,61 @@
     "gravel-snow-autotile_corner-ne",
     "gravel-snow-autotile_edge-e",
     "gravel-snow-autotile_corner-se"
+  ],
+  "trips": [
+    {
+      "end": "2025-11-18",
+      "home": {
+        "room": "Tokyo",
+        "x": 29,
+        "y": 38
+      },
+      "id": "devhouse2",
+      "members": [
+        "bailey",
+        "damian",
+        "dylan",
+        "julia"
+      ],
+      "name": "devhouse 2",
+      "start": "2025-10-02",
+      "where": "Japan"
+    },
+    {
+      "end": "2027-02-28",
+      "home": {
+        "room": "Sapporo",
+        "x": 33,
+        "y": 12
+      },
+      "id": "devhouse3",
+      "members": [
+        "bailey",
+        "damian",
+        "dylan",
+        "julia",
+        "khoi",
+        "sam",
+        "xander"
+      ],
+      "name": "devhouse 3",
+      "start": "2027-02-18",
+      "stays": [
+        {
+          "from": "2027-02-18",
+          "room": "Sapporo",
+          "x": 33,
+          "y": 12
+        },
+        {
+          "from": "2027-02-25",
+          "room": "Asahikawa",
+          "x": 31,
+          "y": 12
+        }
+      ],
+      "where": "Hokkaido"
+    }
   ],
   "version": 2
 }

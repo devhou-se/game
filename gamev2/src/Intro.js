@@ -7,7 +7,7 @@
  *   2. the basic controls, drawn as keycaps (or as the on-screen buttons when
  *      touch controls are active)
  *   3. where to start — there is no quest system, so it points at real
- *      things: the friends around Tokyo, exploring, and Paint the Board
+ *      things: where the friends are today, exploring, and Paint the Board
  * Fishing controls and map travel are deliberately absent (the first is
  * taught when a rod is bought, the second is a debug feature).
  *
@@ -62,6 +62,19 @@ class Intro {
         } catch (e) { return false; }
     }
 
+    /**
+     * Is this a new player — one the intro has been (or is about to be)
+     * offered to and who has not finished it? Same test as shouldAutoShow,
+     * without `?nointro` and without touching the gate. GameScene asks
+     * before it places the player (Trips.startFor).
+     */
+    static isNewPlayer() {
+        try {
+            const seen = localStorage.getItem(Intro.SEEN_KEY);
+            return seen !== '1' && (seen === 'pending' || CharacterCreator.shouldAutoShow());
+        } catch (e) { return false; }
+    }
+
     isVisible() { return this.visible; }
 
     show(opts = {}) {
@@ -106,11 +119,53 @@ class Intro {
     }
 
     /**
-     * The friends by name ("Bailey"): the same CharacterSelect.lineup() the
-     * cast row draws, so the sentence under the row names who is in it.
+     * The friends on `date`, as sprite base names: CharacterSelect.lineup()
+     * of that date's trip (config.members when there are no trips) —
+     * alphabetical, only names with a sprite set, never James. The cast row
+     * draws these and the sentence under it names them, so the two agree.
      */
-    members() {
-        return CharacterSelect.lineup(this.scene.config).map(n => n.charAt(0).toUpperCase() + n.slice(1));
+    static cast(config, date) {
+        const trip = Trips.forDate(Trips.of(config), date);
+        return CharacterSelect.lineup(config, trip ? trip.members : undefined);
+    }
+
+    /**
+     * Page 1's copy for a config, a game date and the real date: who
+     * devhouse is — the members of the game date's trip (issue #130;
+     * Intro.cast, the same people the cast row draws) — then tripCopy's two
+     * sentences, then how the date works.
+     */
+    static welcomeCopy(config, date, today) {
+        const trips = Trips.of(config);
+        const trip = Trips.forDate(trips, date);
+        const names = Trips.list(Intro.cast(config, date).map(Trips.displayName));
+        const live = Trips.live(trips, today);
+        const [about, lines] = Intro.tripCopy(trip,
+            !!trip && !!live && live.id === trip.id && Trips.during(trip, date),
+            !trip || Trips.daysOf(trips, trip, [...contentChangeDates(config)]).length > 0);
+        return [
+            `devhouse is a group of friends${names ? `: ${names}` : ''}.`,
+            about,
+            lines,
+            // the game always opens on a day of a trip (today's, or the one
+            // today cycles onto — NpcStates.defaultGameDate), so Time Travel
+            // is for visiting ANOTHER day, or another trip
+            `The date at the top of the screen picks the day. Use Time Travel in the menu to visit another day${trips.length > 1 ? ' or another trip' : ' of the trip'}, and everyone has a new story.`,
+        ];
+    }
+
+    /**
+     * Page 1's sentences about the trip, from data: which trip the game
+     * date is on, where it went, and whether anyone has posted from it yet.
+     */
+    static tripCopy(trip, live, posted) {
+        const about = !trip ? 'Their trip to Japan is now a little world you can walk around.'
+            : live ? `They are on ${trip.name} right now${trip.where ? `, in ${trip.where}` : ''}, and it is a little world you can walk around.`
+            : `This is ${trip.name}${trip.where ? `, their trip to ${trip.where}` : ''}: a little world you can walk around.`;
+        const lines = posted
+            ? 'The people you meet will tell you about their day. Their lines come from the blog posts they wrote on the road.'
+            : 'The people you meet will tell you about their day, once they start writing blog posts on the road.';
+        return [about, lines];
     }
 
     // --------------------------------------------------------------- drawing
@@ -171,7 +226,7 @@ class Intro {
     drawWelcome(l) {
         const scene = this.scene;
         // the cast, small, along the top
-        const cast = CharacterSelect.lineup(scene.config)
+        const cast = Intro.cast(scene.config, gameDate())
             .map(name => `${name}_front`)
             .map(key => scene.textures.exists(`${key}_frame_0`) ? `${key}_frame_0` : key)
             .filter(key => scene.textures.exists(key));
@@ -185,19 +240,8 @@ class Intro {
             img.setOrigin(31 / 64, 54 / 64); // feet (see TitleScreen)
         });
 
-        const names = this.members();
-        const list = names.length > 1
-            ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
-            : names.join('');
-        const paras = [
-            [`devhouse is a group of friends${list ? `: ${list}` : ''}.`, '#ffffff'],
-            ['Their trip to Japan is now a little world you can walk around.', '#dddddd'],
-            ['The people you meet will tell you about their day. Their lines come from the blog posts they wrote on the road.', '#dddddd'],
-            // the game always opens on a day of the trip (today's, or the one
-            // today cycles onto — NpcStates.defaultGameDate), so Time Travel
-            // is for visiting ANOTHER day
-            ['The date at the top of the screen picks the day. Use Time Travel in the menu to visit another day of the trip, and everyone has a new story.', '#dddddd'],
-        ];
+        const paras = Intro.welcomeCopy(scene.config, gameDate(), todayIso())
+            .map((copy, i) => [copy, i ? '#dddddd' : '#ffffff']);
         let y = l.py + 232;
         paras.forEach(([copy, color]) => {
             const t = l.text(l.cx, y, copy, '22px', false, color, 0.5, 0);
@@ -312,7 +356,7 @@ class Intro {
         // not you
         const mine = ((scene.player && scene.player.baseSpriteKey) || scene.config.player.sprite || '')
             .replace(/_(front|back|side)$/, '');
-        const other = CharacterSelect.lineup(scene.config).find(n => n !== mine) || cast.find(n => n !== mine);
+        const other = Intro.cast(scene.config, gameDate()).find(n => n !== mine) || cast.find(n => n !== mine);
         const me = frame(mine) || (cast.length ? frame(cast[0]) : null);
         const them = other ? frame(other) : null;
         if (me) l.image(x + 26, cy, me, 1);
@@ -331,32 +375,18 @@ class Intro {
     }
 
     /**
-     * Where the friends are on the game date, for page 3. The game opens on
-     * a trip day (NpcStates.defaultGameDate) and on most of those nobody is
-     * in the start room, so "around Tokyo" is only said when it is true;
-     * otherwise the rooms they are in are named (the HUD shows room names).
+     * Where the friends are on the game date, for page 3 (Trips.whereText):
+     * the ones in the room the player is standing in are named, the other
+     * rooms are listed by their display names (the HUD shows those). Whoever
+     * the player is playing as is not one of "them".
      */
     whereFriendsAre() {
         const s = this.scene;
-        const start = s.config.player && s.config.player.startRoom;
-        const friends = new Set(this.members().map(n => n.toLowerCase()));
-        // the travelling cast only: a dated NPC (config `states`) that is in
-        // the live room today — not a fixture like the izakaya's opponent
-        // (asked through npcsIn: a district of a stitched city keeps its
-        // NPCs in the city room, under the district's name)
-        const live = (key) => (s.roomManager ? s.roomManager.npcsIn(key) : []);
-        const rooms = Object.entries(s.config.rooms || {})
-            .filter(([key, r]) => (r.npcs || []).some(n => n.states && friends.has(String(n.name).toLowerCase())
-                && live(key).some(o => o.npc.name === n.name)))
-            .map(([key]) => key)
-            .slice(0, 3);   // a few places to head for, not an itinerary
-        if (!rooms.length || !start || rooms.includes(start)) {
-            return `They are out and about around ${start || 'town'}.`;
-        }
-        const list = rooms.length > 1
-            ? `${rooms.slice(0, -1).join(', ')} and ${rooms[rooms.length - 1]}`
-            : rooms[0];
-        return `Today they are in ${list}.`;
+        const played = Trips.baseOf((s.player && s.player.baseSpriteKey) || s.config.player.sprite);
+        // "here" is the district the player stands in: config rooms are the
+        // districts, a stitched city is only where they are drawn
+        return Trips.whereText(Trips.membersByRoom(s.config, gameDate(), { played }),
+            s.roomManager ? s.roomManager.currentDistrict() : null);
     }
 
     /** Page 3: something to go and do. */

@@ -74,14 +74,19 @@ LOOKS = {
 }
 
 # Where each of them stands before their first blog post moves them
-# (tools/blog_to_npc.py): room, cell, and what they say. Added to config.json
+# (tools/blog_to_npc.py): room, cell, and what they say. The NPC is marked
+# with the trip and the stay it is the base cast of (config.json "trips",
+# src/utils/Trips.js: TRIP below, and the room as the stay), so it only
+# stands there on that trip's dates while the group is based in that room.
+# The rest of the devhouse 3 base cast (the other four in Sapporo, all seven
+# in Asahikawa) is plain config data with the same marks. Added to config.json
 # only while the room has no NPC of that name, so a position or line edited
 # later (by hand, tools/npc_state.py or the blog pipeline) is never undone.
 # The lines are placeholders: friendly, undated, and no facts about anyone.
 HOME = {
     'khoi': ('Sapporo', 38, 8, [
         "Hey, I'm Khoi.",
-        "Devhouse 3 is on: Hokkaido, in the snow. I can't wait.",
+        "Devhouse 3 is on: Hokkaido, in the snow.",
     ]),
     'sam': ('Sapporo', 21, 27, [
         "Hi, I'm Sam!",
@@ -92,6 +97,8 @@ HOME = {
         "Hokkaido with the devhouse crew. This should be a good one.",
     ]),
 }
+
+TRIP = 'devhouse3'              # the trip HOME is the base cast of
 
 DIRS = ('front', 'back', 'side')
 MOUTH = (0xe5, 0x3b, 0x44)      # the one mouth colour every cast sprite uses
@@ -356,9 +363,11 @@ def frame_counts(cfg, donor):
     return {d: sm[f'{donor}_{d}']['frameCount'] for d in DIRS}
 
 
-def base_npc(name, x, y, dialogue):
-    """A cast NPC definition — the shape roomgen.make_npc writes."""
+def base_npc(name, x, y, dialogue, room_key):
+    """A cast NPC definition — the shape roomgen.make_npc writes — scoped to
+    the trip and the stay (the room) it is the base cast of."""
     return {'name': name.capitalize(), 'sprite': f'{name}_front', 'gridX': x, 'gridY': y,
+            'trip': TRIP, 'stay': room_key,
             'gridOffsetX': 0, 'gridOffsetY': 0, 'dialogue': dialogue,
             'directionalSprites': {'up': f'{name}_back', 'down': f'{name}_front',
                                    'left': '', 'right': f'{name}_side'},
@@ -437,7 +446,7 @@ def main():
         if args.check:
             stale.append(f'config.json rooms.{room_key}.npcs: {name.capitalize()}')
         else:
-            npcs.append(base_npc(name, x, y, dialogue))
+            npcs.append(base_npc(name, x, y, dialogue, room_key))
             placed.append(f'{name.capitalize()} in {room_key} at ({x},{y})')
 
     if args.check:

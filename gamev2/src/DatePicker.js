@@ -10,6 +10,12 @@
  * Keys while open: arrows/WASD move a day (left-right) or a week (up-down),
  * ENTER/SPACE travels, ESC closes. Everything is also clickable (day cells,
  * month arrows).
+ *
+ * Trips (config.trips, src/utils/Trips.js): a trip's own days are underlined
+ * in the grid, the row under the grid names each trip — the one the
+ * selected day is on is lit — and a click on a name, or SHIFT with
+ * left/right, jumps the selection to that trip's first day with posts
+ * (Trips.jump), so two trips fifteen months apart are one press away.
  */
 class DatePicker {
     constructor(scene) {
@@ -21,7 +27,7 @@ class DatePicker {
         this.keys = scene.input.keyboard.addKeys({
             left: K.LEFT, right: K.RIGHT, up: K.UP, down: K.DOWN,
             a: K.A, d: K.D, w: K.W, s: K.S,
-            enter: K.ENTER, space: K.SPACE, esc: K.ESC,
+            enter: K.ENTER, space: K.SPACE, esc: K.ESC, shift: K.SHIFT,
         });
     }
 
@@ -36,6 +42,7 @@ class DatePicker {
         const [y, m, d] = gameDate().split('-').map(Number);
         this.sel = new Date(y, m - 1, d);
         this.contentDates = contentChangeDates(this.scene.config);
+        this.trips = Trips.of(this.scene.config);
         this.visible = true;
         this.render();
     }
@@ -66,6 +73,19 @@ class DatePicker {
         this.rerender();
     }
 
+    /** Select a day by ISO date. */
+    select(iso) {
+        const [y, m, d] = iso.split('-').map(Number);
+        this.sel = new Date(y, m - 1, d);
+        this.rerender();
+    }
+
+    /** Jump to the next (1) / previous (-1) trip's landing day, if there is one that way. */
+    jumpTrip(dir) {
+        const to = Trips.jump(this.trips, this.iso(this.sel), dir, [...this.contentDates]);
+        if (to) this.select(to);
+    }
+
     confirm() {
         const target = this.iso(this.sel);
         this.hide();
@@ -83,15 +103,19 @@ class DatePicker {
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
         if (JD(k.esc)) return this.hide();
         if (JD(k.enter) || JD(k.space)) return this.confirm();
-        if (JD(k.left) || JD(k.a)) return this.moveDays(-1);
-        if (JD(k.right) || JD(k.d)) return this.moveDays(1);
+        const left = JD(k.left) || JD(k.a), right = JD(k.right) || JD(k.d);
+        if (k.shift.isDown && (left || right)) return this.jumpTrip(left ? -1 : 1);
+        if (left) return this.moveDays(-1);
+        if (right) return this.moveDays(1);
         if (JD(k.up) || JD(k.w)) return this.moveDays(-7);
         if (JD(k.down) || JD(k.s)) return this.moveDays(7);
     }
 
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
-        const pw = 480, ph = 470, px = (W - pw) / 2, py = (H - ph) / 2;
+        // the trips row (when the config has trips) makes the panel one row taller
+        const tripRow = this.trips.length ? 34 : 0;
+        const pw = 480, ph = 470 + tripRow, px = (W - pw) / 2, py = (H - ph) / 2;
         const objs = this.objs;
 
         const overlay = scene.add.graphics();
@@ -155,6 +179,11 @@ class DatePicker {
                 marks.lineStyle(2, 0x33cc66, 1);
                 marks.strokeRect(cxp - cw / 2 + 3, cyp - ch / 2 + 3, cw - 6, ch - 6);
             }
+            if (this.trips.some(t => Trips.during(t, dIso))) {
+                // a trip day: underlined, post or no post
+                marks.fillStyle(0x4d79a8, 1);
+                marks.fillRect(cxp - cw / 2 + 6, cyp + ch / 2 - 3, cw - 12, 2);
+            }
             if (this.contentDates.has(dIso)) {
                 marks.fillStyle(0x33cc66, 1);
                 marks.fillRect(cxp - 2, cyp + 13, 4, 4);
@@ -168,8 +197,41 @@ class DatePicker {
             this.dayCells.push(t);
         }
 
+        if (tripRow) this.renderTrips(text, cx, py + ph - 78 - tripRow, selIso);
         text(cx, py + ph - 78, `viewing: ${formatGameDate(selIso)}`, '18px', true, '#33cc66');
         text(cx, py + ph - 50, Hints.text(scene, 'dot = blog post · gold = today · arrows: day/week'), '16px', false, '#888888');
         text(cx, py + ph - 26, Hints.text(scene, 'ENTER/click: travel · ESC: close'), '16px', false, '#888888');
+    }
+
+    /**
+     * The trips row: every trip by name, underlined like its days in the
+     * grid, the one the selected day belongs to lit (gold on one of its own
+     * days, white on the days after it). A click / tap on a name jumps to
+     * that trip; the hint at the end is the keyboard / touch way to do the
+     * same.
+     */
+    renderTrips(text, cx, y, selIso) {
+        const mine = Trips.forDate(this.trips, selIso);
+        const labels = this.trips.map(t => t.name);
+        const hint = Hints.text(this.scene, 'SHIFT + ←/→');
+        // monospace: lay the row out by character count, centred
+        const cw = 9.9, gap = 3;
+        const total = labels.reduce((n, l) => n + l.length + gap, 0) + hint.length;
+        let x = cx - (total * cw) / 2;
+        const rule = this.scene.add.graphics();
+        rule.setScrollFactor(0); rule.setDepth(2002); this.objs.push(rule);
+        rule.fillStyle(0x4d79a8, 1);
+        this.trips.forEach((trip, i) => {
+            const on = trip === mine;
+            const color = !on ? '#88ccff' : Trips.during(trip, selIso) ? '#ffd700' : '#ffffff';
+            const t = text(x, y, labels[i], '18px', on, color, 0);
+            t.setInteractive({ useHandCursor: true });
+            t.on('pointerdown', () => this.select(
+                trip === Trips.forDate(this.trips, gameDate()) && Trips.during(trip, gameDate())
+                    ? gameDate() : Trips.landing(this.trips, trip, [...this.contentDates])));
+            rule.fillRect(Math.round(x), y + 12, Math.round(t.width), 2);
+            x += (labels[i].length + gap) * cw;
+        });
+        text(x, y, hint, '16px', false, '#888888', 0);
     }
 }

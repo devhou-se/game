@@ -33,7 +33,8 @@ confirm the world is still playable after a map change. `node tools/play.js help
 
 `node tools/test_game.js` runs the game's own decision code in Node, with no browser: which train a
 station parks, the departures board's order and scrolling, room display names, the dialogue hint wording,
-touch buttons cancelling their touch, which post a dialogue line is captioned with, the default game date.
+touch buttons cancelling their touch, which post a dialogue line is captioned with, the default game date,
+trips (which NPCs exist on a date, where a player starts, what the intro says, Time Travel's trip jump).
 When a fix lives in a Phaser-side class, pull the decision into a static function there and add a case.
 
 ## Studio
@@ -64,6 +65,7 @@ problem survey) is shared with `tools/play.js`, so the page and the terminal too
 - `src/systems/UIScale.js` - Magnifies overlays when the canvas is shown smaller than 1:1 (see Small Viewports and Touch)
 - `src/utils/Hints.js` - The one helper that words key hints for keyboard or touch (see Small Viewports and Touch)
 - `src/utils/JapaneseFont.js` + `fonts/` - The pixel fonts, and the Japanese face added to each of them (see Fonts and Japanese Text)
+- `src/utils/Trips.js` - The devhouse trips as data: which trip a date belongs to, and everything that follows (see Trips)
 - `src/GameScene.js` - Main game scene (room system, HUD, input handling, collision)
 - `src/Character.js` - Character movement class with grid-based tweening
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
@@ -119,18 +121,26 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
   `?date=YYYY-MM-DD` when given, else the default below; a state of `{"present": false}` removes the NPC
   from that date. Author states with `python3 tools/npc_state.py <Room> <Npc> <date> --dialogue ... --pos X,Y`
   (see `src/utils/NpcStates.js`)
-  - **Default game date** (`defaultGameDate()`, issue #54): the trip is the set of dated days in the
-    config (`contentChangeDates`, handed over by `setTripDates(config)` at the top of `GameScene.create()` —
-    nothing is hard-coded). While today is between the first and last of them the game date is today.
-    Outside the trip, today is mapped onto a trip day: days since the day after the trip's last day,
-    modulo the number of trip days, indexes the sorted list (the day after the trip ends is its first day
-    again) — so a visitor with no `?date=` always opens on a day that has posts, and the next real day
-    shows the next trip day. The default is fixed when the config loads (`bootToday`), so a session left
-    open past midnight keeps the day its NPCs were resolved for. On most trip days nobody is in the start room (Tokyo); they are in the
-    neighbouring rooms. The HUD shows that date. `?date=` and Time
-    Travel always win; `setGameDate()` drops the param only for the date a clean URL already gives, so
-    picking today's real date after the trip is an explicit `?date=` like any other. `tools/play.js`
-    and the studio open on the same day (`WorldModel.defaultDate()` calls `defaultGameDate`).
+  - **Trips scope it** (see Trips below): only states dated inside the game date's trip — and its
+    current stay — are applied, and a base NPC marked `"trip"` / `"stay"` exists only on those dates.
+  - **Default game date** (`defaultGameDate()`, issues #54, #118): while today is inside a trip
+    (`config.trips` start to end) the game date is today, post or no post. Otherwise today is mapped
+    onto a content day of the most recent trip that has posts: days since the day after that trip's
+    last post, modulo its number of content days, indexes its sorted list (the day after the last is
+    the first again) — so a visitor with no `?date=` always opens on a day that has posts, the next
+    real day shows the next one, and two trips are never read as one long span. The content days
+    (`contentChangeDates`) and the trips are handed over by `setTripDates(config)` at the top of
+    `GameScene.create()`; nothing is hard-coded. The default is fixed when the config loads
+    (`bootToday`), so a session left open past midnight keeps the day its NPCs were resolved for.
+    The HUD shows that date, led by the trip's name on a trip day (`devhouse 3 · February 20 2027`,
+    `GameScene.hudDate()`) — when the line still ends two `HUD_PADDING`s short of the `menu` button with
+    it: `hudFits()` measures title | room | date | wallet with the HUD's own text objects, and
+    `Trips.dateLabel(..., fits)` drops the name where it does not fit (the konbini, the Don Takotes,
+    Asahikawa Station: long room names), so the wallet is never pushed under the button. Anything
+    that lengthens the HUD line must keep going through that check. `?date=` and Time Travel always win; `setGameDate()` drops the param
+    only for the date a clean URL already gives, so picking today's real date between trips is an
+    explicit `?date=` like any other. `tools/play.js` and the studio open on the same day
+    (`WorldModel.defaultDate()` calls `defaultGameDate`).
 - `objects`: Array of static obstacles with position (absolute or offset from center) that block movement
 - `transporters`: Array of teleport points with position, targetRoom, and target position
 
@@ -198,8 +208,9 @@ Asahikawa were always single maps; interiors and trains keep their fade.
 - **Systems that re-read the room** — `TrafficLights` rebuilds its signal list whenever `floorSprites` is
   replaced (every chunk change), so signals streamed in are put on the current phase before they scroll into
   view and its night glow follows them; `UIScale`'s overlay camera re-filters the display list every frame it
-  is up, which covers sprites coming back from the pool; `Intro.whereFriendsAre` asks `roomManager.npcsIn(room)`
-  (a district's own `rooms[...].npcs` is empty once it is stitched).
+  is up, which covers sprites coming back from the pool; `Intro.whereFriendsAre` reads the cast from config per district (`Trips.membersByRoom`) and names
+  "here" with `roomManager.currentDistrict()` (a district's own `rooms[...].npcs` is empty once it is
+  stitched — ask `roomManager.npcsIn(room)` for live NPCs).
 - **Tools** — `tools/play.js`, `tools/world-model.js` (lint / render / check) and `/studio/` model rooms from
   `config.json` + the `.tmj` files and do not stitch: there Tokyo is still five rooms joined by the 22 seam
   transporters, i.e. what `?stitch=0` plays. `play.js check` / `lint` therefore keep guarding the districts
@@ -209,6 +220,92 @@ Asahikawa were always single maps; interiors and trains keep their fade.
 - **Adding a district / a second city**: place the map in `devhouse.world` so the shared road lines up,
   add it to `cities.<City>.rooms`, run `tools/sync_cities.py` and `tools/make_worldmap.py`. Keep the hidden
   seam transporters in the maps — `?stitch=0` and the tools still use them.
+
+### Trips (issues #118, #131, #130, #96, #59)
+
+The trips are data — `config.json` top-level `trips`, read through `src/utils/Trips.js` (pure functions
+of the config and a date; `tools/play.js`, the studio and `tools/test_game.js` run the same code):
+
+```json
+"trips": [
+  { "id": "devhouse2", "name": "devhouse 2", "where": "Japan", "start": "2025-10-02", "end": "2025-11-18",
+    "members": ["bailey", "damian", "dylan", "julia"], "home": { "room": "Tokyo", "x": 29, "y": 38 } },
+  { "id": "devhouse3", "name": "devhouse 3", "where": "Hokkaido", "start": "2027-02-18", "end": "2027-02-28",
+    "members": ["bailey", "damian", "dylan", "julia", "khoi", "sam", "xander"],
+    "home": { "room": "Sapporo", "x": 33, "y": 12 },
+    "stays": [ { "from": "2027-02-18", "room": "Sapporo", "x": 33, "y": 12 },
+               { "from": "2027-02-25", "room": "Asahikawa", "x": 31, "y": 12 } ] }
+]
+```
+
+`members` are sprite base names (James is the default player sprite, never a member; `credits` is a
+separate list and is not read for any of this). `stays` is optional: where the group is based from each
+date. Give every stay its `x`, `y`: one without a cell is ignored as a start (the player lands at the
+trip's `home`, possibly a room away from the cast) and `play.js check` reports it. devhouse 2's dates are the span of its blog posts.
+
+**The trip a game date belongs to** (`Trips.forDate`) is the latest one that has OPENED by then — the
+days after a trip still belong to it — or the first trip for a date before them all. A trip opens
+`"lead"` days before its `start` (default `Trips.LEAD`, 14; `trip.opens`): a post from the travel days on
+the way there is that trip's content day, not the previous trip's (it would otherwise join the previous
+trip's cycle and shift the between-trips default date). On those lead-in days (`windowFor(...).early`)
+the previous trip is history and the new trip's base NPCs are not standing anywhere yet — only people
+who have posted since it opened are placed — and from the trip's first day the lead-in posts are history
+too and everyone is at the base. A lead-in day is not a trip day (`Trips.during`): no HUD prefix, no
+picker underline, and the default date only lands there once it has a post. `blog_to_npc.py`
+(`trip_window`, `TRIP_LEAD`) mirrors the rule. The trip decides:
+
+- **Who exists** (`Trips.windowFor` → `resolveNpc(npc, date, trips)`). A base NPC marked `"trip": "<id>"`
+  is there only on that trip's dates, and with `"stay": "<room>"` only while the group is based in that
+  room; otherwise it resolves as if its base said `present: false`. Dated states are applied only from
+  the window's first day (the start of the stay, else of the trip) — earlier ones are another trip's
+  history — and a state inside the window still places anybody anywhere. So: devhouse 2's base cast
+  (Bailey, Damian, Julia in Tokyo; Dylan in Machi) carries `"trip": "devhouse2"`; devhouse 3 has a base
+  NPC for all seven in Sapporo (`"stay": "Sapporo"`) and in Asahikawa (`"stay": "Asahikawa"`) with two
+  neutral lines each, so on 18-24 Feb 2027 everyone stands in Sapporo and from the 25th in Asahikawa
+  before anyone has posted; Khoi, Sam and Xander are nowhere on a 2025 date. A member's first post of a
+  trip moves them as usual (`blog_to_npc.py` needs no trip knowledge: it writes a dated state where they
+  are and `present: false` everywhere else, both inside the window), and when the group moves base
+  everyone is at the new base until they post from it. NPCs with no `trip` (the izakaya opponents,
+  Yukimura's villager, the pipeline's hidden per-room defs) are unscoped apart from the state window.
+  Resolution of every NPC on every devhouse 2 day was compared before and after the change: identical,
+  apart from the three new members being absent.
+- **The default game date** — see Default game date above.
+- **Where the player starts** (`Trips.startFor(config, date, { newPlayer, played })` → `{ room, x, y }`,
+  the same terms a door target is written in — a DISTRICT cell (`Tokyo 29,38`, `Machi 22,10`), never a
+  stitched-city one: `GameScene.startPosition()` is the one caller and puts the player there through
+  `roomManager.resolve`, so the start is the same cell with `?stitch=0`; "the room" below is the district. A
+  RETURNING player starts at the trip's home for that date (the stay's cell, else `home`, else
+  `config.player.startRoom/X/Y`) whatever the cast is doing — there is no saved position, so this is the
+  spot they have always started from. A NEW player (`Intro.isNewPlayer()`: the intro not finished yet)
+  starts where there is someone to talk to: the room with the most members that day, never counting the
+  member they are playing as; a tie goes to the room fewest doors / train rides from home
+  (`Trips.hopsFrom`), then config order. In the home room they stand on the home cell when somebody is
+  within `Trips.NEAR` (6) cells; otherwise on the cell nearest the group, at least two cells from
+  everyone, that can be walked to from the room's arrivals (`Trips.standNear`: Floor tile, no collider,
+  inside the boundary, not a door). On every devhouse 2 post day, as any character, that is within 6
+  cells of someone (unit-tested). `CharacterSelect.become` calls `GameScene.resettleNewPlayer()`: a new
+  player who has not taken a step and has just become the only member near their start cell (the
+  creator's name Easter egg, or Menu → Character) is moved to wherever `startFor` says now. With
+  somebody still within `Trips.NEAR` cells (`Trips.hasCompany`) they stay exactly where they are, and
+  the first step off the start cell ends it (`update()` clears `bootStart`; `GameScene.playerIsAt` compares
+  through `resolve`).
+  `config.player.startRoom/X/Y` — what the editor's Spawn tool writes — is now only the fallback for a
+  config with no trips (and the reachability seed in `AchievementManager` / `world-model.js`): to move
+  where the game opens, edit the trip's `home` / `stays` cell.
+- **The intro** — who devhouse is (`Intro.cast`: `CharacterSelect.lineup` of the trip's members, alphabetical —
+  the cast row draws them and the sentence under it names them), which trip this is and whether it is on right now (`Intro.welcomeCopy`), and where everyone
+  is today (`Trips.membersByRoom` + `Trips.whereText`).
+- **Time Travel** (`src/DatePicker.js`) — a trip's own days are underlined in the grid whether or not
+  they have posts, and a row under the grid names every trip (the selected day's is lit). A click / tap
+  on a name, or SHIFT + left/right (touch: hold the sprint pill and press ◀ ▶), jumps to that trip's
+  first day with posts, or its first day when it has none (`Trips.jump` / `Trips.landing`). No new key.
+
+**Adding a trip**: add it to `trips`; give its base cast NPC definitions in the room(s) they are based
+in, marked with `trip` (and `stay` when the trip has stays) — the shape `tools/generate_cast.py`
+`base_npc` writes; keep the lines neutral, they are what people say until their first post. Then
+`node tools/play.js check` (it surveys every day of every trip: base NPCs must be walkable-up-to, and
+every home / stay cell and every new-player start must be a free cell that leads somewhere) and
+`node tools/play.js trips` / `start [new]` to see where a player lands on the current `date`.
 
 **Boundary System:**
 - Each room can define a custom polygon boundary to restrict player movement
@@ -496,18 +593,22 @@ the HTML loader.
 ### New-Player Intro (issue #39)
 
 `src/Intro.js` (`scene.intro`): a three-page overlay in the usual panel style (depth 2000-2003).
-1. **Welcome to devhouse** — the friends (named from `CharacterSelect.lineup(config)`, the same list the cast row draws), the
-   Japan trip, NPC lines coming from the trip's blog posts, and the HUD date picking the day ("Time Travel
-   in the menu" to visit another day of the trip — the game always opens on a trip day, see the default
-   game date under `npcs`).
+1. **Welcome to devhouse** (`Intro.welcomeCopy`, see Trips) — the friends: the members of the game date's
+   trip (`Intro.cast` — `CharacterSelect.lineup` of that trip's `members`, alphabetical), drawn in the cast
+   row above and named in the sentence under it (not `credits`, not James); which trip it is ("They are on devhouse 3 right now, in Hokkaido" while it is on, "This is
+   devhouse 2, their trip to Japan" otherwise); NPC lines coming from the blog posts ("once they start
+   writing" for a trip with no posts yet); and the HUD date picking the day ("Time Travel in the menu" to
+   visit another day or another trip — the game always opens on a trip day, see the default game date
+   under `npcs`).
 2. **How to play** — move / sprint / interact / talk / menu drawn as keycaps (the interact row also
    lists what a bump starts: people, shops, trains, the izakaya); when
    `touchControls.enabled` the same rows are drawn as the on-screen d-pad, sprint pill and A / B buttons,
    plus a one-line keyboard reminder (touch controls are also on for touchscreen laptops).
-3. **Where to start** — there is no quest system, so it points at real things: the friends (`whereFriendsAre()`:
-   "around Tokyo" when one of them is in the start room on the game date, otherwise the rooms they are
-   in that day are named — on most trip days Tokyo is empty), exploring, and Paint the Board (with the
-   live progress bar from `achievementManager`).
+3. **Where to start** — there is no quest system, so it points at real things: the friends (`whereFriendsAre()`
+   → `Trips.whereText`: the ones in the room — the district, in a stitched city — the player is standing in are named — "Today Bailey, Damian
+   and Julia are here in Machi, and Dylan is in Inaka.", "Today everyone is here in Sapporo." — and
+   other rooms are listed by display name, three at most; whoever the player is playing as is not
+   counted), exploring, and Paint the Board (with the live progress bar from `achievementManager`).
 
 Fishing controls and map travel are **deliberately absent** (fishing is learned when a rod is bought; map
 travel is a debug feature) — keep them out when editing the copy.
@@ -523,6 +624,10 @@ travel is a debug feature) — keep them out when editing the copy.
   — is never shown it automatically, and a Time Travel reload does not replay it.
 - **`?nointro=1`** suppresses the automatic showing (and leaves the gate untouched) — combine with
   `?notitle=1` in tests that start from a fresh profile. Tests that pre-seed `gamev2_character` never see it.
+  NOTE: `?nointro=1` does not make a fresh profile a returning player — `Intro.isNewPlayer()` ignores it,
+  so an UNSEEDED profile still gets the new-player start next to the cast (e.g. Machi 22,10 on
+  2025-11-11), not the trip home. A test that assumes the Tokyo 29,38 spawn must seed
+  `gamev2_character` (and so be a returning player).
 - **How to Play** in the ESC menu replays it at any time (`scene.intro.show()`). It is the only controls
   reference: the separate Controls menu entry and overlay (#38) were folded into page 2 (#55), so a new
   global binding or bump interaction is documented there.
@@ -594,7 +699,8 @@ instead of saving a composite. It deliberately skips `CharacterCreator.save()`, 
 the creator's name Easter egg, `syncNpcPresence` (you never meet yourself) and `tools/play.js as <name>`.
 No code lists the names. The ONE explicit list is `config.json` top-level `members` (sprite base names;
 shown alphabetically whatever order the list is written in: bailey, damian, dylan, julia, khoi, sam, xander) — the devhouse members, read through
-`CharacterSelect.lineup(config)` by the title line-up and the intro's cast row ONLY. A listed name with no
+`CharacterSelect.lineup(config)` by the title line-up ONLY (the intro's cast row and its sentence pass the game date's trip
+members, `lineup(config, trip.members)` — `Intro.cast`, see Trips). A listed name with no
 sprite set is skipped; a sprite set that is not listed never appears there (James is the default player
 sprite and selectable, but not a member — issue #56). The line-ups size themselves for any
 number (title: spacing and scale from the count; intro: the row closes up, then drops to 1x; the Character
@@ -642,8 +748,10 @@ creator's composite (head / torso / legs / beard donors + recolours), run offlin
 - **Base NPCs** come from the same tool (`HOME`: room, cell, two placeholder lines that state no facts about
   anyone). They are added only while the room has no NPC of that name, so later edits and the blog pipeline's
   states are never undone. All three stand in Sapporo — Khoi by the station house (38,8), Sam on the Odori
-  park path (21,27), Xander on the Clock Tower plaza (35,17) — and are undated, so they are there on every
-  game date until their first post moves them.
+  park path (21,27), Xander on the Clock Tower plaza (35,17) — and are marked `"trip": "devhouse3",
+  "stay": "Sapporo"`, so they are there on devhouse 3's Sapporo days only (issue #131, see Trips), until
+  their first post moves them. The rest of the devhouse 3 base cast (the other four in Sapporo, all seven
+  in Asahikawa) is plain config data with the same marks.
 - **Blog authors** (`AUTHOR_NPCS` in `tools/blog_to_npc.py`, GitHub login → NPC name): the three are listed
   under placeholder keys (`'<khoi github login>'`) because their logins are NOT known. A placeholder can never
   match a post (`is_login`: only login-shaped keys are looked up — letters, digits, inner hyphens, underscores, a
@@ -783,8 +891,10 @@ fake `stations` entries (do not ride to them).
 ### Hokkaido: Sapporo and Asahikawa (issue #43)
 
 Two generated towns reachable only by train (`SapporoStation`, `AsahikawaStation` in
-`tools/generate_stations.py`; both sit detached to the north in `devhouse.world`). Base rooms have no NPCs -
-the blog pipeline places people there.
+`tools/generate_stations.py`; both sit detached to the north in `devhouse.world`). They are devhouse 3's
+two bases: the trip's base cast stands in Sapporo on 18-24 Feb 2027 and in Asahikawa from the 25th (see
+Trips; the generators keep a room's NPCs), and on any other date the rooms are empty unless the blog
+pipeline has placed someone there.
 
 - **Sapporo** (`tools/generate_sapporo.py`, 56x43) is the one town on a street GRID: two east-west streets
   (rows 20-22, 31-33) and three north-south (columns 14-16, 30-32 the station avenue, 44-46), `road-plain`
@@ -961,6 +1071,8 @@ The whole game runs on WASD/arrows + SPACE/ENTER + SHIFT, with ESC as the single
 system key — no other bindings (no T shortcut, no ,/. month keys). Touch controls
 synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill → SHIFT).
 - **Movement**: WASD or arrows move 1 cell, Shift doubles speed (not distance)
+- **Time Travel**: arrows / WASD move a day or a week, SHIFT + left/right jumps to the previous / next trip,
+  SPACE/ENTER travels, ESC closes
 - **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
 - **Dialogue**: SPACE/ENTER advances, ESC closes
 - **Title screen**: SPACE/ENTER/ESC or a tap starts the game (`?notitle=1` skips the screen)

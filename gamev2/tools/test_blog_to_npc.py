@@ -518,6 +518,110 @@ def test_shipped_dialogue(cfg):
                     assert len(line) < b.MAX_LINE_CHARS or line[-1] in '.!?…。！？', where
 
 
+def whereabouts(cfg, npc_name, date):
+    """[(room, x, y)] — everywhere the game shows this NPC on date (the
+    izakaya's opponent is a fixture, not the travelling NPC)."""
+    window = b.trip_window(cfg, date)
+    out = []
+    for room_key, room in cfg['rooms'].items():
+        npc = b.npc_in_room(room, npc_name)
+        if npc is None or npc.get('drinkingGameOpponent'):
+            continue
+        present, x, y = b.resolve_pos(npc, date, window)
+        if present:
+            out.append((room_key, x, y))
+    return out
+
+
+def test_trips(base_cfg):
+    """Trip-scoped base NPCs and dated states compose (issues #118, #131):
+    before a trip's first post its members stand at the trip's base, a post
+    moves its author as usual, a new stay starts from base again, and none of
+    it shows on another trip's dates."""
+    cfg = copy.deepcopy(base_cfg)
+    spots = b.find_spots(cfg)
+
+    def spot_in(room_key, label=None):
+        return next(s for s, (r, _, _) in sorted(spots.items()) if r == room_key and (label is None or label in s))
+
+    def base(room_key, name):
+        npc = b.npc_in_room(cfg['rooms'][room_key], name)
+        return (room_key, npc['gridX'], npc['gridY'])
+
+    seven = ('Bailey', 'Damian', 'Dylan', 'Julia', 'Khoi', 'Sam', 'Xander')
+    trips = {t['id']: t for t in cfg['trips']}
+    assert trips['devhouse3']['members'] == [n.lower() for n in seven]
+    assert all('james' not in t['members'] for t in cfg['trips'])
+    assert b.trip_window(cfg, '2027-02-20')['stay']['room'] == 'Sapporo'
+    assert b.trip_window(cfg, '2027-02-25')['from'] == '2027-02-25'
+    assert b.trip_window(cfg, '2026-11-25')['trip']['id'] == 'devhouse2'
+    assert b.trip_window({'rooms': {}}, '2027-02-20') is None
+    # a trip opens a fortnight before it starts (the lead-in): its posts, nobody at the base yet
+    assert b.trip_window(cfg, '2027-02-03')['trip']['id'] == 'devhouse2'
+    lead = b.trip_window(cfg, '2027-02-10')
+    assert (lead['trip']['id'], lead['early'], lead['from']) == ('devhouse3', True, '2027-02-04'), lead
+    assert b.trip_window(cfg, '2027-02-18')['early'] is False and b.trip_window(cfg, '2025-09-01')['early'] is False
+    cfg_l = copy.deepcopy(cfg)
+    for name in seven:
+        assert whereabouts(cfg_l, name, '2027-02-10') == [], name
+    place(cfg_l, post(900, date='2027-02-10'), spot_in('Tokyo'), spots)       # a post on the way there
+    assert [r for r, _, _ in whereabouts(cfg_l, 'Bailey', '2027-02-10')] == ['Tokyo']
+    assert [r for r, _, _ in whereabouts(cfg_l, 'Bailey', '2027-02-17')] == ['Tokyo']
+    assert whereabouts(cfg_l, 'Bailey', '2027-02-18') == [base('Sapporo', 'Bailey')]     # day one: at the base
+    assert whereabouts(cfg_l, 'Bailey', '2025-11-02') == whereabouts(cfg, 'Bailey', '2025-11-02')
+
+    # before any devhouse 3 post: everyone at the base, Sapporo then Asahikawa
+    for name in seven:
+        assert whereabouts(cfg, name, '2027-02-20') == [base('Sapporo', name)], name
+        assert whereabouts(cfg, name, '2027-02-26') == [base('Asahikawa', name)], name
+    # ...and the three new members are nowhere on a devhouse 2 date
+    for name in ('Khoi', 'Sam', 'Xander'):
+        assert whereabouts(cfg, name, '2025-11-02') == [], name
+    before = {name: whereabouts(cfg, name, '2025-11-02') for name in seven}
+    assert all(len(before[n]) == 1 for n in ('Bailey', 'Damian', 'Dylan', 'Julia')), before
+
+    # Bailey's first devhouse 3 post moves him, off everybody else's cell
+    place(cfg, post(901, date='2027-02-20'), spot_in('Sapporo', 'Clock Tower'), spots)
+    (room, x, y), = whereabouts(cfg, 'Bailey', '2027-02-20')
+    assert room == 'Sapporo' and (room, x, y) != base('Sapporo', 'Bailey')
+    others = {whereabouts(cfg, n, '2027-02-20')[0] for n in seven if n != 'Bailey'}
+    assert (room, x, y) not in others and len(others) == 6
+    assert whereabouts(cfg, 'Bailey', '2027-02-19') == [base('Sapporo', 'Bailey')]      # the day before: still base
+    assert whereabouts(cfg, 'Bailey', '2027-02-24') == [(room, x, y)]                   # stays put until the group moves
+    # the group moves base: he is in Asahikawa with the rest, though his last post was Sapporo
+    assert whereabouts(cfg, 'Bailey', '2027-02-25') == [base('Asahikawa', 'Bailey')]
+    # a post from Asahikawa moves him there
+    place(cfg, post(902, date='2027-02-26'), spot_in('Asahikawa'), spots)
+    (room2, x2, y2), = whereabouts(cfg, 'Bailey', '2027-02-26')
+    assert room2 == 'Asahikawa' and (room2, x2, y2) != base('Asahikawa', 'Bailey')
+    # a post from a room that is another trip's home still places him (and only there)
+    place(cfg, post(903, date='2027-02-27'), spot_in('Tokyo'), spots)
+    (room3, _, _), = whereabouts(cfg, 'Bailey', '2027-02-27')
+    assert room3 == 'Tokyo'
+    assert whereabouts(cfg, 'Bailey', '2027-02-26') == [(room2, x2, y2)]
+    # a room he had never been in gets a hidden base def, as ever
+    fresh = next(r for r in sorted({r for r, _, _ in spots.values()})
+                 if b.npc_in_room(cfg['rooms'][r], 'Khoi') is None)
+    cfg_k = copy.deepcopy(cfg)
+    cell = b.walkable_near(cfg_k, fresh, *spots[spot_in(fresh)][1:],
+                           b.occupied_cells(cfg_k, fresh, '2027-02-21', 'Khoi'))
+    assert any('hidden base def' in c for c in b.apply(cfg_k, 'Khoi', '2027-02-21', fresh, *cell, ['hello']))
+    assert [r for r, _, _ in whereabouts(cfg_k, 'Khoi', '2027-02-21')] == [fresh]
+    assert whereabouts(cfg_k, 'Khoi', '2027-02-25') == [base('Asahikawa', 'Khoi')]
+    assert whereabouts(cfg_k, 'Khoi', '2025-11-02') == []
+
+    # nobody else moved, and devhouse 2 is exactly as it was
+    for name in seven:
+        if name != 'Bailey':
+            assert whereabouts(cfg, name, '2027-02-27') == [base('Asahikawa', name)], name
+        assert whereabouts(cfg, name, '2025-11-02') == before[name], name
+    # every dated day so far belongs to exactly one trip, and its base cast is still valid data
+    for room_key in ('Sapporo', 'Asahikawa'):
+        for npc in base_cfg['rooms'][room_key]['npcs']:
+            assert npc.get('trip') == 'devhouse3' and npc.get('stay') == room_key, (room_key, npc['name'])
+            assert npc.get('present') is not False and len(npc['dialogue']) >= 2
+
+
 def test_tiled_ids_stable():
     """config_to_tiled keeps every sprite's tile id when a room gains or loses
     sprites, so a map change does not renumber the whole .tmj (#108)."""
@@ -561,6 +665,7 @@ if __name__ == '__main__':
     test_shipped_posts(config)
     test_photos(config)
     test_authors(config)
+    test_trips(config)
     test_shipped_dialogue(config)
     test_tiled_ids_stable()
     print('ok')

@@ -43,14 +43,15 @@ class CharacterSelect {
 
     /**
      * The devhouse members shown in the title line-up and the intro's cast
-     * row: config.members (sprite base names), sorted alphabetically. A listed name
+     * row: config.members (sprite base names) — or `names`, when the caller
+     * wants one trip's members (the intro does) — sorted alphabetically. A listed name
      * with no sprite set is skipped; a sprite set that is not listed (james,
      * the default player sprite, is not a member) never appears.
      */
-    static lineup(config) {
+    static lineup(config, names) {
         const have = new Set(CharacterSelect.available(config));
-        // always alphabetical, whatever order config.members was written in
-        return (config.members || []).filter(n => have.has(n)).sort((a, b) => a.localeCompare(b));
+        // always alphabetical, whatever order the list was written in
+        return (names || config.members || []).filter(n => have.has(n)).sort((a, b) => a.localeCompare(b));
     }
 
     /** Patch config.player to the saved character. Call before SpriteSystem boots. */
@@ -140,6 +141,9 @@ class CharacterSelect {
         // back the one you stopped being
         scene.syncNpcPresence();
         if (scene.syncPlayerNameLabel) scene.syncPlayerNameLabel();
+        // a new player who has not taken a step yet may have just emptied
+        // the room they were started in (issue #59)
+        if (scene.resettleNewPlayer) scene.resettleNewPlayer();
         return true;
     }
 

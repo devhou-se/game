@@ -23,8 +23,26 @@ class WorldModel {
         return config;
     }
 
+    // Every day worth surveying: the days with posts, and every day of every trip (the
+    // trip's base cast stands somewhere on each of them, post or no post).
+    static surveyDates(config) {
+        const dates = new Set(contentChangeDates(config));
+        for (const trip of Trips.of(config)) {
+            for (let n = Trips.dayNumber(trip.start); n <= Trips.dayNumber(trip.end); n++) {
+                dates.add(new Date(n * 86400000).toISOString().slice(0, 10));
+            }
+        }
+        return [...dates].sort();
+    }
+
     static defaultDate(config) {
-        return defaultGameDate(todayIso(), [...contentChangeDates(config)].sort());
+        return defaultGameDate(todayIso(), [...contentChangeDates(config)].sort(), Trips.of(config));
+    }
+
+    // Where the game puts a player on `date` (Trips.startFor): the trip's home for a
+    // returning player, next to the cast for a new one.
+    static startFor(config, date, opts) {
+        return Trips.startFor(config, date, opts);
     }
 
     constructor(config, env, state) {
@@ -41,9 +59,10 @@ class WorldModel {
             this.WORLD_WIDTH / this.GRID_SIZE, this.WORLD_HEIGHT / this.GRID_SIZE);
         this.collisionSystem = new CollisionSystem(this);
 
-        const s = Object.assign({
-            room: config.player.startRoom, x: config.player.startX, y: config.player.startY,
-            date: WorldModel.defaultDate(config), as: baseOf(config.player.sprite),
+        this.trips = Trips.of(config);
+        const date = (state && state.date) || WorldModel.defaultDate(config);
+        const s = Object.assign(WorldModel.startFor(config, date), {
+            date, as: baseOf(config.player.sprite),
         }, state || {});
         this.date = s.date;
         this.as = s.as;
@@ -72,7 +91,7 @@ class WorldModel {
         const opponent = this.as === 'damian' ? 'bailey' : 'damian';
         const list = [];
         for (const raw of this.config.rooms[roomKey].npcs || []) {
-            const r = resolveNpc(raw, this.date);
+            const r = resolveNpc(raw, this.date, this.trips);
             if (!r || baseOf(r.sprite) === this.as) continue;
             if (r.drinkingGameOpponent && baseOf(r.sprite) !== opponent) continue;
             list.push(this.character(r.name,
@@ -497,6 +516,28 @@ class WorldModel {
         const arrivals = {};
         const arrive = (room, x, y, via) => (arrivals[room] = arrivals[room] || []).push({ x, y, via });
         arrive(this.config.player.startRoom, this.config.player.startX, this.config.player.startY, 'spawn');
+        // every place the game can start a player: each trip's home and stays, and where a
+        // new player is put (next to the cast) on each surveyed day
+        const starts = new Set([`${this.config.player.startRoom},${this.config.player.startX},${this.config.player.startY}`]);
+        const start = (spot, via) => {
+            if (!spot || !spot.room) return;
+            // Trips.homeFor ignores a home or stay without a cell and falls back — for a stay,
+            // to the trip's home, which can be a different room from where the group is
+            if (!Number.isInteger(spot.x) || !Number.isInteger(spot.y)) {
+                problems.push({ room: spot.room, text: `${via} has no cell (x, y): players start somewhere else instead` });
+                return;
+            }
+            const id = `${spot.room},${spot.x},${spot.y}`;
+            if (starts.has(id)) return;
+            starts.add(id);
+            if (!rooms[spot.room]) problems.push({ room: spot.room, text: `${via} names a missing room` });
+            else arrive(spot.room, spot.x, spot.y, via);
+        };
+        for (const trip of this.trips) {
+            start(trip.home, `${trip.name} home`);
+            for (const stay of trip.stays) start(stay, `${trip.name} stay`);
+        }
+        for (const date of dates) start(WorldModel.startFor(this.config, date, { newPlayer: true }), `new-player start (${date})`);
         for (const [k, r] of Object.entries(rooms)) {
             for (const t of r.transporters) {
                 if (!rooms[t.targetRoom]) problems.push({ room: k, x: t.gridX, y: t.gridY, text: `targets missing room "${t.targetRoom}"` });

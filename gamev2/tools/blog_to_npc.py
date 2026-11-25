@@ -71,8 +71,18 @@ LLM response, for testing the placement plumbing).
 Cross-room moves rely on resolveNpc semantics: an NPC definition whose base
 has "present": false stays hidden until a dated state sets present true, so
 authors can hop between rooms with one hidden base def per visited room.
+
+Trips (config.json "trips", src/utils/Trips.js): the game only applies the
+states dated inside the trip — and the stay — that the game date belongs to,
+and a base NPC marked "trip" / "stay" stands there only on those dates. So
+before an author's first post of a trip they are at the trip's base spot,
+that post moves them exactly as above, and when the group moves base
+everyone is at the new base until they post from it. Nothing here needs to
+know which trip a post is from; trip_window / resolve_pos mirror the game's
+rule only so a new arrival is not put on a cell somebody is standing on.
 """
 import argparse
+import datetime
 import json
 import os
 import re
@@ -455,12 +465,53 @@ def npc_in_room(room, name):
     return next((n for n in room.get('npcs', []) if n['name'].lower() == name.lower()), None)
 
 
-def resolve_pos(npc, date):
+TRIP_LEAD = 14   # days before its start a trip opens (Trips.LEAD in the game)
+
+
+def trip_window(cfg, date):
+    """What `date` can see — {'trip', 'stay', 'from'} or None with no trips
+    (mirrors Trips.windowFor in the game): its trip is the latest one opened
+    by then (a trip opens `lead` days, default TRIP_LEAD, before its start;
+    the first trip, for a date before them all), its stay the latest one of
+    that trip begun by then, and `from` the first day whose dated states
+    still apply (the start of that stay, else of the trip). `early` is a
+    lead-in day of a later trip: `from` is the day it opened and its base
+    NPCs are not there yet."""
+    iso = re.compile(r'\d{4}-\d{2}-\d{2}$')
+    trips = sorted((t for t in cfg.get('trips') or []
+                    if t.get('id') and iso.match(t.get('start') or '') and iso.match(t.get('end') or '')
+                    and t['start'] <= t['end']), key=lambda t: t['start'])
+    if not trips:
+        return None
+    def opens(t):
+        lead = t.get('lead')
+        lead = lead if isinstance(lead, int) and not isinstance(lead, bool) and lead >= 0 else TRIP_LEAD
+        return (datetime.date.fromisoformat(t['start']) - datetime.timedelta(days=lead)).isoformat()
+    trip = ([t for t in trips if opens(t) <= date] or trips[:1])[-1]
+    stays = sorted((s for s in trip.get('stays') or [] if s.get('room') and iso.match(s.get('from') or '')),
+                   key=lambda s: s['from'])
+    stay = ([s for s in stays if s['from'] <= date] or stays[:1] or [None])[-1]
+    if date < trip['start'] and trip is not trips[0]:
+        return {'trip': trip, 'stay': stay, 'early': True, 'from': opens(trip)}
+    return {'trip': trip, 'stay': stay, 'early': False,
+            'from': stay['from'] if stay and stay['from'] > trip['start'] else trip['start']}
+
+
+def resolve_pos(npc, date, window=None):
     """(present, gridX, gridY) for an NPC as of date — base overlaid by every
-    state dated on-or-before, in order (mirrors resolveNpc in the game)."""
+    state dated on-or-before, in order (mirrors resolveNpc in the game). With
+    a `window` (trip_window) it is scoped as the game scopes it: a base
+    marked "trip" / "stay" is absent outside that trip / stay, and states
+    from before the window are skipped."""
     present = npc.get('present') is not False
+    if window and npc.get('trip'):
+        if npc['trip'] != window['trip']['id'] or window.get('early') or (
+                npc.get('stay') and (window['stay'] or {}).get('room') != npc['stay']):
+            present = False
     x, y = npc.get('gridX'), npc.get('gridY')
     for d in sorted(npc.get('states', {})):
+        if window and d < window['from']:
+            continue
         if d <= date:
             st = npc['states'][d]
             present = st.get('present', present)
@@ -471,10 +522,11 @@ def resolve_pos(npc, date):
 def occupied_cells(cfg, room_key, date, exclude_name):
     """Cells taken by other NPCs present in room_key as of date."""
     occ = set()
+    window = trip_window(cfg, date)
     for n in cfg['rooms'][room_key].get('npcs', []):
         if n['name'].lower() == exclude_name.lower():
             continue
-        present, x, y = resolve_pos(n, date)
+        present, x, y = resolve_pos(n, date, window)
         if present and x is not None:
             occ.add((x, y))
     return occ

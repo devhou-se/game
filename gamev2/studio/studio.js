@@ -60,7 +60,13 @@ async function boot() {
         Object.assign(S.rooms[k], { blocked: m.blocked, interactions: m.interactions(), art: renderArt(k), npcs: [] });
     }
 
-    S.dates = [...contentChangeDates(config)].sort();
+    // the days with posts, plus the first day of every trip and stay (the trip's base cast)
+    const days = new Set(contentChangeDates(config));
+    for (const trip of Trips.of(config)) {
+        days.add(trip.start);
+        for (const stay of trip.stays) days.add(stay.from);
+    }
+    S.dates = [...days].sort();
     const today = m.date;
     if (!S.dates.includes(today)) S.dates.push(today);
     S.dates.sort();

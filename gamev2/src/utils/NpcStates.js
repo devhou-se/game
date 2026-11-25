@@ -15,11 +15,15 @@
  * Viewing "2026-07-01" above shows the 06-30 dialogue at the base position.
  *
  * The game date is ?date=YYYY-MM-DD when given (time travel). Otherwise it is
- * today (device local time) while today is inside the trip — the span of the
- * dated content, first state date to last — and, once the trip is over (or
- * before it starts), the trip day that today cycles onto: see
- * defaultGameDate. A state of {"present": false} removes the NPC from that
- * date until a later state sets it back.
+ * today (device local time) while a trip is on and, between trips, the trip
+ * day that today cycles onto: see defaultGameDate. A state of
+ * {"present": false} removes the NPC from that date until a later state sets
+ * it back.
+ *
+ * Trips (config.trips, src/utils/Trips.js) scope all of this: only the
+ * states dated inside the game date's trip — and, when the trip moves base,
+ * inside its current stay — are applied, and a base NPC marked "trip" (and
+ * "stay") only exists on that trip's dates. See resolveNpc.
  *
  * A state may also carry "photo": <post id> — a blog-post photo imported to
  * assets/photos/<id>.png by tools/blog_to_npc.py, hung in a frame beside the
@@ -49,53 +53,54 @@ function todayIso() {
         String(d.getDate()).padStart(2, '0');
 }
 
-// The days of the trip: every date with dated content, sorted. Set once the
-// config has loaded (see setTripDates); empty until then, and for a config
-// with no dated content.
+// Every date with dated content, sorted, and the trips they belong to
+// (Trips.of(config)). Set once the config has loaded (see setTripDates);
+// empty until then, and for a config with no dated content / no trips.
 let tripDates = [];
+let loadedTrips = [];
 // The real date when the config loaded. NPCs are resolved once, at boot, so
 // the default game date must not move on at midnight in a session left open
 // (the HUD would name a day whose stories are not the ones showing).
 let bootToday = null;
 
 /**
- * Tell the date functions which days the trip covers — the sorted
- * contentChangeDates(config). GameScene calls this as soon as config.json is
- * decoded, before anything asks for the game date.
+ * Tell the date functions which days have content — the sorted
+ * contentChangeDates(config) — and which trips there are. GameScene calls
+ * this as soon as config.json is decoded, before anything asks for the game
+ * date or resolves an NPC.
  */
 function setTripDates(config) {
     tripDates = [...contentChangeDates(config)].sort();
+    loadedTrips = Trips.of(config);
     bootToday = todayIso();
 }
 
 /**
- * The game date when the URL names none (issue #54).
+ * The game date when the URL names none (issues #54, #118).
  *
- * During the trip — from the first dated day to the last — that is simply
- * today. Outside it, today would be a date with no connection to the trip
- * (everyone frozen on their last post), so today is mapped onto a trip day
- * instead: count the days since the trip ended and wrap at the number of
- * trip days, so the day after the last day is day one again. Only days that
- * have content are in the cycle, so quiet stretches between posts are
- * skipped. A visitor therefore always lands on a day of the trip, everyone
- * has that day's story, and coming back tomorrow shows the next one.
+ * With trips configured (Trips.defaultDate): today while a trip is on —
+ * whether or not anyone has posted yet — and otherwise a content day of the
+ * most recent trip, cycled: count the days since that trip's last post and
+ * wrap at its number of content days, so the day after the last is day one
+ * again. Only days that have content are in the cycle, and only one trip's,
+ * so two trips are never read as one long span. A visitor therefore always
+ * lands on a day of a trip, everyone has that day's story, and coming back
+ * tomorrow shows the next one.
+ *
+ * Without trips the content days are taken as one trip, first day to last
+ * (the rule before trips were data).
  *
  * `today` defaults to the real date as it was when the config loaded (the
- * world is resolved once, so the date holds for the session) and `dates` to
- * the loaded trip days; both are parameters so the mapping can be checked
- * without a clock.
+ * world is resolved once, so the date holds for the session), `dates` to
+ * the loaded content days and `trips` to the loaded trips; all are
+ * parameters so the mapping can be checked without a clock.
  */
-function defaultGameDate(today = bootToday || todayIso(), dates = tripDates) {
+function defaultGameDate(today = bootToday || todayIso(), dates = tripDates, trips = loadedTrips) {
+    if (trips.length) return Trips.defaultDate(today, dates, trips);
     if (!dates.length) return today;
     const first = dates[0], last = dates[dates.length - 1];
     if (today >= first && today <= last) return today;
-    // whole days since the epoch; UTC so daylight saving never skews a count
-    const dayNumber = (iso) => {
-        const [y, m, d] = iso.split('-').map(Number);
-        return Math.round(Date.UTC(y, m - 1, d) / 86400000);
-    };
-    const n = dates.length;
-    return dates[(((dayNumber(today) - dayNumber(last) - 1) % n) + n) % n];
+    return Trips.cycle(today, dates);
 }
 
 function gameDate() {
@@ -104,13 +109,26 @@ function gameDate() {
     return defaultGameDate();
 }
 
-function resolveNpc(npcConfig, date) {
-    if (!npcConfig.states) return npcConfig;
+/**
+ * An NPC as it is on `date`, or null when it is not there.
+ *
+ * `trips` (default: the loaded config's) scopes it to the trip the date
+ * belongs to — Trips.windowFor: a base definition marked "trip" (and
+ * "stay") is absent outside that trip (and stay), exactly as if it said
+ * "present": false, and states dated before the window opens are another
+ * trip's history and are skipped. States inside the window apply as ever,
+ * so a post still places its author in any room.
+ */
+function resolveNpc(npcConfig, date, trips = loadedTrips) {
+    const scope = trips.length ? Trips.windowFor(trips, date) : null;
+    const scoped = !Trips.baseOn(npcConfig, scope);
+    if (!npcConfig.states && !scoped) return npcConfig;
     const merged = Object.assign({}, npcConfig);
     delete merged.states;
+    if (scoped) merged.present = false;
     // ISO dates compare correctly as strings
-    for (const d of Object.keys(npcConfig.states).sort()) {
-        if (d > date) continue;
+    for (const d of Object.keys(npcConfig.states || {}).sort()) {
+        if (d > date || (scope && d < scope.from)) continue;
         const state = npcConfig.states[d];
         Object.assign(merged, state);
         if ('dialogue' in state && !('voice' in state)) merged.voice = null;

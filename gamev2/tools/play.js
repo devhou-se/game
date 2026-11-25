@@ -11,12 +11,12 @@ const SESSION = path.join(os.tmpdir(), 'gamev2-play-' +
     crypto.createHash('sha1').update(GV2).digest('hex').slice(0, 8) + '.json');
 
 const ctx = vm.createContext({ console, URLSearchParams, location: { search: '' } });
-for (const f of ['utils/ConfigCodec.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'systems/TiledAdapter.js',
+for (const f of ['utils/ConfigCodec.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'systems/TiledAdapter.js',
     'systems/RoomManager.js', 'systems/CollisionSystem.js', 'Shop.js', 'TrainTravel.js', '../tools/world-model.js']) {
     vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 }
-const { decodeConfig, contentChangeDates, Shop, WorldModel, DIRS } =
-    vm.runInContext('({decodeConfig, contentChangeDates, Shop, WorldModel, DIRS})', ctx);
+const { decodeConfig, contentChangeDates, Shop, WorldModel, DIRS, Trips } =
+    vm.runInContext('({decodeConfig, contentChangeDates, Shop, WorldModel, DIRS, Trips})', ctx);
 
 const ALIAS = { up: 'n', down: 's', left: 'w', right: 'e', north: 'n', south: 's', east: 'e', west: 'w' };
 const out = (s) => process.stdout.write(s + '\n');
@@ -128,11 +128,13 @@ const COMMANDS = {
             'npcs                       everyone in the world on the current date',
             'dates                      days that have blog content',
             'date <YYYY-MM-DD|today>    time travel; today is the day the game opens on',
+            'trips                      the trips, and where a player starts on the current date',
+            'start [new]                go where the game starts a returning (or a new) player on the current date',
             'as <name>                  play as a cast member (their NPC leaves the world)',
-            'check                      transporter targets and unreachable rooms, plus NPC placement on every content day',
+            'check                      transporter targets and unreachable rooms, plus NPC placement and player starts on every content and trip day',
             'lint [room]...             map QA: floor holes, missing or stray colliders, tree and overhang layering',
             'render <room> <out.png>    draw a room to a PNG [--scale 0.5] [--colliders]',
-            'reset                      back to the spawn point, on the day the game opens on',
+            'reset                      back to the start (the trip home), on the day the game opens on',
             '',
             'Legend: @ you  # blocked  . walkable  > transporter  T train  $ shop  ~ pond  ? clock  D drinking game  letters are NPCs',
             'State persists between runs. With no arguments, commands are read from stdin, one per line.',
@@ -240,6 +242,20 @@ const COMMANDS = {
         return `on ${w.date}, playing as ${w.as}\n` + lines.join('\n');
     },
     dates: (w) => [...contentChangeDates(w.config)].sort().join(' '),
+    trips(w) {
+        const fmt = (s) => `${s.room} ${s.x},${s.y}`;
+        const lines = w.trips.map(t => `${t.id.padEnd(10)} ${t.start} to ${t.end}  ${t.name}, ${t.where || '?'}: ${t.members.join(' ')}` +
+            t.stays.map(s => `\n             from ${s.from} based in ${s.room}`).join(''));
+        const trip = Trips.forDate(w.trips, w.date);
+        lines.push(`on ${w.date}${trip ? ` (${trip.name})` : ''}: a returning player starts at ${fmt(WorldModel.startFor(w.config, w.date))}, ` +
+            `a new one at ${fmt(WorldModel.startFor(w.config, w.date, { newPlayer: true, played: w.as }))}`);
+        return lines.join('\n');
+    },
+    start(w, [who]) {
+        const s = WorldModel.startFor(w.config, w.date, { newPlayer: who === 'new', played: w.as });
+        w.enter(s.room, s.x, s.y);
+        return where(w);
+    },
     date(w, [d]) {
         if (d === 'today') d = WorldModel.defaultDate(w.config);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(d || '')) throw new Error('date <YYYY-MM-DD|today>');
@@ -298,7 +314,7 @@ const COMMANDS = {
         return `${k}: ${img.width}x${img.height}px -> ${file}`;
     },
     check(w) {
-        const dates = [...contentChangeDates(w.config)];
+        const dates = WorldModel.surveyDates(w.config);
         if (!dates.includes(w.date)) dates.push(w.date);
         const { problems } = w.survey(dates.sort());
         if (!problems.length) return 'no problems found';

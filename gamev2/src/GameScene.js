@@ -115,7 +115,7 @@ class GameScene extends Phaser.Scene {
             // Load configuration (expand the v2 tile-palette format to the
             // runtime "x,y" -> tileKey shape before anything reads it)
             this.config = decodeConfig(this.cache.json.get('config'));
-            setTripDates(this.config);   // the default game date is a day of the trip
+            setTripDates(this.config);   // content days + config.trips: the default game date, NPC scoping
 
             // Rooms are authored in Tiled (tiled/*.tmj is the map source of truth).
             // TiledAdapter outputs the exact room shape RoomManager renders, so the
@@ -199,12 +199,14 @@ class GameScene extends Phaser.Scene {
             this.roomManager.setupCities(this.config, this.cache.json.get('worldMap'));
             this.achievementManager.computeReachable();
 
-            // Create player
-            const start = this.roomManager.resolve(
-                this.config.player.startRoom,
-                this.config.player.startX !== null ? this.config.player.startX : centerGridX,
-                this.config.player.startY !== null ? this.config.player.startY : centerGridY);
+            // where the game date's trip starts a player (see startPosition):
+            // a district cell, like a door target, so through resolve
+            this.newPlayer = Intro.isNewPlayer();
+            this.bootStart = this.startPosition();
+            const start = this.roomManager.resolve(this.bootStart.room, this.bootStart.x, this.bootStart.y);
             this.roomManager.currentRoom = start.room;
+
+            // Create player
             const playerStartX = start.x;
             const playerStartY = start.y;
 
@@ -310,6 +312,74 @@ class GameScene extends Phaser.Scene {
             if (window.failLoader) window.failLoader();
             throw error;
         }
+    }
+
+    /**
+     * Where this player starts on the game date — { room, x, y } in the same
+     * terms as a door target (Trips.startFor): the home of the date's trip
+     * for a returning player, next to the cast for a new one. Never the
+     * member the player is playing as.
+     */
+    startPosition() {
+        const sprite = (this.player && this.player.baseSpriteKey) || this.config.player.sprite;
+        const at = Trips.startFor(this.config, gameDate(), { newPlayer: this.newPlayer, played: Trips.baseOf(sprite) });
+        // a start with no cell (config.player.startX/Y null) is the middle of the world
+        return {
+            room: at.room,
+            x: at.x != null ? at.x : Math.floor(this.WORLD_WIDTH / this.GRID_SIZE / 2),
+            y: at.y != null ? at.y : Math.floor(this.WORLD_HEIGHT / this.GRID_SIZE / 2),
+        };
+    }
+
+    /** Is the player standing on a startPosition() cell (a district's, so through resolve)? */
+    playerIsAt(spot) {
+        const rm = this.roomManager, at = rm.resolve(spot.room, spot.x, spot.y);
+        return rm.currentRoom === at.room && this.player.gridX === at.x && this.player.gridY === at.y;
+    }
+
+    /**
+     * A new player who has not moved yet is put where startPosition() says
+     * now, when becoming one of the cast (the first-run creator's name
+     * Easter egg, or Menu → Character before taking a step) left the place
+     * they were started in with nobody to talk to. With somebody still near
+     * they stay put. CharacterSelect.become calls this; for anyone else,
+     * and once the player has taken a step (see update), it does nothing.
+     */
+    resettleNewPlayer() {
+        const from = this.bootStart, rm = this.roomManager;
+        if (!this.newPlayer || !from) return;
+        if (!this.playerIsAt(from)) return;
+        const played = Trips.baseOf(this.player.baseSpriteKey);
+        if (Trips.hasCompany(this.config, gameDate(), from.room, from.x, from.y, played)) return;
+        const to = this.startPosition();
+        if (to.room === from.room && to.x === from.x && to.y === from.y) return;
+        this.bootStart = to;
+        rm.switchRoomInstant(to.room, to.x, to.y);
+    }
+
+    /**
+     * The HUD's date segment: the game date, led by its trip's name on a
+     * trip day when the line still ends clear of the menu button with it
+     * (it does not in rooms with long names — the konbini, Don Takote).
+     */
+    hudDate() {
+        return Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate, (label) => this.hudFits(label));
+    }
+
+    /**
+     * Would the HUD line — title | room | `dateLabel` | wallet — end at
+     * least two HUD_PADDINGs short of the menu button? Measured with the HUD's
+     * own text objects, so it is exact for the font in use. True before the
+     * HUD exists.
+     */
+    hudFits(dateLabel) {
+        if (!this.hudText || !this.hudDateText || !this.menuButton) return true;
+        const was = this.hudDateText.text;
+        this.hudDateText.setText(dateLabel);
+        const right = UI.HUD_PADDING + this.hudText.width + this.hudDateText.width +
+            (this.hudMoneyText ? this.hudMoneyText.width : 0);
+        this.hudDateText.setText(was);
+        return right <= this.menuButton.x - this.menuButton.width - 2 * UI.HUD_PADDING;
     }
 
     /**
@@ -455,7 +525,7 @@ class GameScene extends Phaser.Scene {
         this.hudDateText = this.add.text(
             UI.HUD_PADDING + this.hudText.width,
             UI.HUD_HEIGHT / 2,
-            formatGameDate(gameDate()),
+            this.hudDate(),
             {
                 fontSize: FONTS.HUD_SIZE,
                 fill: COLORS.HUD_TEXT,
@@ -504,6 +574,7 @@ class GameScene extends Phaser.Scene {
         this.menuButton.setResolution(1);
         this.menuButton.setInteractive({ useHandCursor: true });
         this.menuButton.on('pointerdown', () => this.menuManager.toggle());
+        this.updateHUD();   // now the menu button is there to measure against (hudFits)
     }
 
     /**
@@ -524,10 +595,11 @@ class GameScene extends Phaser.Scene {
     updateHUD() {
         const hudText = `${this.config.game.title} | ${this.hudRoomName()} | `;
         JapaneseFont.fit(this.hudText.setText(hudText));   // room for a Japanese room name
-        this.hudDateText.setText(formatGameDate(gameDate()));
+        // the wallet first: how much room the date has depends on it (hudFits)
+        if (this.hudMoneyText) this.hudMoneyText.setText(` | ${this.shop.fmt(this.shop.money)}`);
+        this.hudDateText.setText(this.hudDate());
         this.hudDateText.setX(UI.HUD_PADDING + this.hudText.width);
         if (this.hudMoneyText) {
-            this.hudMoneyText.setText(` | ${this.shop.fmt(this.shop.money)}`);
             this.hudMoneyText.setX(UI.HUD_PADDING + this.hudText.width + this.hudDateText.width);
         }
     }
@@ -962,6 +1034,9 @@ class GameScene extends Phaser.Scene {
         }
         this.updateCharacterDepths();
         if (this.debugManager) this.debugManager.update();
+        // a player who has left their start cell is where they chose to be (resettleNewPlayer)
+        const boot = this.bootStart;
+        if (boot && this.player && !this.playerIsAt(boot)) this.bootStart = null;
         // Achievement "Paint the board": record the tile the player stands on.
         if (this.player && this.achievementManager) {
             const k = this.player.gridX + ',' + this.player.gridY;
