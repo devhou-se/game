@@ -42,7 +42,7 @@ b = rg.Builder(W, H)
 b.fill('snow-autotile')
 
 # ---- rail corridor across the north (ambient trains run along the track) ------
-b.autotile('gravel-autotile', rect(0, 3, W - 1, 5))
+b.autotile('gravel-snow-autotile', rect(0, 3, W - 1, 5))   # gravel with a snow bank, not a grass fringe
 for x in range(W):
     b.put('Over Floor', x, 4, 'train-track_0_0')
 for x in range(1, W - 1):

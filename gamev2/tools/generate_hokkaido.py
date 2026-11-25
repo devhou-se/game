@@ -23,6 +23,8 @@ placeholders like Tokyo Tower / Tsutenkaku.
   dirt-snow-autotile_*      1x1   the dirt-outside path family with its green grass
                                    fringe recoloured to snow, for paths trodden
                                    through a snowed-in town (9 autotile roles)
+  gravel-snow-autotile_*    1x1   the gravel family (the rail-corridor ballast)
+                                   with the same fringe-to-snow recolour
 
 (The LimeZu Modern_Exteriors clock tower in Tileset_53_MV was considered for
 the Clock Tower and rejected: it is 16px art, so at this game's cell size its
@@ -407,17 +409,22 @@ SPRITES = {      # key: (builder, pixel-double?, tileNames label)
 FLAT = {'asahikawa-bridge_0_0': -200}
 
 
-# dirt-outside-autotile's grass fringe -> snow bank (exact palette swaps; the
-# dirt, its shadow and the ink line are kept)
+# dirt-outside-autotile's and gravel-autotile's grass fringe -> snow bank (exact
+# palette swaps — both families share the fringe colours; the dirt, the gravel
+# pebbles, the shadow and the ink line are kept)
 SNOW_FRINGE = {(131, 175, 111): (232, 240, 249), (80, 133, 130): (196, 208, 224),
                (66, 95, 170): (160, 176, 200)}
 DIRT_ROLES = ('center', 'edge-n', 'edge-s', 'edge-e', 'edge-w',
               'corner-ne', 'corner-nw', 'corner-se', 'corner-sw')
 
 
-def snow_dirt(cfg):
+SNOW_FAMILIES = {'dirt-outside-autotile': 'dirt-snow-autotile',     # source family -> snow family
+                 'gravel-autotile': 'gravel-snow-autotile'}
+
+
+def snow_fringe(cfg, src_fam, dst_fam):
     for role in DIRT_ROLES:
-        src, dst = f'dirt-outside-autotile_{role}', f'dirt-snow-autotile_{role}'
+        src, dst = f'{src_fam}_{role}', f'{dst_fam}_{role}'
         im = Image.open(f'assets/sprites/{src}.png').convert('RGBA')
         px = im.load()
         for y in range(im.height):
@@ -427,8 +434,8 @@ def snow_dirt(cfg):
                     px[x, y] = SNOW_FRINGE[(r, g, b)] + (a,)
         im.save(f'assets/sprites/{dst}.png')
         cfg['spriteMetadata'][dst] = dict(cfg['spriteMetadata'][src])
-        cfg.setdefault('tileNames', {})[dst] = 'dirt-snow-autotile'
-    print(f'dirt-snow-autotile: {len(DIRT_ROLES)} roles')
+        cfg.setdefault('tileNames', {})[dst] = dst_fam
+    print(f'{dst_fam}: {len(DIRT_ROLES)} roles')
 
 
 def main():
@@ -450,7 +457,8 @@ def main():
         if key in FLAT:
             cfg['spriteMetadata'][key]['depthBias'] = FLAT[key]
         cfg.setdefault('tileNames', {})[key] = label
-    snow_dirt(cfg)
+    for src_fam, dst_fam in SNOW_FAMILIES.items():
+        snow_fringe(cfg, src_fam, dst_fam)
     json.dump(cfg, open('config.json', 'w'), indent=2, sort_keys=True)
 
     if '--preview' in sys.argv:

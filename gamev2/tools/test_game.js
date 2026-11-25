@@ -162,6 +162,33 @@ const tests = {
         assert.strictEqual(rooms.TokyoStation.name, 'Tokyo Station');
     },
 
+    'a snowed-in town lays no grass-fringed path: gravel and dirt use their snow families'() {
+        // gravel-autotile / dirt-outside-autotile edges carry a green fringe (tools/generate_hokkaido.py SNOW_FAMILIES)
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
+        const bad = [], snowTowns = [];
+        for (const [key, room] of Object.entries(cfg.rooms)) {
+            const floor = (room.layers || []).find((l) => l.name === 'Floor');
+            const cells = Object.entries((floor && floor.tiles) || {});
+            if (!cells.some(([, t]) => name(t).startsWith('snow-autotile'))) continue;
+            snowTowns.push(key);
+            for (const [xy, t] of cells) {
+                if (/^(gravel|dirt-outside)-autotile_/.test(name(t))) bad.push(`${key} @${xy} ${name(t)}`);
+            }
+        }
+        assert.deepStrictEqual(bad, []);
+        for (const town of ['Yukimura', 'Sapporo', 'Asahikawa']) {
+            assert.ok(snowTowns.includes(town), `${town} is no longer on snow ground`);
+            const floor = cfg.rooms[town].layers.find((l) => l.name === 'Floor');
+            assert.ok(Object.values(floor.tiles).some((t) => name(t).startsWith('gravel-snow-autotile_')), `${town} has no rail-corridor gravel`);
+        }
+        for (const role of ['center', 'edge-n', 'edge-s', 'edge-e', 'edge-w', 'corner-ne', 'corner-nw', 'corner-se', 'corner-sw']) {
+            const k = `gravel-snow-autotile_${role}`;
+            assert.ok(k in cfg.spriteMetadata, `${k} is not in spriteMetadata (not loaded at boot)`);
+            assert.ok(fs.existsSync(path.join(GV2, 'assets', 'sprites', k + '.png')), `${k}.png is missing`);
+        }
+    },
+
     'a dated state that marks an NPC absent carries no placement'() {
         // tools/blog_to_npc.py PLACEMENT_KEYS: a leftover photo is still preloaded, leftover dialogue reads as a post
         const placementKeys = ['gridX', 'gridY', 'dialogue', 'photo', 'voice', 'drunk', 'posts'];

@@ -678,8 +678,9 @@ the blog pipeline places people there.
   clock tower was rejected (16px art - pixels twice the size - and more saturated). `--preview out.png`
   writes a contact sheet. It also derives the `dirt-snow-autotile` family (9 roles) from
   `dirt-outside-autotile` by swapping the green grass fringe for a snow bank - use it for dirt paths on
-  snow ground (Asahikawa and Yukimura's shrine path do, #105). The rail-corridor gravel in the snow towns
-  still has `gravel-autotile`'s green edge - there is no snow variant of that family yet.
+  snow ground (Asahikawa and Yukimura's shrine path do, #105) - and `gravel-snow-autotile` from
+  `gravel-autotile` the same way (`SNOW_FAMILIES`), which the rail corridors of Yukimura, Sapporo and
+  Asahikawa use (#125). `test_game.js` fails a snow-ground room that lays either grass-fringed family.
 - **Flat sprites over water**: `Over Floor` and `Water` share one fixed depth, so a multi-cell sprite on
   `Over Floor` is drawn UNDER water tiles. The bridge therefore sits on `Non-Collidables` with
   `spriteMetadata.depthBias: -200` (written by `generate_hokkaido.py`'s `FLAT` table): above every ground
