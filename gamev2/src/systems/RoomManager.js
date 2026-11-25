@@ -365,6 +365,9 @@ class RoomManager {
         // Restart (or stop) the ambient passing trains for the new room
         if (this.scene.ambientTrains) this.scene.ambientTrains.onRoomChange(newRoom);
 
+        // ...and the ambient boats on its waterways
+        if (this.scene.ambientBoats) this.scene.ambientBoats.onRoomChange(newRoom);
+
         // Re-grade day/night for the new room (interiors are never graded)
         if (this.scene.dayNight) this.scene.dayNight.onRoomChange();
     }

@@ -239,6 +239,7 @@ class GameScene extends Phaser.Scene {
             this.trainTravel = new TrainTravel(this);
             this.trainTravel.onRoomChange(this.roomManager.currentRoom);
             this.ambientTrains = new AmbientTrains(this);
+            this.ambientBoats = new AmbientBoats(this);
             this.dialogueManager = new DialogueManager(this);
             this.shop = new Shop(this);
             this.fishing = new Fishing(this);

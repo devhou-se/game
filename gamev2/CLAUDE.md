@@ -41,6 +41,7 @@ Then navigate to `http://localhost:8000` in your browser.
 - `src/Intro.js` - New-player intro (who devhouse is, controls as keycaps, where to start); replayable from the menu as How to Play
 - `assets/portraits/` - Optional hand-drawn character portraits (`manifest.json` + `<name>.png`, see its README)
 - `src/Voice.js` - Spoken NPC dialogue (lazy per-line audio clips) and the shared mute setting
+- `src/AmbientTrains.js` / `src/AmbientBoats.js` - Decorative passing trains and moat boats (see Ambient Traffic)
 - `editor/` - Visual editor for editing game configuration
   - `editor/index.html` - Entry point for the visual editor (access at `/editor/`)
   - `editor/GridEditor.js` - Main editor grid and placement logic
@@ -113,6 +114,39 @@ Room transitions use camera fade effects (250ms fade out, 250ms hold, 250ms fade
 - Player movement is validated using point-in-polygon detection (cell center must be inside boundary)
 - Boundaries can create non-rectangular rooms (L-shapes, hexagons, irregular polygons, etc.)
 - The visual editor provides a boundary editing tool for creating custom shapes
+
+### Ambient Traffic (issue #29)
+
+Purely decorative movers that make a room feel alive. Both are built in `GameScene.create()`, re-armed by
+`RoomManager.switchRoom()` through `onRoomChange(roomKey)` (which also destroys whatever is on screen), find
+their route in the room's map data rather than in coordinates, have no collision, and send the first one
+3-10s after you enter a room and another every 15-40s after it finishes.
+
+- **`AmbientTrains`** - any room with `train-track*` tiles that is not a `stations` room (Palace, Inaka,
+  Yukimura) gets a train running the topmost track row, off-screen edge to off-screen edge, depth 48.
+- **`AmbientBoats`** - any room with straight moat tiles (today: the Tokyo moat) gets a boat. A "run" is a
+  line of consecutive cells holding the same plain `moat-<north|south|east|west>` tile; `-rocks` tiles,
+  corner pieces and gaps end a run, so a boat never crosses rocks, the bridge gap in the south moat or the
+  stone bank. Runs too short for a boat to travel `MIN_TRAVEL` are dropped. The open-water strip inside the
+  tile is measured from the tile image itself (`waterBand`: the longest stretch of the dominant colour
+  across the middle of the tile), so no per-tile offsets are hard-coded. A boat fades in at one end of a
+  run, drifts to the other at `SPEED` with a small bob and fades out - it cannot leave by the screen edge
+  the way a train does. Runs with a boat's length of water on camera (below the HUD bar) are preferred.
+  Depth is `calculateLayerDepth(1) + 1`: above the flat ground/water layers, below everything Y-sorted.
+  Because scenery standing on the near bank is drawn over the water, `clearWater()` narrows each run's band
+  to the lanes that room sprites of higher depth leave in view (a lane covered for more than `COVER_LIMIT`
+  of the run is hidden) and the run is dropped if what is left is narrower than a boat. That is why Tokyo's
+  north moat has no boats: the `blue-wall-short` palace wall hides the lower half of its channel. Tokyo ends
+  up with 8 runs (5 south, 1 west, 2 east). A tree crown overhanging one end of a run is allowed.
+- **Boat art is procedural** (`AmbientBoats.buildTexture`): no boat sprite exists, so each livery
+  (`AmbientBoats.LIVERIES`: `wood`, `lacquer`, `white`) is drawn to a canvas on the tile art's 4x pixel
+  grid, once per facing, under the key `boat-<livery>-<right|left|down|up>`. `ensureTexture()` only draws a
+  key that is not already loaded, so real art replaces it by loading a sprite under the same key (keep it
+  within `AmbientBoats.size()`, or update `ART`, since run fitting uses that size).
+- **Testing** - both expose `cross()` to send one immediately (a no-op in a room with no track / no water):
+  `game.scene.keys.GameScene.ambientTrains.cross()` / `.ambientBoats.cross(run, dir, livery)` (all optional;
+  `run` is an entry of `ambientBoats.runs`, `dir` is `1` or `-1`). A new water tile family needs its name
+  added to `AmbientBoats.WATER_TILE`; ponds are not waterways.
 
 ### HUD System
 

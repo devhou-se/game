@@ -46,6 +46,7 @@ class AmbientTrains {
     /** One train, off-screen edge to off-screen edge along the track row. */
     cross() {
         const scene = this.scene;
+        if (this.row === null) return;   // no track here (or a station room)
         const room = scene.roomManager.rooms[scene.roomManager.currentRoom];
         const GS = scene.GRID_SIZE;
 
