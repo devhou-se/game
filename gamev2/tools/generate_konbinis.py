@@ -31,6 +31,7 @@ cfg = rg.load_config()
 ALL_HOSTS = ['Machi', 'Market', 'Park', 'Sapporo', 'Sendai']
 ALL_HOSTS += ['Fukuoka']
 ALL_HOSTS += ['Kanazawa']         # issue #68
+ALL_HOSTS += ['SanFranbourne']     # the home city (issue #218)
 HOSTS = ARGS or ALL_HOSTS
 assert all(h in ALL_HOSTS for h in HOSTS), f'unknown host; expected some of {ALL_HOSTS}'
 SEVEN = 'seven-eleven_0_0'

@@ -9,7 +9,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 **Option 3: No browser (for agents)**
 `node tools/play.js <command>` plays the game as text: it loads the real map, collision and NPC-date
 code from `src/` into Node, with no Phaser and no dependencies. Walk, talk to NPCs, follow teleports,
-ride trains, time travel, inspect cells, `lint` a room's map, `render` it to a PNG, and run `check` to
+ride trains, `fly` between the airports, time travel, inspect cells, `lint` a room's map, `render` it to a PNG, and run `check` to
 confirm the world is still playable after a map change. `node tools/play.js help` lists the commands; the `play-game` skill
 (`.claude/skills/play-game/SKILL.md`) is the full guide, including what the tool cannot do.
 It plays the world the game plays: the Tokyo districts are stitched into one room by the game's own

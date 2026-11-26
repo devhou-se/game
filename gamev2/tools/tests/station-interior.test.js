@@ -93,6 +93,22 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, realConfig }) => {
             assert.ok(town, `${key}: town ${st.town}`);
             assert.ok(m.free(...st.entry), `${key}: entry cell ${st.entry} is blocked`);
             const into = town.transporters.filter((t) => t.targetRoom === key);
+            // an airport's rail stop (#218): its "town" is the airport hall, whose way out (two mats, like a
+            // station's own) is the door, and the station's exit lands on the hall's entry cell
+            const hall = (config.airports || {})[st.town];
+            if (hall) {
+                assert.strictEqual(into.length, 2, `${key}: the hall's two exit mats lead here`);
+                for (const t of into) same([t.targetX, t.targetY], st.entry, `${key}: the hall's way out misses the entry cell`);
+                const hallSolid = new Set(Object.keys(layer(town, 'Colliders')));
+                assert.strictEqual(room.transporters.length, 2, `${key}: exit mats`);
+                for (const t of room.transporters) {
+                    same([t.targetRoom, t.targetX, t.targetY], [st.town, ...hall.entry], `${key}: exit target`);
+                    assert.ok(!hallSolid.has(K(t.targetX, t.targetY)), `${key}: the exit lands on a blocked cell of ${st.town}`);
+                    assert.ok(m.reach(st.entry).has(K(t.gridX, t.gridY)), `${key}: the exit cannot be walked to`);
+                }
+                same(into.map((t) => t.gridX).sort(), [hall.entry[0], hall.entry[0] + 1], `${key}: the hall's mats are below its entry cell`);
+                return;
+            }
             assert.strictEqual(into.length, 1, `${key}: one door in ${st.town}`);
             same([into[0].targetX, into[0].targetY], st.entry, `${key}: the town door misses the entry cell`);
             // the exit: two mats under the front wall, straight below the entry cell, out to the cell in front of the door

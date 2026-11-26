@@ -99,3 +99,53 @@ row in `STATIONS` gets the whole station. Top to bottom:
   the only way to the platform, the door / entry / exit cells both ways, the kiosk, the blog cells, the
   signs); `trains-stations.test.js` holds `exitDoor`; `tools/browser/regress.js` `train-ride` rides between
   two stations with real keys.
+
+### Airports and flights (issue #218)
+
+The home city (San Franbourne, see `landmarks-and-towns.md`) is overseas: **the only way between it and Japan is
+by air**. Config `airports` is the registry, written by `tools/generate_airports.py` from its `AIRPORTS` dict:
+
+| Field | What |
+|---|---|
+| `serves` | the room the airport belongs to: `Palace` (Tokyo) for `HanedaAirport`, `SanFranbourne` for `SanFranbourneAirport`. `Places.of` follows it, so Haneda is in Tokyo's dot on the Map |
+| `label` | what the flights board calls it (`Tokyo`). Left out when it is just the name of the room it serves, so the home city's name is written once |
+| `order` | its place on the board |
+| `arrive` | where you stand after a flight: in front of the gate |
+| `entry` | where a door from outside puts you |
+
+- **Getting there.** Tokyo's airport is a stop on the rail system: `HanedaStation` (`Haneda Airport` on every
+  departures board, a small main-line station, `STATIONS` row with `'blog': False`). Its `town` is the airport
+  hall itself, so its stairs lead straight into `HanedaAirport` and the hall's way out leads back to the
+  platform. The home airport opens onto the city by the terminal's doors. No station serves the home city.
+- **One template**, `airport_interior` in `tools/generate_airports.py` (36x22), top to bottom: the back wall
+  (windows onto the apron, **the gate** in the middle and **the departures board** beside it); the carpeted
+  **gate lounge** with banks of seats and **the pub** against the west wall; **the security line** - two scanner
+  arches you walk through (on `Other`, no collider, like a ticket gate), x-ray belts and tube railing closing
+  the rest of the row; the **check-in hall** with desks, the **7-Eleven kiosk**, benches and trolleys; the front
+  wall with the way out. Both airports are `interior` rooms with `shopEnabled: false` (no day/night grade, never
+  offered to the blog pipeline).
+- **Boarding** is one `Interactions` rule, `flights` (`airport-gate*` / `airport-board*`): a bump opens the
+  departures board in flight mode - `StationPicker.show(room, { flights: true })`, the same list, keys, scrolling
+  and touch rules over `AirTravel.registry(config)`, titled FLIGHTS. Picking a row calls `AirTravel.go`.
+- **The 7-Eleven** is the station's booth (`station-kiosk`) and its existing rule: the konbini list. **The pub**
+  is one more rule (`airport-bar*`, kind `pub`) and one more row of `Shop.VENUES`: the izakaya's drinks and food
+  through the ordinary shop list, titled AIRPORT PUB; it buys no fish. **Neither stamps the Stamp Card** - an
+  airport is not a store (`Stamps.isStore`), exactly as a station's kiosk does not stamp. The city's own 7-Eleven
+  (`KonbiniSanFranbourne1`) is an ordinary konbini interior and does count, so Konbini Pilgrim now needs a flight.
+- **The flight** (`src/AirTravel.js`): the screen fades, the room is swapped under a black curtain, and the
+  cabin plays for `AirTravel.DURATION` (9 s): `plane-interior` (the train interiors' size, shown at 2x like them,
+  its windows cut through) over `plane-sky`, which slides behind the windows once - day, cloud, sea, sunset, dusk
+  flying out; the other way flying home (`AirTravel.skyShift`) - with the player in a window seat. On a phone it
+  is magnified as the train ride is (`TrainTravel.cutsceneScale`, #201). The picture tells `UIScale` it is a
+  backdrop exactly the size of the view (`getBounds`), so the parts that run off the sides are never squeezed in.
+  You step off in front of the other airport's gate (`arrive`).
+- **Input** is locked as on a train, except that a flight can be skipped: SPACE / ENTER / ESC (A / B on touch)
+  or a tap, from `AirTravel.SKIP_AFTER` (0.7 s) after the cabin comes up (`AirTravel.canSkip`) - the press that
+  boarded cannot skip it. `InputHandler` hands every frame to `AirTravel.handleInput` while `flying`.
+- **Rules as static functions** (`registry`, `destinations`, `canFly`, `direction`, `routeText`, `canSkip`,
+  `progress`, `skyShift`), tested in `tools/tests/airports.test.js` with the template, the city and the rule
+  that no train reaches it. `Trips.hopsFrom` counts a flight as one hop; `play.js` has `fly <airport>` and the
+  world check arrives at every gate.
+- **Adding an airport**: a row in `AIRPORTS` (`serves`, `out`: where its way out leads), a door or station that
+  leads to its `entry`, then `generate_airports.py`, `config_to_tiled.py` and `play.js lint`. Every airport
+  flies to every other.

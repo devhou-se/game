@@ -259,9 +259,12 @@ def save_config(cfg):
 
 def overworld_rooms(cfg):
     """The rooms the pipeline keeps an author's whereabouts in: everything but
-    the `interior` rooms (konbini, izakaya). Station rooms are in here — they
-    hold placements — but are indoors as far as spots go (is_indoors)."""
-    return {k: r for k, r in cfg['rooms'].items() if not r.get('interior')}
+    the `interior` rooms (konbini, izakaya, the airports) and any room that
+    says `"blog": false` (issue #218: the home city and the airport's rail
+    stop are on no trip, so nothing there is ever offered). Station rooms are
+    in here — they hold placements — but are indoors as far as spots go
+    (is_indoors)."""
+    return {k: r for k, r in cfg['rooms'].items() if not r.get('interior') and r.get('blog') is not False}
 
 
 def is_indoors(cfg, room_key):

@@ -104,6 +104,13 @@
       "y": -6400,
       "width": 2816,
       "height": 2176
+    },
+    {
+      "fileName": "gamev2/tiled/sanfranbourne.tmj",
+      "x": 16000,
+      "y": 12800,
+      "width": 3840,
+      "height": 3840
     }
   ],
   "onlyShowAdjacentMaps": false,

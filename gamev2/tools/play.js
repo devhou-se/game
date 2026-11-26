@@ -117,7 +117,9 @@ function where(world) {
     return `${h.room} ${h.x},${h.y}` + (h.city ? ` (${h.city} ${p.gridX},${p.gridY})` : '') + ` on ${world.date} as ${world.as}` +
         (world.livery ? `\nparked train: ${world.livery}` : '') +
         (world.onBoardCell() ? '\non a train boarding cell: ride <' +
-            Object.keys(world.config.stations).filter(k => k !== world.roomManager.currentRoom).join('|') + '>' : '');
+            Object.keys(world.config.stations).filter(k => k !== world.roomManager.currentRoom).join('|') + '>' : '') +
+        ((world.config.airports || {})[world.roomManager.currentRoom] ? '\nin an airport: bump the gate, or fly <' +
+            Object.keys(world.config.airports).filter(k => k !== world.roomManager.currentRoom).join('|') + '>' : '');
 }
 
 function report(world, r, dir) {
@@ -139,6 +141,7 @@ const COMMANDS = {
             'goto [room] <x> <y>        pathfind and walk; stops if a transporter takes you. Districts of a city are one walk: goto Market 5 24',
             'warp <room> [x y]          teleport (debug)',
             'ride <station>             take the train from a boarding cell',
+            'fly <airport>              take a flight from inside an airport (in the game: bump the gate)',
             'inspect <x> <y>            every tile, collider and interaction on a cell',
             'rooms                      all rooms with sizes and counts',
             'transporters [room]        where every teleport leads',
@@ -232,6 +235,16 @@ const COMMANDS = {
         if (!key) return 'destinations: ' + Object.keys(stations).filter(k => k !== w.roomManager.currentRoom).join(', ');
         w.enter(key, stations[key].arrive[0], stations[key].arrive[1]);
         return 'rode the train -> ' + where(w);
+    },
+    fly(w, [dest]) {
+        const airports = w.config.airports || {}, here = w.roomManager.currentRoom;
+        if (!airports[here]) return 'not in an airport';
+        const others = Object.keys(airports).filter(k => k !== here);
+        const name = (k) => airports[k].label || w.config.rooms[airports[k].serves].name;
+        const key = others.find(k => [k, name(k), airports[k].serves].some(n => n.toLowerCase() === String(dest).toLowerCase()));
+        if (!key) return 'flights: ' + others.join(', ');
+        w.enter(key, airports[key].arrive[0], airports[key].arrive[1]);
+        return 'flew -> ' + where(w);
     },
     inspect(w, [x, y]) {
         // the cell is named in the coordinates of the district underfoot; the model works in the room's

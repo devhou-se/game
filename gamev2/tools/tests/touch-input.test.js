@@ -174,7 +174,7 @@ module.exports = ({ test, assert, fs, path, GV2, ctx, fired, load, game, require
         // the lists a direction key walks or steps you into all open through it; without it the board opened
         // one row up (W held), the Character list one row down (S from the menu), Time Travel a week off
         const read = (f) => fs.readFileSync(path.join(GV2, 'src', f), 'utf8');
-        for (const [file, open] of [['StationPicker.js', 'show(fromKey) {'], ['DatePicker.js', 'show() {'], ['CharacterSelect.js', 'show() {'], ['Shop.js', 'showInventory() {']]) {
+        for (const [file, open] of [['StationPicker.js', 'show(fromKey, opts) {'], ['DatePicker.js', 'show() {'], ['CharacterSelect.js', 'show() {'], ['Shop.js', 'showInventory() {']]) {
             const body = read(file).split('\n    ' + open)[1].split('\n    }\n')[0];
             assert.ok(body.includes('InputHandler.swallow(this.keys);'), `${file} ${open}`);
             assert.ok(body.indexOf('InputHandler.swallow(this.keys);') < body.search(/this\.(visible|invVisible) = true;/), `${file}: before it is visible`);

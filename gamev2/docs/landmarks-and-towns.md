@@ -263,6 +263,51 @@ after the existing stations in `tools/generate_stations.py`); it sits detached, 
   label names one place; `Hakata Station` is the forecourt, anchored on the station house's doorway sprite,
   which every station house has), besides the generic shrine / torii / pond / pagoda / 7-Eleven / vending spots.
 
+### San Franbourne, the home city, and its airport (issue #218)
+
+devhouse people come from Melbourne or from San Francisco, so home is both at once: **one** city, played for
+affection, not two halves. It is overseas - **reachable only by air** (see "Airports and flights" in
+`trains-and-stations.md`): no station serves it, it is on no departures board, nobody is placed there by a trip
+and the blog pipeline never offers it (`"blog": false` on the room, see `blog-pipeline.md`).
+
+- **The name is written once.** `NAME` in `tools/generate_sanfranbourne.py` becomes `rooms.SanFranbourne.name`,
+  and the Map label, the flights board, the flight's caption and the Map footer all read it from there (config
+  `places.SanFranbourne` and `airports.SanFranbourneAirport` carry no label). The room key stays
+  `SanFranbourne`. To rename the city: change `NAME` and re-run `generate_sanfranbourne.py` and
+  `generate_konbinis.py SanFranbourne` (its 7-Eleven's room name, `7-Eleven · <name>`, is derived by that
+  generator like every konbini's). Its airport has a name of its own, **Tullafrisco Airport**, the way Hakata
+  station serves Fukuoka. `airports.test.js` fails if the bare name appears a second time in `config.json`.
+- **San Franbourne** (`tools/generate_sanfranbourne.py`, 60x60), north to south down the **avenue** (columns
+  28-31): the **airport terminal** and control tower (north-west; its double doors lead into
+  `SanFranbourneAirport`) and the **sports ground** (north-east: a flat oval you walk on, four posts at each
+  end, light towers that glow at night, banks of fog on `Tops`); the **tram street** (rows 15-17), where a
+  **cable car** and a **green-and-yellow tram** share one pair of rails and the avenue crosses on a signalled
+  zebra crossing; the **painted ladies** (six terraces, each on a higher footing than the last) standing on a
+  bluestone wall of **street art** with two **coffee windows** let into it, the **laneway** along its foot;
+  the plaza with the **pointy pyramid** beside the **arts-centre spire** (both in `game.lookUp.sprites`), a glass
+  tower, vending machines and the 7-Eleven `KonbiniSanFranbourne1`; the **brown river** (solid, rowers on it)
+  under the **red suspension bridge** - the deck is the avenue, and you walk between the legs of both towers
+  (only the leg cells collide); the yellow **station with the clocks** over its door (sealed: nobody catches a
+  train there, a bump says so - you meet under the clocks), townhouses and a palm garden; the boardwalk, the
+  **pier** (flat, walked on to its end) with the raft of **sea lions** beside it (a bump from the pier says a
+  line), and the island with the lighthouse out in the bay.
+- **Art**: `tools/generate_sanfranbourne_art.py` (Pillow, in `ART_TOOLS`; `--preview out.png`) draws every
+  `sfb-*` sprite, the `airport-*` furniture and the two flight pictures as shaded pixel art in the GuttyKreum
+  palette - no brand marks but the 7-Eleven the game already has. The oval and the pier are flat
+  (`Non-Collidables` with a `depthBias`, the `asahikawa-bridge` recipe); the river is `pond-autotile`
+  recoloured (`sfb-river_*`, so it is not a fishing spot); the light towers are named `...lamp-post` so
+  `DayNight` lights them.
+- **Houses are sealed** (`generate_houses.py` has not been run for this town), and there are no rubbish bins.
+- **Built by** `generate_sanfranbourne_art.py` -> `generate_airports.py` -> `generate_sanfranbourne.py` ->
+  `generate_konbinis.py SanFranbourne` -> `generate_stations.py` (the Haneda stop) -> `config_to_tiled.py` ->
+  `make_worldmap.py`. `devhouse.world` has it far to the south-east of every Japan map.
+- **On the Map** it is the one `overseas` place: a little plane in the sea south-east of Honshu on a dashed
+  course off the corner of the picture (config `places.SanFranbourne`: `overseas: true`, and a `geo` that is a
+  position on the picture, not a real longitude / latitude). The ring and the red dot work there as anywhere;
+  the footer reads `San Franbourne (overseas)`. `HanedaAirport` and its rail stop belong to Tokyo's dot
+  (`Places.of` follows `airports.<key>.serves`).
+- **Tests**: `tools/tests/airports.test.js`.
+
 ### House interiors: a generic home for every house (issue #208)
 
 `tools/generate_houses.py <Town> [<Town> ...]` is the konbini recipe for homes: it finds a town's houses in

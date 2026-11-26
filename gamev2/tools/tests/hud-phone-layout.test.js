@@ -165,16 +165,19 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         // which rooms that is today: on the larger phone the stations with a name longer than "Tokyo Station"
         // (13), on the smaller one every station and Shirakawa-go (12); and a house, whose short form keeps
         // its town ("Sapporo house", #208) and so can be as long as a station's - as do a lobby and a
-        // shrine since #220 ("Tokyo shrine", "Market shrine": 12 and 13, the date at 667x375)
+        // shrine since #220 ("Tokyo shrine", "Market shrine": 12 and 13, the date at 667x375). Since #218 also, at
+        // both widths, the two airports and the home city, whose names are as long as a station's (14 and more)
         const stations = Object.keys(config.stations).map(k => config.rooms[k].name).sort();
+        const abroad = Object.keys(config.airports).map(k => config.rooms[k].name).concat(config.rooms.SanFranbourne.name);
+        assert.ok(abroad.length === 3 && abroad.every(n => n.length > 13 && game('hudBrief')(hudName(n)) === hudName(n)), abroad.join());
         const notHouses = (set) => Array.from(set).filter(n => !/^(House|Lobby|Shrine) · /.test(n)).sort();
         const kinds = (set, kind) => Array.from(set).filter(n => n.startsWith(kind + ' · ')).sort();
         assert.deepStrictEqual(kinds(bare[744], 'Shrine').concat(kinds(bare[744], 'Lobby')), [], 'every shrine and lobby counts down at 844x390');
         assert.deepStrictEqual(kinds(bare[715], 'Shrine'), ['Shrine · Market', 'Shrine · Tokyo']);
         assert.deepStrictEqual(kinds(bare[715], 'Lobby'), []);
-        assert.deepStrictEqual(notHouses(bare[744]), stations.filter(n => n.length > 13));
+        assert.deepStrictEqual(notHouses(bare[744]), stations.filter(n => n.length > 13).concat(abroad).sort());
         assert.ok(bare[744].has('Kanazawa Station') && !bare[744].has('Tokyo Station'));
-        assert.deepStrictEqual(notHouses(bare[715]), stations.concat('Shirakawa-go').sort());
+        assert.deepStrictEqual(notHouses(bare[715]), stations.concat('Shirakawa-go', abroad).sort());
         assert.ok(shown > bare[744].size + bare[715].size, `the countdown shows in ${shown} room bars`);
         assert.strictEqual(bar(744, 'Shirakawa-go', '¥5,000', '2027-02-10'), 'Shirakawa-go | devhouse 3 in 8d | ¥5,000');
         assert.strictEqual(bar(715, 'Shirakawa-go', '¥5,000', '2027-02-10'), null, '3px too wide for "soon": the date, as in a station');

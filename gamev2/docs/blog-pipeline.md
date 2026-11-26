@@ -10,7 +10,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   offer the ordinary landmarks. Interiors are opt-in: a station room (a key of `config.stations`; they
   carry no `interior` flag) offers only `indoors` landmarks — today `the platform`, its west end by the
   vending machine — and the model is told to pick it only for a post about that station or the train ride
-  itself. `interior: true` rooms (konbini, izakaya, shrine worship halls) are never offered. The cell chosen is the nearest free
+  itself. `interior: true` rooms (konbini, izakaya, shrine worship halls, the airports) are never offered, and neither is a room that says `"blog": false` (the home city San Franbourne and Haneda's rail stop, issue #218: on no trip, so no spot there - `overworld_rooms` leaves them out). The cell chosen is the nearest free
   one to the landmark's standing cell that can be walked to from one of the room's ways in, so a
   landmark inside a fence (Market's fox statues) puts its visitor outside it. A room on its own is entered
   by its transporters; a district of the stitched Tokyo city is also walked into from its neighbours, so
