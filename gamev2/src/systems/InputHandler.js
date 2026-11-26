@@ -274,7 +274,12 @@ class InputHandler {
             if (upHeld)    moveY -= 1;
             if (downHeld)  moveY += 1;
 
-            let speedMultiplier = (this.shiftKey.isDown || (t && t.sprint)) ? 2 : 1;
+            // sprint is x2 — a little more when well fed, nothing at all when
+            // peckish (issue #209); walking speed never changes
+            const shop = this.scene.shop;
+            const sprinting = this.shiftKey.isDown || (t && t.sprint);
+            let speedMultiplier = !sprinting ? 1 : (shop ? shop.sprintMultiplier() : Energy.SPRINT);
+            if (sprinting && shop) shop.sprintHeld();   // on an empty meter it says why nothing happens
 
             // Drink effects (issue #12): temporary speed boost, and the
             // vodka-redbull chance of stepping somewhere you didn't ask to
@@ -289,6 +294,8 @@ class InputHandler {
 
             if (moveX !== 0 || moveY !== 0) {
                 this.scene.player.startMovement(moveX, moveY, speedMultiplier);
+                // a cell actually walked (not a bump) costs a little energy
+                if (shop && this.scene.player.isMoving) shop.walked();
             }
         }
     }

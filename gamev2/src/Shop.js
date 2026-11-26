@@ -21,7 +21,8 @@
  * (ItemIcons, issue #82).
  *
  * Every consumable has an effect. Effects are additive buffs only — nothing
- * here ever slows or gates the player. One DRINK effect and one FOOD effect
+ * here ever slows or gates the player (the energy meter, issue #209, takes
+ * away only the sprint, and only when it is empty: Energy.js). One DRINK effect and one FOOD effect
  * can be active at once: using the same item again refreshes its timer, a
  * different item in the same slot replaces it (the toast says what it
  * replaced). Active effects show as chips under the HUD with the time left,
@@ -44,6 +45,8 @@ class Shop {
         this.qty = 1;
         this.effects = {};         // slot ('drink' | 'food') -> active effect
         this.woreOff = [];         // names of expired effects still to be announced
+        this.notices = [];         // other lines waiting for a free screen (energy, stamps)
+        this.energyDrain = 1;      // the debug menu's "fast hunger" raises it
         this.clockOffset = 0;      // ms added to the clock — tests fast-forward buffs with it
 
         const cfg = scene.config.shop || {};
@@ -76,6 +79,14 @@ class Shop {
         };
         this.effectChips = { drink: chip('#66ff88'), food: chip('#ffcc66') };
         this.chipIcons = {};       // slot -> [slot square, icon] drawn inside that chip
+        // the energy meter (issue #209): an onigiri and a row of segments,
+        // first in that stack — tap it for the Items screen, like the wallet
+        this.meter = scene.add.graphics();
+        this.meter.setScrollFactor(0).setDepth(1001);
+        this.meterIcon = scene.add.image(0, 0, ItemIcons.ensure(scene, this.itemById('onigiri') || { id: 'energy', category: 'food' }));
+        this.meterIcon.setDisplaySize(Shop.METER.icon, Shop.METER.icon).setScrollFactor(0).setDepth(1002);
+        this.meterIcon.setInteractive({ useHandCursor: true });
+        this.meterIcon.on('pointerdown', () => this.showInventory());
         scene.time.addEvent({ delay: 250, loop: true, callback: () => this.updateEffectChip() });
         this.updateEffectChip();
     }
@@ -83,10 +94,14 @@ class Shop {
     updateEffectChip() {
         this.expireEffects();
         this.announceWoreOff();
+        // the touch sprint pill is dimmed while sprint is off (an open list still uses it as SHIFT)
+        const tc = this.scene.touchControls;
+        if (tc && tc.root) tc.root.classList.toggle('tc-nosprint', this.energy <= 0 && !this.isVisible());
         // just under the HUD bar, at its right end (40px tall and the canvas
         // wide, unless the bar is magnified — GameScene.layoutHUD)
         const scene = this.scene;
         let y = (scene.hudBarHeight || UI.HUD_HEIGHT) + 8;
+        y = this.drawMeter((scene.hudWidth || scene.cameras.main.width) - 12, y) + 4;
         for (const slot of Shop.SLOTS) {
             const chip = this.effectChips[slot], fx = this.effects[slot];
             let icon = this.chipIcons[slot];
@@ -105,6 +120,30 @@ class Shop {
         }
     }
 
+    /**
+     * The energy meter, its right edge at `right` and its top at `y`: a dark
+     * backdrop, the onigiri and Energy.SEGMENTS segments, lit from the left
+     * in the level's colour. Returns the y under it.
+     */
+    drawMeter(right, y) {
+        const M = Shop.METER, g = this.meter;
+        if (!g) return y;
+        const lit = Energy.segments(this.energy);
+        const w = M.pad + M.icon + M.gap + Energy.SEGMENTS * (M.segW + M.segGap) - M.segGap + M.pad;
+        const x = right - w;
+        g.clear();
+        g.fillStyle(0x000000, 0.6);
+        g.fillRect(x, y, w, M.height);
+        const sx = x + M.pad + M.icon + M.gap, sy = y + (M.height - M.segH) / 2;
+        for (let i = 0; i < Energy.SEGMENTS; i++) {
+            g.fillStyle(i < lit ? Energy.color(this.energy) : 0x444444, 1);
+            g.fillRect(sx + i * (M.segW + M.segGap), sy, M.segW, M.segH);
+        }
+        this.meterIcon.setPosition(x + M.pad + M.icon / 2, y + M.height / 2);
+        this.meterIcon.setAlpha(this.energy > 0 ? 1 : 0.45);
+        return y + M.height;
+    }
+
     // ---------------- state ----------------
 
     /** The shop's clock. Effects expire against this, not a frame timer. */
@@ -113,7 +152,8 @@ class Shop {
     /**
      * Read the save blob. Tolerates every older shape: the issue #12 blob was
      * just `{money, items}`, v2 added effects and the consumption counters,
-     * v3 the fish (they are plain `items`) and the `caught` counters. Whatever
+     * v3 the fish (they are plain `items`) and the `caught` counters, v4 the
+     * energy meter, the stamp card and the hints already given. Whatever
      * is missing defaults to empty and the wallet is never touched, unknown
      * item ids are kept (the catalogue may bring them back) and junk counts
      * are dropped.
@@ -136,6 +176,10 @@ class Shop {
         this.items = counts(raw.items);   // id -> count owned
         this.used = counts(raw.used);     // id -> times consumed (achievements)
         this.caught = counts(raw.caught); // fish id -> times landed (achievements)
+        // issue #209: a save from before the meter (and a new player) starts full
+        this.energy = Energy.clamp(raw.energy);
+        this.stamps = Stamps.clean(raw.stamps);     // place id -> 1 (the stamp card)
+        this.hints = Stamps.clean(raw.hints);       // one-time hints already given
 
         // effects are saved as {id, until}; the numbers come back from the
         // catalogue, and an expiry can never be further off than the item lasts
@@ -154,7 +198,8 @@ class Shop {
         for (const slot in this.effects) effects[slot] = { id: this.effects[slot].id, until: this.effects[slot].until };
         try {
             localStorage.setItem(this.STORE_KEY, JSON.stringify({
-                v: 3, money: this.money, items: this.items, effects, used: this.used, caught: this.caught }));
+                v: 4, money: this.money, items: this.items, effects, used: this.used, caught: this.caught,
+                energy: Math.round(this.energy * 100) / 100, stamps: this.stamps, hints: this.hints }));
         } catch (e) { /* private mode etc — play on without persistence */ }
     }
 
@@ -230,11 +275,91 @@ class Shop {
         if (changed) this.save();
     }
 
-    /** Say what wore off — but never over another toast or an open list. */
+    /** Say what wore off, then any waiting notice — never over another toast or an open list. */
     announceWoreOff() {
-        if (!this.woreOff.length || this._toast || this.isVisible()) return;
-        this.toast(`${this.woreOff.join(' and ')} wore off`);
-        this.woreOff = [];
+        if (this._toast || this.isVisible()) return;
+        if (this.woreOff.length) {
+            this.toast(`${this.woreOff.join(' and ')} wore off`);
+            this.woreOff = [];
+        } else if (this.notices.length) {
+            this.toast(this.notices.shift());
+        }
+    }
+
+    // ---------------- energy and the stamp card (issue #209; the rules are in Energy.js) ----------------
+
+    /**
+     * The player walked one cell. The meter drops a little; the first time
+     * it runs low a hint is queued (once ever), and a line every time it
+     * runs out. Written to the save once per whole point, not every step.
+     */
+    walked() {
+        const before = this.energy;
+        if (before <= 0) return;
+        this.energy = Energy.afterStep(before, this.energyDrain);
+        const note = Energy.notice(before, this.energy, this.hints.low);
+        if (note) {
+            if (note.kind === 'low') this.hints.low = 1;
+            this.notices.push(note.text);
+        }
+        if (note || Math.floor(before) !== Math.floor(this.energy)) this.save();
+        if (note || Energy.segments(before) !== Energy.segments(this.energy) ||
+            Energy.level(before) !== Energy.level(this.energy)) this.updateEffectChip();
+    }
+
+    /** What holding sprint multiplies a step's speed by right now (1 when peckish). */
+    sprintMultiplier() { return Energy.sprintMultiplier(this.energy); }
+
+    /**
+     * Sprint is held while walking. On an empty meter it does nothing, so the
+     * peckish line is said again (queued like any notice, at most once per
+     * Energy.REMIND_MS) — a save loaded at zero never saw the first one.
+     */
+    sprintHeld() {
+        if (!Energy.remind(this.energy, Date.now(), this._reminded)) return;
+        this._reminded = Date.now();
+        if (!this.notices.includes(Energy.PECKISH)) this.notices.push(Energy.PECKISH);
+    }
+
+    /** A free cup from a konbini's water cooler. */
+    drinkWater() {
+        if (this.isVisible()) return;
+        const before = this.energy;
+        this.energy = Energy.afterWater(before);
+        if (this.energy > before) {
+            this.notices = this.notices.filter(n => n !== Energy.PECKISH);
+            this.toast(`a cup of water, on the house: energy +${Math.round(this.energy - before)}`);
+            this.save();
+            this.updateEffectChip();
+        } else {
+            this.toast('a cup of water. you are not that thirsty: something from the shelves would do more');
+        }
+    }
+
+    /**
+     * Stamp the card for a purchase at the open venue, if the place is new.
+     * Returns the line to add to the purchase toast ('' when nothing new);
+     * a milestone's reward (Stamps.MILESTONES) is paid here.
+     */
+    stampPurchase() {
+        const scene = this.scene, rm = scene.roomManager;
+        if (!rm) return '';
+        const place = Stamps.placeFor(this.kind, rm.currentDistrict(), scene.config.rooms[rm.currentRoom]);
+        if (!place || this.stamps[place]) return '';
+        const achievements = scene.achievementManager;
+        const wasDone = achievements && achievements.stampProgress()[0].complete;
+        const before = Stamps.count(this.stamps);
+        this.stamps[place] = 1;
+        let line = ` · stamp ${before + 1} on your card`;
+        for (const m of Stamps.rewards(before, before + 1)) {
+            if (m.yen) this.money += m.yen;
+            if (m.item && this.itemById(m.item)) this.items[m.item] = (this.items[m.item] || 0) + 1;
+            line += `: ${Stamps.describe(m, id => (this.itemById(id) || { name: id }).name, n => this.fmt(n))}!`;
+        }
+        if (achievements && !wasDone && achievements.stampProgress()[0].complete) {
+            this.notices.push(`★ achievement: ${Stamps.ACHIEVEMENT}`);
+        }
+        return line;
     }
 
     /** Active effects, drink first. */
@@ -296,14 +421,17 @@ class Shop {
         this.used[id] = (this.used[id] || 0) + 1;
 
         let note = '';
+        const gain = Math.round(Energy.afterEating(this.energy, item) - this.energy);
+        this.energy = Energy.afterEating(this.energy, item);
+        this.notices = this.notices.filter(n => n !== Energy.PECKISH && n !== Energy.HINT);
         if (item.effect) {
             const slot = Shop.slotOf(item);
             const old = this.activeEffects().find(e => e.slot === slot);
             if (old) note = old.id === id ? ' (timer refreshed)' : ` (replaces ${old.name})`;
             this.effects[slot] = this.makeEffect(item, this.now() + (item.effect.secs || 0) * 1000);
-            this.updateEffectChip();
         }
-        this.toast(`${item.effectName || item.name}: ${this.effectSummary(item)}${note}`);
+        this.updateEffectChip();
+        this.toast(`${item.effectName || item.name}: ${this.effectSummary(item)}${note}${gain > 0 ? ` · energy +${gain}` : ''}`);
         this.save();
 
         if (achievements) {
@@ -404,10 +532,14 @@ class Shop {
         if (this.money < cost) return this.toast(`not enough yen — that's ${this.fmt(cost)}`);
         this.money -= cost;
         this.items[item.id] = (this.items[item.id] || 0) + qty;
+        const stamp = this.stampPurchase();
         this.save();
         this.scene.updateHUD();
-        if (useNow && !item.permanent) this.use(item.id);
-        else this.toast(`bought ${qty > 1 ? qty + '× ' : ''}${item.name} — it's in your items (menu)`);
+        if (useNow && !item.permanent) {
+            this.use(item.id);
+            // the use toast has the screen: the stamp is said after it
+            if (stamp) this.notices.push(stamp.replace(/^ · /, ''));
+        } else this.toast(`bought ${qty > 1 ? qty + '× ' : ''}${item.name} — it's in your items (menu)${stamp}`);
         this.qty = 1;
         this.repaint();
     }
@@ -599,9 +731,11 @@ class Shop {
                 text(px + pw - 30, y, this.fmt(item.sell), '24px', false, '#ffd700', 1);
             } else if (inv) {
                 if (item.sell > 0) text(px + pw - 30, y, `sells ${this.fmt(item.sell)}`, '20px', false, '#88aa88', 1);
+                else if (Energy.valueOf(item)) text(px + pw - 30, y, `energy +${Energy.valueOf(item)}`, '20px', false, '#ffcc66', 1);
             } else {
                 // what you already carry, and whether the wallet stretches to it
                 const soldOut = item.permanent && owned;
+                if (Energy.valueOf(item)) text(px + pw - 240, y, `energy +${Energy.valueOf(item)}`, '18px', false, '#ffcc66', 1);
                 if (owned) text(px + pw - 150, y, item.permanent ? 'owned' : `have ×${owned}`, '20px', false, '#88aa88', 1);
                 text(px + pw - 30, y, this.fmt(item.price), '24px', false,
                      soldOut ? '#555555' : (this.money >= item.price ? '#ffffff' : '#aa6666'), 1);
@@ -694,6 +828,9 @@ Shop.categoryOf = (item) => item.category || (item.permanent ? 'gear' : (item.ef
 /** The slot an item's effect occupies (a grilled fish is food). */
 Shop.slotOf = (item) => ['food', 'fish'].includes(Shop.categoryOf(item)) ? 'food' : 'drink';
 
+/** The HUD energy meter's measurements (HUD px): it is as tall as an effect chip. */
+Shop.METER = { height: 38, pad: 6, icon: 32, gap: 6, segW: 10, segH: 14, segGap: 3 };
+
 /** Gap between a HUD effect chip's icon slot, its text and its right edge. */
 Shop.CHIP_PAD = 8;
 
@@ -757,45 +894,46 @@ Shop.EFFECT_KINDS = {
  * save-file keys — rename one and saved inventories lose it. `icon` picks a
  * pixel map and its colours (ItemIcons.SHAPES); without one the item gets its
  * category's default. The fish are added to whichever catalogue is in use
- * (Shop.fishItems).
+ * (Shop.fishItems). `energy` is what one restores on the meter (issue #209,
+ * Energy.valueOf: food fills, a soft drink tops up, alcohol hardly counts).
  */
 Shop.DEFAULT_ITEMS = [
     // --- drinks ---
-    { id: 'zone-energy',   name: 'Zone Energy',   price: 300, where: 'vending', category: 'drink',
+    { id: 'zone-energy',   name: 'Zone Energy',   price: 300, where: 'vending', category: 'drink', energy: 30,
       icon: { shape: 'can', colors: { a: '#7b4dff', b: '#4a2bb0', c: '#35218a', d: '#ffe14a' } },
       desc: 'speed +50% for 30s', effect: { speed: 1.5, secs: 30 } },
-    { id: 'vodka-redbull', name: 'Vodka Redbull', price: 800, where: 'vending', category: 'drink',
+    { id: 'vodka-redbull', name: 'Vodka Redbull', price: 800, where: 'vending', category: 'drink', energy: 10,
       icon: { shape: 'can', colors: { a: '#2f5fc4', b: '#1f3f8a', c: '#d8dde6', d: '#e23a3a' } },
       desc: 'speed +100% for 20s. direction: negotiable.', effect: { speed: 2, secs: 20, scramble: 0.2 } },
-    { id: 'green-tea',     name: 'Green Tea',     price: 160, where: 'vending', category: 'drink',
+    { id: 'green-tea',     name: 'Green Tea',     price: 160, where: 'vending', category: 'drink', energy: 15,
       icon: { shape: 'bottle', colors: { a: '#8fcf5a', b: '#5f9a35', c: '#f3f7e6', d: '#2f7a2f' } },
       desc: 'calm. speed +20% for 60s, and it settles a wobbly drink.', effect: { speed: 1.2, secs: 60 } },
-    { id: 'canned-coffee', name: 'Canned Coffee', price: 220, where: 'vending', category: 'drink',
+    { id: 'canned-coffee', name: 'Canned Coffee', price: 220, where: 'vending', category: 'drink', energy: 20,
       icon: { shape: 'can-short', colors: { a: '#8a5630', b: '#5c371d', c: '#f1dfb0', d: '#8a5630' } },
       desc: 'the long haul: speed +30% for 90s.', effect: { speed: 1.3, secs: 90 } },
-    { id: 'ramune',        name: 'Ramune',        price: 240, where: 'counter', category: 'drink',
+    { id: 'ramune',        name: 'Ramune',        price: 240, where: 'counter', category: 'drink', energy: 20,
       icon: { shape: 'ramune', colors: { a: '#9fe3f2', b: '#5fb5cc', c: '#2a7fd0', d: '#ffffff' } },
       desc: 'steady hands: fishing strike window +80% for 2 min.', effect: { fishWindow: 1.8, secs: 120 } },
-    { id: 'highball',      name: 'Highball',      price: 500, where: 'izakaya', category: 'drink',
+    { id: 'highball',      name: 'Highball',      price: 500, where: 'izakaya', category: 'drink', energy: 5,
       icon: { shape: 'glass', colors: { a: '#e9b44c', b: '#c48a2a', c: '#fff6da', d: '#f5e04a' } },
       desc: 'speed +60% for 40s. a little wobbly.', effect: { speed: 1.6, secs: 40, scramble: 0.1 } },
-    { id: 'nama-beer',     name: 'Nama Beer',     price: 600, where: 'izakaya', category: 'drink',
+    { id: 'nama-beer',     name: 'Nama Beer',     price: 600, where: 'izakaya', category: 'drink', energy: 5,
       icon: { shape: 'mug', colors: { a: '#f2b632', b: '#c98a14' } },
       desc: 'start the nomikai showdown 8 gulps ahead (Bailey keeps pace). 90s.', effect: { headStart: 8, secs: 90 } },
     // --- food ---
-    { id: 'onigiri',       name: 'Onigiri',       price: 180, where: 'counter', category: 'food',
+    { id: 'onigiri',       name: 'Onigiri',       price: 180, where: 'counter', category: 'food', energy: 45,
       icon: { shape: 'onigiri', colors: { a: '#1f3327' } },
       desc: 'tuna mayo. fish bite twice as fast for 2 min.', effect: { fishBite: 0.5, secs: 120 } },
-    { id: 'melon-pan',     name: 'Melon Pan',     price: 250, where: 'counter', category: 'food',
+    { id: 'melon-pan',     name: 'Melon Pan',     price: 250, where: 'counter', category: 'food', energy: 40,
       icon: { shape: 'bun', colors: { a: '#f0d27a', b: '#c99a3c', d: '#b5802c' } },
       desc: 'lucky crumbs: no old boots, double the rare fish. 2 min.', effect: { fishLuck: 2, secs: 120 } },
-    { id: 'nikuman',       name: 'Nikuman',       price: 320, where: 'counter', category: 'food',
+    { id: 'nikuman',       name: 'Nikuman',       price: 320, where: 'counter', category: 'food', energy: 60,
       icon: { shape: 'nikuman', colors: { a: '#e6dcc8', b: '#cbbfa8' } },
       desc: 'warm and filling: speed +15% for 2 min, on top of any drink.', effect: { speed: 1.15, secs: 120 } },
-    { id: 'edamame',       name: 'Edamame',       price: 280, where: 'izakaya', category: 'food',
+    { id: 'edamame',       name: 'Edamame',       price: 280, where: 'izakaya', category: 'food', energy: 30,
       icon: { shape: 'pods', colors: { a: '#7cc24a', b: '#4f8a2c' } },
       desc: 'soaks it up: drinks cannot make you wobble for 2 min.', effect: { steady: true, secs: 120 } },
-    { id: 'karaage',       name: 'Karaage',       price: 450, where: 'izakaya', category: 'food',
+    { id: 'karaage',       name: 'Karaage',       price: 450, where: 'izakaya', category: 'food', energy: 60,
       icon: { shape: 'nuggets', colors: { a: '#c9772e', b: '#8f4d1a', c: '#eaa85a' } },
       desc: 'fried courage: nomikai showdown winnings +50% for 3 min.', effect: { prizeBonus: 1.5, secs: 180 } },
     // --- gear ---

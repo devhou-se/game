@@ -43,7 +43,8 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
 - **Hidden debug menu**: triple-press backtick (``` within a second) — rows for
   the grid view/inspector, the N/E/X flag keys, map-click travel, a time-of-day
   pin (AUTO/day/dusk/night/dawn, same effect as `?tod=`), exact wallet amount
-  (prompt), and noclip (all default off, persisted in localStorage). Deliberately
+  (prompt), fast hunger (the energy meter drains `Energy.DEBUG_FACTOR` times as fast, to test it; the
+  one row that is not saved, so it is off on every load) and noclip (all default off, persisted in localStorage). Deliberately
   absent from How to Play. Map-click travel on the menu's Map overlay
   only works when its toggle is on.
 - Input blocked when `player.isMoving` or `isTransitioning`
@@ -137,7 +138,8 @@ The game always renders 1280x960; everything below is about showing that on anyt
     abbreviated if that is what it takes (`Trips.countdown`, tried before the bare date); the segment is
     still the Time Travel button, which shows the date. A name too long for even `devhouse 3 soon` (a
     station) shows the date as on any other day; the portrait bar keeps countdown and date on its second row. `scene.hudWidth` / `scene.hudBarHeight` are the bar's size in HUD
-    coordinates (the shop's effect chips hang off them); scene event `'hudscalechange'` says when to
+    coordinates (the shop's energy meter and, under it, its effect chips hang off them, at the right
+    end just under the bar, so the bar itself is never wider or taller for them); scene event `'hudscalechange'` says when to
     lay out again. Anything new on the HUD goes at depth 1000-1999, scroll factor 0. The date,
     wallet and `menu` buttons take a tap anywhere in the height of their row (`layoutHUD` sets their
     hit areas), not just on the glyphs, which are about 11 CSS px tall on a phone.

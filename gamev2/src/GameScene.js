@@ -697,6 +697,74 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
+     * The konbini stamp card (issue #209; menu -> Stamp Card): every store in
+     * the world (Stamps.stores, from config) as a stamp that is inked once
+     * you have bought something there, the vending-machine areas stamped, and
+     * the rewards. It is the achievements overlay's kind of panel and closes
+     * the same way (ESC, a click or tap), through the same input branch.
+     */
+    showStampCard() {
+        if (this.achievementsVisible) return;
+        const cam = this.cameras.main, W = cam.width, H = cam.height;
+        const shop = this.shop, stamps = shop.stamps;
+        const stores = Stamps.stores(this.config), count = Stamps.count(stamps);
+        const vending = Object.keys(stamps).filter(id => id.startsWith('vending:')).length;
+        const cols = 2, rows = Math.ceil(stores.length / cols);
+        const rowH = Math.max(22, Math.min(30, Math.floor((H - 16 - 300) / Math.max(1, rows))));
+        const pw = 640, ph = 300 + rows * rowH, px = (W - pw) / 2, py = (H - ph) / 2;
+        const objs = [];
+        const overlay = this.add.graphics();
+        overlay.fillStyle(0x000000, 0.85); overlay.fillRect(0, 0, W, H);
+        overlay.setScrollFactor(0); overlay.setDepth(2000);
+        overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, W, H), Phaser.Geom.Rectangle.Contains);
+        objs.push(overlay);
+        const g = this.add.graphics();
+        g.fillStyle(0x1a1a1a, 1); g.fillRect(px, py, pw, ph);
+        g.lineStyle(2, 0x666666, 1); g.strokeRect(px, py, pw, ph);
+        g.setScrollFactor(0); g.setDepth(2001); objs.push(g);
+        const text = (x, y, t, size, bold, color, origin) => {
+            const o = this.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
+                fontFamily: bold ? 'PixelOperatorMonoBold' : 'PixelOperatorMono' });
+            o.setOrigin(origin != null ? origin : 0.5, 0.5); o.setResolution(1);
+            o.setScrollFactor(0); o.setDepth(2002); objs.push(o); return o;
+        };
+        const cx = W / 2;
+        text(cx, py + 34, 'STAMP CARD', '32px', true);
+        text(cx, py + 72, 'every new shop or vending machine you buy from is a stamp', '18px', false, '#bbbbbb');
+        // one ring per store, inked red once it is stamped
+        const ink = this.add.graphics(); ink.setScrollFactor(0); ink.setDepth(2002); objs.push(ink);
+        const colW = (pw - 60) / cols;
+        stores.forEach((s, i) => {
+            const x = px + 30 + Math.floor(i / rows) * colW, y = py + 108 + (i % rows) * rowH;
+            const done = !!stamps[s.id];
+            ink.lineStyle(2, done ? 0xe0463c : 0x666666, 1); ink.strokeCircle(x + 9, y, 8);
+            if (done) { ink.fillStyle(0xe0463c, 1); ink.fillCircle(x + 9, y, 5); }
+            JapaneseFont.fit(text(x + 28, y, s.name, '20px', done, done ? '#ffffff' : '#888888', 0));
+        });
+        let y = py + 108 + rows * rowH + 12;
+        text(cx, y, `vending machines: ${vending} area${vending === 1 ? '' : 's'} stamped`, '20px', false,
+            vending ? '#ffffff' : '#888888');
+        y += 36;
+        const nameOf = (id) => (shop.itemById(id) || { name: id }).name, fmt = (n) => shop.fmt(n);
+        text(cx, y, `${count} stamp${count === 1 ? '' : 's'}`, '24px', true, '#ffd700');
+        y += 32;
+        const next = Stamps.next(count);
+        text(cx, y, next ? `at ${next.at} stamps: ${Stamps.describe(next, nameOf, fmt)}` : 'every reward collected',
+            '20px', false, '#66ff88');
+        y += 28;
+        text(cx, y, 'rewards at ' + Stamps.MILESTONES.map(m => m.at).join(', ') + ' stamps', '18px', false, '#888888');
+        text(cx, py + ph - 26, Hints.text(this, '(click or ESC to close)'), '16px', false, '#888888');
+        const close = () => {
+            this.achievementsVisible = false;
+            this.achievementsCloseCallback = null;
+            objs.forEach(o => o.destroy());
+        };
+        this.achievementsVisible = true;
+        this.achievementsCloseCallback = close;
+        overlay.on('pointerdown', close);
+    }
+
+    /**
      * Nearest walkable cell to (gx, gy) in a room (spiral search): must have
      * floor, no collider, inside bounds, and not sit on a transporter (that
      * would immediately teleport the arriving player).
@@ -968,6 +1036,11 @@ class GameScene extends Phaser.Scene {
         // bumping a vending machine / konbini counter or shelf / izakaya bar opens its store
         if (this.shop && !this.dialogueManager.isVisible()) {
             this.shop.checkShopInteraction(targetGridX, targetGridY);
+        }
+        // bumping a konbini's water cooler is a free cup of water (issue #209)
+        if (this.shop && !this.dialogueManager.isVisible() && !this.shop.isVisible() &&
+            this.roomManager.interactionAt(targetGridX, targetGridY, 'water')) {
+            this.shop.drinkWater();
         }
         // bumping pond water casts a line (the fishing mini game)
         if (this.fishing && !this.dialogueManager.isVisible() && !this.shop.isVisible()) {

@@ -8,6 +8,7 @@ const Interactions = {
         { kind: 'drinks', group: 'shop', pattern: /^office-(shelf-drinks|shelf-glass|fridge|freezer)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^office-shelf-snacks/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },
+        { kind: 'water', group: 'water', pattern: /^office-watercooler/, footprint: true, room: 'konbini' },
         { kind: 'pond', group: 'pond', pattern: /^pond-autotile/ },
         { kind: 'clock', group: 'clock', pattern: /^(office-clock|office-poster-menu)/ },
     ],

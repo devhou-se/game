@@ -1,6 +1,6 @@
 # Shop, food and drink, fishing, the drinking game stake
 
-The wallet, konbini / vending machines / Don Takote, items and effects, selling fish, the save blob (`src/Shop.js` and friends).
+The wallet, konbini / vending machines / Don Takote, items and effects, the energy meter and the stamp card, selling fish, the save blob (`src/Shop.js` and friends).
 
 A "see X" in the text names a section; if it is not in this file, the index in [`../CLAUDE.md`](../CLAUDE.md) says which file has it.
 
@@ -114,8 +114,8 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   `node tools/test_game.js` checks every item has a distinct, well-formed icon; look
   at new ones in a list before shipping them — the panels are dark, which is what
   the slot square is for.
-- **Effects are additive buffs only** (no hunger/energy stat, nothing gates
-  movement). The keys an `effect` may carry are listed in `Shop.EFFECT_KINDS`:
+- **Effects are additive buffs only** (the energy meter below is separate, and the only
+  thing it ever takes away is the sprint). The keys an `effect` may carry are listed in `Shop.EFFECT_KINDS`:
   `speed`, `scramble`, `steady` (read by `InputHandler` via `movementModifier()`),
   `fishBite`, `fishWindow`, `fishLuck` (read by `Fishing` via `shop.buff(key)`),
   `headStart`, `prizeBonus` (read by `DrinkingGame`, locked in when a round
@@ -158,11 +158,13 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   without `sell` are worth nothing, so a shop never buys its own stock back. No new
   key bindings.
 - **Save blob** `localStorage.gamev2_shop`:
-  `{ v: 3, money, items: {id: count}, effects: {drink|food: {id, until}}, used: {id: count}, caught: {id: count} }`.
+  `{ v: 4, money, items: {id: count}, effects: {drink|food: {id, until}}, used: {id: count}, caught: {id: count},
+  energy, stamps: {place: 1}, hints: {low: 1} }`.
   `until` is an absolute epoch-ms expiry, so buffs survive reloads and room changes
   and lapse on time; on load it is clamped to the item's own duration and effects
-  for unknown items are dropped. Older blobs load as-is and are rewritten as v3 on
-  the next save: the issue #12 one (`{money, items}`) and v2 (no `caught`, no fish)
+  for unknown items are dropped. Older blobs load as-is and are rewritten as v4 on
+  the next save: the issue #12 one (`{money, items}`), v2 (no `caught`, no fish) and v3
+  (no `energy`: the meter starts full, as it does for a new player; no `stamps`, no `hints`)
   — the wallet is never changed by loading.
   `used` counts consumption and feeds two achievements in
   `AchievementManager.consumptionProgress()`: **Taste Tester** (use every
@@ -191,3 +193,73 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 - `node tools/test_game.js` covers the pure parts of all of this without a browser:
   icons, sell values, catches into the bag, save migration, stake / pool maths and a
   whole stubbed round at every stake (win, lose, draw, walk-out, vs Bailey).
+
+### Energy and the stamp card (issue #209)
+
+A reason to stop at a konbini or a vending machine every few minutes, that never punishes. The rules
+are pure functions in `src/Energy.js` (`Energy`, `Stamps`); `Shop` holds the state in its save blob,
+draws the meter and pays the rewards; tests are `tools/tests/energy.test.js`.
+
+**Energy** is a 0-100 meter. A new player and a save from before the meter start full.
+
+| | |
+|---|---|
+| Drain | `Energy.CELLS` = 1800 cells of walking empty a full meter (`Energy.stepCost()` = 100/1800 a cell). A walked cell is 200 ms, so that is **6 minutes of walking, 3 of pure sprinting** (a sprint, or a speed drink, covers more cells a second and so drains faster by the clock). Standing, talking, menus, mini-games and train rides cost nothing; a bump that does not move you costs nothing (`InputHandler.handlePlayerMovement` calls `shop.walked()` only when the step started). |
+| Well fed, `>= Energy.WELL_FED` (70) | sprint is x`Energy.WELL_FED_SPRINT` (2.25) instead of x2. Meter green. |
+| Normal | sprint x2. Meter amber. |
+| Low, `<= Energy.LOW` (25) | nothing changes; the meter is red. The first time ever it gets here a one-line hint is toasted (`Energy.HINT`, remembered in the save as `hints.low`). |
+| Peckish, 0 | **SHIFT / the sprint pill does nothing** and a toast says so (`Energy.PECKISH`, every time the meter empties, and again - at most once per `Energy.REMIND_MS`, 10 s - whenever sprint is held while walking on an empty meter: `Shop.sprintHeld`, so a save loaded at zero is told too). The touch sprint pill is dimmed with a dashed border while the meter is empty (`tc-nosprint` on the touch root, set by `Shop.updateEffectChip`; not while a shop list is open, where the pill is SHIFT). Walking speed is unchanged, speed drinks still work, and nothing else is ever blocked: you can walk, talk, shop, fish, play the drinking game and ride trains on an empty meter. |
+
+- **Refilling**: using any food or drink adds its `energy` (`Energy.valueOf(item)`; the use toast ends
+  `· energy +N`, the buy list and the Items screen show `energy +N` on the row). Food fills, a soft
+  drink tops up, alcohol hardly counts:
+
+  | Item | energy | | Item | energy |
+  |---|---|---|---|---|
+  | Nikuman, Karaage | 60 | | Zone Energy | 30 |
+  | a grilled fish | 50 | | Canned Coffee, Ramune | 20 |
+  | Onigiri | 45 | | Green Tea | 15 |
+  | Melon Pan | 40 | | Vodka Redbull | 10 |
+  | Edamame | 30 | | Highball, Nama Beer | 5 |
+
+  An item in a config catalogue with no `energy` gets `Energy.DEFAULTS[category]`. Gear gives none.
+  Buying does not fill the meter; eating does (so SHIFT+ENTER "buy & use now" is the quick way).
+- **The meter** is on the HUD layer at the right end just under the bar, first in the stack the
+  effect chips are in (`Shop.drawMeter`, `Shop.METER`): an onigiri and `Energy.SEGMENTS` (5)
+  segments on a dark backdrop, as tall as a chip. It is not part of the bar, so the bar's one row
+  (desktop, landscape phone) and two rows (portrait) are as they were. Tapping the onigiri opens Items.
+- **Lines wait their turn**: the hint, the peckish line and a stamp earned by "buy & use now" go
+  into `shop.notices` and are toasted by the same 250 ms timer as "X wore off", never over another
+  toast or an open list. Eating or a cup of water drops a queued peckish line.
+- **The safety net** (a player cannot be left unable to eat): an empty meter costs only the sprint;
+  a konbini's **water cooler** (`office-watercooler`, the `water` rule in `Interactions.js`; eight of
+  the eleven 7-Elevens have one in a back corner) gives a free cup on a bump, `+Energy.WATER` (20)
+  up to `Energy.WATER_CAP` (40) - enough to sprint again, never enough to be well fed; the
+  cheapest thing sold is a ¥160 Green Tea; and money comes back from the stamp card, a friendly
+  nomikai round (¥100, no stake) and selling fish.
+- **Debug**: the debug menu's `fast hunger` row multiplies the drain by `Energy.DEBUG_FACTOR` (30;
+  `shop.energyDrain`). It is not saved.
+
+**The stamp card** (menu -> Stamp Card, `GameScene.showStampCard`; it is the achievements overlay's
+kind of panel and closes the same way). Buying anything stamps the place, once:
+
+- a store - any konbini or Don Takote, by room key (`Stamps.isStore`, the same test as
+  `Interactions`' konbini; the till and the shelves both count);
+- the vending machines of an area - `vending:<room>`, the district underfoot in the stitched city
+  (so Market's machines are one stamp, Park's another);
+- the izakaya bar gives no stamp.
+
+The card lists every store from config (`Stamps.stores(config)`), so a new town's konbini is on it
+with no code change. Rewards are paid when the count of stamps reaches a milestone
+(`Stamps.MILESTONES`; stamps only add up, so there is no "claimed" record) and the purchase toast
+says so:
+
+| Stamps | Reward |
+|---|---|
+| 2 | ¥200 back |
+| 5 | a free Onigiri |
+| 8 | ¥500 back |
+| 12 | ¥1,000 back and a free Nikuman |
+
+**Konbini Pilgrim** (`AchievementManager.stampProgress()`, listed in the Achievements overlay) is a
+stamp from every store in config; vending areas do not count towards it.

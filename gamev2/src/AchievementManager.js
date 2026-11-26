@@ -148,9 +148,19 @@ class AchievementManager {
         ];
     }
 
+    /**
+     * Stamp card achievement (issue #209), from the shop's `stamps`:
+     *   Konbini Pilgrim — buy something at every konbini and discount store
+     *   (the list is every store room in config, so a new town's count by themselves)
+     */
+    stampProgress() {
+        const shop = this.scene.shop;
+        return [Stamps.progress(this.scene.config, shop ? shop.stamps : {})];
+    }
+
     /** Every achievement the shop's save feeds, in the order the overlay lists them. */
     itemProgress() {
-        return this.consumptionProgress().concat(this.fishingProgress());
+        return this.consumptionProgress().concat(this.fishingProgress(), this.stampProgress());
     }
 
     /** Record a tile the player has stepped on. */

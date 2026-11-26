@@ -204,7 +204,7 @@ class WorldModel {
         if (table) return table;
         const npc = this.room.npcs.find(n => n.gridX === x && n.gridY === y);
         if (npc) return { kind: 'npc', group: 'npc', npc };
-        return ['shop', 'pond', 'clock'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
+        return ['shop', 'water', 'pond', 'clock'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
     }
 
     describe(i) {
@@ -227,6 +227,7 @@ class WorldModel {
             return `opens the ${Shop.titleFor(i.kind, this.roomConfig)} shop: ` + items.map(it => `${it.name} ¥${it.price}`).join(', ') +
                 (venue.buys ? `; buys caught fish${venue.grills ? ' and grills them' : ''}` : '');
         }
+        if (i.kind === 'water') return 'a free cup of water: a little energy, up to a cap (Energy.WATER_CAP)';
         if (i.kind === 'pond') return 'casts a fishing line (needs the fishing rod); a catch goes into the bag to sell';
         if (i.kind === 'clock') return 'opens the time-travel date picker';
         if (i.kind === 'drinking-game') return 'starts the izakaya drinking game (free, or pick a stake)';

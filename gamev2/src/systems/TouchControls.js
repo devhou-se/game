@@ -251,6 +251,8 @@ class TouchControls {
                 border-color:rgba(255,120,120,0.5); color:#ff9c9c; }
             #touch-controls .tc-sprint { width:64px; height:42px;
                 border-radius:21px; font-size:20px; }
+            /* no energy, no sprint (Shop.updateEffectChip sets it on the root) */
+            #touch-controls.tc-nosprint .tc-sprint { opacity:0.35; border-style:dashed; }
         `;
         document.head.appendChild(style);
 

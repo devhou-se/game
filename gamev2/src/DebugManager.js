@@ -149,6 +149,11 @@ class DebugManager {
               value: () => this.scene.shop ? this.scene.shop.fmt(this.scene.shop.money) : '-',
               lit: () => false,
               activate: () => this.setWallet() },
+            // issue #209: the energy meter empties in seconds, to test it (never saved: off on every load)
+            { label: 'fast hunger',
+              value: () => onOff(this.scene.shop && this.scene.shop.energyDrain > 1),
+              lit: () => !!this.scene.shop && this.scene.shop.energyDrain > 1,
+              activate: () => { const shop = this.scene.shop; if (shop) shop.energyDrain = shop.energyDrain > 1 ? 1 : Energy.DEBUG_FACTOR; } },
             { label: 'noclip',
               value: () => onOff(this.settings.noclip),
               lit: () => this.settings.noclip,

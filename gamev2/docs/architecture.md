@@ -28,6 +28,8 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   table). `Shop`, `Fishing`, `DrinkingGame`, `GameScene` and `tools/play.js` all read it; add a rule here
   rather than a tile-name check in a feature file
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
+- `src/Energy.js` - The rules of the energy meter and the konbini stamp card (`Energy`, `Stamps`: pure functions, no Phaser);
+  `Shop` holds the state and draws the meter (see "Energy and the stamp card" in `shop-and-economy.md`)
 - `src/DatePicker.js` - Time Travel calendar (menu, or the HUD date). Marks three different days: today (gold), the day the
   game is on (blue — a trip day, usually a year of months from today) and the cursor (green box). The legend names only
   colours that are on the month shown; the jump row under the selected date moves the cursor to today / the game's day (click, tap, or SHIFT + up / down), and the trips row above it to a trip

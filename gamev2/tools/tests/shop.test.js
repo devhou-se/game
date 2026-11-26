@@ -39,7 +39,7 @@ module.exports = ({ test, assert, fs, path, GV2, ctx, game, shopWith, showdownWi
         assert.strictEqual(shop.money, 1000, 'catching pays nothing by itself');
         assert.deepStrictEqual({ ...shop.items }, { 'fishing-rod': 1, koi: 2, funa: 1 });
         assert.deepStrictEqual({ ...saved().items }, { 'fishing-rod': 1, koi: 2, funa: 1 });
-        assert.strictEqual(saved().v, 3);
+        assert.strictEqual(saved().v, 4);
         assert.deepStrictEqual(Array.from(shop.sellable(), i => i.id), ['funa', 'koi'], 'only fish sell');
 
         for (const c of CATCHES.filter(c => c.value > 0)) assert.strictEqual(sellValue(shop.itemById(c.id), 1), c.value);
@@ -93,7 +93,7 @@ module.exports = ({ test, assert, fs, path, GV2, ctx, game, shopWith, showdownWi
         assert.deepStrictEqual(Array.from(shop.addCatch(CATCHES.find(c => c.id === 'unagi'))), ['Big Catch']);
         assert.deepStrictEqual(Array.from(shop.addCatch(CATCHES.find(c => c.id === 'golden-koi'))), [], 'only the first time');
         const progress = Array.from(shop.scene.achievementManager.itemProgress(), a => a.name);
-        assert.deepStrictEqual(progress, ['Taste Tester', 'Regular Customer', 'Big Catch']);
+        assert.deepStrictEqual(progress, ['Taste Tester', 'Regular Customer', 'Big Catch', 'Konbini Pilgrim']);
 
         shop.use('unagi');                               // from the Items screen: raw
         assert.strictEqual(shop.items.unagi, 1);
