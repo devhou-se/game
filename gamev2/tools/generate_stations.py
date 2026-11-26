@@ -15,6 +15,7 @@ Stations:
   OsakaStation    — inside Osaka's station house
   SendaiStation   — inside Sendai's station house
   SapporoStation / AsahikawaStation — inside the Hokkaido station houses
+  FukuokaStation  — "Hakata", inside Fukuoka's station house
 
 Also carves the Palace facade door and removes the old direct platform
 portals (superseded by the train). Idempotent, and safe to re-run on the live
@@ -95,6 +96,8 @@ STATIONS = {
     'SapporoStation':   {'label': 'Sapporo',   'town': 'Sapporo',   'train': 'train-orange'},
     'AsahikawaStation': {'label': 'Asahikawa', 'town': 'Asahikawa', 'train': 'train-green',
                          'parent': 'SapporoStation'},
+    # Fukuoka (issue #67): a main-line city stop (orange). The station is Hakata.
+    'FukuokaStation':   {'label': 'Hakata',    'town': 'Fukuoka',   'train': 'train-orange'},
 }
 assert all(st.get('parent', 'TokyoStation') in STATIONS for st in STATIONS.values()), 'unknown parent station'
 
@@ -112,6 +115,7 @@ TOWN_DOORS = {          # townRoom: (hidden door cell into the station, exit cel
     'SendaiStation':   {'door': [35, 9], 'exit': [35, 10]},
     'SapporoStation':   {'door': [34, 9], 'exit': [34, 10]},
     'AsahikawaStation': {'door': [32, 9], 'exit': [32, 10]},
+    'FukuokaStation':   {'door': [30, 9], 'exit': [30, 10]},
 }
 
 for key, st in STATIONS.items():

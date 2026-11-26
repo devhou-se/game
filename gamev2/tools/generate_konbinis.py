@@ -28,6 +28,7 @@ cfg = rg.load_config()
 # (re)build only theirs - e.g. `generate_konbinis.py Sapporo` after regenerating
 # Sapporo - and leave every other store's room exactly as it is.
 ALL_HOSTS = ['Machi', 'Market', 'Park', 'Sapporo', 'Sendai']
+ALL_HOSTS += ['Fukuoka']
 HOSTS = sys.argv[1:] or ALL_HOSTS
 assert all(h in ALL_HOSTS for h in HOSTS), f'unknown host; expected some of {ALL_HOSTS}'
 SEVEN = 'seven-eleven_0_0'

@@ -60,7 +60,10 @@ their route in the room's map data rather than in coordinates, have no collision
     passing boat, under everyone standing), and the shade is translucent, so `clearWater` does not
     count it as scenery hiding the canal. **Sendai's Matsushima bay** declares the one vertical waterway
     (issue #66: columns 66-68, from just under the rail embankment to the south edge of the map, which is
-    its open end; the islets, the pier and the moored boat keep west of it). Frozen water (Asahikawa's river,
+    its open end; the islets, the pier and the moored boat keep west of it). **Fukuoka's Naka river** is
+    another horizontal one (issue #67: rows 40-42, `from` the first rimmed column east of the beach - a
+    closed end at the river mouth - `to` the east edge, `under` columns 29-32, the same parapet and shade
+    tiles as Osaka's bridge). Frozen water (Asahikawa's river,
     Yukimura's pond) declares none, so it gets no boats.
   Runs too short for a boat to travel `MIN_TRAVEL` (128px, so a run is at least four cells for either
   hull - the three-cell pockets between the moat's rocks get none) are dropped. On a closed run a boat

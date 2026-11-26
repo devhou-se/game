@@ -23,6 +23,11 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | The pub (HUB) | Sendai | `sendai-pub_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
 | Nikka distillery kiln house | Sendai | `sendai-kiln_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
 | Matsushima sightseeing boat, pier, islets | Sendai | `matsushima-*_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
+| Fukuoka Tower | Fukuoka | `fukuoka-tower_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
+| Yatai stalls (ramen, yakitori, oden) and their lantern posts | Fukuoka | `yatai-ramen_0_0`, `yatai-yakitori_0_0`, `yatai-oden_0_0`, `yatai-lanterns_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
+| Canal City and its fountain | Fukuoka | `canal-city_0_0`, `canal-fountain_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
+| Kushida shrine's Yamakasa float | Fukuoka | `hakata-yamakasa_0_0` (beside a `shrine-red` hall) | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
+| Dazaifu Tenmangu: hall, arched bridge, plum trees | Fukuoka | `dazaifu-hall_0_0`, `dazaifu-bridge_0_0`, `plum-tree_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
 
 - **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reachable only by train, like Yukimura:
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
@@ -140,3 +145,43 @@ pipeline has placed someone there.
   shrine / torii / 7-Eleven / vending spots.
 - A room missing from `assets/map/world-map.json` is fine: the Map overlay still opens (no dot, "you are
   here: <room>") and `TrainTravel.dirTo` treats it as x=0. Re-run `tools/make_worldmap.py` to add new rooms.
+
+### Fukuoka (issue #67)
+
+A generated town reachable only by train (`FukuokaStation`, labelled **Hakata**, a main-line city stop listed
+after the existing stations in `tools/generate_stations.py`); it sits detached, far south-west of Osaka, in
+`devhouse.world`. It is where devhouse 2 ended (8-12 Nov 2025) and holds that week's eight posts.
+
+- **Fukuoka** (`tools/generate_fukuoka.py`, 62x62). The west edge is the **sea** (columns 0-4, solid
+  `pond-autotile_center`) with a waterline (`beach-shore-*`) and three columns of `sand-autotile` beach. A paved
+  pedestrian **avenue** (columns 29-32) is the spine, north to south: the station house and its forecourt ->
+  a signalled zebra crossing over the **downtown street** (rows 20-22, asphalt; high-rises and **Fukuoka Tower**
+  on its plaza by the beach to the west, the station plaza with the 7-Eleven `KonbiniFukuoka1` to the east)
+  -> between **Canal City** with its fountain (west) and **Kushida shrine** - a `shrine-red` hall with a
+  Yamakasa float beside it - the machiya and a pagoda (east) -> **the ramen river street** -> the bridge ->
+  Ohori Park's pond (south-west) and **Dazaifu Tenmangu** (south-east) -> the south lane.
+- **The ramen river street**: ten **yatai** (rows 34-36: `yatai-ramen|yakitori|oden`, 3x3, solid all over)
+  face a two-row promenade and the bank; a hedge runs behind the row and behind every gap in it, so the stalls
+  are only ever seen from the front. Between them stand `yatai-lanterns` posts: the key holds `-lanterns`, so
+  `DayNight` lights them at night with the lanterns and lamp posts (no code change).
+- **The Naka river** (rows 40-42, from the first column east of the waterline to the east edge of the map) is
+  the room's one `waterways` entry, built exactly like Osaka's canal (`pond-autotile` edge-n / center / edge-s,
+  parapet and shade tiles on the four-cell deck, `under` columns 29-32), so it carries the ambient boats and
+  can be fished from the bank. Its west end, the river mouth, is a closed end (a boat fades in there): the run
+  is measured on its first rimmed cross-section, and the open sea beside it has no rim to measure.
+- **Dazaifu Tenmangu** is inside the town, not a room of its own, and is laid out the way a shrine is walked:
+  from the south lane through a `torii-red`, over the arched `dazaifu-bridge` (flat, `Non-Collidables` +
+  `depthBias: -200`, the `asahikawa-bridge` recipe; the two pond cells under it are left out of the colliders),
+  to the `dazaifu-hall` - the temporary hall of 2025 with a grove on its roof, as post 740 found it - between
+  `plum-tree`s. All buildings face south, so a shrine approached from the north would show its back.
+- **Art**: `tools/generate_fukuoka_art.py` (needs Pillow; `--preview out.png` writes a contact sheet) draws all
+  of the above in `generate_hokkaido.py`'s way (half size, pixel-doubled, GuttyKreum palette, 1px ink
+  outline; it imports that tool's palette and helpers), derives `sand-autotile` (9 roles) from
+  `dirt-outside-autotile`, and adds `fukuoka-tower` to config `game.lookUp.sprites`.
+- **Build order**: `generate_fukuoka_art.py`, `make_prefabs.py`, `generate_fukuoka.py`,
+  `generate_konbinis.py Fukuoka`, `generate_stations.py`, then
+  `config_to_tiled.py Fukuoka FukuokaStation KonbiniFukuoka1`, `play.js lint` for the three, `make_worldmap.py`.
+- Blog NPCs can be sent to `Fukuoka Tower`, `the yatai stalls`, `Kushida shrine`, `Canal City`,
+  `Dazaifu Tenmangu` and `Hakata Station` (`LANDMARKS`, all `rooms: ('Fukuoka',)`, as Sendai's are - each
+  label names one place; `Hakata Station` is the forecourt, anchored on the station house's doorway sprite,
+  which every station house has), besides the generic shrine / torii / pond / pagoda / 7-Eleven / vending spots.

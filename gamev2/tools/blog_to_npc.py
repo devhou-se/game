@@ -212,6 +212,13 @@ LANDMARKS = [
     ('sendai-pub_', 'the HUB pub', (3, 5), {'rooms': ('Sendai',)}),          # the pavement beside its door
     ('sendai-kiln_', 'the Nikka distillery', (3, 6), {'rooms': ('Sendai',)}),   # the lane, beside the kiln house's door
     ('matsushima-ferry_', 'Matsushima bay', (-2, -1), {'rooms': ('Sendai',)}),   # the promenade, by the moored boat
+    # Fukuoka (issue #67)
+    ('fukuoka-tower_', 'Fukuoka Tower', (0, 12), {'rooms': ('Fukuoka',)}),   # the plaza at its foot, beside the entrance
+    ('yatai-ramen', 'the yatai stalls', (1, 3), {'rooms': ('Fukuoka',)}),   # on the promenade, at a stall's stools
+    ('hakata-yamakasa_', 'Kushida shrine', (0, 4), {'rooms': ('Fukuoka',)}),   # in front of the Yamakasa float
+    ('canal-city_', 'Canal City', (2, 6), {'rooms': ('Fukuoka',)}),   # the plaza, beside the doors
+    ('dazaifu-hall_', 'Dazaifu Tenmangu', (1, 5), {'rooms': ('Fukuoka',)}),   # the court below the steps, off the bridge's axis
+    ('building-entrance-1', 'Hakata Station', (3, 1), {'rooms': ('Fukuoka',)}),   # the forecourt, east of the door
     # Inside a station (issue #73): the west end of the platform, by the
     # vending machine — clear of the train doors, the arrival cell and the exit
     ('white-vending-machine-top', 'the platform', {'indoors': True}),

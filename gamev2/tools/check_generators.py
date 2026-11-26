@@ -44,6 +44,7 @@ import tempfile
 GENERATORS = [
     'generate_machi', 'generate_inaka', 'generate_yukimura', 'generate_osaka',
     'generate_sapporo', 'generate_asahikawa', 'generate_sendai',
+    'generate_fukuoka',
     'generate_konbinis', 'generate_discount_stores', 'generate_stations',
     'generate_izakaya',
 ]
@@ -58,6 +59,7 @@ ART_TOOLS = [
     'make_road_tiles', 'generate_ads', 'generate_cast', 'extract_city',
     'extract_dotonbori', 'extract_shrine', 'extract_street', 'extract_train',
     'extract_train_interior',
+    'generate_fukuoka_art',
 ]
 # the art tools that also need a Japanese system font (generate_ads.find_font)
 FONT_TOOLS = ['generate_ads', 'extract_city']

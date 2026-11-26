@@ -76,6 +76,13 @@
       "y": -3200,
       "width": 4480,
       "height": 3072
+    },
+    {
+      "fileName": "gamev2/tiled/fukuoka.tmj",
+      "x": -11200,
+      "y": 5440,
+      "width": 3968,
+      "height": 3968
     }
   ],
   "onlyShowAdjacentMaps": false,

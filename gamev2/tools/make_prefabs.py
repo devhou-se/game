@@ -202,6 +202,45 @@ PREFABS = {
                                    colliders=[(x, y) for x in range(5) for y in (0, 1)], doors=[]),
     'matsushima-pier':        dict(w=5, h=1, sprites=[('Non-Collidables', 0, 0, 'matsushima-pier_0_0')],
                                    colliders=[], doors=[]),
+    # ---- Fukuoka (issue #67; art drawn by tools/generate_fukuoka_art.py) ----------
+    # Fukuoka Tower: the base building (rows 10-11) and the mirrored shaft (the
+    # middle two columns, rows 2-9) collide; only the mast is walk-behind. The
+    # air either side of the shaft is open - nothing is drawn there to hide in.
+    'fukuoka-tower':   dict(w=4, h=12, sprites=[('Collidables', 0, 0, 'fukuoka-tower_0_0')],
+                            colliders=[(x, y) for x in (1, 2) for y in range(2, 10)]
+                                      + [(x, y) for x in range(4) for y in (10, 11)], doors=[]),
+    # A yatai food stall: solid all over - the cart, its stools and the row its
+    # canvas roof is drawn on (a stall at the end of the row is open at the side,
+    # and nobody should stand inside the roof). You stand in front of the stools.
+    'yatai-ramen':     dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'yatai-ramen_0_0')],
+                            colliders=[(x, y) for x in range(3) for y in range(3)], doors=[]),
+    'yatai-yakitori':  dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'yatai-yakitori_0_0')],
+                            colliders=[(x, y) for x in range(3) for y in range(3)], doors=[]),
+    'yatai-oden':      dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'yatai-oden_0_0')],
+                            colliders=[(x, y) for x in range(3) for y in range(3)], doors=[]),
+    # A post strung with paper lanterns (lit at night: the key holds `-lanterns`).
+    'yatai-lanterns':  dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'yatai-lanterns_0_0')],
+                            colliders=[(0, 1)], doors=[]),
+    # The Yamakasa float at Kushida shrine: the trestle and the lowest tier collide.
+    'hakata-yamakasa': dict(w=2, h=4, sprites=[('Collidables', 0, 0, 'hakata-yamakasa_0_0')],
+                            colliders=[(x, y) for x in (0, 1) for y in (2, 3)], doors=[]),
+    'canal-city':      building(8, 6, door=3, door_w=2),
+    'canal-fountain':  dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'canal-fountain_0_0')],
+                            colliders=[(0, 0), (1, 0), (0, 1), (1, 1)], doors=[]),
+    # Dazaifu Tenmangu's hall: solid all the way up, the grove on its roof
+    # included - there is only a river bank behind it, and nobody hides there.
+    'dazaifu-hall':    dict(w=6, h=5, sprites=[('Collidables', 0, 0, 'dazaifu-hall_0_0')],
+                            colliders=[(x, y) for x in range(6) for y in range(5)], doors=[]),
+    # The arched bridge over the shrine pond: flat, walked ON (asahikawa-bridge's
+    # recipe - Non-Collidables with a negative depthBias in spriteMetadata).
+    'dazaifu-bridge':  dict(w=2, h=4, sprites=[('Non-Collidables', 0, 0, 'dazaifu-bridge_0_0')],
+                            colliders=[], doors=[]),
+    'plum-tree':       dict(w=2, h=3, sprites=[('Tops', 0, 0, 'plum-tree_0_0')], colliders=[(0, 2), (1, 2)], doors=[]),
+    # The shrine hall under the red roof (Park's, Kushida's): the `shrine` prefab's
+    # footprint and colliders with red-shrine-top on top.
+    'shrine-red':      dict(w=5, h=8, sprites=[('Tops', 0, 0, 'red-shrine-top_0_0'), ('Collidables', 1, 2, 'shrine-building_0_0')],
+                            colliders=[(x, y) for x in (1, 2, 3) for y in range(2, 7) if (x, y) != (2, 6)]
+                                      + [(x, 1) for x in range(5)] + [(x, y) for x in (0, 4) for y in (2, 3, 4)], doors=[(2, 6)]),
     # ---- street accessories (issue #19; art from tools/extract_street.py) --------
     # One sprite on Collidables each, so it Y-sorts by its feet: the bottom cell
     # is solid, the pole / head above it is walk-behind. Maps place the green

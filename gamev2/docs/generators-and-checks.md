@@ -10,7 +10,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 committed world: it runs each one in a scratch copy and fails, naming the rooms and cells, if `config.json`
 would change (issue #107, see "Generated rooms stay regenerable"). It also re-seeds every room with
 `config_to_tiled.py` and fails if a committed `tiled/*.tmj` would change (a config edit whose map was not
-re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_tsutenkaku`,
+re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_fukuoka_art`, `_tsutenkaku`,
 `_discount_art`, `_cooler_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
 `extract_*.py` scripts) and fails if `assets/sprites`, `assets/ads`, `tiled/prefabs` or `config.json` would
 change (issues #186, #193). Run it after any edit to a
@@ -23,7 +23,7 @@ see `generate_ads.find_font`, and are listed as `skip`, not checked, where none 
 
 - **Generated rooms stay regenerable** (issue #107): a room generator re-run on an unchanged world leaves
   `config.json` byte-identical, and `python3 tools/check_generators.py` fails when one would not. That
-  holds for `generate_machi`, `_inaka`, `_yukimura`, `_osaka`, `_sapporo`, `_asahikawa`, `_sendai`, `_konbinis`,
+  holds for `generate_machi`, `_inaka`, `_yukimura`, `_osaka`, `_sapporo`, `_asahikawa`, `_sendai`, `_fukuoka`, `_konbinis`,
   `_discount_stores`, `_stations` and `_izakaya` (the Izakaya interior plus its street door and
   lantern pair in Market, see Shop, Food and Drink), each run on its own:
   - a town generator ends with `b.finish()` (`roomgen.Builder`), which runs the picket-fence and
@@ -55,7 +55,7 @@ see `generate_ads.find_font`, and are listed as `skip`, not checked, where none 
   warns if a town is ever placed back inside (it is still redrawn on top), and `tools/test_game.js` fails.
   **The world file is laid out like Japan** (issue #68, north up; compass order, not true distance): Asahikawa
   north-east of Sapporo, both north of the Tokyo city, Osaka west-south-west of Tokyo, and no two detached
-  maps overlapping — `tools/tests/map-data.test.js` holds it. A new town goes at its compass position; moving
+  maps overlapping — `tools/tests/map-data.test.js` holds it (Fukuoka, far south-west of Osaka: `fukuoka.test.js`). A new town goes at its compass position; moving
   a detached town changes nothing but the Map (`cities` offsets are the stitched districts' only).
   Widening the world costs nothing on the Map screen while it stays wider than about 1.47:1 - the
   overlay is height-limited. `world-map.json` keeps the same contract (one rect per room), so the "You" marker, NPC dots and map-click travel work as before. Regenerate

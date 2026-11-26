@@ -15,6 +15,9 @@ Config `stations` is the rail registry, written by `tools/generate_stations.py` 
 - **`parent`** - the station key of the city this one is a day trip from (Inaka and Yukimura ->
   `TokyoStation`, Asahikawa -> `SapporoStation`). One level only.
 
+A station's `label` need not be its town's name: `FukuokaStation` is labelled `Hakata` (the board says Hakata,
+the room's HUD name is `Hakata Station`, the town room is `Fukuoka`).
+
 `src/StationPicker.js` builds the board with the static `StationPicker.board(stations, fromKey, cameFrom)`:
 cities in `order`, each followed by its day trips indented and tagged `day trip`. The station you are at
 is not a destination; it is left out unless it has day trips, in which case it stays as their grey,

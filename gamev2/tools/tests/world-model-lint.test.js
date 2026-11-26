@@ -51,7 +51,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith, require }) => 
                 }
             }
         }
-        assert.strictEqual(roofs, 5, 'found every shrine roof: Tokyo, Machi, Asahikawa (blue), Market, Park (red)');
+        assert.strictEqual(roofs, 6, 'found every shrine roof: Tokyo, Machi, Asahikawa (blue), Market, Park, Fukuoka (red)');
     });
 
     test('the headless world model is stopped by collision tiles, like the game', () => {
