@@ -26,7 +26,8 @@
  *    canvas whatever the zoom.
  *  - Hint lines (anything worded by Hints.text) never go below
  *    UIScale.MIN_HINT CSS px: they are scaled up in place when their panel
- *    could not be magnified enough.
+ *    could not be magnified enough. So is any other single line of overlay
+ *    text under UIScale.MIN_TEXT CSS px, by at most a quarter, and a float.
  *
  * On a portrait phone the window shows only a tall slice of the canvas
  * (`Viewport.current.crop`). All three cameras are given that slice as their
@@ -186,7 +187,7 @@ class UIScale {
 
         // overlay objects are the tail of the depth-sorted list
         let box = null, cover = null, floatBox = null;
-        const floats = [], covers = [], hints = [];
+        const floats = [], covers = [], texts = [];
         for (let i = list.length - 1; i >= 0 && list[i].depth >= UIScale.MIN_DEPTH; i--) {
             const o = list[i];
             // measured where and as it was authored, not where we last put it
@@ -211,7 +212,7 @@ class UIScale {
                 continue;
             }
             box = box ? UIScale.union(box, b) : b;
-            if (o.type === 'Text' && o.scaleX === 1 && o.scaleY === 1 && typeof Hints !== 'undefined' && Hints.isHint(o.text)) hints.push(o);
+            if (o.type === 'Text' && o.scaleX === 1 && o.scaleY === 1) texts.push({ o, box: b });
         }
         // a float decides the zoom only when it is all there is
         const alone = !box;
@@ -234,10 +235,13 @@ class UIScale {
         // floats are magnified like the overlay they are over (never shrunk
         // with it), less if that would make them wider than the canvas — or
         // than the gap between the touch controls, down where those are
+        // (a line of text, in a whole view, at least as big as UIScale.MIN_TEXT)
+        const down = this.down();
         const floatScale = (o) => {
             const low = o.y > H - insets.bottom - UIScale.MARGIN;
             const room = W - 2 * UIScale.MARGIN - (low ? insets.left + insets.right : 0);
-            return Math.min(Math.max(1, fit.zoom), room / o.width);
+            const least = o.type === 'Text' && !cropped ? UIScale.MIN_TEXT * down / parseFloat(o.style.fontSize) : 1;
+            return Math.min(Math.max(1, fit.zoom, least), room / o.width);
         };
         for (const o of floats) o._uiSlide = 0;
         if (!alone && floats.length) {
@@ -261,8 +265,7 @@ class UIScale {
             };
             if (this.reserve !== null || stuck()) {
                 const reserve = () => {
-                    const scale = Math.max(1, fit.zoom);
-                    const top = Math.min(...floats.map(o => o.y - o.displayOriginY * scale));
+                    const top = Math.min(...floats.map(o => o.y - o.displayOriginY * floatScale(o)));
                     return Math.min(this.reserve === null ? H : this.reserve, Math.floor(top - UIScale.MARGIN));
                 };
                 // twice: the float is magnified with the panel, which the strip shrinks
@@ -303,14 +306,24 @@ class UIScale {
                 o.scaleX * scale / fit.zoom, o.scaleY * scale / fit.zoom);
         }
 
-        // hint lines their panel could not magnify enough grow in place, as
-        // far as the panel is wide
-        const down = this.down();
-        for (const o of hints) {
-            const css = parseFloat(o.style.fontSize) * fit.zoom / down;
+        // text its panel could not magnify enough grows in place, as far as
+        // the panel is wide: hint lines always, any other single line of
+        // text where the whole canvas is in view (see textGrowth)
+        for (const t of texts) {
+            const o = t.o, hint = typeof Hints !== 'undefined' && Hints.isHint(o.text);
+            t.hint = hint;
+            t.grow = 1;
+            // the point it grows about
+            t.x = t.box.x0 + o.originX * (t.box.x1 - t.box.x0);
+            t.y = t.box.y0 + o.originY * (t.box.y1 - t.box.y0);
+            if (!hint && (cropped || o.style.wordWrapWidth || o.text.indexOf('\n') >= 0)) continue;
             const room = (box.x1 - box.x0 - 2 * UIScale.MARGIN) / o.width;
-            const grow = Math.min(UIScale.MAX_HINT_GROWTH, UIScale.MIN_HINT / css, Math.max(1, room));
-            if (grow > 1.01) UIScale.put(o, o.x, o.y, grow, grow);
+            t.grow = UIScale.textGrowth(parseFloat(o.style.fontSize), fit.zoom, down, room, hint);
+        }
+        for (const t of texts) {
+            // a hint line stands alone; anything else stops short of the text beside it
+            const grow = t.hint || t.grow <= 1.01 ? t.grow : UIScale.clearGrowth(t, texts);
+            if (grow > 1.01) UIScale.put(t.o, t.o.x, t.o.y, grow, grow);
         }
 
         const changed = !this.active || fit.zoom !== this.zoom ||
@@ -401,6 +414,46 @@ class UIScale {
         this.hudZoom = zoom;
         this.hudWidth = width;
         this.scene.events.emit('hudscalechange', zoom);
+    }
+
+    /**
+     * How much an overlay Text of `font` px is scaled up in place so it is
+     * not shown under the floor (UIScale.MIN_HINT / MIN_TEXT CSS px), when
+     * the overlay camera is at `zoom` and the canvas is shown at 1 / `down`.
+     * Never past `room` (panel width over the text's width), and never more
+     * than the cap: a hint line stands alone under its panel and may grow
+     * 1.6x; any other line has neighbours, so it grows only a quarter (and
+     * stops short of them: clearGrowth) — enough for every panel on a
+     * 667x375 phone, most of the way on a 568x320.
+     * 1 when the text is already big enough.
+     */
+    static textGrowth(font, zoom, down, room, hint) {
+        const css = font * zoom / down;
+        const floor = hint ? UIScale.MIN_HINT : UIScale.MIN_TEXT;
+        const most = hint ? UIScale.MAX_HINT_GROWTH : UIScale.MAX_TEXT_FLOOR_GROWTH;
+        return Math.max(1, Math.min(most, floor / css, Math.max(1, room)));
+    }
+
+    /**
+     * The most (up to `me.grow`, in steps of 0.05 down to 1) that `me` can
+     * grow about its point without running into another text of `all`, each
+     * of which grows too, as far as it wants and no further than `me`. Each
+     * is `{ box: {x0, y0, x1, y1}, x, y, grow }`: its box, the point in it
+     * that stays put, the growth it wants. Texts that already touch (a label
+     * on its plate) are not in each other's way.
+     */
+    static clearGrowth(me, all) {
+        const grown = (t, g) => ({
+            x0: t.x + (t.box.x0 - t.x) * g, y0: t.y + (t.box.y0 - t.y) * g,
+            x1: t.x + (t.box.x1 - t.x) * g, y1: t.y + (t.box.y1 - t.y) * g,
+        });
+        const hit = (a, b) => a.x1 > b.x0 && a.x0 < b.x1 && a.y1 > b.y0 && a.y0 < b.y1;
+        const others = all.filter(t => t !== me && !hit(me.box, t.box));
+        for (let g = me.grow; g > 1.01; g = Math.round((g - 0.05) * 100) / 100) {
+            const mine = grown(me, g);
+            if (!others.some(t => hit(mine, grown(t, Math.min(g, t.grow))))) return g;
+        }
+        return 1;
     }
 
     /**
@@ -606,6 +659,12 @@ UIScale.HUD_TARGET = 0.7;
 /** Smallest a hint line is ever shown, in CSS px, and the most one grows to get there. */
 UIScale.MIN_HINT = 10;
 UIScale.MAX_HINT_GROWTH = 1.6;
+/**
+ * Smallest any other single line of overlay text is shown, in CSS px (#200: under it the glyphs
+ * break up when the canvas is scaled down), and the most one grows in place to get there.
+ */
+UIScale.MIN_TEXT = 10;
+UIScale.MAX_TEXT_FLOOR_GROWTH = 1.25;
 /** Fewest cells across the view the world zoom will leave. */
 UIScale.MIN_CELLS = 8;
 /** Canvas px the Map overlay keeps clear at the sides of the overworld image, both sides together: full view, cropped view. */

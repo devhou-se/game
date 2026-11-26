@@ -198,4 +198,53 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.ok(scene.indexOf('new RotatePrompt(this)') > scene.indexOf('new UIScale(this)'));
         assert.ok(!/rotatePrompt/.test(fs.readFileSync(path.join(GV2, 'src', 'systems', 'InputHandler.js'), 'utf8')));
     });
+
+    test('a single line of overlay text is never shown under 10 CSS px on a small landscape phone, a hint line as before (#200)', () => {
+        const U = game('UIScale'), g = U.textGrowth;
+        const css = (font, zoom, down, room, hint) => font * zoom * g(font, zoom, down, room, hint) / down;
+        // what the phones measured: the konbini's list (zoom 1.35, 1.21 once a toast has shown), the map
+        // (1.02), the creator (1.41), the dialogue's caption (1.58), at 667x375 (2.56 canvas px per CSS px) and 844x390
+        for (const down of [1280 / 500, 1280 / 520]) {
+            for (const [font, zoom] of [[18, 1.35], [18, 1.21], [20, 1.21], [22, 1.02], [16, 1.41], [16, 1.58]]) {
+                assert.ok(css(font, zoom, down, 3, false) >= U.MIN_TEXT - 1e-9, `${font}px at ${zoom} / ${down}`);
+                assert.ok(g(font, zoom, down, 3, false) <= U.MAX_TEXT_FLOOR_GROWTH);
+            }
+        }
+        // exactly to the floor, no further; nothing at all for text that is big enough, and on a desktop
+        assert.ok(Math.abs(css(18, 1.21, 2.56, 3, false) - 10) < 1e-9);
+        assert.strictEqual(g(24, 1.58, 2.56, 3, false), 1);
+        assert.strictEqual(g(16, 1, 1, 3, false), 1);
+        assert.strictEqual(g(12, 1, 1, 3, true), 1);
+        // body text has neighbours: a quarter at most (a 568x320 phone gets most of the way), and never wider than its panel
+        assert.strictEqual(g(16, 1.41, 3, 3, false), U.MAX_TEXT_FLOOR_GROWTH);
+        assert.strictEqual(g(18, 1.21, 2.56, 1.1, false), 1.1);
+        assert.strictEqual(g(18, 1.21, 2.56, 0.8, false), 1);
+        // a hint line is what it was (#110): to 10 CSS px, up to 1.6x
+        assert.strictEqual(U.MIN_HINT, 10);
+        assert.ok(Math.abs(g(14, 1.41, 2.56, 3, true) - 10 / (14 * 1.41 / 2.56)) < 1e-9);
+        assert.strictEqual(g(14, 1, 3, 3, true), U.MAX_HINT_GROWTH);
+        assert.strictEqual(g(14, 1, 3, 1.2, true), 1.2);
+        // ... and it stops short of the text beside it, which grows too: the shop's "[ buy ]" (right edge at 418) and
+        // "[ buy & use now ]" (170 wide, right edge at 610) are 22px apart, so 1.25 would run them together
+        const row = (grow) => [
+            { box: { x0: 358, y0: 0, x1: 418, y1: 20 }, x: 418, y: 10, grow },
+            { box: { x0: 440, y0: 0, x1: 610, y1: 20 }, x: 610, y: 10, grow },
+        ];
+        const edge = (t, g) => t.x + (t.box.x0 - t.x) * g;
+        for (const [want, most] of [[1.06, 1.06], [1.1, 1.1], [1.18, 1.08], [1.25, 1.1]]) {      // down from what it wants in steps of 0.05
+            const r = row(want), got = U.clearGrowth(r[1], r);
+            assert.ok(got <= want && got >= 1 && edge(r[1], got) >= 418, `${want} -> ${got}`);
+            assert.strictEqual(got, most);
+            assert.strictEqual(U.clearGrowth(r[0], r), most);      // the one beside it comes its way just as far
+        }
+        // nothing beside it: all it wants; a plate it already sits on is not in its way; a neighbour that stays put still counts
+        const lone = { box: { x0: 100, y0: 0, x1: 200, y1: 18 }, x: 150, y: 9, grow: 1.25 };
+        assert.strictEqual(U.clearGrowth(lone, [lone]), 1.25);
+        assert.strictEqual(U.clearGrowth(lone, [lone, { box: { x0: 90, y0: -4, x1: 210, y1: 22 }, x: 150, y: 9, grow: 1 }]), 1.25);
+        assert.strictEqual(U.clearGrowth(lone, [lone, { box: { x0: 204, y0: 0, x1: 260, y1: 18 }, x: 204, y: 9, grow: 1 }]), 1.05);
+        assert.strictEqual(U.clearGrowth(lone, [lone, { box: { x0: 201, y0: 0, x1: 260, y1: 18 }, x: 201, y: 9, grow: 1 }]), 1);
+        // wrapped paragraphs and the cropped portrait view are left alone, and the loop is the one place it is applied
+        const src = fs.readFileSync(path.join(GV2, 'src', 'systems', 'UIScale.js'), 'utf8');
+        assert.ok(/if \(!hint && \(cropped \|\| o\.style\.wordWrapWidth \|\| o\.text\.indexOf\('\\n'\) >= 0\)\) continue;/.test(src));
+    });
 };

@@ -61,7 +61,7 @@ The game always renders 1280x960; everything below is about showing that on anyt
 | small desktop / laptop window | exact fit, centred | none | as authored (never zoomed: all 20 x 15 cells stay in view) | overlays magnified to desktop size or the canvas; HUD >= ~11 CSS px |
 | touchscreen laptop | same as the row above it would get | hidden until the screen is touched, gone again on a key press; when up, translucent over the canvas's bottom corners | same | same; keyboard wording until touched |
 | tablet, 4:3-ish landscape | fills the window | translucent over the bottom corners (0.75x) | as authored | overlays kept clear of the controls |
-| landscape phone | full height | in the side bars (0.8-1x); on phones under 400px tall, 0.6x and partly over the corners | 2x (10 x 7.5 cells) | HUD ~11 CSS px, hint lines >= 10, body text 9-10 on the tallest panels |
+| landscape phone | full height | in the side bars (0.8-1x); on phones under 400px tall, 0.6x and partly over the corners | 2x (10 x 7.5 cells) | HUD ~11 CSS px, hint lines and every other single line of overlay text >= 10 (667x375 and up) |
 | portrait phone / tablet | fills the height above the controls; the window crops its sides (a tall slice, >= 560 canvas px wide) | under the canvas, full size | as authored in the slice (about 9.5 x 15 cells) | HUD ~11, hint lines >= 10; panels wider than the slice shrink to it (the 920px intro lands at ~7 CSS px body text) |
 
 - **Canvas layout — `src/systems/Viewport.js`.** `Viewport.apply(game)` is the only place the canvas
@@ -173,7 +173,17 @@ The game always renders 1280x960; everything below is about showing that on anyt
     hint lines and the panel does not pulse.
   - **Hint lines never go below 10 CSS px** (`UIScale.MIN_HINT`): any overlay Text whose string came
     from `Hints.text` is scaled up in place (to at most 1.6x, and the panel's width) when its panel
-    could not be magnified enough. Body text has no floor — keep it at 18px or more.
+    could not be magnified enough.
+  - **Nor does any other single line of overlay text, on a landscape phone** (`UIScale.MIN_TEXT`, 10 CSS px,
+    #200: under that the glyphs break up when the canvas is scaled down). A Text at overlay depth that is one
+    line (no `\n`, no word wrap) grows in place about its origin, by at most a quarter
+    (`MAX_TEXT_FLOOR_GROWTH`), never wider than its panel (`UIScale.textGrowth`) and never into the text
+    beside it, which grows too (`UIScale.clearGrowth`, steps of 0.05). That is every panel at 667x375 and
+    844x390 — the konbini's effect line and bottom row once a toast has shrunk the panel, the map's member
+    names, the creator's FRONT / BACK, the dialogue's post caption — and most of the way at 568x320. A float
+    that is a Text (the toast) is magnified to the same floor. Not in the cropped portrait view, and not
+    wrapped or multi-line text, which cannot be re-flowed in place: keep paragraphs at 22px or more and
+    single lines at 16px or more, and give a line room to grow about its origin.
   - An overlay that already fills the canvas cannot be magnified; its text can use
     `scene.uiScale.textSize('14px')` instead (the map's labels do — up to 1.6x). The HUD bar shows
     through a dimmer and is taller where it is magnified, so anything such an overlay draws near the
