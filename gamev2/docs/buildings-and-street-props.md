@@ -106,3 +106,32 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
   `triggerCells` are the table cells and the bar still sells). `node tools/play.js lint` (tools/world-model.js) enforces it per room, and `play.js check` across ALL
   rooms and reports an ERROR `rubbish-bin` for any placed tile whose key or tile name is a bin / dumpster / trash
   can (`BIN_RE`), whatever `--room` was asked for. Do not extract the bins / dumpsters in the asset packs.
+
+### Neon and lit fronts at night: glow spots (issue #219)
+
+`DayNight.buildGlows` lights a CELL: every tile whose key matches `lamp-post` or `-lanterns` gets one warm halo.
+A neon board or a shop window is part of a sprite many cells big, so it is declared per sprite instead, as **glow
+spots** (`src/utils/Glows.js`), and every placed copy of that sprite gets them - at night only, in any room that is
+graded at night.
+
+- **A spot** is `{ x, y, r, ry, color, a, pulse, flicker }`: `x`, `y` the centre in cells from the sprite's top-left
+  corner (so `2.5` is half way across the third cell, whatever the art's scale), `r` the radius in cells across and
+  `ry` down (default `r`), `color` `0xRRGGBB` (default the lamps' `0xffb366`), `a` the strength 0..1, `pulse`
+  `{ period, depth }` a slow swell down to `1 - depth` and back, `flicker: true` a neon tube that sags to 55% for a
+  tenth of a second about one time in sixteen. Keep a radius under 2.5 cells (the halo cull's margin is four).
+- **Where they come from**: the sprite's `glow` list in `config.json` `spriteMetadata` if it has one (an empty list
+  turns the sprite off), else its row in `Glows.SPRITES`. The table exists because Sapporo's art landed before its
+  sprites were registered; a row can be moved into `spriteMetadata` as it is. It holds `susukino-neon-corner`,
+  `susukino-karaoke`, `susukino-ramen-gate`, `tanukikoji-gate`, `sapporo-station-front`, `sapporo-konbini` and the
+  two `snowfest-stall-*` (pink / cyan / yellow / green boards, warm windows, the cool white of the station's clock
+  and name board). `susukino-neon-lanterns` and `ramen-alley-lanterns` are lanterns by name and are lit by the
+  lamp rule, so they are not in it. **None of these is placed yet**, so nothing in today's world changes. A unit
+  test (`tools/tests/glows-trams.test.js`) holds every glowing sprite, in the table or in `spriteMetadata`, to
+  having art, spots on it and radii the cull allows; registering or placing one needs no change to it.
+- **Cost**: each spot is one Image of a single shared 96px halo texture (`glow-halo`, made the first time a room
+  needs it), tinted, stretched and blended ADD at depth 955 with the lamps' halos - one quad, where a lamp's
+  Graphics halo is re-tessellated every frame. They are in `dayNight.glows` and are hidden off camera by the same
+  `cullGlows`, which also re-lights the pulsing / flickering ones in view (`Glows.level`, a pure function of time).
+- **To light a new sprite**: look at its art on a 64px grid, add a row (or a `glow` list), and check it at
+  `?tod=night`. A light that is one cell big and stands alone is better named `*-lanterns` / `*lamp-post*`.
+

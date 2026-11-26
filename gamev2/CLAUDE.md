@@ -115,9 +115,9 @@ be found here.
 | `blog-pipeline.md` | Where blog NPCs may be put, The blog rehearsal, Re-homing a placement | any `blog_to_npc.py` change or pipeline bug (also `trips-and-dates.md`, and the caption / author / voice parts in the three files above) |
 | `shop-and-economy.md` | Shop, Food and Drink: wallet, konbini counters, vending machines, Don Takote, items, icons, effects, fishing catches, selling, save blob, nomikai stake | shops, items, money, fishing, the drinking game |
 | `trains-and-stations.md` | Stations and the departures board, adding a station | rideable trains, `config.stations`, `generate_stations.py` |
-| `ambient-traffic.md` | Ambient Traffic: passing trains, boats, `waterways` | decorative movers, canals / moats, track tiles |
+| `ambient-traffic.md` | Ambient Traffic: passing trains, boats, `waterways`, Streetcars (`tramways`) | decorative movers, canals / moats, track tiles, tram lines |
 | `landmarks-and-towns.md` | Featured locations / landmarks, Osaka, adding a landmark, Hokkaido (Sapporo, Asahikawa, snow, konbini interiors per host, build order), House interiors, Tower lobbies | adding a landmark, a town, a konbini or discount store to a town, opening a town's houses |
-| `buildings-and-street-props.md` | Generic city buildings (high-rises, discount store, machiya), Street accessories (traffic lights, crossings, kerbside props, Osaka's roads, no bins) | placing buildings or street furniture; `TrafficLights.js` |
+| `buildings-and-street-props.md` | Generic city buildings (high-rises, discount store, machiya), Street accessories (traffic lights, crossings, kerbside props, Osaka's roads, no bins), Neon and lit fronts at night (`Glows.js`) | placing buildings or street furniture; `TrafficLights.js`; making a sprite glow at night |
 | `generators-and-checks.md` | `check_generators.py`, Generated rooms stay regenerable, the world map (`make_worldmap.py`), Asset Generation | editing a generated room, a generator, an art tool, or the world map |
 | `tools-play-test-studio.md` | `tools/play.js`, `tools/test_game.js`, Studio, Visual Editor | using or changing the terminal tools, `world-model.js`, `/studio/`, `/editor/` |
 

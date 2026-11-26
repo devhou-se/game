@@ -856,6 +856,9 @@ class RoomManager {
         // ...and the ambient boats on its waterways
         if (this.scene.ambientBoats) this.scene.ambientBoats.onRoomChange(newRoom);
 
+        // ...and the streetcars on its tramways
+        if (this.scene.ambientTrams) this.scene.ambientTrams.onRoomChange(newRoom);
+
         // Re-grade day/night for the new room (interiors are never graded)
         if (this.scene.dayNight) this.scene.dayNight.onRoomChange();
     }

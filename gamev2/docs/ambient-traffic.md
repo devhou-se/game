@@ -1,6 +1,7 @@
-# Ambient traffic: passing trains and boats
+# Ambient traffic: passing trains, boats and streetcars
 
-The decorative trains and moat / canal boats (`src/AmbientTrains.js`, `src/AmbientBoats.js`) and the `waterways` data.
+The decorative trains and moat / canal boats (`src/AmbientTrains.js`, `src/AmbientBoats.js`) and the `waterways` data;
+the streetcar on a room's `tramways` (`src/AmbientTrams.js`).
 
 A "see X" in the text names a section; if it is not in this file, the index in [`../CLAUDE.md`](../CLAUDE.md) says which file has it.
 
@@ -91,3 +92,47 @@ their route in the room's map data rather than in coordinates, have no collision
   is replaced by one that does). To make new water navigable, declare it in the room's `waterways` (above)
   from its generator; `AmbientBoats.WATER_TILE` is only for self-describing straight channel tiles like
   the moat. An ordinary pond is not a waterway.
+
+### Streetcars: a room's `tramways` (issue #219)
+
+`AmbientTrains` only runs station liveries on `train-track*` rows. A tram in a street is declared instead, in the
+room's config, and **no room declares one yet**: with no `tramways` nothing is built, nothing runs and nothing is
+drawn. A unit test (`tools/tests/glows-trams.test.js`) holds every declared row to what can run: a line
+`AmbientTrams.line` accepts, inside its room, with cars that are in `spriteMetadata` (so they are loaded).
+
+```json
+"tramways": [{ "row": 21, "from": 4, "to": 55, "sprite": "sapporo-streetcar_0_0",
+               "speed": 160, "headway": 30, "stops": [14, { "x": 38, "dwell": 6 }], "dwell": 4 }]
+```
+
+- **`row`** is the rail row, in the room's own cells: the car's wheels stand on it (its art is drawn up from the
+  bottom of that row, like a train on its track bed, so a 5x3 streetcar covers the two rows above too).
+  **`from` / `to`** are the first and last rail cell; left out, they are the row's `tram-rail-h` / `tram-rail-cross`
+  tiles (`AmbientTrams.RAIL`), so painting the rails is enough. Only a horizontal line exists: the car is side-on art.
+- **`sprite`** is a loaded sprite key (it must be in `spriteMetadata` to be loaded; a line whose art is missing
+  waits and tries again), or a list of keys taken in turn, one per trip. `speed` is px a second (default 160, 2.5
+  cells), `headway` the seconds between one car finishing and the next setting off (30), `stops` the cells it
+  stops at - the car's middle over the middle of the cell - each for `dwell` seconds (4) or its own.
+- **One car is on a line at a time.** It runs west to east, waits `headway`, and the next runs east to west,
+  mirrored (`flipX`; the art heads east). An end on the room's edge is open - the car comes in from off the map
+  and leaves the same way; any other end is a terminus, where it fades in / out standing on the last of the rails
+  (as the Palace train does at the end of its track). It pulls away from and draws up to a stop or a terminus.
+- **It is decoration, like a passing train**: it adds nothing to collision, never waits for anyone, and the player
+  can stand in it. Its depth is `(row + 1) * 10 + 4` (`AmbientTrams.depthAt`) - with whatever stands on the rail
+  row and one under a character there, so a player on the rails is drawn over the car as it passes through them,
+  and one on the row behind is hidden by it. That is the passing train's level-crossing rule without its cap of
+  48: a tram is in the street and sorts like anything else on it. Being in the world, it is under the day/night
+  grade and darkens at night with the street; it carries no light of its own.
+- **The timetable is a pure function of time**: `AmbientTrams.line(def, layers, offset, cols)` normalises a
+  declaration (and moves it to its district's place in a stitched city), `AmbientTrams.plan(line, opts)` lays out
+  one trip as legs, `AmbientTrams.at(plan, ms)` says where the car is. `GameScene.update` advances it; the car is
+  hidden whenever the camera cannot see it, so off screen only that arithmetic runs, and it still arrives on time.
+- **Testing**: `game.scene.keys.GameScene.ambientTrams.cross(index, dir)` sends a car now (`dir` 1 east, -1 west).
+  Unit tests: `tools/tests/glows-trams.test.js`.
+- **Could it run San Franbourne's cable car and tram?** Yes, as one line: `{ "row": <the rail row of the tram
+  street>, "from", "to", "sprite": ["sfb-cable-car_0_0", "sfb-tram_0_0"] }` - explicit cells, because those rails
+  are part of the street's own tiles, and a terminus at each end, because the street is closed at both. They must
+  be ONE line taking turns: two lines on one row know nothing of each other and would drive through one another.
+  It is not wired: today both are standing `Collidables` with solid cells, and running them means the map taking
+  them (and their colliders) off the street.
+

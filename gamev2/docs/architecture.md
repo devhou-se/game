@@ -17,6 +17,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/systems/UIScale.js` - World zoom, HUD magnification and overlay fitting for small, cropped or touch-covered canvases (see Small Viewports and Touch)
 - `src/systems/LandmarkView.js` - The camera looks up in front of a landmark marked in config `game.lookUp` (see Small Viewports and Touch)
 - `src/utils/Hints.js` - The one helper that words key hints for keyboard or touch (see Small Viewports and Touch)
+- `src/utils/Glows.js` - Glow spots a placed sprite lights at night: neon boards, lit fronts (see Neon and lit fronts at night)
 - `src/utils/JapaneseFont.js` + `fonts/` - The pixel fonts, and the Japanese face added to each of them (see Fonts and Japanese Text)
 - `src/AirTravel.js` - The flights between the two airports (issue #218): who can fly where, the cabin cutscene and its skip rule (see Airports and flights in `trains-and-stations.md`)
 - `src/utils/Places.js` - The towns as real places in Japan for the Map overlay: config `places`, which town a room is in, who is where, label layout (see The Map overlay in `hud-input-touch.md`)
@@ -43,6 +44,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `assets/portraits/` - Optional hand-drawn character portraits (`manifest.json` + `<name>.png`, see its README)
 - `src/Voice.js` - Spoken NPC dialogue (lazy per-line audio clips) and the shared mute setting
 - `src/AmbientTrains.js` / `src/AmbientBoats.js` - Decorative passing trains and moat boats (see Ambient Traffic)
+- `src/AmbientTrams.js` - A streetcar on a room's declared `tramways` (see Ambient Traffic; no room declares one yet)
 - `src/TrafficLights.js` - Decorative traffic-signal cycle (see Street accessories)
 - `editor/` - Canvas editor for `config.json` room data (see `editor/README.md`)
 - `studio/` - Read-only view of the whole world (see Studio in `tools-play-test-studio.md`)

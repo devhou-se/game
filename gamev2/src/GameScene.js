@@ -268,6 +268,7 @@ class GameScene extends Phaser.Scene {
             this.airTravel = new AirTravel(this);
             this.ambientTrains = new AmbientTrains(this);
             this.ambientBoats = new AmbientBoats(this);
+            this.ambientTrams = new AmbientTrams(this);   // a room's `tramways` (none declared: nothing runs)
             this.trafficLights = new TrafficLights(this);   // decorative signal cycle
             this.dialogueManager = new DialogueManager(this);
             this.shop = new Shop(this);
@@ -1177,6 +1178,7 @@ class GameScene extends Phaser.Scene {
         // a stitched city only keeps the tile sprites near the camera
         this.roomManager.updateStreaming();
         if (this.dayNight) this.dayNight.cullGlows();   // ...and the lamp halos
+        if (this.ambientTrams) this.ambientTrams.update(this.game.loop.delta);
         this.npcManager.updateLabels();
         if (this.playerNameLabel && this.player) {
             this.playerNameLabel.setPosition(

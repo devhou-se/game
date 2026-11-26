@@ -4,7 +4,9 @@
  * Time of day follows the real clock in Tokyo (JST, UTC+9) with four periods:
  * Dawn 5-7, Day 7-19, Dusk 19-21, Night 21-5. Day renders untouched; dawn and
  * dusk get a warm colour grade; night gets a dark blue grade plus warm glow
- * halos on every lamp post / lantern already placed in the room's Tiled map.
+ * halos on every lamp post / lantern already placed in the room's Tiled map,
+ * and the glow spots a placed sprite declares (src/utils/Glows.js: neon
+ * boards, lit shop fronts).
  *
  * The grade is a camera-fixed MULTIPLY rectangle at depth 950 — above the
  * whole world and its labels (<= 900), below the HUD (1000) and the train-ride
@@ -101,7 +103,35 @@ class DayNight {
             g.setDepth(955);   // over the night grade, under the HUD
             this.glows.push(g);
         }
+        this.buildSpriteGlows();
         this.cullGlows();
+    }
+
+    /**
+     * The glow spots of the placed sprites that declare some (Glows: a neon
+     * board, a lit shop front), each a tinted copy of one halo texture. A room
+     * with no such sprite gets nothing, and not even the texture is made.
+     */
+    buildSpriteGlows() {
+        const scene = this.scene, GS = scene.GRID_SIZE;
+        if (typeof Glows === 'undefined') return;
+        const meta = (scene.config && scene.config.spriteMetadata) || {};
+        const byKey = new Map();
+        for (const rec of (scene.roomManager.tileRecords || [])) {
+            let spots = byKey.get(rec.key);
+            if (spots === undefined) byKey.set(rec.key, spots = Glows.spotsFor(rec.key, meta[rec.key]));
+            if (!spots.length) continue;
+            for (const halo of Glows.place(rec.left, rec.top, GS * ((rec.config && rec.config.scale) || 1), spots)) {
+                const img = scene.add.image(halo.x, halo.y, Glows.texture(scene));
+                img.setDisplaySize(halo.rx * 2, halo.ry * 2);
+                img.setTint(halo.color);
+                img.setAlpha(halo.alpha);
+                img.setBlendMode(Phaser.BlendModes.ADD);
+                img.setDepth(955);
+                if (Glows.animated(halo)) img.halo = halo;
+                this.glows.push(img);
+            }
+        }
     }
 
     /**
@@ -114,8 +144,11 @@ class DayNight {
         const cam = this.scene.cameras.main, pad = this.scene.GRID_SIZE * 4;
         const hw = cam.width / 2 / cam.zoom + pad, hh = cam.height / 2 / cam.zoom + pad;
         const cx = cam.scrollX + cam.width / 2, cy = cam.scrollY + cam.height / 2;
+        const now = this.scene.time.now;
         for (const g of this.glows) {
             g.setVisible(Math.abs(g.x - cx) < hw && Math.abs(g.y - cy) < hh);
+            // a pulsing or flickering sprite glow (Glows) is re-lit while it is in view
+            if (g.halo && g.visible) g.setAlpha(g.halo.alpha * Glows.level(g.halo, now));
         }
     }
 
