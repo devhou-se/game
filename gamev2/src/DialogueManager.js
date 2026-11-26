@@ -24,6 +24,12 @@ class DialogueManager {
      * without them the top of a Japanese first line is cut off.
      */
     static TEXT_PAD_TOP = 4;
+    /**
+     * A blank row below the last line: full-width brackets (」 』 】 ）) reach a
+     * row under the Latin font's descent. Layout does not count it
+     * (linesHeight), so the lines per page are what they were without it.
+     */
+    static TEXT_PAD_BOTTOM = 1;
 
     /**
      * Characters with no spaces between words (Japanese/Chinese: kana, han,
@@ -290,7 +296,7 @@ class DialogueManager {
                 fontSize: `${DialogueManager.TEXT_FONT.size}px`,
                 fill: '#ffffff',
                 fontFamily: DialogueManager.TEXT_FONT.family,
-                padding: { top: DialogueManager.TEXT_PAD_TOP, bottom: 0 }
+                padding: { top: DialogueManager.TEXT_PAD_TOP, bottom: DialogueManager.TEXT_PAD_BOTTOM }
             }
         );
         this.dialogueText.setResolution(1);
@@ -605,7 +611,7 @@ class DialogueManager {
             this.dialogueText.setLineSpacing(0);
             const one = this.dialogueText.setText('A').height;
             this.lineHeight = this.dialogueText.setText('A\nA').height - one;
-            this.lineBase = one - this.lineHeight;
+            this.lineBase = one - this.lineHeight - DialogueManager.TEXT_PAD_BOTTOM;
         }
         return this.lineBase + n * this.lineHeight + (n - 1) * lineSpacing;
     }

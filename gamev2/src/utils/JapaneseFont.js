@@ -4,31 +4,33 @@
  * The game's pixel fonts (PressStart2P, PixelOperatorMono, PixelOperatorMonoBold)
  * have no kana or kanji, so Japanese — blog-derived dialogue, post captions,
  * anything a future post brings — used to fall back to whatever smooth
- * system font the device had. DotGothic16 (fonts/DotGothic16-Regular.ttf, SIL
- * OFL — see fonts/README.md) is a 16px-bitmap-style gothic with the full JIS
- * kana + kanji set.
+ * system font the device had. PixelMplus12 (fonts/PixelMplus12-Grid.ttf, M+
+ * FONT LICENSE — see fonts/README.md) is the M+ 12px bitmap gothic as
+ * outlines, with every JIS level 1 and level 2 kanji. It is drawn on a 12px
+ * grid, so it is pixel-exact at 12px and at the dialogue's 24px (#153); the
+ * file is the original moved onto an exact grid by tools/regrid_pixelmplus.py.
  *
  * It is registered as a second face of each of those three families,
  * limited by `unicode-range` to the Japanese blocks. The browser then picks
  * it per character, so every existing `fontFamily: 'PixelOperatorMono'`
  * (Phaser text, canvas measuring, the creator's DOM input) gets Japanese
  * glyphs with no change at the call site, Latin text keeps its own font and
- * metrics, and a character DotGothic16 lacks still falls back to the system
+ * metrics, and a character PixelMplus12 lacks still falls back to the system
  * font as before.
  *
- * The file is 2 MB, so it is not in the boot queue: GameScene starts the
+ * The file is 1.3 MB, so it is not in the boot queue: GameScene starts the
  * download once the loader has finished, it is fetched once (one buffer
  * shared by the three faces), and any text already on screen with Japanese
  * in it is redrawn when the font arrives.
  */
 class JapaneseFont {
-    static URL = 'fonts/DotGothic16-Regular.ttf';
+    static URL = 'fonts/PixelMplus12-Grid.ttf';
 
     /** Every font family the game draws text with (GameScene.preload loads them). */
     static FAMILIES = ['PressStart2P', 'PixelOperatorMono', 'PixelOperatorMonoBold'];
 
     /**
-     * The blocks DotGothic16 takes over: CJK radicals, CJK punctuation +
+     * The blocks PixelMplus12 takes over: CJK radicals, CJK punctuation +
      * hiragana + katakana, han (extension A, unified, compatibility) and
      * the full-width / half-width forms. Latin, arrows and symbols stay
      * with the Latin fonts and their existing fallbacks.
@@ -54,12 +56,14 @@ class JapaneseFont {
     /**
      * Blank rows a Text of this font size needs above and below a line with
      * Japanese in it. Phaser sizes the canvas from the Latin font's ascent
-     * and descent; DotGothic16 stands about a tenth of an em taller (2.4px
-     * at 24px) and, in PressStart2P, hangs as far below a box that has no
-     * descent — so an eighth of an em, rounded up to whole pixels.
+     * and descent; PixelMplus12's cell is 11 of its 12 rows above the
+     * baseline and 2 below. That is two rows (4px at 24px) over the 3/4 em
+     * ascent of the PixelOperator faces and, in PressStart2P, two rows
+     * below a box that has no descent — so a sixth of an em, rounded up to
+     * whole pixels.
      */
     static padRows(fontSize) {
-        return Math.ceil(parseFloat(fontSize) / 8);
+        return Math.ceil(parseFloat(fontSize) / 6);
     }
 
     /**
@@ -69,8 +73,9 @@ class JapaneseFont {
      * Latin text is drawn exactly as before. The padding is the same on both
      * sides, so a Text anchored at its vertical centre does not move. A Text
      * anchored at its bottom edge in a PixelOperator face (whose descent
-     * already holds the Japanese glyphs) passes `{ below: false }` to pad the
-     * top only, so its baseline stays where a Latin line has it. Call it
+     * holds the Japanese glyphs, all but the lowest row of a full-width
+     * bracket) passes `{ below: false }` to pad the top only, so its
+     * baseline stays where a Latin line has it. Call it
      * after the text is set, and again after a setText() that may change the
      * answer. A Text that already has vertical padding (name plate, toasts)
      * or handles this itself (the dialogue text) does not need it.
