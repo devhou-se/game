@@ -61,7 +61,7 @@ function install() {
         frames: 0, lag: null,
         arm: () => { T.lag = { key: null, open: null }; },
         lagFrames: () => (T.lag && T.lag.key !== null && T.lag.open !== null ? T.lag.open - T.lag.key : null),
-        roomName: (key) => (s.config.rooms[key] && s.config.rooms[key].name) || key,
+        roomName: (key) => hudName((s.config.rooms[key] && s.config.rooms[key].name) || key),   // as the HUD bar writes it
         hud: () => ({ room: s.hudText.text, date: s.hudDateText.text, money: s.hudMoneyText.text,
             oneRow: s.hudDateText.y === s.hudText.y, shown: s.hudText.visible && s.hudDateText.visible && s.menuButton.visible }),
         overlays: () => {
@@ -918,7 +918,7 @@ async function trips(shared) {
             });
             need(st.lead && st.date === before && st.today === before, { notALeadInDay: st, before });
             need(st.lead.trip === trip.id && st.lead.days >= 1, { lead: st.lead });
-            need(st.hud.date.includes(st.lead.name) && st.labels.some(l => st.hud.date.includes(`${st.lead.name} ${l} · `)), { hudDoesNotCountDown: st.hud.date, want: st.labels });
+            need(st.hud.date.includes(st.lead.name) && st.labels.some(l => st.hud.date.includes(`${st.lead.name} ${l} | `)) && !st.hud.date.includes('·'), { hudDoesNotCountDown: st.hud.date, want: st.labels });
             const expected = st.groups.filter(g => g[0] === st.base).reduce((n, g) => n + g[1], 0);
             need(st.inBase.length === expected && st.inBase.length < st.members, { castAtTheBaseBeforeTheTrip: st.inBase, data: st.groups });
             // nobody has posted from the road: the player waits at the base the trip will arrive at

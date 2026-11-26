@@ -545,7 +545,7 @@ class GameScene extends Phaser.Scene {
      * the date and wallet to a second row.
      * The date is the bare date, on a trip's own days too (issue #163: the
      * trip's name is never in the bar). Only a lead-in day's countdown
-     * ("devhouse 3 in 8 days · February 10 2027", Trips.dateLabel) leads it,
+     * ("devhouse 3 in 8 days | February 10 2027", Trips.dateLabel) leads it,
      * as long a form of it as still ends two paddings clear of the menu
      * button, or as the second row has room for.
      * `hudWidth` / `hudBarHeight` are the bar's size in HUD coordinates, for
@@ -577,9 +577,9 @@ class GameScene extends Phaser.Scene {
         // a magnified bar on a landscape phone is too narrow for a long room name (a
         // konbini, a station) and 60px of two rows is a lot of a 390px screen (issue
         // #202): there the row is kept by abbreviating instead — the month ("Nov 11
-        // 2025"), then the name to its first part ("7-Eleven · Park 1" -> "7-Eleven"),
+        // 2025"), then the name to its first part ("7-Eleven | Park 1" -> "7-Eleven"),
         // then the date's year. A portrait slice has the height and keeps its two rows.
-        const brief = room.split(' · ')[0], whole = this.cameras.main.width >= this.scale.width;
+        const brief = room.split(' | ')[0], whole = this.cameras.main.width >= this.scale.width;
         const compact = () => whole && [[room, true], [brief, true], [room, false], [brief, false]]
             .some(([name, year]) => fits(`${name} | `, shortGameDate(gameDate(), year), pad));
         let rows = 1;
@@ -616,14 +616,15 @@ class GameScene extends Phaser.Scene {
 
     /**
      * What the HUD calls the room the player is in: its display `name` from
-     * config ("7-Eleven · Sapporo", "Sapporo Station"), never the bare room
+     * config ("Sapporo Station"; "7-Eleven · Sapporo" reads "7-Eleven | Sapporo",
+     * every separator on the bar is a pipe, hudName), never the bare room
      * key unless the room has no name. Inside a stitched city that is the
      * district underfoot (`hudDistrict`; update() re-asks when it changes).
      */
     hudRoomName() {
         const key = this.hudDistrict = this.roomManager.currentDistrict();
         const room = this.config.rooms[key];
-        return (room && room.name) || key;
+        return hudName((room && room.name) || key);
     }
 
     /**

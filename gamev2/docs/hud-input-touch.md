@@ -13,6 +13,10 @@ Semi-transparent bar at top showing: `{game.title} | {room name} | {game.date}` 
   only where a host has several stores: `7-Eleven · Market 3`), `Don Takote · Osaka`
   (`generate_discount_stores.py` `store_name()`), `Sapporo Station` (`generate_stations.py`
   `station_name()`). Nothing reads `room.name` as an identifier - room keys are the identifiers.
+- Every separator on the bar is ` | ` (issue #207): a name's own ` · ` is written as one (`hudName()` in
+  `NpcStates.js`, called by `hudRoomName()`), so `7-Eleven · Park 1` reads `7-Eleven | Park 1` on the bar, and
+  the lead-in countdown is `devhouse 3 in 8d | February 10 2027` (`Trips.dateLabel`). The stored name keeps
+  its dot everywhere else (the Map, the shop panel, the generators).
 - Inside the stitched city the "room" is the district underfoot (`roomManager.currentDistrict()`, kept in
   `hudDistrict`), so the segment changes as you cross from one district into the next
 - Title and date loaded from `config.json`
@@ -126,7 +130,7 @@ The game always renders 1280x960; everything below is about showing that on anyt
     `hudScale()` (towards 0.7x on screen). That leaves the bar less width, so `GameScene.layoutHUD()`
     lays it out for `cameras.main.width / hudZoom`: it drops the game's title, then — on a
     landscape phone, where the whole canvas is across the view and two rows are a lot of the height —
-    abbreviates (`Nov 11 2025`, `shortGameDate`; then the room's name to its first part, `7-Eleven · Park 1`
+    abbreviates (`Nov 11 2025`, `shortGameDate`; then the room's name to its first part, `7-Eleven | Park 1`
     -> `7-Eleven`; then the date's year), and only then wraps date and wallet onto a second row. `scene.hudWidth` / `scene.hudBarHeight` are the bar's size in HUD
     coordinates (the shop's effect chips hang off them); scene event `'hudscalechange'` says when to
     lay out again. Anything new on the HUD goes at depth 1000-1999, scroll factor 0. The date,

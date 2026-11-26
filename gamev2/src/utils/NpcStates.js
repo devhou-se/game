@@ -200,6 +200,16 @@ function shortGameDate(iso, year = true) {
 }
 
 /**
+ * A display name as the HUD bar writes it: the bar's one separator is " | "
+ * (issue #207), so a name's own " · " ("7-Eleven · Park 1", "Don Takote · Osaka")
+ * becomes one. Only the bar: the name in config, on the Map, the shop panel
+ * and the departures board keeps its dot.
+ */
+function hudName(name) {
+    return String(name).split(' · ').join(' | ');
+}
+
+/**
  * Navigate to the given game date. The date a clean URL already gives
  * (defaultGameDate) drops the param; any other date — including today's real
  * date once the trip is over — is an explicit choice and goes in ?date=.
@@ -226,5 +236,6 @@ if (typeof window !== 'undefined') {
     window.contentChangeDates = contentChangeDates;
     window.formatGameDate = formatGameDate;
     window.shortGameDate = shortGameDate;
+    window.hudName = hudName;
     window.setGameDate = setGameDate;
 }

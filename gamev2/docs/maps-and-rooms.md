@@ -30,7 +30,7 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
     The HUD shows that date bare (`February 20 2027`, `Trips.dateLabel`), on a trip's own days too: the
     trip's name is never in the bar (issue #163 — it used to lead the date where the row had room, so it
     came and went between rooms; Time Travel says which trip a day belongs to). The one thing that leads
-    the date is the lead-in countdown (`devhouse 3 in 8 days · February 10 2027`, issue #164, see Trips
+    the date is the lead-in countdown (`devhouse 3 in 8 days | February 10 2027`, issue #164, see Trips
     and Dates), and only when the line still ends two `HUD_PADDING`s short of the `menu` button with
     it: `GameScene.layoutHUD()` measures title | room | date | wallet with the HUD's own text objects and
     shortens, then drops, the countdown where it does not fit (the konbini, the Don Takotes,

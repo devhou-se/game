@@ -509,9 +509,10 @@ class Trips {
      * days too — the HUD never names the trip an ordinary day belongs to
      * (issue #163: it used to lead the date where the row had room, so it
      * came and went from room to room). The one exception is a lead-in day,
-     * "devhouse 3 in 8 days · February 10 2027" (issue #164: the reason the
-     * base is empty — "devhouse 3 in 8d · …", then "devhouse 3 soon · …",
-     * where the count does not fit). `format` is formatGameDate.
+     * "devhouse 3 in 8 days | February 10 2027" (issue #164: the reason the
+     * base is empty — "devhouse 3 in 8d | …", then "devhouse 3 soon | …",
+     * where the count does not fit; the bar's separator is " | " throughout,
+     * issue #207). `format` is formatGameDate.
      *
      * `fits(label)`, when given, says whether a label has room in the HUD:
      * the countdown is shortened and then dropped when it does not, so the
@@ -524,7 +525,7 @@ class Trips {
         if (!lead) return bare;
         // the count, then shorter ways to say it, then nothing
         return [Trips.inDays(lead.days), `in ${lead.days}d`, 'soon']
-            .map(when => `${lead.trip.name} ${when} · ${bare}`)
+            .map(when => `${lead.trip.name} ${when} | ${bare}`)
             .find(label => !fits || fits(label)) || bare;
     }
 

@@ -138,18 +138,18 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
         assert.strictEqual(T.upcoming(trips, '2027-02-18'), null);
         assert.strictEqual(T.upcoming(trips, '2026-11-25'), null);
         // the HUD: a countdown, "soon" where the count does not fit, the bare date where nothing does
-        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt), 'devhouse 3 in 8 days · February 10 2027');
-        assert.strictEqual(T.dateLabel(trips, '2027-02-17', fmt), 'devhouse 3 tomorrow · February 17 2027');
-        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, (l) => !/in 8 days/.test(l)), 'devhouse 3 in 8d · February 10 2027');
-        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, (l) => !/in 8/.test(l)), 'devhouse 3 soon · February 10 2027');
-        assert.strictEqual(T.dateLabel(trips, '2027-02-17', fmt, (l) => !/tomorrow/.test(l)), 'devhouse 3 in 1d · February 17 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt), 'devhouse 3 in 8 days | February 10 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-17', fmt), 'devhouse 3 tomorrow | February 17 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, (l) => !/in 8 days/.test(l)), 'devhouse 3 in 8d | February 10 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, (l) => !/in 8/.test(l)), 'devhouse 3 soon | February 10 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-17', fmt, (l) => !/tomorrow/.test(l)), 'devhouse 3 in 1d | February 17 2027');
         assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, () => false), 'February 10 2027');
         // in Sapporo with the starting wallet (16px a character, see the HUD test below) the short count is what fits
         const inSapporo = (label) => 10 + 16 * `${config.game.title} | Sapporo | ${label} | ¥5,000`.length <= 1280 - 10 - 64 - 20;
-        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, inSapporo), 'devhouse 3 in 8d · February 10 2027');
-        assert.strictEqual(T.dateLabel(trips, '2027-02-04', fmt, inSapporo), 'devhouse 3 in 14d · February 4 2027');
-        assert.strictEqual(T.dateLabel(trips, '2027-01-19', fmt), 'devhouse 3 in 30 days · January 19 2027');
-        assert.strictEqual(T.dateLabel(trips, '2027-01-19', fmt, inSapporo), 'devhouse 3 in 30d · January 19 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-10', fmt, inSapporo), 'devhouse 3 in 8d | February 10 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-02-04', fmt, inSapporo), 'devhouse 3 in 14d | February 4 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-01-19', fmt), 'devhouse 3 in 30 days | January 19 2027');
+        assert.strictEqual(T.dateLabel(trips, '2027-01-19', fmt, inSapporo), 'devhouse 3 in 30d | January 19 2027');
         assert.strictEqual(T.dateLabel(trips, '2027-01-18', fmt), 'January 18 2027');
         assert.strictEqual(T.dateLabel(trips, '2027-03-01', fmt), 'March 1 2027');
         // nobody is anywhere, so everyone starts at the base the group will arrive at

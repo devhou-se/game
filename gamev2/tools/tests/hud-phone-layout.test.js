@@ -14,7 +14,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
                     assert.ok(fits(label), `${def.name} on ${iso} with ${money}: "${label}" ends at ${right(def.name, label, money)}`);
                     assert.ok(label.endsWith(fmt(iso)));
                     if (T.leadIn(trips, iso)) {
-                        assert.ok(label === fmt(iso) || /^devhouse 3 (in 30 days|in 30d|in 14 days|in 14d|tomorrow|in 1d|soon) · /.test(label), label);
+                        assert.ok(label === fmt(iso) || /^devhouse 3 (in 30 days|in 30d|in 14 days|in 14d|tomorrow|in 1d|soon) \| /.test(label), label);
                         (label === fmt(iso) ? uncounted++ : counted++);
                     } else {
                         // a trip's own day reads like any other: the same in a short-named room and a long-named one
@@ -104,9 +104,33 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.strictEqual(short('2026-05-31'), 'May 31 2026');
         // tried in order before the bar wraps, and only where the whole canvas is across the view
         const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
-        assert.ok(src.includes("const brief = room.split(' · ')[0], whole = this.cameras.main.width >= this.scale.width;"));
+        assert.ok(src.includes("const brief = room.split(' | ')[0], whole = this.cameras.main.width >= this.scale.width;"));
         assert.ok(src.includes('whole && [[room, true], [brief, true], [room, false], [brief, false]]'));
         assert.ok(src.includes('if (!row(long) && !full && !row(short) && !compact()) {'));
+    });
+
+    test('every separator on the HUD bar is a pipe (#207)', () => {
+        const config = realConfig(), T = game('Trips'), trips = T.of(config), fmt = game('formatGameDate'), hudName = game('hudName');
+        assert.strictEqual(hudName('7-Eleven · Park 1'), '7-Eleven | Park 1');
+        assert.strictEqual(hudName('Don Takote · Osaka'), 'Don Takote | Osaka');
+        assert.strictEqual(hudName('Sapporo Station'), 'Sapporo Station');
+        assert.strictEqual(hudName('a · b · c'), 'a | b | c');
+        // every room's name as the bar writes it, and every form of the countdown
+        const dotted = Object.values(config.rooms).filter((r) => r.name && r.name.includes('·'));
+        assert.ok(dotted.length >= 10, 'the konbinis and Don Takotes keep their dotted names in config');
+        for (const [key, def] of Object.entries(config.rooms)) assert.ok(!hudName(def.name || key).includes('·'), key);
+        for (const fits of [undefined, (l) => !/days|tomorrow/.test(l), (l) => !/in \d/.test(l) && !/tomorrow/.test(l)]) {
+            for (const iso of ['2027-01-19', '2027-02-04', '2027-02-10', '2027-02-17']) {
+                const label = T.dateLabel(trips, iso, fmt, fits);
+                assert.ok(/^devhouse 3 .+ \| /.test(label) && !label.includes('·'), label);
+            }
+        }
+        // the bar is composed with pipes only: the name through hudName, the abbreviation cut at the first pipe
+        const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(src.includes('return hudName((room && room.name) || key);'));
+        assert.ok(src.includes('const long = `${this.config.game.title} | ${room} | `, short = `${room} | `;'));
+        assert.ok(src.includes('this.hudMoneyText.setText(` | ${this.shop.fmt(this.shop.money)}`);'));
+        assert.strictEqual('7-Eleven | Park 1'.split(' | ')[0], '7-Eleven');
     });
 
     test('the rotate prompt is for a portrait phone, once per turn into portrait, twice a session (#111, #199)', () => {
