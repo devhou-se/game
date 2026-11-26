@@ -48,7 +48,9 @@ the day a later visitor opens on (unless it is all the trip has). `blog_to_npc.p
 has arrived, and an empty base with no explanation read as a bug. On a lead-in day
 - the HUD counts down — `devhouse 3 in 8 days · February 10 2027`, shortened to `in 8d`, then `soon`, then
   the bare date as the line runs out of room (`Trips.dateLabel`; in Sapporo with the starting ¥5,000 it is
-  `in 8d`) — for new and returning players alike;
+  `in 8d`) — for new and returning players alike. This is the only time the HUD names a trip: on the
+  trip's own days the date is bare (issue #163). The countdown is the `Trips.leadIn` line in
+  `Trips.dateLabel`; with `lead` null there the HUD is the bare date every day;
 - the intro's page 1 reads "devhouse 3, their trip to Hokkaido, starts on February 18. This is the little
   world they will be walking around." (`Intro.tripCopy(..., starts)`), and page 3 "They have not arrived
   yet: devhouse 3 starts here in Sapporo on February 18. Have a look around before they get here."

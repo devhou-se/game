@@ -505,32 +505,27 @@ class Trips {
     }
 
     /**
-     * The HUD's date: "devhouse 3 · February 20 2027" on one of a trip's own
-     * days, "devhouse 3 in 8 days · February 10 2027" on a lead-in day
-     * (issue #164: the reason the base is empty — "devhouse 3 in 8d · …",
-     * then "devhouse 3 soon · …", where the count does not fit), the bare
-     * date on any other. `format`
-     * is formatGameDate.
+     * The HUD's date: the bare date ("February 20 2027"), on a trip's own
+     * days too — the HUD never names the trip an ordinary day belongs to
+     * (issue #163: it used to lead the date where the row had room, so it
+     * came and went from room to room). The one exception is a lead-in day,
+     * "devhouse 3 in 8 days · February 10 2027" (issue #164: the reason the
+     * base is empty — "devhouse 3 in 8d · …", then "devhouse 3 soon · …",
+     * where the count does not fit). `format` is formatGameDate.
      *
      * `fits(label)`, when given, says whether a label has room in the HUD:
-     * the trip's name is dropped when it does not (a long room name such as
-     * "Don Takote · Sapporo" leaves no room for it before the menu button),
-     * so the wallet after the date is never pushed under the button.
+     * the countdown is shortened and then dropped when it does not, so the
+     * wallet after the date is never pushed under the menu button.
      */
     static dateLabel(trips, iso, format, fits) {
-        const trip = Trips.forDate(trips, iso);
         const bare = format(iso);
+        // the countdown is this line: `const lead = null;` and the HUD is the bare date every day
         const lead = Trips.leadIn(trips, iso);
-        if (!lead && !Trips.during(trip, iso)) return bare;
-        const ok = (label) => !fits || fits(label);
-        if (lead) {
-            // the count, then shorter ways to say it, then nothing
-            const label = [Trips.inDays(lead.days), `in ${lead.days}d`, 'soon']
-                .map(when => `${trip.name} ${when} · ${bare}`).find(ok);
-            return label || bare;
-        }
-        const full = `${trip.name} · ${bare}`;
-        return ok(full) ? full : bare;
+        if (!lead) return bare;
+        // the count, then shorter ways to say it, then nothing
+        return [Trips.inDays(lead.days), `in ${lead.days}d`, 'soon']
+            .map(when => `${lead.trip.name} ${when} · ${bare}`)
+            .find(label => !fits || fits(label)) || bare;
     }
 
     /**

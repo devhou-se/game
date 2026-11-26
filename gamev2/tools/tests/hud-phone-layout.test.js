@@ -1,11 +1,11 @@
 module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
-    test('the HUD drops the trip name rather than run under the menu button, in every room (#118)', () => {
+    test('the HUD date is bare on a trip day in every room, and a countdown never runs under the menu button (#118, #163)', () => {
         const config = realConfig(), T = game('Trips'), trips = T.of(config), fmt = game('formatGameDate');
         // the HUD's metrics: PixelOperatorMono at 16px is 16px a character; 1280 wide, 10px padding, "menu" right-aligned
         const CH = 16, PAD = 10, MENU_LEFT = 1280 - PAD - 4 * CH;
         const right = (room, label, money) => PAD + CH * `${config.game.title} | ${room} | ${label} | ${money}`.length;
         const days = [...game('contentChangeDates')(config)].sort().concat('2027-02-20', '2027-02-26', '2026-11-25', '2027-01-18', '2027-01-19', '2027-02-04', '2027-02-17');
-        let dropped = 0, kept = 0;
+        let tripDays = 0, counted = 0, uncounted = 0;
         for (const def of Object.values(config.rooms)) {
             for (const iso of days) {
                 for (const money of ['¥0', '¥5,000', '¥999,999']) {
@@ -13,15 +13,29 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
                     const label = T.dateLabel(trips, iso, fmt, fits);
                     assert.ok(fits(label), `${def.name} on ${iso} with ${money}: "${label}" ends at ${right(def.name, label, money)}`);
                     assert.ok(label.endsWith(fmt(iso)));
-                    if (T.during(T.forDate(trips, iso), iso)) (label === fmt(iso) ? dropped++ : kept++);
-                    else if (T.leadIn(trips, iso)) assert.ok(label === fmt(iso) || /^devhouse 3 (in 30 days|in 30d|in 14 days|in 14d|tomorrow|in 1d|soon) · /.test(label), label);
-                    else assert.strictEqual(label, fmt(iso));
+                    if (T.leadIn(trips, iso)) {
+                        assert.ok(label === fmt(iso) || /^devhouse 3 (in 30 days|in 30d|in 14 days|in 14d|tomorrow|in 1d|soon) · /.test(label), label);
+                        (label === fmt(iso) ? uncounted++ : counted++);
+                    } else {
+                        // a trip's own day reads like any other: the same in a short-named room and a long-named one
+                        assert.strictEqual(label, fmt(iso), `${def.name} on ${iso}`);
+                        assert.strictEqual(T.dateLabel(trips, iso, fmt), fmt(iso));
+                        if (T.during(T.forDate(trips, iso), iso)) tripDays++;
+                    }
                 }
             }
         }
-        assert.ok(dropped > 0 && kept > dropped, `the name is kept where there is room (${kept}) and dropped where there is not (${dropped})`);
-        assert.strictEqual(T.dateLabel(trips, '2027-02-20', fmt, () => false), 'February 20 2027');
-        assert.strictEqual(T.dateLabel(trips, '2027-02-20', fmt, () => true), 'devhouse 3 · February 20 2027');
+        assert.ok(tripDays > 0 && counted > 0 && uncounted > 0, `trip days were checked (${tripDays}); the countdown is kept where there is room (${counted}), dropped where not (${uncounted})`);
+        for (const fits of [undefined, () => true, () => false]) {
+            assert.strictEqual(T.dateLabel(trips, '2027-02-20', fmt, fits), 'February 20 2027');
+            assert.strictEqual(T.dateLabel(trips, '2027-02-18', fmt, fits), 'February 18 2027');
+            assert.strictEqual(T.dateLabel(trips, '2027-02-28', fmt, fits), 'February 28 2027');
+            assert.strictEqual(T.dateLabel(trips, '2025-11-02', fmt, fits), 'November 2 2025');
+        }
+        // layoutHUD only asks for a fitted label on a countdown day
+        const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(src.includes('const counting = Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate) !== bare;'));
+        assert.ok(!/devhouse \d+ · /.test(src));
     });
 
     test('a room narrower than a phone view is measured by its boundary (#110)', () => {

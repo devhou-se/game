@@ -541,11 +541,11 @@ class GameScene extends Phaser.Scene {
      * either leaves the bar narrower: it drops the game's title first, then
      * (landscape only) abbreviates the date and the room's name, then moves
      * the date and wallet to a second row.
-     * On one of a trip's own days the date is led by the trip's name
-     * ("devhouse 3 · February 20 2027", Trips.dateLabel) when that still
-     * ends two paddings clear of the menu button — it does not in rooms with
-     * long names (the konbini, Don Takote) — and whenever the date has the
-     * second row to itself.
+     * The date is the bare date, on a trip's own days too (issue #163: the
+     * trip's name is never in the bar). Only a lead-in day's countdown
+     * ("devhouse 3 in 8 days · February 10 2027", Trips.dateLabel) leads it,
+     * as long a form of it as still ends two paddings clear of the menu
+     * button, or as the second row has room for.
      * `hudWidth` / `hudBarHeight` are the bar's size in HUD coordinates, for
      * whatever else sits on the HUD layer (the shop's effect chips).
      */
@@ -554,7 +554,7 @@ class GameScene extends Phaser.Scene {
         const width = this.cameras.main.width / zoom, full = width >= this.scale.width;
         const room = this.hudRoomName();
         const bare = formatGameDate(gameDate());
-        const named = Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate);
+        const counting = Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate) !== bare;
         this.hudMoneyText.setText(` | ${this.shop.fmt(this.shop.money)}`);
         // does `lead` + `date` + wallet end `gap` short of the menu button?
         const fits = (lead, date, gap) => {
@@ -564,13 +564,11 @@ class GameScene extends Phaser.Scene {
                 gap + this.menuButton.width + pad <= width;
         };
         const long = `${this.config.game.title} | ${room} | `, short = `${room} | `;
-        const trip = named !== bare;
-        // with the whole canvas to itself the bar is always the one authored row
-        // the longest trip-led date that fits after `lead` — on a lead-in day the
-        // countdown shortens ("in 8 days", "in 8d", "soon", issue #164) before
-        // the trip's name is dropped — else the bare date
+        // with the whole canvas to itself the bar is always the one authored row.
+        // The date after `lead` is the bare date; on a lead-in day it is the longest
+        // countdown that fits ("in 8 days", "in 8d", "soon", issue #164), else bare
         const row = (lead) => {
-            const label = trip ? Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate,
+            const label = counting ? Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate,
                 (l) => fits(lead, l, 2 * pad)) : bare;
             return label !== bare ? fits(lead, label, 2 * pad) : fits(lead, bare, pad);
         };

@@ -206,10 +206,10 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
         assert.strictEqual(bootOn('2026-11-25', '?date=2025-11-02'), '2025-11-02');
         assert.strictEqual(bootOn('2027-02-20', '?date=2025-11-02'), '2025-11-02');
         assert.strictEqual(bootOn('2026-11-25', '?date=2027-02-26'), '2027-02-26');
-        // the HUD names the trip on its own days only
+        // the HUD never names the trip on its own days (#163): the bare date, as between trips
         const label = (d) => game('Trips.dateLabel')(game('Trips.of')(realConfig()), d, game('formatGameDate'));
-        assert.strictEqual(label('2027-02-20'), 'devhouse 3 · February 20 2027');
-        assert.strictEqual(label('2025-11-02'), 'devhouse 2 · November 2 2025');
+        assert.strictEqual(label('2027-02-20'), 'February 20 2027');
+        assert.strictEqual(label('2025-11-02'), 'November 2 2025');
         assert.strictEqual(label('2026-11-25'), 'November 25 2026');
         bootOn('2026-11-25');
     });

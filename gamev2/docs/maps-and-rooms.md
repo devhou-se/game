@@ -27,13 +27,16 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
     (`contentChangeDates`) and the trips are handed over by `setTripDates(config)` at the top of
     `GameScene.create()`; nothing is hard-coded. The default is fixed when the config loads
     (`bootToday`), so a session left open past midnight keeps the day its NPCs were resolved for.
-    The HUD shows that date, led by the trip's name on a trip day (`devhouse 3 · February 20 2027`,
-    `Trips.dateLabel`) — when the line still ends two `HUD_PADDING`s short of the `menu` button with
+    The HUD shows that date bare (`February 20 2027`, `Trips.dateLabel`), on a trip's own days too: the
+    trip's name is never in the bar (issue #163 — it used to lead the date where the row had room, so it
+    came and went between rooms; Time Travel says which trip a day belongs to). The one thing that leads
+    the date is the lead-in countdown (`devhouse 3 in 8 days · February 10 2027`, issue #164, see Trips
+    and Dates), and only when the line still ends two `HUD_PADDING`s short of the `menu` button with
     it: `GameScene.layoutHUD()` measures title | room | date | wallet with the HUD's own text objects and
-    drops the name where it does not fit (the konbini, the Don Takotes,
+    shortens, then drops, the countdown where it does not fit (the konbini, the Don Takotes,
     Asahikawa Station: long room names), so the wallet is never pushed under the button. On a small
     screen the same routine goes on to drop the game's title and then to wrap the date and wallet to a
-    second row, where the trip's name comes back if the row has room (see Small Viewports and Touch). Anything
+    second row, where the countdown comes back if the row has room (see Small Viewports and Touch). Anything
     that lengthens the HUD line must keep going through that check. `?date=` and Time Travel always win; `setGameDate()` drops the param
     only for the date a clean URL already gives, so picking today's real date between trips is an
     explicit `?date=` like any other. `tools/play.js` and the studio open on the same day
