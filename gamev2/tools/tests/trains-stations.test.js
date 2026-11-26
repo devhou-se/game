@@ -96,6 +96,24 @@ module.exports = ({ test, assert, fs, path, vm, GV2, game }) => {
         assert.strictEqual(travel.cameFrom('OsakaStation'), null);
     });
 
+    test('you step off by the door you boarded by, wherever the destination parks its train (#206)', () => {
+        const exitDoor = game('TrainTravel.exitDoor');
+        const small = { board: [[8, 3], [15, 3]] }, large = { board: [[14, 3], [21, 3]] };
+        assert.strictEqual(exitDoor(small, small, 15), 15, 'same size: the same column, as before');
+        assert.strictEqual(exitDoor(small, large, 8), 14, 'first door to first door');
+        assert.strictEqual(exitDoor(small, large, 15), 21);
+        assert.strictEqual(exitDoor(large, small, 21), 15);
+        assert.strictEqual(exitDoor(large, small, 20), 15, 'not on a door: the nearest one');
+        assert.strictEqual(exitDoor(large, {}, 21), 21, 'a destination with no doors listed: unchanged');
+        // the real registry: from every door of every station, every destination's cell is one of its own doors
+        const stations = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).stations;
+        for (const [a, from] of Object.entries(stations)) {
+            for (const [b, to] of Object.entries(stations)) {
+                from.board.forEach(([x], i) => assert.strictEqual(exitDoor(from, to, x), to.board[i][0], `${a} door ${i} -> ${b}`));
+            }
+        }
+    });
+
     test('the train-ride cutscene is magnified with the world, never past the height of the view', () => {
         const scale = game('TrainTravel.cutsceneScale');
         assert.strictEqual(scale(1, 960, 480), 1, 'desktop: as authored');

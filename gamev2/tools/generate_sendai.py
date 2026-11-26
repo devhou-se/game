@@ -371,7 +371,9 @@ if not konbini_entry:
     b.solid(*konbini_door)
 b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 cfg['rooms']['Sendai'] = b.room('Sendai', npcs=prev.get('npcs', []), transporters=rg.kept_order(prev, [
-    rg.transporter(station_door[0], station_door[1], 'SendaiStation', 11, 11, hidden=True),
+    # into the station at its entry cell (generate_stations.py: a large station's is not 11,11)
+    rg.transporter(station_door[0], station_door[1], 'SendaiStation',
+                   *cfg.get('stations', {}).get('SendaiStation', {}).get('entry', [11, 11]), hidden=True),
 ] + ([konbini_entry] if konbini_entry else [])))
 # the bay is navigable (src/AmbientBoats.js): cells, inclusive. The channel runs
 # off the south edge of the map, so boats sail in and out there.

@@ -220,7 +220,9 @@ if not konbini_entry:
 b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 # (listed in the order they already are: generate_konbinis.py appends its door)
 cfg['rooms']['Sapporo'] = b.room('Sapporo', npcs=prev.get('npcs', []), transporters=rg.kept_order(prev, [
-    rg.transporter(station_door[0], station_door[1], 'SapporoStation', 11, 11, hidden=True),
+    # into the station at its entry cell (generate_stations.py: a large station's is not 11,11)
+    rg.transporter(station_door[0], station_door[1], 'SapporoStation',
+                   *cfg.get('stations', {}).get('SapporoStation', {}).get('entry', [11, 11]), hidden=True),
 ] + ([konbini_entry] if konbini_entry else []) + [
     don.door_transporter('Sapporo', store_door),
 ]))

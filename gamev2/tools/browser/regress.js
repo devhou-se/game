@@ -634,14 +634,17 @@ async function desktop(shared) {
             // a key pressed mid-ride does nothing
             await hold(page, 'ArrowDown', 'false', 200);
             need(await until(page, '!__t.s.trainTravel.riding && !__t.rm.isTransitioning', 12000), { rideNeverEnded: await page.evaluate('({ pos: __t.pos(), riding: __t.s.trainTravel.riding })') });
-            const st = await page.evaluate((key) => {
+            const st = await page.evaluate(([key, from, x]) => {
                 const { s, rm } = __t, to = s.config.stations[key], p = s.player;
-                return { pos: __t.pos(), hud: __t.hud(), row: to.trainCell[1], overlays: __t.overlays(), screen: __t.onScreen(),
+                return { pos: __t.pos(), hud: __t.hud(), row: to.trainCell[1], door: TrainTravel.exitDoor(s.config.stations[from], to, x), overlays: __t.overlays(), screen: __t.onScreen(),
                     free: __t.free(p.gridX, p.gridY), name: __t.roomName(key), cutscene: (s.trainTravel._cutTweens || []).length,
                     curtain: s.children.list.filter(o => o.depth >= 2999 && o.depth <= 3000 && o.visible && o.alpha > 0).length,
                     train: !!(s.trainTravel.sprite && s.trainTravel.sprite.visible), lastRide: s.trainTravel.lastRide, way: __t.wayOut() };
-            }, dest.key);
-            need(st.pos.room === dest.key && st.pos.y === st.row && st.pos.x === board.cell.x && st.free, { notOnTheDestinationPlatform: st.pos, dest: dest.key, row: st.row });
+            }, [dest.key, board.from, board.cell.x]);
+            // off by the door he boarded by: that door's column at the destination (stations differ in size, #206)
+            const doors = await page.evaluate(([a, b]) => [a, b].map(k => __t.s.config.stations[k].board.map(c => c[0])), [board.from, dest.key]);
+            need(st.door === doors[1][doors[0].indexOf(board.cell.x)], { exitDoor: st.door, doors, boarded: board.cell.x });
+            need(st.pos.room === dest.key && st.pos.y === st.row && st.pos.x === st.door && st.free, { notOnTheDestinationPlatform: st.pos, dest: dest.key, row: st.row, door: st.door });
             need(st.overlays.length === 0 && st.cutscene === 0 && st.curtain === 0 && st.train, { cutsceneLeftBehind: st });
             need(st.screen.visible && st.screen.inView, { player: st.screen });
             need(st.hud.room.includes(st.name), { hud: st.hud.room, expected: st.name });

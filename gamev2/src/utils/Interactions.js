@@ -2,6 +2,9 @@ const Interactions = {
     RULES: [
         { kind: 'vending', group: 'shop', pattern: /vending-machine/, footprint: true },
         { kind: 'counter', group: 'shop', pattern: /^(blue-shrine-platform-base|office-counter)/, footprint: true, room: 'konbini' },
+        // the 7-Eleven kiosk inside a station (tools/generate_stations.py): the whole
+        // booth is the till, in any room - a station is not an `interior`
+        { kind: 'counter', group: 'shop', pattern: /^station-kiosk/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^office-(shelf-drinks|shelf-glass|fridge|freezer)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^office-shelf-snacks/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },

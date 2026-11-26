@@ -283,7 +283,9 @@ for x in range(10, 27):
 prev = cfg['rooms'].get('Osaka', {})
 b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 cfg['rooms']['Osaka'] = b.room('Osaka', npcs=prev.get('npcs', []), transporters=[
-    rg.transporter(station_door[0], station_door[1], 'OsakaStation', 11, 11, hidden=True),
+    # into the station at its entry cell (generate_stations.py: a large station's is not 11,11)
+    rg.transporter(station_door[0], station_door[1], 'OsakaStation',
+                   *cfg.get('stations', {}).get('OsakaStation', {}).get('entry', [11, 11]), hidden=True),
     don.door_transporter('Osaka', store_door),
 ])
 # the canal is navigable (src/AmbientBoats.js): cells, inclusive. `under` is the

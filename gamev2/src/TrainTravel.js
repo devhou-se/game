@@ -37,6 +37,23 @@ class TrainTravel {
         return riding || station.train;
     }
 
+    /**
+     * The column the player steps off at: the door he boarded by, counted
+     * along the train (first door -> first door), not the same X - a large
+     * station parks its train further along the platform than a small one
+     * (config `stations.<key>.board`, issue #206), and the same X there is a
+     * window or bare track. A boarding X that is no door of `from` (never the
+     * case in play) takes the nearest one.
+     */
+    static exitDoor(from, to, enterX) {
+        const doors = (st) => ((st && st.board) || []).map(([x]) => x);
+        const out = doors(to), into = doors(from);
+        if (!out.length) return enterX;
+        let i = into.indexOf(enterX);
+        if (i < 0) i = into.reduce((best, x, j) => (Math.abs(x - enterX) < Math.abs(into[best] - enterX) ? j : best), 0);
+        return out[Math.min(Math.max(i, 0), out.length - 1)];
+    }
+
     stationOf(roomKey) {
         return (this.scene.config.stations || {})[roomKey] || null;
     }
@@ -213,7 +230,8 @@ class TrainTravel {
         };
 
         // the door the player boarded from — he steps back out of the same one
-        const enterX = player.getGridPosition().x;
+        // (the same door of the train: its column at the destination)
+        const enterX = TrainTravel.exitDoor(from, to, player.getGridPosition().x);
         // face down now (while hidden), so he faces the camera both in the ride
         // cutscene window and when he steps off — not moon-walking on his back
         player.updateDirectionSprite(0, 1);

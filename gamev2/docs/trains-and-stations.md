@@ -36,7 +36,64 @@ nearest row in view (`StationPicker.clampSelection`), or to the row under a rest
 wrap and skip the heading; SPACE/ENTER boards; ESC, or a click outside the panel, steps back. It is all
 drawn in the usual 1280x960 overlay space at depth 2000-2003, so `UIScale` magnifies it on phones.
 
-**Adding a station**: add it to `STATIONS` where it belongs on the board (with `parent` for a day trip)
-and to `TOWN_DOORS`, then re-run `generate_stations.py`. `node tools/test_game.js` checks the real
+**Adding a station**: add it to `STATIONS` where it belongs on the board (with `parent` for a day trip;
+`'size': 'large'` for a city terminus) and to `TOWN_DOORS`, optionally its Japanese name to `STATION_JA`,
+then run `generate_station_art.py` (its name board; needs Pillow) and `generate_stations.py`, and
+`config_to_tiled.py` for the station room and its town. `node tools/test_game.js` checks the real
 registry's board. To see a long board without adding rooms, intercept `config.json` in playwright and add
 fake `stations` entries (do not ride to them).
+
+### The station interior (issue #206)
+
+Every station room is built by one template, `station_interior` in `tools/generate_stations.py`, so a new
+row in `STATIONS` gets the whole station. Top to bottom:
+
+| Rows | What |
+|---|---|
+| 0-1 | the back wall in the line's colour (`station-wall-orange` main line, `-green` branch line) with the station's name boards on row 1, clear of the parked train (row 0 is under the HUD bar) |
+| 2-3 | the track: `station-track-n` / `-s` on `station-ballast`, solid except the train's two door cells on row 3 (`board`) |
+| 4 | the platform edge (`station-platform-edge`: coping, white line, yellow tactile strip); you step off the train onto it |
+| 5-8 | the platform: a door mark under each door (row 5), lamps, benches facing the train, the timetable, a red vending machine, the hanging platform sign and clock; **the white vending machine at `(2,6)` and the cells west of it are the blog pipeline's platform spot and stay put in every station** (shipped history stands on `(1..2, 5..7)`) |
+| 9 | the gate line: `station-gate` cells in the middle are the only way through (walkable, on the `Other` layer so they need no collider); tube railing, the ticket machines and the kiosk close the rest. The LED departures sign hangs over the gates (`Tops`) |
+| 10 .. h-3 | the concourse: the tactile path from the gates to the exit, benches, planters, the post box; in a large station also pillars, lockers, the route map and a tactile branch past the machines to the kiosk |
+| h-2, h-1 | the front wall, with the stairs in the middle; the two exit mats are on the last row |
+
+- **Size** is `STATIONS[...]['size']`, looked up in `SIZES`: `small` (the default, 24x15, two gates, train at
+  column 7 - the size and cells every station had before, so a town door written for `11,11` is still
+  right) or `large` (36x20, four gates, train at column 13: Tokyo, Osaka, Sendai, Sapporo, Hakata). Everything else is
+  derived in `layout(size)`; nothing is hand-placed per station. A village stop (a station with a
+  `parent`) also gets the station cat.
+- **Registry fields** written per station besides `label` / `town` / `train` / `order` / `parent`:
+  `size`; `board` (the door cells, `[trainX + 1, 3]` and `[trainX + 8, 3]`); `trainCell` (`[trainX, 4]`);
+  `arrive` (a platform cell by the gates - `play.js ride` and the world check land there); **`entry`**
+  (where a town door puts you: three cells above the exit, `[11, 11]` in a small station); `ja` (the
+  Japanese name, from `STATION_JA`, when there is one).
+- **Town doors land on `entry`.** `generate_stations.py` points every transporter that leads into a
+  station at that station's `entry`, and a town generator whose station is not small reads it back
+  (`cfg['stations'][key]['entry']`, as `generate_osaka.py`, `generate_sendai.py`, `generate_sapporo.py` and
+  `generate_fukuoka.py` do) so that a re-run
+  of the town alone writes the same door. Giving an existing small station `'size': 'large'` therefore
+  needs that one line in its town generator, or `check_generators.py` reports the town.
+- **Stepping off**: you leave the train by the door you boarded by, counted along the train
+  (`TrainTravel.exitDoor(from, to, x)`) - not at the same X, which in a station of another size is a
+  window.
+- **The 7-Eleven kiosk** (`station-kiosk`, 4x3, solid) is a shop front inside the station, not a separate
+  room: `Interactions.RULES` has a `counter` rule for `station-kiosk*` with no room condition, so bumping
+  any cell of the booth - from the concourse in front of its counter, or from either side - opens the
+  ordinary konbini list (buying and selling fish, titled KONBINI). A station stays a non-`interior` room:
+  the blog pipeline places people in it and the night grade applies (the platform lamps are
+  `station-lamp-post`, so `DayNight` lights them).
+- **The departures board** you choose from is still opened by walking onto a door cell of the train; the
+  LED sign over the gates is scenery.
+- **Art**: `tools/extract_station.py` cuts the floors, track, benches, notice boards, railing, stairs,
+  planters, post box and cat from the GuttyKreum Train Station pack (the pack the trains come from, 4x).
+  `tools/generate_station_art.py` draws what the pack lacks, as shaded pixel art in the pack's palette
+  (never line art): walls, gates, ticket machines, the kiosk, pillar, lamp, lockers, the hanging signs
+  and **one name board per station** (`station-name-<town>`, read from `STATIONS` / `STATION_JA` without
+  running the generator) - text in the game's own fonts (`PressStart2P`, `PixelMplus12` at its native
+  12px), so no system font is needed and a re-run is byte-identical. Both are in `check_generators.py`'s
+  art list; `--preview out.png` writes a contact sheet.
+- **Tests**: `tools/tests/station-interior.test.js` checks every station of the registry (size, gates as
+  the only way to the platform, the door / entry / exit cells both ways, the kiosk, the blog cells, the
+  signs); `trains-stations.test.js` holds `exitDoor`; `tools/browser/regress.js` `train-ride` rides between
+  two stations with real keys.

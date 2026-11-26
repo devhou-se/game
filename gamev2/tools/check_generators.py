@@ -58,7 +58,7 @@ ART_TOOLS = [
     'generate_discount_art', 'generate_cooler_art', 'make_snow_tiles',
     'make_road_tiles', 'generate_ads', 'generate_cast', 'extract_city',
     'extract_dotonbori', 'extract_shrine', 'extract_street', 'extract_train',
-    'extract_train_interior',
+    'extract_train_interior', 'extract_station', 'generate_station_art',
     'generate_fukuoka_art',
 ]
 # the art tools that also need a Japanese system font (generate_ads.find_font)
@@ -67,7 +67,8 @@ CHECKS = GENERATORS + [TILED] + ART_TOOLS
 # what a tool reads and may write, relative to gamev2/ — copied to the scratch
 # project once (plus config.json), compared and put back after every run
 OUTPUTS = ['tiled', 'assets/sprites', 'assets/ads']
-INPUTS = ['tools', 'src/CharacterCreator.js'] + OUTPUTS
+# (fonts: generate_station_art sets its signs in the game's own pixel fonts)
+INPUTS = ['tools', 'src/CharacterCreator.js', 'fonts'] + OUTPUTS
 
 
 def have_pillow():

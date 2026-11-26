@@ -320,7 +320,9 @@ if not konbini_entry:
     b.solid(*konbini_door)
 b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 cfg['rooms']['Fukuoka'] = b.room('Fukuoka', npcs=prev.get('npcs', []), transporters=rg.kept_order(prev, [
-    rg.transporter(station_door[0], station_door[1], 'FukuokaStation', 11, 11, hidden=True),
+    # into the station at its entry cell (generate_stations.py: a large station's is not 11,11)
+    rg.transporter(station_door[0], station_door[1], 'FukuokaStation',
+                   *cfg.get('stations', {}).get('FukuokaStation', {}).get('entry', [11, 11]), hidden=True),
 ] + ([konbini_entry] if konbini_entry else [])))
 # the river is navigable (src/AmbientBoats.js): cells, inclusive. It is measured
 # from its first rimmed column, so its west end - the river mouth - is a closed
