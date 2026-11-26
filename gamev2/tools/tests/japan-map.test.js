@@ -106,7 +106,13 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.strictEqual(P.of(config, 'Izakaya'), 'TokyoCity');
         assert.strictEqual(P.of(config, 'Machi'), 'TokyoCity');
         assert.strictEqual(P.of(config, 'FukuokaStation'), 'Fukuoka');
-        assert.strictEqual(P.whereText(config, 'Market'), 'Market (in Tokyo)');
+        // a district of Tokyo is named by its display name, and says its city (#219: the room keys are unchanged)
+        assert.strictEqual(P.whereText(config, 'Market'), 'Asakusa (in Tokyo)');
+        assert.strictEqual(P.whereText(config, 'Tokyo'), 'Imperial Palace (in Tokyo)');
+        assert.strictEqual(P.whereText(config, 'Palace'), 'Marunouchi (in Tokyo)');
+        assert.strictEqual(P.whereText(config, 'Park'), 'Park (in Tokyo)');
+        assert.strictEqual(P.whereText(config, 'KonbiniMarket1'), '7-Eleven · Asakusa 1 (in Tokyo)');
+        assert.strictEqual(tokyo.label, 'Tokyo', "the city's dot keeps the city's name");
         assert.strictEqual(P.whereText(config, 'TokyoStation'), 'Tokyo Station');
         assert.strictEqual(P.whereText(config, 'Inaka'), 'Inaka (not on this map)');
 

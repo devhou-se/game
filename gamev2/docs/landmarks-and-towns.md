@@ -58,6 +58,53 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
     Asahikawa's machiya row is `ramen alley` — issue #100).
   - `{'indoors': True}` — offered inside station rooms, and only there (issue #73).
 
+### Districts: the named areas of every town (issue #219)
+
+Every town is made of named areas, and the data says so: config `districts`, keyed by room.
+
+```json
+"districts": { "Market": [ { "key": "asakusa", "name": "Asakusa",
+    "description": "Senso-ji temple and its five-storey pagoda, the lantern gate, ...",
+    "bounds": [4, 2, 53, 41], "stand": [28, 27],
+    "spots": ["Senso-ji temple", "the 7-Eleven", "the izakaya", "the temple gate", "..."] } ] }
+```
+
+- **One authored list**: `DISTRICTS` in `tools/districts.py`. `python3 tools/districts.py` writes config
+  `districts` from it (and works out each district's `spots`: the `LANDMARKS` labels whose standing cell is
+  inside its bounds); `--report` prints every district with its spots and where seven authors would stand,
+  and what is in no district. It is a generator in `check_generators.py`: re-run it after an edit to the list
+  or a map change that moves a landmark. Never edit config `districts` by hand.
+- **Fields**: `bounds` is `[x0, y0, x1, y1]`, inclusive, in the room's OWN cells (district-local in Tokyo,
+  like everything authored); `stand` the cell a visitor to "the district" stands nearest to; `description`
+  one line of what is there, written for the blog placement model. Districts of one room never overlap; a
+  room need not be covered edge to edge.
+- **What it is for today**: the blog pipeline (`blog-pipeline.md`, "Districts"). The game does not read
+  `districts`; the HUD names the ROOM (`hudRoomName`), which for Tokyo's four ported rooms is the district.
+- **Names are the redesign plan's, bounds are today's map.** A district the plan names that is not built yet
+  has NO entry: Ueno and Shibuya (Park is one district, "Park", whose description says it stands in for both),
+  Sapporo's Tanukikoji and Susukino, Asahikawa's zoo gate, Shirakawa-go's ryokan, Osaka's station front (a
+  threshold, not a district). Add it in the change that builds it. Machi, Inaka and Yukimura (being deleted)
+  have none; San Franbourne (#218) was not on master when this landed: give it districts when it is.
+
+| Room (key) | Districts today |
+|---|---|
+| Tokyo | Imperial Palace |
+| Market | Asakusa |
+| Palace | Marunouchi |
+| Park | Park |
+| Sapporo | Sapporo Station front, Clock Tower block, Odori Park |
+| Asahikawa | Station front and Heiwa-dori, Ramen alley, Asahibashi and the riverbank |
+| Osaka | Dotonbori, Shinsekai |
+| Sendai | Sendai Station front, Aoba Castle ruins, Downtown, Zuihoden, Nikka distillery, Samurai quarter, Matsushima bay |
+| Fukuoka | Hakata Station, Momochi, Canal City, Old Hakata, Nakasu, Dazaifu |
+| Kanazawa | Station front, Higashi Chaya and the temple hill, Katamachi, Castle, Kenrokuen, Nagamachi |
+| Shirakawago | Far bank and bridge, Village, Viewpoint |
+| Toyama | Iwase port, Tram street |
+
+- **Tokyo's display names**: the room keys are unchanged; see `name` in `maps-and-rooms.md`.
+- **Is a city its own?** `tools/check_distinct.py` (`generators-and-checks.md`) measures how much art each
+  city shares with the others; a rebuild must not make a city worse.
+
 ### Sendai, the samurai town (issue #66)
 
 `tools/generate_sendai.py` (70x48) builds devhouse 2's first base (26-30 October 2025) from what its twelve
@@ -427,7 +474,7 @@ tower); the rollout is `.agent-queue/items/lobbies_apply.sh <Town> ...`.
 ### Shrine worship halls (issue #212)
 
 A shrine hall is enterable: its top step (the `shrine` / `shrine-red` prefab's door cell, building cell
-`(1, 4)`) carries a hidden transporter into a worship hall of its own, `Shrine<Host><n>` (HUD: `Shrine | Tokyo`).
+`(1, 4)`) carries a hidden transporter into a worship hall of its own, `Shrine<Host><n>` (HUD: `Shrine | Asakusa`, the host's display name).
 Applied so far to **Tokyo, Market and Park**; Asahikawa, Kushida and Dazaifu Tenmangu (Fukuoka) come with
 the roll-out, Machi is being deleted.
 
@@ -460,7 +507,9 @@ the roll-out, Machi is being deleted.
   the box; under `red-shrine-top` it is vermilion and gilt on a warm dark floor, the mirror image, with a
   second pair of pillars level with the box. `LARGE` in the generator (Kushida, Dazaifu Tenmangu) builds a
   26x18 hall with a third pair of pillars, plaques on both sides and more lanterns. `HALLS` maps a hall's
-  tile to its door cell, `NAMES` gives a hall its own name.
+  tile to its door cell, `NAMES` gives a hall its own name: Kushida, Dazaifu Tenmangu, and the hall inside the
+  palace moat, "Palace Shrine" (`ShrineTokyo1`) - "Shrine · Imperial Palace" would not fit a phone's one-row
+  HUD bar at 667x375 (issue #219). A name of its own does not make a hall large: `LARGE` lists those.
 - **Lantern light.** The room is `interior` (never offered to the blog pipeline, no day/night grade) and
   `lanternLight`: at night only, `DayNight.gradeFor` dims it warm (`LANTERN_NIGHT`) and every `*-lanterns*`
   tile gets its halo. `shopEnabled: false`: nothing in it is a konbini fixture.

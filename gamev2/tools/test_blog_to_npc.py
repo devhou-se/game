@@ -17,9 +17,11 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import blog_to_npc as b  # noqa: E402
+import check_distinct  # noqa: E402
 import check_generators  # noqa: E402
 import config_to_tiled as c2t  # noqa: E402
 import post_photos  # noqa: E402
+import districts  # noqa: E402
 import sync_cities  # noqa: E402
 
 
@@ -1149,6 +1151,212 @@ def test_sync_cities_anywhere():
     assert cells['tokyo'] and cells['market'], sorted(cells)
 
 
+# the four placements issue #219 moved to the place each post is about: (NPC, date) -> (room, cell)
+REPLACED_219 = {
+    ('Bailey', '2025-11-01'): ('Market', (26, 17)),         # Senso-ji: the foot of the hall's steps
+    ('Julia', '2025-11-01'): ('Market', (49, 30)),          # four Don Quijotes: beside the Don Takote's doors
+    ('Dylan', '2025-11-01'): ('Market', (6, 38)),           # the izakaya night: beside its door, not in front
+    ('Damian', '2025-11-12'): ('FukuokaStation', (1, 5)),   # Hakata to Okayama: Hakata's platform, not Tokyo's Park
+}
+
+
+def test_districts(cfg):
+    """config `districts` (tools/districts.py, issue #219): every town's named
+    areas, offered to the placement model beside the named spots."""
+    # in step with the one authored list, and it covers every outdoor town that is staying
+    assert cfg.get('districts') == districts.build(cfg), 'config districts are stale: python3 tools/districts.py'
+    outdoor = [k for k in b.overworld_rooms(cfg) if not b.is_indoors(cfg, k)]
+    assert sorted(cfg['districts']) == sorted(k for k in outdoor if k not in districts.UNLABELLED), \
+        sorted(set(outdoor) ^ set(cfg['districts']))
+    assert set(districts.UNLABELLED) <= set(outdoor), 'a deleted town is still listed as unlabelled'
+    assert 'districts' in check_generators.GENERATORS
+    spots, areas = b.find_spots(cfg), b.find_areas(cfg)
+    assert len(areas) == sum(len(v) for v in cfg['districts'].values()) >= 30
+    for room_key, listed in cfg['districts'].items():
+        w, h = b.room_cells(cfg, room_key)[:2]
+        assert len({d['key'] for d in listed}) == len({d['name'] for d in listed}) == len(listed), room_key
+        for d in listed:
+            where = f"{room_key} / {d['name']}"
+            x0, y0, x1, y1 = d['bounds']
+            assert 0 <= x0 <= x1 < w and 0 <= y0 <= y1 < h, f'{where}: bounds {d["bounds"]} in a {w}x{h} room'
+            assert x0 <= d['stand'][0] <= x1 and y0 <= d['stand'][1] <= y1, f'{where}: stand {d["stand"]} outside the bounds'
+            assert d['description'].strip() == d['description'] and '\n' not in d['description'] and 20 <= len(d['description']) <= 200, where
+            # its spots are the landmarks standing inside it - worked out, so they cannot go stale silently
+            inside = sorted(label for label, (x, y) in ((i.split(' · ', 1)[1], c[1:]) for i, c in spots.items() if c[0] == room_key)
+                            if x0 <= x <= x1 and y0 <= y <= y1)
+            assert d['spots'] == inside, (where, d['spots'], inside)
+            assert b.district_at(cfg, room_key, *d['stand']) is d
+            # no two districts of a room overlap
+            for other in listed:
+                if other is not d:
+                    ox0, oy0, ox1, oy1 = other['bounds']
+                    assert x1 < ox0 or ox1 < x0 or y1 < oy0 or oy1 < y0, f"{where} overlaps {other['name']}"
+            # every author can be placed in it on one day: seven different cells, each inside the bounds,
+            # walked to, not a door, the cell in front of one or a seam, not on the room's edge, in the open
+            reach, doors, plain = b.reachable_cells(cfg, room_key), b.doorway_cells(cfg, room_key), b.plain_cells(cfg, room_key)
+            behind, taken = b.overhead_cells(cfg, room_key, standing=True), []
+            for _ in b.AUTHOR_NPCS:
+                cell = b.area_cell(cfg, room_key, d, set(taken))
+                assert cell is not None, f'{where}: nowhere to stand with {taken} taken'
+                assert x0 <= cell[0] <= x1 and y0 <= cell[1] <= y1 and cell in reach and cell not in taken, (where, cell)
+                assert cell not in doors and cell not in behind and 0 < cell[0] < w - 1 and 0 < cell[1] < h - 1, (where, cell)
+                taken.append(cell)
+            assert taken[0] in plain, f'{where}: the first to arrive stands on a road or a stair at {taken[0]}'
+            assert b.area_id(room_key, d) in areas
+    # a station and an interior have no districts, and an area is never mistaken for a named spot
+    assert not any(b.is_indoors(cfg, room) for room, _ in areas.values())
+    assert not set(areas) & set(spots) and all(i.endswith(b.AREA) for i in areas)
+    both = b.all_spots(cfg)
+    assert set(both) == set(areas) | set(spots) and all(both[i] == spots[i] for i in spots)
+    # Sapporo's park is both: the spot under its lanterns, and the park
+    assert 'Sapporo · Odori Park' in spots and 'Sapporo · Odori Park (area)' in areas
+
+    # the Tokyo districts go by their real names; the room keys are what they were (#219)
+    names = {k: cfg['rooms'][k]['name'] for k in ('Tokyo', 'Market', 'Palace', 'Park')}
+    assert names == {'Tokyo': 'Imperial Palace', 'Market': 'Asakusa', 'Palace': 'Marunouchi', 'Park': 'Park'}, names
+    for key, name in names.items():
+        assert [d['name'] for d in cfg['districts'][key]] == [name], key
+    assert cfg['cities']['TokyoCity']['name'] == 'Tokyo' and cfg['rooms']['TokyoStation']['name'] == 'Tokyo Station'
+    # an interior names its host by the host's display name
+    assert cfg['rooms']['KonbiniMarket1']['name'] == '7-Eleven · Asakusa 1'
+    assert cfg['rooms']['DonTakoteMarket']['name'] == 'Don Takote · Asakusa'
+    assert cfg['rooms']['HouseMarket1']['name'] == 'House · Asakusa 1'
+    assert cfg['rooms']['ShrineMarket1']['name'] == 'Shrine · Asakusa'
+    assert cfg['rooms']['ShrineTokyo1']['name'] == 'Palace Shrine'      # its own name: the host's is too long for a phone's bar
+    assert cfg['rooms']['KonbiniPark1']['name'] == '7-Eleven · Park 1'
+    # what a post about Asakusa or the palace names is a spot of that district
+    for room_key, label, cell in (('Market', 'Senso-ji temple', (26, 17)), ('Market', 'the temple gate', (26, 24)),
+                                  ('Market', 'the izakaya', (6, 38)), ('Tokyo', 'the Imperial Palace gate', (28, 34)),
+                                  ('Tokyo', 'the palace moat', (20, 33))):
+        assert spots[f'{room_key} · {label}'] == (room_key, *cell), (label, spots.get(f'{room_key} · {label}'))
+        assert b.walkable_near(cfg, room_key, *cell) == cell and label in cfg['districts'][room_key][0]['spots']
+    izakaya = next(t for t in cfg['rooms']['Market']['transporters'] if t['targetRoom'] == 'Izakaya')
+    assert (izakaya['gridX'], izakaya['gridY']) == (7, 37) and (6, 38) not in b.doorway_cells(cfg, 'Market')
+
+    # what the model reads: a named spot with its district, a district with its description
+    ids_ = sorted(both)
+    offer = b.offer_lines(cfg, ids_).split('\n')
+    assert len(offer) == len(ids_) and all(line.startswith(f'- {i}') for line, i in zip(offer, ids_))
+    asakusa = cfg['districts']['Market'][0]
+    assert f"- Market · Asakusa (area): {asakusa['description']}" in offer
+    assert '- Market · Senso-ji temple (in Asakusa)' in offer and '- Tokyo · the palace moat (in Imperial Palace)' in offer
+    assert '- Sapporo · the Don Takote discount store' in offer, 'a spot in no district is offered bare'
+    assert '- TokyoStation · the platform' in offer
+    assert 'Senso-ji' in asakusa['description'] and 'Ueno' in cfg['districts']['Park'][0]['description']
+
+    # a post that names an area and no landmark is placed in that district: on ordinary ground inside
+    # its bounds, and the next author the same day beside them, not on them
+    post_ = dict(post(900, date='2031-03-04', title='A slow day'),
+                 content='We dropped the bags and spent the whole afternoon wandering around Asakusa. Too many people.')
+    assert b.named_area(post_, ids_) == 'Market · Asakusa (area)'
+    assert b.named_area(post(901), ids_) is None and b.named_area(dict(post_, content='Asakusabashi'), ids_) is None
+    assert b.named_area(dict(post_, content='Odori Park at night, then the Park again'), ids_) == 'Sapporo · Odori Park (area)'
+    assert b.generate(post_, 'Bailey', ids_, mock=True)[0]['spot'] == 'Market · Asakusa (area)'
+    assert b.generate(post(901), 'Bailey', ids_, mock=True)[0]['spot'] == ids_[0]
+    work, out = copy.deepcopy(cfg), io.StringIO()
+    with contextlib.redirect_stdout(out):
+        record, _ = b.process_post(work, post_, both, ids_, mock=True, dry_run=True)
+        second, _ = b.process_post(work, dict(post_, post_id=902, author='dbut2'), both, ids_, mock=True, dry_run=True)
+    assert record and record['room'] == 'Asakusa' and record['spot'] == 'Asakusa (area)', (record, out.getvalue())
+    cells = []
+    for name in ('Bailey', 'Dylan'):
+        (room_key, state), = [(r, st) for r, st in placements(work, name, '2031-03-04') if st.get('present')]
+        cell = (state['gridX'], state['gridY'])
+        x0, y0, x1, y1 = asakusa['bounds']
+        assert room_key == 'Market' and x0 <= cell[0] <= x1 and y0 <= cell[1] <= y1, (name, room_key, cell)
+        assert cell in b.plain_cells(cfg, 'Market') and cell not in b.doorway_cells(cfg, 'Market'), (name, cell)
+        assert cell in b.reachable_cells(cfg, 'Market'), (name, cell)
+        cells.append(cell)
+    assert cells[0] == both['Market · Asakusa (area)'][1:] and cells[1] != cells[0] and second, cells
+    # ... and a placement can be re-homed to a district by hand
+    with contextlib.redirect_stdout(io.StringIO()):
+        b.rehome(work, 'Bailey', '2031-03-04', 'Fukuoka · Nakasu (area)', both)
+    (room_key, state), = [(r, st) for r, st in placements(work, 'Bailey', '2031-03-04') if st.get('present')]
+    assert room_key == 'Fukuoka' and b.district_at(cfg, 'Fukuoka', state['gridX'], state['gridY'])['key'] == 'nakasu'
+
+    # the ground an area never uses: road, rails, crossings, stairs, a bridge deck
+    plain = b.plain_cells(cfg, 'Market')
+    assert (2, 43) not in plain and (26, 16) not in plain and (26, 17) in plain      # the avenue, the hall's steps, the paving below them
+    assert (12, 11) not in b.plain_cells(cfg, 'Shirakawago'), 'the suspension bridge deck'
+    assert {(7, 37), (7, 38), (6, 37), (8, 37), (7, 36)} <= b.doorway_cells(cfg, 'Market')
+    # a district with no ordinary cell left takes a road cell before it gives up - and nothing else
+    far = cfg['districts']['Shirakawago'][0]
+    assert far['key'] == 'far-bank'
+    crowd = set()
+    for _ in b.AUTHOR_NPCS:
+        crowd.add(b.area_cell(cfg, 'Shirakawago', far, crowd))
+    assert None not in crowd and crowd - b.plain_cells(cfg, 'Shirakawago'), 'the bus bay is a road stub'
+    assert not any((x, 11) in crowd for x in range(10, 16)), 'never the bridge deck'
+    sealed = dict(far, bounds=[20, 29, 30, 31])                     # solid ground: nowhere at all
+    assert b.area_cell(cfg, 'Shirakawago', sealed) is None
+
+    # the four placements the plan found in the wrong place stand where their post is about
+    for (name, date), (room_key, cell) in REPLACED_219.items():
+        assert rooms_on(cfg, name, date) == [room_key], (name, date, rooms_on(cfg, name, date))
+        state = b.npc_in_room(cfg['rooms'][room_key], name)['states'][date]
+        assert (state['gridX'], state['gridY']) == cell and state['dialogue'], (name, date, state.get('gridX'), state.get('gridY'))
+        assert cell not in b.doorway_cells(cfg, room_key), f'{name} {date}: {cell} is a door or in front of one'
+    for name, date in REPLACED_219:
+        for room_key in ('Tokyo', 'Park'):
+            st = (b.npc_in_room(cfg['rooms'][room_key], name) or {}).get('states', {}).get(date)
+            assert st in (None, {'present': False}), f'{name} {date}: {room_key} still holds {st}'
+
+
+def test_distinct():
+    """tools/check_distinct.py: the audit's measure, and the "no worse than
+    the baseline" rule (issue #219)."""
+    cd = check_distinct
+    assert cd.family('grass-autotile_edge-n') == 'grass-autotile' and cd.family('torii-red-feet_0_0') == 'torii-red'
+    assert cd.family('building-roof-blue_0_0') == 'house-blue' and cd.family('building-entrance-2_0_0') == 'house-entrance'
+    assert cd.family('tree-3-top-snow_0_0') == 'tree-3-snow' and cd.family('sapporo-clock-tower_0_0') == 'sapporo-clock-tower'
+    assert cd.is_building('house-blue') and cd.is_building('sapporo-clock-tower') and cd.is_building('highrise-glass')
+    assert cd.is_building('shrine-building') and not cd.is_building('seven-eleven') and not cd.is_building('tree-3')
+    assert cd.jaccard({1, 2}, {2, 3}) == 1 / 3 and cd.jaccard(set(), set()) == 0
+
+    def room(tiles, **more):
+        return dict({'layers': [{'name': 'Floor', 'tiles': {'0,0': 'grass-autotile_center'}},
+                                {'name': 'Collidables', 'tiles': {f'{i},1': t for i, t in enumerate(tiles)}},
+                                {'name': 'Colliders', 'collision': True, 'tiles': {'0,1': 'gk_blank'}}]}, **more)
+    world = {'tilePalette': [], 'stations': {'AStation': {}}, 'cities': {'AB': {'name': 'Ab', 'rooms': [{'room': 'A1'}, {'room': 'A2'}]}},
+             'rooms': {
+                 'A1': room(['house-blue_0_0', 'tokyo-tower_0_0']), 'A2': room(['tree-1-top_0_0', 'seven-eleven_0_0']),
+                 'B': room(['house-blue_0_0', 'house-red_0_0', 'tree-1-base_0_0']),
+                 'C': room(['sapporo-clock-tower_0_0', 'tree-9_0_0']),
+                 'AStation': room(['house-red_0_0']), 'Shop': room(['house-red_0_0'], interior=True),
+                 'Machi': room(['tokyo-tower_0_0', 'tree-9_0_0'])}}
+    assert cd.towns(world) == {'Ab': ['A1', 'A2'], 'B': ['B'], 'C': ['C'], 'Machi': ['Machi']}
+    got = cd.measure(world)
+    assert sorted(got) == ['Ab', 'B', 'C'], 'a town being deleted is compared against, not judged'
+    # Ab's buildings {house-blue, tokyo-tower}: B shares one of three, Machi one of two
+    assert got['Ab']['buildings'] == 0.5 and got['Ab']['like'] == 'Machi' and got['B']['buildings'] == 0.333
+    # its buildings and scenery {house-blue, tokyo-tower, tree-1}: none its own (the 7-Eleven is kit, grass is ground)
+    assert got['Ab']['own'] == 0 and got['B']['own'] == 0.333 and got['C'] == {'buildings': 0.0, 'like': 'Ab', 'sprites': 0.5, 'own': 0.5}
+    assert cd.passes({'buildings': 0.25, 'sprites': 0.4, 'own': 0.334}) and not cd.passes({'buildings': 0.26, 'sprites': 0.4, 'own': 0.5})
+    assert not cd.passes({'buildings': 0.1, 'sprites': 0.1, 'own': 0.3})
+    # no worse than the baseline: equal is fine, better is fine, a higher overlap or a lower own share fails
+    base = {c: {k: n[k] for k in ('buildings', 'sprites', 'own')} for c, n in got.items()}
+    lines, failed = cd.check(world, base)
+    assert failed == [] and len(lines) == 5 and 'below target' in lines[2], lines
+    assert cd.worse(got['B'], dict(base['B'], buildings=0.9, own=0.1)) == []
+    assert cd.worse(got['B'], dict(base['B'], buildings=0.2)) == ['building overlap 0.33, was 0.20']
+    assert cd.worse(got['B'], dict(base['B'], sprites=0.1, own=0.5)) == ['sprite overlap 0.50, was 0.10', 'own art 33%, was 50%']
+    borrowed = copy.deepcopy(world)
+    borrowed['rooms']['B']['layers'][1]['tiles']['9,1'] = 'sapporo-clock-tower_0_0'      # B takes C's landmark
+    lines, failed = cd.check(borrowed, base)
+    assert failed == ['B', 'C'], (failed, lines)
+    assert any(line.startswith('C ') and 'WORSE than the baseline: building overlap 0.33, was 0.00; own art 0%, was 50%' in line for line in lines), lines
+    # a town the baseline has not heard of is reported, never failed; one that is gone is named
+    lines, failed = cd.check(world, {'Ab': base['Ab'], 'B': base['B'], 'Gone': base['B']})
+    assert failed == [] and any('NOT in the baseline' in line for line in lines if line.startswith('C '))
+    assert lines[-1].startswith('in the baseline but not in the world: Gone')
+    # the committed baseline is this world's cities, and each is recorded with the three numbers
+    real = json.load(open(cd.BASELINE))
+    cfg = b.load_config()
+    assert sorted(real) == sorted(cd.measure(cfg)), (sorted(real), sorted(cd.measure(cfg)))
+    assert all(sorted(v) == ['buildings', 'own', 'sprites'] for v in real.values())
+    assert cd.TARGETS == {'buildings': 0.25, 'sprites': 0.40, 'own': 1 / 3}
+
+
 if __name__ == '__main__':
     config = b.load_config()
     test_trim_line()
@@ -1173,4 +1381,6 @@ if __name__ == '__main__':
     test_tiled_maps_in_sync()
     test_generator_check_skips()
     test_sync_cities_anywhere()
+    test_districts(config)
+    test_distinct()
     print('ok')

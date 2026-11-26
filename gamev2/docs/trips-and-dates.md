@@ -55,7 +55,7 @@ has arrived, and an empty base with no explanation read as a bug. On a lead-in d
 - the intro's page 1 reads "devhouse 3, their trip to Hokkaido, starts on February 18. This is the little
   world they will be walking around." (`Intro.tripCopy(..., starts)`), and page 3 "They have not arrived
   yet: devhouse 3 starts here in Sapporo on February 18. Have a look around before they get here."
-  (`Trips.arrivalText` → `Trips.whereText(groups, here, arrival)` → `Intro.meetCopy`). When somebody has
+  (`Trips.arrivalText` → `Trips.whereText(groups, here, arrival)` → `Intro.meetCopy`; a room is named in these sentences by `Trips.placeName`: its `sentenceName` if it has one, "the Imperial Palace", else its display name). When somebody has
   posted from the road it is "Today Bailey is here in Palace. devhouse 3 starts in Sapporo on February 18.
   Walk into Bailey to say hello." (one person is walked into by name; "Go and find one to say hello." when
   nobody is placed on an ordinary day);

@@ -230,8 +230,10 @@ STATIONS = {
     # Haneda Airport (issue #218): the airport line's one stop. Its `town` is the
     # airport hall itself (HanedaAirport, tools/generate_airports.py) - the stairs
     # lead straight into it. `blog: False`: the blog pipeline never offers it.
-    'HanedaStation':   {'label': 'Haneda Airport', 'town': 'HanedaAirport', 'train': 'train-orange',
-                        'blog': False},
+    # `name`: the room is "Haneda Station" (the boards still say "Haneda Airport"): "Haneda Airport
+    # Station" is 3px too wide for one HUD row on a 667x375 phone.
+    'HanedaStation':   {'label': 'Haneda Airport', 'name': 'Haneda Station', 'town': 'HanedaAirport',
+                        'train': 'train-orange', 'blog': False},
     # Kanazawa (issue #68) - the Hokuriku line from Tokyo, a main-line city stop
     # (orange, large like the other cities). Shirakawa-go and Toyama have no
     # station: you walk there from it.
@@ -263,6 +265,8 @@ assert all(st.get('parent', 'TokyoStation') in STATIONS for st in STATIONS.value
 
 def station_name(st):
     """The room's display name (the HUD shows it): 'Sapporo Station'."""
+    if st.get('name'):
+        return st['name']
     return st['label'] if st['label'].endswith('Station') else f"{st['label']} Station"
 
 

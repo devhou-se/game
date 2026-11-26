@@ -45,6 +45,14 @@ just its platform, and the model is told to pick that only for a post about
 the station or the train ride), and konbini / izakaya interiors are never
 offered.
 
+Districts (config.json "districts", written by tools/districts.py; issue
+#219): every named area of a town is offered too, as "Room · Name (area)"
+with its one-line description, and each named spot says which district it
+is in — so a post that names an area and no landmark ("we stayed in
+Asakusa") still lands there. An area's cell is an ordinary, free, reachable
+one inside its bounds, nearest its `stand` cell: never a road, a stair, a
+door, the cell in front of one, or a seam (area_cell).
+
 Run from gamev2/ (normally by the www-jp game-npc-pipeline workflow; the unit
 checks are `python3 tools/test_blog_to_npc.py`):
 
@@ -72,7 +80,8 @@ post captions go along unchanged — see rehome. Repeat the flag to move several
 post.json is the blog payload: {"post_id", "title", "author", "date",
 "content"} and optionally "url" (the post's page; recorded when present) —
 author is the GitHub login. Needs ANTHROPIC_API_KEY unless --mock (canned
-LLM response, for testing the placement plumbing). With --mock a payload may
+LLM response, for testing the placement plumbing: the first spot, or the
+district the post names — named_area). With --mock a payload may
 steer the canned response with "mock": {"spot", "dialogue", "drunk"} (any of
 them), which is how tools/rehearse_blog.py — the dress rehearsal of this
 whole path, in a scratch copy of config.json — sends each post to the
@@ -190,6 +199,13 @@ LANDMARKS = [
     # cell is their top-left corner (the tip of a tower) — so each carries the
     # cell, relative to that corner, where someone visiting it would stand:
     # on the ground at its foot, clear of doorways and archways.
+    # Tokyo's districts (issue #219): the things a post about Asakusa or the
+    # palace names, which the generic rows above call "the shrine" / "the pond"
+    ('castle-stairs', 'Senso-ji temple', (0, 1), {'rooms': ('Market',)}),          # the foot of the main hall's steps, at their west end
+    ('red-small-pagoda-top', 'the temple gate', (5, 3), {'rooms': ('Market',)}),   # the approach, just south of the gate building
+    ('building-tier-red', 'the izakaya', (0, 2), {'rooms': ('Market',)}),          # the pavement west of its door (7,37), not in front of it
+    ('blue-wall-gate', 'the Imperial Palace gate', (-1, 6), {'rooms': ('Tokyo',)}),   # below the gate's stone steps, west of the path
+    ('moat-south', 'the palace moat', (10, 2), {'rooms': ('Tokyo',)}),             # the outer bank, south of the water
     ('tokyo-tower_', 'Tokyo Tower', (9, 14)),          # beside the east leg
     ('tokyo-station_', 'Tokyo Station', (24, 9)),      # the forecourt, east of the door
     ('tsutenkaku_', 'Tsutenkaku Tower', (5, 14)),      # the plaza in front of it
@@ -503,7 +519,7 @@ def walls_in(cell, free):
     return bool(want)
 
 
-def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
+def walkable_near(cfg, room_key, gx, gy, occupied=frozenset(), allowed=None, reach=12):
     """Nearest cell someone can stand on and be walked up to: floored,
     uncollided, not a transporter, not an occupied cell (the test of
     GameScene.findWalkableNear) and connected to one of the room's ways in —
@@ -523,7 +539,11 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
     Nor a cell where they would be in the way (walls_in): everything that
     could be walked to before can be walked to with them standing there, and
     nobody already there — `occupied` — is left with no cell to be walked up
-    to from."""
+    to from.
+
+    `allowed`, when given, is a further test a cell (x, y) must pass (a
+    district's bounds and ground, area_cell), and `reach` how many rings of
+    cells round (gx, gy) are searched (12: eleven cells away at most)."""
     cells_w, cells_h, floored, blocked = room_cells(cfg, room_key)
     portals = {f"{t['gridX']},{t['gridY']}" for t in cfg['rooms'][room_key].get('transporters', [])}
     reachable = reachable_cells(cfg, room_key)
@@ -538,6 +558,8 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
                 and key not in blocked and key not in portals and (x, y) not in occupied
                 and (reachable is None or (x, y) in reachable)):
             return False
+        if allowed is not None and not allowed((x, y)):
+            return False
         if free is None:
             return True
         if walls_in((x, y), free):
@@ -550,7 +572,7 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
         return True
 
     inside = covered = None
-    for rad in range(0, 12):
+    for rad in range(0, reach):
         for dx in range(-rad, rad + 1):
             for dy in range(-rad, rad + 1):
                 if max(abs(dx), abs(dy)) != rad:
@@ -566,11 +588,166 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset()):
     return inside or covered
 
 
-def generate(post, npc_name, spot_ids, mock=False):
+# what marks a district's id apart from a landmark's: "Sapporo · Odori Park" is
+# the spot under the park's lanterns, "Sapporo · Odori Park (area)" the park
+AREA = ' (area)'
+# ground nobody is stood on for an area: carriageway, rails, a zebra crossing
+NOT_PLAIN = ('road', 'toyama-tram-rail', 'train-track', 'crossing-')
+
+
+def districts_of(cfg, room_key):
+    """The districts of a room, from config `districts` (tools/districts.py
+    writes it): [{key, name, description, bounds, stand, spots}]."""
+    return (cfg.get('districts') or {}).get(room_key) or []
+
+
+def area_id(room_key, district):
+    return f"{room_key} · {district['name']}{AREA}"
+
+
+def find_areas(cfg):
+    """Every district that can be offered -> {'Room · Name (area)': (room,
+    district)}. Outdoor rooms only: a station or an interior has none."""
+    return {area_id(room_key, d): (room_key, d)
+            for room_key in overworld_rooms(cfg) if not is_indoors(cfg, room_key)
+            for d in districts_of(cfg, room_key)}
+
+
+def district_at(cfg, room_key, x, y):
+    """The district of room_key whose bounds hold cell (x, y), or None."""
+    for d in districts_of(cfg, room_key):
+        x0, y0, x1, y1 = d['bounds']
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            return d
+    return None
+
+
+def plain_cells(cfg, room_key):
+    """(x, y) of the room's ordinary ground: a Floor cell that is not road or
+    rail, with no stair or crossing laid over it and no water under it (a
+    walkable cell on the Water layer is the deck of a bridge or a pier) —
+    Trips.plain in the game, plus the carriageway."""
+    floor, spoiled = set(), set()
+    for layer in cfg['rooms'][room_key].get('layers', []):
+        if layer.get('collision'):
+            continue
+        for xy, key in decode_tiles(cfg, layer).items():
+            cell = tuple(map(int, xy.split(',')))
+            if layer['name'] == 'Water' or 'stairs' in key or key.startswith(NOT_PLAIN):
+                spoiled.add(cell)
+            elif layer['name'] == 'Floor':
+                floor.add(cell)
+    return floor - spoiled
+
+
+def doorway_cells(cfg, room_key):
+    """(x, y) of every transporter of the room and the four cells round it:
+    a door, the cell in front of it where people step out, and a seam into a
+    neighbouring district with the cell beside it."""
+    cells = set()
+    for t in cfg['rooms'][room_key].get('transporters', []):
+        x, y = t['gridX'], t['gridY']
+        cells.update(((x, y), (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)))
+    return cells
+
+
+def area_cell(cfg, room_key, district, occupied=frozenset()):
+    """Where somebody placed in a district stands: the free cell nearest its
+    `stand` cell (the middle of its bounds without one) that is inside the
+    bounds, on ordinary ground (plain_cells), in the open (not behind or
+    under a sprite), not a doorway or the cell in front of one, not on the
+    room's edge (the row or column a stitched district shares with its
+    neighbour) — and everything walkable_near asks of any cell: reachable,
+    nobody on it, nobody walled in. Only when every such cell is taken does
+    a road cell do (never a stair, a bridge deck or the track). None when the
+    district has no cell at all."""
+    x0, y0, x1, y1 = district['bounds']
+    cells_w, cells_h = room_cells(cfg, room_key)[:2]
+    plain, doors = plain_cells(cfg, room_key), doorway_cells(cfg, room_key)
+    behind = overhead_cells(cfg, room_key, standing=True)
+
+    def allowed(cell):
+        x, y = cell
+        return (x0 <= x <= x1 and y0 <= y <= y1 and 0 < x < cells_w - 1 and 0 < y < cells_h - 1
+                and cell in plain and cell not in doors and cell not in behind)
+
+    def crowded(cell):
+        # every ordinary cell is taken (a district that is mostly a road stub, on a day everybody
+        # is there): the carriageway does, still inside the bounds and clear of doors and seams
+        x, y = cell
+        return (x0 <= x <= x1 and y0 <= y <= y1 and 0 < x < cells_w - 1 and 0 < y < cells_h - 1
+                and cell not in doors and cell not in behind and cell not in wet)
+
+    wet = {tuple(map(int, xy.split(','))) for layer in cfg['rooms'][room_key].get('layers', [])
+           if not layer.get('collision') for xy, key in decode_tiles(cfg, layer).items()
+           if layer['name'] == 'Water' or 'stairs' in key or key.startswith('train-track')}
+    ax, ay = district.get('stand') or ((x0 + x1) // 2, (y0 + y1) // 2)
+    reach = max(cells_w, cells_h)
+    return (walkable_near(cfg, room_key, ax, ay, occupied, allowed=allowed, reach=reach)
+            or walkable_near(cfg, room_key, ax, ay, occupied, allowed=crowded, reach=reach))
+
+
+def all_spots(cfg):
+    """Everything a post can be placed at -> {id: (room, x, y)}: the named
+    spots (find_spots) and the districts (find_areas), a district by the cell
+    it resolves to with nobody about. Place through stand_cell, which knows
+    an area from a landmark."""
+    spots = find_spots(cfg)
+    for spot_id, (room_key, district) in find_areas(cfg).items():
+        cell = area_cell(cfg, room_key, district)
+        if cell is not None:
+            spots[spot_id] = (room_key, *cell)
+    return spots
+
+
+def stand_cell(cfg, spot_id, spots, occupied=frozenset()):
+    """(room, cell) for a spot id of all_spots with `occupied` cells taken —
+    cell None when there is nowhere to stand. A landmark: the nearest free
+    cell to its standing cell (walkable_near). A district: area_cell."""
+    room_key, ax, ay = spots[spot_id]
+    if spot_id.endswith(AREA):
+        found = find_areas(cfg).get(spot_id)
+        if found:
+            return room_key, area_cell(cfg, room_key, found[1], occupied)
+    return room_key, walkable_near(cfg, room_key, ax, ay, occupied)
+
+
+def offer_lines(cfg, spot_ids):
+    """The "Available spots" list as the placement model reads it: a named
+    spot with the district it is in, then every district with its one-line
+    description (issue #219: the label and description are what lets a post
+    that names an area and no landmark be placed)."""
+    spots, areas = find_spots(cfg), find_areas(cfg)
+    lines = []
+    for spot_id in spot_ids:
+        if spot_id in areas:
+            _, d = areas[spot_id]
+            lines.append(f"- {spot_id}: {d['description']}")
+        else:
+            d = district_at(cfg, *spots[spot_id]) if spot_id in spots else None
+            lines.append(f'- {spot_id}' + (f" (in {d['name']})" if d else ''))
+    return '\n'.join(lines)
+
+
+def named_area(post, spot_ids):
+    """The district on offer that a post names in its title or text ("a day
+    in Asakusa" -> 'Market · Asakusa (area)'), the longest name first, as a
+    whole word; None when it names none. What --mock answers with when it is
+    not steered: the real model reads the same names, with their descriptions."""
+    text = f"{post.get('title') or ''}\n{post.get('content') or ''}"
+    named = [(len(name), spot_id) for spot_id in spot_ids if spot_id.endswith(AREA)
+             for name in [spot_id[:-len(AREA)].split(' · ', 1)[-1]]
+             if re.search(r'(?<!\w)' + re.escape(name) + r'(?!\w)', text)]
+    return max(named)[1] if named else None
+
+
+def generate(post, npc_name, spot_ids, mock=False, offers=None):
     """Claude Sonnet turns the post into ({spot, dialogue, drunk}, usage).
-    usage is None for --mock, else the response.usage token counts."""
+    usage is None for --mock, else the response.usage token counts.
+    `offers` is the spot list as the model reads it (offer_lines: districts
+    with their descriptions); without it, the bare ids."""
     if mock:
-        canned = {'spot': spot_ids[0], 'dialogue': [
+        canned = {'spot': named_area(post, spot_ids) or spot_ids[0], 'dialogue': [
             f"I just wrote about {post['title']}!",
             'Come read it on the blog.',
         ], 'drunk': False}
@@ -610,7 +787,12 @@ def generate(post, npc_name, spot_ids, mock=False):
         'platform of that town\'s train station: choose one only when the '
         'post is mainly about that station or the train ride itself. For '
         'everything else, including a day that merely involved a train, '
-        'choose an outdoor spot.\n\n'
+        'choose an outdoor spot. A spot ending "(area)" is a whole district '
+        'of a town, listed with what is there; a named spot says which '
+        'district it is in. Prefer the named spot the post is about. Choose '
+        'an area when the post names that district, or is about what its '
+        'description says, and no named spot fits — never a spot in another '
+        'town or district just because its name sounds close.\n\n'
         'Drunk rule: set drunk to true only when the post itself reads as if '
         'it was written drunk (slurred or rambling prose, typos played for '
         'laughs, the author saying so) — it picks the voice the dialogue is '
@@ -622,7 +804,7 @@ def generate(post, npc_name, spot_ids, mock=False):
         f"Post title: {post['title']}\n"
         f"Post date: {post['date']}\n\n"
         f"Post content:\n{post['content'][:8000]}\n\n"
-        f"Available spots:\n" + '\n'.join(f'- {s}' for s in spot_ids)
+        f"Available spots:\n" + (offers or '\n'.join(f'- {s}' for s in spot_ids))
     )
 
     # small max_tokens matters beyond cost: the rate limiter reserves
@@ -1061,8 +1243,8 @@ def rehome(cfg, npc_name, date, spot_id, spots):
     from_room = placement_room(cfg, npc_name, date)
     if from_room is None:
         raise ValueError(f'{npc_name} has no placement dated {date}')
-    room_key, ax, ay = spots[spot_id]
-    cell = walkable_near(cfg, room_key, ax, ay, occupied_during(cfg, room_key, date, npc_name))
+    room_key = spots[spot_id][0]
+    cell = stand_cell(cfg, spot_id, spots, occupied_during(cfg, room_key, date, npc_name))[1]
     if cell is None:
         raise ValueError(f'no walkable cell near {spot_id}')
     state = npc_in_room(cfg['rooms'][from_room], npc_name)['states'][date]
@@ -1133,7 +1315,7 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
         print(f'#{post.get("post_id")}: bad date {post.get("date")!r} — skipped')
         return None, None
 
-    result, usage = generate(post, npc_name, spot_ids, mock=mock)
+    result, usage = generate(post, npc_name, spot_ids, mock=mock, offers=offer_lines(cfg, spot_ids))
     spot_id = result.get('spot')
     dialogue = clean_dialogue(result.get('dialogue', []))
     if spot_id not in spots or not dialogue:
@@ -1141,9 +1323,8 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
               f'{len(dialogue)} lines) — skipped')
         return None, usage
 
-    room_key, ax, ay = spots[spot_id]
-    occ = occupied_during(cfg, room_key, date, npc_name)
-    cell = walkable_near(cfg, room_key, ax, ay, occ)
+    room_key = spots[spot_id][0]
+    cell = stand_cell(cfg, spot_id, spots, occupied_during(cfg, room_key, date, npc_name))[1]
     if cell is None:
         print(f'#{post.get("post_id")}: no walkable cell near {spot_id} — skipped')
         return None, usage
@@ -1169,7 +1350,7 @@ def process_post(cfg, post, spots, spot_ids, mock=False, dry_run=False):
         'post_id': post.get('post_id'),
         'npc': npc_name,
         'room': cfg['rooms'][room_key].get('name', room_key),
-        'spot': spot_id.split(' · ', 1)[-1],   # "the vending machines"
+        'spot': spot_id.split(' · ', 1)[-1],   # "the vending machines", "Asakusa (area)"
         'date': date,
         'photo': bool(photo),
         'voice': bool(voice),
@@ -1333,7 +1514,7 @@ def main():
         if args.reset:
             ap.error('--reset cannot be combined with --rehome')
         cfg = load_config()
-        spots = find_spots(cfg)
+        spots = all_spots(cfg)
         for npc_name, date, spot_id in args.rehome:
             try:
                 for line in rehome(cfg, npc_name, date, spot_id, spots):
@@ -1360,9 +1541,9 @@ def main():
     if args.reset:
         reset_states(cfg)
 
-    spots = find_spots(cfg)
+    spots = all_spots(cfg)
     spot_ids = sorted(spots)
-    print(f'{len(spot_ids)} candidate spots across '
+    print(f'{len(spot_ids)} candidate spots ({len(find_areas(cfg))} of them districts) across '
           f'{len(overworld_rooms(cfg))} overworld rooms')
 
     records = []

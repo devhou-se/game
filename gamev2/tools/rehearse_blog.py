@@ -69,9 +69,11 @@ FIRST_DAY, LAST_DAY = '2027-01-19', '2027-03-01'      # the lead-in opens … th
 PHOTO_URL = 'https://rehearsal.invalid/photo-{}.png'   # .invalid never resolves (RFC 2606)
 
 
-def P(post_id, npc, when, spot, title, lines, photo=False, drunk=False):
+def P(post_id, npc, when, spot, title, lines, photo=False, drunk=False, named=False):
+    """`named`: the post is not steered to `spot` — its text names a district
+    and the pipeline has to get there by itself (issue #219)."""
     return {'id': str(post_id), 'npc': npc, 'when': when, 'spot': spot, 'title': title,
-            'lines': lines, 'photo': photo, 'drunk': drunk}
+            'lines': lines, 'photo': photo, 'drunk': drunk, 'named': named}
 
 
 # The posts, in the order they are published. `when` is the publishing moment
@@ -92,6 +94,10 @@ POSTS = [
       ['Rehearsal: the pond is frozen solid.', 'I did not test that personally.'], photo=True),
     P(9005, 'Julia', '2027-02-20T09:30:00Z', 'Sapporo · the 7-Eleven', 'Rehearsal: konbini dinner',
       ['Rehearsal: dinner from the 7-Eleven again.', 'No regrets.'], photo=True),
+    # a post that names a district and no landmark (issue #219): not steered, the pipeline finds the
+    # area by its name - the longest one, "Station front" alone is Kanazawa's
+    P(9019, 'Dylan', '2027-02-21T02:00:00Z', 'Sapporo · Sapporo Station front (area)', 'Rehearsal: nothing planned',
+      ['Rehearsal: nothing planned, so I hung around Sapporo Station front.', 'People-watching in the snow.'], named=True),
     P(9006, 'Bailey', '2027-02-21T13:00:00Z', 'Sapporo · the Don Takote discount store', 'Rehearsal: laaate night',
       ['Rehearsal: we have beeen to the discount store.', 'I own a penguin hat now.'], drunk=True),
     # the three new members
@@ -112,6 +118,9 @@ POSTS = [
       ['Rehearsal: the shrine across the river.', 'Very quiet in the snow.'], photo=True),
     P(9014, 'Julia', '2027-02-26T04:00:00Z', 'Asahikawa · the torii gate', 'Rehearsal: the torii',
       ['Rehearsal: a red gate in white snow.', 'I took forty photos.']),
+    # ... and one sent to a district the way a landmark is
+    P(9020, 'Xander', '2027-02-26T06:00:00Z', 'Asahikawa · Asahibashi and the riverbank (area)', 'Rehearsal: the riverbank',
+      ['Rehearsal: Xander, walking the bank of the frozen river.', 'No landmark in sight, just snow.']),
     P(9015, 'Khoi', '2027-02-27T03:00:00Z', 'Asahikawa · ramen alley', 'Rehearsal: more ramen',
       ['Rehearsal: Khoi, back in ramen alley.', 'Miso this time.']),
     # a day trip from Asahikawa
@@ -258,9 +267,11 @@ def payload_for(post, login):
     content = f"{post['title']}\n\n" + ' '.join(post['lines'])
     if post['photo']:
         content += f"\n\n![photo]({PHOTO_URL.format(post['id'])})"
+    mock = {'spot': post['spot'], 'dialogue': post['lines'], 'drunk': post['drunk']}
+    if post['named']:
+        del mock['spot']
     return {'post_id': post['id'], 'title': post['title'], 'url': f"https://blog.devhou.se/{post['id']}/",
-            'author': login, 'date': post['when'], 'content': content,
-            'mock': {'spot': post['spot'], 'dialogue': post['lines'], 'drunk': post['drunk']}}
+            'author': login, 'date': post['when'], 'content': content, 'mock': mock}
 
 
 def run_pipeline(scratch, payload, log):
@@ -358,9 +369,17 @@ def rehearse(scratch, verbose=False):
     login = {npc: real.get(npc, f'rehearsal-{npc.lower()}') for npc in MEMBERS}
     authors_before = dict(b.AUTHOR_NPCS)
     renderer = use_photo_renderer(scratch)
-    spots = b.find_spots(cfg0)
+    spots, areas = b.all_spots(cfg0), b.find_areas(cfg0)
     for post in POSTS:
         check(f"spot offered to the model: {post['spot']}", post['spot'] in spots)
+    # the districts (issue #219): offered beside the named spots, each with its one-line description
+    offer = b.offer_lines(cfg0, sorted(spots)).split('\n')
+    check('every district is offered to the model with its description',
+          areas and all(f"- {i}: {d['description']}" in offer for i, (_, d) in areas.items()),
+          [i for i, (_, d) in areas.items() if f"- {i}: {d['description']}" not in offer])
+    check('a district is rehearsed both ways: named in the post, and steered to',
+          {bool(p['named']) for p in POSTS if p['spot'] in areas} == {True, False})
+    offered = (len(areas), len({room for room, _ in areas.values()}))
     hokkaido = {'Sapporo · the Sapporo Clock Tower', 'Sapporo · the Sapporo TV Tower', 'Sapporo · Odori Park',
                 'Asahikawa · ramen alley', 'Asahikawa · the bridge over the frozen river', 'Asahikawa · the shrine'}
     check('the six landmarks issue #119 names are all rehearsed', hokkaido <= {p['spot'] for p in POSTS},
@@ -450,8 +469,16 @@ def rehearse(scratch, verbose=False):
               st.get('posts') == [{'id': p['id'], 'lines': len(p['lines']), 'title': p['title'],
                                    'url': f"https://blog.devhou.se/{p['id']}/"} for p in posts], st.get('posts'))
         ax, ay = spots[last['spot']][1:]
-        check(f'{label}: stands within two cells of the landmark\'s standing cell',
-              max(abs(st['gridX'] - ax), abs(st['gridY'] - ay)) <= 2, (st['gridX'], st['gridY'], ax, ay))
+        if last['spot'] in areas:
+            room, district = areas[last['spot']]
+            x0, y0, x1, y1 = district['bounds']
+            cell = (st['gridX'], st['gridY'])
+            check(f'{label}: stands inside the district, on ordinary ground, clear of doors',
+                  x0 <= cell[0] <= x1 and y0 <= cell[1] <= y1 and cell in b.plain_cells(cfg, room)
+                  and cell not in b.doorway_cells(cfg, room), (cell, district['bounds']))
+        else:
+            check(f'{label}: stands within two cells of the landmark\'s standing cell',
+                  max(abs(st['gridX'] - ax), abs(st['gridY'] - ay)) <= 2, (st['gridX'], st['gridY'], ax, ay))
         with_photo = [p for p in posts if p['photo']]
         want_photo = with_photo[-1]['id'] if with_photo else None
         check(f'{label}: photo is {want_photo}', st.get('photo') == want_photo, st.get('photo'))
@@ -489,7 +516,7 @@ def rehearse(scratch, verbose=False):
     view, world_check = game_view(scratch_config, days)
     if view is None:
         check('node is available to resolve the world the way the game does', False, 'node not found on PATH')
-        return results, {'renderer': renderer, 'waiting': waiting}
+        return results, {'renderer': renderer, 'waiting': waiting, 'districts': offered}
     check('the world check (node tools/play.js check) finds no problems in the rehearsed config',
           world_check == ['no problems found'], '\n       '.join(world_check[:12]))
     indoors = {k for k, r in cfg['rooms'].items() if r.get('interior')}
@@ -519,7 +546,7 @@ def rehearse(scratch, verbose=False):
         cells = [(room, x, y) for room, x, y, *_ in view[day]]
         check(f'{day}: nobody shares a cell', len(cells) == len(set(cells)),
               sorted(c for c in set(cells) if cells.count(c) > 1))
-    return results, {'renderer': renderer, 'waiting': waiting, 'placed': len(placed)}
+    return results, {'renderer': renderer, 'waiting': waiting, 'placed': len(placed), 'districts': offered}
 
 
 KEPT = '.gamev2-rehearsal'   # marks a --keep directory as ours to empty next time
@@ -558,6 +585,9 @@ def main():
     print(f"blog pipeline rehearsal: {len(results) - len(failed)}/{len(results)} checks passed"
           f" · {info.get('placed', 0)}/{len(POSTS)} posts placed · photo renderer: {info.get('renderer', '?')}"
           + (f' · scratch kept at {scratch}' if args.keep else ''))
+    if info.get('districts'):
+        print(f"districts offered to the placement model: {info['districts'][0]} in {info['districts'][1]} towns, "
+              f"{sum(1 for p in POSTS if p['spot'].endswith(b.AREA))} of the rehearsed posts placed in one")
     if info.get('waiting'):
         print(f"TO DO before the trip: AUTHOR_NPCS in tools/blog_to_npc.py still has a placeholder for "
               f"{', '.join(info['waiting'])} — until each is replaced by that person's GitHub login their real "

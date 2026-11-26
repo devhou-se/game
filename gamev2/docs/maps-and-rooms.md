@@ -7,7 +7,15 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 ### Room System
 
 Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room has:
-- `name`: Display name
+- `name`: Display name. It is what the player reads (HUD, Map, Stamp Card, the intro) and is never an
+  identifier: the room KEY is. The four ported Tokyo districts show their real names while their keys stay
+  what they were (issue #219): `Tokyo` -> "Imperial Palace", `Market` -> "Asakusa", `Palace` -> "Marunouchi",
+  `Park` -> "Park"; the city's dot on the Map is still "Tokyo" (`cities.TokyoCity.name`) and the station room
+  is "Tokyo Station". Everything authored, every tool and every doc coordinate keeps using the key
+  (`goto Market 5 24`). An interior names its host by the host's display name (`7-Eleven · Asakusa 1`,
+  `Shrine · Asakusa`), so rename a host in config and re-run the interior generators.
+- `sentenceName` (optional): the name inside a sentence, where the display name does not read after "in"
+  (`Tokyo`: "the Imperial Palace" - "Today Sam is here in the Imperial Palace."; `Trips.placeName`).
 - `boundary`: Array of [x, y] points defining a polygon boundary (optional, defaults to rectangular world bounds)
 - `npcs`: Array of NPC definitions with position (absolute or offset from center), sprite, name, and dialogue.
   An NPC may also carry dated state updates under `states` (`{"YYYY-MM-DD": {fields}}`): at load, every

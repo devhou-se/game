@@ -215,7 +215,7 @@ function hudName(name) {
  * "7-Eleven", which says where you are). A room named for its kind says
  * nothing by its first part ("House | Sapporo 3" -> "House", and the same of
  * a tower's lobby and a shrine's hall), so it keeps its town instead:
- * "Sapporo house" (issue #208), "Osaka lobby", "Tokyo shrine" (issue #220).
+ * "Sapporo house" (issue #208), "Osaka lobby", "Park shrine" (issue #220).
  */
 function hudBrief(name) {
     const [head, rest] = String(name).split(' | ');

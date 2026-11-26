@@ -19,6 +19,39 @@ art tools are listed as `skip` without it, so use `/Library/Developer/CommandLin
 tools/check_generators.py` to cover them (ten seconds; `generate_ads` and `extract_city` also need a Japanese system font,
 see `generate_ads.find_font`, and are listed as `skip`, not checked, where none is readable — a sandboxed shell).
 
+`tools/districts.py` is one of the generators checked: it writes config `districts` (the named areas of every
+town, `landmarks-and-towns.md` "Districts") from its own `DISTRICTS` list and each landmark's standing cell,
+so a map change that moves a landmark across a district's edge shows as `DRIFT districts.py`: re-run it.
+
+## check_distinct.py: is each city still its own?
+
+`python3 tools/check_distinct.py` prints, per city (a stitched city's districts as one; stations and
+interiors left out), the measure from the city audit (issues #210, #219):
+
+| Number | What it is | Target |
+|---|---|---|
+| `buildings` | the highest Jaccard overlap (shared / all of the pair) of its building sprites with any other city's, and which city | 0.25 or less |
+| `sprites` | the same over every sprite, ground and shared kit included | 0.40 or less |
+| `own` | the share of its building and scenery sprites (no ground, no shared kit) used in no other city | a third or more |
+
+A sprite is a tile family (`grass-autotile_edge-n` -> `grass-autotile`, `torii-red-top` + `-feet` ->
+`torii-red`, `building-roof-blue` -> `house-blue`); the shared kit (7-Eleven, vending machines, roads,
+crossings, traffic lights, track) counts neither for nor against a city.
+
+- **It does not fail on the targets.** Today only Tokyo passes them; the others miss by design until each is
+  rebuilt (issue #219). It exits 1 only when a city is **worse than the baseline**, `tools/distinct_baseline.json`:
+  a higher overlap or a lower own share than recorded. A city that is not in the baseline (a new town) is
+  printed against the targets and does not fail.
+- **The baseline** (26 Nov 2026, buildings / sprites / own): Tokyo 0.22 / 0.32 / 52%, Hokuriku 0.27 / 0.54 / 40%,
+  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.29 / 0.45 / 26%, Sapporo 0.50 / 0.49 / 12%, Osaka 0.50 / 0.45 / 11%,
+  Asahikawa 0.67 / 0.75 / 10%. `--update` records today's numbers: do it when a rebuild made a city better or
+  a new town landed, and say so in the commit. Never to hide a city getting worse.
+- Machi, Inaka and Yukimura (being deleted) are compared against, as the audit did, and not judged: several
+  cities' worst pair today is Machi, so deleting it improves them.
+- A new town's own landmark art counts as building sprites once its sprite prefix is in `LANDMARK_ART`.
+- It is not one of the five gates: run it after a town's map or generator changes. Unit test: `test_distinct`
+  in `tools/test_blog_to_npc.py`.
+
 ## Generated rooms
 
 - **Generated rooms stay regenerable** (issue #107): a room generator re-run on an unchanged world leaves

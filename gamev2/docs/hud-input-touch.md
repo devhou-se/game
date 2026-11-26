@@ -10,7 +10,7 @@ Semi-transparent bar at top showing: `{game.title} | {room name} | {game.date}` 
 - The room segment is the room's display `name` from config, never its key (`GameScene.hudRoomName()`, the
   one place that decides it; falls back to the key for a room with no name). Generated interiors get a
   human name from their generator: `7-Eleven · Sapporo` (`generate_konbinis.py` `store_name()`, numbered
-  only where a host has several stores: `7-Eleven · Market 3`), `Don Takote · Osaka`
+  only where a host has several stores: `7-Eleven · Asakusa 3`, the host named by its display name), `Don Takote · Osaka`
   (`generate_discount_stores.py` `store_name()`), `Sapporo Station` (`generate_stations.py`
   `station_name()`), `House · Asahikawa 2` (`generate_houses.py`). Nothing reads `room.name` as an identifier - room keys are the identifiers.
 - Every separator on the bar is ` | ` (issue #207): a name's own ` · ` is written as one (`hudName()` in
@@ -187,7 +187,7 @@ The game always renders 1280x960; everything below is about showing that on anyt
     landscape phone, where the whole canvas is across the view and two rows are a lot of the height —
     abbreviates (`Nov 11 2025`, `shortGameDate`; then the room's name to its short form, `hudBrief`: its first
     part, `7-Eleven | Park 1` -> `7-Eleven`, but a room named for its kind keeps its town, `House | Asahikawa 2` -> `Asahikawa house`,
-    `Lobby | Osaka 1` -> `Osaka lobby`, `Shrine | Tokyo` -> `Tokyo shrine` (issue #220; that form is tried before the whole name
+    `Lobby | Osaka 1` -> `Osaka lobby`, `Shrine | Park` -> `Park shrine` (issue #220; that form is tried before the whole name
     for the countdown, so every shrine reads the same way), which can be as long as a station's name and so shows the date
     rather than the countdown at 667x375; then the date's year), and only then wraps date and wallet onto a second row. On a
     lead-in day that one row has no room for the countdown and the date, so there the countdown stands in

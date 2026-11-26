@@ -150,6 +150,715 @@
     "Devil's Advocate: Dylan",
     "Slacker: Yashuk"
   ],
+  "districts": {
+    "Asahikawa": [
+      {
+        "bounds": [
+          17,
+          6,
+          39,
+          14
+        ],
+        "description": "Asahikawa Station, the pedestrian shopping street out of it, ice sculptures, the open snow north of the river",
+        "key": "station-front",
+        "name": "Station front and Heiwa-dori",
+        "spots": [
+          "the vending machines"
+        ],
+        "stand": [
+          28,
+          11
+        ]
+      },
+      {
+        "bounds": [
+          2,
+          9,
+          16,
+          16
+        ],
+        "description": "shoyu ramen counters, red banners, steam, late-night bowls",
+        "key": "ramen-alley",
+        "name": "Ramen alley",
+        "spots": [
+          "ramen alley"
+        ],
+        "stand": [
+          8,
+          15
+        ]
+      },
+      {
+        "bounds": [
+          17,
+          15,
+          39,
+          21
+        ],
+        "description": "the bridge over the frozen river and the snowy banks either side of it",
+        "key": "riverbank",
+        "name": "Asahibashi and the riverbank",
+        "spots": [
+          "the bridge over the frozen river"
+        ],
+        "stand": [
+          23,
+          15
+        ]
+      }
+    ],
+    "Fukuoka": [
+      {
+        "bounds": [
+          28,
+          3,
+          44,
+          10
+        ],
+        "description": "the front of Hakata Station: arrivals and goodbyes, the Christmas market and illuminations, ramen shops",
+        "key": "hakata-station",
+        "name": "Hakata Station",
+        "spots": [
+          "Hakata Station"
+        ],
+        "stand": [
+          36,
+          9
+        ]
+      },
+      {
+        "bounds": [
+          6,
+          6,
+          15,
+          23
+        ],
+        "description": "Fukuoka Tower, the beach and the sea",
+        "key": "momochi",
+        "name": "Momochi",
+        "spots": [
+          "Fukuoka Tower"
+        ],
+        "stand": [
+          11,
+          20
+        ]
+      },
+      {
+        "bounds": [
+          9,
+          24,
+          28,
+          32
+        ],
+        "description": "the Canal City shopping mall and its fountain, arcades and shops",
+        "key": "canal-city",
+        "name": "Canal City",
+        "spots": [
+          "Canal City"
+        ],
+        "stand": [
+          18,
+          31
+        ]
+      },
+      {
+        "bounds": [
+          33,
+          24,
+          59,
+          32
+        ],
+        "description": "Kushida shrine and the Yamakasa festival float, temples and old townhouses",
+        "key": "old-hakata",
+        "name": "Old Hakata",
+        "spots": [
+          "Kushida shrine",
+          "the pagoda",
+          "the shrine"
+        ],
+        "stand": [
+          46,
+          31
+        ]
+      },
+      {
+        "bounds": [
+          9,
+          33,
+          59,
+          42
+        ],
+        "description": "yatai food stalls along the river at night, lanterns, bars and pubs",
+        "key": "nakasu",
+        "name": "Nakasu",
+        "spots": [
+          "the yatai stalls"
+        ],
+        "stand": [
+          30,
+          37
+        ]
+      },
+      {
+        "bounds": [
+          33,
+          43,
+          59,
+          56
+        ],
+        "description": "Dazaifu Tenmangu: the torii and approach, the arched bridge over the pond, plum trees, the hall with a grove on its roof",
+        "key": "dazaifu",
+        "name": "Dazaifu",
+        "spots": [
+          "Dazaifu Tenmangu",
+          "the torii gate"
+        ],
+        "stand": [
+          46,
+          52
+        ]
+      }
+    ],
+    "Kanazawa": [
+      {
+        "bounds": [
+          20,
+          5,
+          37,
+          11
+        ],
+        "description": "Kanazawa Station: arrivals, the forecourt, the bus to Shirakawa-go",
+        "key": "station-front",
+        "name": "Station front",
+        "spots": [],
+        "stand": [
+          28,
+          11
+        ]
+      },
+      {
+        "bounds": [
+          2,
+          13,
+          30,
+          20
+        ],
+        "description": "the old teahouse district: lattice-fronted teahouses, gold leaf shops, the wooded temple hill behind",
+        "key": "higashi-chaya",
+        "name": "Higashi Chaya and the temple hill",
+        "spots": [
+          "the Higashi Chaya teahouse row"
+        ],
+        "stand": [
+          16,
+          19
+        ]
+      },
+      {
+        "bounds": [
+          2,
+          21,
+          30,
+          29
+        ],
+        "description": "downtown at night: the whisky bar, all-you-can-drink dinners, the 7-Eleven",
+        "key": "katamachi",
+        "name": "Katamachi",
+        "spots": [
+          "the 7-Eleven",
+          "the vending machines",
+          "the whisky bar"
+        ],
+        "stand": [
+          15,
+          29
+        ]
+      },
+      {
+        "bounds": [
+          38,
+          7,
+          58,
+          20
+        ],
+        "description": "Kanazawa Castle: the Ishikawa gate, stone walls, the grounds",
+        "key": "castle",
+        "name": "Castle",
+        "spots": [
+          "Kanazawa Castle's Ishikawa gate"
+        ],
+        "stand": [
+          48,
+          20
+        ]
+      },
+      {
+        "bounds": [
+          43,
+          21,
+          58,
+          28
+        ],
+        "description": "the great garden: its pond, the Kotoji stone lantern, roped pines, maples",
+        "key": "kenrokuen",
+        "name": "Kenrokuen",
+        "spots": [
+          "Kenrokuen garden",
+          "the pond"
+        ],
+        "stand": [
+          46,
+          25
+        ]
+      },
+      {
+        "bounds": [
+          2,
+          34,
+          33,
+          51
+        ],
+        "description": "the samurai district: earthen walls, the canal and its stone bridge, a samurai house",
+        "key": "nagamachi",
+        "name": "Nagamachi",
+        "spots": [
+          "the Nagamachi samurai lane"
+        ],
+        "stand": [
+          18,
+          39
+        ]
+      }
+    ],
+    "Market": [
+      {
+        "bounds": [
+          4,
+          2,
+          53,
+          41
+        ],
+        "description": "Senso-ji temple and its five-storey pagoda, the lantern gate, the stall street up to the temple, crowds, the Don Takote discount store, an izakaya, konbini",
+        "key": "asakusa",
+        "name": "Asakusa",
+        "spots": [
+          "Senso-ji temple",
+          "the 7-Eleven",
+          "the Don Takote discount store",
+          "the fox statues",
+          "the izakaya",
+          "the pagoda",
+          "the sakura trees",
+          "the shrine",
+          "the temple gate",
+          "the torii gate",
+          "the vending machines"
+        ],
+        "stand": [
+          28,
+          27
+        ]
+      }
+    ],
+    "Osaka": [
+      {
+        "bounds": [
+          2,
+          9,
+          47,
+          23
+        ],
+        "description": "the neon canal and its bridge, the Dotonbori arch, giant food signs, takoyaki and ramen queues, bars, the Don Takote discount store and its ferris wheel",
+        "key": "dotonbori",
+        "name": "Dotonbori",
+        "spots": [
+          "the Don Takote discount store",
+          "the Dotonbori arch",
+          "the Dotonbori ferris wheel"
+        ],
+        "stand": [
+          30,
+          17
+        ]
+      },
+      {
+        "bounds": [
+          2,
+          29,
+          47,
+          44
+        ],
+        "description": "Tsutenkaku Tower, retro arcades and game shops, kushikatsu, gacha machines, lantern streets",
+        "key": "shinsekai",
+        "name": "Shinsekai",
+        "spots": [
+          "Tsutenkaku Tower",
+          "the sakura trees"
+        ],
+        "stand": [
+          22,
+          40
+        ]
+      }
+    ],
+    "Palace": [
+      {
+        "bounds": [
+          2,
+          5,
+          52,
+          20
+        ],
+        "description": "Tokyo Station's red-brick front and forecourt, the shinkansen, office blocks, Tokyo Tower on the skyline",
+        "key": "marunouchi",
+        "name": "Marunouchi",
+        "spots": [
+          "Tokyo Station",
+          "Tokyo Tower",
+          "the vending machines"
+        ],
+        "stand": [
+          20,
+          12
+        ]
+      }
+    ],
+    "Park": [
+      {
+        "bounds": [
+          4,
+          3,
+          52,
+          37
+        ],
+        "description": "a city park of gravel walks and trees with a small shrine, a pagoda and a temple bell; it stands in for Ueno Park and for Shibuya and Meiji Jingu until those are built",
+        "key": "park",
+        "name": "Park",
+        "spots": [
+          "the 7-Eleven",
+          "the pagoda",
+          "the shrine",
+          "the torii gate",
+          "the vending machines"
+        ],
+        "stand": [
+          30,
+          18
+        ]
+      }
+    ],
+    "Sapporo": [
+      {
+        "bounds": [
+          21,
+          6,
+          35,
+          19
+        ],
+        "description": "the station plaza: arrivals, the meeting point, the walk out of the station into the snow",
+        "key": "station-front",
+        "name": "Sapporo Station front",
+        "spots": [
+          "the vending machines"
+        ],
+        "stand": [
+          26,
+          15
+        ]
+      },
+      {
+        "bounds": [
+          36,
+          6,
+          53,
+          19
+        ],
+        "description": "the Sapporo Clock Tower among office blocks, the 7-Eleven beside it",
+        "key": "clock-tower",
+        "name": "Clock Tower block",
+        "spots": [
+          "the 7-Eleven",
+          "the Sapporo Clock Tower"
+        ],
+        "stand": [
+          38,
+          18
+        ]
+      },
+      {
+        "bounds": [
+          2,
+          23,
+          53,
+          30
+        ],
+        "description": "the long snowy boulevard park: snow sculptures, food stalls, the Sapporo TV Tower at its east end",
+        "key": "odori-park",
+        "name": "Odori Park",
+        "spots": [
+          "Odori Park",
+          "the Sapporo TV Tower"
+        ],
+        "stand": [
+          24,
+          27
+        ]
+      }
+    ],
+    "Sendai": [
+      {
+        "bounds": [
+          22,
+          6,
+          37,
+          11
+        ],
+        "description": "arrivals at Sendai Station, the forecourt, the first steps into town",
+        "key": "station-front",
+        "name": "Sendai Station front",
+        "spots": [
+          "the vending machines"
+        ],
+        "stand": [
+          30,
+          10
+        ]
+      },
+      {
+        "bounds": [
+          2,
+          7,
+          21,
+          20
+        ],
+        "description": "the hilltop castle ruins: the Masamune statue, the great hall foundations, the view over the city",
+        "key": "aoba-castle",
+        "name": "Aoba Castle ruins",
+        "spots": [
+          "the Aoba Castle ruins"
+        ],
+        "stand": [
+          10,
+          14
+        ]
+      },
+      {
+        "bounds": [
+          22,
+          12,
+          42,
+          21
+        ],
+        "description": "the city centre: the HUB pub, ramen and izakaya, the 7-Eleven, hotels, the main street",
+        "key": "downtown",
+        "name": "Downtown",
+        "spots": [
+          "the 7-Eleven",
+          "the HUB pub"
+        ],
+        "stand": [
+          30,
+          20
+        ]
+      },
+      {
+        "bounds": [
+          43,
+          7,
+          55,
+          21
+        ],
+        "description": "the black-and-gold mausoleum of Date Masamune, up cedar steps",
+        "key": "zuihoden",
+        "name": "Zuihoden",
+        "spots": [
+          "Zuihoden"
+        ],
+        "stand": [
+          49,
+          14
+        ]
+      },
+      {
+        "bounds": [
+          2,
+          25,
+          14,
+          36
+        ],
+        "description": "the whisky distillery: brick kiln house, casks, autumn maples, a tasting",
+        "key": "nikka",
+        "name": "Nikka distillery",
+        "spots": [
+          "the Nikka distillery"
+        ],
+        "stand": [
+          8,
+          34
+        ]
+      },
+      {
+        "bounds": [
+          15,
+          25,
+          55,
+          46
+        ],
+        "description": "the old samurai town: earthen walls and gates, townhouses, walled gardens and ponds along a dirt lane",
+        "key": "samurai-quarter",
+        "name": "Samurai quarter",
+        "spots": [
+          "the pond"
+        ],
+        "stand": [
+          34,
+          35
+        ]
+      },
+      {
+        "bounds": [
+          56,
+          7,
+          69,
+          46
+        ],
+        "description": "the bay of pine islets: the cruise boat and its pier, the seaside promenade, sushi and oysters",
+        "key": "matsushima",
+        "name": "Matsushima bay",
+        "spots": [
+          "Matsushima bay"
+        ],
+        "stand": [
+          57,
+          24
+        ]
+      }
+    ],
+    "Shirakawago": [
+      {
+        "bounds": [
+          1,
+          4,
+          15,
+          28
+        ],
+        "description": "where the bus stops: the bear warning, the wobbly suspension bridge over the river",
+        "key": "far-bank",
+        "name": "Far bank and bridge",
+        "spots": [],
+        "stand": [
+          6,
+          15
+        ]
+      },
+      {
+        "bounds": [
+          16,
+          7,
+          35,
+          28
+        ],
+        "description": "the gassho thatched farmhouses, the lanes between them, the harvested paddies",
+        "key": "village",
+        "name": "Village",
+        "spots": [
+          "the gassho farmhouses",
+          "the suspension bridge"
+        ],
+        "stand": [
+          22,
+          14
+        ]
+      },
+      {
+        "bounds": [
+          27,
+          3,
+          35,
+          6
+        ],
+        "description": "the lookout over the thatched roofs to the snow peaks",
+        "key": "viewpoint",
+        "name": "Viewpoint",
+        "spots": [
+          "the Shirakawa-go viewpoint"
+        ],
+        "stand": [
+          31,
+          5
+        ]
+      }
+    ],
+    "Tokyo": [
+      {
+        "bounds": [
+          6,
+          5,
+          54,
+          39
+        ],
+        "description": "the moat, stone walls and blue-tiled gate of the palace, its gardens, pond and cherry trees",
+        "key": "imperial-palace",
+        "name": "Imperial Palace",
+        "spots": [
+          "the Imperial Palace gate",
+          "the fox statues",
+          "the palace moat",
+          "the pond",
+          "the sakura trees",
+          "the shrine",
+          "the temple bell",
+          "the vending machines"
+        ],
+        "stand": [
+          27,
+          35
+        ]
+      }
+    ],
+    "Toyama": [
+      {
+        "bounds": [
+          10,
+          2,
+          42,
+          16
+        ],
+        "description": "the port and its observation tower, the sea, the old merchant street, the black ramen shop",
+        "key": "iwase",
+        "name": "Iwase port",
+        "spots": [
+          "the black ramen shop",
+          "the port observation tower"
+        ],
+        "stand": [
+          24,
+          15
+        ]
+      },
+      {
+        "bounds": [
+          10,
+          17,
+          42,
+          23
+        ],
+        "description": "the tram and its stop, the Glass Art Museum, the street through town",
+        "key": "tram-street",
+        "name": "Tram street",
+        "spots": [
+          "the Glass Art Museum",
+          "the tram stop",
+          "the vending machines"
+        ],
+        "stand": [
+          28,
+          18
+        ]
+      }
+    ]
+  },
   "game": {
     "deadzoneCells": 4,
     "gridSize": 64,
@@ -2693,6 +3402,9 @@
             "2025-10-30": {
               "present": false
             },
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-05": {
               "present": false
             },
@@ -2776,6 +3488,9 @@
             "2025-11-11": {
               "present": false
             },
+            "2025-11-12": {
+              "present": false
+            },
             "2025-11-13": {
               "present": false
             },
@@ -2847,6 +3562,9 @@
               "present": false
             },
             "2025-10-30": {
+              "present": false
+            },
+            "2025-11-01": {
               "present": false
             },
             "2025-11-03": {
@@ -4625,7 +5343,7 @@
           "z": 5
         }
       ],
-      "name": "Don Takote \u00b7 Market",
+      "name": "Don Takote \u00b7 Asakusa",
       "npcs": [],
       "objects": [],
       "shopTitle": "DON TAKOTE",
@@ -13244,6 +13962,9 @@
           "present": false,
           "sprite": "julia_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-03": {
               "present": false
             },
@@ -13347,6 +14068,9 @@
           "present": false,
           "sprite": "bailey_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-05": {
               "present": false
             },
@@ -14774,7 +15498,54 @@
         }
       ],
       "name": "Hakata Station",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 1,
+          "gridY": 5,
+          "name": "Damian",
+          "present": false,
+          "sprite": "damian_front",
+          "states": {
+            "2025-11-12": {
+              "dialogue": [
+                "Took the shinkansen from Hakata to Okayama today, said goodbye to Julia and everything.",
+                "Okayama Korakuen was gorgeous, smelled amazing, real peaceful vibe.",
+                "The castle interior turned out to be a museum, not 'authentic as-is' like I heard \u2014 bit of a letdown, but the outside was great.",
+                "Bought some Bizen ware, had beer and kushikatsu, then found a bar with incredible cocktails. Himeji Castle tomorrow, wish me luck!"
+              ],
+              "gridX": 1,
+              "gridY": 5,
+              "photo": "745",
+              "posts": [
+                {
+                  "id": "745",
+                  "lines": 4,
+                  "title": "\u535a\u591a\u304b\u3089\u5ca1\u5c71\u307e\u3067",
+                  "url": "https://blog.devhou.se/745/"
+                }
+              ],
+              "present": true,
+              "voice": null
+            },
+            "2025-11-13": {
+              "present": false
+            }
+          }
+        }
+      ],
       "objects": [],
       "transporters": [
         {
@@ -16844,7 +17615,7 @@
           "z": 5
         }
       ],
-      "name": "Haneda Airport Station",
+      "name": "Haneda Station",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -20762,7 +21533,7 @@
           "z": 5
         }
       ],
-      "name": "House \u00b7 Market 1",
+      "name": "House \u00b7 Asakusa 1",
       "npcs": [],
       "objects": [],
       "shopEnabled": false,
@@ -21247,7 +22018,7 @@
           "z": 5
         }
       ],
-      "name": "House \u00b7 Market 2",
+      "name": "House \u00b7 Asakusa 2",
       "npcs": [],
       "objects": [],
       "shopEnabled": false,
@@ -21741,7 +22512,7 @@
           "z": 5
         }
       ],
-      "name": "House \u00b7 Market 3",
+      "name": "House \u00b7 Asakusa 3",
       "npcs": [],
       "objects": [],
       "shopEnabled": false,
@@ -30373,6 +31144,9 @@
             "2025-10-30": {
               "present": false
             },
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-03": {
               "present": false
             },
@@ -38008,6 +38782,9 @@
             },
             "2025-11-08": {
               "present": false
+            },
+            "2025-11-12": {
+              "present": false
             }
           }
         },
@@ -38031,6 +38808,9 @@
           "present": false,
           "sprite": "julia_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-06": {
               "dialogue": [
                 "Started the day calm in an onsen overlooking the river, chilly air and all - so peaceful.",
@@ -38119,6 +38899,9 @@
           "present": false,
           "sprite": "bailey_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-06": {
               "dialogue": [
                 "Explored the old samurai houses today, complete with air conditioning. Ahead of their time, honestly.",
@@ -39556,6 +40339,9 @@
           "present": false,
           "sprite": "bailey_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-05": {
               "dialogue": [
                 "Said bye to Vyv over one last oat latte and BLT at Sol's, then dragged Yashuk to the ticket desk. Twice.",
@@ -41461,7 +42247,7 @@
           "z": 5
         }
       ],
-      "name": "7-Eleven \u00b7 Market 1",
+      "name": "7-Eleven \u00b7 Asakusa 1",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -41950,7 +42736,7 @@
           "z": 5
         }
       ],
-      "name": "7-Eleven \u00b7 Market 2",
+      "name": "7-Eleven \u00b7 Asakusa 2",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -42416,7 +43202,7 @@
           "z": 5
         }
       ],
-      "name": "7-Eleven \u00b7 Market 3",
+      "name": "7-Eleven \u00b7 Asakusa 3",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -42886,7 +43672,7 @@
           "z": 5
         }
       ],
-      "name": "7-Eleven \u00b7 Market 4",
+      "name": "7-Eleven \u00b7 Asakusa 4",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -43356,7 +44142,7 @@
           "z": 5
         }
       ],
-      "name": "7-Eleven \u00b7 Market 5",
+      "name": "7-Eleven \u00b7 Asakusa 5",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -43820,7 +44606,7 @@
           "z": 5
         }
       ],
-      "name": "7-Eleven \u00b7 Market 6",
+      "name": "7-Eleven \u00b7 Asakusa 6",
       "npcs": [],
       "objects": [],
       "transporters": [
@@ -54348,7 +55134,7 @@
           "z": 5
         }
       ],
-      "name": "Market",
+      "name": "Asakusa",
       "npcs": [
         {
           "autoFlip": {
@@ -54383,7 +55169,25 @@
               "present": false
             },
             "2025-11-01": {
-              "present": false
+              "dialogue": [
+                "Last day in Tokyo and we spent it hunting FOUR Don Quijotes for bald caps, all to dress as Pitbull.",
+                "Only found four caps though, so half of us went cop instead. Damian just showed up as Chainsaw Man, no notes.",
+                "Pub crawl was chaos in the best way, poor Vyv tapped out early, but I stayed for the last train and the konbini run after.",
+                "Honestly the 680 yen set meal was the real MVP of the day, don't @ me."
+              ],
+              "gridX": 49,
+              "gridY": 30,
+              "photo": "545",
+              "posts": [
+                {
+                  "id": "545",
+                  "lines": 4,
+                  "title": "Last day in Tokyo",
+                  "url": "https://blog.devhou.se/545/"
+                }
+              ],
+              "present": true,
+              "voice": null
             },
             "2025-11-02": {
               "present": false
@@ -54528,6 +55332,22 @@
             "2025-10-30": {
               "present": false
             },
+            "2025-11-01": {
+              "dialogue": [
+                "Senso-ji was packed today, mid-service and all, but the market walk up is still magic every time.",
+                "Spent way too long hunting coin lockers in Asakusa before caving and paying 3500 yen for luggage storage.",
+                "Detour of the day: Neko-en, less a cafe and more just a room of rescue cats, worth every minute.",
+                "Fell asleep during Cool Runnings but woke up rested enough to laugh at Barbie's very not-Indian parrot. Bye for now!"
+              ],
+              "gridX": 26,
+              "gridY": 17,
+              "photo": null,
+              "present": true,
+              "voice": null
+            },
+            "2025-11-02": {
+              "present": false
+            },
             "2025-11-05": {
               "present": false
             },
@@ -54578,8 +55398,8 @@
                 "Confessed the next day I led us home on maps, not memory, sorry Gloria, and sorry Mr. Worldwide bar hoppers.",
                 "Off to Osaka solo now, saving my legs for a week around Lake Biwa - catch you from the saddle."
               ],
-              "gridX": 11,
-              "gridY": 25,
+              "gridX": 6,
+              "gridY": 38,
               "photo": "549",
               "posts": [
                 {
@@ -58538,6 +59358,9 @@
             "2025-11-11": {
               "present": false
             },
+            "2025-11-12": {
+              "present": false
+            },
             "2025-11-13": {
               "dialogue": [
                 "Woke up early, took the shinkansen from Okayama to Himeji, Bailey scored a Hello Kitty ticket.",
@@ -58627,6 +59450,9 @@
               "present": false
             },
             "2025-10-03": {
+              "present": false
+            },
+            "2025-11-01": {
               "present": false
             },
             "2025-11-05": {
@@ -62037,7 +62863,7 @@
           "z": 5
         }
       ],
-      "name": "Palace",
+      "name": "Marunouchi",
       "npcs": [
         {
           "autoFlip": {
@@ -62206,6 +63032,9 @@
               "present": false
             },
             "2025-10-30": {
+              "present": false
+            },
+            "2025-11-01": {
               "present": false
             },
             "2025-11-03": {
@@ -65612,24 +66441,7 @@
               "present": false
             },
             "2025-11-12": {
-              "dialogue": [
-                "Took the shinkansen from Hakata to Okayama today, said goodbye to Julia and everything.",
-                "Okayama Korakuen was gorgeous, smelled amazing, real peaceful vibe.",
-                "The castle interior turned out to be a museum, not 'authentic as-is' like I heard \u2014 bit of a letdown, but the outside was great.",
-                "Bought some Bizen ware, had beer and kushikatsu, then found a bar with incredible cocktails. Himeji Castle tomorrow, wish me luck!"
-              ],
-              "gridX": 33,
-              "gridY": 10,
-              "photo": "745",
-              "posts": [
-                {
-                  "id": "745",
-                  "lines": 4,
-                  "title": "\u535a\u591a\u304b\u3089\u5ca1\u5c71\u307e\u3067",
-                  "url": "https://blog.devhou.se/745/"
-                }
-              ],
-              "present": true
+              "present": false
             },
             "2025-11-13": {
               "present": false
@@ -77419,6 +78231,9 @@
             "2025-10-30": {
               "present": false
             },
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-05": {
               "present": false
             },
@@ -77502,6 +78317,9 @@
             "2025-11-11": {
               "present": false
             },
+            "2025-11-12": {
+              "present": false
+            },
             "2025-11-13": {
               "present": false
             },
@@ -77573,6 +78391,9 @@
               "present": false
             },
             "2025-10-30": {
+              "present": false
+            },
+            "2025-11-01": {
               "present": false
             },
             "2025-11-03": {
@@ -85735,6 +86556,9 @@
             },
             "2025-11-11": {
               "present": false
+            },
+            "2025-11-12": {
+              "present": false
             }
           }
         },
@@ -85952,6 +86776,9 @@
               "voice": null
             },
             "2025-10-31": {
+              "present": false
+            },
+            "2025-11-01": {
               "present": false
             },
             "2025-11-03": {
@@ -89883,6 +90710,9 @@
             },
             "2025-11-07": {
               "present": false
+            },
+            "2025-11-12": {
+              "present": false
             }
           }
         },
@@ -89906,6 +90736,9 @@
           "present": false,
           "sprite": "julia_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-05": {
               "dialogue": [
                 "Shirakawa-go was unreal, mountains like a green-brown-gold rainbow, snow dusted on the peaks.",
@@ -90537,7 +91370,7 @@
           "z": 5
         }
       ],
-      "name": "Shrine \u00b7 Market",
+      "name": "Shrine \u00b7 Asakusa",
       "npcs": [],
       "objects": [],
       "shopEnabled": false,
@@ -91709,7 +92542,7 @@
           "z": 5
         }
       ],
-      "name": "Shrine \u00b7 Tokyo",
+      "name": "Palace Shrine",
       "npcs": [],
       "objects": [],
       "shopEnabled": false,
@@ -96289,7 +97122,7 @@
           "z": 5
         }
       ],
-      "name": "Tokyo",
+      "name": "Imperial Palace",
       "npcs": [
         {
           "autoFlip": {
@@ -96355,16 +97188,7 @@
               "present": false
             },
             "2025-11-01": {
-              "dialogue": [
-                "Senso-ji was packed today, mid-service and all, but the market walk up is still magic every time.",
-                "Spent way too long hunting coin lockers in Asakusa before caving and paying 3500 yen for luggage storage.",
-                "Detour of the day: Neko-en, less a cafe and more just a room of rescue cats, worth every minute.",
-                "Fell asleep during Cool Runnings but woke up rested enough to laugh at Barbie's very not-Indian parrot. Bye for now!"
-              ],
-              "gridX": 30,
-              "gridY": 22,
-              "photo": null,
-              "present": true
+              "present": false
             },
             "2025-11-02": {
               "dialogue": [
@@ -96588,24 +97412,7 @@
               "present": false
             },
             "2025-11-01": {
-              "dialogue": [
-                "Last day in Tokyo and we spent it hunting FOUR Don Quijotes for bald caps, all to dress as Pitbull.",
-                "Only found four caps though, so half of us went cop instead. Damian just showed up as Chainsaw Man, no notes.",
-                "Pub crawl was chaos in the best way, poor Vyv tapped out early, but I stayed for the last train and the konbini run after.",
-                "Honestly the 680 yen set meal was the real MVP of the day, don't @ me."
-              ],
-              "gridX": 35,
-              "gridY": 39,
-              "photo": "545",
-              "posts": [
-                {
-                  "id": "545",
-                  "lines": 4,
-                  "title": "Last day in Tokyo",
-                  "url": "https://blog.devhou.se/545/"
-                }
-              ],
-              "present": true
+              "present": false
             },
             "2025-11-02": {
               "present": false
@@ -96697,6 +97504,7 @@
         }
       ],
       "objects": [],
+      "sentenceName": "the Imperial Palace",
       "transporters": [
         {
           "gridX": 0,
@@ -101928,6 +102736,9 @@
             },
             "2025-11-07": {
               "present": false
+            },
+            "2025-11-12": {
+              "present": false
             }
           }
         },
@@ -101951,6 +102762,9 @@
           "present": false,
           "sprite": "julia_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-03": {
               "dialogue": [
                 "Worst hotel coffee of my life this morning, so we hunted down Karuizawa's famous apple pie instead. Two kinds, both incredible.",
@@ -104006,6 +104820,9 @@
             "2025-10-30": {
               "present": false
             },
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-02": {
               "dialogue": [
                 "Karuizawa kicked off Dealers Choice week and Damian's plan was all vibes, all good ones.",
@@ -104942,6 +105759,9 @@
               "present": false
             },
             "2025-10-30": {
+              "present": false
+            },
+            "2025-11-01": {
               "present": false
             },
             "2025-11-03": {

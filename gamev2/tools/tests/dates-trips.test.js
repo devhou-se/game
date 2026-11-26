@@ -192,7 +192,15 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
         assert.ok(Math.max(Math.abs(spot.x - 30), Math.abs(spot.y - 36)) <= 6, `${spot.x},${spot.y}`);
         assert.deepStrictEqual({ ...T.startFor(posted, '2027-02-13', { played: 'sam' }) }, { room: 'Sapporo', x: 33, y: 12 }, 'playing Sam: nobody else is anywhere');
         assert.strictEqual(meet(groups, 'Tokyo', T.arrivalText(posted, '2027-02-13', 'Tokyo')),
-            'Today Sam is here in Tokyo. devhouse 3 starts in Sapporo on February 18. Walk into Sam to say hello.');
+            'Today Sam is here in the Imperial Palace. devhouse 3 starts in Sapporo on February 18. Walk into Sam to say hello.');
+        // a room is named in a sentence by its `sentenceName` where it has one (the district's display name
+        // is "Imperial Palace", which does not read after "in": #219), else by its display name, else its key
+        assert.strictEqual(T.placeName({ name: 'Imperial Palace', sentenceName: 'the Imperial Palace' }, 'Tokyo'), 'the Imperial Palace');
+        assert.strictEqual(T.placeName({ name: 'Asakusa' }, 'Market'), 'Asakusa');
+        assert.strictEqual(T.placeName({}, 'Market'), 'Market');
+        assert.strictEqual(T.placeName(undefined, 'Gone'), 'Gone');
+        assert.strictEqual(realConfig().rooms.Tokyo.sentenceName, 'the Imperial Palace');
+        assert.deepStrictEqual(Object.keys(realConfig().rooms).filter((k) => realConfig().rooms[k].sentenceName), ['Tokyo']);
         assert.deepStrictEqual({ ...T.startFor(posted, '2027-02-11', { played: 'james' }) }, { room: 'Sapporo', x: 33, y: 12 }, 'the day before the post');
         assert.deepStrictEqual({ ...T.startFor(posted, '2027-02-18', { played: 'james' }) }, { room: 'Sapporo', x: 33, y: 12 }, 'day one: the lead-in post is history');
     });

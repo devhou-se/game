@@ -167,9 +167,19 @@ class Trips {
         const lead = Trips.leadIn(Trips.of(config), date);
         if (!lead) return '';
         const room = lead.stay && lead.stay.room, def = room && config.rooms && config.rooms[room];
-        const place = def ? (def.name || room) : lead.trip.where;
+        const place = def ? Trips.placeName(def, room) : lead.trip.where;
         const where = place ? ` ${def && room === here ? 'here ' : ''}in ${place}` : '';
         return `${lead.trip.name} starts${where} on ${Trips.dayText(lead.trip.start)}.`;
+    }
+
+    /**
+     * A room's name inside a sentence ("Today Sam is here in ..."): its
+     * `sentenceName` where the display name does not read after "in"
+     * (the district "Imperial Palace" is "the Imperial Palace", issue #219),
+     * else the display name, else the key.
+     */
+    static placeName(def, room) {
+        return (def && (def.sentenceName || def.name)) || room;
     }
 
     /** The content days that belong to a trip, sorted (every dated day belongs to exactly one). */
@@ -274,7 +284,7 @@ class Trips {
                     y: npc.gridY != null ? npc.gridY : cy + (npc.gridOffsetY || 0),
                 });
             }
-            if (here.length) out.push({ room, name: def.name || room, members: here });
+            if (here.length) out.push({ room, name: Trips.placeName(def, room), members: here });
         }
         return out;
     }

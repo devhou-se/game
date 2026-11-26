@@ -50,6 +50,8 @@ GENERATORS = [
     'generate_izakaya', 'generate_houses', 'generate_shrines',
 ]
 GENERATORS += ['generate_kanazawa', 'generate_shirakawago', 'generate_toyama']     # Hokuriku (issue #68)
+# config `districts` from tools/districts.py: last, it reads where the landmarks of every room stand (issue #219)
+GENERATORS += ['districts']
 # config_to_tiled.py, run over every room that has a committed tiled/*.tmj
 TILED = 'config_to_tiled'
 # Tools that draw sprites / prefabs (and register them in config.json). They

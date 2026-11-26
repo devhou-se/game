@@ -329,7 +329,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.strictEqual(P.whereText(config, CITY), `${config.rooms[CITY].name} (overseas)`);
         assert.strictEqual(P.whereText(config, HOME), `${config.rooms[HOME].name} (in ${config.rooms[CITY].name}, overseas)`);
         assert.strictEqual(P.whereText(config, HANEDA), 'Haneda Airport (in Tokyo)');
-        assert.strictEqual(P.whereText(config, 'HanedaStation'), 'Haneda Airport Station (in Tokyo)');
+        assert.strictEqual(P.whereText(config, 'HanedaStation'), 'Haneda Station (in Tokyo)');
         assert.deepStrictEqual(plain(P.arrival(config, CITY)), { room: CITY, x: 9, y: 13 });
         // nobody is ever there, so its marker is never the red dot; the ring is the player's
         for (const day of ['2025-10-27', '2027-02-20', '2027-02-10']) assert.ok(!P.present(config, day).has(CITY));

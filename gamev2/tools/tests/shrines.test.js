@@ -73,7 +73,11 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
             assert.strictEqual(h.look, want[h.host], `${h.host}: roof`);
             const room = c.rooms[WIRED[h.host]], look = h.look, other = look === 'red' ? 'blue' : 'red';
             assert.deepStrictEqual([room.interior, room.lanternLight, room.shopEnabled, room.name],
-                [true, true, false, `Shrine · ${h.room.name || h.host}`]);
+                [true, true, false, { Tokyo: 'Palace Shrine' }[h.host] || `Shrine · ${h.room.name || h.host}`]);
+            // a hall is named for its town by the town's DISPLAY name ("Shrine · Asakusa", room key Market);
+            // the palace's hall has a name of its own, because "Imperial Palace shrine" is too long for a
+            // phone's one-row HUD bar - and stays a standard hall: only Kushida and Dazaifu are large (#219)
+            assert.strictEqual(room.worldWidth / 64, 20, `${h.host}: a standard hall`);
             const keys = new Set(room.layers.flatMap((l) => Object.values(l.tiles)).map((id) => c.tilePalette[id]));
             for (const piece of ['honden', 'lattice', 'pillar', 'lanterns', 'wall', 'wall-curtain', 'wall-shoji', 'floor-a', 'floor-b', 'runner-l']) {
                 assert.ok(keys.has(`shrine-in-${piece}-${look}_0_0`), `${h.host}: no ${piece} in ${look}`);

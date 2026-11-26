@@ -28,6 +28,35 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   the shop doorway beside it (9,14); before the rule a ramen post sealed off the west half of the alley,
   Sam's base spot included. `walk_region` is the whole stitched city for a district, so a walk that leaves
   the district and comes back counts.
+- **Districts** (issue #219, config `districts`, written by `tools/districts.py`; the list and the fields are
+  in `landmarks-and-towns.md`, "Districts"). A post often names an area and no landmark ("we stayed in
+  Asakusa"); before, the model could only choose among named spots and such a post went to whatever sounded
+  closest. Now:
+  - `find_areas` offers every district of every outdoor room as `Room · Name (area)` (`AREA`, so
+    `Sapporo · Odori Park`, the spot, and `Sapporo · Odori Park (area)`, the park, are two ids). Stations and
+    interiors have none. `all_spots` is `find_spots` plus the areas, and is what `main` and `--rehome` use.
+  - `offer_lines` is the list the model reads: `- Market · Senso-ji temple (in Asakusa)` for a named spot
+    inside a district, `- Market · Asakusa (area): Senso-ji temple and its five-storey pagoda, ...` for a
+    district, with its description. The system prompt says to prefer the named spot a post is about and to
+    choose an area when the post names the district, or is about what its description says, and no named
+    spot fits.
+  - `area_cell` picks the cell: the free one nearest the district's `stand` that is inside its `bounds`, on
+    ordinary ground (`plain_cells`: not road, rail, a crossing, a stair or a bridge deck), in the open, not
+    a doorway or the cell in front of one (`doorway_cells`: every transporter and its four neighbours, seams
+    into the next district included), not on the room's edge row or column, and everything `walkable_near`
+    asks (reachable, free for the whole stay, nobody walled in). Only when every such cell is taken does a
+    road cell inside the bounds do (Shirakawa-go's far bank is a bus bay); never a stair, a deck or the track.
+    `stand_cell` is the one place that knows an area from a landmark.
+  - `--mock` with no steered spot answers with the district the post's text names (`named_area`: the longest
+    name on offer that appears as a whole word), else the first spot as before; the real model reads the same
+    names with their descriptions.
+  - Room-scoped `LANDMARKS` rows for what a post about Asakusa or the palace names: `Senso-ji temple` (the
+    foot of the main hall's steps), `the temple gate`, `the izakaya` (beside its door, not in front),
+    `the Imperial Palace gate`, `the palace moat`.
+  - `test_districts` in `tools/test_blog_to_npc.py` checks every district (in step with `districts.py`,
+    inside its room, no overlap, seven authors each given a cell that is none of the above) and places a post
+    whose text names "Asakusa" and nothing else. The rehearsal places one post that only names a district and
+    one steered to a district, and its last lines say how many districts were offered.
 - **The blog rehearsal** (issue #119): `python3 tools/rehearse_blog.py [--keep DIR] [-v]` (`--keep` takes a new or empty
   directory, or one an earlier rehearsal kept — it refuses anything else, and anything in or around `gamev2/`) runs
   `blog_to_npc.py` end to end the way the www-jp `game-npc-pipeline` workflow does (one `--payload … --mock
@@ -75,6 +104,13 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   shrine, 727 to Canal City, 731 to Fukuoka Tower and 740 to Dazaifu Tenmangu. Stage 3 (Hokuriku) moved
   fourteen to the place each is about: Toyama's 576 / 583 / 611, Shirakawa-go's 610 / 631, and Kanazawa's
   635, 642 (to Kanazawa Station's platform: the train ride there), 652, 653, 662, 669, 677, 686 and 707.
+  Step 1 of the city redesign (issue #219) moved the four the audit found
+  in the wrong place for want of labels, each checked against its post: Bailey's Senso-ji day (560, 1 Nov
+  2025) from the palace pond to `Market · Senso-ji temple`, Julia's four Don Quijotes (545, 1 Nov) from the
+  palace's vending machines to `Market · the Don Takote discount store`, Dylan's izakaya and karaoke night
+  (549, 1 Nov) from a 7-Eleven to `Market · the izakaya`, and Damian's Hakata-to-Okayama shinkansen (745,
+  12 Nov) from Tokyo's Park to `FukuokaStation · the platform`. A district is a target too:
+  `--rehome Bailey 2025-11-01 "Market · Asakusa (area)"`.
   The cell is free for the
   whole stay (`occupied_during`: from that date until the NPC's next placement, or until a later trip or
   stay starts everyone from its base again — `trip_window`), not just on the day — history is not always

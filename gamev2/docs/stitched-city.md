@@ -6,7 +6,8 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 
 ### Stitched cities: one continuous Tokyo (issues #40 / #41)
 
-Tokyo, Market, Palace, Park and Machi are still five Tiled maps and five room keys in `config.json` — but at
+Tokyo, Market, Palace, Park and Machi (room KEYS: the player reads their display names, "Imperial Palace",
+"Asakusa", "Marunouchi", "Park", issue #219 — see `name` in `maps-and-rooms.md`) are still five Tiled maps and five room keys in `config.json` — but at
 load they are merged into ONE runtime room, `TokyoCity`, so you walk between them with no fade, no input
 block and no reload, and the next district is on screen before you reach it. Inaka, Yukimura, Osaka, Sapporo and
 Asahikawa were always single maps; interiors and trains keep their fade.
