@@ -2,13 +2,28 @@
 """generate_sapporo.py — "Sapporo", Hokkaido's city, in winter (issue #43).
 
 A generated room (roomgen + prefabs, the generate_osaka.py recipe). Reachable
-ONLY by train: the station house door on the north side leads into the
-SapporoStation interior (built by generate_stations.py). Unlike the other
-towns it is laid out on a street GRID, the way Sapporo is:
+ONLY by train: the doors under the station's star clock on the north side lead
+into the SapporoStation interior (built by generate_stations.py). Unlike the
+other towns it is laid out on a street GRID, the way Sapporo is.
 
-  north   the rail line, the platform and the station house; the station
-          plaza; west of the avenue a row of high-rises and the discount store,
-          east of it the SAPPORO CLOCK TOWER on its own paving and the konbini
+It is being rebuilt district by district (issue #219). Stage 1, the north, is
+done - two districts with ground and buildings of their own:
+
+  SAPPORO STATION FRONT   red basket-weave brick (arcade-brick-autotile). The
+          station front with the star clock stands across the rail line; its
+          plaza runs down to Kita-Odori west of the avenue. West of the plaza,
+          on the same brick, the red-brick government hall (Akarenga, sealed:
+          a landmark) and the glass KITA office block, then the discount store.
+  CLOCK TOWER BLOCK       dark setts (flat-grey-brick-autotile), east of the
+          avenue: the SAPPORO CLOCK TOWER where it always stood, the konbini,
+          and the red-brick office block in the north-east corner.
+
+  The two office blocks open into lobbies (tools/generate_houses.py --lobbies
+  Sapporo; their doors are in roomgen.TOWER_DOORS, and roomgen.save_config
+  keeps them through a rebuild). No generic townhouse stands in the north.
+
+Still to come (stages 2-4): Odori Park, Tanukikoji, Susukino. Until then:
+
   middle  Kita-Odori street, then ODORI PARK - a boulevard strip of snow trees
           and lanterns with a path down the middle, cut by the three
           north-south streets - and the SAPPORO TV TOWER at its east end
@@ -19,12 +34,15 @@ Streets: two east-west (rows 20-22 and 31-33) and three north-south (columns
 14-16, 30-32 the station avenue, and 44-46), plain asphalt where they cross.
 You can walk on them - there is no traffic.
 
-Nobody gets lost behind a building: the high-rises stand shoulder to shoulder
-and a hedge closes the ground behind them; the Clock Tower and the TV Tower
-collide along their silhouettes (tools/make_prefabs.py), so only a roof tip
-or the TV Tower's thin mast is ever between the player and the camera.
+Nobody gets lost behind a building: the west row is closed by a shrub in each
+gap between its buildings and a hedge behind them; the station front, the
+government hall and the office blocks collide up to their roof lines and the
+Clock Tower and the TV Tower along their silhouettes (tools/make_prefabs.py),
+so only a roof tip, a rooftop board or the TV Tower's thin mast is ever
+between the player and the camera.
 
-Landmark art is drawn by tools/generate_hokkaido.py. Deterministic and
+Landmark art is drawn by tools/generate_hokkaido.py (the two towers) and
+tools/generate_sapporo_art.py (everything else of Sapporo's own). Deterministic and
 idempotent: rebuilds rooms.Sapporo from scratch each run, keeping any NPCs the
 blog pipeline has placed there and the konbini door generate_konbinis.py wired
 (on a first build there is none to keep: the door is sealed until that runs).
@@ -33,11 +51,14 @@ world changes nothing - tools/check_generators.py (issue #107).
 
 Run from gamev2/:
     python3 tools/generate_hokkaido.py            # sprites (needs Pillow)
+    python3 tools/generate_sapporo_art.py         # sprites + their spriteMetadata (needs Pillow)
     python3 tools/make_prefabs.py
     python3 tools/generate_sapporo.py
     python3 tools/generate_konbinis.py Sapporo    # KonbiniSapporo1 + its door (first build, or the store moved)
     python3 tools/generate_discount_stores.py Sapporo   # DonTakoteSapporo (door wired here)
     python3 tools/generate_stations.py            # builds SapporoStation + registry
+    python3 tools/generate_houses.py Sapporo            # HouseSapporo<n> (the houses in the south)
+    python3 tools/generate_houses.py --lobbies Sapporo  # LobbySapporo<n> (the two office blocks)
     node tools/play.js lint Sapporo            (and SapporoStation, KonbiniSapporo1)
     python3 tools/config_to_tiled.py Sapporo SapporoStation KonbiniSapporo1 DonTakoteSapporo
 """
@@ -82,25 +103,29 @@ for x in range(W):
     b.put('Over Floor', x, 4, 'train-track_0_0')
 for x in range(1, W - 1):
     b.fence(x, 2, x)                                  # north fence line
-for x in list(range(1, 23)) + list(range(37, W - 1)):
-    b.fence(x, 6, x)                                  # south fence, gap at the platform
+for x in list(range(1, 24)) + list(range(34, W - 1)):
+    b.fence(x, 6, x)                                  # south fence, up to the station's wings
 for y in (3, 4, 5):                                   # snowy caps at the corridor ends
     b.stamp('shrub-small-snow', 0, y); b.stamp('shrub-small-snow', W - 1, y)
 for x in range(3, W - 3, 6):                          # drifts beyond the tracks
     b.stamp('shrub-large-snow', x, 0)
 
-# ---- station platform, station house, forecourt --------------------------------
-b.autotile('light-concrete-autotile', rect(23, 6, 32, 8))
-b.stamp('lamp-blue', 24, 7); b.stamp('lamp-blue', 31, 7)
-b.stamp('vending-white', 26, 6); b.stamp('vending-red', 28, 6)
-for i, px in enumerate((25, 27, 30)):
-    b.paver(px, 8, i)
-station_door = b.stamp('house-blue', 33, 4, seal=False)[0]   # door -> SapporoStation
-b.autotile('light-concrete-autotile', rect(23, 9, 38, 10))
+# ---- the two northern districts' own ground (issue #219, stage 1) ---------------
+STATION_BRICK = 'arcade-brick-autotile'       # Sapporo Station front: red basket-weave brick
+CLOCK_SETTS = 'flat-grey-brick-autotile'      # Clock Tower block: dark setts
+STATION = (24, 4)                             # the station front, 10x7: its feet on row 10
+# Station front: the strip the station stands on and the yard east of it, the
+# plaza down to Kita-Odori, and the forecourt of the row west of the plaza
+b.autotile(STATION_BRICK, set(rect(23, 7, 38, 10)) | set(rect(23, 11, 29, 18)))
+b.autotile(STATION_BRICK, rect(2, 17, 15, 18))
+# Clock Tower block: one square from the avenue to the east hedge
+b.autotile(CLOCK_SETTS, rect(34, 12, 53, 18))
 
-# ---- paving: the station plaza, the Clock Tower's square, the pavements ----------
-b.autotile('grey-brick-autotile', rect(23, 11, 29, 18))
-b.autotile('grey-brick-autotile', rect(34, 12, 43, 18))
+# ---- the station front, across the rail line: the track runs behind it and the
+#      doors under the star clock (a pair) open onto the plaza -> SapporoStation --
+station_doors = b.stamp('sapporo-station-front', *STATION, seal=False)
+
+# ---- paving: the pavements, Odori's path, the TV Tower's plaza -------------------
 b.autotile('light-concrete-autotile', rect(2, 19, 53, 19))       # north pavement of Kita-Odori
 b.autotile('light-concrete-autotile', rect(2, 34, 53, 34))       # south pavement of Minami-Odori
 b.autotile('light-concrete-autotile', rect(2, 41, 53, 41))       # the lane the houses front on
@@ -115,13 +140,17 @@ vroad(EAST, KITA, 40)
 for sx in (WEST, AVENUE, EAST):
     crossing(sx, KITA); crossing(sx, MINAMI)
 
-# ---- west of the avenue: the business district, shoulder to shoulder, feet on
-#      row 18 so the row reads as one street front. Doors sealed - no interiors -
-#      except the discount store's, which opens into DonTakoteSapporo (issue #91;
-#      tools/generate_discount_stores.py builds the shop floor) -----------------
-b.stamp('highrise-blue', 2, 8)
-b.stamp('highrise-glass', 7, 9)
-b.stamp('highrise-apartment', 11, 11)
+# ---- west of the plaza, still Station front: the red-brick government hall
+#      (a landmark: sealed) and the glass KITA office block (its lobby is opened
+#      by generate_houses.py --lobbies), feet on row 16 behind a brick forecourt;
+#      then the discount store, which opens into DonTakoteSapporo (issue #91;
+#      tools/generate_discount_stores.py builds the shop floor). A shrub closes
+#      each gap in the row -----------------------------------------------------
+AKARENGA = (2, 11)
+b.stamp('sapporo-akarenga', *AKARENGA)
+b.stamp('shrub-small-snow', 9, 16)
+b.stamp('sapporo-office-glass', 10, 11)
+b.stamp('shrub-small-snow', 15, 16)
 store_door = b.stamp('discount-store', 16, 11, seal=False)[0]
 # a hedge from the platform fence down to the store's shoulder: the ground behind
 # the towers (and under their roof lines) is not somewhere to wander
@@ -136,7 +165,8 @@ b.stamp('tree-snow', 26, 13)
 b.stamp('vending-white', 24, 11); b.stamp('vending-red', 25, 11)
 b.stamp('lantern-red', 23, 17); b.stamp('lantern-red', 29, 17)
 
-# ---- east of the avenue: the Clock Tower, the konbini, a house -----------------
+# ---- east of the avenue, the Clock Tower block: the Clock Tower, the konbini and
+#      the red-brick office block (a lobby, as the glass one) --------------------
 CLOCK = (37, 11)
 b.stamp('sapporo-clock-tower', *CLOCK)
 b.stamp('lantern-red', 36, 17); b.stamp('lantern-red', 42, 17)
@@ -145,12 +175,12 @@ b.stamp('tree-snow', 34, 13)
 KONBINI = (44, 15)
 konbini_door = b.stamp('seven-eleven', *KONBINI, seal=False)[0]   # wired by generate_konbinis.py; kept below
 b.stamp('sign-7-11', 47, 17)
-b.stamp('house-red', 49, 9)
+b.stamp('sapporo-office-brick', 49, 9)
 b.stamp('tree-snow', 45, 9); b.stamp('tree-snow', 40, 7)
-b.stamp('shrub-small-snow', 52, 16); b.stamp('shrub-small-snow', 48, 13)
+b.stamp('shrub-small-snow', 48, 13)
 
 # lamps along the pavements (clear of the konbini door and the crossings)
-for x in (5, 9, 13, 22, 28, 34, 42, 52):                # 52: clear of the TV Tower's mast
+for x in (3, 8, 15, 22, 28, 34, 42, 52):                # 52: clear of the TV Tower's mast
     b.stamp('lamp-blue', x, 19)
 for x in (5, 11, 20, 27, 36, 41, 50):
     b.stamp('lamp-blue', x, 34)
@@ -202,13 +232,7 @@ for x in (0, W - 1):
 for i, x in enumerate(range(1, W - 1)):
     b.fence(x, 42, i)
 
-# ---- keep the player off the ballast: the south fence has a gap at the
-#      platform, so a platform-edge fence closes the gravel row behind it -------
-for x in range(23, 37):
-    if f'{x},5' not in b.L['Colliders']:
-        b.fence(x, 5, x)
-
-# isolated: the ONLY way out is the station house door into SapporoStation (the
+# isolated: the ONLY way out is the station's doors into SapporoStation (the
 # konbini and the discount store lead to their own interiors and back).
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) - keep them.
 prev = cfg['rooms'].get('Sapporo', {})
@@ -221,12 +245,13 @@ b.finish()      # picket fences + solid tracks: the room is complete without a p
 # (listed in the order they already are: generate_konbinis.py appends its door)
 cfg['rooms']['Sapporo'] = b.room('Sapporo', npcs=prev.get('npcs', []), transporters=rg.kept_order(prev, [
     # into the station at its entry cell (generate_stations.py: a large station's is not 11,11)
-    rg.transporter(station_door[0], station_door[1], 'SapporoStation',
-                   *cfg.get('stations', {}).get('SapporoStation', {}).get('entry', [11, 11]), hidden=True),
+    rg.transporter(x, y, 'SapporoStation',
+                   *cfg.get('stations', {}).get('SapporoStation', {}).get('entry', [11, 11]), hidden=True)
+    for x, y in station_doors
 ] + ([konbini_entry] if konbini_entry else []) + [
     don.door_transporter('Sapporo', store_door),
 ]))
 
 rg.save_config(cfg)
-print(f'Sapporo {W}x{H}; station house door at {station_door} -> SapporoStation; '
+print(f'Sapporo {W}x{H}; station doors at {station_doors} -> SapporoStation; '
       f'Clock Tower at {CLOCK}, TV Tower at {TOWER}, konbini at {KONBINI}')

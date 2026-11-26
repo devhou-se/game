@@ -149,6 +149,24 @@ PREFABS = {
                                 colliders=[(x, y) for x in (2, 3) for y in range(3, 9)]
                                           + [(x, y) for x in range(1, 5) for y in (9, 10)]
                                           + [(x, y) for x in range(6) for y in (11, 12)], doors=[]),
+    # ---- Sapporo's own buildings (issue #219; art drawn by tools/generate_sapporo_art.py) --
+    # The station front: everything collides from the wings' roof line down (rows
+    # 2-6), and so do the glazed hall (columns 3-8, row 1) and the tower stub
+    # behind the east wing (columns 7-8, row 0): nothing of it is walk-behind.
+    # The doors under the clock are a pair, as the sprite draws them.
+    'sapporo-station-front': dict(w=10, h=7, sprites=[('Collidables', 0, 0, 'sapporo-station-front_0_0')],
+                                  colliders=[(x, y) for x in range(10) for y in range(2, 7)]
+                                            + [(x, 1) for x in range(3, 9)] + [(7, 0), (8, 0)],
+                                  doors=[(4, 6), (5, 6)]),
+    # The red-brick government hall (Akarenga): the hall and its slate roof (rows
+    # 2-5) and the dome on its drum (the middle column above them) collide.
+    'sapporo-akarenga':      dict(w=7, h=6, sprites=[('Collidables', 0, 0, 'sapporo-akarenga_0_0')],
+                                  colliders=[(x, y) for x in range(7) for y in range(2, 6)] + [(3, 0), (3, 1)],
+                                  doors=[(3, 5)]),
+    # The two office blocks: only the top row (the roof plant, the KITA board) is
+    # walk-behind - a wall of windows is not something to stand behind.
+    'sapporo-office-brick':  building(4, 7, door=2, roof=1),
+    'sapporo-office-glass':  building(5, 6, door=2, roof=1),
     # The bridge over Asahikawa's frozen river: a flat deck you walk ON. It sits
     # on Non-Collidables with a negative depthBias (spriteMetadata, written by
     # generate_hokkaido.py) so it draws over the ice but under everyone on it.

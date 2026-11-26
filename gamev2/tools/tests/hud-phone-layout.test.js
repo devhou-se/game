@@ -178,7 +178,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.deepStrictEqual(kinds(bare[744], 'Shrine'), ['Shrine · Asakusa'], 'one character too long: the date');
         assert.deepStrictEqual(kinds(bare[744], 'Lobby'), [], 'every lobby counts down at 844x390');
         assert.deepStrictEqual(kinds(bare[715], 'Shrine'), ['Shrine · Asakusa']);
-        assert.deepStrictEqual(kinds(bare[715], 'Lobby'), []);
+        // Sapporo's lobbies (#219) read "Sapporo lobby", 13 characters like "Sapporo house": the date at 667x375
+        assert.deepStrictEqual(kinds(bare[715], 'Lobby'), ['Lobby · Sapporo 1', 'Lobby · Sapporo 2']);
         assert.deepStrictEqual(notHouses(bare[744]), stations.filter(n => n.length > 13).concat('Imperial Palace', abroad).sort());
         assert.ok(bare[744].has('Kanazawa Station') && !bare[744].has('Tokyo Station'));
         assert.deepStrictEqual(notHouses(bare[715]), stations.concat('Shirakawa-go', 'Imperial Palace', 'Palace Shrine', abroad).sort());

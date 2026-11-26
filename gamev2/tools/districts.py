@@ -87,11 +87,11 @@ DISTRICTS = {
     # --- Hokkaido ---------------------------------------------------------
     'Sapporo': [
         d('station-front', 'Sapporo Station front',
-          'the station plaza: arrivals, the meeting point, the walk out of the station into the snow',
-          (21, 6, 35, 19), stand=(26, 15)),
+          'the star-clock station front on its red-brick plaza: arrivals, the meeting point, the walk out into the snow',
+          (21, 6, 33, 19), stand=(26, 15)),
         d('clock-tower', 'Clock Tower block',
-          'the Sapporo Clock Tower among office blocks, the 7-Eleven beside it',
-          (36, 6, 53, 19), stand=(38, 18)),
+          'the Sapporo Clock Tower on dark setts beside a red-brick office block, the 7-Eleven next to it',
+          (34, 6, 53, 19), stand=(38, 18)),
         d('odori-park', 'Odori Park',
           'the long snowy boulevard park: snow sculptures, food stalls, the Sapporo TV Tower at its east end',
           (2, 23, 53, 30), stand=(24, 27)),

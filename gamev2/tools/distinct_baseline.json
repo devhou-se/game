@@ -15,19 +15,19 @@
     "sprites": 0.544
   },
   "Osaka": {
-    "buildings": 0.5,
+    "buildings": 0.2,
     "own": 0.107,
     "sprites": 0.451
   },
   "SanFranbourne": {
     "buildings": 0.5,
-    "own": 0.659,
-    "sprites": 0.333
+    "own": 0.688,
+    "sprites": 0.321
   },
   "Sapporo": {
-    "buildings": 0.5,
-    "own": 0.118,
-    "sprites": 0.486
+    "buildings": 0.3,
+    "own": 0.333,
+    "sprites": 0.462
   },
   "Sendai": {
     "buildings": 0.231,

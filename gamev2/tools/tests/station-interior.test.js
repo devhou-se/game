@@ -109,8 +109,11 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, realConfig }) => {
                 same(into.map((t) => t.gridX).sort(), [hall.entry[0], hall.entry[0] + 1], `${key}: the hall's mats are below its entry cell`);
                 return;
             }
-            assert.strictEqual(into.length, 1, `${key}: one door in ${st.town}`);
-            same([into[0].targetX, into[0].targetY], st.entry, `${key}: the town door misses the entry cell`);
+            // one door cell, or a pair side by side (Sapporo's station front, #219): the first is the west one
+            into.sort((a, b) => a.gridX - b.gridX);
+            assert.ok(into.length === 1 || (into.length === 2 && key === 'SapporoStation'), `${key}: ${into.length} doors in ${st.town}`);
+            if (into.length === 2) same([into[1].gridX, into[1].gridY], [into[0].gridX + 1, into[0].gridY], `${key}: the pair of doors is not side by side`);
+            for (const t of into) same([t.targetX, t.targetY], st.entry, `${key}: the town door misses the entry cell`);
             // the exit: two mats under the front wall, straight below the entry cell, out to the cell in front of the door
             const mats = room.transporters;
             assert.strictEqual(mats.length, 2, `${key}: exit mats`);
@@ -122,7 +125,7 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, realConfig }) => {
                 assert.ok(m.reach(st.entry).has(K(t.gridX, t.gridY)), `${key}: the exit cannot be walked to`);
             }
             for (let y = st.entry[1]; y < m.h; y++) assert.ok(m.free(st.entry[0], y), `${key}: the way from the entry cell down to the exit is blocked at row ${y}`);
-            assert.ok(!townSolid.has(K(into[0].gridX, into[0].gridY)), `${key}: the town door is sealed`);
+            for (const t of into) assert.ok(!townSolid.has(K(t.gridX, t.gridY)), `${key}: the town door is sealed`);
         });
     });
 

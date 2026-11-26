@@ -334,7 +334,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         // south wall have no cell to stand on at their doors), so Sendai's start at 2
         assert.deepStrictEqual(byTown, {
             Asahikawa: [1, 2, 3], Fukuoka: [1, 2, 3, 4], Market: [1, 2, 3], Osaka: [1, 2, 3],
-            Sapporo: [1, 2, 3, 4, 5, 6, 7], Sendai: [2, 3, 4, 5],
+            Sapporo: [1, 2, 3, 4, 5, 6], Sendai: [2, 3, 4, 5],     // Sapporo's north-east house went with the rebuild of the north (#219)
         });
         // with this many, all four layouts are in the game
         assert.deepStrictEqual([...new Set(houses(c).map(([, r]) => r.house.layout))].sort(), ['flat', 'futon', 'hearth', 'kotatsu']);

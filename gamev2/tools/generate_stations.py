@@ -277,7 +277,7 @@ TOWN_DOORS = {          # townRoom: (hidden door cell into the station, exit cel
     'OsakaStation':    {'door': [24, 9], 'exit': [24, 10]},
     'KanazawaStation': {'door': [33, 9], 'exit': [33, 10]},
     'SendaiStation':   {'door': [35, 9], 'exit': [35, 10]},
-    'SapporoStation':   {'door': [34, 9], 'exit': [34, 10]},
+    'SapporoStation':   {'door': [28, 10], 'exit': [28, 11]},     # the west of the station front's pair of doors
     'AsahikawaStation': {'door': [32, 9], 'exit': [32, 10]},
     'FukuokaStation':   {'door': [30, 9], 'exit': [30, 10]},
     # the airport hall's own entry cell (generate_airports.layout()['entry']); there is no town door

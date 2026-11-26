@@ -11,6 +11,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
     const TOWERS = {
         'highrise-yellow_0_0': [[1, 7]], 'highrise-blue_0_0': [[2, 10]], 'highrise-glass_0_0': [[1, 9], [2, 9]],
         'highrise-apartment_0_0': [[2, 7]], 'midrise-apartment_0_0': [[2, 5]],
+        'sapporo-office-brick_0_0': [[2, 6]], 'sapporo-office-glass_0_0': [[2, 5]],     // Sapporo's own (#219)
     };
     const python = (args, cwd) => spawnSync('python3', args, { cwd: cwd || GV2, encoding: 'utf8', maxBuffer: 1 << 26 });
     const scratch = (fn) => {

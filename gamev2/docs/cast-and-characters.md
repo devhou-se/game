@@ -78,8 +78,8 @@ creator's composite (head / torso / legs / beard donors + recolours), run offlin
   measured palettes of the hand-drawn five); a hand-drawn replacement can be added there.
 - **Base NPCs** come from the same tool (`HOME`: room, cell, two placeholder lines that state no facts about
   anyone). They are added only while the room has no NPC of that name, so later edits and the blog pipeline's
-  states are never undone. All three stand in Sapporo — Khoi by the station house (38,8), Sam on the Odori
-  park path (21,27), Xander on the Clock Tower plaza (35,17) — and are marked `"trip": "devhouse3",
+  states are never undone. All three stand in Sapporo — Khoi in the yard east of the station front (38,8), Sam on the Odori
+  park path (21,27), Xander on the Clock Tower block's setts (35,17) — and are marked `"trip": "devhouse3",
   "stay": "Sapporo"`, so they are there on devhouse 3's Sapporo days only (issue #131, see Trips), until
   their first post moves them. The rest of the devhouse 3 base cast (the other four in Sapporo, all seven
   in Asahikawa) is plain config data with the same marks.

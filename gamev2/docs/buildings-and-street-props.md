@@ -14,7 +14,7 @@ see Shop, Food and Drink). Of the ported houses, one opens: the red house at Mar
 (issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`). Houses (the
 `house-*` townhouses, and a machiya with no shop sign) get a generic home interior from
 `tools/generate_houses.py` - in Asahikawa, Fukuoka, Market, Osaka, Sapporo and Sendai (issue #208, see House interiors). The high-rises and
-apartment blocks get a lobby from the same tool (`--lobbies`; Osaka's three so far, issue #216, see Tower lobbies).
+apartment blocks get a lobby from the same tool (`--lobbies`; Osaka's three and Sapporo's two office blocks so far, issues #216 and #219, see Tower lobbies).
 
 | Prefab | Cells | Placed in |
 |---|---|---|
@@ -23,6 +23,7 @@ apartment blocks get a lobby from the same tool (`--lobbies`; Osaka's three so f
 | `highrise-glass` (curtain-wall tower) | 4x10 | Osaka (42,29) |
 | `highrise-apartment` (tiled-balcony flats) | 5x8 | Osaka (3,30) |
 | `midrise-apartment` (the same block, two floors lower) | 5x6 | Palace (40,10), feet on the forecourt edge |
+| `sapporo-office-brick` / `sapporo-office-glass` (Sapporo's own office blocks, `roof=1`: only the top row is walk-behind) | 4x7 / 5x6 | Sapporo (49,9) / (10,11) - each with a lobby |
 | `discount-store` (the "Don Quijote") | 5x8 | Market (46,22), Osaka (13,9) by the Dotonbori arch, Sapporo (16,11) - each with an interior |
 | `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Machi (4/9/14,17): the old-town lane |
 

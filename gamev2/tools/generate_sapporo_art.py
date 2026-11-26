@@ -70,8 +70,12 @@ Ground
   snow-path-autotile_*         1x1  a path trodden through the snow (9 roles):
                                     the snow tile a shade lower, boot prints
 
-This tool only writes PNGs into assets/sprites/. It does NOT register anything
-in config.json: the Sapporo rebuild does that when it places them.
+This tool writes the PNGs into assets/sprites/ and registers every one in
+config.json (spriteMetadata, tileNames), as generate_fukuoka_art.py does; the
+palette grows when a generator first places a sprite (roomgen.pidx). The
+prefabs of the pieces that are placed are in tools/make_prefabs.py, the two
+office blocks' doors in roomgen.TOWER_DOORS, and the town itself is built by
+tools/generate_sapporo.py - stage by stage, so most of this is not placed yet.
 
 Deterministic (no randomness, no clock): two runs give byte-identical files.
 Needs Pillow. Run from gamev2/:
@@ -2302,6 +2306,19 @@ def scenes(built, outdir):
     s.save(f'{outdir}/sapporo_art_susukino.png')
 
 
+def register(built, path='config.json'):
+    """spriteMetadata and tileNames for every sprite (the anchor is the centre of
+    the top-left cell; a ground tile's is its own centre). Rewrites config.json
+    only if something changed, so a re-run is a no-op."""
+    cfg = json.load(open(path))
+    before = json.dumps(cfg, sort_keys=True)
+    for key, im in built.items():
+        cfg['spriteMetadata'][key] = {'frameCount': 1, 'anchorX': 32 / im.width, 'anchorY': 32 / im.height}
+        cfg.setdefault('tileNames', {})[key] = key.rsplit('_', 1)[0] if 'autotile' in key else key[:-len('_0_0')]
+    if json.dumps(cfg, sort_keys=True) != before:
+        json.dump(cfg, open(path, 'w'), indent=2, sort_keys=True)
+
+
 def main():
     built = build()
     for key, im in built.items():
@@ -2309,6 +2326,7 @@ def main():
         if 'autotile' not in key:
             print(f'{key}: {im.width}x{im.height}px ({im.width // 64}x{im.height // 64} cells)')
     print(', '.join(f[0] for f in FAMILIES) + f': {len(ROLES)} roles each')
+    register(built)
     for flag, fn in (('--sheet', sheet), ('--scenes', scenes), ('--manifest', manifest)):
         if flag in sys.argv:
             fn(built, sys.argv[sys.argv.index(flag) + 1])

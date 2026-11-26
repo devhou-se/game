@@ -43,11 +43,13 @@ HOUSE_PREFIX = 'House'      # rooms.House<Town><n>, the interiors generate_house
 # The towers the same generator gives a lobby (issue #216): the one sprite a
 # high-rise, an office tower or a block of flats is -> its door cells, relative
 # to the sprite's top-left cell (the bottom row, as building() in
-# make_prefabs.py puts them; the glass tower's doors are a pair). A landmark
-# tower (Tokyo Tower, the TV tower, Fukuoka Tower, a castle) is not in here.
+# make_prefabs.py puts them; the glass tower's doors are a pair; the last row
+# is Sapporo's two office blocks, issue #219). A landmark tower (Tokyo Tower,
+# the TV tower, Fukuoka Tower, a castle) is not in here.
 TOWER_DOORS = {
     'highrise-yellow_0_0': [(1, 7)], 'highrise-blue_0_0': [(2, 10)], 'highrise-glass_0_0': [(1, 9), (2, 9)],
     'highrise-apartment_0_0': [(2, 7)], 'midrise-apartment_0_0': [(2, 5)],
+    'sapporo-office-brick_0_0': [(2, 6)], 'sapporo-office-glass_0_0': [(2, 5)],
 }
 LOBBY_PREFIX = 'Lobby'      # rooms.Lobby<Town><n>
 # The shrine halls tools/generate_shrines.py can open (issue #212): the hall's

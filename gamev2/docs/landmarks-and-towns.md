@@ -18,6 +18,7 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Dotonbori ferris wheel | Osaka | `dotonbori-wheel_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
 | Sapporo Clock Tower | Sapporo | `sapporo-clock-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
 | Sapporo TV Tower | Sapporo | `sapporo-tv-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
+| Sapporo Station front (the star clock), the red-brick government hall (Akarenga) | Sapporo | `sapporo-station-front_0_0`, `sapporo-akarenga_0_0` | shaded pixel art drawn by `tools/generate_sapporo_art.py` |
 | Date Masamune statue (Aoba Castle ruins) | Sendai | `sendai-masamune_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
 | Zuihoden | Sendai | `sendai-zuihoden_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
 | The pub (HUB) | Sendai | `sendai-pub_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
@@ -221,12 +222,23 @@ pipeline has placed someone there.
 
 - **Sapporo** (`tools/generate_sapporo.py`, 56x43) is the one town on a street GRID: two east-west streets
   (rows 20-22, 31-33) and three north-south (columns 14-16, 30-32 the station avenue, 44-46), `road-plain`
-  asphalt where they cross (roads are ordinary walkable Floor tiles). North of the first street: the
-  high-rise row + discount store (west), the station plaza, the **Clock Tower** on its paving and the
-  konbini (`KonbiniSapporo1`). Between the streets: **Odori Park**, a strip of snow trees and lanterns with a
-  path down the middle, closed at the east end by the **TV Tower**. South: houses on a lane and a
-  frozen-pond corner. The high-rises stand shoulder to shoulder with a hedge closing the ground behind
-  them, and both landmarks collide along their silhouettes (see their prefab comments): the Clock
+  asphalt where they cross (roads are ordinary walkable Floor tiles). It is being rebuilt district by
+  district (issue #219); **stage 1, the north, is done** and is two districts, each on ground of its own.
+  **Sapporo Station front** (red basket-weave brick, `arcade-brick-autotile`): the station front with the
+  star clock (`sapporo-station-front`, 10x7 at (24,4), across the rail line; its pair of doors (28,10) and
+  (29,10) both lead into `SapporoStation`, and you come out on (28,11)), the plaza below it, and west of
+  the plaza on the same brick the red-brick government hall (`sapporo-akarenga` at (2,11), a landmark:
+  sealed), the glass KITA office block (`sapporo-office-glass`) and the discount store. **Clock Tower
+  block** (dark setts, `flat-grey-brick-autotile`, east of the avenue): the **Clock Tower** where it always
+  stood, the konbini (`KonbiniSapporo1`) and the red-brick office block (`sapporo-office-brick`). The two
+  office blocks open into lobbies (`LobbySapporo1`, `LobbySapporo2`, see Tower lobbies); no generic
+  townhouse and no Osaka high-rise stands north of Kita-Odori. Still to come (stages 2-4: Odori Park,
+  Tanukikoji, Susukino), and until then as it was: between the streets **Odori Park**, a strip of snow trees
+  and lanterns with a path down the middle, closed at the east end by the **TV Tower**; south, houses on a
+  lane and a frozen-pond corner. The west row is closed by a shrub in each gap and a hedge behind it; the
+  station front, the government hall and the office blocks collide up to their roof lines (nothing of the
+  station is walk-behind; of an office block only its top row), and both towers collide along their
+  silhouettes (see their prefab comments): the Clock
   Tower is solid up to its pyramid roof (only the roof tip is walk-behind) and the TV Tower up to the top
   of its lattice (only the thin mast is), so the tower's shaft closes Kita-Odori's roadway at columns
   49-50 and you pass it on the north pavement. Nobody is fully hidden behind either landmark (on the pavement at (49-50,19) the foot of the mast covers half the player).
@@ -243,6 +255,13 @@ pipeline has placed someone there.
   snow ground (Asahikawa and Yukimura's shrine path do, #105) - and `gravel-snow-autotile` from
   `gravel-autotile` the same way (`SNOW_FAMILIES`), which the rail corridors of Yukimura, Sapporo and
   Asahikawa use (#125). `test_game.js` fails a snow-ground room that lays either grass-fringed family.
+- **Sapporo's own art**: `tools/generate_sapporo_art.py` (needs Pillow, in `check_generators` `ART_TOOLS`)
+  draws everything else that is Sapporo's - the station front, the government hall, the two office blocks,
+  and the pieces the later stages will place (Tanukikoji's arcade, Susukino's neon, Odori's snow sculptures
+  and stalls, the streetcar, `arcade-brick-autotile` and `snow-path-autotile`) - and registers every sprite
+  in `spriteMetadata` / `tileNames`. A piece gets a prefab in `make_prefabs.py` when a stage places it
+  (stage 1: `sapporo-station-front`, `sapporo-akarenga`, `sapporo-office-brick`, `sapporo-office-glass`).
+  `--sheet`, `--scenes` and `--manifest` write a contact sheet, mock scenes and the door / footprint table.
 - **Flat sprites over water**: `Over Floor` and `Water` share one fixed depth, so a multi-cell sprite on
   `Over Floor` is drawn UNDER water tiles. The bridge therefore sits on `Non-Collidables` with
   `spriteMetadata.depthBias: -200` (written by `generate_hokkaido.py`'s `FLAT` table): above every ground
@@ -253,10 +272,12 @@ pipeline has placed someone there.
   `generate_sapporo.py` re-seals the konbini door, so run it after every Sapporo regeneration. (The
   discount store's door is wired by `generate_sapporo.py` itself and survives a regeneration; its
   interior is `generate_discount_stores.py Sapporo`.)
-- **Build order**: `generate_hokkaido.py`, `make_prefabs.py`, `generate_sapporo.py`,
+- **Build order**: `generate_hokkaido.py`, `generate_sapporo_art.py`, `make_prefabs.py`, `generate_sapporo.py`,
   `generate_asahikawa.py`, `generate_konbinis.py Sapporo`, `generate_discount_stores.py Sapporo`,
-  `generate_stations.py` (the towns fence and seal themselves - `b.finish()`), then
+  `generate_stations.py` (the towns fence and seal themselves - `b.finish()`; the station's way out is
+  `TOWN_DOORS` there), `generate_houses.py Sapporo` and `generate_houses.py --lobbies Sapporo`, then
   `config_to_tiled.py Sapporo Asahikawa SapporoStation AsahikawaStation KonbiniSapporo1 DonTakoteSapporo`
+  and the House / Lobby rooms
   (it takes any number of rooms and fails, writing nothing, on a name that is not a room - #102) and
   `node tools/play.js lint <Room>` (lint reads the Tiled map).
 - Blog NPCs can be sent to `the Sapporo Clock Tower`, `the Sapporo TV Tower`, `the bridge over the frozen
@@ -369,7 +390,7 @@ arguments it rebuilds every town that already has houses, and a re-run on an unc
 A town is given its houses by `.agent-queue/items/houses_apply.sh <Town> ...`, which runs the art tools,
 the generator, `config_to_tiled` and lint for the rooms touched, then the five checks.
 
-**Which towns have them** (24 houses; asserted by `houses.test.js`, "the roll-out"):
+**Which towns have them** (23 houses; asserted by `houses.test.js`, "the roll-out"):
 
 | Town | Houses | Stay sealed |
 |---|---|---|
@@ -377,7 +398,7 @@ the generator, `config_to_tiled` and lint for the rooms touched, then the five c
 | Fukuoka | `HouseFukuoka1..4` (two townhouses by the avenue, two machiya) | - |
 | Market (a Tokyo district) | `HouseMarket1..3` (the shopfront townhouses on the south street) | the Izakaya's house keeps its own door |
 | Osaka | `HouseOsaka1..3` | - |
-| Sapporo | `HouseSapporo1..7` (one north-east, six on the south lane) | - |
+| Sapporo | `HouseSapporo1..6` (the south lane; the north-east one went with the rebuild of the north, #219, and the rest moved up a number) | - |
 | Sendai | `HouseSendai2..5` (the machiya row, one townhouse on the south lane) | 1: the courtyard house behind its earthen wall; 6..10: the row behind the south wall - nobody can stand at their doors, so the numbers are kept and unused |
 
 Machi, Inaka and Yukimura have none on purpose (those towns are going away); Palace, Park and Tokyo have no
@@ -447,11 +468,13 @@ The same generator opens a second kind of building: `tools/generate_houses.py --
 gives every high-rise, office tower and block of flats a `Lobby<Town><n>` room (`Lobby · Osaka 2`). It is
 the house code with another row in its `KINDS` table, so everything above holds - found in the town's map
 data, numbered in door order, skipped and sealed by the same rules, a no-op on a re-run, kept through a
-town rebuild by `roomgen.save_config`. **Applied to Osaka only** (the office block, the flats, the glass
-tower); the rollout is `.agent-queue/items/lobbies_apply.sh <Town> ...`.
+town rebuild by `roomgen.save_config`. **Applied to Osaka** (the office block, the flats, the glass
+tower) **and Sapporo** (its own two office blocks, `LobbySapporo1` the brick one in the Clock Tower block,
+`LobbySapporo2` the glass one west of the station plaza, #219); the rollout is `.agent-queue/items/lobbies_apply.sh <Town> ...`.
 
 - **What is a tower** (`roomgen.TOWER_DOORS`): the five generic building sprites `highrise-yellow`,
-  `-blue`, `-glass`, `-apartment` and `midrise-apartment`, with the door cells of their prefabs. Landmark
+  `-blue`, `-glass`, `-apartment` and `midrise-apartment` and Sapporo's `sapporo-office-brick` and
+  `sapporo-office-glass`, with the door cells of their prefabs. Landmark
   towers (Tokyo Tower, the Sapporo TV Tower, Fukuoka Tower, Tsutenkaku, castles) are landmarks and stay
   sealed; the discount store has its own shop floor.
 - **A pair of doors** (the glass tower's): each door that passes the skip rules opens into the same lobby
@@ -470,7 +493,7 @@ tower); the rollout is `.agent-queue/items/lobbies_apply.sh <Town> ...`.
 - **Art**: the eleven `lobby-*` sprites are drawn by `tools/generate_house_art.py`, in the same style.
 - **Lint**: a lobby is held to a home's two rules under the same names (`house-sealed-floor`,
   `flavour-no-front`). Tests: `tools/tests/lobbies.test.js`.
-- **Dry run of the other towns** (26 Nov): Sapporo 2 of 3 and Fukuoka 3 of 4 (a lamp post stands in front
+- **Dry run of the other towns** (26 Nov, before Sapporo's north was rebuilt): Sapporo 2 of 3 and Fukuoka 3 of 4 (a lamp post stands in front
   of the flats' door in each), Sendai 1 of 2 (the flats' door opens onto a sealed verge), Market 1,
   Palace 2; Asahikawa, Tokyo and Park have no towers.
 
