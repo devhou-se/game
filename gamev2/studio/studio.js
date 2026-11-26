@@ -140,17 +140,23 @@ function layout(keys) {
 }
 
 const THROUGH = 4;
+const CROSS = 8;
 const GAP = 4;
 function placeRooms(rooms, links) {
     const keys = Object.keys(rooms);
     const byRoom = Object.fromEntries(keys.map(k => [k, []]));
     const weight = Object.fromEntries(keys.map(k => [k, 0]));
-    for (const l of links) {
+    const pairKey = (l) => [l.a, l.b].sort().join('\u0000');
+    const bundle = {};
+    for (const l of links) bundle[pairKey(l)] = (bundle[pairKey(l)] || 0) + 1;
+    links.forEach((l, i) => {
+        l.i = i;
+        l.n = bundle[pairKey(l)];
         byRoom[l.a].push(l);
         if (l.b !== l.a) byRoom[l.b].push(l);
         weight[l.a] += l.w;
         weight[l.b] += l.w;
-    }
+    });
     const area = (k) => rooms[k].w * rooms[k].h;
     const overlaps = (k, x, y, placed) => {
         const r = rooms[k];
@@ -169,11 +175,26 @@ function placeRooms(rooms, links) {
         for (const o of placed) through += clipLength(x1, y1, x2, y2, rooms[o]);
         return l.w * (len + THROUGH * through);
     };
-    const roomCost = (k, placed) => byRoom[k].reduce((c, l) => c + (placed.has(l.a) && placed.has(l.b) ? linkCost(l, placed) : 0), 0);
+    const live = (l) => placed.has(l.a) && placed.has(l.b);
+    const ends = (l) => [rooms[l.a].x + l.ax, rooms[l.a].y + l.ay, rooms[l.b].x + l.bx, rooms[l.b].y + l.by];
+    const crossCost = (touched) => {
+        const E = links.map(l => live(l) ? ends(l) : null);
+        let c = 0;
+        for (const l of touched) {
+            if (!E[l.i]) continue;
+            for (const o of links) {
+                if (o === l || !E[o.i] || (touched.has(o) && o.i < l.i)) continue;
+                if ((o.a === l.a && o.b === l.b) || (o.a === l.b && o.b === l.a)) continue;
+                if (crosses(E[l.i], E[o.i])) c += CROSS * Math.min(l.w, o.w) / (l.n * o.n);
+            }
+        }
+        return c;
+    };
+    const roomCost = (k, placed) => byRoom[k].reduce((c, l) => c + (live(l) ? linkCost(l, placed) : 0), 0);
     const movedCost = (moved) => {
         const touched = new Set();
         for (const k of moved) for (const l of byRoom[k]) touched.add(l);
-        let c = 0;
+        let c = crossCost(touched);
         for (const l of touched) c += linkCost(l, placed);
         for (const l of links) {
             if (touched.has(l)) continue;
@@ -224,7 +245,13 @@ function placeRooms(rooms, links) {
         const k = pick(keys);
         const r = rooms[k];
         const move = random();
-        const swap = move >= 0.85 ? pick(keys) : null;
+        const sibling = () => {
+            const near = byRoom[k].length ? pick(byRoom[k]) : null;
+            const o = near ? (near.a === k ? near.b : near.a) : null;
+            const l = o ? pick(byRoom[o]) : null;
+            return l ? (l.a === o ? l.b : l.a) : pick(keys);
+        };
+        const swap = move >= 0.85 ? (move < 0.93 ? sibling() : pick(keys)) : null;
         if (swap === k) continue;
         const s = swap ? rooms[swap] : null;
         const moved = swap ? [k, swap] : [k];
@@ -252,6 +279,13 @@ function placeRooms(rooms, links) {
     const minX = Math.min(...keys.map(k => rooms[k].x)), minY = Math.min(...keys.map(k => rooms[k].y));
     for (const k of keys) { rooms[k].x -= minX; rooms[k].y -= minY; }
     return rooms;
+}
+
+function crosses([ax, ay, bx, by], [cx, cy, dx, dy]) {
+    const same = (x1, y1, x2, y2) => x1 === x2 && y1 === y2;
+    if (same(ax, ay, cx, cy) || same(ax, ay, dx, dy) || same(bx, by, cx, cy) || same(bx, by, dx, dy)) return false;
+    const turn = (px, py, qx, qy, rx, ry) => Math.sign((qx - px) * (ry - py) - (qy - py) * (rx - px));
+    return turn(ax, ay, bx, by, cx, cy) * turn(ax, ay, bx, by, dx, dy) < 0 && turn(cx, cy, dx, dy, ax, ay) * turn(cx, cy, dx, dy, bx, by) < 0;
 }
 
 function clipLength(x1, y1, x2, y2, r) {
