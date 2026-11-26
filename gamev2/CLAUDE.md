@@ -56,6 +56,8 @@ python3 tools/sync_cities.py --check    # config `cities` and devhouse.world agr
   `/Library/Developer/CommandLineTools/usr/bin/python3` to cover them, and for any imaging tool.
 - After a map edit: `node tools/play.js lint <Room>` and look at `node tools/play.js render <Room> out.png`.
 - After touching `blog_to_npc.py`, a Hokkaido map, the trips or the cast: `python3 tools/rehearse_blog.py`.
+- A change the player can see: run the browser regression, `tools/browser/regress.js` (how: `tools/browser/README.md`).
+  If you change behaviour it asserts on purpose, update that assertion in the same commit, strictly.
 - Add or extend a unit test for logic you change (`tools/tests/*.test.js`, `tools/test_blog_to_npc.py`). When a
   fix lives in a Phaser-side class, pull the decision into a static function there and add a case.
   The tests live in `tools/tests/<area>.test.js` (`test_game.js` is only the runner and its shared helpers): add a
