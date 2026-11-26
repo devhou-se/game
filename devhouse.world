@@ -83,6 +83,27 @@
       "y": 5440,
       "width": 3968,
       "height": 3968
+    },
+    {
+      "fileName": "gamev2/tiled/kanazawa.tmj",
+      "x": -7168,
+      "y": -5504,
+      "width": 3840,
+      "height": 3328
+    },
+    {
+      "fileName": "gamev2/tiled/shirakawago.tmj",
+      "x": -3328,
+      "y": -4224,
+      "width": 2304,
+      "height": 2048
+    },
+    {
+      "fileName": "gamev2/tiled/toyama.tmj",
+      "x": -2944,
+      "y": -6400,
+      "width": 2816,
+      "height": 2176
     }
   ],
   "onlyShowAdjacentMaps": false,

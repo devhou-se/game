@@ -63,7 +63,8 @@ their route in the room's map data rather than in coordinates, have no collision
     its open end; the islets, the pier and the moored boat keep west of it). **Fukuoka's Naka river** is
     another horizontal one (issue #67: rows 40-42, `from` the first rimmed column east of the beach - a
     closed end at the river mouth - `to` the east edge, `under` columns 29-32, the same parapet and shade
-    tiles as Osaka's bridge). Frozen water (Asahikawa's river,
+    tiles as Osaka's bridge). **Toyama's sea** declares a horizontal one too (issue #68: rows 1-3, from
+    the river mouth to the east edge of the map, its open end). Frozen water (Asahikawa's river,
     Yukimura's pond) declares none, so it gets no boats.
   Runs too short for a boat to travel `MIN_TRAVEL` (128px, so a run is at least four cells for either
   hull - the three-cell pockets between the moat's rocks get none) are dropped. On a closed run a boat

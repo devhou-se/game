@@ -838,7 +838,7 @@ class GameScene extends Phaser.Scene {
         const played = Trips.baseOf((this.player && this.player.baseSpriteKey) || config.player.sprite);
         const present = Places.present(config, gameDate(), { played });
 
-        // click a town's dot to travel there (outside its station) — debug-only:
+        // click a town's dot to travel there (outside its station, Places.arrival) — debug-only:
         // off unless enabled in the hidden ``` debug menu, so the map is
         // normally just a viewer. The image always swallows its clicks so
         // clicking the map never falls through to the close-overlay:

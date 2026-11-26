@@ -28,6 +28,11 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Canal City and its fountain | Fukuoka | `canal-city_0_0`, `canal-fountain_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
 | Kushida shrine's Yamakasa float | Fukuoka | `hakata-yamakasa_0_0` (beside a `shrine-red` hall) | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
 | Dazaifu Tenmangu: hall, arched bridge, plum trees | Fukuoka | `dazaifu-hall_0_0`, `dazaifu-bridge_0_0`, `plum-tree_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
+| Kanazawa Castle's Ishikawa gate | Kanazawa | `kanazawa-ishikawa-gate_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
+| Kenrokuen's Kotoji lantern | Kanazawa | `kanazawa-kotoji_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
+| Higashi Chaya teahouses, the whisky bar | Kanazawa | `kanazawa-chaya-a/-b_0_0`, `kanazawa-whisky-bar_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
+| Gassho farmhouses, the suspension bridge, the viewpoint, the peaks | Shirakawago | `shirakawa-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
+| Glass Art Museum, tram and stop, black-ramen shop, port observation tower | Toyama | `toyama-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 
 - **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reachable only by train, like Yukimura:
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
@@ -91,6 +96,73 @@ the board) and sits detached, north-north-east of Tokyo, in `devhouse.world`.
   spots. Ten devhouse 2 placements that had been scattered over Tokyo were re-homed there with `--rehome`;
   post 480 stays on Tokyo Station's platform (its lines are spoken there: "straight here to catch a three
   hour train to Sendai").
+
+### Hokuriku: Kanazawa, with Shirakawa-go and Toyama on foot (issue #68, stage 3)
+
+Three generated rooms that the game stitches into ONE walkable room, **`HokurikuCity`** - the second stitched
+city, built with the mechanism Tokyo's districts use (see `stitched-city.md`; nothing in the stitcher is
+Tokyo-specific). Kanazawa is the full town and has the region's one station (`KanazawaStation`, a city stop on
+the board after Tokyo's day trips: the Hokuriku line). Shirakawa-go and Toyama are small places with NO
+station: the owner's rule is that small places are walked to from their town, not ridden to.
+
+- **Layout** (`tools/hokuriku.py`, the one place the three generators agree on it; city cells, the union's
+  top-left is 0,0): **Toyama** 44x34 at (66,0), the coast; **Kanazawa** 60x52 at (0,14); **Shirakawa-go**
+  (room key `Shirakawago`, display name `Shirakawa-go`) 36x32 at (60,34), below Toyama. Kanazawa's avenue runs
+  out of its east edge (rows 30-32) and is Shirakawa-go's road in (rows 10-12); Shirakawa-go's mountain path
+  leaves its north edge (columns 24-25) and is Toyama's path in (columns 18-19); the **Sho river** runs down
+  Shirakawa-go (columns 10-15) and on through Toyama (columns 4-9) to the sea. Toyama and Kanazawa do not
+  touch - six columns of wood lie between them - and no district overlaps another. The gaps of the union are
+  filled by the stitcher's woodland (`cities.HokurikuCity.backdrop`, the same spec as Tokyo's; it also carries
+  Kanazawa's railway on into the wood). The city is 110x66, so its `depthScale` is 1.
+- **Seams**: every seam cell (three road cells, two path cells, each way) carries a hidden transporter
+  landing three cells in from the neighbour's edge (`hokuriku.seams`), which is what `?stitch=0` plays; the
+  only cells open on a shared edge are those, so nothing can be walked across stitched that cannot be
+  crossed unstitched. A dirt path that runs on into the neighbour ends in `edge-w` / `edge-e` pieces, not the
+  autotile's rounded cap.
+- **Kanazawa** (`tools/generate_kanazawa.py`): rail, platform and station house across the north; the main
+  street comes down to **the avenue** (rows 30-32). North-west, **Higashi Chaya**: four teahouses and two
+  shops over a paved lane. On the avenue's north side, downtown: a machiya, the **whisky bar**, an office
+  tower, a 7-Eleven (`KonbiniKanazawa1`, `generate_konbinis.py Kanazawa`). North-east, **Kanazawa Castle**:
+  the **Ishikawa gate** (8x4; the gateway, columns 3-4 of the sprite, is open all the way through) and behind
+  it grounds with the keep's foundations and nothing on them ("no castle", "under reconstruction" - the
+  cones). Between the gate and the avenue, **Kenrokuen**: the pond with the two-legged **Kotoji lantern** on
+  its bank. South-west, **Nagamachi**: an earth lane between earthen walls (Sendai's wall, gate and pine
+  sprites), the canal along it, a flat stone bridge (`kanazawa-canal-bridge`, `depthBias: -200`) to a samurai
+  gate and a house in its court. South-east, a shrine in a cedar wood (Teramachi, post 707).
+- **Shirakawa-go** (`tools/generate_shirakawago.py`): the road in ends at a bus bay under a bear warning; the
+  **suspension footbridge** (`shirakawa-bridge`, 8x2: the lower row is the deck, flat with `depthBias: -200`,
+  the upper row its far cable) is the only way over the river - the deck row's six water cells are the only
+  ones left out of the colliders. On the east bank: gassho-zukuri farmhouses (solid over the whole thatch),
+  harvested paddies (`shirakawa-paddy`, a Floor tile you can walk on) with drying racks, the **viewpoint** up
+  a flight of steps, and the snow-capped peaks along the north with the pass to Toyama between them.
+- **Toyama** (`tools/generate_toyama.py`): the **sea** is the top of the map (`pond-autotile`, so it can be
+  fished from the quay; rows 1-3 east of the river mouth are its `waterways` entry, open at the east edge,
+  so ambient boats sail it). On the quay, the **port observation tower** (3x7; `game.lookUp.sprites` has it,
+  so the camera looks up). Below: Iwase's old street with the **black-ramen shop**, and the tram street with
+  the **Glass Art Museum**, the **tram stop** and a tram standing on `toyama-tram-rail` (plain Floor tiles,
+  not `train-track`: no ambient train).
+- **No invisible walls**: every generator ends with `Kit.dress()` (`hokuriku.py`), which gives any bare
+  collider a walker can touch a shrub (what `play.js lint` reports as `stray-collision`).
+- **The Map** (a map of Japan, `hud-input-touch.md`) has a dot for each of the three: `config.places` has
+  `Kanazawa`, `Shirakawago` (label `Shirakawa-go`, as on the HUD) and `Toyama`, each a room key, so each
+  district is its own dot although all three are one stitched city — friends in Shirakawa-go light
+  Shirakawa-go's dot and the gold ring follows the district the player is standing in; Kanazawa Station and
+  the 7-Eleven are in Kanazawa. Debug map-click travel lands outside Kanazawa Station, on Shirakawa-go's
+  west road in from Kanazawa and on Toyama's south road in from Shirakawa-go (`Places.arrival`: a town
+  with no station is entered from the side nearest a station).
+- **Build order**: `generate_hokuriku_art.py`, `make_prefabs.py`, `generate_kanazawa.py`,
+  `generate_shirakawago.py`, `generate_toyama.py`, `generate_konbinis.py Kanazawa`, `generate_stations.py`,
+  the three maps in `../devhouse.world` (as `hokuriku.AT` places them), `config cities.HokurikuCity`,
+  `sync_cities.py`, `config_to_tiled.py Kanazawa Shirakawago Toyama KanazawaStation KonbiniKanazawa1`,
+  `play.js lint` for those and `HokurikuCity`, `make_worldmap.py`. In `devhouse.world` the region stands
+  north-west of Tokyo, north of Yukimura and west of Sapporo (its box is x -112..-2, y -100..-34 in world
+  cells), east of Fukuoka's east edge - Fukuoka stays the westernmost map - and across Sendai's band of latitude.
+- Blog NPCs can be sent to `Kanazawa Castle's Ishikawa gate`, `Kenrokuen garden`, `the Higashi Chaya teahouse
+  row`, `the whisky bar`, `the Nagamachi samurai lane` (Kanazawa), `the suspension bridge`, `the Shirakawa-go
+  viewpoint`, `the gassho farmhouses` (Shirakawago), `the Glass Art Museum`, `the tram stop`, `the black
+  ramen shop` and `the port observation tower` (Toyama), each `rooms:`-scoped, besides the generic shrine /
+  7-Eleven / vending / pond spots. Fourteen devhouse 2 placements were re-homed there with `--rehome`
+  (see `blog-pipeline.md`).
 
 ### Hokkaido: Sapporo and Asahikawa (issue #43)
 

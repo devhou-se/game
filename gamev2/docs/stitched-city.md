@@ -126,6 +126,11 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   two cells of brick across the avenue either side of the Tokyo/Market crossroads).
 - **`?stitch=0`** is the safety valve: no cities, the five districts are separate rooms joined by the fade
   transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).
+- **The second city** (issue #68): `HokurikuCity` stitches Kanazawa, Shirakawa-go and Toyama (see
+  "Hokuriku" in `landmarks-and-towns.md`). Nothing in the stitcher, `RoomManager`, the tools or the blog
+  pipeline is Tokyo-specific - every one of them loops over config `cities` - so the second city needed no
+  code change; `tools/tests/kanazawa.test.js` walks it stitched and with `--stitch=0`. A city's key sorts
+  into config order (`HokurikuCity` before `TokyoCity`): do not read "the city" as the first entry.
 - **Adding a district / a second city**: place the map in `devhouse.world` so the shared road lines up,
   add it to `cities.<City>.rooms`, run `tools/sync_cities.py` and `tools/make_worldmap.py`. Keep the hidden
   seam transporters in the maps — `?stitch=0` (and `play.js --stitch=0`, which `play.js check` runs too) still use them.

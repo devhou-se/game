@@ -72,7 +72,10 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   764 on the canal bank under the ferris wheel); the four October test / bug-report posts (382, 391, 396,
   406) left Machi's vending machines for Tokyo's. Stage 2 (issue #67) moved Fukuoka's eight to Fukuoka: 693 and
   750 to the yatai stalls, 719 and 746 to Hakata Station (both off the Tokyo platform or Market), 712 to Kushida
-  shrine, 727 to Canal City, 731 to Fukuoka Tower and 740 to Dazaifu Tenmangu. The cell is free for the
+  shrine, 727 to Canal City, 731 to Fukuoka Tower and 740 to Dazaifu Tenmangu. Stage 3 (Hokuriku) moved
+  fourteen to the place each is about: Toyama's 576 / 583 / 611, Shirakawa-go's 610 / 631, and Kanazawa's
+  635, 642 (to Kanazawa Station's platform: the train ride there), 652, 653, 662, 669, 677, 686 and 707.
+  The cell is free for the
   whole stay (`occupied_during`: from that date until the NPC's next placement, or until a later trip or
   stay starts everyone from its base again — `trip_window`), not just on the day — history is not always
   written in date order — and `process_post` uses the same check.

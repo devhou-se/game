@@ -219,6 +219,19 @@ LANDMARKS = [
     ('canal-city_', 'Canal City', (2, 6), {'rooms': ('Fukuoka',)}),   # the plaza, beside the doors
     ('dazaifu-hall_', 'Dazaifu Tenmangu', (1, 5), {'rooms': ('Fukuoka',)}),   # the court below the steps, off the bridge's axis
     ('building-entrance-1', 'Hakata Station', (3, 1), {'rooms': ('Fukuoka',)}),   # the forecourt, east of the door
+    # Hokuriku (issue #68): Kanazawa, and Shirakawa-go and Toyama, walked to from it
+    ('kanazawa-ishikawa-gate_', "Kanazawa Castle's Ishikawa gate", (6, 6), {'rooms': ('Kanazawa',)}),   # the garden path below the gate, far enough off that a wander never ends in the gateway
+    ('kanazawa-kotoji_', 'Kenrokuen garden', (-1, 1), {'rooms': ('Kanazawa',)}),   # the pond's bank, beside the Kotoji lantern
+    ('kanazawa-chaya-a_', 'the Higashi Chaya teahouse row', (2, 4), {'rooms': ('Kanazawa',)}),   # the paved lane, beside a teahouse door
+    ('kanazawa-whisky-bar_', 'the whisky bar', (2, 4), {'rooms': ('Kanazawa',)}),   # the pavement beside its door
+    ('sendai-gate_', 'the Nagamachi samurai lane', (-1, -2), {'rooms': ('Kanazawa',)}),   # the earth lane, across the canal from the gate
+    ('shirakawa-bridge_', 'the suspension bridge', (10, 2), {'rooms': ('Shirakawago',)}),   # the lane at the village bridgehead: far enough off that a wander never ends on the one-cell deck
+    ('shirakawa-lookout_', 'the Shirakawa-go viewpoint', (1, -1), {'rooms': ('Shirakawago',)}),   # the terrace, at the rail
+    ('shirakawa-gassho_', 'the gassho farmhouses', (3, 5), {'rooms': ('Shirakawago',)}),   # the lane, beside the big house's door
+    ('toyama-glass-museum_', 'the Glass Art Museum', (1, 6), {'rooms': ('Toyama',)}),   # the pavement beside its doors
+    ('toyama-tram-stop_', 'the tram stop', (3, 1), {'rooms': ('Toyama',)}),   # beside the shelter
+    ('toyama-ramen_', 'the black ramen shop', (2, 4), {'rooms': ('Toyama',)}),   # the old street, beside its door
+    ('toyama-port-tower_', 'the port observation tower', (-1, 6), {'rooms': ('Toyama',)}),   # the quay at its foot, west of the entrance
     # Inside a station (issue #73): the west end of the platform, by the
     # vending machine — clear of the train doors, the arrival cell and the exit
     ('white-vending-machine-top', 'the platform', {'indoors': True}),

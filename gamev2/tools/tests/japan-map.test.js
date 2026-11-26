@@ -12,13 +12,13 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.ok(p, `no place ${key}`);
         return P.project(meta, p.lon, p.lat);
     };
-    // the towns another lane is building: their geo is already in config, their rooms are not
-    const COMING = ['Kanazawa', 'Toyama', 'Shirakawago'];
-    // the world with those rooms in it, each a town of its own
-    const withComing = () => {
+    // Hokuriku (#68): three districts of one stitched city, each a real town of its own and so a dot of its own
+    const HOKURIKU = ['Kanazawa', 'Toyama', 'Shirakawago'];
+    // the world as it was before those rooms were built: their geo in config, their rooms not
+    const before = () => {
         const c = realConfig();
         const rooms = Object.assign({}, c.rooms);
-        for (const k of COMING) if (!rooms[k]) rooms[k] = { name: k, layers: [], npcs: [] };
+        for (const k of HOKURIKU) delete rooms[k];
         return Object.assign({}, c, { rooms });
     };
     const inside = (pts, lon, lat) => {
@@ -58,17 +58,17 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.ok(Math.hypot(fx - ox, fy - oy) > Math.hypot(ox - tx, oy - ty));
         // every dot is on land, on the right island, and well inside the picture
         const island = { Sapporo: 'Hokkaido', Asahikawa: 'Hokkaido', Fukuoka: 'Kyushu' };
-        for (const p of P.list(withComing())) {
+        for (const p of P.list(realConfig())) {
             assert.ok(inside(meta.islands[island[p.key] || 'Honshu'], p.lon, p.lat), `${p.key} is in the sea`);
             const [x, y] = P.project(meta, p.lon, p.lat);
             assert.ok(x > 8 && y > 8 && x < meta.width - 8 && y < meta.height - 8, `${p.key} is at the edge`);
         }
     });
 
-    test('every town that is a real place has a dot, one per city, and it comes from config (#211)', () => {
+    test('every town that is a real place has a dot, one per town, and it comes from config (#211)', () => {
         const config = realConfig();
         const list = P.list(config);
-        assert.deepStrictEqual(plain(list.map(p => p.label)).sort(), ['Asahikawa', 'Fukuoka', 'Osaka', 'Sapporo', 'Sendai', 'Tokyo']);
+        assert.deepStrictEqual(plain(list.map(p => p.label)).sort(), ['Asahikawa', 'Fukuoka', 'Kanazawa', 'Osaka', 'Sapporo', 'Sendai', 'Shirakawa-go', 'Tokyo', 'Toyama']);
         // the stitched city is ONE dot, named after the city
         const tokyo = list.find(p => p.key === 'TokyoCity');
         assert.deepStrictEqual(plain(tokyo.rooms), plain(config.cities.TokyoCity.rooms).map(m => m.room));
@@ -93,19 +93,27 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.strictEqual(P.whereText(config, 'TokyoStation'), 'Tokyo Station');
         assert.strictEqual(P.whereText(config, 'Inaka'), 'Inaka (not on this map)');
 
-        // a geo whose room is not built yet is skipped, and shows the day the room lands
-        for (const k of COMING) {
-            if (config.rooms[k]) continue;
-            assert.ok(config.places[k], `${k} has its geo ready`);
-            assert.ok(!list.some(p => p.key === k));
+        // the districts of a stitched region are dots of their own where they are real places far apart:
+        // Hokuriku is one stitched city and three towns (Tokyo's districts are one), and it has no dot itself
+        assert.deepStrictEqual(plain(config.cities.HokurikuCity.rooms).map(m => m.room).sort(), HOKURIKU.slice().sort());
+        assert.ok(!config.places.HokurikuCity && !list.some(p => p.key === 'HokurikuCity'));
+        for (const k of HOKURIKU) {
+            assert.deepStrictEqual(plain(list.find(p => p.key === k).rooms), [k]);
+            assert.strictEqual(P.of(config, k), k, `${k} is its own town, not "Hokuriku"`);
         }
-        const later = P.list(withComing());
-        assert.strictEqual(later.length, list.length + COMING.filter(k => !config.rooms[k]).length);
-        assert.strictEqual(later.find(p => p.key === 'Shirakawago').label, 'Shirakawa-go');
-        // the districts of a stitched region can be dots of their own
-        const region = Object.assign({}, withComing());
-        region.cities = Object.assign({}, region.cities, { Hokuriku: { name: 'Hokuriku', rooms: COMING.map(room => ({ room, x: 0, y: 0 })) } });
-        assert.strictEqual(P.of(region, 'Toyama'), 'Toyama');
+        // the label is the town's name as the HUD has it, never the room key
+        assert.strictEqual(list.find(p => p.key === 'Shirakawago').label, 'Shirakawa-go');
+        assert.strictEqual(config.rooms.Shirakawago.name, 'Shirakawa-go');
+        assert.ok(!list.some(p => p.label === 'Shirakawago'));
+        // the station and the konbini are in Kanazawa; the two villages have neither
+        assert.strictEqual(P.of(config, 'KanazawaStation'), 'Kanazawa');
+        assert.strictEqual(P.of(config, 'KonbiniKanazawa1'), 'Kanazawa');
+        assert.strictEqual(P.whereText(config, 'Shirakawago'), 'Shirakawa-go');
+        assert.strictEqual(P.whereText(config, 'KonbiniKanazawa1'), '7-Eleven · Kanazawa');
+        // a geo whose room is not built yet is skipped, and shows the day the room lands
+        const earlier = P.list(before());
+        assert.strictEqual(earlier.length, list.length - HOKURIKU.length);
+        for (const k of HOKURIKU) assert.ok(config.places[k] && !earlier.some(p => p.key === k));
         // a bad entry is no dot, not a crash
         const odd = Object.assign({}, config, { places: { Osaka: { geo: [135.5] }, Sendai: {}, Nowhere: { geo: [1, 2] }, Sapporo: { geo: [141.35, 43.06] } } });
         assert.deepStrictEqual(plain(P.list(odd)).map(p => [p.key, p.label]), [['Sapporo', 'Sapporo']]);
@@ -115,10 +123,22 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
     test('a town with friends in it on the game date has the other dot: devhouse 2 and devhouse 3 days (#211)', () => {
         const config = realConfig();
         const on = (date, opts) => Array.from(P.present(config, date, opts)).sort();
-        // devhouse 2: three in Sendai and one at Tokyo Station; then Fukuoka, with one in Machi (Tokyo)
-        // and one in Inaka, which is not on the map
+        // devhouse 2: three in Sendai and one at Tokyo Station; then Fukuoka, with one still at Kanazawa's
+        // shrine (the Hokuriku posts stand in Hokuriku, #68; before that he was put in Machi, Tokyo)
         assert.deepStrictEqual(on('2025-10-27'), ['Sendai', 'TokyoCity']);
-        assert.deepStrictEqual(on('2025-11-10'), ['Fukuoka', 'TokyoCity']);
+        assert.deepStrictEqual(on('2025-11-10'), ['Fukuoka', 'Kanazawa']);
+        // Hokuriku: a member in Shirakawa-go or Toyama lights THAT town's dot, not Kanazawa's or one for the region
+        const rooms = (date) => game('Trips.membersByRoom')(config, date).map(g => g.room);
+        assert.ok(rooms('2025-11-03').includes('Shirakawago') && rooms('2025-11-03').includes('Toyama') && !rooms('2025-11-03').includes('Kanazawa'));
+        assert.deepStrictEqual(on('2025-11-03').filter(k => HOKURIKU.includes(k)), ['Shirakawago', 'Toyama']);
+        assert.ok(rooms('2025-11-05').includes('KanazawaStation'), 'one is on the platform at Kanazawa Station');
+        assert.deepStrictEqual(on('2025-11-05').filter(k => HOKURIKU.includes(k)), ['Kanazawa', 'Shirakawago']);
+        assert.deepStrictEqual(on('2025-11-06'), ['Kanazawa']);
+        // the gold ring is the district the player stands in (as a Tokyo district is Tokyo), an interior its town
+        for (const k of HOKURIKU) assert.strictEqual(P.of(config, k), k);
+        assert.strictEqual(P.of(config, 'Park'), 'TokyoCity');
+        const src0 = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(src0.includes('const hereRoom = this.roomManager.currentDistrict();') && src0.includes('const here = Places.of(config, hereRoom);'));
         assert.deepStrictEqual(on('2025-10-05'), ['TokyoCity']);
         // devhouse 3: everyone in Sapporo, then Asahikawa; nobody anywhere on a lead-in day
         assert.deepStrictEqual(on('2027-02-20'), ['Sapporo']);
@@ -147,7 +167,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
             assert.strictEqual(s, scale, `${name}: the picture is drawn in half steps`);
             const bounds = { x: (W - meta.width * s) / 2, y: (960 - meta.height * s) / 2 + 4, w: meta.width * s, h: meta.height * s };
             assert.ok(bounds.x >= 12 && bounds.y >= 60 && bounds.y + bounds.h <= 960 - 70, `${name}: room for the title and the two footer lines`);
-            for (const config of [realConfig(), withComing()]) {
+            for (const config of [realConfig(), before()]) {
                 const places = P.list(config);
                 // wherever the player is, and whoever is where: nobody, everybody, each town alone
                 for (const here of [null].concat(places.map(p => p.key))) {
@@ -179,11 +199,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
                             const gap = Math.max(at.box.x0 - d.x, d.x - at.box.x1, at.box.y0 - d.y, d.y - at.box.y1);
                             assert.strictEqual(at.leader, gap > d.r + P.LABEL_GAP + 1, `${why}: ${d.key} leader`);
                         }
-                        // the dots themselves are told apart: today's towns stand clear of each other, and the
-                        // three Hokuriku towns to come (35 km apart) may touch but never hide one another
+                        // the dots themselves are told apart: towns stand clear of each other, and the three
+                        // Hokuriku towns (35 km apart) may touch but never hide one another
                         for (const a of dots) for (const b of dots) {
                             if (a.key >= b.key) continue;
-                            const near = COMING.includes(a.key) && COMING.includes(b.key);
+                            const near = HOKURIKU.includes(a.key) && HOKURIKU.includes(b.key);
                             assert.ok(Math.hypot(a.x - b.x, a.y - b.y) >= (near ? 1 : 2) * P.DOT * k + (near ? 0 : 2), `${why}: ${a.key} and ${b.key} dots merge`);
                         }
                     }
@@ -197,7 +217,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.strictEqual(tight.a.fits, false);
     });
 
-    test('debug map-click travel: the dot nearest the click, and the cell outside that town\'s station (#211)', () => {
+    test('debug map-click travel: the dot nearest the click, and the cell outside that town\'s station or on its road in (#211)', () => {
         const config = realConfig();
         const places = P.list(config);
         const [sx, sy] = xy('Sapporo'), [ax, ay] = xy('Asahikawa');
@@ -208,14 +228,33 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         for (const p of places) {
             const to = P.arrival(config, p.key);
             assert.ok(to && p.rooms.includes(to.room), `${p.key} has no arrival cell`);
-            const station = Object.keys(config.stations).find(k => (config.rooms[k].transporters || [])
+            const from = Object.keys(config.rooms).filter(k => (config.rooms[k].transporters || [])
                 .some(t => t.targetRoom === to.room && t.targetX === to.x && t.targetY === to.y));
-            assert.ok(station, `${p.key}: ${JSON.stringify(to)} is not outside a station door`);
+            const served = Object.values(config.stations).some(st => p.rooms.includes(st.town));
+            // a town with a station: outside its door. Without one (Shirakawa-go, Toyama): no station cell
+            if (served) assert.ok(from.some(k => config.stations[k]), `${p.key}: ${JSON.stringify(to)} is not outside a station door`);
+            else assert.ok(from.length && HOKURIKU.includes(p.key), `${p.key}: ${JSON.stringify(to)} is not inside a door into it`);
         }
+        // a town with no station is entered as a traveller from the railhead walks in: by the door or seam
+        // from the room the fewest room changes from a station. Shirakawa-go by its west road from Kanazawa
+        // (one change from Kanazawa Station), not from Toyama; Toyama by its only road, from Shirakawa-go
+        assert.deepStrictEqual(plain(P.arrival(config, 'Kanazawa')), { room: 'Kanazawa', x: 33, y: 10 });
+        assert.deepStrictEqual(plain(P.arrival(config, 'Shirakawago')), { room: 'Shirakawago', x: 3, y: 10 });
+        assert.deepStrictEqual(plain(P.arrival(config, 'Toyama')), { room: 'Toyama', x: 18, y: 30 });
+        // ...whatever order the rooms are written in: with Toyama first in config, Shirakawa-go is still entered from Kanazawa
+        const reordered = Object.assign({}, config, { rooms: Object.assign({ Toyama: config.rooms.Toyama }, config.rooms) });
+        assert.deepStrictEqual(plain(P.arrival(reordered, 'Shirakawago')), { room: 'Shirakawago', x: 3, y: 10 });
+        // a door between a city's own districts is not a way into it
+        const sealed = Object.assign({}, config, { stations: {}, rooms: Object.assign({}, config.rooms) });
+        for (const k of Object.keys(config.stations)) delete sealed.rooms[k];
+        assert.ok(!config.cities.TokyoCity.rooms.some(m => {
+            const to = P.arrival(sealed, 'TokyoCity');
+            return to && (config.rooms[m.room].transporters || []).some(t => t.targetRoom === to.room && t.targetX === to.x && t.targetY === to.y);
+        }));
         assert.deepStrictEqual(plain(P.arrival(config, 'Sendai')), { room: 'Sendai', x: 35, y: 10 });
         assert.deepStrictEqual(plain(P.arrival(config, 'TokyoCity')), { room: 'Palace', x: 27, y: 10 });
         assert.strictEqual(P.arrival(config, 'Nowhere'), null);
-        // a town with no station is entered by any door into it
+        // with no trains at all, by any door into it
         const noTrains = Object.assign({}, config, { stations: {} });
         assert.ok(P.arrival(noTrains, 'Sapporo').room === 'Sapporo');
         const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');

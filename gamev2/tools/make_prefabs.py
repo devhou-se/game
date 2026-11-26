@@ -241,6 +241,50 @@ PREFABS = {
     'shrine-red':      dict(w=5, h=8, sprites=[('Tops', 0, 0, 'red-shrine-top_0_0'), ('Collidables', 1, 2, 'shrine-building_0_0')],
                             colliders=[(x, y) for x in (1, 2, 3) for y in range(2, 7) if (x, y) != (2, 6)]
                                       + [(x, 1) for x in range(5)] + [(x, y) for x in (0, 4) for y in (2, 3, 4)], doors=[(2, 6)]),
+    # ---- Hokuriku (issue #68; art drawn by tools/generate_hokuriku_art.py) --------
+    # Kanazawa Castle's Ishikawa gate: the turret (columns 0-2) and the walls are
+    # solid from the eaves down; the gateway (columns 3-4) is open all the way
+    # through, under the gate's roof.
+    'kanazawa-ishikawa-gate': dict(w=8, h=4, sprites=[('Collidables', 0, 0, 'kanazawa-ishikawa-gate_0_0')],
+                                   colliders=[(x, y) for x in range(8) for y in (1, 2, 3) if x not in (3, 4)]
+                                             + [(x, 0) for x in range(3)], doors=[]),
+    'kanazawa-kotoji':        dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'kanazawa-kotoji_0_0')],
+                                   colliders=[(0, 1), (1, 1)], doors=[]),
+    'kanazawa-chaya-a':       building(4, 4, door=1),
+    'kanazawa-chaya-b':       building(4, 4, door=1),
+    'kanazawa-whisky-bar':    building(4, 4, door=1),
+    # flat decks you walk ON (Non-Collidables + depthBias, the asahikawa-bridge recipe)
+    'kanazawa-canal-bridge':  dict(w=2, h=4, sprites=[('Non-Collidables', 0, 0, 'kanazawa-canal-bridge_0_0')],
+                                   colliders=[], doors=[]),
+    'shirakawa-bridge':       dict(w=8, h=2, sprites=[('Non-Collidables', 0, 0, 'shirakawa-bridge_0_0')],
+                                   colliders=[], doors=[]),
+    'hokuriku-ginkgo':        dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'hokuriku-ginkgo_0_0')],
+                                   colliders=[(0, 2), (1, 2)], doors=[]),
+    # gassho farmhouses: the ground floor and the gable above it are solid; the
+    # generators close the roof's top rows too, so nobody stands behind the thatch
+    'shirakawa-gassho':       dict(w=5, h=5, sprites=[('Collidables', 0, 0, 'shirakawa-gassho_0_0')],
+                                   colliders=[(x, y) for x in range(5) for y in (2, 3, 4)], doors=[(2, 4)]),
+    'shirakawa-gassho-small': dict(w=4, h=4, sprites=[('Collidables', 0, 0, 'shirakawa-gassho-small_0_0')],
+                                   colliders=[(x, y) for x in range(4) for y in (2, 3)], doors=[]),
+    'shirakawa-hasa':         dict(w=3, h=2, sprites=[('Collidables', 0, 0, 'shirakawa-hasa_0_0')],
+                                   colliders=[(x, 1) for x in range(3)], doors=[]),
+    'shirakawa-lookout':      dict(w=4, h=1, sprites=[('Collidables', 0, 0, 'shirakawa-lookout_0_0')],
+                                   colliders=[(x, 0) for x in range(4)], doors=[]),
+    'shirakawa-peak':         dict(w=6, h=4, sprites=[('Collidables', 0, 0, 'shirakawa-peak_0_0')],
+                                   colliders=[(x, y) for x in range(6) for y in (2, 3)], doors=[]),
+    'shirakawa-bear-sign':    dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'shirakawa-bear-sign_0_0')],
+                                   colliders=[(0, 1)], doors=[]),
+    'toyama-glass-museum':    building(6, 6, door=2, door_w=2),
+    'toyama-tram':            dict(w=5, h=2, sprites=[('Collidables', 0, 0, 'toyama-tram_0_0')],
+                                   colliders=[(x, y) for x in range(5) for y in (0, 1)], doors=[]),
+    'toyama-tram-stop':       dict(w=3, h=2, sprites=[('Collidables', 0, 0, 'toyama-tram-stop_0_0')],
+                                   colliders=[(x, 1) for x in range(3)], doors=[]),
+    'toyama-ramen':           building(4, 4, door=1),
+    # the port observation tower: the podium (rows 5-6) and the shaft above it
+    # (the middle column up to the gallery) collide; the lantern room is overhead
+    'toyama-port-tower':      dict(w=3, h=7, sprites=[('Collidables', 0, 0, 'toyama-port-tower_0_0')],
+                                   colliders=[(x, y) for x in range(3) for y in (5, 6)]
+                                             + [(1, y) for y in (2, 3, 4)], doors=[(1, 6)]),
     # ---- street accessories (issue #19; art from tools/extract_street.py) --------
     # One sprite on Collidables each, so it Y-sorts by its feet: the bottom cell
     # is solid, the pole / head above it is walk-behind. Maps place the green

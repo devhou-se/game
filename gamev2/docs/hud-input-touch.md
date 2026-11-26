@@ -47,15 +47,18 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
   one row that is not saved, so it is off on every load) and noclip (all default off, persisted in localStorage). Deliberately
   absent from How to Play. Map-click travel on the menu's Map overlay
   only works when its toggle is on: a click on (or within `UIScale.MAP_CLICK_REACH` canvas px of) a
-  town's dot closes the map and puts the player on the cell outside that town's station
+  town's dot closes the map and puts the player on the cell outside that town's station — or, for a town
+  with no station of its own (Shirakawa-go, Toyama), on the cell inside its door or seam from the room the
+  fewest room changes from a station, the way a traveller walks in from the railhead
   (`Places.nearest` → `Places.arrival`); a click anywhere else on the picture does nothing.
 - **The Map overlay is a map of Japan** (issue #211, `GameScene.showMap`, `src/utils/Places.js`): the
   picture `assets/map/japan.png` (`tools/make_japan_map.py`, see `generators-and-checks.md`) with ONE dot
   and label per town, placed by the town's real longitude / latitude. The towns are data — `config.json`
   top-level `places`: `"<cities key or room key>": { "geo": [lon, lat], "label": "Tokyo" }`. A `cities`
   key makes the whole stitched city one dot (`TokyoCity` → "Tokyo"); a room that has its own entry is its
-  own dot even inside a stitched region. An entry whose key is not a room or city yet is skipped (the geo
-  of Kanazawa, Toyama and Shirakawago is already there), so **a new town appears on the map by adding its
+  own dot even inside a stitched region (Kanazawa, Shirakawa-go and Toyama are three dots, though they are
+  the one stitched `HokurikuCity`: three real places far apart, unlike Tokyo's districts). An entry whose
+  key is not a room or city yet is skipped, so **a new town appears on the map by adding its
   `places` entry** — no code. A town with no entry has no dot: the made-up ones (Inaka, Yukimura) are not
   on the map of Japan; they are still a train ride from Tokyo Station, and the footer reads
   "you are here: Inaka (not on this map)" there.
@@ -67,7 +70,7 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
     district in its city). No names, faces or counts: the player goes and finds out. Somebody in a town
     that is not on the map (Inaka on 10 November 2025) shows nowhere.
   - **Labels** (`Places.layout`, pure, unit-tested at the desktop and phone sizes with every combination
-    of where the player is and who is where, and with the three coming towns added): beside the dot
+    of where the player is and who is where): beside the dot
     (right, left, above, below, the diagonals), then the same further out in rings of
     `Places.RING_STEP` px with a leader line back to the dot; never over another label or anybody's dot
     (the reach of a ringed / haloed dot counts, `Places.reach`), never off the picture. The most
@@ -174,8 +177,10 @@ The game always renders 1280x960; everything below is about showing that on anyt
     lead-in day that one row has no room for the countdown and the date, so there the countdown stands in
     place of the date — `Sapporo | devhouse 3 in 8 days | ¥5,000` at 844x390, `in 8d` at 667x375, the room
     abbreviated if that is what it takes (`Trips.countdown`, tried before the bare date); the segment is
-    still the Time Travel button, which shows the date. A name too long for even `devhouse 3 soon` (a
-    station) shows the date as on any other day; the portrait bar keeps countdown and date on its second row. `scene.hudWidth` / `scene.hudBarHeight` are the bar's size in HUD
+    still the Time Travel button, which shows the date. A name too long for even `devhouse 3 soon`
+    shows the date as on any other day: with the starting wallet that is a name (its first part) of more
+    than 13 characters at 844x390 (`Kanazawa Station`, not `Tokyo Station`) and more than 11 at 667x375 —
+    every station, and `Shirakawa-go` (12); the portrait bar keeps countdown and date on its second row. `scene.hudWidth` / `scene.hudBarHeight` are the bar's size in HUD
     coordinates (the shop's energy meter and, under it, its effect chips hang off them, at the right
     end just under the bar, so the bar itself is never wider or taller for them); scene event `'hudscalechange'` says when to
     lay out again. Anything new on the HUD goes at depth 1000-1999, scroll factor 0. The date,

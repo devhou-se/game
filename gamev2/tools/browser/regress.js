@@ -313,7 +313,9 @@ async function desktop(shared) {
                     return floor && !blocked && rm.checkBoundary(x, y, key) &&
                         !r.transporters.some(t => t.gridX === x && t.gridY === y);
                 };
-                for (const city of Object.values(rm.cities)) {
+                // the city this page booted in first (there is more than one stitched city, #68), then any other
+                const home = rm.memberOf[__t.start.district] && rm.memberOf[__t.start.district].city;
+                for (const city of Object.values(rm.cities).sort((a, b) => (b === home) - (a === home))) {
                     for (const m of city.members) {
                         const A = m.key;
                         for (const t of rm.rooms[A].transporters) {

@@ -48,6 +48,7 @@ GENERATORS = [
     'generate_konbinis', 'generate_discount_stores', 'generate_stations',
     'generate_izakaya', 'generate_houses',
 ]
+GENERATORS += ['generate_kanazawa', 'generate_shirakawago', 'generate_toyama']     # Hokuriku (issue #68)
 # config_to_tiled.py, run over every room that has a committed tiled/*.tmj
 TILED = 'config_to_tiled'
 # Tools that draw sprites / prefabs (and register them in config.json). They
@@ -61,6 +62,7 @@ ART_TOOLS = [
     'extract_train_interior', 'extract_station', 'generate_station_art',
     'generate_fukuoka_art', 'extract_house_interior', 'generate_house_art', 'make_japan_map',
 ]
+ART_TOOLS += ['generate_hokuriku_art']
 # the art tools that also need a Japanese system font (generate_ads.find_font)
 FONT_TOOLS = ['generate_ads', 'extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS

@@ -17,6 +17,8 @@ Config `stations` is the rail registry, written by `tools/generate_stations.py` 
 
 A station's `label` need not be its town's name: `FukuokaStation` is labelled `Hakata` (the board says Hakata,
 the room's HUD name is `Hakata Station`, the town room is `Fukuoka`).
+A town's station can serve places with none: `KanazawaStation` is the only stop in the stitched Hokuriku
+city (issue #68) - Shirakawa-go and Toyama are walked to from Kanazawa and are not on the board.
 
 `src/StationPicker.js` builds the board with the static `StationPicker.board(stations, fromKey, cameFrom)`:
 cities in `order`, each followed by its day trips indented and tagged `day trip`. The station you are at
@@ -60,7 +62,7 @@ row in `STATIONS` gets the whole station. Top to bottom:
 
 - **Size** is `STATIONS[...]['size']`, looked up in `SIZES`: `small` (the default, 24x15, two gates, train at
   column 7 - the size and cells every station had before, so a town door written for `11,11` is still
-  right) or `large` (36x20, four gates, train at column 13: Tokyo, Osaka, Sendai, Sapporo, Hakata). Everything else is
+  right) or `large` (36x20, four gates, train at column 13: Tokyo, Kanazawa, Osaka, Sendai, Sapporo, Hakata). Everything else is
   derived in `layout(size)`; nothing is hand-placed per station. A village stop (a station with a
   `parent`) also gets the station cat.
 - **Registry fields** written per station besides `label` / `town` / `train` / `order` / `parent`:
@@ -70,8 +72,8 @@ row in `STATIONS` gets the whole station. Top to bottom:
   Japanese name, from `STATION_JA`, when there is one).
 - **Town doors land on `entry`.** `generate_stations.py` points every transporter that leads into a
   station at that station's `entry`, and a town generator whose station is not small reads it back
-  (`cfg['stations'][key]['entry']`, as `generate_osaka.py`, `generate_sendai.py`, `generate_sapporo.py` and
-  `generate_fukuoka.py` do) so that a re-run
+  (`cfg['stations'][key]['entry']`, as `generate_osaka.py`, `generate_sendai.py`, `generate_sapporo.py`,
+  `generate_fukuoka.py` and `generate_kanazawa.py` do) so that a re-run
   of the town alone writes the same door. Giving an existing small station `'size': 'large'` therefore
   needs that one line in its town generator, or `check_generators.py` reports the town.
 - **Stepping off**: you leave the train by the door you boarded by, counted along the train

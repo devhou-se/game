@@ -88,23 +88,45 @@ class Places {
     /**
      * Where a traveller sets foot in a place — { room, x, y } in district
      * cells, or null: outside its station's door (the first station on the
-     * line that serves it), else any door into it.
+     * line that serves it). A town with no station of its own (Shirakawa-go,
+     * Toyama: walked to from Kanazawa) is entered the way a traveller from
+     * the railhead walks in: the cell inside the door, or seam, from the
+     * room the fewest room changes from a station — Shirakawa-go's west road
+     * in from Kanazawa, Toyama's south road in from Shirakawa-go. With no
+     * trains at all, any door into it.
      */
     static arrival(config, key) {
         const place = Places.list(config).find(p => p.key === key);
         if (!place) return null;
+        const rooms = config.rooms || {};
         const stations = Object.entries(config.stations || {})
             .filter(([, st]) => place.rooms.includes(st.town))
             .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
         for (const [stationRoom] of stations) {
-            const door = ((config.rooms[stationRoom] || {}).transporters || []).find(t => place.rooms.includes(t.targetRoom));
+            const door = ((rooms[stationRoom] || {}).transporters || []).find(t => place.rooms.includes(t.targetRoom));
             if (door) return { room: door.targetRoom, x: door.targetX, y: door.targetY };
         }
-        for (const room of place.rooms) {
-            const cell = Trips.arrivals(config, room)[0];
-            if (cell) return { room, x: cell[0], y: cell[1] };
+        // room changes from the nearest station, for every room a walker can reach from one
+        const hops = {}, queue = Object.keys(config.stations || {}).filter(r => rooms[r]);
+        for (const r of queue) hops[r] = 0;
+        for (let i = 0; i < queue.length; i++) {
+            for (const t of rooms[queue[i]].transporters || []) {
+                if (t.targetRoom in hops || !rooms[t.targetRoom]) continue;
+                hops[t.targetRoom] = hops[queue[i]] + 1;
+                queue.push(t.targetRoom);
+            }
         }
-        return null;
+        let best = null, bestHops = Infinity;
+        for (const [from, def] of Object.entries(rooms)) {
+            if (place.rooms.includes(from)) continue;        // a door between its own districts is not a way in
+            const far = from in hops ? hops[from] : Number.MAX_VALUE;
+            for (const t of def.transporters || []) {
+                if (!place.rooms.includes(t.targetRoom) || far >= bestHops) continue;
+                best = { room: t.targetRoom, x: t.targetX, y: t.targetY };
+                bestHops = far;
+            }
+        }
+        return best;
     }
 
     /**

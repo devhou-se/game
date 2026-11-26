@@ -43,6 +43,7 @@ Stations:
   YukimuraStation — inside Yukimura's station house
   OsakaStation    — inside Osaka's station house
   SendaiStation   — inside Sendai's station house
+  KanazawaStation — inside Kanazawa's station house
   SapporoStation / AsahikawaStation — inside the Hokkaido station houses
   FukuokaStation  — "Hakata", inside Fukuoka's station house
 """
@@ -224,6 +225,10 @@ STATIONS = {
     # Yukimura — the snowy village, on the same branch line as Inaka.
     'YukimuraStation': {'label': 'Yukimura',      'town': 'Yukimura', 'train': 'train-green',
                         'parent': 'TokyoStation'},
+    # Kanazawa (issue #68) - the Hokuriku line from Tokyo, a main-line city stop
+    # (orange, large like the other cities). Shirakawa-go and Toyama have no
+    # station: you walk there from it.
+    'KanazawaStation': {'label': 'Kanazawa',      'town': 'Kanazawa', 'train': 'train-orange', 'size': 'large'},
     # Osaka — the second city, a main-line stop like Tokyo (orange).
     'OsakaStation':    {'label': 'Osaka',         'town': 'Osaka',    'train': 'train-orange', 'size': 'large'},
     # Sendai (issue #66) - a main-line city stop (orange), up the line from Tokyo
@@ -243,7 +248,7 @@ STATIONS = {
 STATION_JA = {
     'TokyoStation': '東京', 'InakaStation': 'いなか', 'YukimuraStation': '雪村',
     'OsakaStation': '大阪', 'SapporoStation': '札幌', 'AsahikawaStation': '旭川',
-    'SendaiStation': '仙台', 'FukuokaStation': '博多',
+    'SendaiStation': '仙台', 'FukuokaStation': '博多', 'KanazawaStation': '金沢',
 }
 assert all(st.get('parent', 'TokyoStation') in STATIONS for st in STATIONS.values()), 'unknown parent station'
 
@@ -258,6 +263,7 @@ TOWN_DOORS = {          # townRoom: (hidden door cell into the station, exit cel
     'InakaStation':    {'door': [29, 9], 'exit': [29, 10]},
     'YukimuraStation': {'door': [29, 9], 'exit': [29, 10]},
     'OsakaStation':    {'door': [24, 9], 'exit': [24, 10]},
+    'KanazawaStation': {'door': [33, 9], 'exit': [33, 10]},
     'SendaiStation':   {'door': [35, 9], 'exit': [35, 10]},
     'SapporoStation':   {'door': [34, 9], 'exit': [34, 10]},
     'AsahikawaStation': {'door': [32, 9], 'exit': [32, 10]},

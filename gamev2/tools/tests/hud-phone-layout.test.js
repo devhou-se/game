@@ -145,16 +145,31 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.strictEqual(bar(715, 'Sapporo', '¥999,999', '2027-02-04'), 'Sapporo | devhouse 3 in 14d | ¥999,999');
         assert.strictEqual(bar(715, hudName('7-Eleven · Sapporo'), '¥5,000', '2027-02-10'), '7-Eleven | devhouse 3 in 8d | ¥5,000');
         assert.strictEqual(bar(744, 'Sapporo Station', '¥5,000', '2027-02-10'), null, 'too long a name for any form: the date, as on any day');
-        // every room at both phone widths with the starting wallet: all but the longest names (the stations) count down
+        // every room at both phone widths with the starting wallet. The rule, not a ratio and not a kind of
+        // room: a bar shows the date alone only when the room's name (its first part) leaves no room for the
+        // shortest countdown, "devhouse 3 soon" - more than 13 characters at 844x390, more than 11 at 667x375
         let shown = 0;
-        const bare = new Set();
+        const bare = { 744: new Set(), 715: new Set() }, LIMIT = { 744: 13, 715: 11 };
         for (const def of Object.values(config.rooms)) {
-            for (const width of [744, 715]) (bar(width, hudName(def.name), '¥5,000', '2027-02-10') ? shown++ : bare.add(def.name));
+            for (const width of [744, 715]) {
+                const counted = bar(width, hudName(def.name), '¥5,000', '2027-02-10');
+                // the bar tries the whole name, then its short form (hudBrief: "7-Eleven", "Sapporo house")
+                const shortest = Math.min(hudName(def.name).length, game('hudBrief')(hudName(def.name)).length);
+                assert.strictEqual(!!counted, shortest <= LIMIT[width], `${def.name} at ${width}: ${counted}`);
+                if (counted) shown++; else bare[width].add(def.name);
+            }
         }
-        // the rule, not a ratio (new towns add stations): a bar shows the date alone only in a station
-        assert.ok(bare.size > 0 && shown > bare.size, `the countdown shows in ${shown} room bars, the date alone in ${bare.size} rooms`);
-        // ... or in a house, whose short form keeps its town ("Sapporo house", #208) and so is as long as a station's
-        for (const name of bare) assert.ok(/ Station$|^House · /.test(name), `only a station's or a house's name is too long for the countdown: ${name}`);
+        // which rooms that is today: on the larger phone the stations with a name longer than "Tokyo Station"
+        // (13), on the smaller one every station and Shirakawa-go (12); and a house, whose short form keeps
+        // its town ("Sapporo house", #208) and so can be as long as a station's
+        const stations = Object.keys(config.stations).map(k => config.rooms[k].name).sort();
+        const notHouses = (set) => Array.from(set).filter(n => !/^House · /.test(n)).sort();
+        assert.deepStrictEqual(notHouses(bare[744]), stations.filter(n => n.length > 13));
+        assert.ok(bare[744].has('Kanazawa Station') && !bare[744].has('Tokyo Station'));
+        assert.deepStrictEqual(notHouses(bare[715]), stations.concat('Shirakawa-go').sort());
+        assert.ok(shown > bare[744].size + bare[715].size, `the countdown shows in ${shown} room bars`);
+        assert.strictEqual(bar(744, 'Shirakawa-go', '¥5,000', '2027-02-10'), 'Shirakawa-go | devhouse 3 in 8d | ¥5,000');
+        assert.strictEqual(bar(715, 'Shirakawa-go', '¥5,000', '2027-02-10'), null, '3px too wide for "soon": the date, as in a station');
         assert.strictEqual(bar(744, hudName('House · Sapporo 3'), '¥5,000', '2027-02-10'), 'Sapporo house | devhouse 3 soon | ¥5,000');
         assert.strictEqual(bar(715, hudName('House · Sapporo 3'), '¥5,000', '2027-02-10'), null, 'the date, as in a station');
         // layoutHUD: only where the whole canvas is across a magnified view, on a countdown day, before the bare date
