@@ -145,11 +145,14 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.strictEqual(bar(715, hudName('7-Eleven · Sapporo'), '¥5,000', '2027-02-10'), '7-Eleven | devhouse 3 in 8d | ¥5,000');
         assert.strictEqual(bar(744, 'Sapporo Station', '¥5,000', '2027-02-10'), null, 'too long a name for any form: the date, as on any day');
         // every room at both phone widths with the starting wallet: all but the longest names (the stations) count down
-        let shown = 0, bare = 0;
+        let shown = 0;
+        const bare = new Set();
         for (const def of Object.values(config.rooms)) {
-            for (const width of [744, 715]) (bar(width, hudName(def.name), '¥5,000', '2027-02-10') ? shown++ : bare++);
+            for (const width of [744, 715]) (bar(width, hudName(def.name), '¥5,000', '2027-02-10') ? shown++ : bare.add(def.name));
         }
-        assert.ok(bare > 0 && shown >= 5 * bare, `the countdown shows in ${shown} room bars, the date alone in ${bare}`);
+        // the rule, not a ratio (new towns add stations): a bar shows the date alone only in a station
+        assert.ok(bare.size > 0 && shown > bare.size, `the countdown shows in ${shown} room bars, the date alone in ${bare.size} rooms`);
+        for (const name of bare) assert.ok(/ Station$/.test(name), `only a station's name is too long for the countdown: ${name}`);
         // layoutHUD: only where the whole canvas is across a magnified view, on a countdown day, before the bare date
         const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
         assert.ok(src.includes('const count = () => whole && counting && (row(short, true) || [room, brief].some((name) =>'));
