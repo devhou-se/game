@@ -1,6 +1,6 @@
 # Tools: play.js, test_game.js, the Studio and the editor
 
-Playing and checking the game without a browser (`tools/play.js`, `tools/test_game.js`), the read-only Studio and the `config.json` editor.
+Playing and checking the game without a browser (`tools/play.js`, `tools/test_game.js`), the Studio and the `config.json` editor.
 
 A "see X" in the text names a section; if it is not in this file, the index in [`../CLAUDE.md`](../CLAUDE.md) says which file has it.
 
@@ -44,6 +44,25 @@ stitched view, the city's woodland under a town that sits inside its box (none d
 
 It has no logic of its own: `tools/world-model.js` (rooms, collision, NPC dates, interactions, the
 problem survey) is shared with `tools/play.js`, so the page and the terminal tool always agree.
+
+### Editing in the Studio
+
+The Studio is read-only until **Edit** is pressed (Chrome or Edge on a computer; the button is absent
+elsewhere). Edit asks for the repo folder (or `gamev2/` itself), reloads the world from those files as the
+separate rooms each `tiled/*.tmj` holds (never the stitched city), and adds:
+
+- a library of the prefabs in `tiled/prefabs/` - pick one, click a cell to stamp its sprites and colliders;
+- **Select** - click a cell, pick a thing on it (person, door, sprite), drag it to move it, Remove it, or
+  for a door change where it leads and whether it is hidden. Moving or removing a sprite takes the
+  colliders under it that no other standing sprite covers;
+- **Solid** - drag to paint colliders, starting on a solid cell to clear them (Shift-drag pans);
+- **Link** - click two cells to join them with a hidden door each way (each arrives beside the other).
+
+Every action is a line in the change list with Undo; **Save** writes the changed `tiled/*.tmj` (and
+`config.json` when a person moved) into the folder. Nothing is committed - that stays with git.
+`studio/edit.js` holds the map operations and a JSON writer that matches Python's `json.dump`, so an
+untouched file saves byte-identical and a change is a minimal diff. It has no DOM code. Terrain painting,
+new rooms and train stations are still done in Tiled and the generators.
 
 ### Visual Editor
 

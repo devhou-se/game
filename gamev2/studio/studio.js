@@ -15,79 +15,121 @@ const S = {
     model: null, images: {}, rooms: {}, order: [], dates: [], dateIndex: 0,
     show: Object.fromEntries(LAYERS.map(([k, , on]) => [k, on])),
     view: { x: 0, y: 0, z: 6 }, selected: null, survey: { problems: [], reach: {} },
+    source: null, files: {}, prefabs: [], people: {}, stale: new Set(), worldMap: null,
+    edit: null, tool: 'select', arm: null, hover: null, linkFrom: null, retarget: null, active: 0,
+    paint: null, moving: null, changes: [], note: '', noteBad: false,
 };
+const TOOLS = [['select', 'Select'], ['solid', 'Solid'], ['link', 'Link']];
 // The game stitches the districts of config `cities` into one room, and the studio draws that
 // room. ?stitch=0 (as in the game) shows them as the separate rooms joined by seam teleports.
-const STITCH = new URLSearchParams(location.search).get('stitch') !== '0';
+let STITCH = new URLSearchParams(location.search).get('stitch') !== '0';
 
 const bust = Date.now();
-const getJSON = (url) => fetch(`${url}?t=${bust}`).then(r => r.ok ? r.json() : null).catch(() => null);
-const loadImage = (key) => new Promise((resolve) => {
-    const im = new Image();
-    im.onload = () => { S.images[key] = im; resolve(); };
-    im.onerror = () => resolve();
-    im.src = `../assets/sprites/${key}.png`;
-});
+const web = {
+    text: (p) => fetch(`../${p}?t=${bust}`).then(r => r.ok ? r.text() : null).catch(() => null),
+    image: async (key) => `../assets/sprites/${key}.png`,
+};
+function folder(dir) {
+    const file = async (p) => {
+        const parts = p.split('/');
+        let d = dir;
+        for (const part of parts.slice(0, -1)) d = await d.getDirectoryHandle(part);
+        return d.getFileHandle(parts[parts.length - 1]);
+    };
+    return {
+        text: (p) => file(p).then(h => h.getFile()).then(f => f.text()).catch(() => null),
+        image: (key) => file(`assets/sprites/${key}.png`).then(h => h.getFile()).then(f => URL.createObjectURL(f)).catch(() => `../assets/sprites/${key}.png`),
+        write: async (p, text) => {
+            const w = await (await file(p)).createWritable();
+            await w.write(text);
+            await w.close();
+        },
+        list: async (p) => {
+            let d = dir;
+            for (const part of p.split('/')) d = await d.getDirectoryHandle(part);
+            const names = [];
+            for await (const name of d.keys()) names.push(name);
+            return names.sort();
+        },
+    };
+}
+const loadImage = async (key) => {
+    if (S.images[key]) return;
+    const src = await S.source.image(key);
+    await new Promise((resolve) => {
+        const im = new Image();
+        im.onload = () => { S.images[key] = im; resolve(); };
+        im.onerror = () => resolve();
+        im.src = src;
+    });
+};
+const tmjPath = (k) => `tiled/${k.toLowerCase()}.tmj`;
+const env = {
+    exists: (key) => !!S.images[key],
+    sizeOf: (key) => {
+        const im = S.images[key];
+        return im ? [Math.max(1, Math.round(im.width / 64)), Math.max(1, Math.round(im.height / 64))] : [1, 1];
+    },
+    pixels: (key) => [S.images[key].width, S.images[key].height],
+};
 const el = (tag, props, ...kids) => {
     const node = Object.assign(document.createElement(tag), props || {});
     for (const kid of kids) node.append(kid);
     return node;
 };
 
-async function boot() {
-    const config = decodeConfig(await getJSON('../config.json'));
-    const keys = Object.keys(config.rooms);
-    const tmj = Object.fromEntries(await Promise.all(keys.map(async k => [k, await getJSON(`../tiled/${k.toLowerCase()}.tmj`)])));
-    WorldModel.applyTiled(config, (k) => tmj[k]);
-    const worldMap = await getJSON('../assets/map/world-map.json') || { rooms: {} };
+function world() {
+    const config = decodeConfig(structuredClone(S.files['config.json'].doc));
+    WorldModel.applyTiled(config, (k) => S.files[tmjPath(k)] && S.files[tmjPath(k)].doc);
+    return config;
+}
 
-    // the model first (it stitches the cities), then the art of every room it holds - a stitched
-    // city's woodland tiles are in its merged layers, not in any config room
-    S.model = new WorldModel(config, {
-        exists: (key) => !!S.images[key],
-        sizeOf: (key) => {
-            const im = S.images[key];
-            return im ? [Math.max(1, Math.round(im.width / 64)), Math.max(1, Math.round(im.height / 64))] : [1, 1];
-        },
-    }, null, { stitch: STITCH, worldMap });
-    const sprites = new Set();
-    for (const room of Object.values(S.model.roomManager.rooms)) {
+async function load(source) {
+    S.source = source;
+    S.files = {};
+    S.images = {};
+    const open = async (p, indent) => {
+        const text = await source.text(p);
+        if (text !== null) S.files[p] = { doc: Edit.parse(text), indent };
+    };
+    await open('config.json', 2);
+    if (!S.files['config.json']) throw new Error('config.json is missing');
+    const keys = Object.keys(S.files['config.json'].doc.rooms);
+    await Promise.all(keys.map(k => open(tmjPath(k), 1)));
+    S.worldMap = JSON.parse(await source.text('assets/map/world-map.json') || '{"rooms":{}}');
+
+    S.prefabs = [];
+    if (source.list) {
+        for (const name of await source.list('tiled/prefabs')) {
+            if (!name.endsWith('.tmj')) continue;
+            S.prefabs.push(Edit.prefab(name.slice(0, -4), Edit.parse(await source.text('tiled/prefabs/' + name))));
+        }
+    }
+
+    const config = world();
+    const sprites = new Set(['gk_blank']);
+    const draft = new WorldModel(config, env, null, { stitch: STITCH, worldMap: S.worldMap });
+    for (const room of Object.values(draft.roomManager.rooms)) {
         for (const layer of room.layers || []) for (const key of Object.values(layer.tiles || {})) sprites.add(key);
     }
     for (const room of Object.values(config.rooms)) {
         for (const npc of room.npcs || []) sprites.add(npc.sprite + '_frame_0');
     }
+    for (const pf of S.prefabs) for (const sp of pf.sprites) sprites.add(sp.key);
     await Promise.all([...sprites].map(loadImage));
-    const m = S.model;
 
-    // the rooms that are drawn: a stitched city stands in for its districts
-    const shown = m.runtimeRooms();
-    layout(shown);
-    for (const k of shown) {
-        m.enter(k, 0, 0);
-        const r = S.rooms[k];
-        Object.assign(r, { blocked: m.blocked, interactions: m.interactions(), art: renderArt(k), npcs: [] });
-        // the woodland between a city's districts is scenery, not unreachable floor
-        r.outside = new Set();
-        if (r.members) {
-            for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) if (!m.roomManager.checkBoundary(x, y)) r.outside.add(x + ',' + y);
-        }
-    }
-    if (config.cities && Object.keys(config.cities).length) {
-        const b = $('stitch');
-        b.hidden = false;
-        b.setAttribute('aria-pressed', STITCH);
-        b.onclick = () => { location.search = STITCH ? '?stitch=0' : ''; };
-    }
-
-    // the days with posts, plus the first day of every trip and stay (the trip's base cast)
     const days = new Set(contentChangeDates(config));
     for (const trip of Trips.of(config)) {
         days.add(trip.start);
         for (const stay of trip.stays) days.add(stay.from);
     }
     S.dates = [...days].sort();
-    const today = m.date;
+    S.changes = [];
+    S.selected = null;
+    S.model = null;
+    build(true);
+
+    const today = S.model.date;
     if (!S.dates.includes(today)) S.dates.push(today);
     S.dates.sort();
     S.dateIndex = S.dates.indexOf(today);
@@ -95,21 +137,292 @@ async function boot() {
 
     const cast = new Set([baseOf(config.player.sprite)]);
     for (const room of Object.values(config.rooms)) for (const npc of room.npcs || []) cast.add(baseOf(npc.sprite));
-    for (const name of cast) $('as').append(el('option', { value: name, textContent: 'as ' + name }));
-    $('as').value = m.as;
+    $('as').replaceChildren(...[...cast].map(name => el('option', { value: name, textContent: 'as ' + name })));
+    $('as').value = S.model.as;
 
+    const cities = config.cities && Object.keys(config.cities).length;
+    $('stitch').hidden = !cities || !!source.write;
+    $('stitch').setAttribute('aria-pressed', STITCH);
+}
+
+function build(first) {
+    const prev = S.model;
+    S.model = new WorldModel(world(), env, prev ? { date: prev.date, as: prev.as } : null, { stitch: STITCH, worldMap: S.worldMap });
+    const m = S.model;
+    const shown = m.runtimeRooms();
+    if (first) layout(shown);
+    for (const k of shown) {
+        const r = m.roomManager.rooms[k];
+        const room = S.rooms[k];
+        room.w = r.worldWidth / 64;
+        room.h = r.worldHeight / 64;
+        m.enter(k, 0, 0);
+        Object.assign(room, { blocked: m.blocked, interactions: m.interactions(), npcs: room.npcs || [] });
+        if (first || S.stale.has(k)) room.art = renderArt(k);
+        // the woodland between a city's districts is scenery, not unreachable floor
+        room.outside = new Set();
+        if (room.members) {
+            for (let y = 0; y < room.h; y++) for (let x = 0; x < room.w; x++) if (!m.roomManager.checkBoundary(x, y)) room.outside.add(x + ',' + y);
+        }
+    }
+    S.stale.clear();
+    S.people = {};
+}
+
+async function boot() {
+    await load(web);
+    $('stitch').onclick = () => { location.search = STITCH ? '?stitch=0' : ''; };
     for (const [key, label] of LAYERS) {
         const b = el('button', { textContent: label });
         b.setAttribute('aria-pressed', S.show[key]);
         b.onclick = () => { S.show[key] = !S.show[key]; b.setAttribute('aria-pressed', S.show[key]); draw(); };
         $('layers').append(b);
     }
-
+    for (const [key, label] of TOOLS) {
+        const b = el('button', { textContent: label });
+        b.dataset.tool = key;
+        b.onclick = () => setTool(key);
+        $('tools').append(b);
+    }
+    $('edit').hidden = !window.showDirectoryPicker;
     bind();
     resize();
     fit();
     refresh();
-    $('loading').remove();
+    $('loading').hidden = true;
+}
+
+async function startEdit() {
+    let picked;
+    try { picked = await window.showDirectoryPicker({ mode: 'readwrite' }); } catch (e) { return; }
+    let root = picked, repo = null;
+    try { root = await picked.getDirectoryHandle('gamev2'); repo = picked; } catch (e) { root = picked; }
+    try {
+        await root.getFileHandle('config.json');
+        await root.getDirectoryHandle('tiled');
+    } catch (e) {
+        $('source').textContent = `No gamev2/config.json in "${picked.name}"`;
+        $('source').className = 'badge bad';
+        $('source').hidden = false;
+        return;
+    }
+    let branch = '';
+    try {
+        const head = await (await (await (await repo.getDirectoryHandle('.git')).getFileHandle('HEAD')).getFile()).text();
+        const ref = /ref: refs\/heads\/(.+)/.exec(head);
+        branch = ref ? ref[1].trim() : head.slice(0, 7);
+    } catch (e) { branch = ''; }
+    $('loading').hidden = false;
+    STITCH = false;
+    try {
+        await load(folder(root));
+    } catch (e) {
+        $('loading').textContent = 'failed to load: ' + e.message;
+        throw e;
+    }
+    S.edit = { name: picked.name, branch };
+    $('where').textContent = picked.name + (branch ? ` (${branch})` : '');
+    $('source').hidden = true;
+    $('edit').hidden = true;
+    $('rail').hidden = false;
+    $('changes').hidden = false;
+    setTool('select');
+    resize();
+    fit();
+    refresh();
+    $('loading').hidden = true;
+}
+
+function setTool(tool) {
+    S.tool = tool;
+    S.arm = S.linkFrom = S.retarget = null;
+    for (const b of $('tools').children) b.setAttribute('aria-pressed', b.dataset.tool === tool);
+    library();
+    cursor();
+    draw();
+}
+
+function cursor() {
+    stage.style.cursor = S.moving ? 'move' : S.edit && (S.arm || S.retarget || S.tool !== 'select') ? 'crosshair' : '';
+}
+
+const docOf = (k) => S.files[tmjPath(k)] && S.files[tmjPath(k)].doc;
+function peopleOf(k) {
+    if (S.people[k]) return S.people[k];
+    const m = S.model, out = [];
+    for (const date of S.dates) {
+        for (const raw of S.files['config.json'].doc.rooms[k].npcs || []) {
+            const r = resolveNpc(raw, date, m.trips);
+            if (r) out.push({ name: r.name, date, x: r.gridX !== null ? r.gridX : m.cx + r.gridOffsetX, y: r.gridY !== null ? r.gridY : m.cy + r.gridOffsetY });
+        }
+    }
+    return (S.people[k] = out);
+}
+const ctxOf = (k) => ({ sizeOf: env.sizeOf, pixels: env.pixels, people: peopleOf(k) });
+const cellName = (k, x, y) => `${k} (${x}, ${y})`;
+
+function say(text, bad) {
+    S.note = text;
+    S.noteBad = !!bad;
+    changes();
+}
+
+function restore(before) {
+    for (const [p, text] of Object.entries(before)) S.files[p].doc = Edit.parse(text);
+}
+
+function change(rooms, fn, config) {
+    const paths = rooms.map(tmjPath).concat(config ? ['config.json'] : []);
+    const missing = paths.find(p => !S.files[p]);
+    if (missing) return say(`${missing} is missing`, true);
+    const before = Object.fromEntries(paths.map(p => [p, Edit.stringify(S.files[p].doc, S.files[p].indent)]));
+    try {
+        S.changes.push({ text: fn(), before, rooms });
+    } catch (e) {
+        restore(before);
+        return say(e.message, true);
+    }
+    S.note = '';
+    for (const k of rooms) S.stale.add(k);
+    build(false);
+    refresh();
+    return true;
+}
+
+function undo() {
+    const last = S.changes.pop();
+    if (!last) return;
+    restore(last.before);
+    for (const k of last.rooms) S.stale.add(k);
+    S.note = '';
+    build(false);
+    refresh();
+}
+
+async function save() {
+    const paths = [...new Set(S.changes.flatMap(c => Object.keys(c.before)))];
+    if (!paths.length) return;
+    try {
+        for (const p of paths) await S.source.write(p, Edit.stringify(S.files[p].doc, S.files[p].indent));
+    } catch (e) {
+        return say('Could not save: ' + e.message, true);
+    }
+    S.changes = [];
+    say(`Saved ${paths.length} ${paths.length === 1 ? 'file' : 'files'}: ${paths.join(', ')}`);
+}
+
+function changes() {
+    if (!S.edit) return;
+    const n = S.changes.length;
+    const rows = S.changes.map((c, i) => el('div', { className: 'change' }, el('span', { className: 'dim', textContent: i + 1 }), el('span', { textContent: c.text })));
+    const undoButton = el('button', { textContent: 'Undo', disabled: !n });
+    const saveButton = el('button', { className: 'go', textContent: 'Save', disabled: !n });
+    undoButton.onclick = undo;
+    saveButton.onclick = save;
+    $('changes').replaceChildren(
+        el('h2', {}, el('span', { textContent: 'Changes' }), el('span', { className: 'badge', textContent: n })),
+        ...rows,
+        ...(S.note ? [el('div', { className: S.noteBad ? 'note bad' : 'note', textContent: S.note })] : []),
+        el('div', { className: 'actions' }, undoButton, saveButton));
+}
+
+function library() {
+    if (!S.edit) return;
+    const q = $('search').value.trim().toLowerCase();
+    $('library').replaceChildren(...S.prefabs.filter(pf => pf.name.includes(q)).map(pf => {
+        const main = pf.sprites.slice().sort((a, b) => env.sizeOf(b.key)[0] * env.sizeOf(b.key)[1] - env.sizeOf(a.key)[0] * env.sizeOf(a.key)[1])[0];
+        const im = main && S.images[main.key];
+        const b = el('button', { className: 'asset' },
+            im ? el('img', { src: im.src, alt: '' }) : el('span', {}),
+            el('span', {}, el('span', { textContent: pf.name }), el('span', { className: 'dim', textContent: `${pf.w}x${pf.h}` + (pf.doors.length ? ', door' : '') })));
+        b.setAttribute('aria-pressed', S.arm === pf);
+        b.onclick = () => {
+            const next = S.arm === pf ? null : pf;
+            setTool('select');
+            S.arm = next;
+            library();
+            cursor();
+            draw();
+        };
+        return b;
+    }));
+}
+
+function thingsAt(sel) {
+    const doc = docOf(sel.room);
+    const list = [];
+    for (const n of S.rooms[sel.room].npcs) if (n.gridX === sel.x && n.gridY === sel.y) list.push({ type: 'npc', name: n.name, x: n.gridX, y: n.gridY, w: 1, h: 1, label: n.name, kind: 'person' });
+    if (!doc) return list;
+    const t = Edit.transporters(doc).find(t => t.x === sel.x && t.y === sel.y);
+    if (t) list.push({ type: 'door', t, x: t.x, y: t.y, w: 1, h: 1, label: `door to ${t.targetRoom}`, kind: t.hidden ? 'hidden door' : 'door' });
+    for (const s of Edit.thingsAt(doc, sel.x, sel.y, ctxOf(sel.room))) {
+        const [w, h] = env.sizeOf(s.key);
+        list.push({ type: 'sprite', s, x: s.x, y: s.y, w, h, label: s.key, kind: s.layer });
+    }
+    return list;
+}
+const activeThing = () => {
+    if (!S.edit || !S.selected) return null;
+    const list = thingsAt(S.selected);
+    return list[Math.min(S.active, list.length - 1)] || null;
+};
+
+function removeActive() {
+    const thing = activeThing(), sel = S.selected;
+    if (!thing || thing.type === 'npc') return;
+    change([sel.room], () => {
+        if (thing.type === 'door') {
+            Edit.removeTransporter(docOf(sel.room), thing.t);
+            return `Removed the door at ${cellName(sel.room, thing.x, thing.y)}`;
+        }
+        Edit.removeSprite(docOf(sel.room), thing.s, ctxOf(sel.room));
+        return `Removed ${thing.label} from ${cellName(sel.room, thing.x, thing.y)}`;
+    });
+}
+
+function moveActive(thing, room, x, y) {
+    if (thing.type === 'npc') {
+        const date = S.model.date;
+        return change([], () => {
+            const dated = Edit.moveNpc(S.files['config.json'].doc, room, thing.name, date, x, y);
+            return `Moved ${thing.name} to ${cellName(room, x, y)}` + (dated ? ` from ${formatGameDate(date)}` : '');
+        }, true);
+    }
+    return change([room], () => {
+        if (thing.type === 'door') Edit.moveTransporter(thing.t, x, y);
+        else Edit.moveSprite(docOf(room), thing.s, x, y, ctxOf(room));
+        return `Moved ${thing.label}, ${cellName(room, thing.x, thing.y)} to (${x}, ${y})`;
+    });
+}
+
+function place(pf, c) {
+    const x = c.x - Math.floor(pf.w / 2), y = c.y - pf.h + 1;
+    change([c.room], () => {
+        Edit.stamp(docOf(c.room), pf, x, y, ctxOf(c.room));
+        return `Placed ${pf.name} at ${cellName(c.room, x, y)}`;
+    });
+}
+
+function paintSolid(paint) {
+    const cells = [...paint.cells].map(c => c.split(',').map(Number));
+    change([paint.room], () => {
+        for (const [x, y] of cells) Edit.setSolid(docOf(paint.room), x, y, paint.on);
+        const where = cells.length === 1 ? cellName(paint.room, cells[0][0], cells[0][1]) : `${cells.length} cells in ${paint.room}`;
+        return paint.on ? `Made ${where} solid` : `Opened ${where}`;
+    });
+}
+
+function linkCells(a, b) {
+    const rooms = a.room === b.room ? [a.room] : [a.room, b.room];
+    change(rooms, () => {
+        const end = (c) => {
+            const r = S.rooms[c.room], reach = S.survey.reach[c.room] || new Set();
+            const open = (x, y) => reach.size ? reach.has(x + ',' + y) : x >= 0 && y >= 0 && x < r.w && y < r.h && !r.blocked.has(x + ',' + y);
+            return { ...c, doc: docOf(c.room), open };
+        };
+        Edit.link(end(a), end(b));
+        return `Linked ${cellName(a.room, a.x, a.y)} \u21c4 ${cellName(b.room, b.x, b.y)}`;
+    });
 }
 
 function layout(keys) {
@@ -322,6 +635,7 @@ function refresh() {
     S.survey = m.survey();
     for (const k of S.order) S.rooms[k].npcs = m.npcsIn(k);
     panels();
+    changes();
     inspect();
     draw();
 }
@@ -344,7 +658,7 @@ function draw() {
         else { ctx.fillStyle = '#fff'; ctx.fillRect(x0, y0, r.w * z, r.h * z); }
         const cell = (key, fn) => { const [cx, cy] = key.split(',').map(Number); fn(x0 + cx * z, y0 + cy * z); };
 
-        if (S.show.collision) {
+        if (S.show.collision || (S.edit && S.tool === 'solid')) {
             ctx.fillStyle = 'rgba(224, 66, 31, 0.5)';
             for (const key of r.blocked) cell(key, (px, py) => ctx.fillRect(px, py, z, z));
         }
@@ -459,6 +773,70 @@ function draw() {
         ctx.lineWidth = 3;
         ctx.strokeRect(sx(r.x + S.selected.x) - 1, sy(r.y + S.selected.y) - 1, z + 2, z + 2);
     }
+    if (S.edit) overlay();
+}
+
+function overlay() {
+    const z = S.view.z;
+    const box = (k, x, y, w, h, color, dash) => {
+        const r = S.rooms[k];
+        ctx.setLineDash(dash || []);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(sx(r.x + x), sy(r.y + y), w * z, h * z);
+        ctx.setLineDash([]);
+    };
+    const label = (k, x, y, text, color) => {
+        const r = S.rooms[k];
+        ctx.font = 'bold 14px Pixel, monospace';
+        const w = ctx.measureText(text).width;
+        ctx.fillStyle = color;
+        ctx.fillRect(sx(r.x + x), sy(r.y + y) - 20, w + 10, 18);
+        ctx.fillStyle = COLOR.paper;
+        ctx.fillText(text, sx(r.x + x) + 5, sy(r.y + y) - 6);
+    };
+
+    const thing = !S.moving && !S.arm && activeThing();
+    if (thing) box(S.selected.room, thing.x, thing.y, thing.w, thing.h, COLOR.ink, [6, 4]);
+
+    if (S.paint) {
+        const r = S.rooms[S.paint.room];
+        ctx.fillStyle = S.paint.on ? 'rgba(224, 66, 31, 0.75)' : 'rgba(47, 143, 91, 0.75)';
+        for (const key of S.paint.cells) {
+            const [cx, cy] = key.split(',').map(Number);
+            ctx.fillRect(sx(r.x + cx), sy(r.y + cy), z, z);
+        }
+    }
+    if (S.moving) {
+        const m = S.moving;
+        box(m.room, m.x, m.y, m.thing.w, m.thing.h, COLOR.sun);
+        label(m.room, m.x, m.y, `${m.x}, ${m.y}`, COLOR.ink);
+    }
+    if (S.arm && S.hover) {
+        const pf = S.arm, c = S.hover, r = S.rooms[c.room];
+        const x = c.x - Math.floor(pf.w / 2), y = c.y - pf.h + 1;
+        const doc = docOf(c.room);
+        const refused = doc ? Edit.checkStamp(doc, pf, x, y, ctxOf(c.room)) : 'No map file for this room';
+        ctx.globalAlpha = 0.75;
+        for (const sp of pf.sprites) {
+            const im = S.images[sp.key];
+            if (im) ctx.drawImage(im, sx(r.x + x + sp.x), sy(r.y + y + sp.y), im.width * z / 64, im.height * z / 64);
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = 'rgba(224, 66, 31, 0.45)';
+        for (const [dx, dy] of pf.colliders) ctx.fillRect(sx(r.x + x + dx), sy(r.y + y + dy), z, z);
+        box(c.room, x, y, pf.w, pf.h, refused ? COLOR.torii : COLOR.moss);
+        label(c.room, x, y, refused || `${pf.name} ${x}, ${y}`, refused ? COLOR.torii : COLOR.ink);
+    }
+    const from = S.linkFrom || (S.retarget && S.selected);
+    if (from) {
+        const r = S.rooms[from.room];
+        box(from.room, from.x, from.y, 1, 1, COLOR.sun);
+        if (S.hover) {
+            const to = S.rooms[S.hover.room];
+            arrow(sx(r.x + from.x + 0.5), sy(r.y + from.y + 0.5), sx(to.x + S.hover.x + 0.5), sy(to.y + S.hover.y + 0.5), COLOR.sun, 3);
+        }
+    }
 }
 
 function arrow(x1, y1, x2, y2, color, width) {
@@ -527,6 +905,37 @@ function inspect() {
     const parts = [el('h2', {}, el('span', { textContent: `${local.room} ${local.x},${local.y}` }), el('span', { className: 'badge ' + state[1], textContent: state[0] }))];
     if (local.room !== sel.room) parts.push(el('div', { className: 'row' }, el('span', { textContent: `${sel.room} ${sel.x},${sel.y}` }), el('span', { className: 'dim', textContent: 'stitched city cell' })));
 
+    if (S.edit) {
+        const list = thingsAt(sel);
+        S.active = Math.max(0, Math.min(S.active, list.length - 1));
+        list.forEach((thing, i) => {
+            const row = el('button', { className: 'row' }, el('span', { textContent: thing.label }), el('span', { className: 'dim', textContent: thing.kind }));
+            row.setAttribute('aria-pressed', i === S.active);
+            row.onclick = () => { S.active = i; inspect(); draw(); };
+            parts.push(row);
+        });
+        const thing = list[S.active];
+        if (thing && thing.type !== 'npc') {
+            const actions = el('div', { className: 'actions' });
+            if (thing.type === 'door') {
+                const lead = el('button', { textContent: 'Leads to' });
+                lead.setAttribute('aria-pressed', !!S.retarget);
+                lead.onclick = () => { S.retarget = S.retarget ? null : thing; cursor(); inspect(); draw(); };
+                const hide = el('button', { textContent: 'Hidden' });
+                hide.setAttribute('aria-pressed', thing.t.hidden);
+                hide.onclick = () => change([sel.room], () => {
+                    Edit.setProp(thing.t.o, 'hidden', !thing.t.hidden);
+                    return `${thing.t.hidden ? 'Showed' : 'Hid'} the door at ${cellName(sel.room, thing.x, thing.y)}`;
+                });
+                actions.append(lead, hide);
+            }
+            const remove = el('button', { textContent: 'Remove' });
+            remove.onclick = removeActive;
+            actions.append(remove);
+            parts.push(actions);
+        }
+    }
+
     const t = m.room.transporters.find(t => t.gridX === sel.x && t.gridY === sel.y);
     if (t) {
         const go = el('button', { className: 'row' }, el('span', { textContent: `→ ${t.targetRoom} ${t.targetX},${t.targetY}` }), el('span', { className: 'dim', textContent: t.hidden ? 'hidden door' : 'transporter' }));
@@ -567,6 +976,7 @@ function inspect() {
 
 function select(room, x, y, pan) {
     S.selected = { room, x, y };
+    S.active = 0;
     if (pan) {
         const r = S.rooms[room];
         S.view.z = Math.max(S.view.z, 14);
@@ -613,13 +1023,63 @@ function bind() {
     $('as').onchange = (e) => { S.model.as = e.target.value; refresh(); };
     window.addEventListener('resize', resize);
 
+    $('edit').onclick = startEdit;
+    $('search').oninput = library;
+    window.addEventListener('beforeunload', (e) => { if (S.changes.length) e.preventDefault(); });
+    window.addEventListener('keydown', (e) => {
+        if (!S.edit || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+        const mod = e.metaKey || e.ctrlKey;
+        if (e.key === 'Escape') { S.arm = S.linkFrom = S.retarget = null; library(); cursor(); inspect(); draw(); }
+        else if (e.key === 'Delete' || e.key === 'Backspace') removeActive();
+        else if (mod && e.key === 'z') { e.preventDefault(); undo(); }
+        else if (mod && e.key === 's') { e.preventDefault(); save(); }
+    });
+
+    const at = (e, cycle) => {
+        const box = stage.getBoundingClientRect();
+        const cx = S.view.x + (e.clientX - box.left) / S.view.z, cy = S.view.y + (e.clientY - box.top) / S.view.z;
+        const cell = (k) => ({ room: k, x: Math.floor(cx - S.rooms[k].x), y: Math.floor(cy - S.rooms[k].y) });
+        const under = S.order.filter(k => { const r = S.rooms[k]; return cx >= r.x && cx < r.x + r.w && cy >= r.y && cy < r.y + r.h; }).map(cell);
+        return WorldModel.stackPick(under, cycle ? S.selected : null);
+    };
+
     let drag = null;
     stage.addEventListener('pointerdown', (e) => {
-        drag = { x: e.clientX, y: e.clientY, vx: S.view.x, vy: S.view.y, moved: false };
         stage.setPointerCapture(e.pointerId);
+        const c = at(e);
+        const plain = S.edit && e.button === 0 && !e.shiftKey && !S.arm && !S.retarget;
+        if (plain && c && S.tool === 'solid') {
+            S.paint = { room: c.room, on: !S.rooms[c.room].blocked.has(c.x + ',' + c.y), cells: new Set([c.x + ',' + c.y]) };
+            draw();
+            return;
+        }
+        if (plain && c && S.tool === 'select' && S.selected && S.selected.room === c.room && S.selected.x === c.x && S.selected.y === c.y) {
+            const thing = activeThing();
+            if (thing) {
+                S.moving = { thing, room: c.room, ox: c.x - thing.x, oy: c.y - thing.y, x: thing.x, y: thing.y };
+                cursor();
+                return;
+            }
+        }
+        drag = { x: e.clientX, y: e.clientY, vx: S.view.x, vy: S.view.y, moved: false };
     });
     stage.addEventListener('pointermove', (e) => {
-        if (!drag) return;
+        const c = at(e);
+        S.hover = c;
+        if (S.paint) {
+            if (c && c.room === S.paint.room) S.paint.cells.add(c.x + ',' + c.y);
+            draw();
+            return;
+        }
+        if (S.moving) {
+            if (c && c.room === S.moving.room) { S.moving.x = c.x - S.moving.ox; S.moving.y = c.y - S.moving.oy; }
+            draw();
+            return;
+        }
+        if (!drag) {
+            if (S.arm || S.linkFrom || S.retarget) draw();
+            return;
+        }
         if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
         if (!drag.moved) return;
         stage.classList.add('dragging');
@@ -629,17 +1089,40 @@ function bind() {
     });
     stage.addEventListener('pointerup', (e) => {
         stage.classList.remove('dragging');
+        if (S.paint) {
+            const paint = S.paint;
+            S.paint = null;
+            return paintSolid(paint);
+        }
+        if (S.moving) {
+            const m = S.moving;
+            S.moving = null;
+            cursor();
+            if (m.x === m.thing.x && m.y === m.thing.y) return draw();
+            if (moveActive(m.thing, m.room, m.x, m.y)) select(m.room, m.x + m.ox, m.y + m.oy, false);
+            return;
+        }
         const was = drag;
         drag = null;
         if (!was || was.moved) return;
-        const box = stage.getBoundingClientRect();
-        const cx = S.view.x + (e.clientX - box.left) / S.view.z, cy = S.view.y + (e.clientY - box.top) / S.view.z;
-        const cell = (k) => ({ room: k, x: Math.floor(cx - S.rooms[k].x), y: Math.floor(cy - S.rooms[k].y) });
-        const under = S.order.filter(k => { const r = S.rooms[k]; return cx >= r.x && cx < r.x + r.w && cy >= r.y && cy < r.y + r.h; }).map(cell);
-        // the room drawn on top takes the click (a later district over an earlier one, a town over
-        // a city's box); clicking the selected cell again picks the room underneath
-        const hit = WorldModel.stackPick(under, S.selected);
-        if (hit) select(hit.room, hit.x, hit.y, false);
+        const c = at(e, !S.edit);
+        if (S.arm) {
+            if (c) place(S.arm, c);
+        } else if (S.retarget) {
+            const thing = S.retarget, from = S.selected;
+            S.retarget = null;
+            cursor();
+            if (c) change([from.room], () => {
+                Edit.retarget(thing.t, c.room, c.x, c.y);
+                return `Door at ${cellName(from.room, thing.x, thing.y)} now leads to ${cellName(c.room, c.x, c.y)}`;
+            });
+            else { inspect(); draw(); }
+        } else if (S.edit && S.tool === 'link') {
+            if (!c) S.linkFrom = null;
+            else if (!S.linkFrom) S.linkFrom = c;
+            else { const from = S.linkFrom; S.linkFrom = null; linkCells(from, c); }
+            draw();
+        } else if (c) select(c.room, c.x, c.y, false);
         else { S.selected = null; inspect(); draw(); }
     });
     stage.addEventListener('wheel', (e) => {
@@ -654,4 +1137,4 @@ function bind() {
     }, { passive: false });
 }
 
-boot().catch((e) => { $('loading').textContent = 'failed to load: ' + e.message; throw e; });
+boot().catch((e) => { $('loading').hidden = false; $('loading').textContent = 'failed to load: ' + e.message; throw e; });
