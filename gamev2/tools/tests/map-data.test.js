@@ -187,4 +187,28 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith, require 
             assert.ok(r.x >= 0 && r.y >= 0 && r.x + r.w <= map.width + 0.5 && r.y + r.h <= map.height + 0.5, k);
         }
     });
+
+    test('the world file is laid out like Japan: Hokkaido at the top, Osaka south-west of Tokyo, no two maps overlapping (#68)', () => {
+        const config = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const world = JSON.parse(fs.readFileSync(path.join(GV2, '..', 'devhouse.world'), 'utf8'));
+        const at = Object.fromEntries(world.maps.map((m) => [path.basename(m.fileName, '.tmj'), m]));
+        const mid = (k) => ({ x: at[k].x + at[k].width / 2, y: at[k].y + at[k].height / 2 });
+        // north is up: Asahikawa is north-east of Sapporo, and all of Hokkaido is north of the whole Tokyo city
+        const cityTop = Math.min(...config.cities.TokyoCity.rooms.map((r) => at[r.room.toLowerCase()].y));
+        for (const k of ['sapporo', 'asahikawa']) assert.ok(at[k].y + at[k].height <= cityTop, `${k} is north of Tokyo`);
+        assert.ok(mid('asahikawa').x > mid('sapporo').x && mid('asahikawa').y < mid('sapporo').y, 'Asahikawa is north-east of Sapporo');
+        assert.ok(Math.abs(mid('sapporo').x - mid('tokyo').x) < at.tokyo.width / 2, 'Sapporo is about due north of Tokyo');
+        // Osaka is west of every Tokyo district and south of Tokyo itself, further west than it is south
+        const cityWest = Math.min(...config.cities.TokyoCity.rooms.map((r) => at[r.room.toLowerCase()].x));
+        assert.ok(at.osaka.x + at.osaka.width <= cityWest, 'Osaka is west of the Tokyo city');
+        assert.ok(mid('osaka').y > mid('tokyo').y, 'and south of Tokyo');
+        assert.ok(mid('tokyo').x - mid('osaka').x > mid('osaka').y - mid('tokyo').y, 'west-south-west, not south');
+        // the detached towns (the made-up ones included, while they last) touch nothing
+        const maps = Object.keys(at), inCity = new Set(config.cities.TokyoCity.rooms.map((r) => r.room.toLowerCase()));
+        for (const a of maps) for (const b of maps) {
+            if (a >= b || (inCity.has(a) && inCity.has(b))) continue;
+            const A = at[a], B = at[b];
+            assert.ok(A.x + A.width <= B.x || B.x + B.width <= A.x || A.y + A.height <= B.y || B.y + B.height <= A.y, `${a} and ${b} overlap`);
+        }
+    });
 };

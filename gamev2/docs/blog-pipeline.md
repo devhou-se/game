@@ -65,7 +65,12 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   re-checked. Use it instead of hand-editing a cross-room move. Seven placements made on a station platform
   before #73, for posts about somewhere else, were moved this way (Karuizawa apple pie and Shirakawa-go to
   Yukimura, the Lake Biwa rides to Inaka, the castles to Machi's pagoda, the izakaya night and Hakata
-  ramen to Market's 7-Eleven); the travel-day posts stay on their platforms. The cell is free for the
+  ramen to Market's 7-Eleven); the travel-day posts stay on their platforms. Stage 0 of the
+  world rework (issue #68: real places only, laid out like Japan) moved eight more: Osaka, which had hosted
+  no post, now tells its own (Damian's 768 at the Dotonbori arch, Bailey's 769 at Tsutenkaku Tower) and,
+  until those towns exist, the two day trips that end the day there (Himeji 754 at the sakura trees, Nara
+  764 on the canal bank under the ferris wheel); the four October test / bug-report posts (382, 391, 396,
+  406) left Machi's vending machines for Tokyo's. The cell is free for the
   whole stay (`occupied_during`: from that date until the NPC's next placement, or until a later trip or
   stay starts everyone from its base again — `trip_window`), not just on the day — history is not always
   written in date order — and `process_post` uses the same check.

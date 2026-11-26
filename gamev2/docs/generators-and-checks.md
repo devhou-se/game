@@ -52,6 +52,10 @@ see `generate_ads.find_font`, and are listed as `skip`, not checked, where none 
   stand clear of that box in `devhouse.world`** (issue #174: Yukimura above Machi, Inaka and Osaka in a
   column west of it; they used to sit inside the box and showed as clearings in Tokyo's woods). The tool
   warns if a town is ever placed back inside (it is still redrawn on top), and `tools/test_game.js` fails.
+  **The world file is laid out like Japan** (issue #68, north up; compass order, not true distance): Asahikawa
+  north-east of Sapporo, both north of the Tokyo city, Osaka west-south-west of Tokyo, and no two detached
+  maps overlapping — `tools/tests/map-data.test.js` holds it. A new town goes at its compass position; moving
+  a detached town changes nothing but the Map (`cities` offsets are the stitched districts' only).
   Widening the world costs nothing on the Map screen while it stays wider than about 1.47:1 - the
   overlay is height-limited. `world-map.json` keeps the same contract (one rect per room), so the "You" marker, NPC dots and map-click travel work as before. Regenerate
   `assets/map` with the tool whenever a district, `cities.<City>.backdrop` or `patch` changes.

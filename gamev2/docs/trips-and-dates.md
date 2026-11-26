@@ -69,7 +69,7 @@ day the trip starts. Days before the FIRST trip are not a lead-in (they show its
   room; otherwise it resolves as if its base said `present: false`. Dated states are applied only from
   the window's first day (the start of the stay, else of the trip) — earlier ones are another trip's
   history — and a state inside the window still places anybody anywhere. So: devhouse 2's base cast
-  (Bailey, Damian, Julia in Tokyo; Dylan in Machi) carries `"trip": "devhouse2"`; devhouse 3 has a base
+  (Bailey, Damian, Dylan and Julia in one row in Tokyo, issue #68; Dylan stood in Machi before) carries `"trip": "devhouse2"`; devhouse 3 has a base
   NPC for all seven in Sapporo (`"stay": "Sapporo"`) and in Asahikawa (`"stay": "Asahikawa"`) with two
   neutral lines each, so on 18-24 Feb 2027 everyone stands in Sapporo and from the 25th in Asahikawa
   before anyone has posted; Khoi, Sam and Xander are nowhere on a 2025 date. A member's first post of a

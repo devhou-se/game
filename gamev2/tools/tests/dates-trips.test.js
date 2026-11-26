@@ -288,6 +288,34 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
         assert.strictEqual(isNew(), false, 'a player from before the intro existed');
     });
 
+    test('devhouse 2 starts with all four in Tokyo, and the Osaka posts are in Osaka (#68 stage 0)', () => {
+        const config = realConfig(), byRoom = game('Trips.membersByRoom');
+        const where = (date) => Object.fromEntries(byRoom(config, date, {}).flatMap(g => g.members.map(m => [m.name, `${g.room} ${m.x},${m.y}`])));
+        // the base cast: one row by the road, Dylan beside the other three (he stood alone in Machi)
+        const base = config.rooms.Tokyo.npcs.filter(n => n.trip === 'devhouse2');
+        assert.strictEqual(base.map(n => `${n.name} ${n.gridX},${n.gridY}`).sort().join(' | '), 'Bailey 20,42 | Damian 24,42 | Dylan 16,42 | Julia 28,42');
+        for (const [key, room] of Object.entries(config.rooms)) {
+            if (key !== 'Tokyo') assert.strictEqual((room.npcs || []).filter(n => n.trip === 'devhouse2').map(n => n.name).join(), '', `${key} holds no devhouse 2 base NPC`);
+        }
+        // before anyone has written a word, and on the days of the four test / pre-trip posts, nobody is outside Tokyo
+        assert.deepStrictEqual(where('2025-10-02'), { Bailey: 'Tokyo 35,39', Damian: 'Tokyo 24,42', Dylan: 'Tokyo 16,42', Julia: 'Tokyo 28,42' });
+        assert.deepStrictEqual(where('2025-10-07'), { Bailey: 'Tokyo 35,39', Damian: 'Tokyo 34,39', Dylan: 'Tokyo 16,42', Julia: 'Tokyo 28,42' });
+        assert.deepStrictEqual({ ...game('Trips.startFor')(config, '2025-10-02', {}) }, { room: 'Tokyo', x: 29, y: 38 }, 'the player opens on the trip home, beside them');
+        // Dylan leaves the row with his first post and is never in two places
+        for (const date of [...game('contentChangeDates')(config)].filter(d => d < '2027')) {
+            const dylans = byRoom(config, date, {}).flatMap(g => g.members.filter(m => m.name === 'Dylan'));
+            assert.ok(dylans.length <= 1, `${date}: ${dylans.length} Dylans`);
+        }
+        assert.strictEqual(where('2025-10-20').Dylan, 'TokyoStation 1,7');
+        // the posts about Osaka, and the two day trips that end the day there, are told in Osaka
+        const posts = (name, date) => (config.rooms.Osaka.npcs.find(n => n.name === name).states[date].posts || []).map(p => p.id);
+        assert.strictEqual(where('2025-11-13').Damian, 'Osaka 17,35'); assert.strictEqual(posts('Damian', '2025-11-13').join(), '754');
+        assert.strictEqual(where('2025-11-14').Damian, 'Osaka 39,19'); assert.strictEqual(posts('Damian', '2025-11-14').join(), '764');
+        assert.strictEqual(where('2025-11-15').Damian, 'Osaka 21,18'); assert.strictEqual(posts('Damian', '2025-11-15').join(), '768');
+        assert.strictEqual(where('2025-11-16').Bailey, 'Osaka 26,43'); assert.strictEqual(posts('Bailey', '2025-11-16').join(), '769');
+        assert.strictEqual(where('2025-11-18').Bailey, 'Tokyo 32,21', 'and Bailey is back in Tokyo for the last post');
+    });
+
     test('Time Travel jumps between trips (#118)', () => {
         const T = game('Trips'), trips = T.of(realConfig());
         const posts = ['2025-10-04', '2025-11-18'];
