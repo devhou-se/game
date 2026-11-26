@@ -16,7 +16,8 @@ comes here and it is on no departures board. North to south:
           bluestone wall covered in STREET ART with COFFEE WINDOWS let into it;
           the laneway runs along its foot (milk crates for seats)
   city    the POINTY PYRAMID beside the ARTS-CENTRE SPIRE, a glass tower, the
-          7-Eleven and vending machines, on a paved plaza
+          7-Eleven and vending machines, on a paved plaza; and here and there
+          on the pavements somebody standing folded double at the waist
   river   the brown river, rowers on it, and the RED SUSPENSION BRIDGE that
           carries the avenue over: you walk between the legs of its towers
   south   the yellow STATION WITH THE CLOCKS over its door (nobody catches a
@@ -187,6 +188,16 @@ for i, (px, py) in enumerate([(37, 29), (43, 30), (48, 29), (54, 30), (34, 22)])
     b.paver(px, py, i)
 b.stamp('bicycle-blue', 50, 28); b.stamp('scooter-red', 56, 28)
 
+# ---- the leaners: four people standing folded double at the waist, as still as
+#      the lamp posts. Street props, not NPCs: one solid cell each, walked round,
+#      and a bump says a line (src/utils/Interactions.js). Each stands off the
+#      avenue and off every door and the cell in front of it, with open ground
+#      beside it: by the tram stop, on the pavement between the two towers, in the
+#      laneway under the wall, and beside the 7-Eleven. ----------------------------
+LEANERS = [('a', 40, STREET_Y + 3), ('b', 16, LANE_Y), ('c', 45, STREET_Y - 1), ('d', KONBINI[0] - 1, KONBINI[1] + 3)]
+for kind, x, y in LEANERS:
+    stand('Collidables', x, y, f'sfb-lean-{kind}', block(1, 1))
+
 # ---- the brown river, edge to edge, and the red bridge over it --------------------
 for x in [x for x in range(W) if not AVE_X0 <= x <= AVE_X1]:
     for y in range(RIVER_Y0, RIVER_Y1 + 1):
@@ -245,4 +256,5 @@ cfg.setdefault('places', {})[KEY] = {'geo': [141.5, 32.7], 'overseas': True}
 
 rg.save_config(cfg)
 print(f'{NAME} {W}x{H}; airport doors at {airport_doors} -> {AIRPORT}; clocks station at {STATION}, '
-      f'bridge towers at {TOWERS}, pyramid at {PYRAMID}, spire at {SPIRE}, konbini at {KONBINI}, pier at {PIER}')
+      f'bridge towers at {TOWERS}, pyramid at {PYRAMID}, spire at {SPIRE}, konbini at {KONBINI}, pier at {PIER}, '
+      f'leaners at {[(x, y) for _, x, y in LEANERS]}')

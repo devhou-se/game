@@ -288,6 +288,48 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.ok(config.rooms.KonbiniSanFranbourne1.interior && game('Stamps').isStore(config.rooms.KonbiniSanFranbourne1));
     });
 
+    test('the leaners: four people folded at the waist, solid street props that block no door and no route, each with its own line', () => {
+        const config = realConfig(), room = config.rooms[CITY];
+        const solid = tiles(room, 'Colliders'), floor = tiles(room, 'Floor');
+        const found = where(room, /^sfb-lean-/);
+        assert.deepStrictEqual(found.map(([, , key]) => key).sort(), ['a', 'b', 'c', 'd'].map((k) => `sfb-lean-${k}_0_0`), 'one of each look');
+        const start = config.rooms[HOME].transporters[0];
+        const walk = reach(room, [start.targetX, start.targetY]);
+        const fronts = new Set();
+        for (const t of room.transporters) for (const [dx, dy] of [[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1]]) fronts.add(K(t.gridX + dx, t.gridY + dy));
+        const lines = new Set();
+        for (const [x, y, key] of found) {
+            assert.deepStrictEqual(sizeOf(key), [1, 1], `${key} is one cell`);
+            assert.strictEqual(config.tileNames[key], 'sfb-lean');
+            assert.ok(K(x, y) in tiles(room, 'Collidables') && K(x, y) in solid, `${key} is a solid prop`);
+            assert.ok(!fronts.has(K(x, y)), `${key} stands on a door or in front of one`);
+            assert.ok(!(x >= 28 && x <= 31), `${key} stands on the avenue`);
+            // bumped from a free cell beside it, and it says its line there and nothing else does
+            const beside = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [x + dx, y + dy]).filter((c) => walk.has(K(...c)));
+            assert.ok(beside.length >= 2, `${key} at ${x},${y} has ${beside.length} free cells beside it`);
+            const hit = Interactions.find(room, room, x, y, { sizeOf, group: 'flavour' });
+            assert.ok(hit && hit.kind === 'leaner' && hit.say && hit.say.length <= 60, `${key} says nothing`);
+            assert.strictEqual(bump(config, CITY, x, y).kind, 'leaner');
+            lines.add(hit.say);
+            // not a pinch point: whoever could pass before can still pass (its neighbours are joined without it)
+            const round = reach(room, beside[0], [[x, y]]);
+            for (const c of beside) assert.ok(round.has(K(...c)), `${key} closes a path at ${c}`);
+            // on paving, not on the road or the grass
+            assert.ok(/(concrete|brick)-autotile/.test(floor[K(x, y)]), `${key} stands on ${floor[K(x, y)]}`);
+        }
+        assert.strictEqual(lines.size, 4, 'each has its own line');
+        // the way from the airport over the bridge to the end of the pier is as it was: the avenue,
+        // the deck and the pier have nothing new on them, and it is still walked end to end
+        const [pier] = where(room, /^sfb-pier/);
+        for (let y = 18; y <= pier[1] + 7; y++) for (let x = 28; x <= 31; x++) assert.ok(walk.has(K(x, y)), `the avenue is shut at ${x},${y}`);
+        const [tower] = where(room, /^sfb-bridge-tower/);
+        assert.ok(walk.has(K(tower[0] + 2, tower[1] + 6)) && walk.has(K(pier[0] + 1, pier[1] + 7)));
+        for (const t of room.transporters) assert.ok(walk.has(K(t.gridX, t.gridY)) && walk.has(K(t.gridX, t.gridY + 1)), 'a door is shut off');
+        // deadpan and nobody's name: lower case like every other line, no cast member in it
+        const cast = ['bailey', 'dylan', 'damian', 'julia', 'james', 'khoi', 'sam', 'xander'];
+        for (const line of lines) assert.ok(line === line.toLowerCase() && !cast.some((n) => line.includes(n)), line);
+    });
+
     test('the home city is on no trip: nobody stands there, no player starts there, the blog never offers it (#218)', () => {
         const config = realConfig();
         const away = new Set([CITY, HOME, HANEDA, 'HanedaStation', 'KonbiniSanFranbourne1']);

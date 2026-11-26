@@ -337,7 +337,10 @@ and the blog pipeline never offers it (`"blog": false` on the room, see `blog-pi
   (only the leg cells collide); the yellow **station with the clocks** over its door (sealed: nobody catches a
   train there, a bump says so - you meet under the clocks), townhouses and a palm garden; the boardwalk, the
   **pier** (flat, walked on to its end) with the raft of **sea lions** beside it (a bump from the pier says a
-  line), and the island with the lighthouse out in the bay.
+  line), and the island with the lighthouse out in the bay. Four **leaners** (`sfb-lean-{a,b,c,d}`, `LEANERS`
+  in the generator) stand folded double at the waist by the tram stop, on the pavement between the two towers,
+  in the laneway and beside the 7-Eleven: one solid cell each, off the avenue and every door, and a bump says
+  that figure's one line (`Interactions.RULES`, kind `leaner`).
 - **Art**: `tools/generate_sanfranbourne_art.py` (Pillow, in `ART_TOOLS`; `--preview out.png`) draws every
   `sfb-*` sprite, the `airport-*` furniture and the two flight pictures as shaded pixel art in the GuttyKreum
   palette - no brand marks but the 7-Eleven the game already has. The oval and the pier are flat

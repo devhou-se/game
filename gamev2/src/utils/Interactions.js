@@ -31,6 +31,11 @@ const Interactions = {
         // the home city (issue #218)
         { kind: 'clocks', group: 'flavour', pattern: /^sfb-clocks-station/, footprint: true, say: 'everybody meets under the clocks. nobody has ever caught a train here' },
         { kind: 'sea-lions', group: 'flavour', pattern: /^sfb-sea-lions/, footprint: true, say: 'the sea lions bark at you. one of them is eating somebody\'s chips' },
+        // ...and the people folded double at the waist on its pavements: one line each
+        { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-a/, footprint: true, say: 'he has been like this since tuesday' },
+        { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-b/, footprint: true, say: 'still standing. technically' },
+        { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-c/, footprint: true, say: 'three trams have come and gone. he was not waiting for one' },
+        { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-d/, footprint: true, say: 'his slurpee melted hours ago. he has not spilled a drop' },
     ],
 
     match(key, roomConfig, venues) {

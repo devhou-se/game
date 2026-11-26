@@ -35,6 +35,8 @@ The city (tools/generate_sanfranbourne.py places them):
   sfb-sea-lions_0_0        3x2   a raft of sea lions
   sfb-palm_0_0             3x4   a palm
   sfb-rock_0_0             5x3   the island in the bay, with its lighthouse
+  sfb-lean-{a,b,c,d}_0_0   1x1   four people standing folded double at the waist
+                                 (hoodie, beanie, backpack, cap and a cup)
 
 The airports (tools/generate_airports.py, one template for both):
   airport-wall_0_0 1x2, airport-window_0_0 2x2, airport-gate_0_0 2x2 (the jet
@@ -700,6 +702,89 @@ def sea_lions():
 
 
 WOOD_HI = rgb('d2a58c')
+BLACK = rgb('000000')                    # the cast's ink (props are inked in INK)
+
+
+# ---- the leaners: street colour on the pavements (tools/generate_sanfranbourne.py LEANERS) ----
+# Each is a person in the cast's proportions (a big head, a small body, the same
+# inked edge) standing folded double at the waist: legs straight, the back a hump
+# over the hips, the head hanging at knee height, one arm straight down. Drawn
+# facing left; `flip` mirrors. One look per letter, told apart by clothes.
+LEAN_LOOKS = {
+    #    top (fill, lit, shaded)                          trousers        shoes           hair            extras
+    'a': dict(top=(rgb('a8424c'), rgb('c8626a'), rgb('7c2c38')), legs=rgb('2e3a5c'), shoes=rgb('e4cecc'),
+              hair=rgb('3a2a20'), hood=True),                                        # red hoodie, hood up
+    'b': dict(top=(rgb('7a5a3c'), rgb('9c7a58'), rgb('563c28')), legs=rgb('3c4046'), shoes=rgb('2a2a30'),
+              hair=rgb('1c1612'), beanie=rgb('c8452c'), flip=True),                  # brown jacket, red beanie
+    'c': dict(top=(rgb('4f7a5c'), rgb('6f9a7c'), rgb('34563e')), legs=rgb('6a5a48'), shoes=rgb('8a3a34'),
+              hair=rgb('c8a050'), pack=(rgb('3c4c70'), rgb('5c6c94'), rgb('f0d888'))),   # green parka, backpack
+    'd': dict(top=(rgb('24242c'), rgb('44444e'), rgb('14141a')), legs=rgb('8e939e'), shoes=rgb('e8e8ee'),
+              hair=rgb('6a4a30'), cap=rgb('e0b040'), cup=True, flip=True),           # black puffer, cap, a cup
+}
+
+
+def leaner(kind):
+    look = LEAN_LOOKS[kind]
+    im, _ = canvas(1, 1)
+    top, top_hi, top_lo = look['top']
+
+    def part(draw):
+        """One inked piece laid over what is there (the cast's bodies are inked piece by piece)."""
+        layer, d = canvas(1, 1)
+        draw(d)
+        outline(layer, ink=BLACK)
+        im.alpha_composite(layer)
+
+    def far_leg(d):
+        d.rectangle([22, 12, 24, 26], fill=tuple(int(c * 0.75) for c in look['legs'][:3]) + (255,))
+        d.rectangle([20, 26, 24, 27], fill=look['shoes'])
+
+    def near_leg(d):
+        d.polygon([(19, 10), (25, 10), (25, 13), (22, 15), (22, 26), (19, 26)], fill=look['legs'])   # the seat, the leg
+        d.rectangle([17, 26, 22, 27], fill=look['shoes'])
+
+    def head(d):
+        # a cast-sized head hanging crown-down off the shoulders, the face turned to the knees
+        d.rectangle([2, 15, 9, 25], fill=SKIN); d.rectangle([1, 16, 10, 24], fill=SKIN)
+        if look.get('hood'):
+            d.rectangle([1, 16, 3, 24], fill=top); d.rectangle([2, 22, 9, 25], fill=top); d.rectangle([2, 15, 4, 15], fill=top)
+            d.line([(1, 17), (1, 23)], fill=top_hi); d.line([(4, 16), (4, 21)], fill=top_lo); d.line([(4, 21), (10, 21)], fill=top_lo)
+        else:
+            d.rectangle([1, 16, 4, 24], fill=look['hair']); d.rectangle([2, 21, 9, 25], fill=look['hair'])
+            d.rectangle([2, 15, 4, 15], fill=look['hair']); d.rectangle([5, 20, 6, 20], fill=look['hair'])
+        if look.get('beanie'):
+            d.rectangle([1, 21, 10, 24], fill=look['beanie']); d.rectangle([2, 25, 9, 26], fill=look['beanie'])
+            d.line([(1, 21), (10, 21)], fill=RED_LO)
+        if look.get('cap'):
+            d.rectangle([1, 22, 10, 24], fill=look['cap']); d.rectangle([2, 25, 9, 25], fill=look['cap'])
+            d.rectangle([10, 23, 13, 24], fill=look['cap'])
+        d.line([(7, 19), (8, 19)], fill=BLACK)                    # an eye, shut
+        d.point((9, 17), fill=rgb('e8848a'))
+
+    def body(d):
+        # the back: from the hips, the highest point, straight down the slope to the shoulders
+        d.polygon([(24, 6), (20, 6), (7, 13), (6, 17), (11, 18), (21, 12), (25, 11), (25, 8)], fill=top)
+        d.line([(20, 6), (24, 6)], fill=top_hi); d.line([(19, 7), (8, 13)], fill=top_hi)
+        d.line([(12, 17), (21, 12)], fill=top_lo); d.line([(21, 12), (25, 11)], fill=top_lo)
+        if look.get('hood'):
+            d.rectangle([6, 13, 8, 16], fill=top_lo)              # the hood's collar, bunched at the neck
+
+    def pack(d):
+        fill, hi, tag = look['pack']
+        d.polygon([(21, 1), (17, 1), (9, 6), (9, 10), (12, 10), (22, 5), (23, 3)], fill=fill)
+        d.line([(17, 1), (21, 1)], fill=hi); d.line([(16, 2), (10, 6)], fill=hi)
+        d.rectangle([14, 5, 16, 6], fill=tag)
+
+    def near_arm(d):
+        d.rectangle([11, 15, 13, 23], fill=top)
+        d.line([(11, 16), (11, 23)], fill=top_hi)
+        d.rectangle([11, 24, 13, 26], fill=SKIN)
+        if look.get('cup'):
+            d.rectangle([11, 26, 14, 29], fill=WHITE); d.line([(11, 27), (14, 27)], fill=RED)
+
+    for draw in (far_leg, near_leg, body) + ((pack,) if look.get('pack') else ()) + (head, near_arm):
+        part(draw)
+    return im.transpose(Image.FLIP_LEFT_RIGHT) if look.get('flip') else im
 
 
 def palm():
@@ -1105,6 +1190,10 @@ SPRITES = {      # key: (builder, tileNames label)
     'sfb-sea-lions_0_0': (sea_lions, 'sfb-sea-lions'),
     'sfb-palm_0_0': (palm, 'sfb-palm'),
     'sfb-rock_0_0': (rock, 'sfb-rock'),
+    'sfb-lean-a_0_0': (lambda: leaner('a'), 'sfb-lean'),
+    'sfb-lean-b_0_0': (lambda: leaner('b'), 'sfb-lean'),
+    'sfb-lean-c_0_0': (lambda: leaner('c'), 'sfb-lean'),
+    'sfb-lean-d_0_0': (lambda: leaner('d'), 'sfb-lean'),
     'airport-wall_0_0': (airport_wall, 'airport-wall'),
     'airport-window_0_0': (airport_window, 'airport-window'),
     'airport-gate_0_0': (airport_gate, 'airport-gate'),

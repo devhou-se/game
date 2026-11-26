@@ -34,7 +34,7 @@
    "name": "gamev2",
    "tilewidth": 64,
    "tileheight": 64,
-   "tilecount": 119,
+   "tilecount": 123,
    "columns": 0,
    "objectalignment": "topleft",
    "grid": {
@@ -754,6 +754,30 @@
     {
      "id": 118,
      "image": "../assets/sprites/white-vending-machine-top_0_0.png",
+     "imagewidth": 64,
+     "imageheight": 64
+    },
+    {
+     "id": 119,
+     "image": "../assets/sprites/sfb-lean-a_0_0.png",
+     "imagewidth": 64,
+     "imageheight": 64
+    },
+    {
+     "id": 120,
+     "image": "../assets/sprites/sfb-lean-b_0_0.png",
+     "imagewidth": 64,
+     "imageheight": 64
+    },
+    {
+     "id": 121,
+     "image": "../assets/sprites/sfb-lean-c_0_0.png",
+     "imagewidth": 64,
+     "imageheight": 64
+    },
+    {
+     "id": 122,
+     "image": "../assets/sprites/sfb-lean-d_0_0.png",
      "imagewidth": 64,
      "imageheight": 64
     }
@@ -16907,7 +16931,7 @@
     0,
     0,
     0,
-    0,
+    122,
     0,
     0,
     0,
@@ -17142,7 +17166,7 @@
     0,
     0,
     0,
-    0,
+    120,
     0,
     0,
     0,
@@ -17598,7 +17622,7 @@
     87,
     0,
     0,
-    0,
+    121,
     0,
     0,
     0,
@@ -17693,7 +17717,7 @@
     0,
     0,
     0,
-    0,
+    123,
     0,
     0,
     0,
@@ -25585,7 +25609,7 @@
     0,
     0,
     0,
-    0,
+    42,
     0,
     0,
     0,
@@ -25820,7 +25844,7 @@
     0,
     0,
     0,
-    0,
+    42,
     0,
     0,
     0,
@@ -26276,7 +26300,7 @@
     42,
     0,
     0,
-    0,
+    42,
     0,
     0,
     0,
@@ -26371,7 +26395,7 @@
     42,
     42,
     0,
-    0,
+    42,
     42,
     0,
     42,
