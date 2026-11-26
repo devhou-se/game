@@ -1,4 +1,4 @@
-# Landmarks and the train-only towns (Osaka, Sapporo, Asahikawa)
+# Landmarks and the train-only towns (Osaka, Sendai, Sapporo, Asahikawa)
 
 Named landmark sprites, adding one, and the generated towns of Osaka and Hokkaido (snow, konbini per host, build order).
 
@@ -18,6 +18,11 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Dotonbori ferris wheel | Osaka | `dotonbori-wheel_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
 | Sapporo Clock Tower | Sapporo | `sapporo-clock-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
 | Sapporo TV Tower | Sapporo | `sapporo-tv-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
+| Date Masamune statue (Aoba Castle ruins) | Sendai | `sendai-masamune_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
+| Zuihoden | Sendai | `sendai-zuihoden_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
+| The pub (HUB) | Sendai | `sendai-pub_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
+| Nikka distillery kiln house | Sendai | `sendai-kiln_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
+| Matsushima sightseeing boat, pier, islets | Sendai | `matsushima-*_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
 
 - **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reachable only by train, like Yukimura:
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
@@ -42,6 +47,45 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
     label would be wrong in another town built from the same sprites (`the old-town lane` is Machi's;
     Asahikawa's machiya row is `ramen alley` — issue #100).
   - `{'indoors': True}` — offered inside station rooms, and only there (issue #73).
+
+### Sendai, the samurai town (issue #66)
+
+`tools/generate_sendai.py` (70x48) builds devhouse 2's first base (26-30 October 2025) from what its twelve
+posts say happened. It is reachable only by train (`SendaiStation`, a city stop between Osaka and Sapporo on
+the board) and sits detached, north-north-east of Tokyo, in `devhouse.world`.
+
+- **Layout**: rail, platform and station house across the north; the main street runs south from the
+  forecourt and crosses **Aoba-dori** (rows 22-24). North-west, the **Aoba Castle ruins**: a gravel terrace on
+  a two-tier stone wall, up a seven-row flight of steps, with **Date Masamune** on his plinth on the steps'
+  axis and the great hall's foundations laid out in paving. North, downtown: an office tower, the **pub**, a
+  7-Eleven (`KonbiniSendai1`, `generate_konbinis.py Sendai`) under an apartment block, vending machines.
+  North-east, **Zuihoden** on a two-row landing at the head of six steps, in a solid cedar grove behind an
+  earthen wall. South-west, the **Nikka distillery** kiln house with casks and autumn maples - one landmark
+  for the Sakunami / Yamadera day trip, not a room. South, the **samurai quarter**: an earth lane (rows
+  34-35) between earthen walls, machiya, a walled residence garden with a gate on the lane and an open side
+  on Aoba-dori (a way through), and a gated courtyard house on the south side. The whole east edge is
+  **Matsushima bay**.
+- **The bay** is `pond-autotile` water from column 59 (so it can be fished from the promenade or the pier):
+  `pond-autotile_edge-w`, the set's missing west bank, is `edge-e` mirrored by `generate_sendai_art.py`. The
+  **pier** is flat (`Non-Collidables` + `depthBias: -200`, the `asahikawa-bridge` recipe) and its five cells
+  are the only water cells left out of the colliders; the two-deck boat is moored along it. Islets (one is
+  post 487's "rock with a ball on top") keep to columns 60-64; columns 66-68 are the room's one `waterways`
+  entry (`axis: 'v'`, open at the south edge), which gives it ambient boats (see Ambient Traffic).
+- **Nobody under a roof**: the generator makes every building solid over its roof rows too (`building()` /
+  `house()`), and the cedar groves and the walled compounds are solid throughout. The south wall stands a row
+  back from the lane so its gate's roof is over the verge, not over the lane.
+- **Art**: `tools/generate_sendai_art.py` (needs Pillow; `--preview out.png`) draws everything above in the
+  `generate_hokkaido.py` style (it imports that file's palette and helpers): half size, pixel-doubled, 1px
+  ink outline. The earthen wall is 1x2 and tiles side by side; the gate is 4x3 with a two-cell gateway and
+  wing walls that meet the wall's coping.
+- **Build order**: `generate_sendai_art.py`, `make_prefabs.py`, `generate_sendai.py`, `generate_konbinis.py
+  Sendai`, `generate_stations.py`, `config_to_tiled.py Sendai SendaiStation KonbiniSendai1`, `play.js lint`
+  for the three, `make_worldmap.py`.
+- Blog NPCs can be sent to `the Aoba Castle ruins`, `Zuihoden`, `the HUB pub`, `the Nikka distillery` and
+  `Matsushima bay` (`LANDMARKS`, all `rooms: ('Sendai',)`), besides the generic 7-Eleven / vending / pond
+  spots. Ten devhouse 2 placements that had been scattered over Tokyo were re-homed there with `--rehome`;
+  post 480 stays on Tokyo Station's platform (its lines are spoken there: "straight here to catch a three
+  hour train to Sendai").
 
 ### Hokkaido: Sapporo and Asahikawa (issue #43)
 

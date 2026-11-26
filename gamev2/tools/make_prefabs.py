@@ -157,6 +157,51 @@ PREFABS = {
     # A ramen shop's nobori: the pole's foot collides, the cloth is overhead.
     'ramen-banner':        dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'ramen-banner_0_0')],
                                 colliders=[(0, 1)], doors=[]),
+    # ---- Sendai (issue #66; art drawn by tools/generate_sendai_art.py) ----------
+    # Date Masamune on his plinth: the plinth (rows 2-3) collides, horse and rider
+    # above it are walk-behind.
+    'sendai-masamune':     dict(w=3, h=4, sprites=[('Collidables', 0, 0, 'sendai-masamune_0_0')],
+                                colliders=[(x, y) for x in range(3) for y in (2, 3)], doors=[]),
+    # Zuihoden: solid from the eaves down; only the ridge row is walk-behind (and
+    # the generator plants cedars behind it, so nobody gets there).
+    'sendai-zuihoden':     dict(w=7, h=5, sprites=[('Collidables', 0, 0, 'sendai-zuihoden_0_0')],
+                                colliders=[(x, y) for x in range(7) for y in range(1, 5)], doors=[(3, 4)]),
+    # A samurai gate: the wing walls and posts (columns 0 and 3, the two wall
+    # rows) collide; the two-cell gateway between them is open, the roof overhead.
+    'sendai-gate':         dict(w=4, h=3, sprites=[('Collidables', 0, 0, 'sendai-gate_0_0')],
+                                colliders=[(x, y) for x in (0, 3) for y in (1, 2)], doors=[]),
+    # One cell of earthen wall, 1x2 and solid; stamp them side by side.
+    'sendai-earthen-wall': dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'sendai-earthen-wall_0_0')],
+                                colliders=[(0, 0), (0, 1)], doors=[]),
+    'sendai-pine':         dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'sendai-pine_0_0')],
+                                colliders=[(0, 2), (1, 2)], doors=[]),
+    'sendai-cedar':        dict(w=2, h=4, sprites=[('Collidables', 0, 0, 'sendai-cedar_0_0')],
+                                colliders=[(0, 3), (1, 3)], doors=[]),
+    'sendai-maple':        dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'sendai-maple_0_0')],
+                                colliders=[(0, 2), (1, 2)], doors=[]),
+    'sendai-stone-lantern': dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'sendai-stone-lantern_0_0')],
+                                 colliders=[(0, 1)], doors=[]),
+    'sendai-pub':          building(5, 5, door=2),
+    # The distillery's kiln house: the brick hall (rows 3-5) and the kiln tower
+    # rising out of it (rows 1-2, the middle three columns) collide.
+    'sendai-kiln':         dict(w=5, h=6, sprites=[('Collidables', 0, 0, 'sendai-kiln_0_0')],
+                                colliders=[(x, y) for x in range(5) for y in (3, 4, 5)]
+                                          + [(x, y) for x in (1, 2, 3) for y in (1, 2)], doors=[(2, 5)]),
+    'sendai-barrels':      dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'sendai-barrels_0_0')],
+                                colliders=[(0, 1), (1, 1)], doors=[]),
+    # Matsushima bay: islets and the moored sightseeing boat stand in the water
+    # (solid already); the pier is a flat deck you walk ON (Non-Collidables +
+    # depthBias, the asahikawa-bridge recipe).
+    'matsushima-islet':       dict(w=3, h=2, sprites=[('Collidables', 0, 0, 'matsushima-islet_0_0')],
+                                   colliders=[(x, 1) for x in range(3)], doors=[]),
+    'matsushima-islet-small': dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'matsushima-islet-small_0_0')],
+                                   colliders=[(0, 1), (1, 1)], doors=[]),
+    'matsushima-ball-rock':   dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'matsushima-ball-rock_0_0')],
+                                   colliders=[(0, 1), (1, 1)], doors=[]),
+    'matsushima-ferry':       dict(w=5, h=2, sprites=[('Collidables', 0, 0, 'matsushima-ferry_0_0')],
+                                   colliders=[(x, y) for x in range(5) for y in (0, 1)], doors=[]),
+    'matsushima-pier':        dict(w=5, h=1, sprites=[('Non-Collidables', 0, 0, 'matsushima-pier_0_0')],
+                                   colliders=[], doors=[]),
     # ---- street accessories (issue #19; art from tools/extract_street.py) --------
     # One sprite on Collidables each, so it Y-sorts by its feet: the bottom cell
     # is solid, the pole / head above it is walk-behind. Maps place the green

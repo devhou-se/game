@@ -10,7 +10,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 committed world: it runs each one in a scratch copy and fails, naming the rooms and cells, if `config.json`
 would change (issue #107, see "Generated rooms stay regenerable"). It also re-seeds every room with
 `config_to_tiled.py` and fails if a committed `tiled/*.tmj` would change (a config edit whose map was not
-re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_tsutenkaku`,
+re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_tsutenkaku`,
 `_discount_art`, `_cooler_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
 `extract_*.py` scripts) and fails if `assets/sprites`, `assets/ads`, `tiled/prefabs` or `config.json` would
 change (issues #186, #193). Run it after any edit to a
@@ -23,7 +23,7 @@ see `generate_ads.find_font`, and are listed as `skip`, not checked, where none 
 
 - **Generated rooms stay regenerable** (issue #107): a room generator re-run on an unchanged world leaves
   `config.json` byte-identical, and `python3 tools/check_generators.py` fails when one would not. That
-  holds for `generate_machi`, `_inaka`, `_yukimura`, `_osaka`, `_sapporo`, `_asahikawa`, `_konbinis`,
+  holds for `generate_machi`, `_inaka`, `_yukimura`, `_osaka`, `_sapporo`, `_asahikawa`, `_sendai`, `_konbinis`,
   `_discount_stores`, `_stations` and `_izakaya` (the Izakaya interior plus its street door and
   lantern pair in Market, see Shop, Food and Drink), each run on its own:
   - a town generator ends with `b.finish()` (`roomgen.Builder`), which runs the picket-fence and

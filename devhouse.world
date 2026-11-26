@@ -69,6 +69,13 @@
       "y": -3520,
       "width": 2688,
       "height": 2048
+    },
+    {
+      "fileName": "gamev2/tiled/sendai.tmj",
+      "x": 7808,
+      "y": -3200,
+      "width": 4480,
+      "height": 3072
     }
   ],
   "onlyShowAdjacentMaps": false,

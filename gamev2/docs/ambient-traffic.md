@@ -12,7 +12,7 @@ their route in the room's map data rather than in coordinates, have no collision
 3-10s after you enter a room and another every 15-40s after it finishes.
 
 - **`AmbientTrains`** - any room with `train-track*` tiles that is not a `stations` room (Palace, Inaka,
-  Yukimura, Osaka, Sapporo, Asahikawa) gets a train running the topmost track row, off-screen edge to
+  Yukimura, Osaka, Sendai, Sapporo, Asahikawa) gets a train running the topmost track row, off-screen edge to
   off-screen edge, depth `min(48, (row + 1) * 10 + 4)` - 48 for a track on row 4 or lower, and always just
   under a player standing on the track row (feet depth `(row + 1) * 10 + 5`), so on a level crossing the
   player is drawn over the passing train in every room.
@@ -58,7 +58,9 @@ their route in the room's map data rather than in coordinates, have no collision
     `bridge-shade-w|e` is the deck's shadow on the water cell beside it. They lie flat on
     `Non-Collidables` with `depthBias: -200` (the `asahikawa-bridge` recipe: over the Water layer and a
     passing boat, under everyone standing), and the shade is translucent, so `clearWater` does not
-    count it as scenery hiding the canal. Frozen water (Asahikawa's river,
+    count it as scenery hiding the canal. **Sendai's Matsushima bay** declares the one vertical waterway
+    (issue #66: columns 66-68, from just under the rail embankment to the south edge of the map, which is
+    its open end; the islets, the pier and the moored boat keep west of it). Frozen water (Asahikawa's river,
     Yukimura's pond) declares none, so it gets no boats.
   Runs too short for a boat to travel `MIN_TRAVEL` (128px, so a run is at least four cells for either
   hull - the three-cell pockets between the moat's rocks get none) are dropped. On a closed run a boat

@@ -206,6 +206,12 @@ LANDMARKS = [
     ('asahikawa-bridge_', 'the bridge over the frozen river', (1, -1)),   # the north bridgehead
     ('ramen-banner_', 'ramen alley', (-1, 2)),                     # on the lane, outside a shop
     ('ice-pond-autotile_corner-nw', 'the frozen pond', (0, -1)),   # on the bank (the ice is solid)
+    # Sendai (issue #66). Each stands its visitor in the open, in front
+    ('sendai-masamune_', 'the Aoba Castle ruins', (3, 4), {'rooms': ('Sendai',)}),   # the terrace, beside the statue's plinth
+    ('sendai-zuihoden_', 'Zuihoden', (2, 6), {'rooms': ('Sendai',)}),        # the landing at the head of the steps
+    ('sendai-pub_', 'the HUB pub', (3, 5), {'rooms': ('Sendai',)}),          # the pavement beside its door
+    ('sendai-kiln_', 'the Nikka distillery', (3, 6), {'rooms': ('Sendai',)}),   # the lane, beside the kiln house's door
+    ('matsushima-ferry_', 'Matsushima bay', (-2, -1), {'rooms': ('Sendai',)}),   # the promenade, by the moored boat
     # Inside a station (issue #73): the west end of the platform, by the
     # vending machine — clear of the train doors, the arrival cell and the exit
     ('white-vending-machine-top', 'the platform', {'indoors': True}),

@@ -16,16 +16,16 @@ module.exports = ({ test, assert, fs, path, vm, GV2, game }) => {
         };
         // the real registry: Tokyo first, day trips under their city, never alphabetical
         assert.deepStrictEqual(show('TokyoStation'),
-            ['Tokyo Station (here)', '>  Inaka', '  Yukimura', 'Osaka', 'Sapporo', '  Asahikawa']);
+            ['Tokyo Station (here)', '>  Inaka', '  Yukimura', 'Osaka', 'Sendai', 'Sapporo', '  Asahikawa']);
         assert.deepStrictEqual(show('OsakaStation'),
-            ['>Tokyo Station', '  Inaka', '  Yukimura', 'Sapporo', '  Asahikawa']);
+            ['>Tokyo Station', '  Inaka', '  Yukimura', 'Sendai', 'Sapporo', '  Asahikawa']);
         // a day-trip station starts on its city; the way you came wins over that
         assert.deepStrictEqual(show('AsahikawaStation'),
-            ['Tokyo Station', '  Inaka', '  Yukimura', 'Osaka', '>Sapporo']);
+            ['Tokyo Station', '  Inaka', '  Yukimura', 'Osaka', 'Sendai', '>Sapporo']);
         assert.deepStrictEqual(show('AsahikawaStation', 'OsakaStation'),
-            ['Tokyo Station', '  Inaka', '  Yukimura', '>Osaka', 'Sapporo']);
+            ['Tokyo Station', '  Inaka', '  Yukimura', '>Osaka', 'Sendai', 'Sapporo']);
         assert.deepStrictEqual(show('SapporoStation', 'TokyoStation'),
-            ['>Tokyo Station', '  Inaka', '  Yukimura', 'Osaka', 'Sapporo (here)', '  Asahikawa']);
+            ['>Tokyo Station', '  Inaka', '  Yukimura', 'Osaka', 'Sendai', 'Sapporo (here)', '  Asahikawa']);
         // where you came from is ignored when it is where you are, or not a station
         assert.strictEqual(board(stations, 'TokyoStation', 'TokyoStation').selected, 1);
         assert.strictEqual(board(stations, 'TokyoStation', 'Nowhere').selected, 1);

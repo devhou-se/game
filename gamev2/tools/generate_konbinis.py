@@ -27,7 +27,7 @@ cfg = rg.load_config()
 # Rooms whose 7-Elevens get an interior. Name hosts on the command line to
 # (re)build only theirs - e.g. `generate_konbinis.py Sapporo` after regenerating
 # Sapporo - and leave every other store's room exactly as it is.
-ALL_HOSTS = ['Machi', 'Market', 'Park', 'Sapporo']
+ALL_HOSTS = ['Machi', 'Market', 'Park', 'Sapporo', 'Sendai']
 HOSTS = sys.argv[1:] or ALL_HOSTS
 assert all(h in ALL_HOSTS for h in HOSTS), f'unknown host; expected some of {ALL_HOSTS}'
 SEVEN = 'seven-eleven_0_0'

@@ -43,7 +43,7 @@ import tempfile
 # and keeps what it does not own (NPCs, signage, another generator's door).
 GENERATORS = [
     'generate_machi', 'generate_inaka', 'generate_yukimura', 'generate_osaka',
-    'generate_sapporo', 'generate_asahikawa',
+    'generate_sapporo', 'generate_asahikawa', 'generate_sendai',
     'generate_konbinis', 'generate_discount_stores', 'generate_stations',
     'generate_izakaya',
 ]
@@ -53,7 +53,7 @@ TILED = 'config_to_tiled'
 # need Pillow; the extract_* ones read the Godot project's ../Assets, and
 # generate_cast the character creator's tables (src/CharacterCreator.js).
 ART_TOOLS = [
-    'make_prefabs', 'generate_hokkaido', 'generate_tsutenkaku',
+    'make_prefabs', 'generate_hokkaido', 'generate_sendai_art', 'generate_tsutenkaku',
     'generate_discount_art', 'generate_cooler_art', 'make_snow_tiles',
     'make_road_tiles', 'generate_ads', 'generate_cast', 'extract_city',
     'extract_dotonbori', 'extract_shrine', 'extract_street', 'extract_train',
