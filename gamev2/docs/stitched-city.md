@@ -58,6 +58,8 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   from the set. Anything else painted on a collision layer still blocks and is drawn. A city (~23k tiles
   with the woods) is **streamed**: records are bucketed in 4-cell chunks (`buildChunks` — every room is
   bucketed, `Occlusion` looks art up by place through `artNear`) and only those within 3 cells of the view
+  — and of the point the camera follows, which is above the player while it looks up at a landmark
+  (`LandmarkView`, see Small Viewports and Touch) —
   have a sprite (`updateStreaming`, every frame; retired sprites are pooled OFF the display list), about
   1,000 at a time versus ~3,500 for the old Tokyo room. `floorSprites` is therefore "the sprites that exist
   now" — read `tileRecords` / `standingArt()` when you need the whole room (AmbientBoats does). Night lamp

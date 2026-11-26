@@ -1,4 +1,4 @@
-module.exports = ({ test, assert, path, game, worldWith }) => {
+module.exports = ({ test, assert, path, game, load, realConfig, worldWith }) => {
     test('a bump looks its cell up in an index built once per room load', () => {
         const { world, run } = worldWith(true);
         const Interactions = run('Interactions'), Shop = run('Shop');
@@ -261,5 +261,136 @@ module.exports = ({ test, assert, path, game, worldWith }) => {
         r = run({ active: true, camera: camera('ui') });
         assert.deepStrictEqual(r.cam.calls, ['out', 'camerafadeoutcomplete', 'in', 'camerafadeincomplete']);
         assert.deepStrictEqual(r.main.calls, []);
+    });
+
+    test('the camera looks up in front of a marked landmark, and only there (#176 / #90)', () => {
+        if (!game('typeof LandmarkView !== "undefined"')) load('systems/LandmarkView.js');
+        const LandmarkView = game('LandmarkView');
+        const look = realConfig().game.lookUp, G = 64;
+        assert.ok(look && look.sprites['shrine-top'] === 2 && look.sprites['tokyo-tower'] === 0, 'the landmarks are data');
+        for (const plain of ['highrise-yellow', 'highrise-glass', 'midrise-apartment', 'shrine-building', 'torii-red-feet']) {
+            assert.ok(!(plain in look.sprites), plain + ' is not a landmark');
+        }
+        assert.strictEqual(LandmarkView.family('shrine-top_0_0'), 'shrine-top');
+        assert.strictEqual(LandmarkView.family('tokyo-tower-feet'), 'tokyo-tower-feet');
+
+        // indexing: only marked families, with the foot `rows` cells under the marked sprite
+        const rec = (key, x, y, w, h) => ({ key, left: x * G, top: y * G, width: w * G, height: h * G });
+        const marks = LandmarkView.index([
+            rec('shrine-top_0_0', 22, 0, 5, 6), rec('shrine-building_0_0', 23, 2, 3, 6),
+            rec('highrise-yellow_0_0', 40, 0, 4, 8), rec('grass_0_0', 0, 0, 1, 1), rec('tokyo-tower_0_0', 60, 0, 8, 15),
+        ], look.sprites, G);
+        assert.deepStrictEqual(JSON.parse(JSON.stringify(marks)), [
+            { key: 'shrine-top_0_0', left: 22 * G, right: 27 * G, top: 0, feet: 8 * G },
+            { key: 'tokyo-tower_0_0', left: 60 * G, right: 68 * G, top: 0, feet: 15 * G },
+        ]);
+        assert.deepStrictEqual(Array.from(LandmarkView.index([rec('shrine-top_0_0', 0, 0, 5, 6)], undefined, G)), []);
+
+        // the Machi hall, lifted clear of the room's top so the numbers are the camera's alone
+        const hall = { left: 22 * G, right: 27 * G, top: 20 * G, feet: 28 * G };
+        const at = (cx, cy, more) => Object.assign({ x: cx * G + 32, y: cy * G + 32, landmarks: [hall], grid: G,
+            cells: look.cells, fade: look.fade, side: look.side, viewH: 960, bar: 40, deadzone: 256, foot: 128 }, more);
+        const aim = (cx, cy, more) => LandmarkView.aim(at(cx, cy, more));
+        const same = (got, want, why) => assert.deepStrictEqual(JSON.parse(JSON.stringify(got)), want, why);
+
+        // desktop, south of the steps: all of the deadzone goes and the camera sits with the roof's
+        // peak a quarter cell under the bar
+        const steps = aim(24, 29);
+        assert.strictEqual(steps.weight, 1);
+        const camY = 29 * G + 32 - steps.offset;
+        assert.strictEqual(camY - 480 + 40 + 16, hall.top, 'the top is just under the HUD bar');
+        // ... and the ordinary camera would have cut it off (it trails by half the deadzone)
+        assert.ok(29 * G + 32 + 128 - 480 + 40 > hall.top);
+
+        // it fades out with distance, continuously: no step bigger than a walking pace allows
+        let last = aim(24, 28.5), far = null;
+        for (let cy = 28.5; cy <= 36; cy += 1 / 16) {
+            const a = aim(24, cy);
+            assert.ok(Math.abs(a.weight - last.weight) <= 0.07 && Math.abs(a.offset - last.offset) <= 40, `no jump at row ${cy}`);
+            last = far = a;
+        }
+        same(far, { weight: 0, offset: 0 }, 'six cells south it has let go');
+        // ... and to either side, and behind its foot
+        assert.strictEqual(aim(27, 29).weight, 0.75);
+        same(aim(29, 29), { weight: 0, offset: 0 });
+        same(aim(19, 29), { weight: 0, offset: 0 });
+        same(aim(24, 26.5), { weight: 0, offset: 0 });
+        for (let cx = 19; cx <= 30; cx += 1 / 16) {
+            const a = aim(cx, 29), b = aim(cx + 1 / 16, 29);
+            assert.ok(Math.abs(a.weight - b.weight) <= 0.07 && Math.abs(a.offset - b.offset) <= 40, `no jump at column ${cx}`);
+        }
+
+        // nothing marked, nothing changes: a high-rise is not in the list, so it is never indexed
+        same(aim(24, 29, { landmarks: [] }), { weight: 0, offset: 0 });
+        // a landmark the ordinary camera always shows whole (four rows) changes nothing either; a torii
+        // (five) can lose its beam when the camera trails, so it only narrows the deadzone a little
+        const low = { left: 21 * G, right: 27 * G, top: 32 * G, feet: 36 * G };
+        same(aim(24, 36, { landmarks: [low] }), { weight: 0, offset: 0 });
+        const torii = { left: 21 * G, right: 27 * G, top: 31 * G, feet: 36 * G };
+        same(aim(24, 36, { landmarks: [torii] }), { weight: 0.875, offset: 0 });
+
+        // the player always keeps `foot` of view below them and never goes under the bar, at any
+        // weight and wherever the camera sits in what is left of its deadzone
+        const tower = { left: 20 * G, right: 28 * G, top: 0, feet: 40 * G };
+        for (const view of [{ viewH: 960, bar: 40, deadzone: 256 }, { viewH: 480, bar: 34, deadzone: 128 }, { viewH: 480, bar: 46, deadzone: 128, foot: 128 + 60 }]) {
+            for (const mark of [hall, tower]) {
+                for (let cy = mark.feet / G - 1; cy <= mark.feet / G + 7; cy += 0.25) {
+                    for (let cx = 17; cx <= 31; cx += 0.5) {
+                        const o = at(cx, cy, Object.assign({ landmarks: [mark] }, view)), a = LandmarkView.aim(o);
+                        assert.ok(a.weight >= 0 && a.weight <= 1 && a.offset >= 0);
+                        const slack = o.deadzone * (1 - a.weight) / 2;
+                        const lowest = o.y - (o.y - a.offset - slack);   // the player below the view's centre, at most
+                        // (where the view is too short for `foot` even as it is, no lower than the ordinary camera lets them go)
+                        assert.ok(lowest <= Math.max(o.viewH / 2 - o.foot, o.deadzone / 2) + 1e-9, `feet in view at ${cx},${cy}`);
+                        assert.ok(o.y - a.offset + slack - o.viewH / 2 + o.bar <= o.y - 32, `not under the bar at ${cx},${cy}`);
+                    }
+                }
+            }
+        }
+        // a 2x landscape phone (7.5 cells tall) cannot hold the hall: the shift is capped, not the player lost
+        const phone = aim(24, 29, { viewH: 480, bar: 34, deadzone: 128 });
+        same(phone, { weight: 1, offset: 240 - 128 });
+        // with all of the weight and no cap the answer does not depend on the deadzone
+        assert.strictEqual(aim(24, 29, { deadzone: 128 }).offset, steps.offset);
+    });
+
+    test('chunk streaming covers the point the camera follows, above the player while it looks up (#176)', () => {
+        const RoomManager = game('RoomManager');
+        const rm = Object.create(RoomManager.prototype);
+        const cam = { width: 1280, height: 960, zoom: 1, scrollX: 1000, scrollY: 3000, followOffset: { x: 0, y: 0 } };
+        rm.scene = { GRID_SIZE: 64, cameras: { main: cam }, player: { sprite: { x: 1640, y: 3480 } } };
+        const size = RoomManager.CHUNK * 64, margin = RoomManager.STREAM_MARGIN * 64;
+        const plain = rm.streamRect();
+        assert.strictEqual(plain.y0, Math.floor((3480 - 480 - margin) / size));
+        cam.followOffset.y = 352;   // the camera is on its way up
+        const up = rm.streamRect();
+        assert.strictEqual(up.y0, Math.floor((3480 - 352 - 480 - margin) / size));
+        assert.ok(up.y0 < plain.y0, 'the rows it is about to show have sprites');
+        assert.deepStrictEqual([up.x0, up.x1, up.y1], [plain.x0, plain.x1, plain.y1]);
+        delete cam.followOffset;    // a camera stub without one (the tools)
+        assert.deepStrictEqual(rm.streamRect(), plain);
+    });
+
+    test('the look-up narrows the follow deadzone in place, and a zoom change keeps it ours (#176)', () => {
+        const UIScale = game('UIScale');
+        const ui = Object.create(UIScale.prototype);
+        let recentred = 0;
+        const main = { zoom: 1, width: 1280, deadzone: { x: 0, y: 100, width: 256, height: 256 },
+            setZoom(z) { this.zoom = z; },
+            setDeadzone(w, h) { recentred++; this.deadzone.width = w; this.deadzone.height = h; } };
+        ui.scene = { cameras: { main }, scale: { width: 1280 }, events: { emit() {} } };
+        ui.deadzoneShare = 1;
+        ui.setWorldZoom(1);
+        assert.strictEqual(ui.deadzoneHeight(), 256);
+        ui.setDeadzoneShare(0.25);
+        assert.deepStrictEqual([main.deadzone.height, main.deadzone.y, main.deadzone.width], [64, 196, 256], 'narrowed about its centre');
+        assert.strictEqual(recentred, 0, 'Camera.setDeadzone (which re-centres the camera on the player) is not called');
+        assert.strictEqual(ui.deadzoneHeight(), 256);
+        ui.setWorldZoom(2);         // a phone turned round while the camera looks up
+        assert.deepStrictEqual([main.deadzone.width, main.deadzone.height, ui.deadzoneHeight()], [128, 32, 128]);
+        ui.setDeadzoneShare(1);
+        assert.strictEqual(main.deadzone.height, 128, 'the full height comes back, not the narrowed one taken for a new size');
+        ui.setWorldZoom(1);
+        assert.deepStrictEqual([main.deadzone.width, main.deadzone.height], [256, 256]);
     });
 };

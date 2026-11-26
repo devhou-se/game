@@ -286,6 +286,9 @@ class RoomManager {
         // every room is bucketed (Occlusion looks art up by place); only a
         // streamed one creates its sprites chunk by chunk
         this.buildChunks();
+        // the landmarks the camera looks up at (LandmarkView), once per room load
+        const look = this.scene.config && this.scene.config.game.lookUp;
+        this.landmarks = look && typeof LandmarkView !== 'undefined' ? LandmarkView.index(this.tileRecords, look.sprites, this.scene.GRID_SIZE) : [];
         if (this.streamed) {
             this.updateStreaming();
         } else {
@@ -305,6 +308,7 @@ class RoomManager {
         this.tileRecords = [];
         this.blockedCells = new Set();
         this.interactionIndex = null;
+        this.landmarks = [];
         this.signSprites = [];
         this.signArt = [];
         this.liveTiles = new Set();
@@ -545,8 +549,8 @@ class RoomManager {
 
     /**
      * The chunks that must have sprites: whatever the camera shows now or
-     * will after catching up with the player (it trails by the deadzone, and
-     * is not centred yet right after a room swap), plus a margin so nothing
+     * will after catching up with the point it follows (it trails by the
+     * deadzone, and is not centred yet right after a room swap), plus a margin so nothing
      * is created inside the view.
      */
     streamRect() {
@@ -558,11 +562,14 @@ class RoomManager {
         // a camera nowhere near the player (boot, before it starts following)
         // is about to jump to him — only he matters
         if (Math.abs(cx - p.x) > hw || Math.abs(cy - p.y) > hh) { cx = p.x; cy = p.y; }
+        // where it is heading is the point it follows: above the player while
+        // it looks up at a landmark (LandmarkView)
+        const fy = p.y - (cam.followOffset ? cam.followOffset.y : 0);
         return {
             x0: Math.floor((Math.min(cx, p.x) - hw - margin) / size),
-            y0: Math.floor((Math.min(cy, p.y) - hh - margin) / size),
+            y0: Math.floor((Math.min(cy, p.y, fy) - hh - margin) / size),
             x1: Math.floor((Math.max(cx, p.x) + hw + margin) / size),
-            y1: Math.floor((Math.max(cy, p.y) + hh + margin) / size),
+            y1: Math.floor((Math.max(cy, p.y, fy) + hh + margin) / size),
         };
     }
 
@@ -748,6 +755,9 @@ class RoomManager {
         this.loadTransporters();
         this.loadObjects();
         this.loadFloorTiles();
+
+        // the camera's look-up at a landmark belongs to the room that was left
+        if (this.scene.landmarkView) this.scene.landmarkView.reset();
 
         // Update HUD
         this.scene.updateHUD();

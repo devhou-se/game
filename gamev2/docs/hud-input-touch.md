@@ -94,6 +94,32 @@ The game always renders 1280x960; everything below is about showing that on anyt
     (`roomManager.contentRows()`) is held in the part of it under the HUD bar (`GameScene.hudCover()`,
     world px) — centred there if it fits, else scrolling only from its back wall under the bar to its
     door (`RoomManager.heldRows`); `layoutHUD` re-applies the bounds when the bar's height changes.
+    **Looking up at landmarks (issues #176 / #90) — `src/systems/LandmarkView.js` (`scene.landmarkView`).**
+    The camera trails the player by the deadzone, so walking north leaves about five rows above them
+    and the roof of an eight-row shrine hall, or most of a tower, is off the top of the screen. In
+    front of a landmark MARKED AS DATA — config `game.lookUp.sprites`, `{sprite family: rows}`: the
+    shrine halls, pagodas, torii, Tokyo Tower and Station, Tsutenkaku, the Dotonbori arch and wheel,
+    Sapporo's two towers; never every tall sprite, so a high-rise, a tree or a house changes nothing —
+    the world camera follows a point above the player (`cameras.main.followOffset.y`) with a
+    narrower deadzone (`uiScale.setDeadzoneShare`), so the landmark's top comes to sit a quarter cell
+    under the HUD bar. `rows` is how many cells of the building stand below the marked sprite (2 for
+    a shrine's roof sprite and a torii's beam, 0 for a landmark that is one sprite); the reach is
+    `lookUp.cells` cells south of that foot at full strength, fading out over `fade` more and over
+    `side` cells to either side, and gone one cell behind the foot. The decision is the pure
+    `LandmarkView.aim()` (`{weight, offset}`, continuous in the player's position: the camera pans as
+    you walk in and out, there is no trigger edge) and is eased in time on top (`EASE_MS`); a room
+    change, a train arrival and boot settle at once, under the fade (`landmarkView.reset()` from
+    `RoomManager.applyRoomSwap`). It is capped so the player keeps `LandmarkView.FOOT` cells of view
+    (plus any touch controls over the canvas) below them: on a phone (7.5 cells tall at 2x) or under
+    a tower taller than the screen the camera shows as much as fits, not the top. Where the ordinary
+    camera always shows the top nothing changes at all; where it only sometimes does (a torii) the
+    deadzone narrows and the offset stays 0. A room's landmarks are indexed once per room load
+    (`roomManager.landmarks`, from the tile records — a new landmark sprite is one more entry in
+    `lookUp.sprites`), so a frame costs a loop over a dozen rectangles. `streamRect` covers the point
+    the camera follows, so the rows it is about to show are streamed in. Never call
+    `cameras.main.setDeadzone` to change the deadzone mid-game: it re-centres the camera on the
+    player. Camera bounds still win: against a room's top edge (Machi under `?stitch=0`) the view
+    stops there.
     The room-change fade (`RoomManager.switchRoom`) runs on the camera drawn last — the `'ui'`
     camera while the split is on — so it covers the HUD and overlays as the single camera's fade does.
   - **HUD** (depth 1000-1999 with scroll factor 0, `'hud'` camera): magnified from the top-left by

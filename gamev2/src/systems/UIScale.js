@@ -72,6 +72,7 @@ class UIScale {
         this.offsetX = 0;       // canvas x of overlay x: offsetX + x * zoom
         this.offsetY = 0;
         this.worldZoom = 1;
+        this.deadzoneShare = 1; // of the deadzone's height (LandmarkView narrows it to look up)
         this.hudZoom = 1;
         this.viewX = 0;         // left edge of the slice of canvas the cameras draw into
         this.hudWidth = 0;      // canvas px the HUD layer has across
@@ -340,6 +341,31 @@ class UIScale {
         this.scene.events.emit('uiscalechange', this);
     }
 
+    /** The follow deadzone's full height at the current zoom (world px), before any narrowing. */
+    deadzoneHeight() {
+        const dz = this.scene.cameras.main.deadzone;
+        if (this._deadzoneHome) return this._deadzoneHome.height / this.worldZoom;
+        return dz ? dz.height : 0;
+    }
+
+    /**
+     * Keep only `share` (0..1) of the follow deadzone's height: LandmarkView
+     * narrows it while the camera looks up at a landmark, every frame of the
+     * ease. The rectangle is resized in place - Camera.setDeadzone would
+     * re-centre the camera on the player, a jump - and stays ours, so
+     * setWorldZoom does not take the narrowed height for a new size.
+     */
+    setDeadzoneShare(share) {
+        const dz = this.scene.cameras.main.deadzone, ours = this._deadzone;
+        if (share === this.deadzoneShare) return;
+        this.deadzoneShare = share;
+        if (!dz) return;
+        if (!ours || dz.width !== ours.width || dz.height !== ours.height) { this.setWorldZoom(this.worldZoom); return; }
+        const height = this._deadzoneHome.height / this.worldZoom * share;
+        dz.y += (dz.height - height) / 2;   // it is centred on the view once a frame: keep it so
+        dz.height = ours.height = height;
+    }
+
     /**
      * Zoom the world camera, and scale its follow deadzone to match (and to
      * the width of a cropped view) so the player keeps the same share of the
@@ -356,7 +382,8 @@ class UIScale {
             }
             // across, the same share of a cropped (portrait) view as of the whole canvas
             const share = main.width / this.scene.scale.width;
-            const width = this._deadzoneHome.width * share / zoom, height = this._deadzoneHome.height / zoom;
+            const width = this._deadzoneHome.width * share / zoom;
+            const height = this._deadzoneHome.height / zoom * this.deadzoneShare;
             if (dz.width !== width || dz.height !== height) main.setDeadzone(width, height);
             this._deadzone = { width, height };
         }

@@ -33,7 +33,9 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 - **Adding a landmark**: put a cell-aligned PNG in `assets/sprites/` (register `spriteMetadata` with
   `anchorX = 32/width`, `anchorY = 32/height`, plus `tileNames`), add a prefab spec to
   `tools/make_prefabs.py` (colliders = the base cells only), stamp it from the room generator, and add it to
-  `LANDMARKS` in `tools/blog_to_npc.py` so blog NPCs can be placed there. A landmark entry may carry a third
+  `LANDMARKS` in `tools/blog_to_npc.py` so blog NPCs can be placed there. If it is taller than about five
+  rows and worth looking up at, add its sprite family to config `game.lookUp.sprites` (`0` for a landmark
+  that is one sprite; see "Looking up at landmarks" in `hud-input-touch.md`). A landmark entry may carry a third
   element `(dx, dy)`: the cell, relative to the sprite's top-left, where a visitor stands (tall sprites'
   own cell is their tip, not their foot), and an options dict:
   - `{'rooms': ('Machi',)}` — the label names one place, so only those rooms offer it. Use it whenever a

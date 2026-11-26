@@ -280,6 +280,7 @@ class GameScene extends Phaser.Scene {
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
             this.uiScale = new UIScale(this); // magnifies overlays on small viewports
             this.rotatePrompt = new RotatePrompt(this); // "rotate your phone", briefly, on a portrait phone
+            this.landmarkView = new LandmarkView(this); // the camera looks up in front of a landmark
 
             // Create HUD
             this.createHUD();
@@ -1040,6 +1041,8 @@ class GameScene extends Phaser.Scene {
             this.player.settleIdle();
         }
         this.roomManager.rooms[this.roomManager.currentRoom].npcs.forEach(npc => npc.settleIdle());
+        // in front of a landmark the camera looks up at it
+        if (this.landmarkView) this.landmarkView.update();
         // a stitched city only keeps the tile sprites near the camera
         this.roomManager.updateStreaming();
         if (this.dayNight) this.dayNight.cullGlows();   // ...and the lamp halos

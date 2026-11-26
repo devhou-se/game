@@ -15,6 +15,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/game.js` - Phaser game configuration (viewport: 1280×960, physics setup)
 - `src/systems/Viewport.js` - Where the canvas sits in the window, and where the touch controls go (see Small Viewports and Touch)
 - `src/systems/UIScale.js` - World zoom, HUD magnification and overlay fitting for small, cropped or touch-covered canvases (see Small Viewports and Touch)
+- `src/systems/LandmarkView.js` - The camera looks up in front of a landmark marked in config `game.lookUp` (see Small Viewports and Touch)
 - `src/utils/Hints.js` - The one helper that words key hints for keyboard or touch (see Small Viewports and Touch)
 - `src/utils/JapaneseFont.js` + `fonts/` - The pixel fonts, and the Japanese face added to each of them (see Fonts and Japanese Text)
 - `src/utils/Trips.js` - The devhouse trips as data: which trip a date belongs to, and everything that follows (see Trips)

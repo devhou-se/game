@@ -83,6 +83,27 @@
   "game": {
     "deadzoneCells": 4,
     "gridSize": 64,
+    "lookUp": {
+      "cells": 3,
+      "fade": 3,
+      "side": 2,
+      "sprites": {
+        "dotonbori-arch": 0,
+        "dotonbori-wheel": 0,
+        "pagoda-roof": 3,
+        "red-pagoda-roof": 8,
+        "red-pagoda-small-top": 3,
+        "red-shrine-top": 2,
+        "sapporo-clock-tower": 0,
+        "sapporo-tv-tower": 0,
+        "shrine-top": 2,
+        "tokyo-station": 0,
+        "tokyo-tower": 0,
+        "torii-blue-top": 2,
+        "torii-red-top": 2,
+        "tsutenkaku": 0
+      }
+    },
     "moveDuration": 200,
     "npcWanderInterval": 5000,
     "npcWanderRadius": 2,
