@@ -93,7 +93,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         }
         // never past 1:1, whatever the image
         assert.strictEqual(fit(1280, 960, 400, 300, false), 1);
-        assert.ok(/const s = UIScale\.mapFit\(W, H, meta\.width, meta\.height, W < this\.scale\.width\);/.test(
+        // the Map is Japan since #211 (pixel art, drawn larger than 1:1): the same fit, with a ceiling
+        assert.ok(/const s = UIScale\.mapFit\(W, H, meta\.width, meta\.height, W < this\.scale\.width, UIScale\.MAP_MAX_SCALE\);/.test(
             fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8')));
     });
 

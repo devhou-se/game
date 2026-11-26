@@ -457,13 +457,16 @@ class UIScale {
     }
 
     /**
-     * The scale the Map overlay draws the overworld image at: the largest
-     * that leaves room for the title above and the footer below, never past
-     * 1:1. The side margin is what limits it where the view is cropped (a
-     * portrait phone), so there it is only enough to clear the frame.
+     * The scale the Map overlay draws its picture at: the largest that
+     * leaves room for the title above and the footer below, never past `max`
+     * (1:1 unless said), and in half steps from 2 up so that pixel art keeps
+     * even pixels. The side margin is what limits it where the view
+     * is cropped (a portrait phone), so there it is only enough to clear the
+     * frame.
      */
-    static mapFit(W, H, mapW, mapH, cropped) {
-        return Math.min((W - (cropped ? UIScale.MAP_MARGIN_CROPPED : UIScale.MAP_MARGIN)) / mapW, (H - 170) / mapH, 1);
+    static mapFit(W, H, mapW, mapH, cropped, max = 1) {
+        const s = Math.min((W - (cropped ? UIScale.MAP_MARGIN_CROPPED : UIScale.MAP_MARGIN)) / mapW, (H - 170) / mapH, max);
+        return s >= 2 ? Math.floor(s * 2) / 2 : s;
     }
 
     /** The part of the canvas the touch controls cover (canvas px in from each edge). */
@@ -670,6 +673,9 @@ UIScale.MIN_CELLS = 8;
 /** Canvas px the Map overlay keeps clear at the sides of the overworld image, both sides together: full view, cropped view. */
 UIScale.MAP_MARGIN = 120;
 UIScale.MAP_MARGIN_CROPPED = 24;
+/** Most the Map's picture of Japan is magnified, and how near a dot (canvas px) a debug map-click must land. */
+UIScale.MAP_MAX_SCALE = 4;
+UIScale.MAP_CLICK_REACH = 28;
 UIScale.NO_INSETS = { left: 0, right: 0, bottom: 0 };
 UIScale.NO_CROP = { left: 0, right: 0 };
 UIScale.IDENTITY = { zoom: 1, offsetX: 0, offsetY: 0, originX: 0, originY: 0 };

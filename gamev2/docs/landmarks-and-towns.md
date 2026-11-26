@@ -145,8 +145,11 @@ pipeline has placed someone there.
   shrine / torii / 7-Eleven / vending spots.
 - Asahikawa's three cottages are the first houses you can walk into (`HouseAsahikawa1..3`, see House
   interiors below); the three machiya of ramen alley are shops and stay sealed.
-- A room missing from `assets/map/world-map.json` is fine: the Map overlay still opens (no dot, "you are
-  here: <room>") and `TrainTravel.dirTo` treats it as x=0. Re-run `tools/make_worldmap.py` to add new rooms.
+- A room missing from `assets/map/world-map.json` is fine: `TrainTravel.dirTo` treats it as x=0. Re-run
+  `tools/make_worldmap.py` to add new rooms (the studio lays the world out from it).
+- **A new town needs its dot on the Map**: add `"<Room>": { "geo": [lon, lat], "label": "..." }` to
+  config `places` (the Map is a map of Japan since #211, see `hud-input-touch.md`). `japan-map.test.js`
+  fails for a station town with no entry, and for a geo that falls in the sea of the drawn outline.
 
 ### Fukuoka (issue #67)
 

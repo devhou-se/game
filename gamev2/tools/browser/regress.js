@@ -556,23 +556,59 @@ async function desktop(shared) {
         };
 
         await cleanly('menu-map', async () => {
-            await page.evaluate('__t.home()');
-            await idle(page);
-            await menuTo('Map');
-            need(await press(page, 'Enter', '__t.s.mapVisible'), 'ENTER on Map did not open the map');
-            const st = await page.evaluate(() => {
-                const { s, rm } = __t;
-                const texts = s.children.list.filter(o => o.type === 'Text' && o.depth >= 2000 && o.visible).map(o => o.text);
-                const meta = s.cache.json.get('worldMap');
-                return { menu: s.menuManager.isVisible(), texts, here: rm.currentDistrict(), rooms: Object.keys(meta.rooms),
-                    image: s.children.list.some(o => o.type === 'Image' && o.texture.key === 'world-map' && o.visible) };
-            });
-            need(!st.menu && st.image, { mapNotDrawn: st });
-            need(st.texts.includes('You') && st.texts.includes(st.here) && st.rooms.every(r => st.texts.includes(r)), { mapLabels: st.texts.slice(0, 30), here: st.here });
+            // The Map is Japan with a dot and a label per town (#211): no overworld picture, no NPC names.
+            const mapNow = async () => {
+                await page.evaluate('__t.home()');
+                await idle(page);
+                await menuTo('Map');
+                need(await press(page, 'Enter', '__t.s.mapVisible'), 'ENTER on Map did not open the map');
+                return page.evaluate(() => {
+                    const { s, rm } = __t;
+                    const shown = s.children.list.filter(o => o.depth >= 2000 && o.visible);
+                    const texts = shown.filter(o => o.type === 'Text').map(o => o.text);
+                    const images = shown.filter(o => o.type === 'Image').map(o => o.texture.key);
+                    const japan = shown.find(o => o.type === 'Image' && o.texture.key === 'japan-map');
+                    const box = japan && japan.getBounds();
+                    const places = Places.list(s.config);
+                    const played = Trips.baseOf(s.player.baseSpriteKey || s.config.player.sprite);
+                    const labels = shown.filter(o => o.type === 'Text' && places.some(p => p.label === o.text)).map(o => o.getBounds());
+                    const cast = Trips.membersByRoom(s.config, gameDate()).reduce((all, g) => all.concat(g.members.map(m => m.name)), []);
+                    return { menu: s.menuManager.isVisible(), texts, images, dots: s.mapDots, date: gameDate(),
+                        places: places.map(p => p.key), names: places.map(p => p.label),
+                        here: Places.of(s.config, rm.currentDistrict()),
+                        present: Array.from(Places.present(s.config, gameDate(), { played })).sort(),
+                        inMap: !!box && s.mapDots.every(d => d.x > box.x && d.x < box.right && d.y > box.y && d.y < box.bottom) &&
+                            labels.every(l => l.x >= box.x - 1 && l.right <= box.right + 1 && l.y >= box.y - 1 && l.bottom <= box.bottom + 1),
+                        apart: labels.every((a, i) => labels.every((b, j) => i === j || !Phaser.Geom.Rectangle.Overlaps(a, b))),
+                        labels: labels.length, named: cast.filter(n => texts.includes(n)) };
+                });
+            };
+            const judge = (st) => {
+                need(!st.menu && st.images.includes('japan-map') && !st.images.includes('world-map'), { mapNotDrawn: st.images, menu: st.menu });
+                need(st.places.length >= 6 && st.dots.length === st.places.length && st.places.every(k => st.dots.some(d => d.key === k)), { aDotPerTown: st.dots, places: st.places });
+                need(st.labels === st.names.length && st.names.every(n => st.texts.includes(n)) && st.dots.every(d => d.fits), { aLabelPerTown: st.texts.slice(0, 20), names: st.names });
+                need(st.inMap && st.apart, { labelsOverlapOrLeaveTheMap: st.dots, inMap: st.inMap, apart: st.apart });
+                need(st.dots.filter(d => d.present).map(d => d.key).sort().join() === st.present.join(), { presenceDots: st.dots, want: st.present, date: st.date });
+                need(st.dots.filter(d => d.here).map(d => d.key).join() === (st.here || ''), { youAreHere: st.dots, want: st.here });
+                need(st.named.length === 0 && !st.texts.includes('You'), { theMapNamesPeople: st.named, texts: st.texts.slice(0, 20) });
+                need(st.texts.some(t => /friends in town/.test(t)) && st.texts.some(t => /^you are here: .*(ESC|B) to close$/.test(t)), { legend: st.texts });
+            };
+            const closes = async () => {
+                need(await press(page, 'Escape', '!__t.s.mapVisible'), 'ESC did not close the map');
+                await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
+                const after = await page.evaluate('({ overlays: __t.overlays(), dots: __t.s.mapDots })');
+                need(after.overlays.length === 0 && after.dots === null, { afterMap: after });
+            };
+            judge(await mapNow());
+            await closes();
+            // a day with people in another town (27 October 2025: three of them in Sendai): that town has the other dot
+            await boot(page, url(`${QUIET}&date=2025-10-27`));
+            const day = await mapNow();
+            judge(day);
+            need(day.here && day.present.includes('Sendai') && day.dots.find(d => d.key === 'Sendai').present && day.dots.some(d => !d.present), { presenceOnTheDay: day.dots, want: day.present });
             await page.screenshot({ path: path.join(SHOTS, 'regress_map.png') });
-            need(await press(page, 'Escape', '!__t.s.mapVisible'), 'ESC did not close the map');
-            await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
-            need((await page.evaluate('__t.overlays()')).length === 0, { afterMap: await page.evaluate('__t.overlays()') });
+            await closes();
+            await boot(page, url(QUIET));
         });
 
         await cleanly('menu-time-travel', async () => {

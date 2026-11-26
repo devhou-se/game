@@ -46,7 +46,44 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
   (prompt), fast hunger (the energy meter drains `Energy.DEBUG_FACTOR` times as fast, to test it; the
   one row that is not saved, so it is off on every load) and noclip (all default off, persisted in localStorage). Deliberately
   absent from How to Play. Map-click travel on the menu's Map overlay
-  only works when its toggle is on.
+  only works when its toggle is on: a click on (or within `UIScale.MAP_CLICK_REACH` canvas px of) a
+  town's dot closes the map and puts the player on the cell outside that town's station
+  (`Places.nearest` → `Places.arrival`); a click anywhere else on the picture does nothing.
+- **The Map overlay is a map of Japan** (issue #211, `GameScene.showMap`, `src/utils/Places.js`): the
+  picture `assets/map/japan.png` (`tools/make_japan_map.py`, see `generators-and-checks.md`) with ONE dot
+  and label per town, placed by the town's real longitude / latitude. The towns are data — `config.json`
+  top-level `places`: `"<cities key or room key>": { "geo": [lon, lat], "label": "Tokyo" }`. A `cities`
+  key makes the whole stitched city one dot (`TokyoCity` → "Tokyo"); a room that has its own entry is its
+  own dot even inside a stitched region. An entry whose key is not a room or city yet is skipped (the geo
+  of Kanazawa, Toyama and Shirakawago is already there), so **a new town appears on the map by adding its
+  `places` entry** — no code. A town with no entry has no dot: the made-up ones (Inaka, Yukimura) are not
+  on the map of Japan; they are still a train ride from Tokyo Station, and the footer reads
+  "you are here: Inaka (not on this map)" there.
+  - **Three kinds of dot**: a small cream dot for a town; a larger red dot in a white ring with a halo that
+    breathes (alpha only) where trip members are standing on the game date; a gold ring (and a gold
+    label) round the town the player is in. Presence is `Places.present(config, gameDate(), { played })`
+    — `Trips.membersByRoom`, the intro's "where the friends are", with each room mapped to its town by
+    `Places.of` (an interior is in the town its door leads to, a station in the town it serves, a
+    district in its city). No names, faces or counts: the player goes and finds out. Somebody in a town
+    that is not on the map (Inaka on 10 November 2025) shows nowhere.
+  - **Labels** (`Places.layout`, pure, unit-tested at the desktop and phone sizes with every combination
+    of where the player is and who is where, and with the three coming towns added): beside the dot
+    (right, left, above, below, the diagonals), then the same further out in rings of
+    `Places.RING_STEP` px with a leader line back to the dot; never over another label or anybody's dot
+    (the reach of a ringed / haloed dot counts, `Places.reach`), never off the picture. The most
+    hemmed-in dots choose first.
+  - **Size**: `UIScale.mapFit(W, H, w, h, cropped, UIScale.MAP_MAX_SCALE)` — the same fit the old
+    overworld picture used, now allowed past 1:1 and stepped in halves from 2x so the pixel art stays
+    even: 3x at 1280x960 and on a landscape phone, 2.5x in the portrait view. Labels are 16px through
+    `uiScale.textSize` (26 canvas px = 10.5 CSS px at 844x390, #200) and the dots grow by the same
+    factor. Two footer lines, both through `Hints.text`: the legend (`Places.LEGEND`) and
+    "you are here: <room> (in <town>) · ESC to close". `scene.mapDots` lists what is drawn while the
+    map is open (`{ key, label, here, present, x, y, fits, leader }`; null when closed) for the debug
+    console and `tools/browser/regress.js`.
+  - The old overworld picture, `assets/map/world-map.png`, is no longer loaded by the game. Its
+    metadata `world-map.json` still is (the stitched city's offsets are checked against it,
+    `TrainTravel.dirTo` reads it), and `/studio/`, `tools/make_worldmap.py` and several unit tests
+    still use both files: keep regenerating them after a map edit.
 - Input blocked when `player.isMoving` or `isTransitioning`
 - Supports diagonal movement with simultaneous key presses
 

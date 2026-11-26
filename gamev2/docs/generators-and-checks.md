@@ -12,7 +12,7 @@ would change (issue #107, see "Generated rooms stay regenerable"). It also re-se
 `config_to_tiled.py` and fails if a committed `tiled/*.tmj` would change (a config edit whose map was not
 re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_fukuoka_art`, `_tsutenkaku`,
 `_discount_art`, `_cooler_art`, `_station_art`, `_house_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
-`extract_*.py` scripts, `extract_station` among them) and fails if `assets/sprites`, `assets/ads`, `tiled/prefabs` or `config.json` would
+`extract_*.py` scripts, `extract_station` among them) and fails if `assets/sprites`, `assets/ads`, `assets/map`, `tiled/prefabs` or `config.json` would
 change (issues #186, #193). Run it after any edit to a
 generated room, a map or a generator. The room and map checks take a few seconds and need no Pillow; the
 art tools are listed as `skip` without it, so use `/Library/Developer/CommandLineTools/usr/bin/python3
@@ -61,8 +61,20 @@ see `generate_ads.find_font`, and are listed as `skip`, not checked, where none 
   maps overlapping — `tools/tests/map-data.test.js` holds it (Fukuoka, far south-west of Osaka: `fukuoka.test.js`). A new town goes at its compass position; moving
   a detached town changes nothing but the Map (`cities` offsets are the stitched districts' only).
   Widening the world costs nothing on the Map screen while it stays wider than about 1.47:1 - the
-  overlay is height-limited. `world-map.json` keeps the same contract (one rect per room), so the "You" marker, NPC dots and map-click travel work as before. Regenerate
+  overlay is height-limited. `world-map.json` keeps the same contract (one rect per room). **The game's Map overlay no longer shows
+  this picture** (issue #211: it is a map of Japan, below); the studio's world layout, `CityStitcher`'s boot check,
+  `TrainTravel.dirTo` and the map-data tests still read it. Regenerate
   `assets/map` with the tool whenever a district, `cities.<City>.backdrop` or `patch` changes.
+- **The Map overlay's picture of Japan** (issue #211): `tools/make_japan_map.py` (Pillow, in `ART_TOOLS`;
+  `assets/map` is one of `check_generators`' compared `OUTPUTS`) draws `assets/map/japan.png` from
+  hand-authored coastlines in the tool (`ISLANDS`: Hokkaido, Honshu, Shikoku, Kyushu and ten small islands,
+  as simplified lon / lat polygons — nothing is downloaded): sea with shallows, an ink coast, lowland / hill /
+  mountain greens from the distance inland plus hash noise, a little snow on the highest ground, in the
+  beach and grass tiles' colours. `assets/map/japan.json` is the contract `Places.project` reads —
+  `lon0`, `lat0` (the NORTH edge), `pxPerLon`, `pxPerLat` (equirectangular, squeezed east-west by
+  cos 38°), and the `islands` outlines, which `japan-map.test.js` uses to hold every town's `geo` on
+  land. Change a coastline or the bounds there and re-run it; the dots follow the json. `--preview out.png`
+  writes a 3x picture and nothing else.
 - **World map without Tiled**: `tools/make_worldmap.py` uses `tmxrasterizer` when Tiled is installed and
   otherwise (or with `--pil`) draws the rooms itself via `node tools/play.js render`, which is also the
   "look at the render" step for a new room: `node tools/play.js render <Room> out.png [--scale .5] [--colliders]`.

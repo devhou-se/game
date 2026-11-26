@@ -135,6 +135,71 @@
       "sprite": "object-tile"
     }
   },
+  "places": {
+    "Asahikawa": {
+      "geo": [
+        142.37,
+        43.77
+      ],
+      "label": "Asahikawa"
+    },
+    "Fukuoka": {
+      "geo": [
+        130.4,
+        33.59
+      ],
+      "label": "Fukuoka"
+    },
+    "Kanazawa": {
+      "geo": [
+        136.66,
+        36.56
+      ],
+      "label": "Kanazawa"
+    },
+    "Osaka": {
+      "geo": [
+        135.5,
+        34.69
+      ],
+      "label": "Osaka"
+    },
+    "Sapporo": {
+      "geo": [
+        141.35,
+        43.06
+      ],
+      "label": "Sapporo"
+    },
+    "Sendai": {
+      "geo": [
+        140.87,
+        38.27
+      ],
+      "label": "Sendai"
+    },
+    "Shirakawago": {
+      "geo": [
+        136.91,
+        36.26
+      ],
+      "label": "Shirakawa-go"
+    },
+    "TokyoCity": {
+      "geo": [
+        139.77,
+        35.68
+      ],
+      "label": "Tokyo"
+    },
+    "Toyama": {
+      "geo": [
+        137.21,
+        36.7
+      ],
+      "label": "Toyama"
+    }
+  },
   "player": {
     "autoFlip": {
       "horizontal": true,

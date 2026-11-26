@@ -18,6 +18,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/systems/LandmarkView.js` - The camera looks up in front of a landmark marked in config `game.lookUp` (see Small Viewports and Touch)
 - `src/utils/Hints.js` - The one helper that words key hints for keyboard or touch (see Small Viewports and Touch)
 - `src/utils/JapaneseFont.js` + `fonts/` - The pixel fonts, and the Japanese face added to each of them (see Fonts and Japanese Text)
+- `src/utils/Places.js` - The towns as real places in Japan for the Map overlay: config `places`, which town a room is in, who is where, label layout (see The Map overlay in `hud-input-touch.md`)
 - `src/utils/Trips.js` - The devhouse trips as data: which trip a date belongs to, and everything that follows (see Trips)
 - `src/GameScene.js` - Main game scene (room system, HUD, input handling, collision)
 - `src/Character.js` - Character movement class with grid-based tweening

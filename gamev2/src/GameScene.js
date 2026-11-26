@@ -27,13 +27,14 @@ class GameScene extends Phaser.Scene {
         // Load config with cache-busting
         this.load.json("config", `config.json?t=${Date.now()}`);
 
-        // Map screen: world-map.json is the contract (a replaceable overworld
-        // image + per-room rects) — regenerate with tools/make_worldmap.py, or
-        // ship hand-drawn art and set "custom": true
+        // world-map.json: where each room sits in the world (tools/make_worldmap.py)
+        // — the stitched city's offsets are re-checked against it and trains
+        // run the way their destination lies. Its picture is the studio's.
         this.load.json('worldMap', `assets/map/world-map.json?t=${Date.now()}`);
-        this.load.once('filecomplete-json-worldMap', (key, type, data) => {
-            if (data.image) this.load.image('world-map', `${data.image}?t=${Date.now()}`);
-        });
+        // Map screen: Japan, and the projection that puts a town's `geo` on
+        // it (tools/make_japan_map.py)
+        this.load.json('japanMap', `assets/map/japan.json?t=${Date.now()}`);
+        this.load.image('japan-map', `assets/map/japan.png?t=${Date.now()}`);
 
         // Advertisement signage (issue #26): the generated ad pool that
         // RoomManager.placeSignage mounts on building walls — regenerate
@@ -792,11 +793,18 @@ class GameScene extends Phaser.Scene {
         return null;
     }
 
+    /**
+     * The Map: Japan, with a dot for every town in the game (issue #211).
+     * Which towns and where is config `places` (src/utils/Places.js), put on
+     * the picture by their real longitude / latitude. A town with friends in
+     * it on the game date has a different dot — no names, no faces, no count:
+     * the player goes and finds out — and the town the player is in is ringed.
+     */
     showMap() {
         if (this.mapVisible) return;   // only one overlay at a time
-        const meta = this.cache.json.get('worldMap');
-        if (!meta || !meta.rooms || !this.textures.exists('world-map')) {
-            console.warn('world map assets missing — run tools/make_worldmap.py');
+        const meta = this.cache.json.get('japanMap');
+        if (!meta || !meta.pxPerLon || !this.textures.exists('japan-map')) {
+            console.warn('map assets missing — run tools/make_japan_map.py');
             return;
         }
         const cam = this.cameras.main, W = cam.width, H = cam.height;
@@ -808,23 +816,32 @@ class GameScene extends Phaser.Scene {
         overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, W, H), Phaser.Geom.Rectangle.Contains);
         objs.push(overlay);
 
-        // fit the overworld into the viewport (never upscale past 1:1); a
-        // portrait phone's cropped view is the narrow one, so it keeps less margin
-        const s = UIScale.mapFit(W, H, meta.width, meta.height, W < this.scale.width);
+        // fit Japan into the viewport, in half steps where there is room
+        // (its pixels stay even); a portrait phone's cropped
+        // view is the narrow one, so it keeps less margin
+        const s = UIScale.mapFit(W, H, meta.width, meta.height, W < this.scale.width, UIScale.MAP_MAX_SCALE);
         const dw = meta.width * s, dh = meta.height * s;
-        const px = (W - dw) / 2, py = (H - dh) / 2 + 14;
+        const px = Math.round((W - dw) / 2), py = Math.round((H - dh) / 2 + 4);
 
-        const img = this.add.image(px, py, 'world-map');
+        const img = this.add.image(px, py, 'japan-map');
         img.setOrigin(0, 0); img.setDisplaySize(dw, dh);
         img.setScrollFactor(0); img.setDepth(2001); objs.push(img);
         const frame = this.add.graphics();
         frame.lineStyle(2, 0x666666, 1); frame.strokeRect(px, py, dw, dh);
         frame.setScrollFactor(0); frame.setDepth(2002); objs.push(frame);
 
-        // click a spot on the map to travel there (nearest walkable cell) —
-        // debug-only: off unless enabled in the hidden ``` debug menu, so the
-        // map is normally just a viewer. The image always swallows its clicks
-        // so clicking the map never falls through to the close-overlay:
+        const config = this.config;
+        const places = Places.list(config);
+        // an interior, a station or a district is in its town
+        const hereRoom = this.roomManager.currentDistrict();
+        const here = Places.of(config, hereRoom);
+        const played = Trips.baseOf((this.player && this.player.baseSpriteKey) || config.player.sprite);
+        const present = Places.present(config, gameDate(), { played });
+
+        // click a town's dot to travel there (outside its station) — debug-only:
+        // off unless enabled in the hidden ``` debug menu, so the map is
+        // normally just a viewer. The image always swallows its clicks so
+        // clicking the map never falls through to the close-overlay:
         // closing is the dark surround, ESC, or actually travelling.
         const mapTravel = this.debugManager && this.debugManager.settings.mapTravel;
         img.setInteractive(mapTravel ? { useHandCursor: true } : undefined);
@@ -833,18 +850,14 @@ class GameScene extends Phaser.Scene {
             if (!mapTravel) return;
             // image px, from the hit point local to the image (holds under UIScale's zoom)
             const ix = localX * meta.width / img.width, iy = localY * meta.height / img.height;
-            for (const name in meta.rooms) {
-                const r = meta.rooms[name];
-                if (ix < r.x || ix >= r.x + r.w || iy < r.y || iy >= r.y + r.h) continue;
-                const gx = Math.floor((ix - r.x) / (r.w / r.cells[0]));
-                const gy = Math.floor((iy - r.y) / (r.h / r.cells[1]));
-                const cell = this.findWalkableNear(name, gx, gy);
-                if (cell) {
-                    close();
-                    this.roomManager.switchRoom(name, cell[0], cell[1]);
-                }
-                return;  // clicked inside a room (even if no landing found)
-            }
+            const place = Places.nearest(meta, places, ix, iy, UIScale.MAP_CLICK_REACH / s);
+            if (!place) return;
+            const to = Places.arrival(config, place.key);
+            // the arrival cell itself, unless something stands on it
+            const cell = to && this.findWalkableNear(to.room, to.x, to.y);
+            if (!cell) return;
+            close();
+            this.roomManager.switchRoom(to.room, cell[0], cell[1]);
         });
 
         const text = (x, y, t, size, bold, color, bg) => {
@@ -852,89 +865,83 @@ class GameScene extends Phaser.Scene {
                 fontFamily: bold ? 'PixelOperatorMonoBold' : 'PixelOperatorMono',
                 backgroundColor: bg });
             o.setOrigin(0.5, 0.5); o.setResolution(1);
-            o.setScrollFactor(0); o.setDepth(2003); objs.push(o); return o;
+            o.setScrollFactor(0); o.setDepth(2005); objs.push(o); return o;
         };
         // on a small screen the map is magnified until its title is up in the
         // (magnified) HUD row, which shows through the dimmer: blank it there
         const title = text(W / 2, py - 24, 'MAP', '26px', true, null, this.uiScale.hudZoom > 1 ? '#000000' : undefined);
         if (this.uiScale.hudZoom > 1) title.setPadding(14, 2, 14, 2);
 
-        // labels dodge each other: try offsets around the anchor until the
-        // label's bounds don't intersect anything already placed
-        const placed = [];
-        const placeLabel = (x, y, t, size, bold, color) => {
-            const o = text(x, y, t, size, bold, color, 'rgba(0,0,0,0.65)');
-            const tries = [[0, 0], [0, -16], [0, 16], [22, 0], [-22, 0],
-                           [0, -32], [0, 32], [26, -16], [-26, -16], [26, 16], [-26, 16]];
-            for (const [dx, dy] of tries) {
-                o.setPosition(x + dx, y + dy);
-                const b = o.getBounds();
-                if (!placed.some(p => Phaser.Geom.Rectangle.Overlaps(p, b))) break;
-            }
-            placed.push(o.getBounds());
-            return o;
+        // dots and labels grow with the text where the canvas is shown small
+        const k = parseFloat(this.uiScale.textSize('100px')) / 100;
+        const lines = this.add.graphics();
+        lines.setScrollFactor(0); lines.setDepth(2003); objs.push(lines);
+        const circle = (x, y, draw) => {
+            const g = this.add.graphics();
+            draw(g);
+            g.setPosition(x, y); g.setScrollFactor(0); g.setDepth(2004);
+            objs.push(g); return g;
+        };
+        const pulse = (targets, props) => {
+            const tween = this.tweens.add({ targets, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', ...props });
+            objs.push({ destroy: () => tween.stop() });
         };
 
-        // grid cell -> screen, through the room's OWN rect (so replacement
-        // map art doesn't need to be to scale — each room maps independently)
-        const cellToMap = (r, gx, gy) => [
-            px + (r.x + (gx + 0.5) * (r.w / r.cells[0])) * s,
-            py + (r.y + (gy + 0.5) * (r.h / r.cells[1])) * s,
-        ];
-        const mkDot = (mx, my, color, radius) => {
-            const dot = this.add.graphics();
-            dot.fillStyle(color, 1); dot.fillCircle(0, 0, radius);
-            dot.lineStyle(2, 0x000000, 1); dot.strokeCircle(0, 0, radius);
-            dot.setPosition(mx, my); dot.setScrollFactor(0); dot.setDepth(2004);
-            objs.push(dot); return dot;
-        };
-
-        // an interior isn't ON the map — the player is marked at its entrance
-        // (where the interior's exit transporter lands in the overworld)
-        // (in a stitched city: the district underfoot, in its own cells)
-        const at = this.roomManager.localize(this.player.gridX, this.player.gridY);
-        const here = at.room;
-        let markRoom = meta.rooms[here] && here;
-        let markX = at.x, markY = at.y;
-        if (!markRoom) {
-            const exit = ((this.config.rooms[here] || {}).transporters || [])
-                .find(t => meta.rooms[t.targetRoom]);
-            if (exit) { markRoom = exit.targetRoom; markX = exit.targetX; markY = exit.targetY; }
-        }
-
-        // room labels (current/containing room in gold)
-        for (const name in meta.rooms) {
-            const r = meta.rooms[name];
-            placeLabel(px + (r.x + r.w / 2) * s, py + (r.y + r.h / 2) * s,
-                       name, '18px', true, name === markRoom ? '#ffd700' : '#ffffff');
-        }
-
-        // every NPC in overworld rooms, at their live (dated, wandering) position
-        for (const roomName in meta.rooms) {
-            for (const { npc, x, y } of this.roomManager.npcsIn(roomName)) {
-                const [mx, my] = cellToMap(meta.rooms[roomName], x, y);
-                mkDot(mx, my, 0x66bbff, 4);
-                placeLabel(mx, my - 15, npc.name, '14px', false, '#aaddff');
+        const dots = places.map(p => {
+            const [ix, iy] = Places.project(meta, p.lon, p.lat);
+            const isHere = p.key === here, isPresent = present.has(p.key);
+            const label = text(0, 0, p.label, '16px', true, isHere ? '#ffd700' : '#ffffff', 'rgba(10,22,39,0.72)');
+            label.setPadding(3, 1, 3, 1);
+            return { key: p.key, label: p.label, here: isHere, present: isPresent,
+                x: Math.round(px + ix * s), y: Math.round(py + iy * s), r: Places.reach(isHere, isPresent) * k,
+                w: label.width, h: label.height, text: label };
+        });
+        const spots = Places.layout(dots, { x: px, y: py, w: dw, h: dh });
+        for (const d of dots) {
+            const at = spots[d.key];
+            d.text.setPosition(Math.round(at.x), Math.round(at.y));
+            if (at.leader) {
+                // from the dot to the nearest point of its label
+                const tx = Math.max(at.box.x0, Math.min(d.x, at.box.x1)), ty = Math.max(at.box.y0, Math.min(d.y, at.box.y1));
+                lines.lineStyle(2, 0x0a1627, 1); lines.lineBetween(d.x, d.y, tx, ty);
+            }
+            if (d.present) {
+                // friends are in town: a red dot in a white ring, with a halo that breathes
+                const halo = circle(d.x, d.y, g => { g.fillStyle(0xff5a4d, 1); g.fillCircle(0, 0, Places.DOT_HALO * k); });
+                halo.setAlpha(0.2);
+                pulse(halo, { alpha: 0.55 });
+                circle(d.x, d.y, g => {
+                    g.fillStyle(0xff5a4d, 1); g.fillCircle(0, 0, Places.DOT_PRESENT * k);
+                    g.lineStyle(2 * k, 0xffffff, 1); g.strokeCircle(0, 0, Places.DOT_PRESENT * k);
+                });
+            } else {
+                circle(d.x, d.y, g => {
+                    g.fillStyle(0xf4f0e0, 1); g.fillCircle(0, 0, Places.DOT * k);
+                    g.lineStyle(2, 0x0a1627, 1); g.strokeCircle(0, 0, Places.DOT * k);
+                });
+            }
+            if (d.here) {
+                // "you are here": a gold ring round the town's dot
+                const ring = circle(d.x, d.y, g => {
+                    g.lineStyle(5 * k, 0x0a1627, 1); g.strokeCircle(0, 0, Places.DOT_YOU * k);
+                    g.lineStyle(3 * k, 0xffd700, 1); g.strokeCircle(0, 0, Places.DOT_YOU * k);
+                });
+                pulse(ring, { scale: Places.YOU_PULSE });
             }
         }
+        // what is on the map, for the debug console and the browser checks
+        this.mapDots = dots.map(d => ({ key: d.key, label: d.label, here: d.here, present: d.present, x: d.x, y: d.y,
+            fits: spots[d.key].fits, leader: spots[d.key].leader }));
 
-        // "you are here" — gold pulsing dot
-        let footer = `you are here: ${here}`;
-        if (markRoom) {
-            const [mx, my] = cellToMap(meta.rooms[markRoom], markX, markY);
-            const dot = mkDot(mx, my, 0xffd700, 6);
-            placeLabel(mx, my - 16, 'You', '14px', true, '#ffd700');
-            const pulse = this.tweens.add({ targets: dot, scale: 1.6, duration: 500,
-                                            yoyo: true, repeat: -1 });
-            objs.push({ destroy: () => pulse.stop() });
-            if (markRoom !== here) footer = `you are here: ${here} (in ${markRoom})`;
-        }
-        const travelHint = mapTravel ? '   ·   click a spot to travel there' : '';
-        text(W / 2, py + dh + 20, Hints.text(this, `${footer}${travelHint}   ·   ESC to close`), '13px', false, '#bbbbbb');
+        const where = Places.whereText(config, hereRoom);
+        const travelHint = mapTravel ? '   ·   click a dot to travel there' : '';
+        text(W / 2, py + dh + 18, Hints.text(this, Places.LEGEND), '16px', false, '#bbbbbb');
+        text(W / 2, py + dh + 18 + 24 * k, Hints.text(this, `you are here: ${where}${travelHint}   ·   ESC to close`), '16px', false, '#bbbbbb');
 
         const close = () => {
             this.mapVisible = false;
             this.mapCloseCallback = null;
+            this.mapDots = null;
             objs.forEach(o => o.destroy());
         };
         this.mapVisible = true;
