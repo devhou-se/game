@@ -166,10 +166,7 @@ function placeRooms(rooms, links) {
         const x1 = a.x + l.ax, y1 = a.y + l.ay, x2 = b.x + l.bx, y2 = b.y + l.by;
         const len = Math.hypot(x2 - x1, y2 - y1);
         let through = 0;
-        for (const o of placed) {
-            if (o === l.a || o === l.b) continue;
-            through += clipLength(x1, y1, x2, y2, rooms[o]);
-        }
+        for (const o of placed) through += clipLength(x1, y1, x2, y2, rooms[o]);
         return l.w * (len + THROUGH * through);
     };
     const roomCost = (k, placed) => byRoom[k].reduce((c, l) => c + (placed.has(l.a) && placed.has(l.b) ? linkCost(l, placed) : 0), 0);
