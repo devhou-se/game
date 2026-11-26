@@ -44,6 +44,40 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         assert.deepStrictEqual(rooms.Izakaya.npcs.map((n) => [n.name, !!n.drinkingGameOpponent]), [['Damian', true], ['Bailey', true]]);
     });
 
+    test('the Izakaya house carries its own sign: its two ad boards are pinned, every other board is random', () => {
+        const c = cfg(), adFor = game('RoomManager.adFor');
+        const ads = JSON.parse(fs.readFileSync(path.join(GV2, 'assets', 'ads', 'manifest.json'), 'utf8')).ads;
+        const door = doorsInto(c.rooms)[0][1], signage = c.rooms.Market.signage;
+        // the boards on the wall above the house front (6..8,37): a wide one and a square one
+        const own = signage.filter((s) => s.gridY === door.gridY - 1 && s.gridX >= door.gridX - 1 && s.gridX <= door.gridX + 1);
+        assert.deepStrictEqual(own.map((s) => [s.gridX, s.gridY, s.shape, s.ad]), [[6, 36, 'wide', 'ad-wide-03'], [8, 36, 'square', 'ad-square-01']]);
+        assert.strictEqual(signage.filter((s) => s.ad).length, 2, 'only the Izakaya pins an ad');
+        assert.strictEqual(signage.length, 10, 'no board added or lost');
+        // the pinned ad is in the pool, of the board's shape, and is the drinking sign the generator means:
+        // the pool's files are numbered in SPECS order, per shape
+        const specs = [...fs.readFileSync(path.join(GV2, 'tools', 'generate_ads.py'), 'utf8').matchAll(/dict\(shape='(\w+)', text='([^']+)'/g)];
+        const nth = (shape, n) => specs.filter((m) => m[1] === shape)[n - 1][2];
+        assert.strictEqual(nth('wide', 3), 'のみほうだい');
+        assert.strictEqual(nth('square', 1), '酒');
+        for (const spot of own) {
+            const ad = ads.find((a) => a.key === spot.ad);
+            assert.ok(ad && ad.shape === spot.shape && fs.existsSync(path.join(GV2, 'assets', 'ads', ad.file)), spot.ad);
+            // whatever the roll, the same sign; with the pin gone, the roll decides again
+            for (const roll of [0, 0.37, 0.5, 0.999]) assert.strictEqual(adFor(spot, ads, roll).key, spot.ad);
+            const free = { gridX: spot.gridX, gridY: spot.gridY, shape: spot.shape };
+            const seen = new Set([0, 0.2, 0.4, 0.6, 0.8, 0.999].map((roll) => adFor(free, ads, roll).key));
+            assert.ok(seen.size > 3, 'an unpinned board draws from the pool');
+            assert.ok([...seen].every((k) => ads.find((a) => a.key === k).shape === spot.shape));
+        }
+        // a pin that is not in the pool (or is another shape) falls back to a random ad of the shape; no ads, no sign
+        assert.strictEqual(adFor({ shape: 'wide', ad: 'ad-square-01' }, ads, 0).key, 'ad-wide-01');
+        assert.strictEqual(adFor({ shape: 'wide', ad: 'nope' }, ads, 0.999).key, 'ad-wide-14');
+        assert.strictEqual(adFor({ shape: 'wide' }, [], 0.5), null);
+        // the generator owns the pin
+        const tool = fs.readFileSync(path.join(GV2, 'tools', 'generate_izakaya.py'), 'utf8');
+        assert.ok(tool.includes("((6, 36), 'wide', 'ad-wide-03')") && tool.includes("((8, 36), 'square', 'ad-square-01')"));
+    });
+
     test("Inaka's farmhouse is a sealed house again: no door, no way to the Izakaya from Inaka (#68)", () => {
         const c = cfg(), inaka = c.rooms.Inaka, name = (t) => c.tilePalette[t];
         assert.deepStrictEqual(inaka.transporters.map((t) => t.targetRoom), ['InakaStation']);

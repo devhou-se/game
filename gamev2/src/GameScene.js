@@ -541,7 +541,8 @@ class GameScene extends Phaser.Scene {
      * On a small screen UIScale draws the HUD layer magnified (so its text
      * stays legible), and a portrait phone shows only a slice of the canvas;
      * either leaves the bar narrower: it drops the game's title first, then
-     * (landscape only) abbreviates the date and the room's name, then moves
+     * (landscape only) abbreviates the date and the room's name — on a
+     * lead-in day the countdown takes the date's place there — then moves
      * the date and wallet to a second row.
      * The date is the bare date, on a trip's own days too (issue #163: the
      * trip's name is never in the bar). Only a lead-in day's countdown
@@ -569,10 +570,11 @@ class GameScene extends Phaser.Scene {
         // with the whole canvas to itself the bar is always the one authored row.
         // The date after `lead` is the bare date; on a lead-in day it is the longest
         // countdown that fits ("in 8 days", "in 8d", "soon", issue #164), else bare
-        const row = (lead) => {
+        // (`counted`: only with a countdown in it)
+        const row = (lead, counted) => {
             const label = counting ? Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate,
                 (l) => fits(lead, l, 2 * pad)) : bare;
-            return label !== bare ? fits(lead, label, 2 * pad) : fits(lead, bare, pad);
+            return label !== bare ? fits(lead, label, 2 * pad) : !counted && fits(lead, bare, pad);
         };
         // a magnified bar on a landscape phone is too narrow for a long room name (a
         // konbini, a station) and 60px of two rows is a lot of a 390px screen (issue
@@ -582,8 +584,15 @@ class GameScene extends Phaser.Scene {
         const brief = room.split(' | ')[0], whole = this.cameras.main.width >= this.scale.width;
         const compact = () => whole && [[room, true], [brief, true], [room, false], [brief, false]]
             .some(([name, year]) => fits(`${name} | `, shortGameDate(gameDate(), year), pad));
+        // On a lead-in day that one row has no room for a countdown AND a date, and a
+        // phone player in the empty base was given no reason for it: there the countdown
+        // stands in place of the date ("Sapporo | devhouse 3 in 8d | ¥5,000",
+        // Trips.countdown; the date is a tap on it away, in Time Travel). A name too
+        // long for even "devhouse 3 soon" shows the date as on any other day.
+        const count = () => whole && counting && (row(short, true) || [room, brief].some((name) =>
+            !!Trips.countdown(Trips.of(this.config), gameDate(), (l) => fits(`${name} | `, l, pad))));
         let rows = 1;
-        if (!row(long) && !full && !row(short) && !compact()) {
+        if (!row(long) && !full && !count() && !row(short) && !compact()) {
             rows = 2;
             JapaneseFont.fit(this.hudText.setText(room));
             this.hudDateText.setText(Trips.dateLabel(Trips.of(this.config), gameDate(), formatGameDate,

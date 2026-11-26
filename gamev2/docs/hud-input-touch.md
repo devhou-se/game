@@ -131,7 +131,12 @@ The game always renders 1280x960; everything below is about showing that on anyt
     lays it out for `cameras.main.width / hudZoom`: it drops the game's title, then — on a
     landscape phone, where the whole canvas is across the view and two rows are a lot of the height —
     abbreviates (`Nov 11 2025`, `shortGameDate`; then the room's name to its first part, `7-Eleven | Park 1`
-    -> `7-Eleven`; then the date's year), and only then wraps date and wallet onto a second row. `scene.hudWidth` / `scene.hudBarHeight` are the bar's size in HUD
+    -> `7-Eleven`; then the date's year), and only then wraps date and wallet onto a second row. On a
+    lead-in day that one row has no room for the countdown and the date, so there the countdown stands in
+    place of the date — `Sapporo | devhouse 3 in 8 days | ¥5,000` at 844x390, `in 8d` at 667x375, the room
+    abbreviated if that is what it takes (`Trips.countdown`, tried before the bare date); the segment is
+    still the Time Travel button, which shows the date. A name too long for even `devhouse 3 soon` (a
+    station) shows the date as on any other day; the portrait bar keeps countdown and date on its second row. `scene.hudWidth` / `scene.hudBarHeight` are the bar's size in HUD
     coordinates (the shop's effect chips hang off them); scene event `'hudscalechange'` says when to
     lay out again. Anything new on the HUD goes at depth 1000-1999, scroll factor 0. The date,
     wallet and `menu` buttons take a tap anywhere in the height of their row (`layoutHUD` sets their

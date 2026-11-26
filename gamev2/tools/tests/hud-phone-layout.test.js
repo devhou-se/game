@@ -106,7 +106,55 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
         assert.ok(src.includes("const brief = room.split(' | ')[0], whole = this.cameras.main.width >= this.scale.width;"));
         assert.ok(src.includes('whole && [[room, true], [brief, true], [room, false], [brief, false]]'));
-        assert.ok(src.includes('if (!row(long) && !full && !row(short) && !compact()) {'));
+        assert.ok(src.includes('if (!row(long) && !full && !count() && !row(short) && !compact()) {'));
+    });
+
+    test('on a landscape phone a lead-in day\'s countdown stands in place of the date', () => {
+        const config = realConfig(), T = game('Trips'), trips = T.of(config), fmt = game('formatGameDate'), hudName = game('hudName');
+        // the countdown on its own, longest form that fits; null off a lead-in day or when nothing fits
+        assert.strictEqual(T.countdown(trips, '2027-02-10'), 'devhouse 3 in 8 days');
+        assert.strictEqual(T.countdown(trips, '2027-02-10', (l) => l.length <= 16), 'devhouse 3 in 8d');
+        assert.strictEqual(T.countdown(trips, '2027-02-10', (l) => l.length <= 15), 'devhouse 3 soon');
+        assert.strictEqual(T.countdown(trips, '2027-02-10', () => false), null);
+        assert.strictEqual(T.countdown(trips, '2027-02-17'), 'devhouse 3 tomorrow');
+        assert.strictEqual(T.countdown(trips, '2027-01-19', (l) => !/days/.test(l)), 'devhouse 3 in 30d');
+        for (const iso of ['2027-02-18', '2027-02-20', '2025-11-02', '2026-11-25']) assert.strictEqual(T.countdown(trips, iso), null, iso);
+        // it is the date label's own countdown, with no date and so no separator of its own
+        for (const iso of ['2027-01-19', '2027-02-04', '2027-02-10', '2027-02-17']) {
+            for (const fits of [undefined, (l) => !/days|tomorrow/.test(l), (l) => /soon/.test(l)]) {
+                const count = T.countdown(trips, iso, fits);
+                assert.ok(!count.includes('|') && !count.includes('·'), count);
+                assert.strictEqual(T.dateLabel(trips, iso, fmt, fits && ((l) => fits(l.split(' | ')[0]))), `${count} | ${fmt(iso)}`);
+            }
+        }
+        // the phone bars: PixelOperatorMono 16px is 16px a character, 10px padding, "menu" right-aligned;
+        // 844x390 lays the bar out 744 wide and 667x375 715 wide. `name | count | wallet` ends a padding short of menu
+        const CH = 16, PAD = 10;
+        const bar = (width, name, money, iso) => {
+            const fits = (lead) => (l) => PAD + CH * `${lead} | ${l} | ${money}`.length + PAD + 4 * CH + PAD <= width;
+            for (const lead of [name, name.split(' | ')[0]]) {
+                const count = T.countdown(trips, iso, fits(lead));
+                if (count) return `${lead} | ${count} | ${money}`;
+            }
+            return null;
+        };
+        assert.strictEqual(bar(744, 'Sapporo', '¥5,000', '2027-02-10'), 'Sapporo | devhouse 3 in 8 days | ¥5,000');
+        assert.strictEqual(bar(715, 'Sapporo', '¥5,000', '2027-02-10'), 'Sapporo | devhouse 3 in 8d | ¥5,000');
+        assert.strictEqual(bar(715, 'Sapporo', '¥5,000', '2027-01-19'), 'Sapporo | devhouse 3 in 30d | ¥5,000');
+        assert.strictEqual(bar(715, 'Sapporo', '¥999,999', '2027-02-04'), 'Sapporo | devhouse 3 in 14d | ¥999,999');
+        assert.strictEqual(bar(715, hudName('7-Eleven · Sapporo'), '¥5,000', '2027-02-10'), '7-Eleven | devhouse 3 in 8d | ¥5,000');
+        assert.strictEqual(bar(744, 'Sapporo Station', '¥5,000', '2027-02-10'), null, 'too long a name for any form: the date, as on any day');
+        // every room at both phone widths with the starting wallet: all but the longest names (the stations) count down
+        let shown = 0, bare = 0;
+        for (const def of Object.values(config.rooms)) {
+            for (const width of [744, 715]) (bar(width, hudName(def.name), '¥5,000', '2027-02-10') ? shown++ : bare++);
+        }
+        assert.ok(bare > 0 && shown >= 5 * bare, `the countdown shows in ${shown} room bars, the date alone in ${bare}`);
+        // layoutHUD: only where the whole canvas is across a magnified view, on a countdown day, before the bare date
+        const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(src.includes('const count = () => whole && counting && (row(short, true) || [room, brief].some((name) =>'));
+        assert.ok(src.includes('!!Trips.countdown(Trips.of(this.config), gameDate(), (l) => fits(`${name} | `, l, pad))));'));
+        assert.ok(src.includes('return label !== bare ? fits(lead, label, 2 * pad) : !counted && fits(lead, bare, pad);'));
     });
 
     test('every separator on the HUD bar is a pipe (#207)', () => {

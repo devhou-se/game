@@ -403,16 +403,16 @@ class RoomManager {
      * random ad of its shape from the generated pool (assets/ads — see
      * tools/generate_ads.py), so the street reads a little different on
      * every visit. Signs join floorSprites and are cleaned up with the room.
+     * A spot with an `ad` key is a shop's own sign and always shows that
+     * one (adFor: the Izakaya's two boards, tools/generate_izakaya.py).
      */
     placeSignage(room) {
         const manifest = this.scene.cache.json.get('adsManifest');
         if (!manifest || !room.signage || !room.signage.length) return;
         const GS = this.scene.GRID_SIZE;
         for (const spot of room.signage) {
-            const pool = manifest.ads.filter(ad =>
-                ad.shape === spot.shape && this.scene.textures.exists(ad.key));
-            if (!pool.length) continue;
-            const ad = pool[Math.floor(Math.random() * pool.length)];
+            const ad = RoomManager.adFor(spot, manifest.ads.filter(ad => this.scene.textures.exists(ad.key)), Math.random());
+            if (!ad) continue;
             const img = this.scene.add.image(spot.gridX * GS, spot.gridY * GS, ad.key);
             img.setOrigin(0, 0);
             // mounted on a wall band: feet-based depth of the sign's bottom
@@ -422,6 +422,17 @@ class RoomManager {
             this.signArt.push({ key: ad.key, depth: img.depth, left: img.x, top: img.y,
                                 width: img.displayWidth, height: img.displayHeight, sprite: img });
         }
+    }
+
+    /**
+     * The ad a signage spot shows, from `ads` (the manifest's, loaded): the
+     * one the spot names (`ad`: a shop's own sign, the same on every visit)
+     * when it is there and of the spot's shape, else one of that shape
+     * picked by `roll` (0..1). Null when there is none of the shape.
+     */
+    static adFor(spot, ads, roll) {
+        const pool = ads.filter(ad => ad.shape === spot.shape);
+        return pool.find(ad => ad.key === spot.ad) || pool[Math.floor(roll * pool.length)] || null;
     }
 
     /**

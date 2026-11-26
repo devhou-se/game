@@ -7,14 +7,18 @@ The Izakaya is in Market, the temple-town district of the stitched Tokyo
 town that will go). It is the red townhouse in the south-west corner of the
 temple precinct, west of the big torii: the house front at Market (6..8, 37),
 door on (7,37), reached from the paving in front of it (7,38). A red lantern
-(akachochin) stands either side of the house so the door can be found.
+(akachochin) stands either side of the house so the door can be found, and
+the two ad boards on its upper wall are its own sign: they always show the
+all-you-can-drink board and the red sake tag from the ad pool (SIGNS), where
+every other board in the street draws a random ad.
 
 Like generate_konbinis.py, this owns the interior AND the door it opens in a
 host room that has no generator of its own (Market is a ported district):
   * rooms.Izakaya is rebuilt from scratch (its NPCs are kept as they stand);
   * the host's door cell is unsealed and a hidden transporter wired onto it,
     replaced in place so a re-run leaves config.json byte-identical;
-  * the two lanterns are (re)placed beside the house front.
+  * the two lanterns are (re)placed beside the house front;
+  * the house's two signage spots are pinned to their ads (`ad`).
 Nothing else in the host is touched. To move the Izakaya again: seal the old
 door by hand (collider back, transporter and lanterns out), change HOST / DOOR
 / LANTERNS here and re-run.
@@ -30,6 +34,10 @@ HOST = 'Market'
 DOOR = (7, 37)                      # the red townhouse's door (building-entrance-3 at 6,37)
 ARRIVE = (9, 12)                    # inside, one row above the exit mats
 LANTERNS = [(5, 36), (9, 36)]       # lantern-red prefab origins (head; the solid foot is one row down)
+
+# the house's ad boards, pinned: (cell, shape, key in assets/ads/manifest.json)
+SIGNS = [((6, 36), 'wide', 'ad-wide-03'),      # のみほうだい 90分 ¥980 (all you can drink), a mug
+         ((8, 36), 'square', 'ad-square-01')]  # 酒 (sake) on red, a lantern
 
 cfg = rg.load_config()
 
@@ -138,6 +146,17 @@ for lx, ly in LANTERNS:             # the lantern-red prefab, written straight i
     layers['Tops'][f'{lx},{ly}'] = rg.pidx('red-lanterns_6_3')
     layers['Collidables'][f'{lx},{ly + 1}'] = rg.pidx('red-lanterns_4_1')
     layers['Colliders'][f'{lx},{ly + 1}'] = rg.pidx('gk_blank')
+
+signage = host.setdefault('signage', [])
+for (sx, sy), shape, ad in SIGNS:   # the house's own sign: pin the ad on its board, in place
+    spot = {'gridX': sx, 'gridY': sy, 'shape': shape, 'ad': ad}
+    at = [i for i, s in enumerate(signage) if (s['gridX'], s['gridY']) == (sx, sy)]
+    if at:
+        signage[at[0]] = spot
+        for i in reversed(at[1:]):
+            del signage[i]
+    else:
+        signage.append(spot)
 
 rg.save_config(cfg)
 print(f'Izakaya 20x15; street door {HOST} {DOOR} -> Izakaya {ARRIVE}; '

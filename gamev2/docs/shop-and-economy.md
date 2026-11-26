@@ -34,6 +34,12 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   again. `tools/generate_izakaya.py` owns the interior, the door it opens in Market
   (collider off, hidden transporter, replaced in place) and the two lanterns, the way
   `generate_konbinis.py` owns a 7-Eleven's door; Market is otherwise a ported map.
+  The house's two ad boards are its sign: their `signage` spots carry `"ad"` — `ad-wide-03`
+  (のみほうだい, all you can drink) at `(6,36)` and `ad-square-01` (酒) at `(8,36)` — and a spot
+  with an `ad` always shows that one, where every other board draws a random ad of its shape
+  on each visit (`RoomManager.adFor`). The generator's `SIGNS` owns the pins; the keys are the
+  pool's own (`assets/ads/manifest.json`, numbered in `generate_ads.py` `SPECS` order: a unit
+  test ties the two keys to those two specs).
   The opponents at the table (Damian; Bailey when you play as Damian) are fixtures
   kept from the room as it stands. Tests: `tools/tests/izakaya.test.js`.
 - **Vending machines are solid down to their foot** (issue #101). A machine is a cabinet

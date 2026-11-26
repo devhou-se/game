@@ -288,6 +288,49 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
         assert.strictEqual(isNew(), false, 'a player from before the intro existed');
     });
 
+    test('the start cell is beside the biggest cluster in the room, on ordinary ground', () => {
+        const config = realConfig(), T = game('Trips'), startFor = game('Trips.startFor');
+        // people within NEAR of one another, in a chain, are one cluster; the biggest is the crowd
+        const at = (x, y) => ({ x, y });
+        const crowd = (people) => T.crowd(people).map(p => `${p.x},${p.y}`).join(' ');
+        assert.strictEqual(crowd([at(49, 14), at(58, 27), at(57, 26)]), '58,27 57,26');
+        assert.strictEqual(crowd([at(0, 0), at(6, 0), at(12, 0), at(30, 0), at(31, 0)]), '0,0 6,0 12,0', 'a chain is one cluster');
+        assert.strictEqual(crowd([at(0, 0), at(7, 0)]), '0,0 7,0', 'as big as each other: both kept');
+        assert.strictEqual(crowd([at(3, 3)]), '3,3');
+        assert.strictEqual(crowd([]), '');
+        // ordinary ground: not a stair tile, not a deck over water
+        assert.strictEqual(T.plain('Over Floor', 'castle-stairs_0_0'), false);
+        assert.strictEqual(T.plain('Water', 'water-autotile_center'), false);
+        assert.strictEqual(T.plain('Floor', 'flat-grey-brick-autotile_center'), true);
+        assert.strictEqual(T.plain('Over Floor', 'plaza-tile_0_0'), true);
+        // 27 October 2025: Damian alone on the Zuihoden steps, Bailey and Dylan together on the bay
+        // promenade — the player used to open on a stair cell beside Damian, Sendai (49,16)
+        const tiles = (room, x, y) => config.rooms[room].layers.filter(l => !l.collision && l.tiles && l.tiles[`${x},${y}`]).map(l => [l.name, l.tiles[`${x},${y}`]]);
+        assert.ok(tiles('Sendai', 49, 16).some(([, t]) => /stairs/.test(t)), 'the old start cell is a stair');
+        for (const [date, alone] of [['2025-10-27', 'Damian'], ['2025-10-28', 'Julia']]) {
+            const people = game('Trips.membersByRoom')(config, date, { played: 'james' }).find(g => g.room === 'Sendai').members;
+            const spot = startFor(config, date, { played: 'james' });
+            assert.deepStrictEqual({ ...spot }, { room: 'Sendai', x: 55, y: 24 }, date);
+            const gap = (name) => { const m = people.find(p => p.name === name); return Math.max(Math.abs(m.x - spot.x), Math.abs(m.y - spot.y)); };
+            assert.ok(gap('Bailey') <= 3 && gap('Dylan') <= 3 && gap(alone) > T.NEAR, `${date}: beside the two, not ${alone}`);
+        }
+        // every content day, whoever is played: ordinary ground wherever standNear chose the cell
+        for (const date of [...game('contentChangeDates')(config)].filter(d => d < '2027').sort()) {
+            for (const played of [undefined, 'james', 'bailey', 'damian', 'dylan', 'julia']) {
+                const spot = startFor(config, date, { played }), home = T.homeFor(config, date);
+                if (spot.room === home.room && spot.x === home.x && spot.y === home.y) continue;
+                assert.ok(tiles(spot.room, spot.x, spot.y).every(([l, t]) => T.plain(l, t)), `${date} as ${played}: ${spot.room} ${spot.x},${spot.y}`);
+            }
+        }
+        // steps are still a start when they are the only cells in sight of the crowd
+        const row = (y, t) => Object.fromEntries([...Array(20)].map((_, x) => [`${x},${y}`, t]));
+        const tiny = { game: { gridSize: 64, worldWidth: 1280, worldHeight: 64 }, rooms: { R: { transporters: [],
+            layers: [{ name: 'Floor', tiles: row(0, 'f') }, { name: 'Over Floor', tiles: Object.fromEntries(Object.entries(row(0, 'castle-stairs_0_0')).filter(([xy]) => parseInt(xy, 10) >= 8)) }] } } };
+        assert.deepStrictEqual([...T.standNear(tiny, 'R', [at(19, 0)], at(0, 0))], [17, 0], 'the plain cells are 12 and more away: a step beside them');
+        assert.deepStrictEqual([...T.standNear(tiny, 'R', [at(10, 0)], at(0, 0))], [7, 0], 'plain ground three cells off beats a step two cells off');
+        assert.deepStrictEqual([...T.standNear(tiny, 'R', [at(19, 0), at(11, 0), at(12, 0)], at(0, 0))], [7, 0], 'the two, not the one further up the steps');
+    });
+
     test('devhouse 2 starts with all four in Tokyo, and the Osaka posts are in Osaka (#68 stage 0)', () => {
         const config = realConfig(), byRoom = game('Trips.membersByRoom');
         const where = (date) => Object.fromEntries(byRoom(config, date, {}).flatMap(g => g.members.map(m => [m.name, `${g.room} ${m.x},${m.y}`])));

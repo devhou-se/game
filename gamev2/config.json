@@ -30488,11 +30488,13 @@
       "objects": [],
       "signage": [
         {
+          "ad": "ad-wide-03",
           "gridX": 6,
           "gridY": 36,
           "shape": "wide"
         },
         {
+          "ad": "ad-square-01",
           "gridX": 8,
           "gridY": 36,
           "shape": "square"

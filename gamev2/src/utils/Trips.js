@@ -452,6 +452,12 @@ class Trips {
      * their way. Of several as near, the one the shortest walk from an
      * arrival: on the way from the door to the people.
      *
+     * "Anybody" is the biggest cluster of them (crowd): with two on the bay
+     * promenade and one alone on a flight of steps, the cell is beside the
+     * two. And it is ordinary ground where there is any (plain): not a stair
+     * tile, and not a deck over water (a bridge, a pier) — a player who
+     * opens the game half way up a staircase reads as a bug.
+     *
      * Walkable means what it means to the collision system: a Floor tile, no
      * tile on a collision layer, inside the room and its boundary, and not a
      * door (which would send the player straight out again) or an NPC.
@@ -462,13 +468,18 @@ class Trips {
         const W = Math.round((def.worldWidth || config.game.worldWidth) / grid);
         const H = Math.round((def.worldHeight || config.game.worldHeight) / grid);
         const K = (x, y) => x + ',' + y;
-        const floor = new Set(), solid = new Set();
+        const floor = new Set(), solid = new Set(), odd = new Set();
         for (const layer of def.layers || []) {
             const into = layer.collision ? solid : (layer.name === 'Floor' ? floor : null);
             if (into) for (const xy of Object.keys(layer.tiles || {})) into.add(xy);
+            if (layer.collision) continue;
+            for (const [xy, tile] of Object.entries(layer.tiles || {})) {
+                if (!Trips.plain(layer.name, tile)) odd.add(xy);
+            }
         }
         for (const t of def.transporters || []) solid.add(K(t.gridX, t.gridY));
         for (const p of people) solid.add(K(p.x, p.y));
+        const near = Trips.crowd(people);
         const poly = def.boundary && def.boundary.length >= 3 ? def.boundary : null;
         const inside = (x, y) => {
             if (!poly) return true;
@@ -489,19 +500,58 @@ class Trips {
         for (const [x, y] of seeds) {
             if (ok(x, y) && !seen.has(K(x, y))) { seen.add(K(x, y)); queue.push([x, y]); }
         }
-        let best = null;
+        let best = null, any = null;
         for (let i = 0; i < queue.length; i++) {
             const [x, y] = queue[i];
-            const d = Math.min(...people.map(p => Math.max(Math.abs(p.x - x), Math.abs(p.y - y))));
-            // the flood runs in walking order, so the first cell found at a distance wins it
-            if (d >= 2 && (!best || d < best.d)) best = { x, y, d };
+            const gap = (p) => Math.max(Math.abs(p.x - x), Math.abs(p.y - y));
+            const d = Math.min(...near.map(gap));
+            // the flood runs in walking order, so the first cell found at a distance wins it;
+            // two cells from EVERYBODY, also the ones outside the crowd
+            if (d >= 2 && people.every(p => gap(p) >= 2)) {
+                if (!any || d < any.d) any = { x, y, d };
+                if (!odd.has(K(x, y)) && (!best || d < best.d)) best = { x, y, d };
+            }
             for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
                 if (!ok(nx, ny) || seen.has(K(nx, ny))) continue;
                 seen.add(K(nx, ny));
                 queue.push([nx, ny]);
             }
         }
+        // ordinary ground unless the only cells in sight of them (NEAR) are steps or a deck
+        if (!best || (best.d > Trips.NEAR && any.d <= Trips.NEAR)) best = any;
         return best ? [best.x, best.y] : null;
+    }
+
+    /**
+     * The people ([{ x, y }]) to stand next to: the biggest cluster of them,
+     * a cluster being people within NEAR cells of one another, in a chain.
+     * Clusters as big as each other are all kept (standNear then takes the
+     * one nearest the door).
+     */
+    static crowd(people) {
+        const left = [...people], clusters = [];
+        while (left.length) {
+            const cluster = [left.shift()];
+            for (let i = 0; i < cluster.length; i++) {
+                for (let j = left.length - 1; j >= 0; j--) {
+                    const a = cluster[i], b = left[j];
+                    if (Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) <= Trips.NEAR) cluster.push(...left.splice(j, 1));
+                }
+            }
+            clusters.push(cluster);
+        }
+        const most = Math.max(0, ...clusters.map(c => c.length));
+        return clusters.filter(c => c.length === most).flat();
+    }
+
+    /**
+     * Is a tile (its key, on a layer that is not a collision layer) ordinary
+     * ground to start a player on? Not a stair tile ("castle-stairs_0_1")
+     * and not anything on the Water layer: a walkable cell with water under
+     * it is the deck of a bridge or a pier.
+     */
+    static plain(layer, tile) {
+        return layer !== 'Water' && !/stairs/.test(String(tile));
     }
 
     /**
@@ -524,9 +574,28 @@ class Trips {
         const lead = Trips.leadIn(trips, iso);
         if (!lead) return bare;
         // the count, then shorter ways to say it, then nothing
-        return [Trips.inDays(lead.days), `in ${lead.days}d`, 'soon']
-            .map(when => `${lead.trip.name} ${when} | ${bare}`)
+        return Trips.countdowns(lead)
+            .map(count => `${count} | ${bare}`)
             .find(label => !fits || fits(label)) || bare;
+    }
+
+    /** A lead-in's countdown, longest first: "devhouse 3 in 8 days", "devhouse 3 in 8d", "devhouse 3 soon". */
+    static countdowns(lead) {
+        return [Trips.inDays(lead.days), `in ${lead.days}d`, 'soon'].map(when => `${lead.trip.name} ${when}`);
+    }
+
+    /**
+     * A lead-in day's countdown on its own, with no date after it —
+     * "devhouse 3 in 8d" — or null on any other day. It stands IN PLACE of
+     * the date on a landscape phone's one-row bar, which has no room for
+     * both (GameScene.layoutHUD): the countdown is the reason the base is
+     * empty, and the date is one tap away in Time Travel, which that
+     * segment opens. The longest form `fits(label)` allows, or null when
+     * none does.
+     */
+    static countdown(trips, iso, fits) {
+        const lead = Trips.leadIn(trips, iso);
+        return (lead && Trips.countdowns(lead).find(label => !fits || fits(label))) || null;
     }
 
     /**

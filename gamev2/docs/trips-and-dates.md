@@ -48,7 +48,8 @@ the day a later visitor opens on (unless it is all the trip has). `blog_to_npc.p
 has arrived, and an empty base with no explanation read as a bug. On a lead-in day
 - the HUD counts down — `devhouse 3 in 8 days | February 10 2027`, shortened to `in 8d`, then `soon`, then
   the bare date as the line runs out of room (`Trips.dateLabel`; in Sapporo with the starting ¥5,000 it is
-  `in 8d`) — for new and returning players alike. This is the only time the HUD names a trip: on the
+  `in 8d`) — for new and returning players alike. A landscape phone's one-row bar has no room for
+  both, so there the countdown takes the date's place (`Trips.countdown`, see `hud-input-touch.md`). This is the only time the HUD names a trip: on the
   trip's own days the date is bare (issue #163). The countdown is the `Trips.leadIn` line in
   `Trips.dateLabel`; with `lead` null there the HUD is the bare date every day;
 - the intro's page 1 reads "devhouse 3, their trip to Hokkaido, starts on February 18. This is the little
@@ -90,7 +91,10 @@ day the trip starts. Days before the FIRST trip are not a lead-in (they show its
   (`Trips.hopsFrom`), then config order. In the home room they stand on the home cell when somebody is
   within `Trips.NEAR` (6) cells; otherwise on the cell nearest the group, at least two cells from
   everyone, that can be walked to from the room's arrivals (`Trips.standNear`: Floor tile, no collider,
-  inside the boundary, not a door). On every devhouse 2 post day, as any character, that is within 6
+  inside the boundary, not a door). "The group" is the biggest cluster in the room — people within NEAR
+  of one another, in a chain (`Trips.crowd`) — so with Bailey and Dylan on Sendai's bay promenade and
+  Damian alone at Zuihoden the start is beside the two; and the cell is ordinary ground where there is
+  any in sight of them (`Trips.plain`): not a stair tile, not a deck over water (a bridge, a pier). On every devhouse 2 post day, as any character, that is within 6
   cells of someone (unit-tested). "Home" (`Trips.homeFor`) is the trip's own cell for the date — the
   stay's cell (the first stay's on a lead-in day), else `home`, else `config.player.startRoom/X/Y` — and
   is where a player lands when nobody is anywhere (a lead-in day with no posts) or no cell can be found.
