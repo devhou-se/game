@@ -24,7 +24,8 @@ see `generate_ads.find_font`, and are listed as `skip`, not checked, where none 
 - **Generated rooms stay regenerable** (issue #107): a room generator re-run on an unchanged world leaves
   `config.json` byte-identical, and `python3 tools/check_generators.py` fails when one would not. That
   holds for `generate_machi`, `_inaka`, `_yukimura`, `_osaka`, `_sapporo`, `_asahikawa`, `_konbinis`,
-  `_discount_stores` and `_stations`, each run on its own:
+  `_discount_stores`, `_stations` and `_izakaya` (the Izakaya interior plus its street door and
+  lantern pair in Market, see Shop, Food and Drink), each run on its own:
   - a town generator ends with `b.finish()` (`roomgen.Builder`), which runs the picket-fence and
     solid-track passes itself — `fix_fences.py` / `seal_tracks.py` are the same code
     (`roomgen.picket_fences` / `roomgen.seal_tracks`) for a room named on the command line, and are no

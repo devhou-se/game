@@ -1968,17 +1968,17 @@
       {
        "name": "targetRoom",
        "type": "string",
-       "value": "Inaka"
+       "value": "Market"
       },
       {
        "name": "targetX",
        "type": "int",
-       "value": 13
+       "value": 7
       },
       {
        "name": "targetY",
        "type": "int",
-       "value": 17
+       "value": 38
       },
       {
        "name": "hidden",
@@ -2005,17 +2005,17 @@
       {
        "name": "targetRoom",
        "type": "string",
-       "value": "Inaka"
+       "value": "Market"
       },
       {
        "name": "targetX",
        "type": "int",
-       "value": 13
+       "value": 7
       },
       {
        "name": "targetY",
        "type": "int",
-       "value": 17
+       "value": 38
       },
       {
        "name": "hidden",

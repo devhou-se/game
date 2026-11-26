@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""generate_inaka.py — "Inaka", a quiet countryside train stop, plus the
-Izakaya inside the red farmhouse beside the pond.
+"""generate_inaka.py — "Inaka", a quiet countryside train stop.
 
 NOT contiguous with the rest of the overworld: you get here by boarding the
 train on the platform west of Tokyo Station (Palace room) — visible station
@@ -8,12 +7,14 @@ transporters both ways. A rail line crosses the north, a small platform with
 lamps and a station house sits beside it, and the rest is farmland: dirt
 paths, tilled plots, an orchard, a pond, farmhouses.
 
-Deterministic and idempotent: rebuilds rooms.Inaka and rooms.Izakaya from
-scratch each run while preserving Inaka's dated blog NPC history.
+Deterministic and idempotent: rebuilds rooms.Inaka from scratch each run
+while preserving Inaka's dated blog NPC history. The red farmhouse beside the
+pond is a sealed house: the Izakaya it used to open into moved to Tokyo
+(issue #68, tools/generate_izakaya.py).
 
 Run from gamev2/:  python3 tools/generate_inaka.py
-Then:              python3 tools/config_to_tiled.py Inaka Izakaya     (fences and tracks are done here: b.finish())
-                   node tools/play.js lint Inaka Izakaya
+Then:              python3 tools/config_to_tiled.py Inaka     (fences and tracks are done here: b.finish())
+                   node tools/play.js lint Inaka
                    node tools/play.js check
                    python3 tools/make_worldmap.py          (after editing devhouse.world)
 """
@@ -62,7 +63,7 @@ for x in range(6, 11):
     b.plants(x, 18, x)
 
 b.pond(5, 10, 10)
-izakaya_door = b.stamp('house-red', 12, 11, seal=False)[0]
+b.stamp('house-red', 12, 11)                 # the lakeside farmhouse: a sealed house (#68)
 b.stamp('house-blue', 25, 16)
 
 # orchard (east) + loose trees
@@ -91,102 +92,13 @@ for x in range(12, 32):
     if f'{x},5' not in b.L['Colliders']:
         b.fence(x, 5, x)
 
-# ---- wiring: station house + lakeside farmhouse interiors ---------------------
+# ---- wiring: the station house ------------------------------------------------
 # (the actual train ride happens inside the station — see generate_stations.py)
 b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 cfg['rooms']['Inaka'] = b.room('Inaka', npcs=inaka_npcs, transporters=[
     {'gridX': station_door[0], 'gridY': station_door[1],
      'targetRoom': 'InakaStation', 'targetX': 11, 'targetY': 11, 'hidden': True},
-    rg.transporter(izakaya_door[0], izakaya_door[1], 'Izakaya', 9, 12, hidden=True),
 ])
-
-# ---- IZAKAYA ------------------------------------------------------------------
-# The registered interior pack has no true wood floor, chairs, drinkware or
-# izakaya furniture yet. Warm floor tiles, office counters and cabinets are
-# deliberate placeholders; drink/glass shelves make the bar read clearly.
-ib = rg.Builder(20, 15)
-ib.fill('office-void-autotile')
-for x in range(2, 18):
-    for y in range(3, 13):
-        ib.put('Floor', x, y, 'office-warm-autotile_center')
-
-
-def solid_furniture(builder, key, x, y, w=1, h=1):
-    """Place a registered multi-cell furniture sprite and seal its footprint."""
-    builder.put('Collidables', x, y, key)
-    for dx in range(w):
-        for dy in range(h):
-            builder.solid(x + dx, y + dy)
-
-
-# Back wall, menu and clock.
-for x in range(2, 18):
-    solid_furniture(ib, 'office-wall-white_0_0', x, 2)
-ib.put('Other', 5, 2, 'office-poster-menu_0_0')
-ib.put('Other', 9, 2, 'office-clock_0_0')
-
-# Bar: bottle/glass shelves behind a six-cell counter, with a register.
-for x, key in zip(range(11, 17), [
-        'office-shelf-drinks_0_0', 'office-shelf-glass_0_0',
-        'office-shelf-drinks_0_0', 'office-shelf-glass_0_0',
-        'office-shelf-drinks_0_0', 'office-shelf-glass_0_0']):
-    ib.put('Other', x, 3, key)
-    ib.solid(x, 3)
-for x in (11, 13, 15):
-    solid_furniture(ib, 'office-counter2_0_0', x, 5, 2)
-ib.put('Tops', 15, 5, 'office-register_0_0')
-for x in (11, 13, 15):
-    solid_furniture(ib, 'izakaya-stool_0_0', x, 6)   # bar stools (tools/extract_street.py)
-
-# Red lanterns frame the dining room.
-ib.stamp('lantern-red', 2, 3)
-ib.stamp('lantern-red', 17, 3)
-solid_furniture(ib, 'office-plant-a_0_0', 2, 12)
-solid_furniture(ib, 'office-plant-b_0_0', 17, 12)
-
-# Communal tables. The sprite canvas is three cells wide but its visible table
-# and usable footprint are two, so only those two cells are solid/interactive.
-# Stools (never bins - issue #19) are placed diagonally to leave a direct
-# approach on both long sides instead of turning the dining area into a maze.
-TABLES = [(4, 7), (4, 11), (12, 10)]
-for tx, ty in TABLES:
-    solid_furniture(ib, 'office-counter_0_0', tx, ty, 2)
-    for sx, sy in ((tx, ty - 1), (tx, ty + 1)):
-        solid_furniture(ib, 'izakaya-stool_0_0', sx, sy)
-
-# Clear doorway mats at the bottom. Arrival is one row inside, never on an
-# exit transporter, so entering cannot bounce the player straight back out.
-for x in (9, 10):
-    ib.put('Floor', x, 13, 'office-warm-autotile_center')
-
-damian = rg.make_npc('Damian', 'damian', 6, 7, [
-    'Bump the table when you are ready. Fifteen seconds. No excuses.',
-])
-bailey = rg.make_npc('Bailey', 'bailey', 6, 7, [
-    'Bump the table when you are ready. Fifteen seconds. No excuses.',
-])
-for opponent in (damian, bailey):
-    opponent['drinkingGameOpponent'] = True
-    opponent['stationary'] = True
-
-outside = (izakaya_door[0], izakaya_door[1] + 1)
-izakaya = ib.room('Izakaya', npcs=cfg['rooms'].get('Izakaya', {}).get('npcs') or [damian, bailey], transporters=[
-    rg.transporter(9, 13, 'Inaka', outside[0], outside[1], hidden=True),
-    rg.transporter(10, 13, 'Inaka', outside[0], outside[1], hidden=True),
-])
-izakaya['boundary'] = [
-    [2, 3], [18, 3], [18, 13], [11, 13],
-    [11, 14], [9, 14], [9, 13], [2, 13],
-]
-izakaya['interior'] = True
-izakaya['shopEnabled'] = False   # not a konbini: its shelves and tables stay furniture...
-izakaya['shopMenu'] = 'izakaya'    # ...but the bar (office-counter2) sells the izakaya menu
-izakaya['drinkingGame'] = {
-    'triggerCells': [[4, 7], [5, 7]],
-    'durationMs': 15_000,
-}
-cfg['rooms']['Izakaya'] = izakaya
 
 rg.save_config(cfg)
-print(f'Inaka {W}x{H}; station door {station_door} -> InakaStation; '
-      f'farmhouse door {izakaya_door} -> Izakaya')
+print(f'Inaka {W}x{H}; station door {station_door} -> InakaStation')

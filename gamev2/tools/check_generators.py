@@ -45,6 +45,7 @@ GENERATORS = [
     'generate_machi', 'generate_inaka', 'generate_yukimura', 'generate_osaka',
     'generate_sapporo', 'generate_asahikawa',
     'generate_konbinis', 'generate_discount_stores', 'generate_stations',
+    'generate_izakaya',
 ]
 # config_to_tiled.py, run over every room that has a committed tiled/*.tmj
 TILED = 'config_to_tiled'

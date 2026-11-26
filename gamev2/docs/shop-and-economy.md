@@ -21,9 +21,20 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 - A "konbini" is any room with `interior: true` and `shopEnabled !== false` — the
   7-Eleven interiors and the Don Takote discount stores (below). The
   Izakaya is `shopEnabled: false` + `shopMenu: "izakaya"` (set in
-  `tools/generate_inaka.py`): its shelves and tables stay furniture, only the bar
+  `tools/generate_izakaya.py`): its shelves and tables stay furniture, only the bar
   sells, and the drinking game's `triggerCells` are checked first so they never
   open a menu.
+- **Where the Izakaya is** (issue #68): in Tokyo, in Market - the red townhouse in the
+  south-west corner of the temple precinct, west of the big torii (house front at Market
+  `(6..8, 37)`). The door is `(7,37)`, entered from the paving at `(7,38)`, and a red
+  lantern stands either side of the house (feet at `(5,37)` and `(9,37)`) - the only
+  house on the row with a pair. Both exit mats (`Izakaya (9,13)` / `(10,13)`) land on
+  `(7,38)`. It used to be behind Inaka's lakeside farmhouse, which is a sealed house
+  again. `tools/generate_izakaya.py` owns the interior, the door it opens in Market
+  (collider off, hidden transporter, replaced in place) and the two lanterns, the way
+  `generate_konbinis.py` owns a 7-Eleven's door; Market is otherwise a ported map.
+  The opponents at the table (Damian; Bailey when you play as Damian) are fixtures
+  kept from the room as it stands. Tests: `tools/tests/izakaya.test.js`.
 - **Vending machines are solid down to their foot** (issue #101). A machine is a cabinet
   tile over a foot tile (`*-vending-machine-top*` over `-bottom` / `-base*`; the tall ones
   are a 1x2 cabinet sprite over a base), and the foot is only the last 14-18px of the

@@ -10,7 +10,8 @@ Street buildings beyond the ported houses / konbini / shrines. Each is ONE sprit
 a prefab (`building()` in `tools/make_prefabs.py`): solid from the ground up, with only the top two rows (the
 roof line) walk-behind, as behind a house roof - so the player is never lost behind a tower. Doors are
 sealed and lead nowhere, except the discount store's, which opens into its Don Takote shop floor (issue #91,
-see Shop, Food and Drink).
+see Shop, Food and Drink). Of the ported houses, one opens: the red house at Market `(6,33)` is the Izakaya
+(issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`).
 
 | Prefab | Cells | Placed in |
 |---|---|---|
