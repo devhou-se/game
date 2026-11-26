@@ -64,6 +64,17 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   1,000 at a time versus ~3,500 for the old Tokyo room. `floorSprites` is therefore "the sprites that exist
   now" — read `tileRecords` / `standingArt()` when you need the whole room (AmbientBoats does). Night lamp
   halos are culled the same way (`DayNight.cullGlows`).
+- **The city's index is kept** (issue #175) — a streamed city's records, `blockedCells` and chunks are the
+  same on every visit, so `loadFloorTiles` builds them on the first entry and keeps them in
+  `roomManager.tileIndexes`; leaving a konbini or a station afterwards only spawns the sprites of the chunks
+  in view (the swap went from 18 ms to 8 ms, 73 ms to 32 ms on a 4x-throttled CPU). `clearFloorTiles` hands
+  kept records back with no sprite and no Occlusion fade. Only a stitched, streamed room is kept
+  (`RoomManager.keepsIndex`): with `?cull=0` or `?stitch=0`, and in every other room, each entry rebuilds as
+  before. A kept index is used only while the room object, its layer list and each layer's tile table are
+  the same objects (`RoomManager.indexFits`) — stitching again or giving a room new layers / a new tile
+  table rebuilds it; code that changes a tile of a live room IN PLACE must call
+  `roomManager.forgetTileIndex(roomKey)` (nothing in the game does; the studio and editor never run
+  `loadFloorTiles`).
 - **Bumps are a lookup** (issue #145) — what a blocked step opens (shop / pond / clock) comes from
   **`roomManager.interactionAt(x, y, group)`**: the room's interactive cells are indexed once, on the first
   bump after a room load (`Interactions.index`: cell -> interactions, footprints expanded; thrown away by

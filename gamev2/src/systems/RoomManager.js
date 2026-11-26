@@ -32,6 +32,7 @@ class RoomManager {
         this.streamed = false;       // true: sprites exist only near the camera
         this.chunks = null;
         this.activeChunks = null;
+        this.tileIndexes = new Map();    // room key -> a streamed city's kept index (see tileIndexFor)
     }
 
     // ------------------------------------------------------------ cities
@@ -257,6 +258,11 @@ class RoomManager {
      * stitched city (~20k tiles) is STREAMED: records are bucketed into
      * CHUNK-cell squares and only those near the camera have a sprite
      * (updateStreaming, every frame). `?cull=0` turns streaming off.
+     *
+     * A streamed city's index (records, blocked cells, chunks) is the same on
+     * every visit, so it is built on the first one and kept (issue #175: it
+     * was over half of the swap into the city); a later entry only spawns the
+     * sprites of the chunks in view. See tileIndexFor for when it is rebuilt.
      */
     loadFloorTiles() {
         this.clearFloorTiles();
@@ -265,6 +271,18 @@ class RoomManager {
         this.depthScale = room.depthScale || 1;
         this.streamed = !!room.stitched &&
             new URLSearchParams(window.location.search).get('cull') !== '0';
+
+        const kept = this.tileIndexFor(this.currentRoom);
+        if (kept) {
+            this.tileRecords = kept.records;
+            this.blockedCells = kept.blocked;
+            this.chunks = kept.chunks;
+            this.landmarks = kept.landmarks || [];   // LandmarkView's index is per room load too
+            this.updateStreaming();
+            this.placeSignage(room);
+            this.refreshFloorSprites();
+            return;
+        }
 
         // Support both old format (room.floor) and new format (room.layers)
         if (room.layers) {
@@ -289,6 +307,13 @@ class RoomManager {
         // the landmarks the camera looks up at (LandmarkView), once per room load
         const look = this.scene.config && this.scene.config.game.lookUp;
         this.landmarks = look && typeof LandmarkView !== 'undefined' ? LandmarkView.index(this.tileRecords, look.sprites, this.scene.GRID_SIZE) : [];
+        if (RoomManager.keepsIndex(room, this.streamed)) {
+            this.tileIndexes.set(this.currentRoom, {
+                room, layers: room.layers, tiles: room.layers.map(layer => layer.tiles),
+                records: this.tileRecords, blocked: this.blockedCells, chunks: this.chunks,
+                landmarks: this.landmarks,
+            });
+        }
         if (this.streamed) {
             this.updateStreaming();
         } else {
@@ -299,9 +324,58 @@ class RoomManager {
         this.refreshFloorSprites();
     }
 
+    /**
+     * Whether a room's tile index is kept across room switches: only a
+     * stitched city that is streamed. Every other room is small, and with
+     * `?cull=0` (every sprite made at once, for measuring) or `?stitch=0`
+     * (no city at all) everything is rebuilt on each entry, as it always was.
+     */
+    static keepsIndex(room, streamed) {
+        return !!(room && room.stitched && streamed && room.layers);
+    }
+
+    /**
+     * Whether a kept index still describes the room: the same room object
+     * with the same layer list and the same tile table in every layer. A room
+     * that was stitched again, or given new layers or a new tile table (how
+     * the game, the studio and the editor all apply a map edit), misses.
+     */
+    static indexFits(kept, room, streamed) {
+        return !!kept && RoomManager.keepsIndex(room, streamed) &&
+            kept.room === room && kept.layers === room.layers &&
+            kept.tiles.length === room.layers.length &&
+            room.layers.every((layer, i) => layer.tiles === kept.tiles[i]);
+    }
+
+    /** The kept index of a room if it still fits (a stale one is dropped), else null. */
+    tileIndexFor(roomKey) {
+        const kept = this.tileIndexes.get(roomKey);
+        if (RoomManager.indexFits(kept, this.rooms[roomKey], this.streamed)) return kept;
+        this.tileIndexes.delete(roomKey);
+        return null;
+    }
+
+    /**
+     * Drop kept tile indexes (one room's, or all): call after changing a
+     * tile of a room's layers IN PLACE, which indexFits cannot see.
+     */
+    forgetTileIndex(roomKey) {
+        if (roomKey === undefined) this.tileIndexes.clear();
+        else this.tileIndexes.delete(roomKey);
+    }
+
     /** Destroy the current room's tile sprites and signs and forget its records. */
     clearFloorTiles() {
         for (const rec of this.liveTiles) rec.sprite.destroy();
+        // records that are kept for the next visit go back as they were made:
+        // no sprite, no Occlusion fade (currentRoom is already the NEXT room
+        // here, so the index is found by its records)
+        if ([...this.tileIndexes.values()].some(kept => kept.records === this.tileRecords)) {
+            for (const rec of this.tileRecords) {
+                rec.sprite = null;
+                if (rec.fade !== undefined) delete rec.fade;
+            }
+        }
         this.spritePool.forEach(sprite => sprite.destroy());
         this.signSprites.forEach(sprite => sprite.destroy());
         this.spritePool = [];
