@@ -3,7 +3,7 @@ const COLOR = { torii: '#e0421f', moat: '#2f5fd0', moss: '#2f8f5b', sun: '#f2b01
 const GROUP_COLOR = { shop: COLOR.sun, pond: COLOR.moat, clock: '#9b4fd0', 'drinking-game': '#d04f9b' };
 const LAYERS = [
     ['art', 'Art', true], ['collision', 'Collision', false], ['unreachable', 'Unreachable', true],
-    ['teleports', 'Teleports', true], ['trains', 'Train lines', true], ['interactions', 'Interactions', true], ['people', 'People', true],
+    ['teleports', 'Teleports', true], ['trains', 'Train lines', false], ['interactions', 'Interactions', true], ['people', 'People', true],
 ];
 
 const $ = (id) => document.getElementById(id);
