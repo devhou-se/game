@@ -153,7 +153,9 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         }
         // the rule, not a ratio (new towns add stations): a bar shows the date alone only in a station
         assert.ok(bare.size > 0 && shown > bare.size, `the countdown shows in ${shown} room bars, the date alone in ${bare.size} rooms`);
-        for (const name of bare) assert.ok(/ Station$/.test(name), `only a station's name is too long for the countdown: ${name}`);
+        // (and, since #218, the airports and the home city: names as long as a station's)
+        const long = (name) => / (Station|Airport)$/.test(name) || name === config.rooms.SanFranbourne.name;
+        for (const name of bare) assert.ok(long(name), `only a station's or an airport's name is too long for the countdown: ${name}`);
         // layoutHUD: only where the whole canvas is across a magnified view, on a countdown day, before the bare date
         const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
         assert.ok(src.includes('const count = () => whole && counting && (row(short, true) || [room, brief].some((name) =>'));

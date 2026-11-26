@@ -80,6 +80,12 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
     "you are here: <room> (in <town>) · ESC to close". `scene.mapDots` lists what is drawn while the
     map is open (`{ key, label, here, present, x, y, fits, leader }`; null when closed) for the debug
     console and `tools/browser/regress.js`.
+  - **A place that is not in Japan** (issue #218: the home city) is `"overseas": true` in config
+    `places`. It is listed, ringed, haloed and labelled like any town, but drawn as a little plane on a
+    dashed course off the bottom-right corner of the picture, and its `geo` is a position on the picture
+    (in the open sea south-east of Honshu, the one stretch where its long label clears the others in
+    every view), not a real place. Its footer reads `<name> (overseas)`; a room inside it,
+    `<room> (in <name>, overseas)`. An airport room is in the place of the room it `serves`.
   - The old overworld picture, `assets/map/world-map.png`, is no longer loaded by the game. Its
     metadata `world-map.json` still is (the stitched city's offsets are checked against it,
     `TrainTravel.dirTo` reads it), and `/studio/`, `tools/make_worldmap.py` and several unit tests

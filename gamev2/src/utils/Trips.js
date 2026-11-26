@@ -408,13 +408,15 @@ class Trips {
 
     /**
      * How many room changes each room is from `from`: a door is one, and so
-     * is a train ride between any two stations. Rooms that cannot be reached
+     * is a train ride between any two stations or a flight between any two
+     * airports (config `airports`). Rooms that cannot be reached
      * are left out.
      */
     static hopsFrom(config, from) {
-        const stations = Object.keys(config.stations || {});
+        const stations = Object.keys(config.stations || {}), airports = Object.keys(config.airports || {});
         const next = (room) => {
             const out = ((config.rooms[room] || {}).transporters || []).map(t => t.targetRoom);
+            if (airports.includes(room)) return out.concat(airports);
             return stations.includes(room) ? out.concat(stations) : out;
         };
         const hops = { [from]: 0 }, queue = [from];
@@ -430,7 +432,8 @@ class Trips {
 
     /**
      * Every cell a walker can arrive on in a room: door targets from every
-     * room's transporters, and the platform cell of a station room.
+     * room's transporters, the platform cell of a station room, and the
+     * gate cell of an airport.
      */
     static arrivals(config, room) {
         const cells = [];
@@ -441,6 +444,8 @@ class Trips {
         }
         const station = (config.stations || {})[room];
         if (station && Array.isArray(station.arrive)) cells.push([station.arrive[0], station.arrive[1]]);
+        const airport = (config.airports || {})[room];
+        if (airport && Array.isArray(airport.arrive)) cells.push([airport.arrive[0], airport.arrive[1]]);
         return cells;
     }
 

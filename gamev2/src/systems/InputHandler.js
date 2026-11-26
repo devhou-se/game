@@ -96,6 +96,16 @@ class InputHandler {
         // Priority 0: no input at all while riding the train
         if (this.scene.trainTravel && this.scene.trainTravel.riding) return;
 
+        // Priority 0: a flight takes no input but its own skip (the keys that
+        // skip it are synced, so the press does nothing else on landing)
+        if (this.scene.airTravel && this.scene.airTravel.flying) {
+            this.scene.airTravel.handleInput();
+            this.lastKeyState.esc = this.escKey.isDown;
+            this.lastKeyState.space = this.spaceKey.isDown || this.enterKey.isDown;
+            this.lastKeyState.enter = this.enterKey.isDown;
+            return;
+        }
+
         // Priority 0.5: the hidden debug menu owns input while open (sync ESC
         // so the press that closed it doesn't pop the main menu next frame)
         if (this.scene.debugManager && this.scene.debugManager.menuVisible) {

@@ -29,6 +29,7 @@ cfg = rg.load_config()
 # Sapporo - and leave every other store's room exactly as it is.
 ALL_HOSTS = ['Machi', 'Market', 'Park', 'Sapporo', 'Sendai']
 ALL_HOSTS += ['Fukuoka']
+ALL_HOSTS += ['SanFranbourne']     # the home city (issue #218)
 HOSTS = sys.argv[1:] or ALL_HOSTS
 assert all(h in ALL_HOSTS for h in HOSTS), f'unknown host; expected some of {ALL_HOSTS}'
 SEVEN = 'seven-eleven_0_0'

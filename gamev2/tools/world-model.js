@@ -204,7 +204,7 @@ class WorldModel {
         if (table) return table;
         const npc = this.room.npcs.find(n => n.gridX === x && n.gridY === y);
         if (npc) return { kind: 'npc', group: 'npc', npc };
-        return ['shop', 'water', 'pond', 'clock', 'flavour'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
+        return ['flights', 'shop', 'water', 'pond', 'clock', 'flavour'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
     }
 
     describe(i) {
@@ -227,6 +227,8 @@ class WorldModel {
             return `opens the ${Shop.titleFor(i.kind, this.roomConfig)} shop: ` + items.map(it => `${it.name} ¥${it.price}`).join(', ') +
                 (venue.buys ? `; buys caught fish${venue.grills ? ' and grills them' : ''}` : '');
         }
+        if (i.group === 'flights') return 'opens the flights board: fly to ' +
+            Object.keys(this.config.airports || {}).filter(k => k !== this.roomManager.currentRoom).join(', ');
         if (i.kind === 'water') return 'a free cup of water: a little energy, up to a cap (Energy.WATER_CAP)';
         if (i.kind === 'pond') return 'casts a fishing line (needs the fishing rod); a catch goes into the bag to sell';
         if (i.kind === 'clock') return 'opens the time-travel date picker';
@@ -319,6 +321,9 @@ class WorldModel {
         }
         for (const [k, st] of Object.entries(this.config.stations || {})) {
             if (st && st.arrive) lands(k, st.arrive[0], st.arrive[1]);
+        }
+        for (const [k, a] of Object.entries(this.config.airports || {})) {
+            if (a && a.arrive) lands(k, a.arrive[0], a.arrive[1]);
         }
         return cells;
     }
@@ -712,6 +717,7 @@ class WorldModel {
             }
         }
         for (const [k, st] of Object.entries(this.config.stations || {})) arrive(k, st.arrive[0], st.arrive[1], 'train');
+        for (const [k, a] of Object.entries(this.config.airports || {})) if (rooms[k]) arrive(k, a.arrive[0], a.arrive[1], 'flight');
         for (const k of keys) {
             reach[k] = new Set();
             if (!arrivals[k]) { problem(k, undefined, undefined, 'nothing leads here'); continue; }

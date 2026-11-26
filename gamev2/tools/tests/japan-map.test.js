@@ -2,7 +2,7 @@
 // longitude / latitude and label), src/utils/Places.js (which towns, who is in them, where the labels
 // go) and the picture and projection tools/make_japan_map.py writes to assets/map/japan.{png,json}.
 module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
-    load('utils/Places.js');
+    if (game('typeof Places') === 'undefined') load('utils/Places.js');   // airports.test.js loads it too
     const P = game('Places');
     // values made in the game's vm context, as this realm's own (deepStrictEqual compares prototypes)
     const plain = (v) => JSON.parse(JSON.stringify(v));
@@ -59,8 +59,21 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         // every dot is on land, on the right island, and well inside the picture
         const island = { Sapporo: 'Hokkaido', Asahikawa: 'Hokkaido', Fukuoka: 'Kyushu' };
         for (const p of P.list(withComing())) {
-            assert.ok(inside(meta.islands[island[p.key] || 'Honshu'], p.lon, p.lat), `${p.key} is in the sea`);
             const [x, y] = P.project(meta, p.lon, p.lat);
+            if (p.overseas) {
+                // not in Japan (#218): out in the open sea, on no island, in the bottom-right of the picture,
+                // south of every town
+                for (const [name, pts] of Object.entries(meta.islands)) assert.ok(!inside(pts, p.lon, p.lat), `${p.key} is on ${name}`);
+                assert.ok(x > meta.width * 0.7 && y > meta.height * 0.8, `${p.key} is not in the corner`);
+                for (const q of P.list(withComing())) {
+                    if (q.overseas) continue;
+                    const [qx, qy] = P.project(meta, q.lon, q.lat);
+                    assert.ok(y > qy, `${p.key} is north of ${q.key}`);
+                }
+                assert.ok(x < meta.width - 8 && y < meta.height - 8, `${p.key} is at the edge`);
+                continue;
+            }
+            assert.ok(inside(meta.islands[island[p.key] || 'Honshu'], p.lon, p.lat), `${p.key} is in the sea`);
             assert.ok(x > 8 && y > 8 && x < meta.width - 8 && y < meta.height - 8, `${p.key} is at the edge`);
         }
     });
@@ -68,7 +81,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
     test('every town that is a real place has a dot, one per city, and it comes from config (#211)', () => {
         const config = realConfig();
         const list = P.list(config);
-        assert.deepStrictEqual(plain(list.map(p => p.label)).sort(), ['Asahikawa', 'Fukuoka', 'Osaka', 'Sapporo', 'Sendai', 'Tokyo']);
+        // (the home city is the one place overseas, #218: its label is its room's name, written nowhere else)
+        const home = config.rooms.SanFranbourne.name;
+        assert.deepStrictEqual(plain(list.map(p => p.label)).sort(), ['Asahikawa', 'Fukuoka', 'Osaka', home, 'Sapporo', 'Sendai', 'Tokyo'].sort());
+        assert.deepStrictEqual(plain(list.filter(p => p.overseas).map(p => p.key)), ['SanFranbourne']);
+        assert.ok(!('label' in config.places.SanFranbourne) && !JSON.stringify(config.airports).includes(home), 'the name is written once');
         // the stitched city is ONE dot, named after the city
         const tokyo = list.find(p => p.key === 'TokyoCity');
         assert.deepStrictEqual(plain(tokyo.rooms), plain(config.cities.TokyoCity.rooms).map(m => m.room));
@@ -210,7 +227,10 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
             assert.ok(to && p.rooms.includes(to.room), `${p.key} has no arrival cell`);
             const station = Object.keys(config.stations).find(k => (config.rooms[k].transporters || [])
                 .some(t => t.targetRoom === to.room && t.targetX === to.x && t.targetY === to.y));
-            assert.ok(station, `${p.key}: ${JSON.stringify(to)} is not outside a station door`);
+            // (the overseas place has no station: outside its airport's door, #218)
+            const airport = p.overseas && Object.keys(config.airports).find(k => (config.rooms[k].transporters || [])
+                .some(t => t.targetRoom === to.room && t.targetX === to.x && t.targetY === to.y));
+            assert.ok(p.overseas ? airport && !station : station, `${p.key}: ${JSON.stringify(to)} is not outside a station door`);
         }
         assert.deepStrictEqual(plain(P.arrival(config, 'Sendai')), { room: 'Sendai', x: 35, y: 10 });
         assert.deepStrictEqual(plain(P.arrival(config, 'TokyoCity')), { room: 'Palace', x: 27, y: 10 });

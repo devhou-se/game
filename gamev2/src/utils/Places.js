@@ -14,12 +14,19 @@
  * (Inaka, Yukimura) are not on the map of Japan, and are reached as ever by
  * train from Tokyo Station.
  *
+ * A place that is not in Japan is `"overseas": true` (issue #218: the home
+ * city, reached by air). It is still one marker with a label, a presence dot
+ * and the player's ring, but it is drawn as a plane out in the sea at the
+ * map's edge: its `geo` says where on the picture, not where in the world.
+ * An airport room belongs to the place of the room it serves (config
+ * `airports.<key>.serves`): Haneda is in Tokyo's dot.
+ *
  * Pure functions of the config (and the map's metadata, assets/map/japan.json,
  * written by tools/make_japan_map.py): tools/tests/japan-map.test.js runs the
  * same code. GameScene.showMap draws what these decide.
  */
 class Places {
-    /** Every place that has a dot: [{ key, label, lon, lat, rooms }], in config order. */
+    /** Every place that has a dot: [{ key, label, lon, lat, rooms, overseas }], in config order. */
     static list(config) {
         const out = [];
         const rooms = (config && config.rooms) || {}, cities = (config && config.cities) || {};
@@ -32,6 +39,7 @@ class Places {
                 key, lon: geo[0], lat: geo[1],
                 label: p.label || (city ? city.name : rooms[key].name) || key,
                 rooms: city ? (city.rooms || []).map(m => m.room) : [key],
+                overseas: !!p.overseas,
             });
         }
         return out;
@@ -39,8 +47,9 @@ class Places {
 
     /**
      * The place a room belongs to, or null: the room itself, the city it is
-     * a district of, the town its station serves, or — for an interior —
-     * wherever its doors lead (a konbini is in its town). A room that is its
+     * a district of, the town its station serves, the town its airport
+     * serves, or — for an interior — wherever its doors lead (a konbini is
+     * in its town). A room that is its
      * own place wins over the city it is stitched into, so the districts of
      * a region can be separate dots.
      */
@@ -63,6 +72,8 @@ class Places {
                 if (key) return key;
                 const station = (config.stations || {})[r];
                 if (station && station.town) next.push(station.town);
+                const airport = (config.airports || {})[r];
+                if (airport && airport.serves) next.push(airport.serves);
                 for (const t of config.rooms[r].transporters || []) next.push(t.targetRoom);
             }
             front = next;
@@ -88,7 +99,8 @@ class Places {
     /**
      * Where a traveller sets foot in a place — { room, x, y } in district
      * cells, or null: outside its station's door (the first station on the
-     * line that serves it), else any door into it.
+     * line that serves it), else outside its airport's door, else any door
+     * into it.
      */
     static arrival(config, key) {
         const place = Places.list(config).find(p => p.key === key);
@@ -98,6 +110,11 @@ class Places {
             .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
         for (const [stationRoom] of stations) {
             const door = ((config.rooms[stationRoom] || {}).transporters || []).find(t => place.rooms.includes(t.targetRoom));
+            if (door) return { room: door.targetRoom, x: door.targetX, y: door.targetY };
+        }
+        for (const [airportRoom, airport] of Object.entries(config.airports || {})) {
+            if (!place.rooms.includes(airport.serves)) continue;
+            const door = ((config.rooms[airportRoom] || {}).transporters || []).find(t => place.rooms.includes(t.targetRoom));
             if (door) return { room: door.targetRoom, x: door.targetX, y: door.targetY };
         }
         for (const room of place.rooms) {
@@ -115,7 +132,8 @@ class Places {
         const name = ((config.rooms || {})[room] || {}).name || room;
         const town = Places.list(config).find(p => p.key === Places.of(config, room));
         if (!town) return `${name} (not on this map)`;
-        return name.includes(town.label) ? name : `${name} (in ${town.label})`;
+        const far = town.overseas ? ', overseas' : '';
+        return name.includes(town.label) ? `${name}${far && ` (${far.slice(2)})`}` : `${name} (in ${town.label}${far})`;
     }
 
     /** Canvas px (before text growth) a town's marker reaches from its centre: nothing else may come nearer. */
@@ -200,5 +218,7 @@ Places.DOT_YOU = 12;
 Places.YOU_PULSE = 1.2;
 /** The Map's legend line (worded through Hints.text). */
 Places.LEGEND = 'red dot: friends in town   ·   gold ring: you';
+/** Half the wingspan of an overseas place's plane marker, canvas px before text growth. */
+Places.PLANE = 9;
 
 if (typeof window !== 'undefined') window.Places = Places;

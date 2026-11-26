@@ -265,6 +265,7 @@ class GameScene extends Phaser.Scene {
             this.stationPicker = new StationPicker(this);
             this.trainTravel = new TrainTravel(this);
             this.trainTravel.onRoomChange(this.roomManager.currentRoom);
+            this.airTravel = new AirTravel(this);
             this.ambientTrains = new AmbientTrains(this);
             this.ambientBoats = new AmbientBoats(this);
             this.trafficLights = new TrafficLights(this);   // decorative signal cycle
@@ -892,7 +893,7 @@ class GameScene extends Phaser.Scene {
             const isHere = p.key === here, isPresent = present.has(p.key);
             const label = text(0, 0, p.label, '16px', true, isHere ? '#ffd700' : '#ffffff', 'rgba(10,22,39,0.72)');
             label.setPadding(3, 1, 3, 1);
-            return { key: p.key, label: p.label, here: isHere, present: isPresent,
+            return { key: p.key, label: p.label, here: isHere, present: isPresent, overseas: p.overseas,
                 x: Math.round(px + ix * s), y: Math.round(py + iy * s), r: Places.reach(isHere, isPresent) * k,
                 w: label.width, h: label.height, text: label };
         });
@@ -914,6 +915,26 @@ class GameScene extends Phaser.Scene {
                     g.fillStyle(0xff5a4d, 1); g.fillCircle(0, 0, Places.DOT_PRESENT * k);
                     g.lineStyle(2 * k, 0xffffff, 1); g.strokeCircle(0, 0, Places.DOT_PRESENT * k);
                 });
+            } else if (d.overseas) {
+                // not in Japan: a little plane heading out over the sea, and its
+                // dashed course on to the corner of the map (issue #218)
+                const ex = px + dw - 4, ey = py + dh - 4, n = Math.hypot(ex - d.x, ey - d.y) || 1;
+                for (let t = Places.PLANE * k + 6; t < n - 4; t += 10) {
+                    lines.fillStyle(0xf4f0e0, 1);
+                    lines.fillRect(Math.round(d.x + (ex - d.x) * t / n) - 1, Math.round(d.y + (ey - d.y) * t / n) - 1, 3, 3);
+                }
+                circle(d.x, d.y, g => {
+                    const r = Places.PLANE * k;
+                    const plane = () => {
+                        g.fillTriangle(-r, -r * 0.2, r, 0, -r, r * 0.2);                 // the fuselage, nose to the east
+                        g.fillTriangle(-r * 0.1, 0, -r * 0.6, -r, r * 0.35, 0);          // the wings
+                        g.fillTriangle(-r * 0.1, 0, -r * 0.6, r, r * 0.35, 0);
+                        g.fillTriangle(-r, 0, -r * 1.2, -r * 0.45, -r * 0.6, 0);         // the tail
+                        g.fillTriangle(-r, 0, -r * 1.2, r * 0.45, -r * 0.6, 0);
+                    };
+                    g.fillStyle(0x0a1627, 1); g.fillCircle(0, 0, r * 1.15);
+                    g.fillStyle(0xf4f0e0, 1); plane();
+                }).setRotation(Math.atan2(ey - d.y, ex - d.x));
             } else {
                 circle(d.x, d.y, g => {
                     g.fillStyle(0xf4f0e0, 1); g.fillCircle(0, 0, Places.DOT * k);
@@ -930,7 +951,7 @@ class GameScene extends Phaser.Scene {
             }
         }
         // what is on the map, for the debug console and the browser checks
-        this.mapDots = dots.map(d => ({ key: d.key, label: d.label, here: d.here, present: d.present, x: d.x, y: d.y,
+        this.mapDots = dots.map(d => ({ key: d.key, label: d.label, here: d.here, present: d.present, overseas: d.overseas, x: d.x, y: d.y,
             fits: spots[d.key].fits, leader: spots[d.key].leader }));
 
         const where = Places.whereText(config, hereRoom);
@@ -1040,6 +1061,12 @@ class GameScene extends Phaser.Scene {
         if (this.drinkingGame && !this.dialogueManager.isVisible() &&
             this.drinkingGame.checkStart(targetGridX, targetGridY)) return;
         this.npcManager.checkInteraction(targetGridX, targetGridY);
+        // bumping an airport's gate or its departures board opens the flights (issue #218)
+        if (this.airTravel && this.stationPicker && !this.dialogueManager.isVisible() && !this.airTravel.flying &&
+            !(this.shop && this.shop.isVisible()) && this.roomManager.interactionAt(targetGridX, targetGridY, 'flights')) {
+            this.stationPicker.show(this.roomManager.currentRoom, { flights: true });
+            return;
+        }
         // bumping a vending machine / konbini counter or shelf / izakaya bar opens its store
         if (this.shop && !this.dialogueManager.isVisible()) {
             this.shop.checkShopInteraction(targetGridX, targetGridY);

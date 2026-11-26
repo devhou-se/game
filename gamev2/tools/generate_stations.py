@@ -45,6 +45,8 @@ Stations:
   SendaiStation   — inside Sendai's station house
   SapporoStation / AsahikawaStation — inside the Hokkaido station houses
   FukuokaStation  — "Hakata", inside Fukuoka's station house
+  HanedaStation   — "Haneda Airport": its stairs lead into the HanedaAirport hall
+                    (tools/generate_airports.py), not out to a town
 """
 import roomgen as rg
 from roomgen import rect
@@ -224,6 +226,11 @@ STATIONS = {
     # Yukimura — the snowy village, on the same branch line as Inaka.
     'YukimuraStation': {'label': 'Yukimura',      'town': 'Yukimura', 'train': 'train-green',
                         'parent': 'TokyoStation'},
+    # Haneda Airport (issue #218): the airport line's one stop. Its `town` is the
+    # airport hall itself (HanedaAirport, tools/generate_airports.py) - the stairs
+    # lead straight into it. `blog: False`: the blog pipeline never offers it.
+    'HanedaStation':   {'label': 'Haneda Airport', 'town': 'HanedaAirport', 'train': 'train-orange',
+                        'blog': False},
     # Osaka — the second city, a main-line stop like Tokyo (orange).
     'OsakaStation':    {'label': 'Osaka',         'town': 'Osaka',    'train': 'train-orange', 'size': 'large'},
     # Sendai (issue #66) - a main-line city stop (orange), up the line from Tokyo
@@ -243,7 +250,7 @@ STATIONS = {
 STATION_JA = {
     'TokyoStation': '東京', 'InakaStation': 'いなか', 'YukimuraStation': '雪村',
     'OsakaStation': '大阪', 'SapporoStation': '札幌', 'AsahikawaStation': '旭川',
-    'SendaiStation': '仙台', 'FukuokaStation': '博多',
+    'SendaiStation': '仙台', 'FukuokaStation': '博多', 'HanedaStation': '羽田空港',
 }
 assert all(st.get('parent', 'TokyoStation') in STATIONS for st in STATIONS.values()), 'unknown parent station'
 
@@ -262,6 +269,8 @@ TOWN_DOORS = {          # townRoom: (hidden door cell into the station, exit cel
     'SapporoStation':   {'door': [34, 9], 'exit': [34, 10]},
     'AsahikawaStation': {'door': [32, 9], 'exit': [32, 10]},
     'FukuokaStation':   {'door': [30, 9], 'exit': [30, 10]},
+    # the airport hall's own entry cell (generate_airports.layout()['entry']); there is no town door
+    'HanedaStation':    {'door': [17, 21], 'exit': [17, 18]},
 }
 
 layouts = {}
@@ -274,6 +283,8 @@ for key, st in STATIONS.items():
         rg.transporter(mx, my, st['town'], exit_cell[0], exit_cell[1], hidden=True)
         for (mx, my) in L['mats']
     ])
+    if st.get('blog') is False:         # off the blog pipeline's list of rooms (blog_to_npc.overworld_rooms)
+        cfg['rooms'][key]['blog'] = False
 
 # registry the game reads (StationPicker + TrainTravel)
 cfg['stations'] = {

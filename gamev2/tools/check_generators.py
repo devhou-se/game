@@ -45,6 +45,7 @@ GENERATORS = [
     'generate_machi', 'generate_inaka', 'generate_yukimura', 'generate_osaka',
     'generate_sapporo', 'generate_asahikawa', 'generate_sendai',
     'generate_fukuoka',
+    'generate_airports', 'generate_sanfranbourne',
     'generate_konbinis', 'generate_discount_stores', 'generate_stations',
     'generate_izakaya', 'generate_houses',
 ]
@@ -60,6 +61,7 @@ ART_TOOLS = [
     'extract_dotonbori', 'extract_shrine', 'extract_street', 'extract_train',
     'extract_train_interior', 'extract_station', 'generate_station_art',
     'generate_fukuoka_art', 'extract_house_interior', 'generate_house_art', 'make_japan_map',
+    'generate_sanfranbourne_art',
 ]
 # the art tools that also need a Japanese system font (generate_ads.find_font)
 FONT_TOOLS = ['generate_ads', 'extract_city']

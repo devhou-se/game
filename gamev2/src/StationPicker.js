@@ -121,11 +121,23 @@ class StationPicker {
 
     isVisible() { return this.visible; }
 
-    show(fromKey) {
+    /** The registry the open board lists: the stations, or the airports (flight mode). */
+    registry() {
+        return this.flights ? AirTravel.registry(this.scene.config) : this.scene.config.stations;
+    }
+
+    /**
+     * Open the board at `fromKey`. `opts.flights` makes it the airport's
+     * board (issue #218): the same list and rules over config `airports`,
+     * and picking a row flies (AirTravel) instead of riding.
+     */
+    show(fromKey, opts) {
         if (this.visible) return;
         const scene = this.scene;
-        const cameFrom = scene.trainTravel ? scene.trainTravel.cameFrom(fromKey) : null;
-        const board = StationPicker.board(scene.config.stations, fromKey, cameFrom);
+        this.flights = !!(opts && opts.flights);
+        const travel = this.flights ? scene.airTravel : scene.trainTravel;
+        const cameFrom = travel ? travel.cameFrom(fromKey) : null;
+        const board = StationPicker.board(this.registry(), fromKey, cameFrom);
         if (board.selected < 0) return;
         this.fromKey = fromKey;
         this.rows = board.rows;
@@ -162,7 +174,7 @@ class StationPicker {
         const row = this.rows[this.selected];
         if (!row || row.here) return;
         this.hide();
-        this.scene.trainTravel.go(this.fromKey, row.key);
+        (this.flights ? this.scene.airTravel : this.scene.trainTravel).go(this.fromKey, row.key);
     }
 
     handleInput() {
@@ -240,7 +252,7 @@ class StationPicker {
             slot.label.setText(row.label);
             slot.label.setX(this.listX + row.indent * StationPicker.INDENT);
             slot.label.setFill(row.here ? '#888888' : sel ? '#ffff00' : '#ffffff');
-            slot.tag.setText(row.here ? 'you are here' : row.indent ? 'day trip' : '');
+            slot.tag.setText(row.here ? 'you are here' : row.indent ? 'day trip' : this.flights ? 'flight' : '');
             slot.hit.setFillStyle(0xffffff, sel ? 0.08 : 0);
             if (sel) cursorY = slot.label.y;
         });
@@ -254,7 +266,7 @@ class StationPicker {
 
     render() {
         const scene = this.scene, cam = scene.cameras.main, W = cam.width, H = cam.height;
-        const stations = scene.config.stations;
+        const stations = this.registry();
         const ROW_H = StationPicker.ROW_H, MORE_H = StationPicker.MORE_H;
         const scrolls = this.rows.length > this.shown;
         const listH = this.shown * ROW_H + (scrolls ? 2 * MORE_H : 0);
@@ -281,7 +293,7 @@ class StationPicker {
             o.setOrigin(originX === undefined ? 0.5 : originX, 0.5); o.setResolution(1);
             return keep(o, 2003);
         };
-        text(W / 2, py + 34, 'DEPARTURES', '32px', true);
+        text(W / 2, py + 34, this.flights ? 'FLIGHTS' : 'DEPARTURES', '32px', true);
         text(W / 2, py + 66, `from ${stations[this.fromKey].label}`, '16px', false, '#888888');
 
         // the rows: a full-width strip takes the pointer, so the whole row is

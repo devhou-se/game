@@ -5,6 +5,10 @@ const Interactions = {
         // the 7-Eleven kiosk inside a station (tools/generate_stations.py): the whole
         // booth is the till, in any room - a station is not an `interior`
         { kind: 'counter', group: 'shop', pattern: /^station-kiosk/, footprint: true },
+        // an airport (tools/generate_airports.py, issue #218): the pub's bar is a till like the
+        // kiosk, and the gate or the board beside it opens the flights (GameScene, StationPicker)
+        { kind: 'pub', group: 'shop', pattern: /^airport-bar/, footprint: true },
+        { kind: 'flights', group: 'flights', pattern: /^airport-(gate|board)/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^office-(shelf-drinks|shelf-glass|fridge|freezer)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^office-shelf-snacks/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },
@@ -18,6 +22,9 @@ const Interactions = {
         { kind: 'stove', group: 'flavour', pattern: /^home-stove/, footprint: true, say: 'the stove ticks. the kettle on it is nearly boiling' },
         { kind: 'television', group: 'flavour', pattern: /^home-tv/, footprint: true, say: 'the weather: snow in the north, and more tomorrow' },
         { kind: 'bookshelf', group: 'flavour', pattern: /^home-bookshelf/, footprint: true, say: 'paperbacks, a road atlas, and manga read to pieces' },
+        // the home city (issue #218)
+        { kind: 'clocks', group: 'flavour', pattern: /^sfb-clocks-station/, footprint: true, say: 'everybody meets under the clocks. nobody has ever caught a train here' },
+        { kind: 'sea-lions', group: 'flavour', pattern: /^sfb-sea-lions/, footprint: true, say: 'the sea lions bark at you. one of them is eating somebody\'s chips' },
     ],
 
     match(key, roomConfig, venues) {

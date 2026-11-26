@@ -348,11 +348,19 @@ def test_spots(cfg):
     for room_key, room in cfg['rooms'].items():
         if room.get('interior'):
             assert room_key not in by_room, f'{room_key} is an interior but offers {by_room[room_key]}'
+        elif room.get('blog') is False:
+            # closed to the pipeline (issue #218): the home city and Haneda's rail stop are on no trip,
+            # so their torii, 7-Eleven, vending machines and platform are never offered
+            assert room_key not in by_room, f'{room_key} is closed to the blog but offers {by_room[room_key]}'
+            assert room_key not in b.overworld_rooms(cfg), room_key
         elif room_key in stations:
             assert set(by_room.get(room_key, {})) == {'the platform'}, (room_key, by_room.get(room_key))
         else:
             assert 'the platform' not in by_room.get(room_key, {}), room_key
             assert by_room.get(room_key), f'{room_key} is outdoors and offers nowhere to stand'
+    closed = {k for k, r in cfg['rooms'].items() if r.get('blog') is False}
+    assert closed == {'SanFranbourne', 'HanedaStation'}, closed
+    assert not any(k in by_room for k in cfg.get('airports', {})), 'an airport offers a spot'
     indoor_labels = {label for _, label, _, options in map(b.landmark_fields, b.LANDMARKS)
                      if options.get('indoors')}
     assert indoor_labels == {'the platform'}, indoor_labels
@@ -461,6 +469,8 @@ def test_spots(cfg):
 
     # a station's platform spot keeps clear of the train doors and where you arrive
     for room_key in stations:
+        if cfg['rooms'][room_key].get('blog') is False:      # offers no platform spot (checked above)
+            continue
         st = cfg['stations'][room_key]
         cell = b.walkable_near(cfg, room_key, *by_room[room_key]['the platform'])
         keep_clear = [tuple(c) for c in st.get('board', [])] + [tuple(st['arrive'])]
