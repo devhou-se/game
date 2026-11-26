@@ -544,7 +544,10 @@ the roll-out, Machi is being deleted.
   the bell rings (a toast: there are no sound effects) and a blessing is said; bump the fortune stand and
   ¥100 draws the day's omikuji, great blessing to great curse. One a game day, kept in the shop's save blob,
   read back free until the date changes. No overlay, no key: a bump, so touch works as it stands. One visit
-  per bump (`ShrineVisit.fresh`): a key held against the box or the stand pays once, until it is let go.
+  per bump (`ShrineVisit.fresh`): a key held against the box or the stand pays once, until it is let go - also
+  across the menu or any overlay opened and closed with the key still down (`ShrineVisit.carried`, fed
+  `InputHandler.heading()` every frame: while the direction that bumped is held the bump's time moves with the
+  clock; let go for `HELD_MS` it is over, so a key pressed again inside the menu is a new bump).
 - **Art**: `tools/generate_shrine_art.py` (needs Pillow; `--preview out.png`) draws every piece as shaded
   pixel art in the two looks (`shrine-in-<piece>-red|blue`, shared pieces `shrine-in-<piece>`); the temple
   packs are exteriors only, and `tools/extract_shrine.py` cuts the one interior piece they have, the garland.

@@ -79,7 +79,11 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
     of where the player is and who is where): beside the dot
     (right, left, above, below, the diagonals), then the same further out in rings of
     `Places.RING_STEP` px with a leader line back to the dot; never over another label or anybody's dot
-    (the reach of a ringed / haloed dot counts, `Places.reach`), never off the picture. The most
+    (the reach of a ringed / haloed dot counts, `Places.reach`), never off the picture, and never within
+    `Places.LABEL_GAP` of the dashes of the overseas place's course (`Places.course`, the boxes `showMap`
+    draws, passed as `avoid`; issue #220). Only where that would leave some label no spot at all (the
+    narrowest portrait view) are the labels laid out without it, and the dashes one stands on are left
+    out (`Places.uncovered`), so nothing is drawn under a label. The most
     hemmed-in dots choose first.
   - **Size**: `UIScale.mapFit(W, H, w, h, cropped, UIScale.MAP_MAX_SCALE)` — the same fit the old
     overworld picture used, now allowed past 1:1 and stepped in halves from 2x so the pixel art stays

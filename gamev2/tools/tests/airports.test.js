@@ -173,15 +173,14 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.strictEqual(A.canSkip(A.DURATION - 1), true);
         assert.strictEqual(A.canSkip(A.DURATION), false, 'it is already landing');
         assert.deepStrictEqual([A.progress(-5), A.progress(0), A.progress(4500), A.progress(9000), A.progress(99999)], [0, 0, 0.5, 1, 1]);
-        // the sky goes by once: day to dusk flying out, dusk to day flying home, never past either end
-        assert.deepStrictEqual([A.skyShift(0, 1, 1000), A.skyShift(0.5, 1, 1000), A.skyShift(1, 1, 1000), A.skyShift(2, 1, 1000)], [0, 500, 1000, 1000]);
-        assert.deepStrictEqual([A.skyShift(0, -1, 1000), A.skyShift(0.25, -1, 1000), A.skyShift(1, -1, 1000)], [1000, 750, 0]);
-        // the pictures: the cabin is the train interiors' size (so the same magnification applies), its
-        // windows are holes, and the sky behind is wider than the cabin and opaque
+        // the day goes by once: day to dusk flying out, dusk to day flying home, never past either end
+        assert.deepStrictEqual([A.skyTime(0, 1), A.skyTime(0.5, 1), A.skyTime(1, 1), A.skyTime(2, 1)], [0, 0.5, 1, 1]);
+        assert.deepStrictEqual([A.skyTime(0, -1), A.skyTime(0.25, -1), A.skyTime(1, -1)], [1, 0.75, 0]);
+        // the pictures: the cabin is the train interiors' size (so the same magnification applies) and its
+        // windows are holes; plane-sky is no longer drawn (see the next test) but stays registered art
         const png = require(path.join(GV2, 'tools', 'png.js'));
         const size = (name) => { const b = fs.readFileSync(path.join(GV2, 'assets', 'sprites', name + '.png')); return [b.readUInt32BE(16), b.readUInt32BE(20)]; };
         assert.deepStrictEqual(size('plane-interior'), size('train-interior-metro'));
-        assert.ok(size('plane-sky')[0] > size('plane-interior')[0]);
         const config = realConfig();
         for (const name of ['plane-interior', 'plane-sky']) assert.ok(config.spriteMetadata[name], `${name} is loaded`);
         const cabin = png.decode ? png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', 'plane-interior.png'))) : null;
@@ -208,6 +207,95 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         const scene = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
         assert.ok(scene.includes("this.roomManager.interactionAt(targetGridX, targetGridY, 'flights')"));
         assert.ok(fs.readFileSync(path.join(GV2, 'index.html'), 'utf8').includes('src/AirTravel.js'));
+    });
+
+    test('every cabin window shows the same sky at any moment, and the clouds pass them one after another (#220)', () => {
+        const png = require(path.join(GV2, 'tools', 'png.js'));
+        const read = (name) => png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', name + '.png')));
+        const src = fs.readFileSync(path.join(GV2, 'src', 'AirTravel.js'), 'utf8');
+        // the sky is a function of the time of day alone: no x, so no window can differ from another
+        assert.strictEqual(A.skyAt.length, 1);
+        assert.ok(!src.includes("'plane-sky'"), 'the long day-to-dusk strip no longer slides behind the windows');
+        assert.ok(src.includes('const now = AirTravel.skyAt(AirTravel.skyTime(progress, dir));'));
+        assert.ok(src.includes('scene.add.rectangle(carLeft, skyTop + n * bandH, carW, bandH + 1, 0xffffff)'), 'one band right across the cabin, behind every window');
+        assert.ok(src.includes('now.bands.forEach((color, n) => bands[n].setFillStyle(color, 1));'));
+        const build = src.slice(src.indexOf('    buildCutscene('), src.indexOf('    destroyCutscene('));
+        assert.ok(!/add\.graphics\(/.test(build), 'no Graphics in the cabin: UIScale would measure it and squeeze the picture on a phone');
+        // day, sunset, night: blue, then a warm horizon under a darker top, then dark; both ways round
+        const rgb = (c) => [c >> 16, (c >> 8) & 255, c & 255];
+        const day = plain(A.skyAt(0)), sunset = plain(A.skyAt(0.7)), night = plain(A.skyAt(1));
+        assert.strictEqual(day.bands.length, A.SKY_BANDS);
+        assert.ok(rgb(day.bands[0])[2] > 200 && rgb(day.bands[0])[0] < 120, 'a blue day');
+        const low = rgb(sunset.bands[A.SKY_BANDS - 1]);
+        assert.ok(low[0] > 200 && low[0] > low[2] + 80, 'an orange horizon at sunset');
+        assert.ok(rgb(night.bands[0]).every((v) => v < 60) && rgb(night.sea).every((v) => v < 60), 'a dark night');
+        assert.deepStrictEqual([day.stars, sunset.stars, night.stars], [0, 0, 1], 'stars only at night');
+        assert.ok(day.cloudAlpha > 0.5 && day.cloud === 0xffffff && sunset.cloud !== 0xffffff && night.cloudAlpha === 0, 'white cloud by day, lit at sunset, none at night');
+        assert.deepStrictEqual(plain(A.skyAt(A.skyTime(0.3, 1))), plain(A.skyAt(A.skyTime(0.7, -1))), 'flying home is the same day backwards');
+        assert.deepStrictEqual([plain(A.skyAt(-1)), plain(A.skyAt(9))], [day, night]);
+        // never a jump: from one frame to the next no channel moves more than a few steps
+        let prev = A.skyAt(0);
+        for (let i = 1; i <= 540; i++) {
+            const now = A.skyAt(i / 540);
+            [...now.bands, now.sea].forEach((c, n) => {
+                const was = rgb([...prev.bands, prev.sea][n]);
+                assert.ok(rgb(c).every((v, j) => Math.abs(v - was[j]) <= 4), `frame ${i}: band ${n} jumps`);
+            });
+            prev = now;
+        }
+        // the colours are the ones the registered sky picture was painted from: its top row and its sea row,
+        // wherever no cloud, star or glint is drawn on them
+        const sky = read('plane-sky'), px = (x, y) => [0, 1, 2].map((j) => sky.data[(y * sky.width + x) * 4 + j]);
+        assert.deepStrictEqual([sky.width, sky.height], [1280, A.SKY_H * 2]);
+        let matched = 0;
+        for (const f of [0, 0.2, 0.45, 0.62, 0.8]) {
+            const x = Math.round(f * 639), at = plain(A.skyAt(x / 639));
+            assert.deepStrictEqual(px(x * 2, 0), rgb(at.bands[0]), `the top of the sky at ${f}`);
+            for (let y = A.SKY_HORIZON; y < A.SKY_H; y++) {
+                if ((x * 7 + y * 13) % 23 === 0) continue;   // a glint on the water
+                assert.deepStrictEqual(px(x * 2, y * 2), rgb(at.sea), `the sea at ${f}, row ${y}`);
+                matched++;
+            }
+        }
+        assert.ok(matched > 40);
+        // the windows the stars are drawn in are the holes in the cabin wall
+        const cabin = read('plane-interior'), alpha = (x, y) => cabin.data[(y * cabin.width + x) * 4 + 3];
+        assert.strictEqual(cabin.width, A.CABIN_W * 2);
+        const row = Math.round(cabin.height * A.WINDOW_BAND) + 12, holes = [];   // under any pulled-down blind
+        for (let x = 1, from = 0; x < cabin.width; x++) {
+            if (alpha(x, row) === 0 && alpha(x - 1, row) !== 0) from = x;
+            if (alpha(x, row) !== 0 && alpha(x - 1, row) === 0) holes.push((from + x) / 4);
+        }
+        // (a window is two panes either side of a one-px mullion: two holes each)
+        const windows = plain(A.windows());
+        assert.strictEqual(windows.length * 2, holes.length);
+        windows.forEach((x, i) => {
+            const middle = (holes[2 * i] + holes[2 * i + 1]) / 2;
+            assert.ok(Math.abs(x + 0.5 - middle) <= 0.5, `window ${i} at ${x}, its panes meet at ${middle}`);
+        });
+        for (const [sx, sy] of A.STARS) assert.ok(sx !== 0 && Math.abs(sx) <= 5 && sy >= -12 && sy < 8, 'a star is inside a pane of its window, above the sea');
+        // clouds: each at its own speed against the flight, coming round again, inside the window band
+        const at = (ms, dir) => plain(A.clouds(ms, dir));
+        const start = at(0, 1), later = at(1000, 1), back = at(1000, -1);
+        assert.strictEqual(start.length, A.CLOUDS);
+        const span = A.CABIN_W + 2 * A.CLOUD_MARGIN, speeds = new Set();
+        start.forEach((c, i) => {
+            const moved = ((c.x - later[i].x) % span + span) % span, home = ((back[i].x - c.x) % span + span) % span;
+            assert.ok(moved > 20 && moved < 60 && Math.abs(moved - home) < 1e-6, `cloud ${i} drifts ${moved} px a second, backwards flying out and forwards flying home`);
+            speeds.add(Math.round(moved));
+            assert.ok(c.y - c.h / 2 >= -13 && c.y + c.h / 2 <= A.SKY_HORIZON - A.SKY_H / 2, `cloud ${i} is in the window band, above the horizon`);
+            assert.ok(c.w < 2 * A.WINDOW_STEP, 'a cloud is no wider than two windows: it passes them in turn');
+        });
+        assert.ok(speeds.size >= 4, 'the clouds do not move as one sheet');
+        for (let ms = 0; ms <= A.DURATION; ms += 250) {
+            for (const dir of [1, -1]) {
+                const now = at(ms, dir);
+                for (const c of now) assert.ok(c.x >= -A.CLOUD_MARGIN && c.x < A.CABIN_W + A.CLOUD_MARGIN);
+                // what differs between two windows is only which cloud is in it: never the same view in all
+                const over = windows.map((w) => now.filter((c) => Math.abs(c.x - w) < c.w / 2 + 6).length);
+                if (ms % 3000 === 0) assert.ok(new Set(over).size > 1 || over[0] === 0, `at ${ms}ms the windows do not all show one cloud`);
+            }
+        }
     });
 
     test('the home city: one name, every landmark standing and walkable-to, sealed houses, a lit night (#218)', () => {

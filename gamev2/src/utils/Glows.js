@@ -86,6 +86,18 @@ const Glows = {
     },
 
     /**
+     * The alpha a sprite's halo is drawn at: its own strength, times its level
+     * now (pulse / flicker), times how far its sprite is faded - `fade` is the
+     * tile record's (Occlusion: 0.4 while somebody stands behind the building,
+     * undefined at full strength), so a ghosted building's neon ghosts with it
+     * instead of burning at full strength over it (issue #220).
+     */
+    shown(alpha, level, fade) {
+        const f = Number.isFinite(fade) ? Math.max(0, Math.min(1, fade)) : 1;
+        return alpha * level * f;
+    },
+
+    /**
      * The one halo texture every spot is a tinted, stretched copy of: white,
      * in the same six steps as a lamp's halo. Drawn once (an Image of it is a
      * single quad; a lamp's Graphics halo is re-tessellated every frame).

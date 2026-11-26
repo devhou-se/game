@@ -134,8 +134,16 @@ by air**. Config `airports` is the registry, written by `tools/generate_airports
   (`KonbiniSanFranbourne1`) is an ordinary konbini interior and does count, so Konbini Pilgrim now needs a flight.
 - **The flight** (`src/AirTravel.js`): the screen fades, the room is swapped under a black curtain, and the
   cabin plays for `AirTravel.DURATION` (9 s): `plane-interior` (the train interiors' size, shown at 2x like them,
-  its windows cut through) over `plane-sky`, which slides behind the windows once - day, cloud, sea, sunset, dusk
-  flying out; the other way flying home (`AirTravel.skyShift`) - with the player in a window seat. On a phone it
+  its windows cut through) over ONE sky, so every window shows the same hour (issue #220: a long day-to-dusk
+  picture used to slide behind them, and the front of the plane was in daylight while the back was in the dark).
+  The sky is repainted as the flight goes: `AirTravel.skyAt(f)` gives six flat bands from the top of the sky to
+  the horizon, the sea, the cloud's tint and the stars' strength for a time of day `f` and has no x;
+  `AirTravel.skyTime(progress, dir)` runs `f` from day to night flying out and back again flying home; a few
+  small clouds drift past window after window, each at its own speed (`AirTravel.clouds`), and the same few
+  stars stand in every window at night. The colours are the stops `plane-sky.png` was painted from (`AirTravel.SKY`;
+  a unit test holds them to the picture, which stays registered but is no longer drawn). They are plain shapes, not
+  a Graphics: `UIScale` measures what a Graphics draws and would squeeze the picture on a phone. The player is in
+  a window seat. On a phone it
   is magnified as the train ride is (`TrainTravel.cutsceneScale`, #201). The picture tells `UIScale` it is a
   backdrop exactly the size of the view (`getBounds`), so the parts that run off the sides are never squeezed in.
   You step off in front of the other airport's gate (`arrive`).
@@ -143,7 +151,7 @@ by air**. Config `airports` is the registry, written by `tools/generate_airports
   or a tap, from `AirTravel.SKIP_AFTER` (0.7 s) after the cabin comes up (`AirTravel.canSkip`) - the press that
   boarded cannot skip it. `InputHandler` hands every frame to `AirTravel.handleInput` while `flying`.
 - **Rules as static functions** (`registry`, `destinations`, `canFly`, `direction`, `routeText`, `canSkip`,
-  `progress`, `skyShift`), tested in `tools/tests/airports.test.js` with the template, the city and the rule
+  `progress`, `skyTime`, `skyAt`, `clouds`, `windows`), tested in `tools/tests/airports.test.js` with the template, the city and the rule
   that no train reaches it. `Trips.hopsFrom` counts a flight as one hop; `play.js` has `fly <airport>` and the
   world check arrives at every gate.
 - **Adding an airport**: a row in `AIRPORTS` (`serves`, `out`: where its way out leads), a door or station that

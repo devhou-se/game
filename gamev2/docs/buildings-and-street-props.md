@@ -132,7 +132,11 @@ graded at night.
 - **Cost**: each spot is one Image of a single shared 96px halo texture (`glow-halo`, made the first time a room
   needs it), tinted, stretched and blended ADD at depth 955 with the lamps' halos - one quad, where a lamp's
   Graphics halo is re-tessellated every frame. They are in `dayNight.glows` and are hidden off camera by the same
-  `cullGlows`, which also re-lights the pulsing / flickering ones in view (`Glows.level`, a pure function of time).
+  `cullGlows`, which also re-lights the ones in view (`Glows.shown`): a pulse or flicker (`Glows.level`, a pure
+  function of time), and **the fade of its own building** - each sprite glow keeps its tile record, and while
+  `Occlusion` has the building ghosted because somebody is behind it (`rec.fade`, 0.4) its glow is drawn at that
+  share of its strength and comes back with it (issue #220). A lamp post's or lantern's halo has no record: a post
+  is not part of the building beside it and stays lit.
 - **To light a new sprite**: look at its art on a 64px grid, add a row (or a `glow` list), and check it at
   `?tod=night`. A light that is one cell big and stands alone is better named `*-lanterns` / `*lamp-post*`.
 

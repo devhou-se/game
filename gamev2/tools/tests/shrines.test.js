@@ -277,8 +277,54 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         // check() keeps the last bump whether or not it paid, and has no timer left to pay by
         const code = src('ShrineVisit.js');
         assert.ok(code.includes("const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell, scene.time.now);"));
-        assert.ok(code.includes('this.bump = { cell, at: scene.time.now };\n        if (!fresh) return true;'));
+        assert.ok(code.includes('this.bump = { cell, at: scene.time.now, dx: Math.sign(gridX - from.gridX), dy: Math.sign(gridY - from.gridY) };\n        if (!fresh) return true;'));
         assert.ok(!/COOLDOWN/.test(code), 'the 1.5 s cooldown that paid a held key again is gone');
+    });
+
+    test('a menu opened and closed with the key still held is the same bump: no second offering (#220)', () => {
+        const S = visit(), fresh = S.fresh, carried = S.carried;
+        const UP = { x: 0, y: -1 }, NONE = { x: 0, y: 0 }, LEFT = { x: -1, y: 0 };
+        const bump = { cell: '10,7', at: 5000, dx: 0, dy: -1 };
+        // while the direction that bumped is down the bump's time moves with the clock; let go, or turned, it ages
+        assert.deepStrictEqual(plain(carried(bump, 5016, UP)), { cell: '10,7', at: 5016, dx: 0, dy: -1 });
+        assert.strictEqual(carried(bump, 5016, NONE), bump);
+        assert.strictEqual(carried(bump, 5016, LEFT), bump);
+        assert.strictEqual(carried(bump, 5016, { x: -1, y: -1 }), bump, 'up and left together is another way to be heading');
+        assert.strictEqual(carried(null, 5016, UP), null);
+        assert.strictEqual(carried(bump, 5016, null), bump);
+        assert.strictEqual(carried({ cell: '10,7', at: 5000, dx: 0, dy: 0 }, 5016, NONE).at, 5000, 'a bump with no direction is never carried');
+        assert.strictEqual(carried(bump, 5000 + S.HELD_MS + 1, UP), bump, 'a bump let go for that long is over: the key coming down again does not revive it');
+        // the game's frames: bumps while the player has the input, none while the menu has it (frames
+        // `menu[0]`..`menu[1]`), and the key down for the frames of `held`
+        const spend = (frames, menu, held, useHold = true) => {
+            let last = null, money = 100, now = 0;
+            for (let i = 0; i < frames; i++) {
+                now += 1000 / 60;
+                const down = held(i), inMenu = i >= menu[0] && i < menu[1];
+                if (down && !inMenu) {
+                    const isNew = fresh(last, '10,7', now);
+                    last = { cell: '10,7', at: now, dx: 0, dy: -1 };
+                    if (isNew) money = S.offer(money, 0).money;
+                }
+                if (useHold) last = carried(last, now, down ? UP : NONE);
+            }
+            return 100 - money;
+        };
+        const always = () => true;
+        assert.strictEqual(spend(600, [120, 300], always), S.OFFERING, 'the menu open for three seconds, Up held throughout: one offering');
+        assert.strictEqual(spend(600, [120, 300], always, false), 2 * S.OFFERING, 'the bug: without the carry the box is paid again as the menu closes');
+        assert.strictEqual(spend(600, [120, 300], (i) => i < 200 || i >= 280), 2 * S.OFFERING, 'let go inside the menu and pressed again: a new bump');
+        assert.strictEqual(spend(600, [0, 0], (i) => i < 200 || i >= 230), 2 * S.OFFERING, 'let go and bumped again with no menu: as before');
+        assert.strictEqual(spend(600, [0, 0], always), S.OFFERING);
+        // the heading is read off the keys and the touch pad every frame, whoever owns the input
+        if (!game('typeof InputHandler !== "undefined"')) vm.runInContext(src('systems/InputHandler.js'), ctx, { filename: 'InputHandler.js' });
+        const H = game('InputHandler.headingOf');
+        assert.deepStrictEqual(plain([H({ up: true }), H({ down: true, right: true }), H({ left: true, right: true }), H({})]),
+            [{ x: 0, y: -1 }, { x: 1, y: 1 }, { x: 0, y: 0 }, { x: 0, y: 0 }]);
+        const scene = src('GameScene.js'), input = src('systems/InputHandler.js');
+        assert.ok(scene.includes('this.inputHandler.handleInput();\n        // a key still held against the offering box is the same bump, menu or no menu\n        if (this.shrineVisit) this.shrineVisit.hold(this.inputHandler.heading());'));
+        assert.ok(/heading\(\) \{[\s\S]{0,400}touchControls\.state/.test(input), 'the touch pad counts as a held key');
+        assert.ok(src('ShrineVisit.js').includes('if (this.bump) this.bump = ShrineVisit.carried(this.bump, this.scene.time.now, heading);'));
     });
 
     test('a lantern-lit interior dims at night and lights its lanterns; every other interior ignores the hour (#212)', () => {

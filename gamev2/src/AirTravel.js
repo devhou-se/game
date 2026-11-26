@@ -76,13 +76,70 @@ class AirTravel {
     }
 
     /**
-     * How far the sky has slid past the windows, px: 0..`travel`. Flying out
-     * it runs from the day end to the dusk end; flying back, the other way
-     * (night first, landing in the morning).
+     * The time of day outside, 0 (bright day) .. 1 (night), `progress` of the
+     * way through the flight. Flying out it runs from day to dusk; flying
+     * back, the other way (night first, landing in the morning).
      */
-    static skyShift(progress, dir, travel) {
+    static skyTime(progress, dir) {
         const p = Math.max(0, Math.min(1, progress));
-        return travel * (dir >= 0 ? p : 1 - p);
+        return dir >= 0 ? p : 1 - p;
+    }
+
+    /**
+     * The sky at time of day `f` (skyTime): { bands, sea, cloud, cloudAlpha,
+     * stars } - SKY_BANDS flat colours from the top of the sky down to the
+     * horizon (banded, not smooth: pixel art), the sea under it, the tint
+     * and strength of the cloud, and how bright the stars are (0..1).
+     *
+     * It has no x: the whole window band is ONE sky, so every window shows the
+     * same hour. (The first cabin slid one long day-to-dusk picture behind the
+     * windows, and the front of the plane was in daylight while the back was
+     * in the dark, issue #220.) The colours are the stops plane-sky.png was
+     * painted from (tools/generate_sanfranbourne_art.py plane_sky).
+     */
+    static skyAt(f) {
+        const t = Math.max(0, Math.min(1, f)), S = AirTravel.SKY;
+        let i = 0;
+        while (i < S.length - 2 && t > S[i + 1].f) i++;
+        const a = S[i], b = S[i + 1], u = (t - a.f) / (b.f - a.f);
+        const mix = (p, q, w) => p.map((v, j) => Math.trunc(v + (q[j] - v) * w));
+        const hex = (c) => (c[0] << 16) | (c[1] << 8) | c[2];
+        const top = mix(a.top, b.top, u), horizon = mix(a.horizon, b.horizon, u);
+        const bands = [];
+        for (let n = 0; n < AirTravel.SKY_BANDS; n++) bands.push(hex(mix(top, horizon, n / AirTravel.SKY_BANDS)));
+        const ramp = (lo, hi) => Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
+        // cloud: white by day, lit pink near the sunset, dusky after it, gone by night
+        const day = [255, 255, 255], lit = [255, 214, 190], dusk = [190, 130, 160];
+        const cloud = t < 0.65 ? mix(day, lit, ramp(0.5, 0.65)) : mix(lit, dusk, ramp(0.65, 0.8));
+        return { bands, sea: hex(mix(a.sea, b.sea, u)), cloud: hex(cloud), cloudAlpha: 0.85 * (1 - ramp(0.82, 0.95)), stars: ramp(0.84, 0.94) };
+    }
+
+    /**
+     * Where the clouds are `elapsed` ms into a flight: [{ x, y, w, h }] in the
+     * cabin picture's own px (x from its left edge, y from the middle of the
+     * window band; x is the cloud's centre). Each drifts at its own speed the
+     * other way to the flight and comes round again, so it passes one window
+     * after another: at any moment the windows share a sky and differ only in
+     * which cloud is going by.
+     */
+    static clouds(elapsed, dir) {
+        const span = AirTravel.CABIN_W + 2 * AirTravel.CLOUD_MARGIN, out = [];
+        for (let i = 0; i < AirTravel.CLOUDS; i++) {
+            const start = ((i * 0.618034) % 1) * span, speed = 26 + (i * 17) % 30;       // px a second
+            const moved = start - (dir >= 0 ? 1 : -1) * speed * elapsed / 1000;
+            out.push({
+                x: (((moved % span) + span) % span) - AirTravel.CLOUD_MARGIN,
+                y: -10 + (i * 5) % 13, w: 22 + (i * 11) % 20, h: 5,
+            });
+        }
+        return out;
+    }
+
+    /** The x of the middle of each window, in the cabin picture's own px. */
+    static windows() {
+        const out = [];
+        for (let x = AirTravel.WINDOW_FIRST; x < AirTravel.CABIN_W - 14; x += AirTravel.WINDOW_STEP) out.push(x);
+        return out;
     }
 
     /** The airport the player last flew into `roomKey` from, or null. */
@@ -112,28 +169,44 @@ class AirTravel {
         const carW = cabin.displayWidth, carH = cabin.displayHeight;
         const carLeft = W / 2 - carW / 2, carTop = H / 2 - carH / 2;
 
-        // the sky slides slowly behind the windows for the whole flight
+        // one sky behind the whole window band, so every window shows the same hour: it is
+        // repainted as the flight goes (skyAt), day to dusk flying out and dusk to day flying
+        // home, with the cloud drifting past window after window (clouds)
+        const u = 4 * k;                                   // one px of the cabin art on screen: the picture is saved at 2x and shown at 2k
         const bandY = carTop + carH * AirTravel.WINDOW_BAND;
-        const sky = scene.add.image(carLeft, bandY, 'plane-sky').setOrigin(0, 0.5).setScale(2 * k);
-        const travel = Math.max(0, sky.displayWidth - carW);
-        sky.setX(carLeft - AirTravel.skyShift(0, dir, travel));
-        c.add(sky);
-        this._cutTweens = [scene.tweens.add({
-            targets: sky, x: carLeft - AirTravel.skyShift(1, dir, travel),
-            duration: AirTravel.DURATION, ease: 'Linear',
-        })];
-        // near cloud, quicker than the sky, going the other way to the flight
-        for (let i = 0; i < 4; i++) {
-            const y = bandY - carH * 0.06 + (i % 3) * carH * 0.05;
-            const puff = scene.add.ellipse(0, y, (150 + i * 40) * k, 22 * k, 0xffffff, 0.5);
-            const off = 200 * k;
-            puff.setX(dir > 0 ? W + off : -off);
-            c.add(puff);
-            this._cutTweens.push(scene.tweens.add({
-                targets: puff, x: dir > 0 ? -off : W + off,
-                duration: 2600 + i * 700, repeat: -1, delay: i * 900,
-            }));
+        const skyTop = bandY - AirTravel.SKY_H / 2 * u, bandH = AirTravel.SKY_HORIZON / AirTravel.SKY_BANDS * u;
+        // plain shapes, not a Graphics: UIScale measures what a Graphics draws, and one wider
+        // than the view would have the whole picture squeezed to fit a phone
+        const shape = (o) => { c.add(o); return o; };
+        const bands = [];
+        for (let n = 0; n < AirTravel.SKY_BANDS; n++) {
+            bands.push(shape(scene.add.rectangle(carLeft, skyTop + n * bandH, carW, bandH + 1, 0xffffff).setOrigin(0, 0)));
         }
+        // the same few stars in every window: they are too far off to pass by
+        const stars = [];
+        for (const wx of AirTravel.windows()) {
+            for (const [sx, sy] of AirTravel.STARS) {
+                stars.push(shape(scene.add.rectangle(carLeft + (wx + sx) * u, bandY + sy * u, u, u, 0xffffe6).setOrigin(0, 0)));
+            }
+        }
+        const puffs = AirTravel.clouds(0, dir).map((cloud) => shape(scene.add.ellipse(0, bandY + cloud.y * u, cloud.w * u, cloud.h * u, 0xffffff)));
+        const sea = shape(scene.add.rectangle(carLeft, skyTop + AirTravel.SKY_HORIZON * u, carW,
+            (AirTravel.SKY_H - AirTravel.SKY_HORIZON) * u, 0xffffff).setOrigin(0, 0));
+        const paint = (progress) => {
+            const now = AirTravel.skyAt(AirTravel.skyTime(progress, dir));
+            now.bands.forEach((color, n) => bands[n].setFillStyle(color, 1));
+            sea.setFillStyle(now.sea, 1);
+            for (const star of stars) star.setAlpha(now.stars);
+            AirTravel.clouds(progress * AirTravel.DURATION, dir).forEach((cloud, i) => {
+                puffs[i].setX(carLeft + cloud.x * u);
+                puffs[i].setFillStyle(now.cloud, now.cloudAlpha);
+            });
+        };
+        paint(0);
+        this._cutTweens = [scene.tweens.addCounter({
+            from: 0, to: 1, duration: AirTravel.DURATION, ease: 'Linear',
+            onUpdate: (tween) => paint(tween.getValue()),
+        })];
         c.add(cabin);
 
         // the player in a window seat: the standing front frame, legs cropped at the cushion
@@ -255,6 +328,28 @@ AirTravel.SKIP_AFTER = 700;
 AirTravel.FADE = 350;
 /** The middle of the cabin's window band, and the seat cushion the rider sits on, as fractions of its height (tools/generate_sanfranbourne_art.py plane_interior). */
 AirTravel.WINDOW_BAND = 33 / 120;
+/** The cabin picture at 1x: its width, and the middles of its windows (the first, and one every WINDOW_STEP). */
+AirTravel.CABIN_W = 364;
+AirTravel.WINDOW_FIRST = 13;
+AirTravel.WINDOW_STEP = 26;
+/** The sky behind the window band, in the cabin picture's px: its height, the row of the horizon, the colour bands above it. */
+AirTravel.SKY_H = 44;
+AirTravel.SKY_HORIZON = 31;
+AirTravel.SKY_BANDS = 6;
+/** The day outside, bright day to night: at time `f`, the colour at the top of the sky, at the horizon, and of the sea. */
+AirTravel.SKY = [
+    { f: 0.00, top: [86, 150, 232], horizon: [170, 214, 250], sea: [58, 104, 176] },
+    { f: 0.45, top: [92, 150, 226], horizon: [190, 220, 246], sea: [60, 100, 168] },
+    { f: 0.62, top: [110, 120, 190], horizon: [250, 190, 120], sea: [86, 86, 140] },
+    { f: 0.74, top: [96, 70, 140], horizon: [248, 140, 80], sea: [90, 60, 100] },
+    { f: 0.88, top: [40, 36, 90], horizon: [150, 80, 110], sea: [40, 36, 80] },
+    { f: 1.00, top: [16, 18, 48], horizon: [50, 44, 96], sea: [18, 20, 52] },
+];
+/** How many clouds are in the air, and how far past each end of the cabin one goes before it comes round. */
+AirTravel.CLOUDS = 7;
+AirTravel.CLOUD_MARGIN = 40;
+/** The stars in a window, px from the middle of the window and of the band. */
+AirTravel.STARS = [[-4, -9], [2, -5], [-1, 1], [4, -11]];
 AirTravel.SEAT_LINE = 84 / 120;
 
 if (typeof window !== 'undefined') window.AirTravel = AirTravel;

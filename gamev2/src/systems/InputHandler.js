@@ -264,6 +264,28 @@ class InputHandler {
     }
 
     /**
+     * The direction held down right now, { x, y } with -1 / 0 / 1 each, from
+     * the arrows, WASD and the touch pad - whoever owns the input this frame.
+     * It moves nobody: it is for a rule that must know a key was never let go
+     * while an overlay was open (ShrineVisit.hold).
+     */
+    heading() {
+        const t = (this.scene.touchControls && this.scene.touchControls.enabled)
+            ? this.scene.touchControls.state : null;
+        return InputHandler.headingOf({
+            left: this.cursors.left.isDown || this.aKey.isDown || !!(t && t.left),
+            right: this.cursors.right.isDown || this.dKey.isDown || !!(t && t.right),
+            up: this.cursors.up.isDown || this.wKey.isDown || !!(t && t.up),
+            down: this.cursors.down.isDown || this.sKey.isDown || !!(t && t.down),
+        });
+    }
+
+    /** { x, y } of four held flags, as handlePlayerMovement adds them up: opposite keys cancel. */
+    static headingOf(held) {
+        return { x: (held.right ? 1 : 0) - (held.left ? 1 : 0), y: (held.down ? 1 : 0) - (held.up ? 1 : 0) };
+    }
+
+    /**
      * Handle player movement input
      */
     handlePlayerMovement() {

@@ -99,6 +99,63 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game }) => {
         assert.ok(/Glows\.spotsFor\(rec\.key, meta\[rec\.key\]\)/.test(dn) && /Glows\.level\(g\.halo, now\)/.test(dn));
     });
 
+    test('a building faded because somebody is behind it takes its own glow down with it; a lamp post stays lit (#220)', () => {
+        const G = glows();
+        if (!game('typeof Occlusion !== "undefined"')) vm.runInContext(src('systems/Occlusion.js'), ctx, { filename: 'Occlusion.js' });
+        const ALPHA = game('Occlusion.ALPHA');
+        // at full strength (no fade on the record) nothing changes: strength x level
+        assert.strictEqual(G.shown(0.8, 1, undefined), 0.8);
+        assert.strictEqual(G.shown(0.8, 0.5, undefined), 0.4);
+        // faded with the building, in step with it all the way down and back
+        assert.ok(Math.abs(G.shown(0.8, 1, ALPHA) - 0.8 * ALPHA) < 1e-9);
+        assert.ok(Math.abs(G.shown(1, G.FLICKER_DIP, ALPHA) - G.FLICKER_DIP * ALPHA) < 1e-9, 'a dipping tube on a ghosted building');
+        let prev = 1;
+        for (let fade = 1; fade >= ALPHA; fade -= 0.05) { const a = G.shown(1, 1, fade); assert.ok(a <= prev); prev = a; }
+        assert.deepStrictEqual([G.shown(1, 1, 0), G.shown(1, 1, 7), G.shown(1, 1, -1), G.shown(1, 1, NaN)], [0, 1, 0, 1], 'kept in 0..1; junk is full strength');
+        // DayNight: each sprite glow knows its record and is re-lit every frame it is in view; a lamp's
+        // Graphics halo is given no record, so it is never touched
+        const dn = src('DayNight.js');
+        assert.ok(dn.includes('img.rec = rec;') && dn.includes('img.strength = halo.alpha;'));
+        assert.ok(dn.includes('if (g.rec && g.visible) g.setAlpha(Glows.shown(g.strength, g.halo ? Glows.level(g.halo, now) : 1, g.rec.fade));'));
+        const lamps = dn.slice(dn.indexOf('    buildGlows(roomKey) {'), dn.indexOf('    buildSpriteGlows() {'));
+        assert.ok(lamps.includes('lamp-post|-lanterns') && !/\.rec\b/.test(lamps), 'a lamp halo belongs to no building');
+        // the fade it reads is the one Occlusion keeps on the record
+        assert.ok(src('systems/Occlusion.js').includes('rec.fade = next;'));
+    });
+
+    test('a streetcar at night: a warm glow along its windows and a headlight on the end it is heading for (#220)', () => {
+        const T = trams(), GS = 64;
+        for (const [width, height] of [[320, 192], [256, 128]]) {
+            const east = plain(T.lights(width, height, 1, GS)), west = plain(T.lights(width, height, -1, GS));
+            assert.strictEqual(east.length, 2);
+            const [glowE, headE] = east, [glowW, headW] = west;
+            // the windows: on the centre line, the car's length, the same both ways
+            assert.deepStrictEqual(glowE, glowW);
+            assert.deepStrictEqual([glowE.x, glowE.rx * 2], [width / 2, width]);
+            assert.ok(glowE.y > height * 0.3 && glowE.y < height * 0.7 && glowE.alpha < 0.7, 'soft, over the body');
+            // the headlight: just ahead of the nose going east, and mirrored about the centre line going west
+            assert.ok(headE.x > width && headE.x - headE.rx < width, 'it sits on the leading end');
+            assert.ok(Math.abs(headW.x - (width - headE.x)) < 1e-9 && headW.x < 0, 'mirrored with the car');
+            assert.deepStrictEqual([headW.y, headW.rx, headW.ry, headW.color, headW.alpha], [headE.y, headE.rx, headE.ry, headE.color, headE.alpha]);
+            assert.ok(headE.y > glowE.y && headE.y < height, 'low on the car');
+            assert.ok(headE.rx <= GS && headE.rx < glowE.rx / 2, 'small');
+            // everything stays inside the four cells DayNight culls halos by, measured from the car
+            for (const l of [...east, ...west]) assert.ok(l.x + l.rx <= width + GS * 4 && l.x - l.rx >= -GS * 4 && l.ry <= GS * 2.5);
+        }
+        // only at night, only while the car is seen, following it, faded with it, destroyed with it
+        const code = src('AmbientTrams.js');
+        assert.ok(code.includes("const lit = seen && typeof Glows !== 'undefined' && !!(scene.dayNight && scene.dayNight.lights);"));
+        assert.ok(code.includes('this.light(state, seen, at.alpha);'));
+        assert.ok(code.includes('g.setPosition(img.x + s.x, img.y + s.y);') && code.includes('g.setAlpha(s.alpha * alpha);'));
+        assert.ok(code.includes('Glows.texture(scene)') && !/load\.image|textures\.addCanvas/.test(code), 'the lamps\' halo texture: no new art');
+        assert.ok(/retire\(state\) \{[\s\S]{0,200}g\.destroy\(\)/.test(code));
+        const dn = src('DayNight.js');
+        assert.ok(dn.includes('this.lights = !!(grade && grade.lights);'));
+        if (!game('typeof DayNight !== "undefined"')) vm.runInContext(dn, ctx, { filename: 'DayNight.js' });
+        const grade = game('DayNight.gradeFor');
+        assert.deepStrictEqual(['dawn', 'day', 'dusk', 'night'].map((p) => !!((grade({}, p) || {}).lights)), [false, false, false, true]);
+    });
+
     // Every declared tramway is a line that can run: AmbientTrams.line accepts it, it is inside its room,
     // and its cars are registered sprites (GameScene loads textures from spriteMetadata, and a car with
     // no texture never departs). True of any config, with or without tramways.

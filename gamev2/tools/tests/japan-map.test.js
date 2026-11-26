@@ -185,6 +185,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         // [name, canvas width in view, cropped, text growth, the picture's scale]
         const views = [['desktop 1280x960', 1280, false, 1, 3], ['landscape phone 844x390', 1280, false, 1.6, 3],
             ['portrait phone, narrowest view', game('Viewport.MIN_VISIBLE'), true, 1.6, 2], ['portrait phone 390x844', 612, true, 1.3, 2.5]];
+        let coursesSeen = 0, coursesCut = 0;
         for (const [name, W, cropped, k, scale] of views) {
             const s = fit(W, 960, meta.width, meta.height, cropped, MAX);
             assert.strictEqual(s, scale, `${name}: the picture is drawn in half steps`);
@@ -203,8 +204,25 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
                                 r: P.reach(p.key === here, present.includes(p.key)) * k,
                                 w: Math.ceil(p.label.length * font * 0.62) + 6, h: Math.ceil(font * 1.2) + 2 };
                         });
-                        const spots = P.layout(dots, bounds);
+                        // an overseas place with nobody in it is a plane with a dashed course to the corner
+                        // of the map (GameScene.showMap draws these same boxes): labels keep off the dashes (#220)
+                        const course = places.flatMap((p, i) => (p.overseas && !present.includes(p.key) ? P.course(dots[i], bounds, k) : []));
+                        const spots = P.layout(dots, bounds, course);
                         const why = `${name}, at ${here}, friends in ${present}`;
+                        // ...everywhere but the narrowest portrait view, where keeping off them can leave a
+                        // label no spot at all: there the dashes under a label are not drawn (the course
+                        // starts clear of it), and most of the course still is
+                        const drawn = P.uncovered(course, spots);
+                        places.forEach((p, i) => {
+                            const d = dots[i], on = course.filter((dash) => hit(spots[d.key].box, dash)).length;
+                            assert.ok(!drawn.some((dash) => hit(spots[d.key].box, dash)), `${why}: a dash is drawn under ${d.key}'s label`);
+                            const near = (dash) => hit(spots[d.key].box, { x0: dash.x0 - P.LABEL_GAP, y0: dash.y0 - P.LABEL_GAP, x1: dash.x1 + P.LABEL_GAP, y1: dash.y1 + P.LABEL_GAP });
+                            if (!cropped || W > game('Viewport.MIN_VISIBLE')) assert.strictEqual(course.filter(near).length, 0, `${why}: ${d.key}'s label touches the flight's course`);
+                            if (!cropped || W > game('Viewport.MIN_VISIBLE')) assert.strictEqual(on, 0, `${why}: ${d.key}'s label is on the flight's course`);
+                        });
+                        assert.ok(drawn.length >= course.length / 2 && (!course.length || drawn.length >= 5), `${why}: ${drawn.length} of ${course.length} dashes are left`);
+                        if (course.length) coursesSeen++;
+                        if (drawn.length < course.length) coursesCut++;
                         for (const d of dots) {
                             const at = spots[d.key];
                             assert.ok(at.fits, `${why}: no room for ${d.key}'s label`);
@@ -235,6 +253,32 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         }
         // phones: a label is at least 10 CSS px (16px grown 1.6x on a 960-high canvas shown 390 high)
         assert.ok(Math.round(16 * game('UIScale.MAX_TEXT_GROWTH')) * 390 / 960 >= game('UIScale.MIN_TEXT'));
+        assert.ok(coursesSeen > 0, 'the home city and its course were laid out');
+        assert.ok(coursesCut < coursesSeen / 20, `a label had to stand on the course in ${coursesCut} of ${coursesSeen} layouts`);
+        // the course: 3px dashes every 10, from clear of the plane toward the bottom-right corner, inside the map
+        const box = { x: 100, y: 50, w: 600, h: 400 };
+        const dashes = plain(P.course({ x: 500, y: 300 }, box, 1));
+        assert.ok(dashes.length > 10);
+        const first = dashes[0], last = dashes[dashes.length - 1];
+        assert.ok(Math.hypot(first.x0 + 1 - 500, first.y0 + 1 - 300) >= P.PLANE + 5, 'the first dash is clear of the plane');
+        assert.ok(last.x1 <= 700 && last.y1 <= 450 && last.x0 > first.x0 && last.y0 > first.y0, 'it runs out to the corner and stops inside the map');
+        for (const d of dashes) assert.deepStrictEqual([d.x1 - d.x0, d.y1 - d.y0], [P.COURSE_DASH, P.COURSE_DASH]);
+        // the bug: beside its dot (the first choice) the label covers its own course; told about it, it moves
+        const sfb = [{ key: 'sfb', x: 500, y: 300, r: P.DOT, w: 140, h: 22 }];
+        const blind = P.layout(sfb, box).sfb, aware = P.layout(sfb, box, dashes).sfb;
+        assert.ok(dashes.some((d) => hit(blind.box, d)), 'a label to the right of the plane is on the dashes');
+        assert.ok(aware.fits && !dashes.some((d) => hit(aware.box, d)));
+        // ...and not just off them: a label whose edge is 2px from a dash (the real label at 1280x960) moves too
+        const close = [{ x0: blind.box.x0 + 4, y0: blind.box.y1 + 2, x1: blind.box.x0 + 7, y1: blind.box.y1 + 5 }];
+        assert.ok(!hit(blind.box, close[0]));
+        assert.notDeepStrictEqual(plain(P.layout(sfb, box, close).sfb.box), plain(blind.box));
+        const src1 = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(src1.includes('const spots = Places.layout(dots, mapBox, dots.flatMap(d => d.course));\n        for (const d of dots) d.course = Places.uncovered(d.course, spots);'));
+        // where keeping off the dashes would leave a label no spot, the labels win and those dashes are left out
+        const cramped = { x: 0, y: 0, w: 60, h: 12 }, mark = [{ x0: 20, y0: 4, x1: 23, y1: 7 }, { x0: 2, y0: 4, x1: 5, y1: 7 }];
+        const only = P.layout([{ key: 'a', x: 6, y: 6, r: 4, w: 40, h: 12 }], cramped, mark);
+        assert.ok(only.a.fits && hit(only.a.box, mark[0]));
+        assert.deepStrictEqual(plain(P.uncovered(mark, only)), [mark[1]]);
         // a label with nowhere to go says so
         const tight = P.layout([{ key: 'a', x: 10, y: 10, r: 5, w: 80, h: 20 }], { x: 0, y: 0, w: 40, h: 20 });
         assert.strictEqual(tight.a.fits, false);

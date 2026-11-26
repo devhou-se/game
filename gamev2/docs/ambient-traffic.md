@@ -122,7 +122,14 @@ drawn. A unit test (`tools/tests/glows-trams.test.js`) holds every declared row 
   row and one under a character there, so a player on the rails is drawn over the car as it passes through them,
   and one on the row behind is hidden by it. That is the passing train's level-crossing rule without its cap of
   48: a tram is in the street and sorts like anything else on it. Being in the world, it is under the day/night
-  grade and darkens at night with the street; it carries no light of its own.
+  grade and darkens at night with the street.
+- **At night a running car is lit** (issue #220): a soft warm glow along its windows and a small pale headlight
+  on the end it is heading for - two tinted copies of the lamps' halo texture (`Glows.texture`, no art of their
+  own), ADD-blended at depth 955 with the lamp halos. `AmbientTrams.lights(width, height, dir, GS)` gives them as
+  offsets from the corner of the car's art: the window glow is on the centre line, so it is the same both ways,
+  and the headlight is mirrored about it with the car (`x -> width - x`). They are on only while the room's lamps
+  are (`DayNight.lights`: night outdoors), follow the car every frame, fade with it at a terminus, are hidden
+  whenever the car is, and are destroyed with it.
 - **The timetable is a pure function of time**: `AmbientTrams.line(def, layers, offset, cols)` normalises a
   declaration (and moves it to its district's place in a stitched city), `AmbientTrams.plan(line, opts)` lays out
   one trip as legs, `AmbientTrams.at(plan, ms)` says where the car is. `GameScene.update` advances it; the car is

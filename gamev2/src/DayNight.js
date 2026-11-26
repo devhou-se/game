@@ -21,6 +21,7 @@ class DayNight {
     constructor(scene) {
         this.scene = scene;
         this.glows = [];
+        this.lights = false;
 
         const forced = new URLSearchParams(window.location.search).get('tod');
         this.forced = ['dawn', 'day', 'dusk', 'night'].includes(forced) ? forced : null;
@@ -62,8 +63,11 @@ class DayNight {
             this.grade.setVisible(true);
         }
 
+        // are the room's lights on (night outdoors, a lantern-lit hall at night)? Read by
+        // whatever else lights up with the lamps (AmbientTrams: a car's windows and headlight)
+        this.lights = !!(grade && grade.lights);
         this.clearGlows();
-        if (grade && grade.lights) this.buildGlows(roomKey);
+        if (this.lights) this.buildGlows(roomKey);
     }
 
     onRoomChange() {
@@ -129,6 +133,9 @@ class DayNight {
                 img.setBlendMode(Phaser.BlendModes.ADD);
                 img.setDepth(955);
                 if (Glows.animated(halo)) img.halo = halo;
+                // the glow belongs to this copy of the sprite: it fades with it (Occlusion, rec.fade)
+                img.rec = rec;
+                img.strength = halo.alpha;
                 this.glows.push(img);
             }
         }
@@ -147,8 +154,10 @@ class DayNight {
         const now = this.scene.time.now;
         for (const g of this.glows) {
             g.setVisible(Math.abs(g.x - cx) < hw && Math.abs(g.y - cy) < hh);
-            // a pulsing or flickering sprite glow (Glows) is re-lit while it is in view
-            if (g.halo && g.visible) g.setAlpha(g.halo.alpha * Glows.level(g.halo, now));
+            // a sprite's glow (Glows) is re-lit while it is in view: its pulse or flicker, and the
+            // fade of its building while somebody stands behind it (a lamp's halo has no `rec`:
+            // a post is not part of the building beside it, and stays lit)
+            if (g.rec && g.visible) g.setAlpha(Glows.shown(g.strength, g.halo ? Glows.level(g.halo, now) : 1, g.rec.fade));
         }
     }
 

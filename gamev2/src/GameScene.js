@@ -902,7 +902,12 @@ class GameScene extends Phaser.Scene {
                 x: Math.round(px + ix * s), y: Math.round(py + iy * s), r: Places.reach(isHere, isPresent) * k,
                 w: label.width, h: label.height, text: label };
         });
-        const spots = Places.layout(dots, { x: px, y: py, w: dw, h: dh });
+        // an overseas place's plane flies a dashed course to the corner of the map (unless friends
+        // are there: then it is a red dot like any town); no label may sit on the dashes
+        const mapBox = { x: px, y: py, w: dw, h: dh };
+        for (const d of dots) d.course = d.overseas && !d.present ? Places.course(d, mapBox, k) : [];
+        const spots = Places.layout(dots, mapBox, dots.flatMap(d => d.course));
+        for (const d of dots) d.course = Places.uncovered(d.course, spots);   // a label with nowhere else to go
         for (const d of dots) {
             const at = spots[d.key];
             d.text.setPosition(Math.round(at.x), Math.round(at.y));
@@ -923,11 +928,9 @@ class GameScene extends Phaser.Scene {
             } else if (d.overseas) {
                 // not in Japan: a little plane heading out over the sea, and its
                 // dashed course on to the corner of the map (issue #218)
-                const ex = px + dw - 4, ey = py + dh - 4, n = Math.hypot(ex - d.x, ey - d.y) || 1;
-                for (let t = Places.PLANE * k + 6; t < n - 4; t += 10) {
-                    lines.fillStyle(0xf4f0e0, 1);
-                    lines.fillRect(Math.round(d.x + (ex - d.x) * t / n) - 1, Math.round(d.y + (ey - d.y) * t / n) - 1, 3, 3);
-                }
+                const ex = px + dw - 4, ey = py + dh - 4;
+                lines.fillStyle(0xf4f0e0, 1);
+                for (const dash of d.course) lines.fillRect(dash.x0, dash.y0, dash.x1 - dash.x0, dash.y1 - dash.y0);
                 circle(d.x, d.y, g => {
                     const r = Places.PLANE * k;
                     const plane = () => {
@@ -957,7 +960,7 @@ class GameScene extends Phaser.Scene {
         }
         // what is on the map, for the debug console and the browser checks
         this.mapDots = dots.map(d => ({ key: d.key, label: d.label, here: d.here, present: d.present, overseas: d.overseas, x: d.x, y: d.y,
-            fits: spots[d.key].fits, leader: spots[d.key].leader }));
+            fits: spots[d.key].fits, leader: spots[d.key].leader, box: spots[d.key].box, course: d.course }));
 
         const where = Places.whereText(config, hereRoom);
         const travelHint = mapTravel ? '   ·   click a dot to travel there' : '';
@@ -1167,6 +1170,8 @@ class GameScene extends Phaser.Scene {
      */
     update() {
         this.inputHandler.handleInput();
+        // a key still held against the offering box is the same bump, menu or no menu
+        if (this.shrineVisit) this.shrineVisit.hold(this.inputHandler.heading());
         // stop walk cycles on characters that didn't chain another step this
         // frame (player's own depth/anim are left to TrainTravel while riding)
         if (this.player && !(this.trainTravel && this.trainTravel.riding)) {

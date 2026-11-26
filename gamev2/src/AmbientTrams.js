@@ -25,6 +25,12 @@
  * drawn over the car as it passes through, one a row above is behind it, and
  * the night grade (a layer over the whole world) dims it like everything else.
  *
+ * At night (when the room's lamps are lit, DayNight.lights) a running car is
+ * lit too: a soft warm glow along its windows and a small headlight on the
+ * end it is heading for (AmbientTrams.lights) - two tinted copies of the lamp
+ * halo texture (Glows.texture), above the night grade like every halo. They
+ * follow the car, fade with it at a terminus and are hidden when it is.
+ *
  * The timetable is a pure function of time (plan / at), so the car is where
  * the clock says whether or not anyone is looking; off camera it is hidden
  * and only that arithmetic runs.
@@ -67,7 +73,7 @@ class AmbientTrams {
     cross(index = 0, dir) {
         const state = this.lines[index];
         if (!state) return null;
-        if (state.image) { state.image.destroy(); state.image = null; }
+        this.retire(state);
         return this.depart(state, dir);
     }
 
@@ -103,8 +109,7 @@ class AmbientTrams {
             }
             state.t += delta;
             if (state.t >= state.plan.duration) {
-                state.image.destroy();
-                state.image = null;
+                this.retire(state);
                 state.wait = state.line.headway * 1000;
                 continue;
             }
@@ -121,10 +126,46 @@ class AmbientTrams {
             img.y < view.bottom && img.y + img.height > view.y;
         img.setVisible(seen);
         if (seen) img.setAlpha(at.alpha);
+        this.light(state, seen, at.alpha);
+    }
+
+    /** The car's window glow and headlight: only at night, only while it is seen, as faded as it is. */
+    light(state, seen, alpha) {
+        const scene = this.scene, img = state.image;
+        const lit = seen && typeof Glows !== 'undefined' && !!(scene.dayNight && scene.dayNight.lights);
+        if (!lit) {
+            if (state.glows) for (const g of state.glows) g.setVisible(false);
+            return;
+        }
+        const spots = AmbientTrams.lights(img.width, img.height, state.plan.dir, scene.GRID_SIZE);
+        if (!state.glows) {
+            state.glows = spots.map(() => {
+                const g = scene.add.image(0, 0, Glows.texture(scene));
+                g.setBlendMode(Phaser.BlendModes.ADD);
+                g.setDepth(955);   // with the lamp halos: over the night grade, under the HUD
+                return g;
+            });
+        }
+        spots.forEach((s, i) => {
+            const g = state.glows[i];
+            g.setPosition(img.x + s.x, img.y + s.y);
+            g.setDisplaySize(s.rx * 2, s.ry * 2);
+            g.setTint(s.color);
+            g.setAlpha(s.alpha * alpha);
+            g.setVisible(true);
+        });
+    }
+
+    /** Take a line's car, and its lights, off the street. */
+    retire(state) {
+        if (state.image) state.image.destroy();
+        state.image = null;
+        if (state.glows) for (const g of state.glows) g.destroy();
+        state.glows = null;
     }
 
     clear() {
-        for (const state of this.lines) if (state.image) state.image.destroy();
+        for (const state of this.lines) this.retire(state);
         this.lines = [];
     }
 }
@@ -133,6 +174,28 @@ AmbientTrams.SPEED = 160;     // px a second
 AmbientTrams.HEADWAY = 30;    // seconds
 AmbientTrams.DWELL = 4;       // seconds
 AmbientTrams.RAIL = /^tram-rail-(h|cross)/;
+
+/**
+ * A lit car's halos at night, as offsets from the top-left corner of its art
+ * (`width` x `height` px, the art heading east; `dir` 1 east, -1 west; `GS` a
+ * cell): [{ x, y, rx, ry, color, alpha }], the window glow first.
+ *   - the windows: one wide warm halo over the middle of the body. It is on
+ *     the car's centre line, so it is the same whichever way the car faces.
+ *   - the headlight: a small pale one low on the leading end, its centre just
+ *     ahead of the nose. The car is mirrored going west (setFlipX), so the
+ *     light is mirrored about the centre line with it: x -> width - x.
+ */
+AmbientTrams.lights = (width, height, dir, GS) => {
+    const nose = width + GS * AmbientTrams.HEADLIGHT_AHEAD;
+    return [
+        { x: width / 2, y: height * AmbientTrams.WINDOW_LINE, rx: width * 0.5, ry: GS * 0.8, color: 0xffc070, alpha: 0.65 },
+        { x: dir < 0 ? width - nose : nose, y: height * AmbientTrams.HEADLIGHT_LINE, rx: GS * 0.55, ry: GS * 0.4, color: 0xfff0c8, alpha: 0.9 },
+    ];
+};
+/** Where the windows and the headlight are on a car's art, as fractions of its height; how far ahead of the nose the headlight's centre is, in cells. */
+AmbientTrams.WINDOW_LINE = 0.5;
+AmbientTrams.HEADLIGHT_LINE = 0.78;
+AmbientTrams.HEADLIGHT_AHEAD = 0.1;
 
 /** Odd trips run back the way the last one came. */
 AmbientTrams.direction = (trip) => (trip % 2 === 0 ? 1 : -1);
