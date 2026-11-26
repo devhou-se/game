@@ -178,8 +178,7 @@ async function boot() {
         b.onclick = () => {
             S.show[key] = !S.show[key];
             b.setAttribute('aria-pressed', S.show[key]);
-            if (key === 'teleports' || key === 'trains') { layout(S.model.runtimeRooms()); fit(); }
-            draw();
+            if (key === 'teleports' || key === 'trains') relayout(); else draw();
         };
         $('layers').append(b);
     }
@@ -462,6 +461,30 @@ function layout(keys) {
 const THROUGH = 4;
 const CROSS = 8;
 const GAP = 4;
+function relayout() {
+    const keys = S.model.runtimeRooms();
+    const snap = () => ({ view: { ...S.view }, rooms: Object.fromEntries(keys.map(k => [k, [S.rooms[k].x, S.rooms[k].y]])) });
+    const from = snap();
+    layout(keys);
+    fit();
+    const to = snap();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return draw();
+    const start = performance.now();
+    const step = (now) => {
+        const t = Math.min(1, (now - start) / 600);
+        const e = 1 - Math.pow(1 - t, 3);
+        const mix = (a, b) => a + (b - a) * e;
+        for (const k of keys) {
+            S.rooms[k].x = mix(from.rooms[k][0], to.rooms[k][0]);
+            S.rooms[k].y = mix(from.rooms[k][1], to.rooms[k][1]);
+        }
+        for (const p of ['x', 'y', 'z']) S.view[p] = mix(from.view[p], to.view[p]);
+        draw();
+        if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
+
 function placeRooms(rooms, links) {
     const keys = Object.keys(rooms);
     const byRoom = Object.fromEntries(keys.map(k => [k, []]));
