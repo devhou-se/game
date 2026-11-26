@@ -875,6 +875,8 @@ Shop.VENUES = {
     drinks:  { title: 'DRINKS',          sells: i => (i.where === 'vending' || i.where === 'counter') && Shop.categoryOf(i) === 'drink' },
     snacks:  { title: 'SNACKS',          sells: i => (i.where === 'vending' || i.where === 'counter') && Shop.categoryOf(i) === 'food' },
     izakaya: { title: 'IZAKAYA',         sells: i => i.where === 'izakaya', buys: true, grills: true },
+    // Odori Park's hot-drinks tent (issue #219): the two warm ones off the machine's list
+    stall:   { title: 'HOT DRINKS',      sells: i => i.id === 'canned-coffee' || i.id === 'green-tea' },
     // the airport pub (issue #218): the izakaya's drinks and food, over the bar; it buys no fish
     pub:     { title: 'AIRPORT PUB',     sells: i => i.where === 'izakaya' },
 };

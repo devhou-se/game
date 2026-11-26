@@ -124,9 +124,10 @@ graded at night.
   turns the sprite off), else its row in `Glows.SPRITES`. The table exists because Sapporo's art landed before its
   sprites were registered; a row can be moved into `spriteMetadata` as it is. It holds `susukino-neon-corner`,
   `susukino-karaoke`, `susukino-ramen-gate`, `tanukikoji-gate`, `sapporo-station-front`, `sapporo-konbini` and the
-  two `snowfest-stall-*` (pink / cyan / yellow / green boards, warm windows, the cool white of the station's clock
+  two `snowfest-stall-*` (placed in Odori Park since stage 2, with `odori-lamp-post`, which the lamp rule lights; pink / cyan / yellow / green boards, warm windows, the cool white of the station's clock
   and name board). `susukino-neon-lanterns` and `ramen-alley-lanterns` are lanterns by name and are lit by the
-  lamp rule, so they are not in it. **None of these is placed yet**, so nothing in today's world changes. A unit
+  lamp rule, so they are not in it. **Only the station front and the two stalls are placed so far** (stages 1-2 of
+  the rebuild); the rest light nothing until a stage places them. A unit
   test (`tools/tests/glows-trams.test.js`) holds every glowing sprite, in the table or in `spriteMetadata`, to
   having art, spots on it and radii the cull allows; registering or placing one needs no change to it.
 - **Cost**: each spot is one Image of a single shared 96px halo texture (`glow-halo`, made the first time a room

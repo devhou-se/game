@@ -17,6 +17,7 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 | the 7-Eleven kiosk inside a station (`station-kiosk*`, any cell of the booth; see "The station interior") | `counter` — the same list |
 | the 7-Eleven kiosk in an airport hall (the same booth and rule) | `counter` — the same list; no stamp |
 | the pub's bar in an airport lounge (`airport-bar*`, issue #218) | `pub` — the izakaya's drinks and food, titled AIRPORT PUB; buys no fish, no stamp |
+| the hot-drinks tent in Sapporo's Odori Park (`snowfest-stall-drinks*`, any cell of the tent, issue #219) | `stall` — Canned Coffee and Green Tea, titled HOT DRINKS; no stamp |
 | `office-shelf-drinks` / `-shelf-glass` / `office-fridge` / `office-freezer` in a konbini | `drinks` — the drinks only |
 | `office-shelf-snacks` in a konbini | `snacks` — the food only |
 | `office-counter2*` (the bar) in a room with `"shopMenu": "izakaya"` | `izakaya` — items with `where: 'izakaya'` |

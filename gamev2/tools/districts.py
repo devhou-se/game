@@ -93,8 +93,9 @@ DISTRICTS = {
           'the Sapporo Clock Tower on dark setts beside a red-brick office block, the 7-Eleven next to it',
           (34, 6, 53, 19), stand=(38, 18)),
         d('odori-park', 'Odori Park',
-          'the long snowy boulevard park: snow sculptures, food stalls, the Sapporo TV Tower at its east end',
-          (2, 23, 53, 30), stand=(24, 27)),
+          'the long snowy boulevard park in the snow festival: the snow castle and sculptures, corn and hot-drink '
+          'stalls, the frozen fountain, the Sapporo TV Tower at its east end',
+          (2, 23, 53, 30), stand=(21, 27)),
     ],
     'Asahikawa': [
         d('station-front', 'Station front and Heiwa-dori',

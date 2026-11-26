@@ -88,7 +88,7 @@ HOME = {
         "Hey, I'm Khoi.",
         "Devhouse 3 is on: Hokkaido, in the snow.",
     ]),
-    'sam': ('Sapporo', 21, 27, [
+    'sam': ('Sapporo', 20, 26, [
         "Hi, I'm Sam!",
         "Sapporo first, then Asahikawa. I'm looking forward to all of it.",
     ]),

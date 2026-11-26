@@ -129,7 +129,13 @@ station_doors = b.stamp('sapporo-station-front', *STATION, seal=False)
 b.autotile('light-concrete-autotile', rect(2, 19, 53, 19))       # north pavement of Kita-Odori
 b.autotile('light-concrete-autotile', rect(2, 34, 53, 34))       # south pavement of Minami-Odori
 b.autotile('light-concrete-autotile', rect(2, 41, 53, 41))       # the lane the houses front on
-b.autotile('flat-grey-brick-autotile', rect(2, 26, 46, 27))      # Odori Park's central path
+# Odori Park's own ground (issue #219, stage 2): a path of packed snow down the
+# middle of the boulevard, opening into a court, a plaza and four ways in
+ODORI_PATH = 'snow-path-autotile'
+b.autotile(ODORI_PATH, set(rect(9, 26, 46, 27))                      # the path, block to block
+           | set(rect(3, 27, 10, 29)) | set(rect(9, 23, 10, 25)) | set(rect(6, 30, 7, 30))    # west: the sculpture court
+           | set(rect(20, 24, 26, 29)) | set(rect(22, 23, 24, 23)) | set(rect(22, 30, 24, 30))   # middle: the fountain's plaza
+           | set(rect(35, 23, 36, 25)) | set(rect(38, 28, 39, 30)))                           # east: the lawn's two ways in
 b.autotile('grey-brick-autotile', rect(47, 23, 53, 30))          # the TV Tower's plaza
 
 hroad(KITA, 2, 53)
@@ -185,17 +191,57 @@ for x in (3, 8, 15, 22, 28, 34, 42, 52):                # 52: clear of the TV To
 for x in (5, 11, 20, 27, 36, 41, 50):
     b.stamp('lamp-blue', x, 34)
 
-# ---- Odori Park: rows 23-30. Snow trees along both edges, lanterns between them,
-#      the path down the middle; the three streets cut it into blocks ------------
-for x0, x1 in ((2, 13), (17, 29), (33, 43)):
-    for i, x in enumerate(range(x0 + 1, x1 - 1, 4)):
-        b.stamp('tree-snow', x, 23)                   # trunks on row 25
-        b.stamp('tree-snow', x, 28)                   # trunks on row 30
-        if x + 3 <= x1:
-            b.stamp('lantern-red', x + 2, 24)         # base on row 25
-            b.stamp('lantern-red', x + 2, 29)         # base on row 30
-for i, px in enumerate((4, 9, 19, 24, 28, 35, 40)):
-    b.paver(px, 25 if i % 2 else 28, i)
+# ---- Odori Park: rows 23-30, cut into three blocks by the north-south streets
+#      (issue #219, stage 2). Ploughed snowbanks close its edges - you come in by
+#      the path at a block's ends or by a gap in the bank - and no two blocks are
+#      alike. Everything a visitor looks at faces south, onto the path ------------
+def bank(row=None, col=None, cells=(), heaps=()):
+    """Snowbank: `cells` of row `row` (the east-west piece) or of column `col`
+    (the north-south piece), and a shovelled heap on each of `heaps`."""
+    for c in cells:
+        b.stamp('snowbank-h' if col is None else 'snowbank-v', *((c, row) if col is None else (col, c)))
+    for x, y in heaps:
+        b.stamp('snowbank-pile', x, y)
+
+
+# west block, the SCULPTURE COURT: the snow castle (the festival's big sculpture)
+# with its court in front, the snow tanuki beside the way in from Kita-Odori
+CASTLE, TANUKI = (4, 23), (12, 23)
+b.stamp('snow-sculpture-castle', *CASTLE)             # feet on row 26, the court on rows 27-29
+b.stamp('snow-sculpture-tanuki', *TANUKI)             # feet on row 25, facing the path
+b.stamp('tree-snow', 2, 23)                           # trunk on row 25
+b.stamp('tree-snow', 11, 28)                          # trunk on row 30
+b.stamp('odori-lamp', 2, 26); b.stamp('odori-lamp', 11, 24)     # either side of the castle (feet on rows 27, 25)
+b.stamp('odori-lamp', 3, 28); b.stamp('odori-lamp', 10, 28)     # the court's south corners
+b.stamp('odori-bench', 4, 29); b.stamp('odori-bench', 8, 29)    # either side of the way in from Minami-Odori
+bank(row=30, cells=(3, 4, 5, 8, 9, 10), heaps=[(2, 30), (13, 30)])
+bank(col=13, cells=(28, 29))
+
+# middle block, the FOUNTAIN AND THE STALLS: the frozen fountain in the middle of
+# a plaza the path runs round, a festival tent either side of it (grilled corn,
+# hot drinks), their counters on the path
+FOUNTAIN, CORN, DRINKS = (22, 25), (17, 23), (27, 23)
+b.stamp('odori-fountain', *FOUNTAIN)                  # basin on rows 26-27
+b.stamp('snowfest-stall-corn', *CORN)                 # counters on row 25: you stand on the path
+b.stamp('snowfest-stall-drinks', *DRINKS)
+b.stamp('odori-bench', 20, 24); b.stamp('odori-bench', 25, 24)   # under the north bank, facing the fountain
+b.stamp('odori-lamp', 20, 28); b.stamp('odori-lamp', 26, 28)     # the plaza's south corners
+b.stamp('tree-snow', 18, 28); b.stamp('tree-snow', 27, 28)       # trunks on row 30
+bank(row=23, cells=(20, 21, 25, 26))
+bank(row=30, cells=(20, 21, 25, 26), heaps=[(17, 30), (29, 30)])
+bank(col=17, cells=(28, 29)); bank(col=29, cells=(28, 29))
+
+# east block, the TV TOWER LAWN: open snow towards the tower, the snow bear north
+# of the path between two lamps, benches on the lawn, children's heaps of snow
+BEAR = (38, 24)
+b.stamp('snow-sculpture-bear', *BEAR)                 # feet on row 25
+b.stamp('tree-snow', 33, 23); b.stamp('tree-snow', 42, 23)       # trunks on row 25
+b.stamp('tree-snow', 33, 28)                          # trunk on row 30
+b.stamp('odori-lamp', 37, 24); b.stamp('odori-lamp', 41, 24)     # either side of the bear
+b.stamp('odori-lamp', 37, 28); b.stamp('odori-lamp', 40, 28)     # either side of the way in from Minami-Odori
+b.stamp('odori-bench', 35, 28); b.stamp('odori-bench', 41, 28)
+bank(row=23, cells=(37, 38, 39, 40, 41))
+bank(row=30, cells=(35, 36, 37, 40, 41, 42), heaps=[(43, 30), (42, 29), (43, 29)])
 
 # ---- the TV Tower, closing the east end of the park. Its upper shaft and mast
 #      rise over Kita-Odori: the shaft blocks the roadway there (columns 49-50),
@@ -205,7 +251,7 @@ b.stamp('sapporo-tv-tower', *TOWER)
 b.stamp('lamp-blue', 47, 30); b.stamp('lamp-blue', 52, 30)
 b.stamp('shrub-small-snow', 53, 24); b.stamp('shrub-small-snow', 53, 27)
 
-# ---- south: houses fronting the lane, and the frozen-pond park corner ---------
+# ---- south: houses fronting the lane, and a park corner (stages 3-4) -----------
 for x in (18, 22, 26):
     b.stamp(('house-red', 'house-blue', 'house-black')[(x // 4) % 3], x, 35)
 b.stamp('house-black', 34, 35); b.stamp('house-red', 38, 35)
@@ -214,11 +260,11 @@ b.stamp('house-blue', 48, 35)
 b.stamp('tree-snow', 52, 36)
 b.stamp('vending-red', 47, 38)
 
-b.pond(4, 37, 11, fam='ice-pond-autotile')
+# the park corner in the south-west: snow, trees and a lantern (the frozen pond
+# went with stage 2 - Asahikawa keeps the frozen water - and so did the sakura)
 b.stamp('tree-snow', 2, 34); b.stamp('tree-snow', 12, 34)
 b.stamp('lantern-red', 7, 35)
 b.stamp('shrub-small-snow', 3, 39); b.stamp('shrub-small-snow', 12, 39)
-b.stamp('sakura-small', 8, 39)
 b.stamp('shrub-small-snow', 5, 36); b.stamp('shrub-small-snow', 10, 36)
 
 # ---- borders: snowy hedges west / east, a fence along the south (continuous -
@@ -236,6 +282,23 @@ for i, x in enumerate(range(1, W - 1)):
 # konbini and the discount store lead to their own interiors and back).
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) - keep them.
 prev = cfg['rooms'].get('Sapporo', {})
+# The devhouse 3 base cast of the park stands at its named spots (issue #219,
+# stage 2): Sam beside the corn tent ("the snow festival stalls"), Julia at the
+# foot of the snow castle's steps ("the snow castle"). Each is moved only from
+# the cell they had before the park was rebuilt, so a later edit stays. Julia's
+# line pointed at the Clock Tower she stood by: at the castle it names the castle
+# (only that exact line, and only while she stands at the castle).
+PARK_CAST = {'Sam': ((21, 27), (CORN[0] + 3, CORN[1] + 3)), 'Julia': ((39, 19), (CASTLE[0] + 2, CASTLE[1] + 4))}
+PARK_LINES = {'Julia': ("That's the Sapporo Clock Tower behind me.", "That's the snow castle behind me. Three storeys of it.")}
+for npc in prev.get('npcs', []):
+    was, now = PARK_CAST.get(npc.get('name'), (None, None))
+    if npc.get('trip') != 'devhouse3' or npc.get('stay') != 'Sapporo':
+        continue
+    if (npc['gridX'], npc['gridY']) == was:
+        npc['gridX'], npc['gridY'] = now
+    said, says = PARK_LINES.get(npc['name'], (None, None))
+    if (npc['gridX'], npc['gridY']) == now and said in npc.get('dialogue', []):
+        npc['dialogue'] = [says if line == said else line for line in npc['dialogue']]
 # the konbini door keeps the transporter generate_konbinis.py wired onto it;
 # with none to keep (a first build) it is sealed until that runs
 konbini_entry = rg.kept_door(prev, konbini_door, 'Konbini')

@@ -80,7 +80,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   - The new members' logins are still placeholders (`AUTHOR_NPCS`): the rehearsal proves such a post is
     skipped with the warning, then maps made-up `rehearsal-<name>` logins in memory only. A real login is
     used as soon as it is filled in. The run ends with a TO DO line while any placeholder remains.
-  - `Sapporo · Odori Park` is a spot (the park's lanterns, `rooms: ('Sapporo',)`): the six landmarks issue
+  - `Sapporo · Odori Park` is a spot (hung on the park's hot-drinks tent, standing its visitor on the plaza beside the fountain; `rooms: ('Sapporo',)`): the six landmarks issue
     #119 names all have one.
   - The photo print is rendered for real only where `tools/requirements-photos.txt` is installed
     (opencv-contrib: `cv2.saliency`); elsewhere a stand-in writes the 160×144 print and the summary line

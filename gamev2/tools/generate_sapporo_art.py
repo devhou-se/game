@@ -56,6 +56,9 @@ Odori Park
   snowfest-stall-corn_0_0      3x3  festival tents: grilled corn, hot drinks
   snowfest-stall-drinks_0_0    3x3
   odori-fountain_0_0           3x3  the fountain frozen over, lights in the ice
+  odori-lamp-post_0_0          1x2  the park's lamp: a white globe on a green
+                                    iron post (`lamp-post`: a halo at night)
+  odori-bench_0_0              2x1  a dark green park bench under snow
 Streetcar
   tram-rail-h / -v / -cross    1x1  track: an opaque ground tile in place of the
                                     road tile - setts, grey rails, dark grooves
@@ -1718,6 +1721,47 @@ def odori_fountain():
     return im
 
 
+def odori_lamp():
+    """Odori Park's lamp: a white globe on a dark green iron post (`lamp-post`:
+    DayNight gives its head a halo at night)."""
+    im, d = canvas(1, 2)                 # 32 x 64
+    d.rectangle([15, 22, 16, 59], fill=TRAM_LO); d.line([(15, 22), (15, 59)], fill=TRAM)      # the post
+    for y in (30, 44):                                                                       # its two collars
+        d.rectangle([14, y, 17, y + 1], fill=TRAM); d.line([(14, y + 1), (17, y + 1)], fill=TRAM_LO)
+    d.rectangle([13, 56, 18, 58], fill=TRAM_LO); d.rectangle([11, 59, 20, 61], fill=TRAM_LO)  # the foot
+    d.line([(11, 59), (20, 59)], fill=TRAM)
+    d.rectangle([12, 20, 19, 22], fill=TRAM_LO); d.line([(12, 20), (19, 20)], fill=TRAM_HI)   # the cup under the globe
+    d.ellipse([8, 5, 23, 20], fill=WHITE)                                                    # the globe
+    d.ellipse([10, 8, 21, 19], fill=rgb('fbf3d2'))
+    d.ellipse([12, 11, 19, 18], fill=WARM)
+    d.arc([8, 5, 23, 20], 20, 150, fill=CREAM_LO)
+    d.point((12, 9), fill=WHITE); d.point((13, 8), fill=WHITE)
+    d.rectangle([14, 2, 17, 4], fill=TRAM_LO)                                                # the cap
+    snow_cap(d, 10, 21, 3, 2, seed=5)
+    drift(d, 8, 23, 62, 2, seed=3)
+    outline(im)
+    return im
+
+
+def odori_bench():
+    """A park bench in Odori's dark green, snow lying on its seat and back."""
+    im, d = canvas(2, 1)                 # 64 x 32
+    for x in (8, 53):                                             # iron end frames
+        d.rectangle([x, 9, x + 2, 28], fill=DARK)
+        d.rectangle([x - 2, 27, x + 4, 29], fill=DARK)
+        d.line([(x, 9), (x, 26)], fill=STONE_DK)
+    for y in (9, 13):                                             # the back's two slats
+        d.rectangle([6, y, 57, y + 2], fill=TRAM); d.line([(6, y), (57, y)], fill=TRAM_HI)
+        d.line([(6, y + 2), (57, y + 2)], fill=TRAM_LO)
+    d.rectangle([5, 19, 58, 22], fill=TRAM); d.line([(5, 22), (58, 22)], fill=TRAM_LO)       # the seat
+    d.rectangle([5, 23, 58, 23], fill=DARK)
+    snow_cap(d, 6, 57, 6, 2, seed=2)                              # snow along the top of the back
+    snow_cap(d, 5, 58, 16, 3, seed=6)                             # and lying on the seat
+    drift(d, 3, 14, 30, 2, seed=1); drift(d, 48, 61, 30, 2, seed=4)
+    outline(im)
+    return im
+
+
 def lantern_post():
     """A post of paper lanterns for the ramen alley (`-lanterns`: it glows)."""
     im, d = canvas(1, 2)                 # 32 x 64
@@ -2028,6 +2072,13 @@ PIECES = [
         solid=rows(3, 1, 2)),
      "Odori's fountain in winter (replaces odori-arch): the round basin frozen over, snow on the rim and on "
      'its two bowls, icicles, pink / cyan / warm festival lights set in the ice.'),
+    ('odori-lamp-post_0_0', odori_lamp, (1, 2), 'Odori Park', dict(
+        solid=[[0, 1]], glow=True),
+     "Odori Park's lamp: a white globe on a dark green iron post, snow on its cap. Its key holds `lamp-post`, "
+     'so its head has a halo at night. Only the foot collides.'),
+    ('odori-bench_0_0', odori_bench, (2, 1), 'Odori Park', dict(
+        solid=rows(2, 0, 0)),
+     "A park bench in Odori's dark green, snow lying on the seat and along the back. Faces south."),
     ('tram-rail-h_0_0', lambda: tram_rail('h'), (1, 1), 'Susukino', dict(layer='ground'),
      'Streetcar track running east-west: an OPAQUE ground tile that replaces the road tile (not an overlay '
      'any more) - sett bed, two grey steel rails each with a dark groove, asphalt strip top and bottom. Not '

@@ -223,7 +223,8 @@ pipeline has placed someone there.
 - **Sapporo** (`tools/generate_sapporo.py`, 56x43) is the one town on a street GRID: two east-west streets
   (rows 20-22, 31-33) and three north-south (columns 14-16, 30-32 the station avenue, 44-46), `road-plain`
   asphalt where they cross (roads are ordinary walkable Floor tiles). It is being rebuilt district by
-  district (issue #219); **stage 1, the north, is done** and is two districts, each on ground of its own.
+  district (issue #219); **stages 1 and 2, the north and Odori Park, are done**: three districts, each on
+  ground of its own.
   **Sapporo Station front** (red basket-weave brick, `arcade-brick-autotile`): the station front with the
   star clock (`sapporo-station-front`, 10x7 at (24,4), across the rail line; its pair of doors (28,10) and
   (29,10) both lead into `SapporoStation`, and you come out on (28,11)), the plaza below it, and west of
@@ -232,10 +233,24 @@ pipeline has placed someone there.
   block** (dark setts, `flat-grey-brick-autotile`, east of the avenue): the **Clock Tower** where it always
   stood, the konbini (`KonbiniSapporo1`) and the red-brick office block (`sapporo-office-brick`). The two
   office blocks open into lobbies (`LobbySapporo1`, `LobbySapporo2`, see Tower lobbies); no generic
-  townhouse and no Osaka high-rise stands north of Kita-Odori. Still to come (stages 2-4: Odori Park,
-  Tanukikoji, Susukino), and until then as it was: between the streets **Odori Park**, a strip of snow trees
-  and lanterns with a path down the middle, closed at the east end by the **TV Tower**; south, houses on a
-  lane and a frozen-pond corner. The west row is closed by a shrub in each gap and a hedge behind it; the
+  townhouse and no Osaka high-rise stands north of Kita-Odori. **Odori Park** (rows 23-30 between the two
+  streets, a path of packed snow - `snow-path-autotile` - on snow, rows 26-27 from block to block) is the
+  snow festival, and the three blocks the streets cut it into are not alike: west the **sculpture court**
+  (the snow castle `snow-sculpture-castle` at (4,23) with a court in front of its steps, the snow tanuki at
+  (12,23)), in the middle **the fountain and the stalls** (the frozen `odori-fountain` at (22,25) on a plaza
+  the path runs round, the corn tent at (17,23) and the hot-drinks tent at (27,23), their counters on the
+  path), east the **TV Tower lawn** (the snow bear at (38,24), open snow, children's heaps), closed at the
+  east end by the **TV Tower** on its own plaza, exactly where it was. Ploughed snowbanks (`snowbank-h` /
+  `-v` / `-pile`, one solid cell each) close a block's edges: you come in along the path or by a gap in the
+  bank from either street. `odori-lamp-post` (1x2, lit at night by the lamp rule) and `odori-bench` (2x1)
+  furnish all three. The sculptures collide along their silhouettes (the castle up its keep, the tanuki and
+  the bear all over), a tent all over like a yatai, the fountain's basin and stem - nobody stands inside
+  one, and each has free ground along its south side. A bump on the hot-drinks tent opens a shop list (HOT
+  DRINKS: Canned Coffee and Green Tea, `Shop.VENUES.stall`); the corn tent, the three sculptures and the
+  fountain each say one line (`Interactions.RULES`, group `flavour`). The frozen pond in the south-west
+  corner went with stage 2 (Asahikawa keeps the frozen water), and the sakura with it. Still to come (stages
+  3-4: Tanukikoji, Susukino), and until then as it was: south of Minami-Odori, houses on a lane and a snowy
+  park corner. The west row is closed by a shrub in each gap and a hedge behind it; the
   station front, the government hall and the office blocks collide up to their roof lines (nothing of the
   station is walk-behind; of an office block only its top row), and both towers collide along their
   silhouettes (see their prefab comments): the Clock
@@ -260,7 +275,9 @@ pipeline has placed someone there.
   and the pieces the later stages will place (Tanukikoji's arcade, Susukino's neon, Odori's snow sculptures
   and stalls, the streetcar, `arcade-brick-autotile` and `snow-path-autotile`) - and registers every sprite
   in `spriteMetadata` / `tileNames`. A piece gets a prefab in `make_prefabs.py` when a stage places it
-  (stage 1: `sapporo-station-front`, `sapporo-akarenga`, `sapporo-office-brick`, `sapporo-office-glass`).
+  (stage 1: `sapporo-station-front`, `sapporo-akarenga`, `sapporo-office-brick`, `sapporo-office-glass`;
+  stage 2: the three `snow-sculpture-*`, the two `snowfest-stall-*`, `odori-fountain`, `odori-lamp`,
+  `odori-bench`, the three `snowbank-*`).
   `--sheet`, `--scenes` and `--manifest` write a contact sheet, mock scenes and the door / footprint table.
 - **Flat sprites over water**: `Over Floor` and `Water` share one fixed depth, so a multi-cell sprite on
   `Over Floor` is drawn UNDER water tiles. The bridge therefore sits on `Non-Collidables` with
@@ -280,9 +297,12 @@ pipeline has placed someone there.
   and the House / Lobby rooms
   (it takes any number of rooms and fails, writing nothing, on a name that is not a room - #102) and
   `node tools/play.js lint <Room>` (lint reads the Tiled map).
-- Blog NPCs can be sent to `the Sapporo Clock Tower`, `the Sapporo TV Tower`, `the bridge over the frozen
-  river`, `ramen alley` and `the frozen pond` (`LANDMARKS` in `tools/blog_to_npc.py`), besides the generic
-  shrine / torii / 7-Eleven / vending spots.
+- Blog NPCs can be sent to `the Sapporo Clock Tower`, `the Sapporo TV Tower`, Odori Park's `Odori Park`
+  (the plaza beside the fountain), `the snow castle`, `the snow tanuki`, `the snow bear`, `the snow festival
+  stalls` and `the Odori fountain` (all scoped to Sapporo), `the bridge over the frozen river` and `ramen
+  alley` (`LANDMARKS` in `tools/blog_to_npc.py`), besides the generic shrine / torii / 7-Eleven / vending
+  spots. `the frozen pond` is still a row (an `ice-pond-autotile` pond): Sapporo's went with stage 2, so only
+  Yukimura has one today.
 - Asahikawa's three cottages were the first houses you could walk into (`HouseAsahikawa1..3`, see House
   interiors below); the three machiya of ramen alley are shops and stay sealed.
 - A room missing from `assets/map/world-map.json` is fine: `TrainTravel.dirTo` treats it as x=0. Re-run

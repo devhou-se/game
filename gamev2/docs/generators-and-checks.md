@@ -43,7 +43,7 @@ crossings, traffic lights, track) counts neither for nor against a city.
   a higher overlap or a lower own share than recorded. A city that is not in the baseline (a new town) is
   printed against the targets and does not fail.
 - **The baseline** (26 Nov 2026, buildings / sprites / own): Tokyo 0.22 / 0.32 / 52%, Hokuriku 0.27 / 0.54 / 40%,
-  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.29 / 0.45 / 26%, Sapporo 0.50 / 0.49 / 12%, Osaka 0.50 / 0.45 / 11%,
+  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.29 / 0.45 / 26%, Sapporo 0.30 / 0.29 / 63% (after stages 1-2 of its rebuild; it was 0.50 / 0.49 / 12%), Osaka 0.50 / 0.45 / 11%,
   Asahikawa 0.67 / 0.75 / 10%. `--update` records today's numbers: do it when a rebuild made a city better or
   a new town landed, and say so in the commit. Never to hide a city getting worse.
 - Machi, Inaka and Yukimura (being deleted) are compared against, as the audit did, and not judged: several

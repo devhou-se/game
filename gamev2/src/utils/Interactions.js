@@ -9,6 +9,8 @@ const Interactions = {
         // kiosk, and the gate or the board beside it opens the flights (GameScene, StationPicker)
         { kind: 'pub', group: 'shop', pattern: /^airport-bar/, footprint: true },
         { kind: 'flights', group: 'flights', pattern: /^airport-(gate|board)/, footprint: true },
+        // Odori Park's hot-drinks tent (issue #219): a stall that sells over its counter, as a machine does
+        { kind: 'stall', group: 'shop', pattern: /^snowfest-stall-drinks/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^office-(shelf-drinks|shelf-glass|fridge|freezer)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^office-shelf-snacks/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },
@@ -31,6 +33,12 @@ const Interactions = {
         // the home city (issue #218)
         { kind: 'clocks', group: 'flavour', pattern: /^sfb-clocks-station/, footprint: true, say: 'everybody meets under the clocks. nobody has ever caught a train here' },
         { kind: 'sea-lions', group: 'flavour', pattern: /^sfb-sea-lions/, footprint: true, say: 'the sea lions bark at you. one of them is eating somebody\'s chips' },
+        // Odori Park in the snow festival (issue #219): the corn tent, the sculptures, the frozen fountain
+        { kind: 'corn', group: 'flavour', pattern: /^snowfest-stall-corn/, footprint: true, say: 'grilled corn, butter and soy sauce. the queue starts somewhere behind you' },
+        { kind: 'snow-castle', group: 'flavour', pattern: /^snow-sculpture-castle/, footprint: true, say: 'a castle keep carved out of packed snow. the board says please do not climb it' },
+        { kind: 'snow-tanuki', group: 'flavour', pattern: /^snow-sculpture-tanuki/, footprint: true, say: 'a snow tanuki in a straw hat. his sake flask has frozen solid' },
+        { kind: 'snow-bear', group: 'flavour', pattern: /^snow-sculpture-bear/, footprint: true, say: 'a snow bear with a salmon. he will not finish it before april' },
+        { kind: 'fountain', group: 'flavour', pattern: /^odori-fountain/, footprint: true, say: 'the fountain is off for the winter. the lights under the ice are not' },
         // ...and the people folded double at the waist on its pavements: one line each
         { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-a/, footprint: true, say: 'he has been like this since tuesday' },
         { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-b/, footprint: true, say: 'still standing. technically' },

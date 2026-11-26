@@ -90,8 +90,8 @@ POSTS = [
     P(9003, 'Dylan', '2027-02-20T02:00:00Z', 'Sapporo · Odori Park', 'Rehearsal: Odori Park',
       ['Rehearsal: Odori Park under a metre of snow.', 'The lanterns are on at four.']),
     # two posts by one author on one day: the second one's spot and photo win
-    P(9004, 'Julia', '2027-02-20T03:00:00Z', 'Sapporo · the frozen pond', 'Rehearsal: the frozen pond',
-      ['Rehearsal: the pond is frozen solid.', 'I did not test that personally.'], photo=True),
+    P(9004, 'Julia', '2027-02-20T03:00:00Z', 'Sapporo · the snow castle', 'Rehearsal: the snow castle',
+      ['Rehearsal: the snow castle is three storeys tall.', 'I did not climb it.'], photo=True),
     P(9005, 'Julia', '2027-02-20T09:30:00Z', 'Sapporo · the 7-Eleven', 'Rehearsal: konbini dinner',
       ['Rehearsal: dinner from the 7-Eleven again.', 'No regrets.'], photo=True),
     # a post that names a district and no landmark (issue #219): not steered, the pipeline finds the

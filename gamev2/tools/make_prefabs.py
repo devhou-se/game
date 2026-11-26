@@ -167,6 +167,37 @@ PREFABS = {
     # walk-behind - a wall of windows is not something to stand behind.
     'sapporo-office-brick':  building(4, 7, door=2, roof=1),
     'sapporo-office-glass':  building(5, 6, door=2, roof=1),
+    # ---- Odori Park (issue #219, stage 2). The snow sculptures collide along their
+    # silhouettes, so nobody stands inside one: the castle from its roof down
+    # (the air beside the keep, above the two wing turrets, is open), the tanuki
+    # and the bear all over.
+    'snow-sculpture-castle': dict(w=5, h=4, sprites=[('Collidables', 0, 0, 'snow-sculpture-castle_0_0')],
+                                  colliders=[(x, y) for x in range(5) for y in (2, 3)]
+                                            + [(x, y) for x in (1, 2, 3) for y in (0, 1)], doors=[]),
+    'snow-sculpture-tanuki': dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'snow-sculpture-tanuki_0_0')],
+                                  colliders=[(x, y) for x in range(2) for y in range(3)], doors=[]),
+    'snow-sculpture-bear':   dict(w=3, h=2, sprites=[('Collidables', 0, 0, 'snow-sculpture-bear_0_0')],
+                                  colliders=[(x, y) for x in range(3) for y in range(2)], doors=[]),
+    # The festival tents: solid all over, as a yatai is (nobody stands inside
+    # the canvas). The counter faces south: you bump it from the row below.
+    'snowfest-stall-corn':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'snowfest-stall-corn_0_0')],
+                                  colliders=[(x, y) for x in range(3) for y in range(3)], doors=[]),
+    'snowfest-stall-drinks': dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'snowfest-stall-drinks_0_0')],
+                                  colliders=[(x, y) for x in range(3) for y in range(3)], doors=[]),
+    # The frozen fountain: the basin (rows 1-2) and the stem with its bowls (the
+    # middle column above it).
+    'odori-fountain':        dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'odori-fountain_0_0')],
+                                  colliders=[(x, y) for x in range(3) for y in (1, 2)] + [(1, 0)], doors=[]),
+    # The park's lamp (its key holds `lamp-post`: lit at night): the foot collides,
+    # the globe is overhead. The bench is solid.
+    'odori-lamp':            dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'odori-lamp-post_0_0')],
+                                  colliders=[(0, 1)], doors=[]),
+    'odori-bench':           dict(w=2, h=1, sprites=[('Collidables', 0, 0, 'odori-bench_0_0')],
+                                  colliders=[(0, 0), (1, 0)], doors=[]),
+    # What the plough leaves along a kerb: one solid cell each.
+    'snowbank-h':            dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'snowbank-h_0_0')], colliders=[(0, 0)], doors=[]),
+    'snowbank-v':            dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'snowbank-v_0_0')], colliders=[(0, 0)], doors=[]),
+    'snowbank-pile':         dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'snowbank-pile_0_0')], colliders=[(0, 0)], doors=[]),
     # The bridge over Asahikawa's frozen river: a flat deck you walk ON. It sits
     # on Non-Collidables with a negative depthBias (spriteMetadata, written by
     # generate_hokkaido.py) so it draws over the ice but under everyone on it.

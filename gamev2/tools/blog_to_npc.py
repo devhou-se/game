@@ -215,10 +215,16 @@ LANDMARKS = [
     # Hokkaido (issue #43)
     ('sapporo-clock-tower_', 'the Sapporo Clock Tower', (2, 8)),   # the pavement at its porch
     ('sapporo-tv-tower_', 'the Sapporo TV Tower', (3, 13)),        # in front of the entrance
-    # the park has no sprite of its own: its lanterns do it (the first one's
-    # base, west end of the middle block), and the visitor stands on the
-    # path down the middle (issue #119)
-    ('red-lanterns_4_1', 'Odori Park', (0, 1), {'rooms': ('Sapporo',)}),
+    # Odori Park (issue #219, stage 2). The park itself is the hot-drinks tent's
+    # (there is one): its visitor stands on the plaza beside the fountain, on
+    # the path down the middle (issue #119). Then what is in it, each with the
+    # cell someone looking at it stands on - in front, never on its footprint
+    ('snowfest-stall-drinks_', 'Odori Park', (-1, 4), {'rooms': ('Sapporo',)}),
+    ('snow-sculpture-castle_', 'the snow castle', (2, 4), {'rooms': ('Sapporo',)}),        # the court, at the foot of its steps
+    ('snow-sculpture-tanuki_', 'the snow tanuki', (0, 3), {'rooms': ('Sapporo',)}),        # the path in front of it
+    ('snow-sculpture-bear_', 'the snow bear', (1, 2), {'rooms': ('Sapporo',)}),            # the path in front of it
+    ('snowfest-stall-corn_', 'the snow festival stalls', (3, 3), {'rooms': ('Sapporo',)}),   # the path, beside the corn tent's counter
+    ('odori-fountain_', 'the Odori fountain', (1, 3), {'rooms': ('Sapporo',)}),            # the plaza, south of the basin
     ('asahikawa-bridge_', 'the bridge over the frozen river', (1, -1)),   # the north bridgehead
     ('ramen-banner_', 'ramen alley', (-1, 2)),                     # on the lane, outside a shop
     ('ice-pond-autotile_corner-nw', 'the frozen pond', (0, -1)),   # on the bank (the ice is solid)
