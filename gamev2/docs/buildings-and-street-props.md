@@ -11,7 +11,9 @@ a prefab (`building()` in `tools/make_prefabs.py`): solid from the ground up, wi
 roof line) walk-behind, as behind a house roof - so the player is never lost behind a tower. Doors are
 sealed and lead nowhere, except the discount store's, which opens into its Don Takote shop floor (issue #91,
 see Shop, Food and Drink). Of the ported houses, one opens: the red house at Market `(6,33)` is the Izakaya
-(issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`).
+(issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`). Houses (the
+`house-*` townhouses, and a machiya with no shop sign) get a generic home interior from
+`tools/generate_houses.py` - Asahikawa's three cottages so far (issue #208, see House interiors).
 
 | Prefab | Cells | Placed in |
 |---|---|---|

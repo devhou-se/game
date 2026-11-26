@@ -1053,6 +1053,12 @@ class GameScene extends Phaser.Scene {
                 this.datePicker.show();
             }
         }
+        // bumping a home's kotatsu, hearth, stove, television or bookshelf says one line
+        if (this.shop && !this.dialogueManager.isVisible() && !this.shop.isVisible() &&
+            !(this.datePicker && this.datePicker.isVisible())) {
+            const flavour = this.roomManager.interactionAt(targetGridX, targetGridY, 'flavour');
+            if (flavour && flavour.say && this.shop.toastText() !== flavour.say) this.shop.toast(flavour.say);
+        }
     }
 
     /**

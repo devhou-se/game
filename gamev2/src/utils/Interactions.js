@@ -11,6 +11,13 @@ const Interactions = {
         { kind: 'water', group: 'water', pattern: /^office-watercooler/, footprint: true, room: 'konbini' },
         { kind: 'pond', group: 'pond', pattern: /^pond-autotile/ },
         { kind: 'clock', group: 'clock', pattern: /^(office-clock|office-poster-menu)/ },
+        // a home's furniture (issue #208, tools/generate_houses.py): a bump says one line
+        // (`say`, shown as a toast by GameScene) and nothing else happens
+        { kind: 'kotatsu', group: 'flavour', pattern: /^home-kotatsu/, footprint: true, say: 'the kotatsu is warm. you could stay under it all winter' },
+        { kind: 'hearth', group: 'flavour', pattern: /^home-irori/, footprint: true, say: 'the kettle over the hearth is just starting to sing' },
+        { kind: 'stove', group: 'flavour', pattern: /^home-stove/, footprint: true, say: 'the stove ticks. the kettle on it is nearly boiling' },
+        { kind: 'television', group: 'flavour', pattern: /^home-tv/, footprint: true, say: 'the weather: snow in the north, and more tomorrow' },
+        { kind: 'bookshelf', group: 'flavour', pattern: /^home-bookshelf/, footprint: true, say: 'paperbacks, a road atlas, and manga read to pieces' },
     ],
 
     match(key, roomConfig, venues) {
@@ -21,7 +28,9 @@ const Interactions = {
             if (rule.room === 'konbini' && !konbini) continue;
             if (rule.room === 'venue' && !venue) continue;
             if (!rule.pattern.test(key)) continue;
-            return { kind: rule.room === 'venue' ? venue : rule.kind, group: rule.group, footprint: !!rule.footprint };
+            const hit = { kind: rule.room === 'venue' ? venue : rule.kind, group: rule.group, footprint: !!rule.footprint };
+            if (rule.say) hit.say = rule.say;
+            return hit;
         }
         return null;
     },
@@ -46,7 +55,9 @@ const Interactions = {
                 if (!hit || (group && hit.group !== group)) continue;
                 const [x, y] = xy.split(',').map(Number);
                 const [w, h] = hit.footprint && sizeOf ? sizeOf(key) : [1, 1];
-                found.push({ kind: hit.kind, group: hit.group, key, x, y, w, h });
+                const one = { kind: hit.kind, group: hit.group, key, x, y, w, h };
+                if (hit.say) one.say = hit.say;
+                found.push(one);
             }
         }
         return found;

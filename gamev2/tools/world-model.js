@@ -204,7 +204,7 @@ class WorldModel {
         if (table) return table;
         const npc = this.room.npcs.find(n => n.gridX === x && n.gridY === y);
         if (npc) return { kind: 'npc', group: 'npc', npc };
-        return ['shop', 'water', 'pond', 'clock'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
+        return ['shop', 'water', 'pond', 'clock', 'flavour'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
     }
 
     describe(i) {
@@ -230,6 +230,7 @@ class WorldModel {
         if (i.kind === 'water') return 'a free cup of water: a little energy, up to a cap (Energy.WATER_CAP)';
         if (i.kind === 'pond') return 'casts a fishing line (needs the fishing rod); a catch goes into the bag to sell';
         if (i.kind === 'clock') return 'opens the time-travel date picker';
+        if (i.group === 'flavour') return `says: "${i.say}"`;
         if (i.kind === 'drinking-game') return 'starts the izakaya drinking game (free, or pick a stake)';
     }
 
@@ -501,8 +502,13 @@ class WorldModel {
         const roomConfig = this.config.rooms[roomKey] || {};
         const fixtures = !roomConfig.interior ? [] :
             Interactions.all(room, roomConfig, { sizeOf: (key) => this.cells(key), venues: Shop.VENUES, group: 'shop' });
+        // A home's furniture that says a line when bumped (issue #208) is held to the till's
+        // rule - some side of it can be walked to - and a home (config `house`) to the store's:
+        // no floor its furniture has sealed off.
+        const flavour = !roomConfig.interior ? [] :
+            Interactions.all(room, roomConfig, { sizeOf: (key) => this.cells(key), venues: Shop.VENUES, group: 'flavour' });
         const fromDoor = new Set();
-        if (fixtures.length) {
+        if (fixtures.length || flavour.length || roomConfig.house) {
             const queue = room.transporters.map(t => [t.gridX, t.gridY]).filter(c => walkable(...c));
             for (const c of queue) fromDoor.add(K(...c));
             while (queue.length) {
@@ -533,11 +539,17 @@ class WorldModel {
         // under the corner beside the cooler run left the corner cell a walkable pocket
         // nobody could step into, which reads as a gap in the fittings. (A cell some art
         // stands over - the head of a lantern whose foot is solid - is not bare floor.)
-        if (fixtures.length) {
+        for (const f of flavour) {
+            const sides = [];
+            for (let a = 0; a < f.w; a++) sides.push([f.x + a, f.y + f.h], [f.x + a, f.y - 1]);
+            for (let b = 0; b < f.h; b++) sides.push([f.x - 1, f.y + b], [f.x + f.w, f.y + b]);
+            if (!sides.some(([sx, sy]) => fromDoor.has(K(sx, sy)))) push(errors, 'flavour-no-front', `${nm(f.key)} @${K(f.x, f.y)} (no reachable side)`);
+        }
+        if (fixtures.length || roomConfig.house) {
             const dressed = new Set();
             for (const o of objects) for (const [cx, cy] of o.cells) dressed.add(K(cx, cy));
             for (const c of [...walkCells].sort()) {
-                if (!fromDoor.has(c) && !dressed.has(c)) push(errors, 'shop-sealed-floor', c);
+                if (!fromDoor.has(c) && !dressed.has(c)) push(errors, fixtures.length ? 'shop-sealed-floor' : 'house-sealed-floor', c);
             }
         }
 

@@ -31,16 +31,81 @@ _idx = None
 _PF = {}
 
 
+# The houses tools/generate_houses.py can open (issue #208): the sprite on
+# Collidables that carries a house's front door -> the door cell, relative to
+# that sprite's own top-left cell. The three townhouse prefabs (house-blue /
+# -red / -black) end in a 3x1 `building-entrance`; a machiya is one 5x5 sprite.
+HOUSE_DOORS = {
+    'building-entrance-1_0_0': (1, 0), 'building-entrance-2_0_0': (1, 0), 'building-entrance-3_0_0': (1, 0),
+    'machiya-black_0_0': (2, 4), 'machiya-red_0_0': (2, 4), 'machiya-blue_0_0': (2, 4),
+}
+HOUSE_PREFIX = 'House'      # rooms.House<Town><n>, the interiors generate_houses.py owns
+_house_doors = {}           # room -> its transporters as loaded, when any leads into a house
+
+
+def house_door_at(room, x, y):
+    """Whether (x, y) of `room` is the front door of a house that stands there."""
+    for layer in room.get('layers', []):
+        if layer['name'] != 'Collidables':
+            continue
+        for key, (dx, dy) in HOUSE_DOORS.items():
+            idx = layer['tiles'].get(f'{x - dx},{y - dy}')
+            if idx is not None and _pal[idx] == key:
+                return True
+    return False
+
+
 def load_config(path='config.json'):
     global _cfg, _pal, _idx
     _cfg = json.load(open(path))
     _pal = _cfg['tilePalette']
     _idx = {k: i for i, k in enumerate(_pal)}
+    _house_doors.clear()
+    for key, room in _cfg['rooms'].items():
+        ts = room.get('transporters', [])
+        if any(t['targetRoom'].startswith(HOUSE_PREFIX) and _cfg['rooms'].get(t['targetRoom'], {}).get('house')
+               for t in ts):
+            _house_doors[key] = json.loads(json.dumps(ts))
     return _cfg
 
 
+def keep_house_doors(cfg):
+    """Put back the house doors a rebuild dropped (issue #208).
+
+    A town generator rebuilds its room from scratch and stamps every house
+    sealed; the doors into the house interiors are wired afterwards by
+    generate_houses.py, which is run per town and long after the town's own
+    generator was written. Rather than have every town generator know about
+    them (the way each keeps its 7-Eleven door with kept_door), save_config
+    restores them: a transporter the room had on load that led into a
+    `House...` room which still exists is put back, with its doorway
+    unsealed, when the rebuilt room has no transporter on that cell and the
+    house still stands there (house_door_at - a house the generator moved or
+    removed stays sealed until generate_houses.py is run for the town). The
+    list keeps the order it was loaded in (kept_order), so a town generator
+    re-run on an unchanged world still leaves config.json byte-identical."""
+    for key, before in _house_doors.items():
+        room = cfg['rooms'].get(key)
+        if room is None:
+            continue
+        ts = room.setdefault('transporters', [])
+        taken = {(t['gridX'], t['gridY']) for t in ts}
+        back = [t for t in before
+                if t['targetRoom'].startswith(HOUSE_PREFIX) and cfg['rooms'].get(t['targetRoom'], {}).get('house')
+                and (t['gridX'], t['gridY']) not in taken and house_door_at(room, t['gridX'], t['gridY'])]
+        if not back:
+            continue
+        for layer in room['layers']:
+            if layer['name'] == 'Colliders':
+                for t in back:
+                    layer['tiles'].pop(f"{t['gridX']},{t['gridY']}", None)
+        room['transporters'] = kept_order({'transporters': before}, ts + back)
+
+
 def save_config(cfg=None, path='config.json'):
-    open(path, 'w').write(json.dumps(cfg or _cfg, indent=2, sort_keys=True))
+    cfg = cfg or _cfg
+    keep_house_doors(cfg)
+    open(path, 'w').write(json.dumps(cfg, indent=2, sort_keys=True))
 
 
 def pidx(key):

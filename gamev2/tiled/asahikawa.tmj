@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 63,
+ "nextobjectid": 66,
  "properties": [
   {
    "name": "gv2room",
@@ -10994,7 +10994,7 @@
     0,
     0,
     28,
-    28,
+    0,
     28,
     0,
     28,
@@ -11004,12 +11004,12 @@
     0,
     0,
     28,
-    28,
+    0,
     28,
     28,
     0,
     28,
-    28,
+    0,
     28,
     0,
     0,
@@ -11319,6 +11319,117 @@
     },
     {
      "id": 62,
+     "name": "transporter",
+     "point": true,
+     "x": 2400.0,
+     "y": 1632.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseAsahikawa1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 63,
+     "name": "transporter",
+     "point": true,
+     "x": 352.0,
+     "y": 1696.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseAsahikawa2"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 64,
+     "name": "transporter",
+     "point": true,
+     "x": 672.0,
+     "y": 1696.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseAsahikawa3"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 65,
      "name": "boundary",
      "x": 0,
      "y": 0,

@@ -116,7 +116,7 @@ be found here.
 | `shop-and-economy.md` | Shop, Food and Drink: wallet, konbini counters, vending machines, Don Takote, items, icons, effects, fishing catches, selling, save blob, nomikai stake | shops, items, money, fishing, the drinking game |
 | `trains-and-stations.md` | Stations and the departures board, adding a station | rideable trains, `config.stations`, `generate_stations.py` |
 | `ambient-traffic.md` | Ambient Traffic: passing trains, boats, `waterways` | decorative movers, canals / moats, track tiles |
-| `landmarks-and-towns.md` | Featured locations / landmarks, Osaka, adding a landmark, Hokkaido (Sapporo, Asahikawa, snow, konbini interiors per host, build order) | adding a landmark, a town, a konbini or discount store to a town |
+| `landmarks-and-towns.md` | Featured locations / landmarks, Osaka, adding a landmark, Hokkaido (Sapporo, Asahikawa, snow, konbini interiors per host, build order), House interiors | adding a landmark, a town, a konbini or discount store to a town, opening a town's houses |
 | `buildings-and-street-props.md` | Generic city buildings (high-rises, discount store, machiya), Street accessories (traffic lights, crossings, kerbside props, Osaka's roads, no bins) | placing buildings or street furniture; `TrafficLights.js` |
 | `generators-and-checks.md` | `check_generators.py`, Generated rooms stay regenerable, the world map (`make_worldmap.py`), Asset Generation | editing a generated room, a generator, an art tool, or the world map |
 | `tools-play-test-studio.md` | `tools/play.js`, `tools/test_game.js`, Studio, Visual Editor | using or changing the terminal tools, `world-model.js`, `/studio/`, `/editor/` |

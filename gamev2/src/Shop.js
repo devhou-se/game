@@ -798,6 +798,11 @@ class Shop {
 
     // ---------------- toast ----------------
 
+    /** What the toast on screen says, or null when there is none. */
+    toastText() {
+        return this._toast && this._toast.active ? this._toast.text : null;
+    }
+
     toast(msg) {
         if (this._toast) this._toast.destroy();
         const cam = this.scene.cameras.main;

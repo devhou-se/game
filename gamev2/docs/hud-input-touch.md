@@ -12,7 +12,7 @@ Semi-transparent bar at top showing: `{game.title} | {room name} | {game.date}` 
   human name from their generator: `7-Eleven · Sapporo` (`generate_konbinis.py` `store_name()`, numbered
   only where a host has several stores: `7-Eleven · Market 3`), `Don Takote · Osaka`
   (`generate_discount_stores.py` `store_name()`), `Sapporo Station` (`generate_stations.py`
-  `station_name()`). Nothing reads `room.name` as an identifier - room keys are the identifiers.
+  `station_name()`), `House · Asahikawa 2` (`generate_houses.py`). Nothing reads `room.name` as an identifier - room keys are the identifiers.
 - Every separator on the bar is ` | ` (issue #207): a name's own ` · ` is written as one (`hudName()` in
   `NpcStates.js`, called by `hudRoomName()`), so `7-Eleven · Park 1` reads `7-Eleven | Park 1` on the bar, and
   the lead-in countdown is `devhouse 3 in 8d | February 10 2027` (`Trips.dateLabel`). The stored name keeps

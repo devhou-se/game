@@ -1,6 +1,6 @@
 # Landmarks and the train-only towns (Osaka, Sendai, Sapporo, Asahikawa)
 
-Named landmark sprites, adding one, and the generated towns of Osaka and Hokkaido (snow, konbini per host, build order).
+Named landmark sprites, adding one, the generated towns of Osaka and Hokkaido (snow, konbini per host, build order), and house interiors.
 
 A "see X" in the text names a section; if it is not in this file, the index in [`../CLAUDE.md`](../CLAUDE.md) says which file has it.
 
@@ -143,6 +143,8 @@ pipeline has placed someone there.
 - Blog NPCs can be sent to `the Sapporo Clock Tower`, `the Sapporo TV Tower`, `the bridge over the frozen
   river`, `ramen alley` and `the frozen pond` (`LANDMARKS` in `tools/blog_to_npc.py`), besides the generic
   shrine / torii / 7-Eleven / vending spots.
+- Asahikawa's three cottages are the first houses you can walk into (`HouseAsahikawa1..3`, see House
+  interiors below); the three machiya of ramen alley are shops and stay sealed.
 - A room missing from `assets/map/world-map.json` is fine: the Map overlay still opens (no dot, "you are
   here: <room>") and `TrainTravel.dirTo` treats it as x=0. Re-run `tools/make_worldmap.py` to add new rooms.
 
@@ -185,3 +187,68 @@ after the existing stations in `tools/generate_stations.py`); it sits detached, 
   `Dazaifu Tenmangu` and `Hakata Station` (`LANDMARKS`, all `rooms: ('Fukuoka',)`, as Sendai's are - each
   label names one place; `Hakata Station` is the forecourt, anchored on the station house's doorway sprite,
   which every station house has), besides the generic shrine / torii / pond / pagoda / 7-Eleven / vending spots.
+
+### House interiors: a generic home for every house (issue #208)
+
+`tools/generate_houses.py <Town> [<Town> ...]` is the konbini recipe for homes: it finds a town's houses in
+the town's map data, builds one `House<Town><n>` room per house (display name `House · Asahikawa 2`, formed
+like a konbini's; the HUD writes the dot as a pipe), opens the house's door (collider off, a hidden
+transporter on the door cell, replaced in place) and puts the way out on the cell in front of it. With no
+arguments it rebuilds every town that already has houses, and a re-run on an unchanged world is a no-op.
+**Phase 1 is applied to Asahikawa only** (three cottages); the rollout to the other towns is
+`.agent-queue/items/houses_apply.sh <Town> ...`, which runs the art tools, the generator, `config_to_tiled`
+and lint for the rooms touched, then the five checks.
+
+- **What is a house** (`roomgen.HOUSE_DOORS`): the three townhouse prefabs `house-blue` / `-red` / `-black`,
+  found by their ground floor (`building-entrance-1/2/3`, door in the middle), and the machiya
+  (`machiya-black` / `-red` / `-blue`, door in the middle of the front). **Not** a house: one whose door
+  already leads somewhere (the station houses, the Izakaya in Market), and one with a shop sign at its
+  front (`SHOP_SIGNS`: the ramen nobori - Asahikawa's ramen alley is three shops). 7-Elevens, the discount
+  store, high-rises and apartment blocks, shrine halls, pagodas, temple halls, landmark buildings and
+  stations are never houses: each wants an interior of its own.
+- **A house is skipped, and stays sealed, rather than anything being moved**: when the cell in front of its
+  door cannot be stood on or walked to, when an NPC's base or dated position (any content date) is on the
+  door or on that cell, or when a blog landmark's stand cell (`blog_to_npc.find_spots`) is. The run prints
+  each one and why. A skipped house keeps its number, so the others are not renumbered, and it is opened
+  again by the next run once the reason is gone.
+- **The interior** is one lit room in the void, like a konbini's (20x15, `interior: true`,
+  `shopEnabled: false`, `house: {host, door, layout}`): a two-row back wall (plaster, shoji, fusuma, a
+  window, the tokonoma with its scroll), nine by six cells of floor, and the **genkan** below it - three
+  cells of stone a step down, shoes on one side and the shoe cupboard on the other - with the mat you leave
+  by under its middle cell. You arrive in the genkan. Four layouts (`LAYOUTS`, drawn as text in the
+  generator): `kotatsu` (everyone under one quilt facing the television), `futon` (beds by the closet, tea
+  at the low table), `flat` (a bed on bare boards, a tatami corner) and `hearth` (boards round the sunken
+  irori, a tatami room beside it). Each has tatami, a low table or hearth with cushions, a futon or bed, the
+  tokonoma, a shoji or fusuma, a kitchen corner and a television or bookshelf. Furniture that stands
+  against the wall (`AT_WALL`) is a 1x2 sprite whose top half is drawn over the wall's lower half.
+- **Variety, and why a re-run is stable**: everything comes from the house's position. The layout is the
+  house's own favourite (md5 of town and door) unless a house within twelve cells already has it - then
+  the next one the neighbours lack, preferring the layout the town has used least (`pick_layouts`), so
+  neighbours never match and a small town shows as many layouts as it has houses. The same hash mirrors the
+  room or not and picks one of two tatami (green / sun-aged), two plasters (sand / moss), two sets of cloth
+  (kotatsu quilt, futon, cushions) and the shoes in the genkan.
+- **Nobody lives there yet**, and nothing is sold. One flavour interaction: bumping the kotatsu, the
+  hearth, the stove, the television or the bookshelf says one line as a toast (the `flavour` rules in
+  `src/utils/Interactions.js`, each with its `say`; `GameScene.checkNPCInteraction` shows it and does not
+  restart it while it is up). `interior` keeps the blog pipeline out: a post is never placed in someone's
+  house unless a landmark opts in.
+- **A town generator needs no edit.** It rebuilds its room from scratch with every house sealed, so
+  `roomgen.save_config` puts back the house doors the room had on load (`keep_house_doors`: a transporter
+  into a `House...` room that still exists, where the house still stands and the rebuild put no other door),
+  in the order they were in. A house the generator moved or removed stays sealed until `generate_houses.py`
+  is run for the town, which also deletes the rooms no house claims any more.
+- **Art**: no pack in `../Assets` has a home interior (the GuttyKreum packs are exteriors and a train car;
+  there is no `Modern_Interiors`). `tools/extract_house_interior.py` takes what fits - floorboards from the
+  Train Interiors car floor (`home-wood-floor`), a potted plant from the Japanese City pack (`home-plant`) -
+  and `tools/generate_house_art.py` draws the other 34 `home-*` sprites in the `generate_hokkaido.py` style
+  (half size, pixel-doubled, GuttyKreum palette, 1px ink outline; `--preview out.png` on both). The wall
+  pieces share one beam / rail / skirting (`wall_frame`) so they join side by side; shoji, fusuma and the
+  tokonoma show no plaster, so they sit in a wall of either colour.
+- **Lint** (`play.js lint`, and so `play.js check`): a home with floor its furniture has sealed off is
+  `house-sealed-floor`, and a flavour object with no reachable side is `flavour-no-front`; the shop rules
+  (`shop-no-front`, `shop-sealed-floor`) do not apply to a house. The generator asserts the same before it
+  writes a room.
+- **Build order**: `extract_house_interior.py`, `generate_house_art.py`, `generate_houses.py <Town>`,
+  `config_to_tiled.py <House rooms> <Town>`, `play.js lint` for each. Nothing outdoors changes to the eye,
+  so the world map is not rebuilt. To see a layout that no town has yet: `generate_houses.py --variants`
+  prints all four, plain and mirrored, as JSON (what `tools/tests/houses.test.js` checks).

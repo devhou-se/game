@@ -24,7 +24,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/DialogueManager.js` - NPC dialogue system with multi-line conversations
 - `src/systems/Occlusion.js` - Scenery fades while someone stands hidden behind it, and their name label
   with it (see "Walking behind things" in `occlusion.md`)
-- `src/utils/Interactions.js` - The one table of what a bump opens (shops, ponds, clocks, the drinking
+- `src/utils/Interactions.js` - The one table of what a bump opens (shops, ponds, clocks, a home's flavour lines, the drinking
   table). `Shop`, `Fishing`, `DrinkingGame`, `GameScene` and `tools/play.js` all read it; add a rule here
   rather than a tile-name check in a feature file
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
