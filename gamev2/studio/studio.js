@@ -3,7 +3,7 @@ const COLOR = { torii: '#e0421f', moat: '#2f5fd0', moss: '#2f8f5b', sun: '#f2b01
 const GROUP_COLOR = { shop: COLOR.sun, pond: COLOR.moat, clock: '#9b4fd0', 'drinking-game': '#d04f9b' };
 const LAYERS = [
     ['art', 'Art', true], ['collision', 'Collision', false], ['unreachable', 'Unreachable', true],
-    ['teleports', 'Teleports', true], ['interactions', 'Interactions', true], ['people', 'People', true],
+    ['teleports', 'Teleports', true], ['trains', 'Train lines', true], ['interactions', 'Interactions', true], ['people', 'People', true],
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -175,7 +175,12 @@ async function boot() {
     for (const [key, label] of LAYERS) {
         const b = el('button', { textContent: label });
         b.setAttribute('aria-pressed', S.show[key]);
-        b.onclick = () => { S.show[key] = !S.show[key]; b.setAttribute('aria-pressed', S.show[key]); draw(); };
+        b.onclick = () => {
+            S.show[key] = !S.show[key];
+            b.setAttribute('aria-pressed', S.show[key]);
+            if (key === 'teleports' || key === 'trains') { layout(S.model.runtimeRooms()); fit(); }
+            draw();
+        };
         $('layers').append(b);
     }
     for (const [key, label] of TOOLS) {
@@ -434,18 +439,20 @@ function layout(keys) {
         rooms[k] = { x: 0, y: 0, w: r.worldWidth / 64, h: r.worldHeight / 64, members: city ? city.members : null };
     }
     const links = [];
-    for (const k of keys) {
+    if (S.show.teleports) for (const k of keys) {
         for (const t of m.roomManager.rooms[k].transporters) {
-            if (!rooms[t.targetRoom]) continue;
-            links.push({ a: k, ax: t.gridX + 0.5, ay: t.gridY + 0.5, b: t.targetRoom, bx: t.targetX + 0.5, by: t.targetY + 0.5, w: 1 });
+            const at = m.roomManager.resolve(t.targetRoom, t.targetX, t.targetY);
+            if (!rooms[at.room]) continue;
+            links.push({ a: k, ax: t.gridX + 0.5, ay: t.gridY + 0.5, b: at.room, bx: at.x + 0.5, by: at.y + 0.5, w: 1 });
         }
     }
-    const stations = Object.entries(m.config.stations || {}).filter(([k]) => rooms[k]);
+    const stations = S.show.trains ? Object.entries(m.config.stations || {}).filter(([k]) => rooms[k]) : [];
     for (let i = 0; i < stations.length; i++) for (let j = i + 1; j < stations.length; j++) {
         const [a, sa] = stations[i], [b, sb] = stations[j];
         links.push({ a, ax: sa.board[0][0] + 0.5, ay: sa.board[0][1] + 0.5, b, bx: sb.board[0][0] + 0.5, by: sb.board[0][1] + 0.5, w: 0.15 });
     }
-    S.rooms = placeRooms(rooms, links);
+    const placed = placeRooms(rooms, links);
+    for (const k of keys) S.rooms[k] = Object.assign(S.rooms[k] || {}, placed[k]);
     // cities first: a city's woodland fills its whole bounding box, so anything else is drawn over it.
     // Districts shown side by side (?stitch=0) keep the stitched city's stacking order
     const stacked = WorldModel.stackOrder(m.config, keys);
@@ -579,6 +586,7 @@ function placeRooms(rooms, links) {
         } else {
             const near = byRoom[k].length ? pick(byRoom[k]) : null;
             const o = near ? (near.a === k ? near.b : near.a) : pick(keys);
+            if (o === k) continue;
             [r.x, r.y] = pick(spots(k, [o]));
         }
         const ok = !overlaps(k, r.x, r.y, placed) && (!swap || !overlaps(swap, s.x, s.y, placed));
@@ -706,6 +714,9 @@ function draw() {
                 ctx.fillRect(sx(r.x + t.gridX), sy(r.y + t.gridY), z, z);
             }
         }
+    }
+
+    if (S.show.trains) {
         const stations = Object.entries(S.model.config.stations || {}).filter(([k]) => S.rooms[k]);
         ctx.setLineDash([6, 6]);
         ctx.strokeStyle = COLOR.moat;
