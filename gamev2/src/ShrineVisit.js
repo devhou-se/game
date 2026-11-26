@@ -19,7 +19,7 @@
 class ShrineVisit {
     constructor(scene) {
         this.scene = scene;
-        this.last = -Infinity;      // a held key bumps every frame: one visit per COOLDOWN_MS
+        this.bump = null;           // the last bump { cell, at }: a held key bumps every frame
     }
 
     /** The player bumped a cell: make the offering / draw the fortune there. True when it did. */
@@ -27,8 +27,10 @@ class ShrineVisit {
         const scene = this.scene, shop = scene.shop;
         const hit = scene.roomManager.interactionAt(gridX, gridY, 'shrine');
         if (!hit || !shop) return false;
-        if (scene.time.now - this.last < ShrineVisit.COOLDOWN_MS) return true;
-        this.last = scene.time.now;
+        // one visit per bump: a key held against the box is the same bump until it is let go
+        const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell, scene.time.now);
+        this.bump = { cell, at: scene.time.now };
+        if (!fresh) return true;
         const out = hit.kind === 'offering'
             ? ShrineVisit.offer(shop.money, Math.random())
             : ShrineVisit.fortune(shop.omikuji, gameDate(), shop.money, Math.random());
@@ -41,7 +43,19 @@ class ShrineVisit {
     }
 }
 
-ShrineVisit.COOLDOWN_MS = 1500;
+/**
+ * A blocked step bumps on every frame its key is held (Character.startMovement),
+ * so bumps of one cell less than this apart are one bump, still held.
+ */
+ShrineVisit.HELD_MS = 250;
+/**
+ * Is a bump of `cell` at `now` (ms) a new one, given the bump before it
+ * (`last`: { cell, at }, or null)? Yes for the first, for another cell, and
+ * once the key has been let go: no bump for HELD_MS. A key that stays down
+ * keeps bumping, so it never is - one offering however long it is held
+ * (issue #220; it paid every 1.5 s).
+ */
+ShrineVisit.fresh = (last, cell, now) => !last || last.cell !== cell || now - last.at > ShrineVisit.HELD_MS;
 /** Five yen: go-en, which also means a good connection. */
 ShrineVisit.OFFERING = 5;
 ShrineVisit.FORTUNE_PRICE = 100;

@@ -33,7 +33,7 @@ Three variants:
         wider, deeper hall with a third pair of pillars, a rack of plaques on
         both sides and more lanterns.
 
-Run from gamev2/:  python3 tools/generate_shrines.py [Host ...]
+Run from gamev2/:  python3 tools/generate_shrines.py [Host ...]     (--help: this text, nothing run)
 With no host it rebuilds the shrines that are already wired (what
 check_generators.py runs); name a host to give its halls an interior for the
 first time. Then:  python3 tools/config_to_tiled.py <each new room + hosts>
@@ -44,6 +44,7 @@ import sys
 
 import roomgen as rg
 
+ARGS = rg.cli(__doc__, sys.argv[1:])   # --help: usage, nothing run
 cfg = rg.load_config()
 
 # hall tile -> (door cell relative to the tile, look; None = by the roof over it).
@@ -66,7 +67,7 @@ def wired_hosts():
             if any(t['targetRoom'].startswith(PREFIX) for t in r.get('transporters', []))]
 
 
-HOSTS = sys.argv[1:] or wired_hosts()
+HOSTS = ARGS or wired_hosts()
 unknown = [h for h in HOSTS if h not in cfg['rooms']]
 assert not unknown, f'no such room: {unknown}'
 

@@ -79,6 +79,21 @@ class InputHandler {
     }
 
     /**
+     * An overlay is opening: forget every press its keys are still holding,
+     * so that none of them acts inside it. Phaser raises a key's JustDown
+     * once per press and keeps it until someone reads it, and nobody reads a
+     * direction key while it walks the player or steps through the menu - so
+     * the W held to walk up to the departures board, or the S that stepped
+     * down the menu to "Character", moved the selection a row as the list
+     * opened (issue #220). Reading every key here clears that: a key still
+     * held does nothing until it is released and pressed again. `keys` is the
+     * overlay's addKeys map; `justDown` is Phaser's (passed in by the tests).
+     */
+    static swallow(keys, justDown = Phaser.Input.Keyboard.JustDown) {
+        for (const key of Object.values(keys)) justDown(key);
+    }
+
+    /**
      * Hand this frame's input to whoever owns it
      */
     routeInput() {

@@ -367,39 +367,57 @@ class UIScale {
      * ease. The rectangle is resized in place - Camera.setDeadzone would
      * re-centre the camera on the player, a jump - and stays ours, so
      * setWorldZoom does not take the narrowed height for a new size.
+     * That holds for the first narrowing too: a desktop window never zooms,
+     * so setWorldZoom has not sized the deadzone before the first look-up of
+     * the session, and taking it over through setWorldZoom re-centred the
+     * camera by however far it was trailing the player (issue #220).
      */
     setDeadzoneShare(share) {
-        const dz = this.scene.cameras.main.deadzone, ours = this._deadzone;
         if (share === this.deadzoneShare) return;
         this.deadzoneShare = share;
+        this.sizeDeadzone(this.worldZoom, false);
+    }
+
+    /**
+     * Size the follow deadzone for `zoom`, the view's width and the share of
+     * its height LandmarkView leaves it. The deadzone is whatever its owner
+     * last set: a size that is not ours is taken as the new full size.
+     * `recentre` true goes through Camera.setDeadzone, which puts the camera
+     * back on the player (a zoom or view change redraws everything anyway);
+     * false resizes the rectangle about its own centre and moves nothing.
+     */
+    sizeDeadzone(zoom, recentre) {
+        const main = this.scene.cameras.main, dz = main.deadzone;
         if (!dz) return;
-        if (!ours || dz.width !== ours.width || dz.height !== ours.height) { this.setWorldZoom(this.worldZoom); return; }
-        const height = this._deadzoneHome.height / this.worldZoom * share;
-        dz.y += (dz.height - height) / 2;   // it is centred on the view once a frame: keep it so
-        dz.height = ours.height = height;
+        const ours = this._deadzone;
+        if (!ours || dz.width !== ours.width || dz.height !== ours.height) {
+            this._deadzoneHome = { width: dz.width, height: dz.height };
+        }
+        // across, the same share of a cropped (portrait) view as of the whole canvas
+        const share = main.width / this.scene.scale.width;
+        const width = this._deadzoneHome.width * share / zoom;
+        const height = this._deadzoneHome.height / zoom * this.deadzoneShare;
+        if (recentre) {
+            if (dz.width !== width || dz.height !== height) main.setDeadzone(width, height);
+        } else {
+            // it is centred on the view once a frame: keep it so
+            dz.x += (dz.width - width) / 2;
+            dz.y += (dz.height - height) / 2;
+            dz.width = width;
+            dz.height = height;
+        }
+        this._deadzone = { width, height };
     }
 
     /**
      * Zoom the world camera, and scale its follow deadzone to match (and to
      * the width of a cropped view) so the player keeps the same share of the
-     * view ahead of them. The deadzone is
-     * whatever its owner last set: a size that is not ours is taken as new.
+     * view ahead of them (sizeDeadzone).
      */
     setWorldZoom(zoom) {
-        const main = this.scene.cameras.main, dz = main.deadzone;
+        const main = this.scene.cameras.main;
         if (main.zoom !== zoom) main.setZoom(zoom);
-        if (dz) {
-            const ours = this._deadzone;
-            if (!ours || dz.width !== ours.width || dz.height !== ours.height) {
-                this._deadzoneHome = { width: dz.width, height: dz.height };
-            }
-            // across, the same share of a cropped (portrait) view as of the whole canvas
-            const share = main.width / this.scene.scale.width;
-            const width = this._deadzoneHome.width * share / zoom;
-            const height = this._deadzoneHome.height / zoom * this.deadzoneShare;
-            if (dz.width !== width || dz.height !== height) main.setDeadzone(width, height);
-            this._deadzone = { width, height };
-        }
+        this.sizeDeadzone(zoom, true);
         this.worldZoom = zoom;
         const view = `${zoom}:${main.width}`;
         if (view !== this._worldView) {

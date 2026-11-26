@@ -247,6 +247,36 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         assert.ok(src('../index.html').includes("'src/ShrineVisit.js'"));
     });
 
+    test('one offering per bump: a key held against the box pays once, until it is let go (#220)', () => {
+        const S = visit(), fresh = S.fresh;
+        // the first bump, a bump of another cell, and a bump after the key was let go are new ones
+        assert.strictEqual(fresh(null, '10,7', 5000), true);
+        assert.strictEqual(fresh({ cell: '10,7', at: 5000 }, '11,7', 5016), true, 'the next cell of the box is another bump');
+        assert.strictEqual(fresh({ cell: '10,7', at: 5000 }, '10,7', 5000 + S.HELD_MS + 1), true, 'released and bumped again');
+        // a held key bumps every frame: never new, at 60 or at 10 frames a second
+        assert.strictEqual(fresh({ cell: '10,7', at: 5000 }, '10,7', 5016), false);
+        assert.strictEqual(fresh({ cell: '10,7', at: 5000 }, '10,7', 5100), false);
+        assert.ok(S.HELD_MS >= 150 && S.HELD_MS <= 400, 'longer than a slow frame, shorter than letting go and pressing again');
+        // the visit itself, as check() runs it: ten seconds of a held key at 60 fps is one offering, not seven
+        const spend = (frames, gapAt) => {
+            let bump = null, money = 100, now = 0;
+            for (let i = 0; i < frames; i++) {
+                now += gapAt && gapAt.includes(i) ? 400 : 1000 / 60;
+                const isNew = fresh(bump, '10,7', now);
+                bump = { cell: '10,7', at: now };
+                if (isNew) money = S.offer(money, 0).money;
+            }
+            return 100 - money;
+        };
+        assert.strictEqual(spend(600), S.OFFERING, 'held for ten seconds');
+        assert.strictEqual(spend(600, [200, 400]), 3 * S.OFFERING, 'let go and bumped again twice');
+        // check() keeps the last bump whether or not it paid, and has no timer left to pay by
+        const code = src('ShrineVisit.js');
+        assert.ok(code.includes("const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell, scene.time.now);"));
+        assert.ok(code.includes('this.bump = { cell, at: scene.time.now };\n        if (!fresh) return true;'));
+        assert.ok(!/COOLDOWN/.test(code), 'the 1.5 s cooldown that paid a held key again is gone');
+    });
+
     test('a lantern-lit interior dims at night and lights its lanterns; every other interior ignores the hour (#212)', () => {
         if (!game('typeof DayNight !== "undefined"')) vm.runInContext(src('DayNight.js'), ctx, { filename: 'DayNight.js' });
         const D = game('DayNight');

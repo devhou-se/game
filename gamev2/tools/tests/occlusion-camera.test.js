@@ -1,4 +1,4 @@
-module.exports = ({ test, assert, path, game, load, realConfig, worldWith }) => {
+module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWith }) => {
     test('a bump looks its cell up in an index built once per room load', () => {
         const { world, run } = worldWith(true);
         const Interactions = run('Interactions'), Shop = run('Shop');
@@ -392,5 +392,52 @@ module.exports = ({ test, assert, path, game, load, realConfig, worldWith }) => 
         assert.strictEqual(main.deadzone.height, 128, 'the full height comes back, not the narrowed one taken for a new size');
         ui.setWorldZoom(1);
         assert.deepStrictEqual([main.deadzone.width, main.deadzone.height], [256, 256]);
+    });
+
+    test('the first look-up of a session narrows the deadzone in place too (#220)', () => {
+        // a desktop window never zooms: UIScale.update releases before setWorldZoom has ever sized the
+        // deadzone, so the first narrowing found one that was not "ours" and took it over through
+        // Camera.setDeadzone - which re-centres the camera on the player, a jump of however far it trailed
+        const UIScale = game('UIScale');
+        const fresh = (zoom, width) => {
+            const ui = Object.create(UIScale.prototype);
+            const main = { zoom, width, recentred: 0, deadzone: { x: 512, y: 352, width: 256, height: 256 },
+                setZoom(z) { this.zoom = z; },
+                setDeadzone(w, h) { this.recentred++; this.deadzone.width = w; this.deadzone.height = h; } };
+            ui.scene = { cameras: { main }, scale: { width: 1280 }, events: { emit() {} } };
+            ui.deadzoneShare = 1;
+            ui.worldZoom = zoom;
+            return { ui, main };
+        };
+        const { ui, main } = fresh(1, 1280);
+        assert.strictEqual(ui.deadzoneHeight(), 256, 'the owner\'s deadzone, before anything is ours');
+        ui.setDeadzoneShare(0.9);       // the first frame of the first ease
+        assert.strictEqual(main.recentred, 0, 'Camera.setDeadzone is not called');
+        assert.deepStrictEqual([main.deadzone.width, main.deadzone.height], [256, 256 * 0.9]);
+        assert.ok(Math.abs(main.deadzone.y + main.deadzone.height / 2 - (352 + 128)) < 1e-9 && main.deadzone.x === 512, 'about its own centre');
+        assert.strictEqual(ui.deadzoneHeight(), 256, 'the full height is remembered');
+        for (const share of [0.7, 0.5, 0.5, 0.8, 1]) ui.setDeadzoneShare(share);
+        assert.strictEqual(main.recentred, 0);
+        assert.deepStrictEqual([main.deadzone.x, main.deadzone.y, main.deadzone.width, main.deadzone.height], [512, 352, 256, 256], 'and comes back as it was');
+        // a size its owner set meanwhile is taken as the new full size, still without a re-centre
+        Object.assign(main.deadzone, { width: 320, height: 200 });
+        ui.setDeadzoneShare(0.5);
+        assert.deepStrictEqual([main.deadzone.width, main.deadzone.height, ui.deadzoneHeight(), main.recentred], [320, 100, 200, 0]);
+        // the same share again is nothing; no deadzone (no camera follow yet) is nothing
+        const before = JSON.stringify(main.deadzone);
+        ui.setDeadzoneShare(0.5);
+        assert.strictEqual(JSON.stringify(main.deadzone), before);
+        const none = fresh(1, 1280);
+        none.main.deadzone = null;
+        none.ui.setDeadzoneShare(0.5);
+        assert.strictEqual(none.ui.deadzoneShare, 0.5);
+        // a zoom or view change still goes through Camera.setDeadzone (the picture is redrawn anyway), and keeps the share
+        const phone = fresh(1, 1280);
+        phone.ui.setDeadzoneShare(0.5);
+        phone.ui.setWorldZoom(2);
+        assert.deepStrictEqual([phone.main.deadzone.width, phone.main.deadzone.height, phone.main.recentred], [128, 64, 1]);
+        // the look-up is the only caller, every frame of its ease
+        const look = fs.readFileSync(path.join(GV2, 'src', 'systems', 'LandmarkView.js'), 'utf8');
+        assert.ok(look.includes('this.scene.uiScale.setDeadzoneShare(1 - this.weight);'));
     });
 };

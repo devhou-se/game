@@ -134,9 +134,8 @@ class StationPicker {
         this.top = StationPicker.scrollTop(0, this.selected, this.rows.length, this.shown, this.rows);
         this.press = null;
         this.hover = null;
-        // swallow the keypress that got us here
-        const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
+        // swallow the keys that got us here: the W / Up held to walk onto the board cell too
+        InputHandler.swallow(this.keys);
         this.visible = true;
         this.render();
         scene.input.on('wheel', this.onWheel, this);

@@ -1,4 +1,4 @@
-module.exports = ({ test, assert, fs, path, ctx, fired, load, game, require, __dirname }) => {
+module.exports = ({ test, assert, fs, path, GV2, ctx, fired, load, game, require, __dirname }) => {
     test('a touch on a control is cancelled before Phaser can read it as a tap', () => {
         const listeners = {};
         const btn = {
@@ -145,8 +145,48 @@ module.exports = ({ test, assert, fs, path, ctx, fired, load, game, require, __d
         assert.strictEqual(clearOf(toast, { ...showdown, x1: 300 }, 960), 0, 'beside the panel is not on it');
     });
 
+    test('a key held as a picker opens does nothing in it until it is released (#220)', () => {
+        if (game('typeof InputHandler') === 'undefined') load('systems/InputHandler.js');
+        const swallow = game('InputHandler.swallow');
+        // Phaser's Key and JustDown, as the pickers use them: a press raises _justDown once (key repeat
+        // does not), and it stays raised until someone reads it
+        const key = () => ({ isDown: false, _justDown: false });
+        const press = (k) => { if (!k.isDown) { k.isDown = true; k._justDown = true; } };
+        const release = (k) => { k.isDown = false; };
+        const JD = (k) => { if (k._justDown) { k._justDown = false; return true; } return false; };
+        const keys = { up: key(), down: key(), w: key(), s: key(), enter: key(), space: key(), esc: key() };
+        const moved = () => (JD(keys.up) || JD(keys.w) ? -1 : 0) + (JD(keys.down) || JD(keys.s) ? 1 : 0);
+        // W walks the player onto the board cell: nobody reads its JustDown on the way, so it is still raised
+        press(keys.w);
+        assert.strictEqual(keys.w._justDown, true);
+        swallow(keys, JD);                                   // the board opens
+        assert.strictEqual(moved(), 0, 'the held W does not move the selection as the board opens');
+        press(keys.w);                                       // key repeat while it stays down
+        assert.strictEqual(moved(), 0, 'nor on any later frame while it is held');
+        release(keys.w); press(keys.w);
+        assert.strictEqual(moved(), -1, 'released and pressed again, it moves one row');
+        assert.strictEqual(moved(), 0, 'once');
+        // every key of the overlay, whatever it is called: the S that stepped down the menu, and the ENTER that chose
+        press(keys.s); press(keys.enter); press(keys.down);
+        swallow(keys, JD);
+        assert.ok(Object.values(keys).every((k) => !k._justDown));
+        assert.strictEqual(keys.enter.isDown, true, 'the key itself is untouched: only its pending press is read');
+        // the lists a direction key walks or steps you into all open through it; without it the board opened
+        // one row up (W held), the Character list one row down (S from the menu), Time Travel a week off
+        const read = (f) => fs.readFileSync(path.join(GV2, 'src', f), 'utf8');
+        for (const [file, open] of [['StationPicker.js', 'show(fromKey) {'], ['DatePicker.js', 'show() {'], ['CharacterSelect.js', 'show() {'], ['Shop.js', 'showInventory() {']]) {
+            const body = read(file).split('\n    ' + open)[1].split('\n    }\n')[0];
+            assert.ok(body.includes('InputHandler.swallow(this.keys);'), `${file} ${open}`);
+            assert.ok(body.indexOf('InputHandler.swallow(this.keys);') < body.search(/this\.(visible|invVisible) = true;/), `${file}: before it is visible`);
+        }
+        // the shop's own list (a bump on a shelf) already read every direction key; the overlays that do not
+        // list, and are opened by a key they do not use, read all of theirs
+        assert.ok(read('Shop.js').includes('[k.enter, k.space, k.esc, k.left, k.right, k.a, k.d, k.up, k.down, k.w, k.s].forEach(JD);'));
+        assert.ok(read('DrinkingGame.js').includes('Object.values(this.keys).forEach(JD);'));
+    });
+
     test('a key tapped between two frames is still read on the next one (#195)', () => {
-        load('systems/InputHandler.js');
+        if (game('typeof InputHandler') === 'undefined') load('systems/InputHandler.js');
         // a Phaser key as the handler uses it: isDown, and a 'down' event on keydown
         const key = () => ({ isDown: false, on(ev, fn) { this[ev] = fn; } });
         const press = (k) => { k.isDown = true; k.down(); };

@@ -44,10 +44,9 @@ class DatePicker {
 
     show() {
         if (this.visible || this.scene.isTransitioning) return;
-        // swallow the keypress that opened us (menu ENTER/SPACE) so it
-        // doesn't immediately confirm inside the picker
-        const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
+        // swallow the keys that opened us: the menu's ENTER/SPACE must not confirm
+        // inside the picker, nor the direction held against a wall clock move the day
+        InputHandler.swallow(this.keys);
         const [y, m, d] = gameDate().split('-').map(Number);
         this.sel = new Date(y, m - 1, d);
         this.contentDates = contentChangeDates(this.scene.config);

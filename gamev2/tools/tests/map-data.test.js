@@ -39,7 +39,7 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith, require 
 
     test('every shelf, cooler and till in a konbini or Don Takote can be bumped from a free cell the door leads to', () => {
         // #152: a fixture is used from the cell below it (the till, against the front wall, from any side)
-        load('utils/Interactions.js');
+        if (game('typeof Interactions') === 'undefined') load('utils/Interactions.js');   // once: other tests load it too
         const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
         const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
         const sizeOf = (key) => {

@@ -28,7 +28,11 @@ see `generate_ads.find_font`, and are listed as `skip`, not checked, where none 
   `_discount_stores`, `_stations`, `_izakaya` (the Izakaya interior plus its street door,
   lantern pair and two pinned ad boards in Market, see Shop, Food and Drink), `_houses` (every house
   interior and its door, see House interiors) and `_shrines` (the worship halls and the doors into
-  them, see "Shrine worship halls" in `landmarks-and-towns.md`), each run on its own:
+  them, see "Shrine worship halls" in `landmarks-and-towns.md`), each run on its own. (The four that take
+  town names - `_houses`, `_shrines`, `_konbinis`, `_discount_stores` - read their command line through
+  `roomgen.cli`: `--help` / `-h` prints the tool's docstring and an unknown option is an error, exit 2,
+  both before the config is loaded, so neither is taken for "no town named" and run for real, issue
+  #220. The town generators take no arguments and ignore any.) What keeps a re-run a no-op:
   - a town generator ends with `b.finish()` (`roomgen.Builder`), which runs the picket-fence and
     solid-track passes itself — `fix_fences.py` / `seal_tracks.py` are the same code
     (`roomgen.picket_fences` / `roomgen.seal_tracks`) for a room named on the command line, and are no

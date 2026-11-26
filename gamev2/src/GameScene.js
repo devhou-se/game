@@ -591,7 +591,10 @@ class GameScene extends Phaser.Scene {
         // stands in place of the date ("Sapporo | devhouse 3 in 8d | ¥5,000",
         // Trips.countdown; the date is a tap on it away, in Time Travel). A name too
         // long for even "devhouse 3 soon" shows the date as on any other day.
-        const count = () => whole && counting && (row(short, true) || [room, brief].some((name) =>
+        // A short form that leads with the town ("Tokyo shrine", not a cut of the name) goes first,
+        // so every shrine, lobby and house reads the same way whatever its town's length (issue #220).
+        const names = room.startsWith(brief) ? [room, brief] : [brief, room];
+        const count = () => whole && counting && (row(short, true) || names.some((name) =>
             !!Trips.countdown(Trips.of(this.config), gameDate(), (l) => fits(`${name} | `, l, pad))));
         let rows = 1;
         if (!row(long) && !full && !count() && !row(short) && !compact()) {

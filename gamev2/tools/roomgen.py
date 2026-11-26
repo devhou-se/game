@@ -19,7 +19,7 @@ Typical script:
 Then: config_to_tiled.py MyRoom (and any room whose transporters you touched —
 the game reads the .tmj!), then play.js lint MyRoom.
 """
-import json, os
+import json, os, sys
 import prefab as _prefab
 
 LAYER_NAMES = ['Floor', 'Over Floor', 'Water', 'Non-Collidables', 'Collidables', 'Other', 'Tops', 'Colliders']
@@ -89,6 +89,26 @@ def house_door_at(room, x, y, sprites=None):
                 if idx is not None and _pal[idx] == key:
                     return True
     return False
+
+
+def cli(doc, argv, flags=()):
+    """The command line of a generator that takes town names: the names in `argv`.
+
+    `-h` / `--help` anywhere prints `doc` (the tool's own docstring, which
+    says how to run it) and exits 0; an option that is not one of `flags`
+    exits 2 and names it. Either way before anything is loaded or written:
+    `generate_houses.py --help` used to be read as "no town named" and
+    rebuilt every town (issue #220), and a mistyped `--dryrun` did too.
+    Call it before load_config().
+    """
+    if '-h' in argv or '--help' in argv:
+        print(doc.strip())
+        sys.exit(0)
+    unknown = [a for a in argv if a.startswith('-') and a not in flags]
+    if unknown:
+        print(f"unknown option {' '.join(unknown)}; options: {' '.join(('--help',) + tuple(flags))}", file=sys.stderr)
+        sys.exit(2)
+    return [a for a in argv if not a.startswith('-')]
 
 
 def load_config(path='config.json'):

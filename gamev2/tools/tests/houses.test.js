@@ -233,6 +233,50 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         assert.ok(/interactionAt\(targetGridX, targetGridY, 'flavour'\)/.test(scene) && /toastText\(\) !== flavour\.say/.test(scene));
     });
 
+    test('--help prints a generator\'s usage and runs nothing; an unknown option is an error (#220)', () => {
+        scratch((tmp, read) => {
+            // a config a real run would rewrite: the generators write their own bytes, without this newline
+            fs.appendFileSync(path.join(tmp, 'config.json'), '\n');
+            const before = read(), stamp = fs.statSync(path.join(tmp, 'config.json')).mtimeMs;
+            const untouched = (what) => {
+                assert.ok(read() === before, `${what} rewrote config.json`);
+                assert.strictEqual(fs.statSync(path.join(tmp, 'config.json')).mtimeMs, stamp, `${what} wrote config.json`);
+            };
+            // every generator that takes town names
+            for (const tool of ['generate_houses', 'generate_shrines', 'generate_konbinis', 'generate_discount_stores']) {
+                for (const args of [['--help'], ['-h'], ['Asahikawa', '--help'], ['--lobbies', '-h']]) {
+                    const run = python([`tools/${tool}.py`, ...args], tmp), what = `${tool}.py ${args.join(' ')}`;
+                    assert.strictEqual(run.status, 0, `${what}: ${run.stderr}`);
+                    assert.ok(run.stdout.startsWith(`${tool}.py`) && run.stdout.includes(`python3 tools/${tool}.py`), `${what} prints its usage`);
+                    assert.ok(!/written|built|would be/.test(run.stdout.split('\n').slice(-3).join('\n')) && !run.stderr, `${what} ran`);
+                    untouched(what);
+                }
+                // a mistyped option was read as "no town named" too, or as a town
+                for (const args of [['--dryrun'], ['--dryrun', 'Asahikawa'], ['-n']]) {
+                    const run = python([`tools/${tool}.py`, ...args], tmp), what = `${tool}.py ${args.join(' ')}`;
+                    assert.strictEqual(run.status, 2, what);
+                    assert.ok(run.stderr.includes(`unknown option ${args[0]}`) && !/Traceback/.test(run.stderr) && !run.stdout, `${what}: ${run.stderr}`);
+                    untouched(what);
+                }
+            }
+            // the options that are real still work, and still write nothing
+            const dry = python(['tools/generate_houses.py', '--dry-run', '--lobbies', 'Osaka'], tmp);
+            assert.ok(dry.status === 0 && /dry run: \d+ interior\(s\) would be written, nothing was\./.test(dry.stdout), dry.stderr);
+            untouched('--dry-run');
+            // and the scratch config is one a real run does rewrite, so "untouched" above means something
+            const real = python(['tools/generate_houses.py'], tmp);
+            assert.strictEqual(real.status, 0, real.stderr);
+            assert.ok(read() !== before && read() === before.slice(0, -1), 'a real run writes the config in its own bytes');
+        });
+        // one rule for all of them (roomgen.cli), called before the config is loaded
+        const tool = (f) => fs.readFileSync(path.join(GV2, 'tools', f), 'utf8');
+        for (const f of ['generate_shrines.py', 'generate_konbinis.py']) {
+            assert.ok(tool(f).indexOf('rg.cli(__doc__, sys.argv[1:])') < tool(f).indexOf('rg.load_config()'), f);
+        }
+        assert.ok(/def main\(argv\):\n    named = rg\.cli\(__doc__, argv, \('--variants', '--dry-run', '--lobbies'\)\)[^\n]*\n    cfg = rg\.load_config\(\)/.test(tool('generate_houses.py')));
+        assert.ok(/def main\(argv\):\n    hosts = rg\.cli\(__doc__, argv\) or ALL_HOSTS/.test(tool('generate_discount_stores.py')));
+    });
+
     test('generate_houses.py is a no-op on a re-run, and a town rebuild keeps the house doors (#208)', () => {
         scratch((tmp, read) => {
             const before = read();

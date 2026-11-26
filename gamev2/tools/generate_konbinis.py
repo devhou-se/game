@@ -11,7 +11,7 @@ Interiors are furnished with the office/interior pack sliced into
 assets/sprites/office-*.png. The legacy hand-made 'Konbini' room, if one is
 still in the config, is dropped: Machi's store is KonbiniMachi1.
 
-Run from gamev2/:  python3 tools/generate_konbinis.py [Host ...]
+Run from gamev2/:  python3 tools/generate_konbinis.py [Host ...]    (--help: this text, nothing run)
 Then:              python3 tools/config_to_tiled.py <each new room + hosts>
                    node tools/play.js lint <each new room + hosts>
 """
@@ -22,6 +22,7 @@ import sys
 
 import roomgen as rg
 
+ARGS = rg.cli(__doc__, sys.argv[1:])   # --help: usage, nothing run
 cfg = rg.load_config()
 
 # Rooms whose 7-Elevens get an interior. Name hosts on the command line to
@@ -30,7 +31,7 @@ cfg = rg.load_config()
 ALL_HOSTS = ['Machi', 'Market', 'Park', 'Sapporo', 'Sendai']
 ALL_HOSTS += ['Fukuoka']
 ALL_HOSTS += ['Kanazawa']         # issue #68
-HOSTS = sys.argv[1:] or ALL_HOSTS
+HOSTS = ARGS or ALL_HOSTS
 assert all(h in ALL_HOSTS for h in HOSTS), f'unknown host; expected some of {ALL_HOSTS}'
 SEVEN = 'seven-eleven_0_0'
 DOOR_DX, DOOR_DY = 1, 3      # door cell relative to the building's top-left

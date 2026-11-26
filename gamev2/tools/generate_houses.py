@@ -62,6 +62,7 @@ Run from gamev2/:
     python3 tools/generate_houses.py                          # rebuild every town's houses and lobbies that has them
     python3 tools/generate_houses.py --dry-run [--lobbies] <Town> ...   # say what would be built; write nothing
     python3 tools/generate_houses.py --variants               # every house layout as JSON, nothing written
+    python3 tools/generate_houses.py --help                   # this text; nothing is run (an unknown option is an error)
 Then:   python3 tools/config_to_tiled.py <each House / Lobby room + the towns>
         node tools/play.js lint <each House / Lobby room + the towns>
 (.agent-queue/items/houses_apply.sh <Town> ... and lobbies_apply.sh <Town> ... do all of it.)
@@ -512,12 +513,12 @@ def variants():
 
 
 def main(argv):
+    named = rg.cli(__doc__, argv, ('--variants', '--dry-run', '--lobbies'))   # --help: usage, nothing run
     cfg = rg.load_config()
     if '--variants' in argv:
         print(json.dumps({'tilePalette': cfg['tilePalette'], 'variants': variants()}))
         return 0
     dry, lobbies = '--dry-run' in argv, '--lobbies' in argv
-    named = [a for a in argv if not a.startswith('--')]
     have = {kind: sorted({r[K['marker']]['host'] for r in cfg['rooms'].values() if r.get(K['marker'])})
             for kind, K in KINDS.items()}
     # named towns: their houses, or with --lobbies their towers; no town: everything there is, of both kinds

@@ -212,14 +212,17 @@ function hudName(name) {
 /**
  * The short form of a HUD name, for a bar with no room for the whole of it
  * (a landscape phone, layoutHUD): its first part ("7-Eleven | Park 1" ->
- * "7-Eleven", which says where you are). A house's first part says nothing
- * ("House | Sapporo 3" -> "House"), so a house keeps its town instead:
- * "Sapporo house" (issue #208).
+ * "7-Eleven", which says where you are). A room named for its kind says
+ * nothing by its first part ("House | Sapporo 3" -> "House", and the same of
+ * a tower's lobby and a shrine's hall), so it keeps its town instead:
+ * "Sapporo house" (issue #208), "Osaka lobby", "Tokyo shrine" (issue #220).
  */
 function hudBrief(name) {
     const [head, rest] = String(name).split(' | ');
-    return head === 'House' && rest ? `${rest.replace(/ \d+$/, '')} house` : head;
+    return HUD_KINDS.includes(head) && rest ? `${rest.replace(/ \d+$/, '')} ${head.toLowerCase()}` : head;
 }
+/** First parts of a room's name that are a kind of room, not a place: hudBrief leads with the town. */
+const HUD_KINDS = ['House', 'Lobby', 'Shrine'];
 
 /**
  * Navigate to the given game date. The date a clean URL already gives

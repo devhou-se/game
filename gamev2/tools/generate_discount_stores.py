@@ -205,7 +205,7 @@ def build_interior(store):
 
 
 def main(argv):
-    hosts = argv or ALL_HOSTS
+    hosts = rg.cli(__doc__, argv) or ALL_HOSTS   # --help: usage, nothing run
     assert all(h in ALL_HOSTS for h in hosts), f'unknown host; expected some of {ALL_HOSTS}'
     cfg = rg.load_config()
     register_metadata(cfg)

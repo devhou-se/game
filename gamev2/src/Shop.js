@@ -589,8 +589,7 @@ class Shop {
     showInventory() {
         if (this.isVisible()) return;
         this.selected = 0;
-        const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
+        InputHandler.swallow(this.keys);   // the menu's ENTER, and the W / S that stepped to "Items"
         this.invVisible = true;
         this.refreshStock();
         this.render();

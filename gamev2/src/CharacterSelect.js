@@ -75,8 +75,7 @@ class CharacterSelect {
         this.chars = CharacterSelect.available(this.scene.config);
         if (window.CharacterCreator && CharacterCreator.load()) this.chars.push('custom');
         this.selected = Math.max(0, this.chars.indexOf(this.currentName()));
-        const JD = Phaser.Input.Keyboard.JustDown;
-        JD(this.keys.enter); JD(this.keys.space); JD(this.keys.esc);
+        InputHandler.swallow(this.keys);   // the menu's ENTER, and the W / S that stepped to this entry
         this.visible = true;
         this.render();
     }

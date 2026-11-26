@@ -34,6 +34,12 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
   SPACE/ENTER travels, ESC closes
 - **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
 - **Dialogue**: SPACE/ENTER advances, ESC closes
+- **Keys held as an overlay opens do nothing in it** (issue #220): an overlay's `show()` calls
+  `InputHandler.swallow(this.keys)` (or reads each of its keys with `JustDown`) before it becomes visible.
+  Phaser keeps a key's `JustDown` raised until someone reads it and nobody reads a direction key while it
+  walks the player or steps through the menu, so without it the W held to walk onto a station's board cell
+  moved the departures list up a row as it opened, and the S that stepped down the menu moved the
+  Character list. A key still down acts again only after it is released. A new overlay does the same.
 - **Title screen**: SPACE/ENTER/ESC or a tap starts the game (`?notitle=1` skips the screen)
 - **Intro**: SPACE/ENTER or a tap turns the page, ESC skips (`?nointro=1` skips the first-visit intro)
 - **Character creator**: ↑/↓ pick a row, ←/→ change it, ENTER/SPACE plays, ESC cancels. RANDOM is the last
@@ -163,7 +169,9 @@ The game always renders 1280x960; everything below is about showing that on anyt
     `lookUp.sprites`), so a frame costs a loop over a dozen rectangles. `streamRect` covers the point
     the camera follows, so the rows it is about to show are streamed in. Never call
     `cameras.main.setDeadzone` to change the deadzone mid-game: it re-centres the camera on the
-    player. Camera bounds still win: against a room's top edge (Machi under `?stitch=0`) the view
+    player. `setDeadzoneShare` resizes the rectangle in place (`UIScale.sizeDeadzone`), the first time
+    too: on a desktop window, which never zooms, the first look-up of a session used to take the
+    deadzone over through `setWorldZoom` and jumped by however far the camera trailed (issue #220). Camera bounds still win: against a room's top edge (Machi under `?stitch=0`) the view
     stops there.
     The room-change fade (`RoomManager.switchRoom`) runs on the camera drawn last — the `'ui'`
     camera while the split is on — so it covers the HUD and overlays as the single camera's fade does.
@@ -172,8 +180,10 @@ The game always renders 1280x960; everything below is about showing that on anyt
     lays it out for `cameras.main.width / hudZoom`: it drops the game's title, then — on a
     landscape phone, where the whole canvas is across the view and two rows are a lot of the height —
     abbreviates (`Nov 11 2025`, `shortGameDate`; then the room's name to its short form, `hudBrief`: its first
-    part, `7-Eleven | Park 1` -> `7-Eleven`, but a house keeps its town, `House | Asahikawa 2` -> `Asahikawa house`,
-    which is as long as a station's name and so shows the date rather than the countdown at 667x375; then the date's year), and only then wraps date and wallet onto a second row. On a
+    part, `7-Eleven | Park 1` -> `7-Eleven`, but a room named for its kind keeps its town, `House | Asahikawa 2` -> `Asahikawa house`,
+    `Lobby | Osaka 1` -> `Osaka lobby`, `Shrine | Tokyo` -> `Tokyo shrine` (issue #220; that form is tried before the whole name
+    for the countdown, so every shrine reads the same way), which can be as long as a station's name and so shows the date
+    rather than the countdown at 667x375; then the date's year), and only then wraps date and wallet onto a second row. On a
     lead-in day that one row has no room for the countdown and the date, so there the countdown stands in
     place of the date — `Sapporo | devhouse 3 in 8 days | ¥5,000` at 844x390, `in 8d` at 667x375, the room
     abbreviated if that is what it takes (`Trips.countdown`, tried before the bare date); the segment is
