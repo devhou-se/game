@@ -14,7 +14,7 @@ const stage = $('stage');
 const S = {
     model: null, images: {}, rooms: {}, order: [], dates: [], dateIndex: 0,
     show: Object.fromEntries(LAYERS.map(([k, , on]) => [k, on])),
-    view: { x: 0, y: 0, z: 6 }, selected: null, survey: { problems: [], reach: {} },
+    view: { x: 0, y: 0, z: 6 }, hidden: new Set(), selected: null, survey: { problems: [], reach: {} },
     source: null, files: {}, prefabs: [], people: {}, stale: new Set(), worldMap: null,
     edit: null, tool: 'select', arm: null, hover: null, linkFrom: null, retarget: null, active: 0,
     paint: null, moving: null, changes: [], note: '', noteBad: false,
@@ -150,7 +150,7 @@ function build(first) {
     S.model = new WorldModel(world(), env, prev ? { date: prev.date, as: prev.as } : null, { stitch: STITCH, worldMap: S.worldMap });
     const m = S.model;
     const shown = m.runtimeRooms();
-    if (first) layout(shown);
+    if (first) prepare(shown);
     for (const k of shown) {
         const r = m.roomManager.rooms[k];
         const room = S.rooms[k];
@@ -191,7 +191,7 @@ async function boot() {
     $('edit').hidden = !window.showDirectoryPicker;
     bind();
     resize();
-    fit();
+    relayout();
     refresh();
     $('loading').hidden = true;
 }
@@ -429,63 +429,98 @@ function linkCells(a, b) {
     });
 }
 
-function layout(keys) {
+function prepare(keys) {
     const m = S.model;
-    const rooms = {};
     for (const k of keys) {
         const r = m.roomManager.rooms[k];
         const city = m.roomManager.cities[k];
-        rooms[k] = { x: 0, y: 0, w: r.worldWidth / 64, h: r.worldHeight / 64, members: city ? city.members : null };
+        S.rooms[k] = Object.assign(S.rooms[k] || { x: 0, y: 0 }, { w: r.worldWidth / 64, h: r.worldHeight / 64, members: city ? city.members : null });
     }
-    const links = [];
-    if (S.show.teleports) for (const k of keys) {
-        for (const t of m.roomManager.rooms[k].transporters) {
-            const at = m.roomManager.resolve(t.targetRoom, t.targetX, t.targetY);
-            if (!rooms[at.room]) continue;
-            links.push({ a: k, ax: t.gridX + 0.5, ay: t.gridY + 0.5, b: at.room, bx: at.x + 0.5, by: at.y + 0.5, w: 1 });
-        }
-    }
-    const stations = S.show.trains ? Object.entries(m.config.stations || {}).filter(([k]) => rooms[k]) : [];
-    for (let i = 0; i < stations.length; i++) for (let j = i + 1; j < stations.length; j++) {
-        const [a, sa] = stations[i], [b, sb] = stations[j];
-        links.push({ a, ax: sa.board[0][0] + 0.5, ay: sa.board[0][1] + 0.5, b, bx: sb.board[0][0] + 0.5, by: sb.board[0][1] + 0.5, w: 0.15 });
-    }
-    const placed = placeRooms(rooms, links);
-    for (const k of keys) S.rooms[k] = Object.assign(S.rooms[k] || {}, placed[k]);
     // cities first: a city's woodland fills its whole bounding box, so anything else is drawn over it.
     // Districts shown side by side (?stitch=0) keep the stitched city's stacking order
     const stacked = WorldModel.stackOrder(m.config, keys);
     S.order = stacked.filter(k => S.rooms[k].members).concat(stacked.filter(k => !S.rooms[k].members));
 }
 
+function links(keys) {
+    const m = S.model;
+    const out = [];
+    if (S.show.teleports) for (const k of keys) {
+        for (const t of m.roomManager.rooms[k].transporters) {
+            const at = m.roomManager.resolve(t.targetRoom, t.targetX, t.targetY);
+            if (!keys.includes(at.room)) continue;
+            out.push({ a: k, ax: t.gridX + 0.5, ay: t.gridY + 0.5, b: at.room, bx: at.x + 0.5, by: at.y + 0.5, w: 1 });
+        }
+    }
+    const stations = S.show.trains ? Object.entries(m.config.stations || {}).filter(([k]) => keys.includes(k)) : [];
+    for (let i = 0; i < stations.length; i++) for (let j = i + 1; j < stations.length; j++) {
+        const [a, sa] = stations[i], [b, sb] = stations[j];
+        out.push({ a, ax: sa.board[0][0] + 0.5, ay: sa.board[0][1] + 0.5, b, bx: sb.board[0][0] + 0.5, by: sb.board[0][1] + 0.5, w: 0.15 });
+    }
+    return out;
+}
+
 const THROUGH = 4;
 const CROSS = 8;
 const GAP = 4;
+// Rooms arrive one per frame as the greedy pass places them, the anneal runs between frames, then
+// everything glides to its final spot
 function relayout() {
     const keys = S.model.runtimeRooms();
-    const snap = () => ({ view: { ...S.view }, rooms: Object.fromEntries(keys.map(k => [k, [S.rooms[k].x, S.rooms[k].y]])) });
-    const from = snap();
-    layout(keys);
-    fit();
-    const to = snap();
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return draw();
+    prepare(keys);
+    const rooms = Object.fromEntries(keys.map(k => [k, { x: 0, y: 0, w: S.rooms[k].w, h: S.rooms[k].h }]));
+    const gen = placeRooms(rooms, links(keys));
+    const place = (k) => Object.assign(S.rooms[k], { x: rooms[k].x, y: rooms[k].y });
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        let r;
+        do r = gen.next(); while (!r.done);
+        for (const k of keys) place(k);
+        fit();
+        return draw();
+    }
+    S.hidden = new Set(keys);
+    const target = { ...S.view };
+    const step = () => {
+        const r = gen.next();
+        if (r.done) {
+            const to = Object.fromEntries(keys.map(k => [k, [r.value[k].x, r.value[k].y]]));
+            return glide(keys, to);
+        }
+        if (r.value) {
+            const snap = S.hidden.size === keys.length;
+            S.hidden.delete(r.value);
+            place(r.value);
+            Object.assign(target, fitted(keys.filter(k => !S.hidden.has(k))));
+            if (snap) Object.assign(S.view, target);
+        }
+        for (const p of ['x', 'y', 'z']) S.view[p] += (target[p] - S.view[p]) * 0.2;
+        draw();
+        requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
+
+function glide(keys, to) {
+    const from = { view: { ...S.view }, rooms: Object.fromEntries(keys.map(k => [k, [S.rooms[k].x, S.rooms[k].y]])) };
+    for (const k of keys) [S.rooms[k].x, S.rooms[k].y] = to[k];
+    const view = fitted(keys);
     const start = performance.now();
     const step = (now) => {
         const t = Math.min(1, (now - start) / 600);
         const e = 1 - Math.pow(1 - t, 3);
         const mix = (a, b) => a + (b - a) * e;
         for (const k of keys) {
-            S.rooms[k].x = mix(from.rooms[k][0], to.rooms[k][0]);
-            S.rooms[k].y = mix(from.rooms[k][1], to.rooms[k][1]);
+            S.rooms[k].x = mix(from.rooms[k][0], to[k][0]);
+            S.rooms[k].y = mix(from.rooms[k][1], to[k][1]);
         }
-        for (const p of ['x', 'y', 'z']) S.view[p] = mix(from.view[p], to.view[p]);
+        for (const p of ['x', 'y', 'z']) S.view[p] = mix(from.view[p], view[p]);
         draw();
         if (t < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
 }
 
-function placeRooms(rooms, links) {
+function* placeRooms(rooms, links) {
     const keys = Object.keys(rooms);
     const byRoom = Object.fromEntries(keys.map(k => [k, []]));
     const weight = Object.fromEntries(keys.map(k => [k, 0]));
@@ -560,6 +595,7 @@ function placeRooms(rooms, links) {
     };
     const seed = keys.slice().sort((a, b) => weight[b] - weight[a] || area(b) - area(a))[0];
     placed.add(seed);
+    yield seed;
     while (placed.size < keys.length) {
         const pull = Object.fromEntries(keys.map(k => [k, 0]));
         for (const l of links) {
@@ -576,6 +612,7 @@ function placeRooms(rooms, links) {
             if (c < best) { best = c; bx = x; by = y; }
         }
         rooms[k].x = bx; rooms[k].y = by;
+        yield k;
     }
 
     let rand = 1234567;
@@ -583,6 +620,7 @@ function placeRooms(rooms, links) {
     const pick = (list) => list[Math.floor(random() * list.length)];
     const steps = 12000;
     for (let i = 0; i < steps; i++) {
+        if (i % 2000 === 0) yield null;
         const t = 1 - i / steps;
         const temp = 12 * t * t + 0.05;
         const k = pick(keys);
@@ -681,8 +719,9 @@ function draw() {
     ctx.fillStyle = COLOR.paper;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.textBaseline = 'alphabetic';
+    const shown = S.order.filter(k => !S.hidden.has(k));
 
-    for (const k of S.order) {
+    for (const k of shown) {
         const r = S.rooms[k];
         const x0 = sx(r.x), y0 = sy(r.y);
         if (S.show.art) ctx.drawImage(r.art, x0, y0, r.w * z, r.h * z);
@@ -719,13 +758,13 @@ function draw() {
     }
 
     if (S.show.teleports) {
-        for (const k of S.order) {
+        for (const k of shown) {
             const r = S.rooms[k];
             for (const t of S.model.roomManager.rooms[k].transporters) {
                 // a door's target is authored as (district, cell): where that is in the drawn room
                 const at = S.model.roomManager.resolve(t.targetRoom, t.targetX, t.targetY);
                 const to = S.rooms[at.room];
-                if (!to) continue;
+                if (!to || S.hidden.has(at.room)) continue;
                 const lit = S.selected && ((S.selected.room === k && S.selected.x === t.gridX && S.selected.y === t.gridY) ||
                     (S.selected.room === at.room && S.selected.x === at.x && S.selected.y === at.y));
                 const near = S.selected && (S.selected.room === k || S.selected.room === at.room);
@@ -740,7 +779,7 @@ function draw() {
     }
 
     if (S.show.trains) {
-        const stations = Object.entries(S.model.config.stations || {}).filter(([k]) => S.rooms[k]);
+        const stations = Object.entries(S.model.config.stations || {}).filter(([k]) => S.rooms[k] && !S.hidden.has(k));
         ctx.setLineDash([6, 6]);
         ctx.strokeStyle = COLOR.moat;
         ctx.lineWidth = 1.5;
@@ -757,7 +796,7 @@ function draw() {
     }
 
     if (S.show.people) {
-        for (const k of S.order) {
+        for (const k of shown) {
             const r = S.rooms[k];
             for (const n of r.npcs) {
                 const px = sx(r.x + n.gridX), py = sy(r.y + n.gridY);
@@ -784,7 +823,7 @@ function draw() {
         ctx.fillStyle = COLOR.paper;
         ctx.fillText(name, sx(cx) + 6, sy(cy) + h - 6);
     };
-    for (const k of S.order) {
+    for (const k of shown) {
         const r = S.rooms[k];
         // a city is named by its districts, each at its own corner
         if (r.members) for (const mem of r.members) tag(mem.key, r.x + mem.x, r.y + mem.y);
@@ -794,14 +833,14 @@ function draw() {
     ctx.strokeStyle = COLOR.torii;
     ctx.lineWidth = 3;
     for (const p of S.survey.problems) {
-        if (p.x === undefined) continue;
+        if (p.x === undefined || S.hidden.has(p.room)) continue;
         const r = S.rooms[p.room];
         ctx.beginPath();
         ctx.arc(sx(r.x + p.x + 0.5), sy(r.y + p.y + 0.5), Math.max(z, 9), 0, Math.PI * 2);
         ctx.stroke();
     }
 
-    if (S.selected) {
+    if (S.selected && !S.hidden.has(S.selected.room)) {
         const r = S.rooms[S.selected.room];
         ctx.strokeStyle = COLOR.torii;
         ctx.lineWidth = 3;
@@ -1033,12 +1072,16 @@ function focusRect(x, y, w, h) {
     draw();
 }
 
+function fitted(keys) {
+    const rs = keys.map(k => S.rooms[k]);
+    const x0 = Math.min(...rs.map(r => r.x)), y0 = Math.min(...rs.map(r => r.y));
+    const x1 = Math.max(...rs.map(r => r.x + r.w)), y1 = Math.max(...rs.map(r => r.y + r.h));
+    const z = Math.min(stage.clientWidth / (x1 - x0 + 6), stage.clientHeight / (y1 - y0 + 8));
+    return { z, x: (x0 + x1) / 2 - stage.clientWidth / 2 / z, y: (y0 + y1) / 2 - 2 - stage.clientHeight / 2 / z };
+}
+
 function fit() {
-    const all = Object.values(S.rooms);
-    const w = Math.max(...all.map(r => r.x + r.w)), h = Math.max(...all.map(r => r.y + r.h));
-    S.view.z = Math.min(stage.clientWidth / (w + 6), stage.clientHeight / (h + 8));
-    S.view.x = w / 2 - stage.clientWidth / 2 / S.view.z;
-    S.view.y = h / 2 - 2 - stage.clientHeight / 2 / S.view.z;
+    Object.assign(S.view, fitted(S.order));
 }
 
 function resize() {
