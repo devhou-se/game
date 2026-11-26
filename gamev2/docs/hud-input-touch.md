@@ -169,6 +169,20 @@ The game always renders 1280x960; everything below is about showing that on anyt
   intro skipped a page, B closed and reopened the menu). `TouchControls._own` default-prevents the
   touch events on every control, which Phaser's window handlers respect. Any new DOM control over
   the page needs the same.
+- **"Rotate your phone" — `src/RotatePrompt.js` (`scene.rotatePrompt`, issues #111, #199).** Portrait
+  phones get no layouts of their own (the owner's call); instead a touch-first device
+  (`uiScale.handheld()`) held in portrait with a short side under 600 CSS px (`RotatePrompt.wanted`: never
+  a desktop, a tablet or a touchscreen laptop) is shown "Rotate your phone for a better experience" for
+  6 seconds. It is a toast, not an overlay: one `uiFloat` Text at depth 9500 where the shop's toast goes,
+  not interactive and not in `InputHandler`'s overlay list, so the game is played under it as usual.
+  A tap anywhere takes it down (and still does what it does: on the title it also starts the game); a
+  turn to landscape takes it down at once. It shows over the **title screen** (first thing on every
+  load, and before the creator and intro, which are what portrait shows worst) or over the plain world,
+  never over anything else at overlay depth (`RotatePrompt.overlayUp`): it waits unspent for the world to
+  be free and goes if an overlay opens under it, so no panel ever gives up a strip to it. Once per turn
+  into portrait and `RotatePrompt.MAX` (2) times a session: `RotatePrompt.next` keeps
+  `{shown, armed}` in sessionStorage `gamev2_rotate_prompt` (landscape re-arms), so a Time Travel reload
+  does not replay it.
 - **Testing**: playwright contexts with `hasTouch` AND `isMobile` (without `isMobile` the layout
   viewport never misbehaves the way a phone's does) at 844x390, 667x375, 390x844, 1024x768 and
   1366x1024; `page.touchscreen.tap` or CDP `Input.dispatchTouchEvent` for real touches (a d-pad press

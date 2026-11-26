@@ -108,4 +108,70 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.ok(src.includes('whole && [[room, true], [brief, true], [room, false], [brief, false]]'));
         assert.ok(src.includes('if (!row(long) && !full && !row(short) && !compact()) {'));
     });
+
+    test('the rotate prompt is for a portrait phone, once per turn into portrait, twice a session (#111, #199)', () => {
+        // not in the runner's load list: the class is loaded here, as index.html does
+        if (game('typeof RotatePrompt') === 'undefined') game(fs.readFileSync(path.join(GV2, 'src', 'RotatePrompt.js'), 'utf8'));
+        const R = game('RotatePrompt');
+        // who: a touch-first phone held upright, and nothing else
+        assert.strictEqual(R.wanted(390, 844, true), true, 'portrait phone');
+        assert.strictEqual(R.wanted(430, 932, true), true, 'big portrait phone');
+        assert.strictEqual(R.wanted(844, 390, true), false, 'landscape phone');
+        assert.strictEqual(R.wanted(1024, 768, true), false, 'landscape tablet');
+        assert.strictEqual(R.wanted(768, 1024, true), false, 'portrait tablet');
+        assert.strictEqual(R.wanted(1280, 960, false), false, 'desktop');
+        assert.strictEqual(R.wanted(390, 844, false), false, 'a narrow mouse / keyboard window, or a touchscreen laptop');
+        assert.strictEqual(R.wanted(390, 844, undefined), false);
+
+        // when: a fresh session shows it at once, if the title or the plain world is all there is
+        const plain = (o) => JSON.parse(JSON.stringify(o));
+        const fresh = R.parse(null);
+        assert.deepStrictEqual(plain(fresh), { shown: 0, armed: true });
+        let step = R.next(fresh, true, false);
+        assert.strictEqual(step.show, false, 'an overlay is up: it waits');
+        assert.strictEqual(step.state, fresh, 'and the turn is not spent');
+        step = R.next(fresh, true, true);
+        assert.deepStrictEqual(plain(step), { state: { shown: 1, armed: false }, show: true });
+        // dismissed or timed out: not again while the phone stays upright, however long
+        let s = step.state;
+        for (let i = 0; i < 5; i++) {
+            step = R.next(s, true, true);
+            assert.strictEqual(step.show, false);
+            assert.strictEqual(step.state, s);
+        }
+        // it survives a Time Travel reload (sessionStorage), still spent
+        s = R.parse(JSON.stringify(s));
+        assert.strictEqual(R.next(s, true, true).show, false);
+        // landscape re-arms it; back in portrait it shows once more, and that is the last
+        s = R.next(s, false, true).state;
+        assert.deepStrictEqual(plain(s), { shown: 1, armed: true });
+        assert.strictEqual(R.next(s, false, true).state, s, 'nothing to store while it stays in landscape');
+        step = R.next(s, true, true);
+        assert.deepStrictEqual(plain(step), { state: { shown: 2, armed: false }, show: true });
+        assert.strictEqual(R.MAX, 2);
+        s = R.next(step.state, false, true).state;
+        assert.strictEqual(R.next(s, true, true).show, false, 'never a third time in a session');
+        // a desktop never shows it and stays as it was
+        assert.strictEqual(R.next(fresh, false, true).show, false);
+        assert.strictEqual(R.next(fresh, false, true).state, fresh);
+        // junk in storage is a fresh session
+        for (const junk of ['', 'x', '1', '{"shown":-3}', '{"shown":"2"}', 'null']) assert.deepStrictEqual(plain(R.parse(junk)), { shown: 0, armed: true }, junk);
+        assert.deepStrictEqual(plain(R.parse('{"shown":2,"armed":false}')), { shown: 2, armed: false });
+
+        // "free": anything visible at overlay depth that is not a float or opted out is an overlay
+        const o = (depth, extra) => Object.assign({ depth, visible: true }, extra);
+        assert.strictEqual(R.overlayUp([o(0), o(1000), o(1999)]), false, 'world and HUD');
+        assert.strictEqual(R.overlayUp([o(0), o(2000)]), true, 'a panel');
+        assert.strictEqual(R.overlayUp([o(2000, { visible: false }), o(3500, { uiFloat: true }), o(5000, { uiScaleSkip: true })]), false,
+            'a hidden menu, a toast (or the prompt itself), the debug grid');
+        assert.strictEqual(R.OVERLAY_DEPTH, game('UIScale.MIN_DEPTH'));
+        assert.strictEqual(R.KEY, 'gamev2_rotate_prompt');
+        assert.ok(/Rotate your phone\s+for a better experience/.test(R.TEXT));
+
+        // wired in: in the page's script list, built after UIScale, and not an input-owning overlay
+        assert.ok(fs.readFileSync(path.join(GV2, 'index.html'), 'utf8').includes("'src/RotatePrompt.js',"));
+        const scene = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(scene.indexOf('new RotatePrompt(this)') > scene.indexOf('new UIScale(this)'));
+        assert.ok(!/rotatePrompt/.test(fs.readFileSync(path.join(GV2, 'src', 'systems', 'InputHandler.js'), 'utf8')));
+    });
 };

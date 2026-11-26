@@ -32,6 +32,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   colours that are on the month shown; the jump row under the selected date moves the cursor to today / the game's day (click, tap, or SHIFT + up / down), and the trips row above it to a trip
 - `src/TitleScreen.js` - Title / splash screen shown at boot (cast line-up, press SPACE / tap to start)
 - `src/Intro.js` - New-player intro (who devhouse is, controls as keycaps, where to start); replayable from the menu as How to Play
+- `src/RotatePrompt.js` - "Rotate your phone for a better experience": a brief toast on a portrait phone (see `hud-input-touch.md`)
 - `assets/portraits/` - Optional hand-drawn character portraits (`manifest.json` + `<name>.png`, see its README)
 - `src/Voice.js` - Spoken NPC dialogue (lazy per-line audio clips) and the shared mute setting
 - `src/AmbientTrains.js` / `src/AmbientBoats.js` - Decorative passing trains and moat boats (see Ambient Traffic)

@@ -279,6 +279,7 @@ class GameScene extends Phaser.Scene {
             this.debugManager = new DebugManager(this);
             this.touchControls = new TouchControls(this); // on-screen d-pad (touch / ?touch=1)
             this.uiScale = new UIScale(this); // magnifies overlays on small viewports
+            this.rotatePrompt = new RotatePrompt(this); // "rotate your phone", briefly, on a portrait phone
 
             // Create HUD
             this.createHUD();
