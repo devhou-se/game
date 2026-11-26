@@ -62,7 +62,7 @@ async function boot() {
 
     // the rooms that are drawn: a stitched city stands in for its districts
     const shown = m.runtimeRooms();
-    layout(shown, worldMap);
+    layout(shown);
     for (const k of shown) {
         m.enter(k, 0, 0);
         const r = S.rooms[k];
@@ -112,38 +112,161 @@ async function boot() {
     $('loading').remove();
 }
 
-function layout(keys, worldMap) {
+function layout(keys) {
     const m = S.model;
-    const size = (k) => [m.roomManager.rooms[k].worldWidth / 64, m.roomManager.rooms[k].worldHeight / 64];
-    let right = 0, bottom = 0;
+    const rooms = {};
     for (const k of keys) {
-        // a city sits where its first district is on the world map, less that district's offset in it
+        const r = m.roomManager.rooms[k];
         const city = m.roomManager.cities[k];
-        const anchor = city ? city.members.find(mem => worldMap.rooms[mem.key]) : null;
-        const rect = worldMap.rooms[anchor ? anchor.key : k];
-        if (!rect) continue;
-        const [w, h] = size(k);
-        const scale = rect.w / rect.cells[0];
-        S.rooms[k] = { x: Math.round(rect.x / scale) - (anchor ? anchor.x : 0), y: Math.round(rect.y / scale) - (anchor ? anchor.y : 0), w, h,
-            members: city ? city.members : null };
-        right = Math.max(right, S.rooms[k].x + w);
-        bottom = Math.max(bottom, S.rooms[k].y + h);
+        rooms[k] = { x: 0, y: 0, w: r.worldWidth / 64, h: r.worldHeight / 64, members: city ? city.members : null };
     }
-    let x = 0, y = bottom + 8, rowH = 0;
+    const links = [];
     for (const k of keys) {
-        if (S.rooms[k]) continue;
-        const [w, h] = size(k);
-        if (x + w > Math.max(right, 120)) { x = 0; y += rowH + 6; rowH = 0; }
-        S.rooms[k] = { x, y, w, h };
-        x += w + 4;
-        rowH = Math.max(rowH, h);
+        for (const t of m.roomManager.rooms[k].transporters) {
+            if (!rooms[t.targetRoom]) continue;
+            links.push({ a: k, ax: t.gridX + 0.5, ay: t.gridY + 0.5, b: t.targetRoom, bx: t.targetX + 0.5, by: t.targetY + 0.5, w: 1 });
+        }
     }
-    // bottom first. Districts shown side by side (?stitch=0) stack the way the stitched city does:
-    // the later one on top (WorldModel.stackOrder). A city's woodland fills its whole bounding box:
-    // cities are drawn first, so a town the world map ever places inside that box (none does since
-    // issue #174) is still on top of the woods
+    const stations = Object.entries(m.config.stations || {}).filter(([k]) => rooms[k]);
+    for (let i = 0; i < stations.length; i++) for (let j = i + 1; j < stations.length; j++) {
+        const [a, sa] = stations[i], [b, sb] = stations[j];
+        links.push({ a, ax: sa.board[0][0] + 0.5, ay: sa.board[0][1] + 0.5, b, bx: sb.board[0][0] + 0.5, by: sb.board[0][1] + 0.5, w: 0.15 });
+    }
+    S.rooms = placeRooms(rooms, links);
+    // cities first: a city's woodland fills its whole bounding box, so anything else is drawn over it.
+    // Districts shown side by side (?stitch=0) keep the stitched city's stacking order
     const stacked = WorldModel.stackOrder(m.config, keys);
     S.order = stacked.filter(k => S.rooms[k].members).concat(stacked.filter(k => !S.rooms[k].members));
+}
+
+const THROUGH = 4;
+const GAP = 4;
+function placeRooms(rooms, links) {
+    const keys = Object.keys(rooms);
+    const byRoom = Object.fromEntries(keys.map(k => [k, []]));
+    const weight = Object.fromEntries(keys.map(k => [k, 0]));
+    for (const l of links) {
+        byRoom[l.a].push(l);
+        if (l.b !== l.a) byRoom[l.b].push(l);
+        weight[l.a] += l.w;
+        weight[l.b] += l.w;
+    }
+    const area = (k) => rooms[k].w * rooms[k].h;
+    const overlaps = (k, x, y, placed) => {
+        const r = rooms[k];
+        for (const o of placed) {
+            if (o === k) continue;
+            const p = rooms[o];
+            if (x < p.x + p.w + GAP && x + r.w + GAP > p.x && y < p.y + p.h + GAP && y + r.h + GAP > p.y) return true;
+        }
+        return false;
+    };
+    const linkCost = (l, placed) => {
+        const a = rooms[l.a], b = rooms[l.b];
+        const x1 = a.x + l.ax, y1 = a.y + l.ay, x2 = b.x + l.bx, y2 = b.y + l.by;
+        const len = Math.hypot(x2 - x1, y2 - y1);
+        let through = 0;
+        for (const o of placed) {
+            if (o === l.a || o === l.b) continue;
+            through += clipLength(x1, y1, x2, y2, rooms[o]);
+        }
+        return l.w * (len + THROUGH * through);
+    };
+    const roomCost = (k, placed) => byRoom[k].reduce((c, l) => c + (placed.has(l.a) && placed.has(l.b) ? linkCost(l, placed) : 0), 0);
+    const movedCost = (moved) => {
+        const touched = new Set();
+        for (const k of moved) for (const l of byRoom[k]) touched.add(l);
+        let c = 0;
+        for (const l of touched) c += linkCost(l, placed);
+        for (const l of links) {
+            if (touched.has(l)) continue;
+            const a = rooms[l.a], b = rooms[l.b];
+            for (const k of moved) c += l.w * THROUGH * clipLength(a.x + l.ax, a.y + l.ay, b.x + l.bx, b.y + l.by, rooms[k]);
+        }
+        return c;
+    };
+
+    const placed = new Set();
+    const spots = (k, others) => {
+        const r = rooms[k], out = [];
+        for (const o of others) {
+            if (o === k) continue;
+            const p = rooms[o];
+            for (let y = p.y - r.h + 1; y < p.y + p.h; y += 2) out.push([p.x + p.w + GAP, y], [p.x - r.w - GAP, y]);
+            for (let x = p.x - r.w + 1; x < p.x + p.w; x += 2) out.push([x, p.y + p.h + GAP], [x, p.y - r.h - GAP]);
+        }
+        return out;
+    };
+    const seed = keys.slice().sort((a, b) => weight[b] - weight[a] || area(b) - area(a))[0];
+    placed.add(seed);
+    while (placed.size < keys.length) {
+        const pull = Object.fromEntries(keys.map(k => [k, 0]));
+        for (const l of links) {
+            if (placed.has(l.a) && !placed.has(l.b)) pull[l.b] += l.w;
+            if (placed.has(l.b) && !placed.has(l.a)) pull[l.a] += l.w;
+        }
+        const k = keys.filter(k => !placed.has(k)).sort((a, b) => pull[b] - pull[a] || area(b) - area(a))[0];
+        placed.add(k);
+        let best = Infinity, bx = 0, by = 0;
+        for (const [x, y] of spots(k, placed)) {
+            if (overlaps(k, x, y, placed)) continue;
+            rooms[k].x = x; rooms[k].y = y;
+            const c = roomCost(k, placed) + (Math.abs(x) + Math.abs(y)) * 1e-3;
+            if (c < best) { best = c; bx = x; by = y; }
+        }
+        rooms[k].x = bx; rooms[k].y = by;
+    }
+
+    let rand = 1234567;
+    const random = () => (rand = (rand * 1103515245 + 12345) & 0x7fffffff) / 0x80000000;
+    const pick = (list) => list[Math.floor(random() * list.length)];
+    const steps = 12000;
+    for (let i = 0; i < steps; i++) {
+        const t = 1 - i / steps;
+        const temp = 12 * t * t + 0.05;
+        const k = pick(keys);
+        const r = rooms[k];
+        const move = random();
+        const swap = move >= 0.85 ? pick(keys) : null;
+        if (swap === k) continue;
+        const s = swap ? rooms[swap] : null;
+        const moved = swap ? [k, swap] : [k];
+        const was = [r.x, r.y, s && s.x, s && s.y];
+        const before = movedCost(moved);
+        if (swap) {
+            [r.x, r.y, s.x, s.y] = [s.x, s.y, r.x, r.y];
+        } else if (move < 0.5) {
+            const reach = Math.max(1, Math.round(8 * t));
+            r.x += Math.round((random() * 2 - 1) * reach);
+            r.y += Math.round((random() * 2 - 1) * reach);
+        } else {
+            const near = byRoom[k].length ? pick(byRoom[k]) : null;
+            const o = near ? (near.a === k ? near.b : near.a) : pick(keys);
+            [r.x, r.y] = pick(spots(k, [o]));
+        }
+        const ok = !overlaps(k, r.x, r.y, placed) && (!swap || !overlaps(swap, s.x, s.y, placed));
+        const delta = ok ? movedCost(moved) - before : Infinity;
+        if (delta > 0 && random() >= Math.exp(-delta / temp)) {
+            [r.x, r.y] = was;
+            if (swap) [s.x, s.y] = [was[2], was[3]];
+        }
+    }
+
+    const minX = Math.min(...keys.map(k => rooms[k].x)), minY = Math.min(...keys.map(k => rooms[k].y));
+    for (const k of keys) { rooms[k].x -= minX; rooms[k].y -= minY; }
+    return rooms;
+}
+
+function clipLength(x1, y1, x2, y2, r) {
+    const dx = x2 - x1, dy = y2 - y1;
+    let t0 = 0, t1 = 1;
+    for (const [p, q] of [[-dx, x1 - r.x], [dx, r.x + r.w - x1], [-dy, y1 - r.y], [dy, r.y + r.h - y1]]) {
+        if (p === 0) { if (q < 0) return 0; continue; }
+        const t = q / p;
+        if (p < 0) { if (t > t1) return 0; if (t > t0) t0 = t; }
+        else { if (t < t0) return 0; if (t < t1) t1 = t; }
+    }
+    return (t1 - t0) * Math.hypot(dx, dy);
 }
 
 function renderArt(k) {
