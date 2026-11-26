@@ -30,6 +30,13 @@ one). Run from gamev2/:
     PY=/Library/Developer/CommandLineTools/usr/bin/python3
     $PY tools/extract_shrine.py            # write
     $PY tools/extract_shrine.py --check    # report edge clipping only
+
+It also cuts the one piece of a shrine INTERIOR the pack has (issue #212): the
+garland rope with its paper streamers, 96x31 native at (352, 144) of the temple
+atlas (the row under it belongs to the next tile, so the cell's last row is left empty), as `shrine-in-rope_0_0` (3x1 cells). It is strung between the pillars of
+a worship hall by tools/generate_shrines.py; everything else in there is drawn
+by tools/generate_shrine_art.py. The atlas has no named tile for it, so its
+rectangle is given here (CUTS).
 """
 import glob, json, re, sys
 from PIL import Image
@@ -37,6 +44,9 @@ from PIL import Image
 TRES = '../Assets/Tilemap/GuttyKreum.tres'
 # sprite key -> (Godot tile name in TRES, tile it sits on top of)
 SPRITES = {'shrine-top_0_0': ('shrine-top', 'shrine-building')}
+ATLAS = '../Assets/GuttyKreum/TemplesShrines_v2/Non-RPGMaker_Tilemap/Main_Tilemap.png'
+# sprite key -> (native crop box in ATLAS, display name)
+CUTS = {'shrine-in-rope_0_0': ((352, 144, 448, 175), 'shrine-in-rope')}
 
 
 def tile_source(txt, name):
@@ -105,6 +115,23 @@ def main():
             anchorX=round(16.0 / native.width, 4), anchorY=round(16.0 / native.height, 4))
         cfg.setdefault('tileNames', {})[key] = name
         sync_tiled(key, big.size)
+    for key, (box, name) in CUTS.items():
+        cut = Image.open(ATLAS).convert('RGBA').crop(box)
+        native = Image.new('RGBA', (-(-cut.width // 32) * 32, -(-cut.height // 32) * 32), (0, 0, 0, 0))
+        native.paste(cut, (0, 0))
+        # the rope runs off both ends of its section on purpose (it is hung end to end)
+        edges = [e for e in clipped_edges(native) if e in ('top', 'bottom')]
+        print(f'{key}: {ATLAS} {box} -> {native.width * 2}x{native.height * 2}px, '
+              f'clipped edges: {", ".join(edges) or "none"}')
+        if check:
+            continue
+        if edges:
+            sys.exit(f'{key}: art touches the {"/".join(edges)} edge of {box}')
+        big = native.resize((native.width * 2, native.height * 2), Image.NEAREST)
+        big.save(f'assets/sprites/{key}.png')
+        cfg['spriteMetadata'][key] = {'frameCount': 1, 'anchorX': round(16.0 / native.width, 4),
+                                      'anchorY': round(16.0 / native.height, 4)}
+        cfg.setdefault('tileNames', {})[key] = name
     if not check:
         open('config.json', 'w').write(json.dumps(cfg, indent=2, sort_keys=True))
 

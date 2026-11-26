@@ -9,6 +9,9 @@ const Interactions = {
         { kind: 'snacks', group: 'shop', pattern: /^office-shelf-snacks/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },
         { kind: 'water', group: 'water', pattern: /^office-watercooler/, footprint: true, room: 'konbini' },
+        // inside a shrine's worship hall (tools/generate_shrines.py; src/ShrineVisit.js)
+        { kind: 'offering', group: 'shrine', pattern: /^shrine-in-saisen/, footprint: true },
+        { kind: 'omikuji', group: 'shrine', pattern: /^shrine-in-omikuji_/, footprint: true },
         { kind: 'pond', group: 'pond', pattern: /^pond-autotile/ },
         { kind: 'clock', group: 'clock', pattern: /^(office-clock|office-poster-menu)/ },
         // a home's furniture (issue #208, tools/generate_houses.py): a bump says one line

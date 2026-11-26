@@ -38,5 +38,9 @@ drawn under it. `src/systems/Occlusion.js` keeps them in view with one rule for 
   own reasons would fight it — none does today.
 - `GameScene.update` calls `occlusion.update()` right after `updateCharacterDepths()`. For a before/after
   look in the console: `game.scene.keys.GameScene.occlusion.enabled = false`.
+- Indoors the same rule gives a room depth (issue #212): a shrine hall's pillars are 1x3 `Collidables` with only
+  the foot solid, so the shaft cells are walked behind and the pillar fades; its hanging pieces are `Tops`
+  under four rows tall, lifted in front of the taller thing behind them with a `depthBias` (the rope over the
+  sanctuary, the bell rope in front of the offering box).
 - Layering consequences for maps: a walk-behind strip no longer hides anyone, so "the player vanishes
   behind X" is not a reason to add colliders any more (colliders are for where you cannot stand).

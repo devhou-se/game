@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 14,
- "nextobjectid": 354,
+ "nextobjectid": 355,
  "properties": [
   {
    "name": "gv2room",
@@ -24451,6 +24451,43 @@
     },
     {
      "id": 353,
+     "name": "transporter",
+     "point": true,
+     "x": 1952.0,
+     "y": 1312.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ShrineTokyo1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 12
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 354,
      "name": "boundary",
      "x": 0,
      "y": 0,

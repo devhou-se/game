@@ -180,6 +180,8 @@ class Shop {
         this.energy = Energy.clamp(raw.energy);
         this.stamps = Stamps.clean(raw.stamps);     // place id -> 1 (the stamp card)
         this.hints = Stamps.clean(raw.hints);       // one-time hints already given
+        // the day's omikuji, {date, i}, when one has been drawn (ShrineVisit; absent in older blobs)
+        this.omikuji = Shop.omikujiOf(raw.omikuji);
 
         // effects are saved as {id, until}; the numbers come back from the
         // catalogue, and an expiry can never be further off than the item lasts
@@ -197,9 +199,11 @@ class Shop {
         const effects = {};
         for (const slot in this.effects) effects[slot] = { id: this.effects[slot].id, until: this.effects[slot].until };
         try {
-            localStorage.setItem(this.STORE_KEY, JSON.stringify({
+            const blob = {
                 v: 4, money: this.money, items: this.items, effects, used: this.used, caught: this.caught,
-                energy: Math.round(this.energy * 100) / 100, stamps: this.stamps, hints: this.hints }));
+                energy: Math.round(this.energy * 100) / 100, stamps: this.stamps, hints: this.hints };
+            if (this.omikuji) blob.omikuji = this.omikuji;   // only once a fortune has been drawn
+            localStorage.setItem(this.STORE_KEY, JSON.stringify(blob));
         } catch (e) { /* private mode etc — play on without persistence */ }
     }
 
@@ -820,6 +824,13 @@ class Shop {
         });
     }
 }
+
+/** The saved omikuji as {date, i}, or null for anything that is not one (which fortune `i` is: ShrineVisit). */
+Shop.omikujiOf = (raw) => {
+    if (!raw || typeof raw !== 'object' || !/^\d{4}-\d{2}-\d{2}$/.test(String(raw.date))) return null;
+    const i = Math.floor(Number(raw.i));
+    return i >= 0 ? { date: raw.date, i } : null;
+};
 
 /** How long a toast stays up before it fades — longer lines get longer. */
 Shop.toastMs = (msg) => Math.max(1800, String(msg).length * 45);

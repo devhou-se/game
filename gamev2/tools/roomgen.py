@@ -50,15 +50,24 @@ TOWER_DOORS = {
     'highrise-apartment_0_0': [(2, 7)], 'midrise-apartment_0_0': [(2, 5)],
 }
 LOBBY_PREFIX = 'Lobby'      # rooms.Lobby<Town><n>
-# room-key prefix -> (the key on the interior that says the generator owns it, its door sprites)
+# The shrine halls tools/generate_shrines.py can open (issue #212): the hall's
+# sprite on Collidables -> its door cells, relative to the sprite's top-left
+# cell (the top step of the `shrine` / `shrine-red` prefab; Dazaifu's own hall).
+SHRINE_DOORS = {'shrine-building_0_0': [(1, 4)], 'dazaifu-hall_0_0': [(3, 4)]}
+SHRINE_PREFIX = 'Shrine'    # rooms.Shrine<Town><n>, the worship halls generate_shrines.py owns
+# Every kind of interior whose door a town generator neither builds nor knows
+# about, and save_config therefore keeps through a town rebuild (keep_house_doors):
+# room-key prefix -> (the key on the interior that says its generator owns it, its door sprites).
+# A new kind is one more row here, and a `{host, door}` marker on its rooms.
 OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()}),
-               LOBBY_PREFIX: ('lobby', TOWER_DOORS)}
-_house_doors = {}           # room -> its transporters as loaded, when any leads into a house or a lobby
+               LOBBY_PREFIX: ('lobby', TOWER_DOORS),
+               SHRINE_PREFIX: ('shrine', SHRINE_DOORS)}
+_house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior
 
 
 def owned_door(cfg, t):
     """The door sprites of the kind of interior transporter `t` leads into, if
-    generate_houses.py owns that interior (a house or a lobby that exists)."""
+    its generator owns that interior (a house, a lobby or a worship hall that exists)."""
     for prefix, (marker, sprites) in OWNED_DOORS.items():
         owner = cfg['rooms'].get(t['targetRoom'], {}).get(marker) if t['targetRoom'].startswith(prefix) else None
         # ...and still counts this cell among its doors (one of a tower's pair may have been shut)
@@ -69,7 +78,7 @@ def owned_door(cfg, t):
 
 def house_door_at(room, x, y, sprites=None):
     """Whether (x, y) of `room` is the front door of a house that stands there
-    (or, given a lobby's `sprites`, a door of a tower)."""
+    (or, given another kind's `sprites` - a lobby's, a shrine's - a door of one of those)."""
     sprites = sprites or OWNED_DOORS[HOUSE_PREFIX][1]
     for layer in room.get('layers', []):
         if layer['name'] != 'Collidables':
@@ -110,7 +119,9 @@ def keep_house_doors(cfg):
     removed stays sealed until generate_houses.py is run for the town). The
     list keeps the order it was loaded in (kept_order), so a town generator
     re-run on an unchanged world still leaves config.json byte-identical.
-    The doors into a tower's lobby (issue #216) are kept the same way."""
+    The doors into a tower's lobby (issue #216) and into a shrine's worship
+    hall (issue #212, generate_shrines.py) are kept the same way, and so is
+    every kind of interior in OWNED_DOORS."""
     for key, before in _house_doors.items():
         room = cfg['rooms'].get(key)
         if room is None:

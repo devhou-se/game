@@ -327,7 +327,8 @@ that cell, for a machiya that is a house).
 - **A town generator needs no edit.** It rebuilds its room from scratch with every house sealed, so
   `roomgen.save_config` puts back the house doors the room had on load (`keep_house_doors`: a transporter
   into a `House...` room that still exists, where the house still stands and the rebuild put no other door),
-  in the order they were in. A house the generator moved or removed stays sealed until `generate_houses.py`
+  in the order they were in. The same function keeps every kind of interior listed in `roomgen.OWNED_DOORS`
+  (a tower's lobby and a shrine's worship hall are the other two). A house the generator moved or removed stays sealed until `generate_houses.py`
   is run for the town, which also deletes the rooms no house claims any more.
 - **Art**: no pack in `../Assets` has a home interior (the GuttyKreum packs are exteriors and a train car;
   there is no `Modern_Interiors`). `tools/extract_house_interior.py` takes what fits - floorboards from the
@@ -377,3 +378,58 @@ tower); the rollout is `.agent-queue/items/lobbies_apply.sh <Town> ...`.
 - **Dry run of the other towns** (26 Nov): Sapporo 2 of 3 and Fukuoka 3 of 4 (a lamp post stands in front
   of the flats' door in each), Sendai 1 of 2 (the flats' door opens onto a sealed verge), Market 1,
   Palace 2; Asahikawa, Tokyo and Park have no towers.
+
+### Shrine worship halls (issue #212)
+
+A shrine hall is enterable: its top step (the `shrine` / `shrine-red` prefab's door cell, building cell
+`(1, 4)`) carries a hidden transporter into a worship hall of its own, `Shrine<Host><n>` (HUD: `Shrine | Tokyo`).
+Applied so far to **Tokyo, Market and Park**; Asahikawa, Kushida and Dazaifu Tenmangu (Fukuoka) come with
+the roll-out, Machi is being deleted.
+
+- **`tools/generate_shrines.py [Host ...]`** owns the interior and the door it opens in the host, like
+  `generate_konbinis.py`: the room is rebuilt from scratch (its NPCs kept), the door cell is unsealed and its
+  transporter replaced in place, and the two exit mats lead to the cell in front of the door. With no host it
+  rebuilds the halls already wired (what `check_generators.py` runs); a host is named the first time.
+  `.agent-queue/items/shrines_apply.sh <Host> ...` is the whole roll-out for a town (art, generator,
+  `config_to_tiled`, lint, the five gates).
+- **A town generator keeps the door.** A generated town rebuilds its room and stamps the hall sealed;
+  `roomgen.save_config` then puts the door back exactly as it does a house's (`keep_house_doors`, see House
+  interiors): the hall's room carries `shrine: {host, door, look, size}`, and `'Shrine'` is a row of
+  `roomgen.OWNED_DOORS` (room-key prefix -> that marker and the door sprites, `SHRINE_DOORS`), so a door
+  the room had on load is restored where the hall still stands (cell unsealed, transporter back in its
+  place in the list) and dropped where the hall moved or its room is gone. No town generator needs an edit
+  for its shrine to stay open; `shrines.test.js` proves it on a scratch Asahikawa, and
+  `check_generators.py` for every wired town. Another kind of interior is one more row in `OWNED_DOORS`.
+- **What is inside** (20x16; the floor is 18x10): the inner sanctuary (`honden`, 6x3) on a raised floor
+  at the back, its doors open on the mirror, offerings and paper wands in front of it; a see-through railing
+  one row in front (drawn over the sanctuary: its feet are a row lower) with a standing lamp at each end; the
+  thick straw rope (`shimenawa`, Tops) across the sanctuary's lintel; the offering box (`saisen`, 2x2, solid)
+  with the bell and its braided rope over it (`bell`, Tops); a cloth runner from the door to the box;
+  pillars 1x3 with only the foot solid, so the shaft is walked behind (Occlusion fades it); a garland of rope
+  and paper (the pack's own, `shrine-in-rope`) between the front pair's heads; hanging paper lanterns; a
+  tatami room with a taiko and cushions; the miko's counter (she is part of the sprite, not an NPC); a rack
+  of wishing plaques (`ema`); the fortune stand (`omikuji`) and its rail of tied fortunes; daylight through
+  the door (`doorlight`, a flat sprite: Non-Collidables with a negative `depthBias`).
+- **Three variants.** The look follows the roof: under `shrine-top` (blue) the hall is bare cypress, white
+  plaster and indigo on a cool dark floor, the counter on the west side and standing lamps either side of
+  the box; under `red-shrine-top` it is vermilion and gilt on a warm dark floor, the mirror image, with a
+  second pair of pillars level with the box. `LARGE` in the generator (Kushida, Dazaifu Tenmangu) builds a
+  26x18 hall with a third pair of pillars, plaques on both sides and more lanterns. `HALLS` maps a hall's
+  tile to its door cell, `NAMES` gives a hall its own name.
+- **Lantern light.** The room is `interior` (never offered to the blog pipeline, no day/night grade) and
+  `lanternLight`: at night only, `DayNight.gradeFor` dims it warm (`LANTERN_NIGHT`) and every `*-lanterns*`
+  tile gets its halo. `shopEnabled: false`: nothing in it is a konbini fixture.
+- **Something to do** (`src/ShrineVisit.js`, two `shrine` rules in `Interactions.js`; proposed, not yet
+  confirmed by the owner - the file's header says how to take it out): bump the offering box and ¥5 goes in,
+  the bell rings (a toast: there are no sound effects) and a blessing is said; bump the fortune stand and
+  ¥100 draws the day's omikuji, great blessing to great curse. One a game day, kept in the shop's save blob,
+  read back free until the date changes. No overlay, no key: a bump, so touch works as it stands. A held key
+  makes one visit per 1.5 s.
+- **Art**: `tools/generate_shrine_art.py` (needs Pillow; `--preview out.png`) draws every piece as shaded
+  pixel art in the two looks (`shrine-in-<piece>-red|blue`, shared pieces `shrine-in-<piece>`); the temple
+  packs are exteriors only, and `tools/extract_shrine.py` cuts the one interior piece they have, the garland.
+  Both are in `check_generators.py`.
+- **Doors and blog NPCs**: the door-front cell stays clear (`NPCManager.atDoorway`; `shrines.test.js` holds
+  it for every dated position). `the shrine` LANDMARK stands its visitor at building cell `(1, 6)`, the foot
+  of the two steps: two cells below the door, not in front of it, and walked round by the side of the
+  bottom step.

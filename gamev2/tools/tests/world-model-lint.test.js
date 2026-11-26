@@ -30,29 +30,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith, require }) => 
         }
     });
 
-    test('every shrine roof (blue and red) seals the cells it hides, as the shrine prefab does', () => {
-        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
-        const prefab = JSON.parse(fs.readFileSync(path.join(GV2, 'tiled', 'prefabs', 'shrine.tmj'), 'utf8'));
-        const seal = prefab.layers.find((l) => l.name === 'Colliders').data;
-        let roofs = 0;
-        for (const [name, room] of Object.entries(cfg.rooms)) {
-            const solid = room.layers.find((l) => l.name === 'Colliders');
-            for (const layer of room.layers) {
-                for (const [cell, id] of Object.entries(layer.tiles)) {
-                    if (!/^(red-)?shrine-top_0_0$/.test(cfg.tilePalette[id])) continue;
-                    roofs++;
-                    const [ox, oy] = cell.split(',').map(Number);
-                    const open = [];
-                    seal.forEach((gid, i) => {
-                        const at = `${ox + i % prefab.width},${oy + Math.floor(i / prefab.width)}`;
-                        if (gid && !(solid && at in solid.tiles)) open.push(at);
-                    });
-                    assert.deepStrictEqual(open, [], `${name}: the roof at ${cell} leaves cells behind it open`);
-                }
-            }
-        }
-        assert.strictEqual(roofs, 7, 'found every shrine roof: Tokyo, Machi, Asahikawa, Kanazawa (blue), Market, Park, Fukuoka (red)');
-    });
+    // (the shrine-seal test - every hall sealed as the `shrine` prefab seals it, except its one door
+    // cell - is in shrines.test.js since the halls became enterable, #212)
 
     test('the headless world model is stopped by collision tiles, like the game', () => {
         const WorldModel = game('WorldModel');

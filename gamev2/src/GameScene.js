@@ -271,6 +271,7 @@ class GameScene extends Phaser.Scene {
             this.dialogueManager = new DialogueManager(this);
             this.shop = new Shop(this);
             this.fishing = new Fishing(this);
+            this.shrineVisit = new ShrineVisit(this);
             this.drinkingGame = new DrinkingGame(this);
             this.characterSelect = new CharacterSelect(this);
             this.characterCreator = new CharacterCreator(this);
@@ -1052,6 +1053,10 @@ class GameScene extends Phaser.Scene {
         // bumping pond water casts a line (the fishing mini game)
         if (this.fishing && !this.dialogueManager.isVisible() && !this.shop.isVisible()) {
             this.fishing.checkStart(targetGridX, targetGridY);
+        }
+        // bumping a shrine's offering box or fortune stand: an offering, a fortune
+        if (this.shrineVisit && !this.dialogueManager.isVisible() && !this.shop.isVisible()) {
+            this.shrineVisit.check(targetGridX, targetGridY);
         }
         // bumping a wall clock or calendar opens the time-travel picker
         if (!this.dialogueManager.isVisible() && !this.shop.isVisible() &&

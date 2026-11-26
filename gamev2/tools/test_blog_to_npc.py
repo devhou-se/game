@@ -491,9 +491,11 @@ def test_city_reach(cfg):
     for name in names:
         assert b.city_districts(cfg, name) == districts
 
-    # Tokyo has no door of its own - only seams - and is still judged (it
-    # used to fall back to "no filter"); nobody is judged from the seams alone
-    assert all(t['targetRoom'] in names for t in cfg['rooms']['Tokyo']['transporters'])
+    # Tokyo has seams and one door of its own, into its shrine hall (#212; it
+    # had none before) - and is still judged (it used to fall back to "no
+    # filter"); nobody is judged from the seams alone
+    assert [t['targetRoom'] for t in cfg['rooms']['Tokyo']['transporters']
+            if t['targetRoom'] not in names] == ['ShrineTokyo1']
     reach = {name: b.reachable_cells(cfg, name) for name in names}
     for name in names:
         assert reach[name], f'{name}: nothing reachable'

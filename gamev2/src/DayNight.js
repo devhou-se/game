@@ -9,7 +9,9 @@
  * The grade is a camera-fixed MULTIPLY rectangle at depth 950 — above the
  * whole world and its labels (<= 900), below the HUD (1000) and the train-ride
  * cutscene (~3000). Glows sit just above the grade so they cut through the
- * darkness. Interior rooms ("interior": true in config) are never graded.
+ * darkness. Interior rooms ("interior": true in config) are never graded -
+ * except one lit by lanterns ("lanternLight": true, a shrine's worship hall):
+ * at night it dims a little and its lanterns glow; by day it is untouched.
  *
  * ?tod=dawn|day|dusk|night pins the period for testing.
  */
@@ -49,7 +51,7 @@ class DayNight {
     apply() {
         const roomKey = this.scene.roomManager.currentRoom;
         const roomCfg = this.scene.config.rooms[roomKey] || {};
-        const grade = roomCfg.interior ? null : DayNight.GRADES[this.period()];
+        const grade = DayNight.gradeFor(roomCfg, this.period());
 
         if (!grade) {
             this.grade.setVisible(false);
@@ -123,6 +125,16 @@ class DayNight {
     }
 }
 
+/**
+ * The grade for a room in a period, or null for none. An interior is lit from
+ * inside and ignores the hour, unless its light is lanterns: then night (and
+ * only night) dims it warm and turns the halos on.
+ */
+DayNight.gradeFor = (roomCfg, period) => {
+    if (!(roomCfg && roomCfg.interior)) return DayNight.GRADES[period] || null;
+    return roomCfg.lanternLight && period === 'night' ? DayNight.LANTERN_NIGHT : null;
+};
+
 /** Colour grades per period (MULTIPLY): day is untouched, night turns lights on. */
 DayNight.GRADES = {
     dawn:  { color: 0xffd9c2, alpha: 0.85, lights: false },
@@ -130,5 +142,8 @@ DayNight.GRADES = {
     dusk:  { color: 0xffbe94, alpha: 0.85, lights: false },
     night: { color: 0x7480c0, alpha: 1.0,  lights: true },
 };
+
+/** A lantern-lit interior at night: dimmer and warmer than the street outside. */
+DayNight.LANTERN_NIGHT = { color: 0xa890a8, alpha: 1.0, lights: true };
 
 if (typeof window !== 'undefined') window.DayNight = DayNight;

@@ -11,7 +11,7 @@ committed world: it runs each one in a scratch copy and fails, naming the rooms 
 would change (issue #107, see "Generated rooms stay regenerable"). It also re-seeds every room with
 `config_to_tiled.py` and fails if a committed `tiled/*.tmj` would change (a config edit whose map was not
 re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_fukuoka_art`, `_hokuriku_art`, `_tsutenkaku`,
-`_discount_art`, `_cooler_art`, `_station_art`, `_house_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
+`_discount_art`, `_cooler_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
 `extract_*.py` scripts, `extract_station` among them) and fails if `assets/sprites`, `assets/ads`, `assets/map`, `tiled/prefabs` or `config.json` would
 change (issues #186, #193). Run it after any edit to a
 generated room, a map or a generator. The room and map checks take a few seconds and need no Pillow; the
@@ -26,8 +26,9 @@ see `generate_ads.find_font`, and are listed as `skip`, not checked, where none 
   holds for `generate_machi`, `_inaka`, `_yukimura`, `_osaka`, `_sapporo`, `_asahikawa`, `_sendai`, `_fukuoka`,
   `_kanazawa`, `_shirakawago`, `_toyama`, `_konbinis`,
   `_discount_stores`, `_stations`, `_izakaya` (the Izakaya interior plus its street door,
-  lantern pair and two pinned ad boards in Market, see Shop, Food and Drink) and `_houses` (every house
-  interior and its door, see House interiors), each run on its own:
+  lantern pair and two pinned ad boards in Market, see Shop, Food and Drink), `_houses` (every house
+  interior and its door, see House interiors) and `_shrines` (the worship halls and the doors into
+  them, see "Shrine worship halls" in `landmarks-and-towns.md`), each run on its own:
   - a town generator ends with `b.finish()` (`roomgen.Builder`), which runs the picket-fence and
     solid-track passes itself — `fix_fences.py` / `seal_tracks.py` are the same code
     (`roomgen.picket_fences` / `roomgen.seal_tracks`) for a room named on the command line, and are no
@@ -36,9 +37,10 @@ see `generate_ads.find_font`, and are listed as `skip`, not checked, where none 
     ad `signage`, and a 7-Eleven door wired by `generate_konbinis.py` (`roomgen.kept_door`; with none to
     keep, on a first build, the door is sealed until `generate_konbinis.py <Host>` runs). Doors are listed in
     the order the room already has them (`roomgen.kept_order`; the shop generators replace their door in
-    place), so a first build followed by the shop generators also passes the check. House doors are the
-    one thing a town generator keeps without knowing it: `roomgen.save_config` puts them back
-    (`keep_house_doors`, issue #208, see House interiors).
+    place), so a first build followed by the shop generators also passes the check. House doors and
+    shrine-hall doors are the one thing a town generator keeps without knowing it: `roomgen.save_config`
+    puts them back (`keep_house_doors`, which keeps the door of every kind of interior in
+    `roomgen.OWNED_DOORS`; issues #208 and #212, see House interiors and Shrine worship halls).
   So a generated room may be changed either way — edit the generator and re-run it, or make a surgical
   edit (`/adjust-game`, `stamp_prefab.py`) **and mirror it in the generator** — and the check tells you if
   the two have come apart. Never leave it failing: a generator that has drifted silently drops the hand
