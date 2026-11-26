@@ -54,8 +54,18 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         }
         assert.ok(!solid(door.gridX, door.gridY + 1) && !room.transporters.some((t) => t.gridX === door.gridX && t.gridY === door.gridY + 1),
             'you arrive on a free cell that is not a door');
-        // the only ways out of town are the station and the konbini
-        assert.deepStrictEqual(room.transporters.map((t) => t.targetRoom).sort(), ['FukuokaStation', 'KonbiniFukuoka1']);
+        // the only ways out of town are the station and the konbini; every other door is a house's own front
+        // door (#208): hidden, on the doorway of a house that stands there, into a House room of this town
+        const isHouse = (t) => ((cfg.rooms[t.targetRoom] || {}).house || {}).host === 'Fukuoka';
+        assert.deepStrictEqual(room.transporters.filter((t) => !isHouse(t)).map((t) => t.targetRoom).sort(), ['FukuokaStation', 'KonbiniFukuoka1']);
+        const homes = room.transporters.filter(isHouse);
+        assert.deepStrictEqual(homes.map((t) => t.targetRoom).sort(), ['HouseFukuoka1', 'HouseFukuoka2', 'HouseFukuoka3', 'HouseFukuoka4']);
+        for (const t of homes) {
+            assert.ok(t.hidden && /^HouseFukuoka\d+$/.test(t.targetRoom), `${t.targetRoom}: a hidden door`);
+            assert.ok(where(/^building-entrance-[123]_/).some(([x, y]) => x + 1 === t.gridX && y === t.gridY) ||
+                where(/^machiya-/).some(([x, y]) => x + 2 === t.gridX && y + 4 === t.gridY), `${t.targetRoom}: on a house's doorway`);
+            assert.ok(reachable(t.gridX, t.gridY + 1), `${t.targetRoom}: the cell in front of its door can be walked to`);
+        }
     });
 
     test('Fukuoka: the 7-Eleven on the downtown street has its own interior, wired both ways', () => {

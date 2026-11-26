@@ -89,7 +89,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             assert.deepStrictEqual(room.npcs, [], `${key}: nobody lives here yet`);
             const town = c.rooms[room.house.host].name || room.house.host;
             assert.ok(new RegExp(`^House · ${town}( \\d+)?$`).test(room.name), room.name);
-            assert.strictEqual(game('hudName')(room.name).split(' | ')[0], 'House', room.name);
+            assert.strictEqual(game('hudBrief')(game('hudName')(room.name)), `${town} house`, room.name);
             assert.ok(fs.existsSync(path.join(GV2, 'tiled', key.toLowerCase() + '.tmj')), `${key} has no Tiled map`);
         }
         // no two houses of a town share a name
@@ -279,6 +279,41 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
                 new Set(['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3']));
             assert.ok(!(`${dx},${dy}` in tiles(again.rooms.Asahikawa, 'Colliders')), 'the door did not open again');
         });
+    });
+
+    test('the roll-out: houses in Asahikawa, Fukuoka, Market, Osaka, Sapporo and Sendai, and nowhere else (#208)', () => {
+        const c = cfg(), name = (t) => c.tilePalette[t];
+        const byTown = {};
+        for (const [key, room] of houses(c)) (byTown[room.house.host] = byTown[room.house.host] || []).push(Number(key.match(/\d+$/)[0]));
+        for (const list of Object.values(byTown)) list.sort((a, b) => a - b);
+        // a skipped house keeps its number: Sendai 1 stands inside a walled compound (and 6..10 along the
+        // south wall have no cell to stand on at their doors), so Sendai's start at 2
+        assert.deepStrictEqual(byTown, {
+            Asahikawa: [1, 2, 3], Fukuoka: [1, 2, 3, 4], Market: [1, 2, 3], Osaka: [1, 2, 3],
+            Sapporo: [1, 2, 3, 4, 5, 6, 7], Sendai: [2, 3, 4, 5],
+        });
+        // with this many, all four layouts are in the game
+        assert.deepStrictEqual([...new Set(houses(c).map(([, r]) => r.house.layout))].sort(), ['flat', 'futon', 'hearth', 'kotatsu']);
+        // every house front in those towns is a house, a door that was there before (a station, the Izakaya),
+        // or sealed because nobody can stand in front of it - never an open cell that leads nowhere
+        for (const town of Object.keys(byTown)) {
+            const room = c.rooms[town], sprites = tiles(room, 'Collidables'), solid = tiles(room, 'Colliders');
+            for (const [cell, t] of Object.entries(sprites)) {
+                const front = name(t) in FRONTS, machiya = MACHIYA.includes(name(t));
+                if (!front && !machiya) continue;
+                const [x, y] = cell.split(',').map(Number), [dx, dy] = front ? [x + 1, y] : [x + 2, y + 4];
+                const doors = room.transporters.filter((d) => d.gridX === dx && d.gridY === dy);
+                if (doors.length) {
+                    assert.ok(doors.length === 1 && !(`${dx},${dy}` in solid), `${town} (${dx},${dy}): one open door`);
+                } else {
+                    assert.ok(`${dx},${dy}` in solid, `${town} (${dx},${dy}): a doorway with no door is open`);
+                }
+            }
+        }
+        // the walled house in Sendai: its door is shut and the wall is in front of it
+        const sendai = c.rooms.Sendai, shut = tiles(sendai, 'Colliders');
+        assert.ok('40,31' in shut && '40,32' in shut && !sendai.transporters.some((d) => d.gridX === 40 && d.gridY === 31), 'HouseSendai1 stays sealed');
+        assert.ok(!c.rooms.HouseSendai1);
     });
 
     test('what is not a house stays sealed: ramen alley, the shrine, the station house keeps its own door (#208)', () => {

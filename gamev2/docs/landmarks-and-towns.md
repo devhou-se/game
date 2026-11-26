@@ -143,7 +143,7 @@ pipeline has placed someone there.
 - Blog NPCs can be sent to `the Sapporo Clock Tower`, `the Sapporo TV Tower`, `the bridge over the frozen
   river`, `ramen alley` and `the frozen pond` (`LANDMARKS` in `tools/blog_to_npc.py`), besides the generic
   shrine / torii / 7-Eleven / vending spots.
-- Asahikawa's three cottages are the first houses you can walk into (`HouseAsahikawa1..3`, see House
+- Asahikawa's three cottages were the first houses you could walk into (`HouseAsahikawa1..3`, see House
   interiors below); the three machiya of ramen alley are shops and stay sealed.
 - A room missing from `assets/map/world-map.json` is fine: `TrainTravel.dirTo` treats it as x=0. Re-run
   `tools/make_worldmap.py` to add new rooms (the studio lays the world out from it).
@@ -195,12 +195,29 @@ after the existing stations in `tools/generate_stations.py`); it sits detached, 
 
 `tools/generate_houses.py <Town> [<Town> ...]` is the konbini recipe for homes: it finds a town's houses in
 the town's map data, builds one `House<Town><n>` room per house (display name `House · Asahikawa 2`, formed
-like a konbini's; the HUD writes the dot as a pipe), opens the house's door (collider off, a hidden
+like a konbini's; the HUD writes the dot as a pipe, and where the bar is short it reads `Asahikawa house`,
+`hudBrief`), opens the house's door (collider off, a hidden
 transporter on the door cell, replaced in place) and puts the way out on the cell in front of it. With no
 arguments it rebuilds every town that already has houses, and a re-run on an unchanged world is a no-op.
-**Phase 1 is applied to Asahikawa only** (three cottages); the rollout to the other towns is
-`.agent-queue/items/houses_apply.sh <Town> ...`, which runs the art tools, the generator, `config_to_tiled`
-and lint for the rooms touched, then the five checks.
+A town is given its houses by `.agent-queue/items/houses_apply.sh <Town> ...`, which runs the art tools,
+the generator, `config_to_tiled` and lint for the rooms touched, then the five checks.
+
+**Which towns have them** (24 houses; asserted by `houses.test.js`, "the roll-out"):
+
+| Town | Houses | Stay sealed |
+|---|---|---|
+| Asahikawa | `HouseAsahikawa1..3` (cottages) | ramen alley's three machiya (shops) |
+| Fukuoka | `HouseFukuoka1..4` (two townhouses by the avenue, two machiya) | - |
+| Market (a Tokyo district) | `HouseMarket1..3` (the shopfront townhouses on the south street) | the Izakaya's house keeps its own door |
+| Osaka | `HouseOsaka1..3` | - |
+| Sapporo | `HouseSapporo1..7` (one north-east, six on the south lane) | - |
+| Sendai | `HouseSendai2..5` (the machiya row, one townhouse on the south lane) | 1: the courtyard house behind its earthen wall; 6..10: the row behind the south wall - nobody can stand at their doors, so the numbers are kept and unused |
+
+Machi, Inaka and Yukimura have none on purpose (those towns are going away); Palace, Park and Tokyo have no
+houses. A door in a district of the stitched city is like a konbini's there: the transporter and the way
+back are in the district's own cells (`RoomManager.resolve`), with stitching on or `?stitch=0`.
+A machiya's doorway is the one cell of its footprint you can step onto (`sendai.test.js` allows exactly
+that cell, for a machiya that is a house).
 
 - **What is a house** (`roomgen.HOUSE_DOORS`): the three townhouse prefabs `house-blue` / `-red` / `-black`,
   found by their ground floor (`building-entrance-1/2/3`, door in the middle), and the machiya

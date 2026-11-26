@@ -13,7 +13,7 @@ sealed and lead nowhere, except the discount store's, which opens into its Don T
 see Shop, Food and Drink). Of the ported houses, one opens: the red house at Market `(6,33)` is the Izakaya
 (issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`). Houses (the
 `house-*` townhouses, and a machiya with no shop sign) get a generic home interior from
-`tools/generate_houses.py` - Asahikawa's three cottages so far (issue #208, see House interiors). The high-rises and
+`tools/generate_houses.py` - in Asahikawa, Fukuoka, Market, Osaka, Sapporo and Sendai (issue #208, see House interiors). The high-rises and
 apartment blocks get a lobby from the same tool (`--lobbies`; Osaka's three so far, issue #216, see Tower lobbies).
 
 | Prefab | Cells | Placed in |

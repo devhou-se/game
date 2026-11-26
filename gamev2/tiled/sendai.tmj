@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 293,
+ "nextobjectid": 297,
  "properties": [
   {
    "name": "gv2room",
@@ -27355,17 +27355,17 @@
     0,
     47,
     47,
-    47,
-    47,
-    47,
+    0,
     47,
     47,
     47,
     47,
+    0,
     47,
     47,
     47,
     47,
+    0,
     47,
     47,
     47,
@@ -28134,7 +28134,7 @@
     0,
     0,
     47,
-    47,
+    0,
     47,
     0,
     47,
@@ -28493,6 +28493,154 @@
     },
     {
      "id": 292,
+     "name": "transporter",
+     "point": true,
+     "x": 1120.0,
+     "y": 2144.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseSendai2"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 293,
+     "name": "transporter",
+     "point": true,
+     "x": 1440.0,
+     "y": 2144.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseSendai3"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 294,
+     "name": "transporter",
+     "point": true,
+     "x": 1760.0,
+     "y": 2144.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseSendai4"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 295,
+     "name": "transporter",
+     "point": true,
+     "x": 1696.0,
+     "y": 2848.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseSendai5"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 296,
      "name": "boundary",
      "x": 0,
      "y": 0,

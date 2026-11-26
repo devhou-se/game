@@ -168,8 +168,9 @@ The game always renders 1280x960; everything below is about showing that on anyt
     `hudScale()` (towards 0.7x on screen). That leaves the bar less width, so `GameScene.layoutHUD()`
     lays it out for `cameras.main.width / hudZoom`: it drops the game's title, then — on a
     landscape phone, where the whole canvas is across the view and two rows are a lot of the height —
-    abbreviates (`Nov 11 2025`, `shortGameDate`; then the room's name to its first part, `7-Eleven | Park 1`
-    -> `7-Eleven`; then the date's year), and only then wraps date and wallet onto a second row. On a
+    abbreviates (`Nov 11 2025`, `shortGameDate`; then the room's name to its short form, `hudBrief`: its first
+    part, `7-Eleven | Park 1` -> `7-Eleven`, but a house keeps its town, `House | Asahikawa 2` -> `Asahikawa house`,
+    which is as long as a station's name and so shows the date rather than the countdown at 667x375; then the date's year), and only then wraps date and wallet onto a second row. On a
     lead-in day that one row has no room for the countdown and the date, so there the countdown stands in
     place of the date — `Sapporo | devhouse 3 in 8 days | ¥5,000` at 844x390, `in 8d` at 667x375, the room
     abbreviated if that is what it takes (`Trips.countdown`, tried before the bare date); the segment is

@@ -78,12 +78,18 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             for (const [x, y] of [[gx + 1, gy + 1], [gx + 2, gy + 2]]) assert.ok(seen.has(`${x},${y}`), `gateway cell ${x},${y} is shut`);
             assert.ok(seen.has(`${gx + 1},${gy + 3}`) && seen.has(`${gx + 1},${gy}`), 'a gate leads somewhere on both sides');
         }
-        // nobody stands under a roof: every building's roof rows are solid
+        // nobody stands under a roof: every building's roof rows are solid. The one cell of a building you
+        // can step onto is the doorway of a machiya that is a house (#208): the middle of its front row,
+        // a hidden door into a House room of this town, with the street in front of it
+        const doorway = (key, x, y, w, h, cx, cy) => /^machiya/.test(key) && cx === x + (w - 1) / 2 && cy === y + h - 1 &&
+            seen.has(`${cx},${cy + 1}`) && room.transporters.some((t) => t.hidden && t.gridX === cx && t.gridY === cy &&
+                ((cfg.rooms[t.targetRoom] || {}).house || {}).host === 'Sendai');
         const size = (key) => { const m = cfg.spriteMetadata[key]; return [Math.round(0.5 / m.anchorX), Math.round(0.5 / m.anchorY)]; };
         for (const key of Object.keys(sprites).filter((k) => /^(highrise|machiya|sendai-pub|sendai-kiln|sendai-zuihoden)/.test(k))) {
             const [w, h] = size(key);
             for (const [x, y] of sprites[key]) {
                 for (let cx = x; cx < x + w; cx++) for (let cy = y; cy < y + h; cy++) {
+                    if (doorway(key, x, y, w, h, cx, cy)) continue;
                     assert.ok(!seen.has(`${cx},${cy}`), `${key}: (${cx},${cy}) can be walked onto, behind the building`);
                 }
             }

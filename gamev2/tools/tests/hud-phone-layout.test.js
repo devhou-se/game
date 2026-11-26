@@ -105,7 +105,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.strictEqual(short('2026-05-31'), 'May 31 2026');
         // tried in order before the bar wraps, and only where the whole canvas is across the view
         const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
-        assert.ok(src.includes("const brief = room.split(' | ')[0], whole = this.cameras.main.width >= this.scale.width;"));
+        assert.ok(src.includes('const brief = hudBrief(room), whole = this.cameras.main.width >= this.scale.width;'));
         assert.ok(src.includes('whole && [[room, true], [brief, true], [room, false], [brief, false]]'));
         assert.ok(src.includes('if (!row(long) && !full && !count() && !row(short) && !compact()) {'));
     });
@@ -133,7 +133,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         const CH = 16, PAD = 10;
         const bar = (width, name, money, iso) => {
             const fits = (lead) => (l) => PAD + CH * `${lead} | ${l} | ${money}`.length + PAD + 4 * CH + PAD <= width;
-            for (const lead of [name, name.split(' | ')[0]]) {
+            for (const lead of [name, game('hudBrief')(name)]) {
                 const count = T.countdown(trips, iso, fits(lead));
                 if (count) return `${lead} | ${count} | ${money}`;
             }
@@ -153,7 +153,10 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         }
         // the rule, not a ratio (new towns add stations): a bar shows the date alone only in a station
         assert.ok(bare.size > 0 && shown > bare.size, `the countdown shows in ${shown} room bars, the date alone in ${bare.size} rooms`);
-        for (const name of bare) assert.ok(/ Station$/.test(name), `only a station's name is too long for the countdown: ${name}`);
+        // ... or in a house, whose short form keeps its town ("Sapporo house", #208) and so is as long as a station's
+        for (const name of bare) assert.ok(/ Station$|^House · /.test(name), `only a station's or a house's name is too long for the countdown: ${name}`);
+        assert.strictEqual(bar(744, hudName('House · Sapporo 3'), '¥5,000', '2027-02-10'), 'Sapporo house | devhouse 3 soon | ¥5,000');
+        assert.strictEqual(bar(715, hudName('House · Sapporo 3'), '¥5,000', '2027-02-10'), null, 'the date, as in a station');
         // layoutHUD: only where the whole canvas is across a magnified view, on a countdown day, before the bare date
         const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
         assert.ok(src.includes('const count = () => whole && counting && (row(short, true) || [room, brief].some((name) =>'));
@@ -182,7 +185,21 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.ok(src.includes('return hudName((room && room.name) || key);'));
         assert.ok(src.includes('const long = `${this.config.game.title} | ${room} | `, short = `${room} | `;'));
         assert.ok(src.includes('this.hudMoneyText.setText(` | ${this.shop.fmt(this.shop.money)}`);'));
-        assert.strictEqual('7-Eleven | Park 1'.split(' | ')[0], '7-Eleven');
+        // the short form (hudBrief): the first part, but a house keeps its town - "House" alone says nothing (#208)
+        const hudBrief = game('hudBrief');
+        assert.strictEqual(hudBrief('7-Eleven | Park 1'), '7-Eleven');
+        assert.strictEqual(hudBrief('Don Takote | Osaka'), 'Don Takote');
+        assert.strictEqual(hudBrief('Sapporo Station'), 'Sapporo Station');
+        assert.strictEqual(hudBrief('House | Sapporo 3'), 'Sapporo house');
+        assert.strictEqual(hudBrief('House | Asahikawa 2'), 'Asahikawa house');
+        assert.strictEqual(hudBrief('House | Market 1'), 'Market house');
+        assert.strictEqual(hudBrief('House'), 'House');
+        for (const def of Object.values(config.rooms).filter((r) => r.house)) {
+            const brief = hudBrief(hudName(def.name)), town = config.rooms[def.house.host].name || def.house.host;
+            assert.strictEqual(brief, `${town} house`, def.name);
+            // and it fits the one-row bar of both phones with the short date and a full wallet's worth of room
+            for (const width of [744, 715]) assert.ok(10 + 16 * `${brief} | Feb 10 2027 | ¥5,000`.length + 10 + 64 + 10 <= width, `${brief} at ${width}`);
+        }
     });
 
     test('the rotate prompt is for a portrait phone, once per turn into portrait, twice a session (#111, #199)', () => {

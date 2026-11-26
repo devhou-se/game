@@ -580,9 +580,9 @@ class GameScene extends Phaser.Scene {
         // a magnified bar on a landscape phone is too narrow for a long room name (a
         // konbini, a station) and 60px of two rows is a lot of a 390px screen (issue
         // #202): there the row is kept by abbreviating instead — the month ("Nov 11
-        // 2025"), then the name to its first part ("7-Eleven | Park 1" -> "7-Eleven"),
+        // 2025"), then the name to its short form ("7-Eleven | Park 1" -> "7-Eleven", hudBrief),
         // then the date's year. A portrait slice has the height and keeps its two rows.
-        const brief = room.split(' | ')[0], whole = this.cameras.main.width >= this.scale.width;
+        const brief = hudBrief(room), whole = this.cameras.main.width >= this.scale.width;
         const compact = () => whole && [[room, true], [brief, true], [room, false], [brief, false]]
             .some(([name, year]) => fits(`${name} | `, shortGameDate(gameDate(), year), pad));
         // On a lead-in day that one row has no room for a countdown AND a date, and a

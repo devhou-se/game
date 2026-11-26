@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 88,
+ "nextobjectid": 91,
  "properties": [
   {
    "name": "gv2room",
@@ -19470,7 +19470,7 @@
     38,
     0,
     38,
-    38,
+    0,
     38,
     0,
     38,
@@ -20520,8 +20520,8 @@
     38,
     0,
     0,
-    38,
     38,
+    0,
     38,
     0,
     0,
@@ -20548,7 +20548,7 @@
     0,
     0,
     38,
-    38,
+    0,
     38,
     0,
     0,
@@ -21213,6 +21213,117 @@
     },
     {
      "id": 87,
+     "name": "transporter",
+     "point": true,
+     "x": 672.0,
+     "y": 1056.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseOsaka1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 88,
+     "name": "transporter",
+     "point": true,
+     "x": 736.0,
+     "y": 2400.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseOsaka2"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 89,
+     "name": "transporter",
+     "point": true,
+     "x": 2464.0,
+     "y": 2400.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "HouseOsaka3"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 90,
      "name": "boundary",
      "x": 0,
      "y": 0,

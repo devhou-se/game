@@ -210,6 +210,18 @@ function hudName(name) {
 }
 
 /**
+ * The short form of a HUD name, for a bar with no room for the whole of it
+ * (a landscape phone, layoutHUD): its first part ("7-Eleven | Park 1" ->
+ * "7-Eleven", which says where you are). A house's first part says nothing
+ * ("House | Sapporo 3" -> "House"), so a house keeps its town instead:
+ * "Sapporo house" (issue #208).
+ */
+function hudBrief(name) {
+    const [head, rest] = String(name).split(' | ');
+    return head === 'House' && rest ? `${rest.replace(/ \d+$/, '')} house` : head;
+}
+
+/**
  * Navigate to the given game date. The date a clean URL already gives
  * (defaultGameDate) drops the param; any other date — including today's real
  * date once the trip is over — is an explicit choice and goes in ?date=.
@@ -237,5 +249,6 @@ if (typeof window !== 'undefined') {
     window.formatGameDate = formatGameDate;
     window.shortGameDate = shortGameDate;
     window.hudName = hudName;
+    window.hudBrief = hudBrief;
     window.setGameDate = setGameDate;
 }
