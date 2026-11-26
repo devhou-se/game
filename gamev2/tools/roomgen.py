@@ -40,18 +40,45 @@ HOUSE_DOORS = {
     'machiya-black_0_0': (2, 4), 'machiya-red_0_0': (2, 4), 'machiya-blue_0_0': (2, 4),
 }
 HOUSE_PREFIX = 'House'      # rooms.House<Town><n>, the interiors generate_houses.py owns
-_house_doors = {}           # room -> its transporters as loaded, when any leads into a house
+# The towers the same generator gives a lobby (issue #216): the one sprite a
+# high-rise, an office tower or a block of flats is -> its door cells, relative
+# to the sprite's top-left cell (the bottom row, as building() in
+# make_prefabs.py puts them; the glass tower's doors are a pair). A landmark
+# tower (Tokyo Tower, the TV tower, Fukuoka Tower, a castle) is not in here.
+TOWER_DOORS = {
+    'highrise-yellow_0_0': [(1, 7)], 'highrise-blue_0_0': [(2, 10)], 'highrise-glass_0_0': [(1, 9), (2, 9)],
+    'highrise-apartment_0_0': [(2, 7)], 'midrise-apartment_0_0': [(2, 5)],
+}
+LOBBY_PREFIX = 'Lobby'      # rooms.Lobby<Town><n>
+# room-key prefix -> (the key on the interior that says the generator owns it, its door sprites)
+OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()}),
+               LOBBY_PREFIX: ('lobby', TOWER_DOORS)}
+_house_doors = {}           # room -> its transporters as loaded, when any leads into a house or a lobby
 
 
-def house_door_at(room, x, y):
-    """Whether (x, y) of `room` is the front door of a house that stands there."""
+def owned_door(cfg, t):
+    """The door sprites of the kind of interior transporter `t` leads into, if
+    generate_houses.py owns that interior (a house or a lobby that exists)."""
+    for prefix, (marker, sprites) in OWNED_DOORS.items():
+        owner = cfg['rooms'].get(t['targetRoom'], {}).get(marker) if t['targetRoom'].startswith(prefix) else None
+        # ...and still counts this cell among its doors (one of a tower's pair may have been shut)
+        if owner and [t['gridX'], t['gridY']] in (owner.get('doors') or [owner.get('door')]):
+            return sprites
+    return None
+
+
+def house_door_at(room, x, y, sprites=None):
+    """Whether (x, y) of `room` is the front door of a house that stands there
+    (or, given a lobby's `sprites`, a door of a tower)."""
+    sprites = sprites or OWNED_DOORS[HOUSE_PREFIX][1]
     for layer in room.get('layers', []):
         if layer['name'] != 'Collidables':
             continue
-        for key, (dx, dy) in HOUSE_DOORS.items():
-            idx = layer['tiles'].get(f'{x - dx},{y - dy}')
-            if idx is not None and _pal[idx] == key:
-                return True
+        for key, cells in sprites.items():
+            for dx, dy in cells:
+                idx = layer['tiles'].get(f'{x - dx},{y - dy}')
+                if idx is not None and _pal[idx] == key:
+                    return True
     return False
 
 
@@ -63,8 +90,7 @@ def load_config(path='config.json'):
     _house_doors.clear()
     for key, room in _cfg['rooms'].items():
         ts = room.get('transporters', [])
-        if any(t['targetRoom'].startswith(HOUSE_PREFIX) and _cfg['rooms'].get(t['targetRoom'], {}).get('house')
-               for t in ts):
+        if any(owned_door(_cfg, t) for t in ts):
             _house_doors[key] = json.loads(json.dumps(ts))
     return _cfg
 
@@ -83,7 +109,8 @@ def keep_house_doors(cfg):
     house still stands there (house_door_at - a house the generator moved or
     removed stays sealed until generate_houses.py is run for the town). The
     list keeps the order it was loaded in (kept_order), so a town generator
-    re-run on an unchanged world still leaves config.json byte-identical."""
+    re-run on an unchanged world still leaves config.json byte-identical.
+    The doors into a tower's lobby (issue #216) are kept the same way."""
     for key, before in _house_doors.items():
         room = cfg['rooms'].get(key)
         if room is None:
@@ -91,8 +118,8 @@ def keep_house_doors(cfg):
         ts = room.setdefault('transporters', [])
         taken = {(t['gridX'], t['gridY']) for t in ts}
         back = [t for t in before
-                if t['targetRoom'].startswith(HOUSE_PREFIX) and cfg['rooms'].get(t['targetRoom'], {}).get('house')
-                and (t['gridX'], t['gridY']) not in taken and house_door_at(room, t['gridX'], t['gridY'])]
+                if owned_door(cfg, t) and (t['gridX'], t['gridY']) not in taken
+                and house_door_at(room, t['gridX'], t['gridY'], owned_door(cfg, t))]
         if not back:
             continue
         for layer in room['layers']:

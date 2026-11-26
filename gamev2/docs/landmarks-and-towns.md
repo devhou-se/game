@@ -255,3 +255,36 @@ and lint for the rooms touched, then the five checks.
   `config_to_tiled.py <House rooms> <Town>`, `play.js lint` for each. Nothing outdoors changes to the eye,
   so the world map is not rebuilt. To see a layout that no town has yet: `generate_houses.py --variants`
   prints all four, plain and mirrored, as JSON (what `tools/tests/houses.test.js` checks).
+
+### Tower lobbies: a door into every high-rise (issue #216)
+
+The same generator opens a second kind of building: `tools/generate_houses.py --lobbies <Town> [<Town> ...]`
+gives every high-rise, office tower and block of flats a `Lobby<Town><n>` room (`Lobby · Osaka 2`). It is
+the house code with another row in its `KINDS` table, so everything above holds - found in the town's map
+data, numbered in door order, skipped and sealed by the same rules, a no-op on a re-run, kept through a
+town rebuild by `roomgen.save_config`. **Applied to Osaka only** (the office block, the flats, the glass
+tower); the rollout is `.agent-queue/items/lobbies_apply.sh <Town> ...`.
+
+- **What is a tower** (`roomgen.TOWER_DOORS`): the five generic building sprites `highrise-yellow`,
+  `-blue`, `-glass`, `-apartment` and `midrise-apartment`, with the door cells of their prefabs. Landmark
+  towers (Tokyo Tower, the Sapporo TV Tower, Fukuoka Tower, Tsutenkaku, castles) are landmarks and stay
+  sealed; the discount store has its own shop floor.
+- **A pair of doors** (the glass tower's): each door that passes the skip rules opens into the same lobby
+  and the way out is the cell in front of the first; one that does not stays shut, and the tower is skipped
+  only when neither passes. The lobby records them (`lobby: {host, door, doors}`).
+- **Which run touches what**: a town named without `--lobbies` has only its houses (re)built, with
+  `--lobbies` only its towers; with no town, every town that already has houses or lobbies is rebuilt, each
+  kind for the towns that have it (what `check_generators.py` runs). `--dry-run` prints what a run would
+  build and skip and writes nothing.
+- **The lobby** is one design, identical everywhere for now (`LOBBY`, drawn as text in the generator;
+  20x15, `interior: true`, `shopEnabled: false`): a stone-panelled back wall with two lifts and the
+  building directory, eleven by six cells of chequered polished floor, the reception desk, a sofa either
+  side of a glass table, a palm in each corner, and the entrance mat one cell below the middle of the
+  floor. You arrive just above the mat. Nobody works there yet. A bump on the directory or on a lift says
+  one line (two more `flavour` rules in `Interactions.js`); the lifts go nowhere.
+- **Art**: the eleven `lobby-*` sprites are drawn by `tools/generate_house_art.py`, in the same style.
+- **Lint**: a lobby is held to a home's two rules under the same names (`house-sealed-floor`,
+  `flavour-no-front`). Tests: `tools/tests/lobbies.test.js`.
+- **Dry run of the other towns** (26 Nov): Sapporo 2 of 3 and Fukuoka 3 of 4 (a lamp post stands in front
+  of the flats' door in each), Sendai 1 of 2 (the flats' door opens onto a sealed verge), Market 1,
+  Palace 2; Asahikawa, Tokyo and Park have no towers.

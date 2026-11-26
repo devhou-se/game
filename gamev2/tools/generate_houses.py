@@ -39,16 +39,32 @@ and nothing is sold: `interior` (so the blog pipeline never offers them),
 `shopEnabled: false`, and one flavour line when you bump the kotatsu, the
 hearth, the stove, the television or the bookshelf (src/utils/Interactions.js).
 
+A SECOND KIND OF BUILDING, THE TOWER (issue #216, `--lobbies`): every
+high-rise, office tower and block of flats (roomgen.TOWER_DOORS: the
+highrise-yellow / -blue / -glass / -apartment and midrise-apartment sprites)
+gets a door into a `Lobby<Town><n>` room, found, numbered, skipped, sealed
+and re-run by the same code as a house (KINDS). A tower with a pair of doors
+(the glass tower) opens each door that passes the rules, and is skipped only
+when none does. Landmark towers (Tokyo Tower, the TV tower, Fukuoka Tower,
+castles) are not towers here and stay sealed. THE LOBBY is one design,
+identical everywhere for now (LOBBY): a stone-panelled back wall with two
+lifts and the building directory, eleven by six cells of polished floor, the
+reception desk, a sofa either side of a glass table, a palm in each corner,
+and the entrance mat below the middle of the floor. A bump on the directory
+or on a lift says one line. Nobody works there yet.
+
 Art: tools/extract_house_interior.py (floorboards, a house plant) and
-tools/generate_house_art.py (everything else). Run both first.
+tools/generate_house_art.py (everything else, the lobby's too). Run both first.
 
 Run from gamev2/:
     python3 tools/generate_houses.py Asahikawa [<Town> ...]   # build / rebuild those towns' houses
-    python3 tools/generate_houses.py                          # rebuild every town that has houses
-    python3 tools/generate_houses.py --variants               # every layout as JSON, nothing written
-Then:   python3 tools/config_to_tiled.py <each House room + the towns>
-        node tools/play.js lint <each House room + the towns>
-(.agent-queue/items/houses_apply.sh <Town> ... does all of it.)
+    python3 tools/generate_houses.py --lobbies Osaka [...]    # build / rebuild those towns' tower lobbies
+    python3 tools/generate_houses.py                          # rebuild every town's houses and lobbies that has them
+    python3 tools/generate_houses.py --dry-run [--lobbies] <Town> ...   # say what would be built; write nothing
+    python3 tools/generate_houses.py --variants               # every house layout as JSON, nothing written
+Then:   python3 tools/config_to_tiled.py <each House / Lobby room + the towns>
+        node tools/play.js lint <each House / Lobby room + the towns>
+(.agent-queue/items/houses_apply.sh <Town> ... and lobbies_apply.sh <Town> ... do all of it.)
 """
 import hashlib
 import json
@@ -123,6 +139,35 @@ TATAMI = ['home-tatami-green', 'home-tatami-gold']
 PLASTER = ['sand', 'moss']
 # what a bump says something about (Interactions' flavour rules): each layout has at least one
 FLAVOUR = ('home-kotatsu', 'home-irori', 'home-stove', 'home-tv', 'home-bookshelf')
+
+# The lobby of a tower (issue #216): one design. Read like a house layout, on
+# a floor LW x LH cells:
+#   wall:  p panelling   Ll a lift (2 wide)   D the directory board
+#   floor: . free   P a palm   Rrr the reception desk (3x1)   Ss a sofa   Bb a sofa seen from
+#          behind   Tt the glass table between them (2x1 each)
+LW, LH = 11, 6
+LX, LY = (ROOM_W - LW) // 2, 4
+LOBBY = dict(wall='pLlpLlppDpp',
+             floor=['P.........P',
+                    '...........',
+                    '.Rrr...Ss..',
+                    '.......Tt..',
+                    '.......Bb..',
+                    'P.........P'],
+             door=5)
+LOBBY_WALL = {'p': ('lobby-wall_0_0', 1), 'L': ('lobby-lift_0_0', 2), 'D': ('lobby-directory_0_0', 1)}
+LOBBY_FURNITURE = {'P': ('lobby-plant_0_0', 1), 'R': ('lobby-desk_0_0', 3), 'S': ('lobby-sofa_0_0', 2),
+                   'B': ('lobby-sofa-back_0_0', 2), 'T': ('lobby-table_0_0', 2)}
+LOBBY_FLAVOUR = ('lobby-directory', 'lobby-lift')
+
+# The two kinds of building this generator opens: the room-key prefix, the key
+# on the interior that marks it (and holds its host and door), the sprites that
+# carry its doors -> the door cells relative to the sprite, and its name.
+KINDS = {
+    'house': dict(prefix=rg.HOUSE_PREFIX, marker='house', label='House', what='house',
+                  doors={k: [v] for k, v in rg.HOUSE_DOORS.items()}),
+    'lobby': dict(prefix=rg.LOBBY_PREFIX, marker='lobby', label='Lobby', what='tower', doors=rg.TOWER_DOORS),
+}
 
 
 def seed_of(host, door):
@@ -225,9 +270,49 @@ def build_interior(name, host, front, layout, seed):
     return room, arrive
 
 
-def check_interior(name, room, arrive):
-    """Every free cell of the home can be walked to from the genkan, and every
-    flavour object can be bumped from the cell in front of it."""
+def build_lobby(name, host, front):
+    """(room, arrival cell) for a tower's lobby: the one design, LOBBY."""
+    b = rg.Builder(ROOM_W, ROOM_H)
+    b.fill('office-void-autotile')
+
+    def solid(key, x, y, w=1, h=1):
+        b.put('Collidables', x, y, key)
+        for dx in range(w):
+            for dy in range(h):
+                b.solid(x + dx, y + dy)
+
+    ex, ey = LX + LOBBY['door'], LY + LH             # the entrance: one cell below the floor, the mat on it
+    for c in range(LW):
+        for r in range(LH):
+            b.put('Floor', LX + c, LY + r, f"lobby-floor_{'ab'[(c + r) % 2]}")
+    b.put('Floor', ex, ey, 'lobby-floor_a')
+    b.put('Over Floor', ex, ey, 'lobby-mat_0_0')
+    assert len(LOBBY['wall']) == LW and len(LOBBY['floor']) == LH, 'the lobby does not fit its floor'
+    for c, ch in enumerate(LOBBY['wall']):           # the back wall, two rows of it
+        if ch in LOBBY_WALL:
+            key, w = LOBBY_WALL[ch]
+            solid(key, LX + c, LY - 2, w, 2)
+    for r, row in enumerate(LOBBY['floor']):
+        assert len(row) == LW, row
+        for c, ch in enumerate(row):
+            if ch in LOBBY_FURNITURE:
+                key, w = LOBBY_FURNITURE[ch]
+                solid(key, LX + c, LY + r, w)
+
+    room = b.room(name, transporters=[rg.transporter(ex, ey, host, front[0], front[1], hidden=True)])
+    x1, y1 = LX + LW, LY + LH                        # movement is confined to the lit floor and the mat
+    room['boundary'] = [[LX, LY], [x1, LY], [x1, y1], [ex + 1, y1], [ex + 1, ey + 1], [ex, ey + 1], [ex, y1], [LX, y1]]
+    room['interior'] = True          # never graded by day / night, never offered to the blog pipeline
+    room['shopEnabled'] = False      # nothing in it sells
+    arrive = (ex, ey - 1)            # just inside the doors; the mat is the cell below
+    check_interior(name, room, arrive, floor=(LX, LY, LW, LH), flavour=LOBBY_FLAVOUR, wide=('lobby-lift',))
+    return room, arrive
+
+
+def check_interior(name, room, arrive, floor=(FX, FY, FW, FH), flavour=FLAVOUR, wide=('home-kotatsu', 'home-irori')):
+    """Every free cell of the home (or lobby) can be walked to from the way
+    in, and every flavour object can be bumped from the cell in front of it."""
+    FLAVOUR, (FX, FY, FW, FH) = flavour, floor
     solid = {tuple(map(int, c.split(','))) for c in room['layers'][-1]['tiles']}
     free = ({(FX + c, FY + r) for c in range(FW) for r in range(FH)} | {arrive, (arrive[0], arrive[1] + 1)}) - solid
     seen, todo = {arrive}, [arrive]
@@ -238,23 +323,27 @@ def check_interior(name, room, arrive):
                 seen.add(cell)
                 todo.append(cell)
     assert seen == free, f'{name}: floor nobody can reach: {sorted(free - seen)}'
-    flavour = 0
+    bumps = 0
     for xy, idx in room['layers'][4]['tiles'].items():
         key = rg._pal[idx]
         if key.startswith(FLAVOUR):
             x, y = map(int, xy.split(','))
-            w, h = (2, 2) if key.startswith(('home-kotatsu', 'home-irori')) else (1, 2) if y < FY else (1, 1)
+            w, h = (2, 2) if key.startswith(wide) else (1, 2) if y < FY else (1, 1)
             assert all((x + dx, y + h) in seen for dx in range(w)), f'{name}: {key} at {xy} has no cell in front'
-            flavour += 1
-    assert flavour, f'{name}: nothing to bump'
+            bumps += 1
+    assert bumps, f'{name}: nothing to bump'
 
 
 # ---- finding the houses ---------------------------------------------------------
-def find_houses(cfg, host):
-    """Every house front in `host`, in (y, x) order of its door, as dicts:
-    key / name / door / front / family / origin, plus `excluded` (not a house:
-    'in use', 'shop') or `skipped` (a house that must stay sealed, and why)."""
+def find_houses(cfg, host, kind='house'):
+    """Every house front in `host` (or, for kind 'lobby', every tower), in
+    (y, x) order of its door, as dicts: key / name / door / doors / front /
+    family / origin, plus `excluded` (not one: 'in use', 'shop') or `skipped`
+    (one that must stay sealed, and why). `doors` are the door cells to open -
+    one for a house; for a tower with a pair of doors, each that passes the
+    rules - and `door` / `front` the first of them and the cell outside it."""
     import blog_to_npc as bn
+    K = KINDS[kind]
     room = cfg['rooms'][host]
     found = []
     signs = set()
@@ -262,12 +351,13 @@ def find_houses(cfg, host):
         for xy, idx in layer['tiles'].items():
             key = rg._pal[idx]
             x, y = map(int, xy.split(','))
-            if key in SHOP_SIGNS:
+            if kind == 'house' and key in SHOP_SIGNS:
                 signs.add((x, y))
-            elif layer['name'] == 'Collidables' and key in rg.HOUSE_DOORS:
-                dx, dy = rg.HOUSE_DOORS[key]
-                found.append(dict(family=key.rsplit('_', 2)[0], origin=(x, y), door=(x + dx, y + dy),
-                                  front=(x + dx, y + dy + 1), span=(x - 1, x + 2 * dx + 1)))
+            elif layer['name'] == 'Collidables' and key in K['doors']:
+                cells = [(x + dx, y + dy) for dx, dy in K['doors'][key]]
+                dx, dy = K['doors'][key][0]
+                found.append(dict(family=key.rsplit('_', 2)[0], origin=(x, y), door=cells[0], all_doors=cells,
+                                  front=(cells[0][0], cells[0][1] + 1), span=(x - 1, x + 2 * dx + 1)))
     found.sort(key=lambda h: (h['door'][1], h['door'][0]))
 
     doors = {(t['gridX'], t['gridY']): t['targetRoom'] for t in room.get('transporters', [])}
@@ -280,35 +370,47 @@ def find_houses(cfg, host):
                 people.setdefault((s['gridX'], s['gridY']), f"{npc['name']} ({when})")
     spots = {(x, y): label for label, (r, x, y) in bn.find_spots(cfg).items() if r == host}
 
+    def sealed_because(door):
+        """Why the door at `door` must stay sealed, or None."""
+        front = (door[0], door[1] + 1)
+        fkey = f'{front[0]},{front[1]}'
+        if not (0 <= front[0] < width and 0 <= front[1] < height and fkey in floored and fkey not in blocked):
+            return f'the cell in front of its door {front} cannot be stood on'
+        if front in doors:
+            return f'the cell in front of its door {front} is itself a door'
+        if reach is not None and front not in reach:
+            return f'the cell in front of its door {front} cannot be walked to'
+        why = None
+        for cell, what in ((door, 'on its door'), (front, 'in front of its door')):
+            if cell in people:
+                why = f'{people[cell]} stands {what} {cell}'
+            elif cell in spots:
+                why = f'the blog spot "{spots[cell]}" is {what} {cell}'
+        return why
+
     houses, n = [], 0
     for h in found:
-        door, front = h['door'], h['front']
-        target = doors.get(door)
-        if target and not target.startswith(rg.HOUSE_PREFIX):
+        door = h['door']
+        target = next((doors[d] for d in h['all_doors'] if d in doors and not doors[d].startswith(K['prefix'])), None)
+        if target:
             h['excluded'] = f'in use: its door leads to {target}'
         elif any(h['span'][0] <= x <= h['span'][1] and abs(y - door[1]) <= 1 for x, y in signs):
             h['excluded'] = 'a shop: it has a shop sign at its front'
         else:
             n += 1
-            h['key'] = f'{rg.HOUSE_PREFIX}{host}{n}'
-            fkey = f'{front[0]},{front[1]}'
-            if not (0 <= front[0] < width and 0 <= front[1] < height and fkey in floored and fkey not in blocked):
-                h['skipped'] = f'the cell in front of its door {front} cannot be stood on'
-            elif front in doors:
-                h['skipped'] = f'the cell in front of its door {front} is itself a door'
-            elif reach is not None and front not in reach:
-                h['skipped'] = f'the cell in front of its door {front} cannot be walked to'
+            h['key'] = f"{K['prefix']}{host}{n}"
+            why = {d: sealed_because(d) for d in h['all_doors']}
+            h['doors'] = [d for d in h['all_doors'] if not why[d]]
+            if h['doors']:
+                h['door'] = h['doors'][0]
+                h['front'] = (h['door'][0], h['door'][1] + 1)
             else:
-                for cell, what in ((door, 'on its door'), (front, 'in front of its door')):
-                    if cell in people:
-                        h['skipped'] = f'{people[cell]} stands {what} {cell}'
-                    elif cell in spots:
-                        h['skipped'] = f'the blog spot "{spots[cell]}" is {what} {cell}'
+                h['skipped'] = why[door]
         houses.append(h)
     where = room.get('name', host)
     for h in houses:
         if 'key' in h:
-            h['name'] = f'House · {where}' + (f" {h['key'][len(rg.HOUSE_PREFIX + host):]}" if n > 1 else '')
+            h['name'] = f"{K['label']} · {where}" + (f" {h['key'][len(K['prefix'] + host):]}" if n > 1 else '')
     return houses
 
 
@@ -329,53 +431,70 @@ def pick_layouts(host, houses):
         placed.append(h)
 
 
-def seal(host, cell):
+def seal(host, cell, prefix=rg.HOUSE_PREFIX):
     for layer in host['layers']:
         if layer['name'] == 'Colliders':
             layer['tiles'][f'{cell[0]},{cell[1]}'] = rg.pidx('gk_blank')
     host['transporters'] = [t for t in host.get('transporters', [])
-                            if not ((t['gridX'], t['gridY']) == tuple(cell) and t['targetRoom'].startswith(rg.HOUSE_PREFIX))]
+                            if not ((t['gridX'], t['gridY']) == tuple(cell) and t['targetRoom'].startswith(prefix))]
 
 
-def apply(cfg, host):
-    """(Re)build `host`'s houses in cfg. Returns (built keys, report lines)."""
+def apply(cfg, host, kind='house'):
+    """(Re)build `host`'s houses (or, for kind 'lobby', its towers' lobbies) in
+    cfg. Returns (built keys, report lines)."""
+    K = KINDS[kind]
+    marker, prefix, what = K['marker'], K['prefix'], K['what']
     room = cfg['rooms'][host]
-    candidates = find_houses(cfg, host)
+    candidates = find_houses(cfg, host, kind)
     houses = [h for h in candidates if 'key' in h]
-    pick_layouts(host, houses)
+    if kind == 'house':
+        pick_layouts(host, houses)
     built, lines = [], []
     for h in candidates:
         if 'excluded' in h:
-            lines.append(f"not a house  {host} {h['family']} at {h['origin']} - {h['excluded']}")
+            lines.append(f"not a {what}  {host} {h['family']} at {h['origin']} - {h['excluded']}")
     # rooms of this town from an earlier run that no house claims any more
-    for key in [k for k, r in cfg['rooms'].items() if (r.get('house') or {}).get('host') == host]:
+    for key in [k for k, r in cfg['rooms'].items() if (r.get(marker) or {}).get('host') == host]:
         if key not in {h['key'] for h in houses if 'skipped' not in h}:
-            seal(room, cfg['rooms'][key]['house']['door'])
+            was = cfg['rooms'][key][marker]
+            for cell in was.get('doors') or [was['door']]:
+                seal(room, cell, prefix)
             del cfg['rooms'][key]
     for h in houses:
         if 'skipped' in h:
-            seal(room, h['door'])
+            for cell in h['all_doors']:
+                seal(room, cell, prefix)
             lines.append(f"skipped  {h['key']} ({h['family']}, door {h['door']}) - {h['skipped']}")
             continue
-        interior, arrive = build_interior(h['name'], host, h['front'], h['layout'], seed_of(host, h['door']))
-        interior['house'] = {'host': host, 'door': list(h['door']), 'layout': h['layout']}
-        cfg['rooms'][h['key']] = interior
-        for layer in room['layers']:                         # unseal the doorway...
-            if layer['name'] == 'Colliders':
-                layer['tiles'].pop(f"{h['door'][0]},{h['door'][1]}", None)
-        # ...and wire it in, replacing the door's transporter where it already sits (append
-        # only a new one): a re-run on an unchanged world leaves config.json byte-identical
-        door = rg.transporter(h['door'][0], h['door'][1], h['key'], arrive[0], arrive[1], hidden=True)
-        ts = room.setdefault('transporters', [])
-        at = [i for i, t in enumerate(ts) if (t['gridX'], t['gridY']) == h['door']]
-        if at:
-            ts[at[0]] = door
-            for i in reversed(at[1:]):
-                del ts[i]
+        if kind == 'house':
+            interior, arrive = build_interior(h['name'], host, h['front'], h['layout'], seed_of(host, h['door']))
+            interior[marker] = {'host': host, 'door': list(h['door']), 'layout': h['layout']}
+            said = f"the {h['layout']} room"
         else:
-            ts.append(door)
+            interior, arrive = build_lobby(h['name'], host, h['front'])
+            interior[marker] = {'host': host, 'door': list(h['door']), 'doors': [list(d) for d in h['doors']]}
+            said = 'the lobby' + (f", {len(h['doors'])} doors" if len(h['doors']) > 1 else '')
+        cfg['rooms'][h['key']] = interior
+        for cell in h['all_doors']:                          # a door of a pair that may not open stays shut
+            if cell not in h['doors']:
+                seal(room, cell, prefix)
+        for cell in h['doors']:
+            for layer in room['layers']:                     # unseal the doorway...
+                if layer['name'] == 'Colliders':
+                    layer['tiles'].pop(f'{cell[0]},{cell[1]}', None)
+            # ...and wire it in, replacing the door's transporter where it already sits (append
+            # only a new one): a re-run on an unchanged world leaves config.json byte-identical
+            door = rg.transporter(cell[0], cell[1], h['key'], arrive[0], arrive[1], hidden=True)
+            ts = room.setdefault('transporters', [])
+            at = [i for i, t in enumerate(ts) if (t['gridX'], t['gridY']) == cell]
+            if at:
+                ts[at[0]] = door
+                for i in reversed(at[1:]):
+                    del ts[i]
+            else:
+                ts.append(door)
         built.append(h['key'])
-        lines.append(f"built    {h['key']} \"{h['name']}\" - {h['family']}, door {h['door']}, the {h['layout']} room")
+        lines.append(f"built    {h['key']} \"{h['name']}\" - {h['family']}, door {h['door']}, {said}")
     return built, lines
 
 
@@ -397,22 +516,32 @@ def main(argv):
     if '--variants' in argv:
         print(json.dumps({'tilePalette': cfg['tilePalette'], 'variants': variants()}))
         return 0
-    towns = argv or sorted({r['house']['host'] for r in cfg['rooms'].values() if r.get('house')})
-    unknown = [t for t in towns if t not in cfg['rooms'] or cfg['rooms'][t].get('interior')
+    dry, lobbies = '--dry-run' in argv, '--lobbies' in argv
+    named = [a for a in argv if not a.startswith('--')]
+    have = {kind: sorted({r[K['marker']]['host'] for r in cfg['rooms'].values() if r.get(K['marker'])})
+            for kind, K in KINDS.items()}
+    # named towns: their houses, or with --lobbies their towers; no town: everything there is, of both kinds
+    jobs = [('lobby' if lobbies else 'house', t) for t in named] if named else \
+        [(kind, t) for kind in (['lobby'] if lobbies else KINDS) for t in have[kind]]
+    unknown = [t for t in named if t not in cfg['rooms'] or cfg['rooms'][t].get('interior')
                or t in cfg.get('stations', {})]
     if unknown:
         print(f'not a town: {unknown}')
         return 2
-    if not towns:
+    if not jobs:
         print('no town has houses yet: name the towns to build, e.g. generate_houses.py Asahikawa')
         return 0
     built = []
-    for host in towns:
-        keys, lines = apply(cfg, host)
+    for kind, host in jobs:
+        keys, lines = apply(cfg, host, kind)
         built += keys
-        print('\n'.join(lines) if lines else f'{host}: no houses')
+        print('\n'.join(lines) if lines else f"{host}: no {KINDS[kind]['what']}s")
+    towns = sorted({host for _, host in jobs})
+    if dry:
+        print(f"\ndry run: {len(built)} interior(s) would be written, nothing was.")
+        return 0
     rg.save_config(cfg)
-    print(f"\n{len(built)} house interior(s) written. Now run config_to_tiled, then play.js lint, for:")
+    print(f"\n{len(built)} {'lobby' if lobbies else 'house'} interior(s) written. Now run config_to_tiled, then play.js lint, for:")
     print('  ' + ' '.join(built + towns))
     return 0
 

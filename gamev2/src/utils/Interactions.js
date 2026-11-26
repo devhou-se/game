@@ -18,6 +18,9 @@ const Interactions = {
         { kind: 'stove', group: 'flavour', pattern: /^home-stove/, footprint: true, say: 'the stove ticks. the kettle on it is nearly boiling' },
         { kind: 'television', group: 'flavour', pattern: /^home-tv/, footprint: true, say: 'the weather: snow in the north, and more tomorrow' },
         { kind: 'bookshelf', group: 'flavour', pattern: /^home-bookshelf/, footprint: true, say: 'paperbacks, a road atlas, and manga read to pieces' },
+        // a tower's lobby (issue #216, the same generator): the directory board and the lifts
+        { kind: 'directory', group: 'flavour', pattern: /^lobby-directory/, footprint: true, say: 'every floor has a name on it. none of them is expecting you' },
+        { kind: 'lift', group: 'flavour', pattern: /^lobby-lift/, footprint: true, say: 'the lift wants a pass. the lobby is as far as you go' },
     ],
 
     match(key, roomConfig, venues) {

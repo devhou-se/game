@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""generate_house_art.py — draw the furniture of a Japanese home (issue #208).
+"""generate_house_art.py — draw the furniture of a Japanese home (issue #208)
+and of a tower's lobby (issue #216, the `lobby-*` sprites at the end).
 
 No asset pack in ../Assets has a home interior (the GuttyKreum packs are all
 exteriors plus a train car; there is no Modern_Interiors), so everything the
@@ -35,6 +36,17 @@ that stands. Nothing here is a white line-art placeholder.
     home-zabuton-red / -indigo / -green_0_0    1x1, flat: floor cushions
     home-shoes-a_0_0 / -b_0_0   1x1, flat: shoes left in the genkan
     home-doormat_0_0      1x1, flat: the mat you leave by
+
+  a tower's lobby (issue #216)
+    lobby-floor_a / _b          1x1  polished stone, laid as a chequer
+    lobby-mat_0_0               1x1, flat: the entrance mat you leave by
+    lobby-wall_0_0              1x2  panelled stone under a cornice (solid)
+    lobby-lift_0_0              2x2  a lift: steel doors, the floor indicator, the call button
+    lobby-directory_0_0         1x2  the building directory on the wall
+    lobby-desk_0_0              3x1  the reception desk: a bell, a screen, the visitors' book
+    lobby-sofa_0_0 / lobby-sofa-back_0_0   2x1  a sofa from the front, and from behind
+    lobby-table_0_0             2x1  a glass coffee table with magazines
+    lobby-plant_0_0             1x1  a potted palm
 
 Deterministic and idempotent (no source image, no font): rewrites the PNGs in
 assets/sprites/ and registers them in config.json spriteMetadata + tileNames.
@@ -568,6 +580,164 @@ def doormat():
     return im
 
 
+# ---- a tower's lobby (issue #216) ---------------------------------------------------
+MARBLE = {'a': (rgb('e6e3dc'), rgb('d5d1c8'), rgb('f4f2ee')), 'b': (rgb('c9c6c1'), rgb('b8b4ae'), rgb('dad7d2'))}
+PANEL, PANEL_LO, PANEL_HI = rgb('d9d4c7'), rgb('bdb6a6'), rgb('ece8de')
+SLATE, SLATE_HI, SLATE_LO = rgb('3f4658'), rgb('5c6680'), rgb('2a2f3e')
+
+
+def lobby_floor(tone):
+    def draw():
+        im, d = canvas(1, 1)
+        base, vein, hi = MARBLE[tone]
+        d.rectangle([0, 0, 31, 31], fill=base)
+        speckle(d, 1, 1, 30, 30, vein, 2 if tone == 'a' else 6, every=6)
+        for x, y, n in ((4, 9, 6), (17, 21, 8), (22, 5, 4)) if tone == 'a' else ((6, 23, 7), (15, 7, 9)):
+            d.line([(x, y), (x + n, y + n // 2)], fill=vein)                # a vein across the slab
+        d.line([(1, 1), (30, 1)], fill=hi); d.line([(1, 1), (1, 30)], fill=hi)   # the polish, and the joint
+        d.line([(0, 31), (31, 31)], fill=vein); d.line([(31, 0), (31, 31)], fill=vein)
+        return im
+    return draw
+
+
+def lobby_mat():
+    im, d = canvas(1, 1)
+    d.rectangle([2, 7, 29, 26], fill=SLATE)
+    for y in range(9, 26, 2):
+        d.line([(4, y), (27, y)], fill=SLATE_HI)
+    d.rectangle([2, 7, 29, 26], outline=SLATE_LO)
+    d.rectangle([5, 10, 26, 23], outline=RED)
+    return im
+
+
+def lobby_wall_frame(d, w=32):
+    """What every lobby wall piece shares, so they join side by side: the
+    cornice, the stone panelling and the dark skirting."""
+    d.rectangle([0, 0, w - 1, 63], fill=PANEL)
+    d.rectangle([0, 0, w - 1, 4], fill=SLATE); d.line([(0, 4), (w - 1, 4)], fill=SLATE_LO)
+    d.line([(0, 1), (w - 1, 1)], fill=SLATE_HI)
+    d.line([(0, 5), (w - 1, 5)], fill=PANEL_HI); d.line([(0, 6), (w - 1, 6)], fill=PANEL_LO)
+    d.rectangle([0, 58, w - 1, 63], fill=SLATE); d.line([(0, 58), (w - 1, 58)], fill=SLATE_HI)
+    d.line([(0, 63), (w - 1, 63)], fill=SLATE_LO)
+
+
+def lobby_wall():
+    im, d = canvas(1, 2)
+    lobby_wall_frame(d)
+    for x in (0, 16):                                                       # two stone panels to a cell
+        d.rectangle([x + 2, 10, x + 13, 54], outline=PANEL_LO)
+        d.line([(x + 3, 11), (x + 12, 11)], fill=PANEL_HI); d.line([(x + 3, 11), (x + 3, 53)], fill=PANEL_HI)
+    speckle(d, 4, 13, 28, 52, PANEL_LO, 4, every=9)
+    return im
+
+
+def lobby_lift():
+    im, d = canvas(2, 2)
+    lobby_wall_frame(d, 64)
+    d.rectangle([7, 16, 50, 57], fill=SLATE_LO)                             # the frame
+    d.rectangle([9, 18, 48, 57], fill=STEEL)                                # two brushed-steel doors
+    for x0 in (9, 29):
+        d.rectangle([x0, 18, x0 + 19, 57], fill=STEEL)
+        d.line([(x0 + 1, 19), (x0 + 1, 56)], fill=STEEL_HI); d.line([(x0 + 18, 19), (x0 + 18, 56)], fill=STEEL_LO)
+        for y in range(22, 56, 6):
+            d.line([(x0 + 4, y), (x0 + 15, y)], fill=rgb('aab6c2'))
+    d.line([(28, 18), (28, 57)], fill=SLATE_LO); d.line([(29, 18), (29, 57)], fill=SLATE_LO)
+    d.rectangle([20, 8, 37, 14], fill=IRON)                                 # the indicator: it is on the 7th floor
+    for x, y in ((24, 10), (25, 10), (26, 10), (26, 11), (25, 12), (25, 13)):
+        d.point((x, y), fill=AMBER)
+    d.polygon([(31, 12), (33, 9), (35, 12)], fill=AMBER)
+    d.rectangle([54, 30, 59, 41], fill=STEEL_LO); d.rectangle([55, 31, 58, 40], fill=STEEL_HI)   # the call button
+    d.rectangle([56, 33, 57, 34], fill=AMBER); d.rectangle([56, 37, 57, 38], fill=IRON_HI)
+    return im
+
+
+def lobby_directory():
+    im, d = canvas(1, 2)
+    lobby_wall_frame(d)
+    d.rectangle([3, 11, 28, 50], fill=IRON); d.rectangle([4, 12, 27, 49], fill=SLATE_LO)
+    d.rectangle([6, 14, 25, 17], fill=GOLD)                                 # the building's name plate
+    for i, y in enumerate(range(21, 48, 3)):                                # a floor number and a tenant to a row
+        d.rectangle([6, y, 7, y + 1], fill=AMBER)
+        d.line([(10, y), (10 + (9, 13, 7, 12, 14, 8, 11, 13, 6)[i], y)], fill=WHITE)
+        if i % 3 == 1:
+            d.line([(10, y + 1), (16, y + 1)], fill=STEEL_LO)
+    d.line([(3, 51), (28, 51)], fill=PANEL_LO)
+    return im
+
+
+def lobby_desk():
+    im, d = canvas(3, 1)
+    box(d, 2, 6, 93, 29, rgb('eeeae2'), WOOD, WOOD_LO, 7)                    # a stone top on a timber front
+    d.line([(2, 6), (93, 6)], fill=WHITE)
+    for x in range(10, 90, 10):
+        d.line([(x, 14), (x, 28)], fill=WOOD_LO); d.line([(x + 1, 14), (x + 1, 28)], fill=WOOD_HI)
+    d.rectangle([38, 17, 57, 25], fill=SLATE); d.rectangle([40, 19, 55, 20], fill=GOLD)   # the plate: RECEPTION
+    d.rectangle([42, 22, 53, 22], fill=PANEL_HI)
+    d.rectangle([62, 1, 79, 10], fill=IRON); d.rectangle([63, 2, 78, 8], fill=SKY)       # a screen
+    d.rectangle([65, 4, 72, 4], fill=WHITE); d.rectangle([65, 6, 69, 6], fill=SKY_HI)
+    d.rectangle([69, 10, 72, 11], fill=IRON_HI)
+    d.ellipse([14, 5, 21, 10], fill=GOLD); d.rectangle([17, 3, 18, 5], fill=GOLD)       # the bell
+    d.line([(13, 11), (22, 11)], fill=WOOD_DK)
+    d.rectangle([27, 7, 35, 11], fill=PAPER); d.line([(31, 7), (31, 11)], fill=PAPER_DK)  # the visitors' book
+    d.line([(36, 6), (33, 10)], fill=INDIGO)
+    outline(im)
+    return im
+
+
+def lobby_sofa(back):
+    def draw():
+        im, d = canvas(2, 1)
+        d.rounded_rectangle([3, 4, 60, 28], radius=4, fill=INDIGO_LO)
+        if back:                                                            # seen from behind: the tall back, a seam
+            d.rounded_rectangle([3, 4, 60, 26], radius=4, fill=INDIGO)
+            d.line([(6, 6), (57, 6)], fill=INDIGO_HI); d.line([(31, 8), (31, 25)], fill=INDIGO_LO)
+            d.line([(32, 8), (32, 25)], fill=INDIGO_HI)
+        else:
+            d.rounded_rectangle([3, 4, 60, 15], radius=4, fill=INDIGO)      # the back, then two seat cushions
+            d.line([(6, 5), (57, 5)], fill=INDIGO_HI)
+            for x0 in (9, 33):
+                d.rounded_rectangle([x0, 14, x0 + 21, 25], radius=2, fill=INDIGO_HI)
+                d.line([(x0 + 1, 24), (x0 + 20, 24)], fill=INDIGO)
+            for x0 in (3, 55):                                              # the arms
+                d.rounded_rectangle([x0, 11, x0 + 5, 27], radius=2, fill=INDIGO)
+                d.line([(x0 + 1, 12), (x0 + 4, 12)], fill=INDIGO_HI)
+        for x in (6, 54):
+            d.rectangle([x, 28, x + 3, 30], fill=WOOD_DK)
+        outline(im)
+        return im
+    return draw
+
+
+def lobby_table():
+    im, d = canvas(2, 1)
+    d.rounded_rectangle([6, 7, 57, 23], radius=3, fill=STEEL)
+    d.rounded_rectangle([8, 8, 55, 20], radius=2, fill=rgb('cfe2ee'))        # the glass top
+    d.line([(11, 10), (22, 10)], fill=WHITE); d.line([(40, 18), (51, 18)], fill=STEEL_HI)
+    d.line([(8, 22), (55, 22)], fill=STEEL_LO)
+    for x in (9, 51):
+        d.rectangle([x, 24, x + 2, 28], fill=IRON)
+    d.rectangle([16, 12, 26, 18], fill=RED); d.rectangle([17, 13, 25, 14], fill=WHITE)   # magazines
+    d.rectangle([29, 11, 38, 17], fill=GREEN_HI); d.rectangle([30, 12, 34, 13], fill=CREAM)
+    outline(im)
+    return im
+
+
+def lobby_plant():
+    im, d = canvas(1, 1)
+    d.polygon([(10, 20), (21, 20), (19, 30), (12, 30)], fill=CREAM)          # a glazed pot
+    d.line([(10, 20), (21, 20)], fill=WHITE); d.line([(12, 30), (19, 30)], fill=CREAM_DK)
+    d.line([(19, 22), (18, 29)], fill=CREAM_LO)
+    d.line([(15, 20), (15, 9)], fill=WOOD_LO); d.line([(16, 20), (16, 9)], fill=WOOD_DK)
+    for (x0, y0), (x1, y1) in (((15, 10), (4, 6)), ((15, 10), (27, 6)), ((15, 12), (3, 14)), ((16, 12), (28, 14)),
+                               ((15, 9), (10, 1)), ((16, 9), (21, 1)), ((15, 8), (15, 0))):
+        d.line([(x0, y0), (x1, y1)], fill=GREEN, width=2)                   # the fronds
+        d.line([(x0, y0 - 1), (x1, y1 - 1)], fill=GREEN_HI)
+    for x, y in ((4, 6), (27, 6), (3, 14), (28, 14)):
+        d.line([(x, y), (x, y + 3)], fill=GREEN_LO)
+    outline(im)
+    return im
+
+
 SPRITES = {      # key: (builder, tileNames label)
     'home-tatami-green_w': (tatami('green', 'w'), 'home-tatami'),
     'home-tatami-green_e': (tatami('green', 'e'), 'home-tatami'),
@@ -603,6 +773,17 @@ SPRITES = {      # key: (builder, tileNames label)
     'home-shoes-a_0_0': (shoes([(4, 5, INDIGO, WHITE, False), (18, 16, RED, WOOD, True)]), 'home-shoes'),
     'home-shoes-b_0_0': (shoes([(17, 4, RED_LO, STONE_DK, False), (3, 17, GREEN, WHITE, False)]), 'home-shoes'),
     'home-doormat_0_0': (doormat, 'home-doormat'),
+    'lobby-floor_a': (lobby_floor('a'), 'lobby-floor'),
+    'lobby-floor_b': (lobby_floor('b'), 'lobby-floor'),
+    'lobby-mat_0_0': (lobby_mat, 'lobby-mat'),
+    'lobby-wall_0_0': (lobby_wall, 'lobby-wall'),
+    'lobby-lift_0_0': (lobby_lift, 'lobby-lift'),
+    'lobby-directory_0_0': (lobby_directory, 'lobby-directory'),
+    'lobby-desk_0_0': (lobby_desk, 'lobby-desk'),
+    'lobby-sofa_0_0': (lobby_sofa(False), 'lobby-sofa'),
+    'lobby-sofa-back_0_0': (lobby_sofa(True), 'lobby-sofa'),
+    'lobby-table_0_0': (lobby_table, 'lobby-table'),
+    'lobby-plant_0_0': (lobby_plant, 'lobby-plant'),
 }
 
 
@@ -622,7 +803,7 @@ def main():
         cfg['spriteMetadata'][key] = {'frameCount': 1, 'anchorX': 32 / im.width, 'anchorY': 32 / im.height}
         cfg.setdefault('tileNames', {})[key] = label
     json.dump(cfg, open('config.json', 'w'), indent=2, sort_keys=True)
-    print(f'{len(built)} home sprites written')
+    print(f'{len(built)} home and lobby sprites written')
 
     if '--preview' in sys.argv:
         out = sys.argv[sys.argv.index('--preview') + 1]

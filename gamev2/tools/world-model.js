@@ -504,11 +504,13 @@ class WorldModel {
             Interactions.all(room, roomConfig, { sizeOf: (key) => this.cells(key), venues: Shop.VENUES, group: 'shop' });
         // A home's furniture that says a line when bumped (issue #208) is held to the till's
         // rule - some side of it can be walked to - and a home (config `house`) to the store's:
-        // no floor its furniture has sealed off.
+        // no floor its furniture has sealed off. A tower's lobby (config `lobby`, issue #216)
+        // is held to both, under the same two names.
         const flavour = !roomConfig.interior ? [] :
             Interactions.all(room, roomConfig, { sizeOf: (key) => this.cells(key), venues: Shop.VENUES, group: 'flavour' });
+        const homely = roomConfig.house || roomConfig.lobby;
         const fromDoor = new Set();
-        if (fixtures.length || flavour.length || roomConfig.house) {
+        if (fixtures.length || flavour.length || homely) {
             const queue = room.transporters.map(t => [t.gridX, t.gridY]).filter(c => walkable(...c));
             for (const c of queue) fromDoor.add(K(...c));
             while (queue.length) {
@@ -545,7 +547,7 @@ class WorldModel {
             for (let b = 0; b < f.h; b++) sides.push([f.x - 1, f.y + b], [f.x + f.w, f.y + b]);
             if (!sides.some(([sx, sy]) => fromDoor.has(K(sx, sy)))) push(errors, 'flavour-no-front', `${nm(f.key)} @${K(f.x, f.y)} (no reachable side)`);
         }
-        if (fixtures.length || roomConfig.house) {
+        if (fixtures.length || homely) {
             const dressed = new Set();
             for (const o of objects) for (const [cx, cy] of o.cells) dressed.add(K(cx, cy));
             for (const c of [...walkCells].sort()) {
