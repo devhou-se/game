@@ -12,8 +12,10 @@ import copy
 import io
 import json
 import os
+import struct
 import sys
 import tempfile
+import zlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import blog_to_npc as b  # noqa: E402
@@ -1136,6 +1138,61 @@ def test_generator_check_skips():
     assert cg.skips(['generate_osaka', cg.TILED], False, False) == {}
 
 
+def png_bytes(rows, level=9):
+    """A small RGBA PNG of `rows` (lists of (r, g, b, a)), deflated at `level`."""
+    def chunk(kind, data):
+        return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data))
+    raw = b''.join(b'\0' + bytes(v for px in row for v in px) for row in rows)
+    return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', len(rows[0]), len(rows), 8, 6, 0, 0, 0))
+            + chunk(b'IDAT', zlib.compress(raw, level)) + chunk(b'IEND', b''))
+
+
+def test_generator_check_pictures():
+    """check_generators compares a PNG by its decoded pixels, not its bytes:
+    the same picture deflated by another zlib is not drift, a changed pixel
+    or size is (#230). Without Pillow it cannot decode, so bytes decide."""
+    cg = check_generators
+    assert (cg.pillow_version() is not None) == cg.have_pillow()
+    red, blue, clear = (200, 30, 30, 255), (30, 30, 200, 255), (0, 0, 0, 0)
+    rows = [[red] * 16, [blue] * 16, [clear] * 16, [red, blue] * 8]
+    committed, recompressed = png_bytes(rows, 9), png_bytes(rows, 0)
+    assert committed != recompressed
+    pixel = png_bytes(rows[:3] + [[blue, red] * 8])
+    hidden = png_bytes(rows[:2] + [[(9, 9, 9, 0)] * 16] + rows[3:])     # the colour under a clear pixel is data too
+    size = png_bytes(rows + [[clear] * 16])
+    with tempfile.TemporaryDirectory() as tmp:
+        a, w = os.path.join(tmp, 'a'), os.path.join(tmp, 'w')
+        for base in (a, w):
+            for rel in cg.OUTPUTS:
+                os.makedirs(os.path.join(base, rel))
+        rel = 'assets/sprites/one.png'
+        other = 'tiled/one.tmj'                 # a .tmj is text: bytes decide, whatever is in it
+        for f in (rel, other):
+            open(os.path.join(a, f), 'wb').write(committed)
+
+        def rerun(data, f=rel):
+            open(os.path.join(w, rel), 'wb').write(committed)
+            open(os.path.join(w, other), 'wb').write(committed)
+            open(os.path.join(w, f), 'wb').write(data)
+            out = cg.restore(a, w)
+            assert open(os.path.join(w, f), 'rb').read() == committed, 'the scratch copy was not put back'
+            return out
+
+        assert rerun(committed) == []
+        assert rerun(recompressed, other) == [f'{other} changed']
+        for data in (pixel, hidden, size, b'not a picture', committed[:40]):
+            assert rerun(data) == [f'{rel} changed'], data[:40]
+        same = os.path.join(w, 'same.png')
+        open(same, 'wb').write(recompressed)
+        if cg.have_pillow():
+            assert rerun(recompressed) == [], 'the same pixels in other bytes were reported as drift'
+            assert cg.same_picture(os.path.join(a, rel), same)
+        else:
+            assert rerun(recompressed) == [f'{rel} changed']
+            assert not cg.same_picture(os.path.join(a, rel), same)
+        assert not cg.same_picture(os.path.join(a, other), os.path.join(a, other))      # not a PNG by name
+
+
 def test_sync_cities_anywhere():
     """sync_cities finds config.json and devhouse.world from its own place in
     the repo, not from the working directory (#193)."""
@@ -1383,6 +1440,7 @@ if __name__ == '__main__':
     test_tiled_ids_stable()
     test_tiled_maps_in_sync()
     test_generator_check_skips()
+    test_generator_check_pictures()
     test_sync_cities_anywhere()
     test_districts(config)
     test_distinct()

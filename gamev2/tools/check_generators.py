@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """check_generators.py — a generator re-run on an unchanged world must leave
-what is committed byte-identical: config.json for the room generators (issue
-#107), the Tiled maps for config_to_tiled.py, and the sprites and prefabs for
-the art tools (issue #186).
+what is committed as it is: config.json for the room generators (issue #107),
+the Tiled maps for config_to_tiled.py, and the sprites and prefabs for the
+art tools (issue #186). Text is compared byte for byte, a PNG by its decoded
+pixels (issue #230).
 
 The generated rooms also collect edits their generator did not make: the blog
 pipeline's NPC states, a shop door wired by another generator, a surgical fix
@@ -18,6 +19,14 @@ re-seeded, or a map edited by hand), and each art / prefab tool must rebuild
 the committed assets/sprites and tiled/prefabs. Whatever a tool writes under
 OUTPUTS is compared, so a room generator that touched a sprite fails too.
 
+A PNG is the same when it decodes to the same picture (same_picture): the
+bytes of the file also depend on the zlib that Pillow was built with, so the
+same pixels are written as a different file from one machine to the next.
+What Pillow draws can differ between versions too (a curve or a slanted line
+a pixel off), and that is drift like any other: the summary names the Pillow
+that ran, and docs/generators-and-checks.md the versions known to rebuild
+the committed art.
+
 Run from gamev2/:  python3 tools/check_generators.py [generator ...]
                    python3 tools/check_generators.py generate_osaka config_to_tiled
 
@@ -27,7 +36,7 @@ without it they are listed as skipped, not as ok — run the check with a
 python3 that has Pillow to cover them. The two that draw Japanese text
 (FONT_TOOLS) are skipped the same way where no Japanese system font is
 readable (a sandboxed shell, a machine without one): the glyphs decide the
-bytes, so no stand-in font would rebuild the committed art. A new room
+pixels, so no stand-in font would rebuild the committed art. A new room
 generator belongs in GENERATORS, a new art tool in ART_TOOLS.
 """
 import filecmp
@@ -88,12 +97,17 @@ OUTPUTS = ['tiled', 'assets/sprites', 'assets/ads', 'assets/map']
 INPUTS = ['tools', 'src/CharacterCreator.js', 'fonts'] + OUTPUTS
 
 
-def have_pillow():
+def pillow_version():
+    """The Pillow this python3 has, as '13.0.0'; None without it."""
     try:
-        import PIL  # noqa: F401
-        return True
+        import PIL
+        return PIL.__version__
     except ImportError:
-        return False
+        return None
+
+
+def have_pillow():
+    return pillow_version() is not None
 
 
 def have_jp_font():
@@ -130,10 +144,26 @@ def files_under(base, rel):
     return out
 
 
+def same_picture(a, b):
+    """Whether two PNG files decode to the same picture: the same size and the
+    same RGBA pixels. The file's bytes are not compared — they depend on the
+    zlib Pillow was built with (issue #230). False for anything that is not a
+    PNG Pillow can read, and without Pillow."""
+    if not (a.lower().endswith('.png') and b.lower().endswith('.png')):
+        return False
+    try:
+        from PIL import Image
+        with Image.open(a) as ia, Image.open(b) as ib:
+            return ia.size == ib.size and ia.convert('RGBA').tobytes() == ib.convert('RGBA').tobytes()
+    except Exception:       # no Pillow, or not a picture it can read: not known to be the same
+        return False
+
+
 def restore(root, work):
     """Differences under OUTPUTS between the scratch project and the committed
     one, as ['tiled/x.tmj changed', ...] — and the scratch copy put back the
-    way it was, so the next tool starts from the committed files."""
+    way it was, so the next tool starts from the committed files. A PNG whose
+    bytes differ and whose pixels do not is put back and not reported."""
     out = []
     for rel in OUTPUTS:
         a, b = files_under(root, rel), files_under(work, rel)
@@ -143,7 +173,10 @@ def restore(root, work):
                 out.append(f'{f} ADDED')
                 os.remove(dst)
             elif f not in b or not filecmp.cmp(src, dst, shallow=False):
-                out.append(f'{f} ' + ('changed' if f in b else 'REMOVED'))
+                if f not in b:
+                    out.append(f'{f} REMOVED')
+                elif not same_picture(src, dst):
+                    out.append(f'{f} changed')
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
                 shutil.copyfile(src, dst)
     return out
@@ -253,6 +286,9 @@ def main(argv):
         print('\nA generator no longer rebuilds the committed world. Fold the difference into the\n'
               'generator (or have it keep what it does not own) - do not re-run it over the room.\n'
               'For a Tiled map: python3 tools/config_to_tiled.py <Room> after the config edit.')
+        if any(n in ART_TOOLS for n in failures):
+            print(f'The art tools ran on Pillow {pillow_version()}. A sprite drawn a pixel off by another Pillow\n'
+                  'shows as drift too: docs/generators-and-checks.md lists the versions that rebuild the art.')
     if skipped:
         print(f'\n{len(skipped)} art tool(s) not checked: ' +
               ('this python3 has no Pillow. Run the check with one that does.' if not pillow else

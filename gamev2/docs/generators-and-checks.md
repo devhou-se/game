@@ -24,6 +24,23 @@ repository's `art-source/`, beside `gamev2/`; its `README.md` lists the sheets a
 one from history). `check_generators.py` links that folder beside its scratch copy, so the tools find it there
 too. A sheet a tool reads is added to `art-source/` and to `SHEETS` in `tools/tests/repo-layout.test.js`.
 
+**A PNG is compared by its decoded pixels, not its bytes** (`same_picture`, issue #230): the same size and the
+same RGBA values. The bytes of a PNG also depend on the zlib that Pillow was built with, so the same picture
+is a different file from one machine to the next, and a byte comparison passed only on the machine that wrote
+the art. `config.json`, the `.tmj` maps and the prefabs are still compared byte for byte. So any `python3`
+with a Pillow that draws the same pixels will do, not only the macOS one:
+
+- **Pillow 11.2 to 13.0 rebuild the committed art** (11.2.1, 11.3.0, 12.0.0, 12.1.1, 12.3.0 and 13.0.0 were
+  run on Linux on 27 Nov 2026, every art tool but the two that need a Japanese font).
+- **Pillow 11.1 and older do not**: they draw some curves and slanted lines a pixel off, and the check reports
+  `DRIFT` for 8 to 15 sprites (`sendai-cedar`, `palace-in-fusuma-tiger`, ...). That is Pillow, not the tool:
+  use a newer one. When an art tool drifts the check prints the Pillow version it ran on.
+- A new Pillow can move a pixel too. Pillow 13 fills the one-column middle of a rounded rectangle that older
+  ones left empty, which changed the cabin windows of `plane-interior`; `generate_sanfranbourne_art.py` now
+  draws that column itself, so the picture is the committed one on either. Do the same when a new Pillow
+  moves something: draw the committed pixels with rectangles and points, do not regenerate the art to suit one
+  version.
+
 `tools/districts.py` is one of the generators checked: it writes config `districts` (the named areas of every
 town, `landmarks-and-towns.md` "Districts") from its own `DISTRICTS` list and each landmark's standing cell,
 so a map change that moves a landmark across a district's edge shows as `DRIFT districts.py`: re-run it.
@@ -234,6 +251,6 @@ buildings (`devhouse-tokyo_0_0` 5x8, `devhouse-osaka_0_0` 3x7; their prefabs are
 stair tiles, the wet-room tile, gravel and stepping stone, the partitions, the locked door and the bamboo
 fence of the back wall, and the furniture and garden pieces the home kit did not have. Fully procedural, and
 drawn with rectangles and points only (no Pillow ellipse, polygon or slanted line, which move by a pixel
-between Pillow versions), so a re-run is byte-identical on any Pillow; it writes each sprite's
+between Pillow versions), so a re-run draws the same pixels on any Pillow; it writes each sprite's
 `spriteMetadata` and `tileNames`, and `generate_devhouses.py` appends the keys to the palette as it places
 them. Sizes are whole cells and are what the floor grids assume. Needs Pillow.

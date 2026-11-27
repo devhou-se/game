@@ -53,7 +53,8 @@ python3 tools/sync_cities.py --check    # config `cities` and devhouse.world agr
 ```
 
 - Plain `python3` has no Pillow: `check_generators.py` lists the art tools as `skip` without it. Use
-  `/Library/Developer/CommandLineTools/usr/bin/python3` to cover them, and for any imaging tool.
+  `/Library/Developer/CommandLineTools/usr/bin/python3` to cover them, and for any imaging tool. Elsewhere any
+  `python3` with Pillow 11.2 or newer does: PNGs are compared by pixels, not bytes (`docs/generators-and-checks.md`).
 - After a map edit: `node tools/play.js lint <Room>` and look at `node tools/play.js render <Room> out.png`.
 - After touching `blog_to_npc.py`, a Hokkaido map, the trips or the cast: `python3 tools/rehearse_blog.py`.
 - A change the player can see: run the browser regression, `tools/browser/regress.js` (how: `tools/browser/README.md`).

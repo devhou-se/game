@@ -1049,12 +1049,16 @@ def plane_interior():
     for i, x in enumerate(range(first, CABIN_W - 14, WINDOW_STEP)):
         cx = x
         d.rounded_rectangle([cx - 8, y0 - 2, cx + 8, y1 + 2], 7, fill=wall_hi, outline=wall_lo)
+        # the post down the middle of each window. Pillow before 13 left the one middle column of
+        # these two rounded rectangles unfilled, and that is the cabin as committed: the column is
+        # drawn here, and kept out of the hole, so the picture is the same on any Pillow (issue #230)
+        d.line([(cx, y0 - 1), (cx, y1 + 1)], fill=wall)
         hole = Image.new('L', im.size, 0)
         ImageDraw.Draw(hole).rounded_rectangle([cx - 6, y0, cx + 6, y1], 5, fill=255)
         shade = (0, 5, 0, 0, 9, 0, 0)[i % 7]                              # a pulled-down blind
         for yy in range(y0 + shade, y1 + 1):
             for xx in range(cx - 6, cx + 7):
-                if hole.getpixel((xx, yy)):
+                if xx != cx and hole.getpixel((xx, yy)):
                     px[xx, yy] = CLEAR
         if shade:
             d.line([(cx - 4, y0 + shade - 1), (cx + 4, y0 + shade - 1)], fill=wall_lo)

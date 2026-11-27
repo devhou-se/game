@@ -112,7 +112,8 @@ python3 tools/sync_cities.py --check    # config cities and devhouse.world agree
 ```
 
 - Plain `python3` may have no Pillow; without it `check_generators.py` skips the art tools. Use an interpreter
-  that has it and make sure the run reports `0 skipped`.
+  that has it and make sure the run reports `0 skipped`. Off the Mac, a venv with Pillow 11.2 or newer rebuilds
+  the committed art (PNGs are compared by pixels; `generators-and-checks.md` lists the versions).
 - After a map edit: `node tools/play.js lint <Room>` (0 errors) and look at
   `node tools/play.js render <Room> out.png`.
 - After touching the blog pipeline, a town's landmarks, the trips or the cast: `python3 tools/rehearse_blog.py`.
