@@ -804,18 +804,24 @@ class Shop {
 
     // ---------------- toast ----------------
 
-    /** What the toast on screen says, or null when there is none. */
+    /** What the toast on screen says (as it was said: not as it is broken into lines), or null when there is none. */
     toastText() {
-        return this._toast && this._toast.active ? this._toast.text : null;
+        return this._toast && this._toast.active ? this._toast.said : null;
     }
 
     toast(msg) {
         if (this._toast) this._toast.destroy();
-        const cam = this.scene.cameras.main;
-        const o = this.scene.add.text(cam.width / 2, cam.height - 80, msg, {
-            fontSize: '20px', fill: '#ffffff', fontFamily: 'PixelOperatorMonoBold',
-            backgroundColor: 'rgba(0,0,0,0.75)', padding: { x: 10, y: 6 },
+        const cam = this.scene.cameras.main, T = Shop.TOAST, y = cam.height - T.above;
+        const o = this.scene.add.text(cam.width / 2, y, msg, {
+            fontSize: `${T.font}px`, fill: '#ffffff', fontFamily: 'PixelOperatorMonoBold', align: 'center',
+            backgroundColor: 'rgba(0,0,0,0.75)', padding: { x: T.padX, y: T.padY },
         });
+        o.said = msg;
+        // UIScale magnifies a toast to the text floor but cannot re-flow it: a line too long to
+        // be shown that big between a phone's touch controls (the energy hint at 667x375, #220)
+        // is broken here, before it is drawn. Never on a desktop-sized window.
+        const ui = this.scene.uiScale, widest = ui ? ui.floatWidth(T.font, y) : Infinity;
+        if (o.width > widest) o.setText(Shop.toastLines(msg, o.width, widest, 2 * T.padX));
         o.setOrigin(0.5, 0.5); o.setResolution(1);
         o.setScrollFactor(0); o.setDepth(3500);
         o.uiFloat = true;   // UIScale: magnified, but never moves the overlay it appears over
@@ -843,6 +849,39 @@ Shop.guestbookOf = (raw) => {
 
 /** How long a toast stays up before it fades — longer lines get longer. */
 Shop.toastMs = (msg) => Math.max(1800, String(msg).length * 45);
+
+/** The toast: its font and padding (px), and how far above the bottom of the view its middle is. */
+Shop.TOAST = { font: 20, padX: 10, padY: 6, above: 80 };
+
+/**
+ * `msg`, which is `width` px wide on one line (`pad` of that is padding),
+ * on the fewest lines that are each no wider than `widest`: broken at
+ * spaces only, and as even as they come (the narrowest lines that are still
+ * that few, so the last is never one stray word). The toast's face is
+ * monospaced, so a line's width is its share of the characters. Unchanged
+ * when it fits; a single word too long for a line keeps a line to itself.
+ */
+Shop.toastLines = (msg, width, widest, pad = 0) => {
+    const text = String(msg);
+    if (!(width > widest) || !text.length) return text;
+    const most = Math.max(1, Math.floor((widest - pad) / ((width - pad) / text.length)));
+    const words = text.split(' ');
+    const wrap = (limit) => {
+        const lines = [];
+        for (const word of words) {
+            const last = lines.length - 1;
+            if (last >= 0 && lines[last].length + 1 + word.length <= limit) lines[last] += ' ' + word;
+            else lines.push(word);
+        }
+        return lines;
+    };
+    const fewest = wrap(most);
+    for (let limit = Math.ceil(text.length / fewest.length); limit < most; limit++) {
+        const lines = wrap(limit);
+        if (lines.length === fewest.length) return lines.join('\n');
+    }
+    return fewest.join('\n');
+};
 
 /** Effect slots: one drink and one food effect can be active at a time. */
 Shop.SLOTS = ['drink', 'food'];
