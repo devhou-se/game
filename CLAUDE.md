@@ -82,3 +82,4 @@ When making commits:
 - **Checks** (`.github/workflows/checks.yml`) runs the five no-browser checks above on every push to master
   and every pull request that touches the game, the source art or `devhouse.world`. It has no Pillow, so the
   art tools are listed as `skip` there, and it does not gate the deploy.
+- **Label New Issues** (`.github/workflows/label-new-issues.yml`) adds the `workshop/nominated` label to every newly opened issue.

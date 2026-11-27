@@ -1,0 +1,23 @@
+name: Label New Issues
+
+# Every newly opened issue gets the "workshop/nominated" label, so Workshop
+# picks it up without anyone having to tag it by hand.
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    name: Add workshop/nominated
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: gh issue edit "$ISSUE_NUMBER" --add-label "workshop/nominated"
