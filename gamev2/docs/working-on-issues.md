@@ -181,6 +181,11 @@ attribution lines.
   that plays the change and reads the diff. Small fixes and art-only commits land on green checks.
 - Every push that touches `gamev2/**` deploys to game.devhou.se (workflow "Deploy GameV2 Canvas"). **Watch the
   run** (`gh run list -R devhou-se/game --workflow "Deploy GameV2 Canvas" -L 3`) and say so if it fails.
+- A browser keeps what it has loaded. The game asks for its scripts, `config.json`, the Tiled maps and the
+  manifests with a `?t=` cache-buster, and `firebase.json` serves every PNG with `Cache-Control: no-cache`, so
+  the art is re-checked on each load and a redrawn sprite shows on the next reload (issue #241: the fixed
+  sprite was live, and a browser drew the old one from its cache for up to an hour). `index.html` and the
+  fonts keep the host's default of an hour.
 - The "Checks" workflow (`.github/workflows/checks.yml`) runs the five checks of section 4 on every push to
   master and every pull request that touches the game. It installs the Pillow pinned in `tools/requirements-art.txt`, so it checks
   the art tools too (all but the two that need a Japanese system font, which it lists as `skip`),
@@ -196,6 +201,9 @@ Under Workshop, "say so on the issue" below means say so in your summary.
   names the commit it follows. Revert only if the fix is not quick, and say so on the issue.
 - **A deploy failed**: read the run log before retrying; a root-only commit (nothing under `gamev2/`) does not
   deploy and that is expected.
+- **A fix has landed and someone still sees the old thing**: compare what the live site serves with the commit
+  before changing anything (`curl -s https://game.devhou.se/<path> | cmp - gamev2/<path>`). If they match, the
+  browser is showing a cached file (section 7).
 - **A generator no longer reproduces the world** (`check_generators` fails): the generator is the source of
   truth for a generated room. Fix the generator or re-run it; do not hand-edit its output and leave it failing.
   Ported Tokyo rooms have no generator; their Tiled map is the source of truth.

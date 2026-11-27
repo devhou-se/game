@@ -206,7 +206,10 @@ class SpriteSystem {
     }
 
     /**
-     * Load sprite assets dynamically based on metadata
+     * Load sprite assets dynamically based on metadata.
+     * The URLs carry no cache-buster (there are some 1500 files): firebase.json
+     * serves every PNG `Cache-Control: no-cache`, so the browser re-checks each
+     * one and a redrawn sprite is not drawn from its cache (issue #241).
      * @param {string} spriteKey - Sprite key to load
      * @param {Object} metadata - Sprite metadata
      */

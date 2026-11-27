@@ -97,6 +97,7 @@ Under Workshop (your instructions say so, and the checkout is on a `workshop/<n>
 - **Deploy GameV2 Canvas** (`.github/workflows/firebase-hosting-gamev2.yml`) deploys `gamev2/` to Firebase
   Hosting (project `devhouse-80936`, target `devhouse-game-canvas`) on every push to master that touches
   `gamev2/**` (or `firebase.json`, or the workflow itself), and can be run by hand. The run is green only if the live site serves the commit.
+  `firebase.json` has browsers re-check every PNG (`Cache-Control: no-cache`), so redrawn art is not shown stale.
 - **Checks** (`.github/workflows/checks.yml`) runs the five no-browser checks above on every push to master
   and every pull request that touches the game, the source art or `devhouse.world`. It installs the
   Pillow pinned in `gamev2/tools/requirements-art.txt`, so the art tools are checked there too (the two that

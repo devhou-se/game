@@ -73,4 +73,15 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         const hosting = JSON.parse(fs.readFileSync(path.join(ROOT, 'firebase.json'), 'utf8')).hosting;
         assert.deepStrictEqual(hosting.map((h) => [h.site, h.public]), [['devhouse-game-canvas', 'gamev2']]);
     });
+
+    test('a redrawn sprite is not drawn from the browser cache: the deploy has every PNG re-checked (#241)', () => {
+        // the sprites are asked for with no cache-buster, and Firebase Hosting's default is max-age=3600: the ferris
+        // wheel without its stray piece was live while a browser that had the old sprite drew that for an hour more
+        const sprites = fs.readFileSync(path.join(GV2, 'src', 'systems', 'SpriteSystem.js'), 'utf8');
+        assert.ok(sprites.includes('`assets/sprites/${spriteKey}.png`'), 'SpriteSystem loads assets/sprites/<key>.png as it is');
+        const [site] = JSON.parse(fs.readFileSync(path.join(ROOT, 'firebase.json'), 'utf8')).hosting;
+        const rules = (site.headers || []).filter((h) => h.source === '**/*.png');
+        assert.strictEqual(rules.length, 1, 'firebase.json has one headers rule for **/*.png');
+        assert.deepStrictEqual(rules[0].headers, [{ key: 'Cache-Control', value: 'no-cache' }]);
+    });
 };
