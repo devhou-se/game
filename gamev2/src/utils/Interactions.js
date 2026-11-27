@@ -11,6 +11,8 @@ const Interactions = {
         { kind: 'flights', group: 'flights', pattern: /^airport-(gate|board)/, footprint: true },
         // Odori Park's hot-drinks tent (issue #219): a stall that sells over its counter, as a machine does
         { kind: 'stall', group: 'shop', pattern: /^snowfest-stall-drinks/, footprint: true },
+        // Susukino's ramen alley (issue #219, stage 4): a counter under a noren, eaten at as a yatai is
+        { kind: 'ramen', group: 'shop', pattern: /^susukino-ramen-stall/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^office-(shelf-drinks|shelf-glass|fridge|freezer)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^office-shelf-snacks/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },

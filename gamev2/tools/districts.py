@@ -26,7 +26,7 @@ step 1: labels only, no map changes). The game itself does not read
 
 The names are the redesign plan's going-forward ones wherever that area is on
 today's map; the bounds are today's map. An area the plan names that is not
-built yet (Sapporo's Susukino, Asahikawa's zoo gate,
+built yet (Asahikawa's zoo gate,
 Shirakawa-go's ryokan, Ueno and Shibuya in Tokyo's Park) has NO district:
 add it with the map change that builds it. A room need not be covered edge
 to edge, and districts of one room never overlap.
@@ -101,6 +101,10 @@ DISTRICTS = {
           'the covered shopping arcade on red brick under a glass roof: souvenirs, the crab shop, a drugstore, '
           'the 7-Eleven, in through the tanuki gate',
           (17, 34, 43, 42), stand=(24, 39)),
+        d('susukino', 'Susukino',
+          'the neon crossing at night: the fox board on the corner building, a karaoke bar, the ramen alley behind '
+          'its gate, the streetcar and its stop on a dark tram street',
+          (2, 43, 53, 49), stand=(37, 47)),
     ],
     'Asahikawa': [
         d('station-front', 'Station front and Heiwa-dori',

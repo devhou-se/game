@@ -6,8 +6,8 @@ ONLY by train: the doors under the station's star clock on the north side lead
 into the SapporoStation interior (built by generate_stations.py). Unlike the
 other towns it is laid out on a street GRID, the way Sapporo is.
 
-It is being rebuilt district by district (issue #219). Stages 1 to 3 are done -
-four districts with ground and buildings of their own:
+It was rebuilt district by district (issue #219, four stages) into five
+districts with ground and buildings of their own:
 
   SAPPORO STATION FRONT   grey stone slabs (brown-brick-autotile; it stood on
           the arcade's red brick until stage 3 gave that to Tanukikoji alone).
@@ -31,17 +31,33 @@ four districts with ground and buildings of their own:
           fades). The three shops open into shop interiors
           (tools/generate_houses.py --shops Sapporo; roomgen.SHOP_DOORS).
           No townhouse is left in Sapporo, so it has no House interior.
+  SUSUKINO                the neon crossing, south of the arcade's back row
+          (stage 4; the room grew eight rows south for it, 56x43 -> 56x51). Its
+          ground is dark wet asphalt with the neon lying in it
+          (susukino-asphalt-autotile, its alone) and the streetcar's rails:
+          one east-west street (rows 47-49) with the track down its middle (tram-rail-h on row 48, tram-rail-cross where
+          the station avenue meets it). The three north-south streets run down
+          to it. East of the avenue, on its corner, the neon building with the
+          fox board (a lobby: roomgen.TOWER_DOORS) and the karaoke bar (a shop
+          floor whose counter is a bar: roomgen.SHOP_DOORS); west of it the
+          ramen alley - one row (45) behind a ploughed bank, three counters
+          under noren against the arcade's back wall, entered under the ramen
+          gate from the street. A bump on a counter sells (Shop.VENUES.ramen).
+          The streetcar is declared, not placed: rooms.Sapporo.tramways, run by
+          src/AmbientTrams.js - in from off the map along row 48, a stop
+          outside the alley (the bench and sign on the south kerb), out the
+          other side, and back mirrored.
 
   The two office blocks open into lobbies (tools/generate_houses.py --lobbies
   Sapporo; their doors are in roomgen.TOWER_DOORS, and roomgen.save_config
   keeps them through a rebuild). No generic townhouse stands in the north.
 
-Still to come (stage 4): Susukino and the streetcar, south of the arcade. Until
-then the south-west and south-east corners are plain snow with trees, and the
-arcade's south row closes the town where the fence did.
+The south-west and south-east corners beside the arcade are plain snow with
+trees, fenced along row 42.
 
 Streets: two east-west (rows 20-22 and 31-33) and three north-south (columns
-14-16, 30-32 the station avenue, and 44-46), plain asphalt where they cross.
+14-16, 30-32 the station avenue, and 44-46), plain asphalt where they cross,
+and Susukino's tram street across the south.
 You can walk on them - there is no traffic.
 
 Nobody gets lost behind a building: the west row is closed by a shrub in each
@@ -68,8 +84,8 @@ Run from gamev2/:
     python3 tools/generate_discount_stores.py Sapporo   # DonTakoteSapporo (door wired here)
     python3 tools/generate_stations.py            # builds SapporoStation + registry
     python3 tools/generate_houses.py Sapporo            # removes the House interiors of townhouses that are gone
-    python3 tools/generate_houses.py --shops Sapporo    # ShopSapporo<n> (Tanukikoji's three shops)
-    python3 tools/generate_houses.py --lobbies Sapporo  # LobbySapporo<n> (the two office blocks)
+    python3 tools/generate_houses.py --shops Sapporo    # ShopSapporo<n> (Tanukikoji's three shops, the karaoke bar)
+    python3 tools/generate_houses.py --lobbies Sapporo  # LobbySapporo<n> (the two office blocks, the neon corner)
     node tools/play.js lint Sapporo            (and SapporoStation, KonbiniSapporo1)
     python3 tools/config_to_tiled.py Sapporo SapporoStation KonbiniSapporo1 DonTakoteSapporo
 """
@@ -79,7 +95,7 @@ import generate_discount_stores as don
 
 cfg = rg.load_config()
 
-W, H = 56, 43
+W, H = 56, 51            # 43 rows until stage 4 added Susukino's eight
 b = rg.Builder(W, H)
 
 b.fill('snow-autotile')
@@ -162,11 +178,22 @@ b.autotile('grey-brick-autotile', rect(47, 23, 53, 30))          # the TV Tower'
 
 hroad(KITA, 2, 53)
 hroad(MINAMI, 2, 53)
-vroad(AVENUE, 11, 40)                 # the station avenue runs the whole town
-vroad(WEST, KITA, 40)
-vroad(EAST, KITA, 40)
+# Susukino (issue #219, stage 4): the rows the room grew by. BACK is the strip
+# behind its buildings (closed), FEET the row they stand on, then the tram
+# street: asphalt, the rails, asphalt, and the kerb that closes the town
+BACK, FEET, TRAM_STREET, RAIL, KERB = 43, 46, 47, 48, 50
+vroad(AVENUE, 11, FEET)               # the station avenue runs the whole town, down to the tram street
+vroad(WEST, KITA, FEET)
+vroad(EAST, KITA, FEET)
 for sx in (WEST, AVENUE, EAST):
     crossing(sx, KITA); crossing(sx, MINAMI)
+# the tram street, edge to edge (the car comes in from off the map): the rails
+# and the slush of the south kerb. Its north side is Susukino's own ground, laid
+# below with the district
+for x in range(W):
+    b.put('Floor', x, TRAM_STREET, 'road-edge-top_0_0')
+    b.put('Floor', x, RAIL, 'tram-rail-cross_0_0' if AVENUE <= x <= AVENUE + 2 else 'tram-rail-h_0_0')
+    b.put('Floor', x, RAIL + 1, 'road-edge-bottom_0_0')
 
 # ---- west of the plaza, still Station front: the red-brick government hall
 #      (a landmark: sealed) and the glass KITA office block (its lobby is opened
@@ -299,11 +326,11 @@ for i, x in enumerate(range(17, 29, 3)):
     b.stamp('tanukikoji-south-row-' + 'ab'[i % 2], x, SOUTH_ROW)
 for i, x in enumerate(range(34, 43, 3)):
     b.stamp('tanukikoji-south-row-' + 'ba'[i % 2], x, SOUTH_ROW)
-for x in (29, 33, 43):                                  # the odd cell at a stretch's end
-    b.stamp('shrub-small-snow', x, 41)
+for x in (29, 33, 43):                                  # the odd cell at a stretch's end, down to Susukino's back strip
+    b.stamp('shrub-small-snow', x, 41); b.stamp('shrub-small-snow', x, 42)
 
-# the two south corners wait for stage 4 (Susukino): snow, trees, a lantern, and
-# the vending machines in the south-east one. No townhouse stands anywhere
+# the two south corners beside the arcade: snow, trees, a lantern, and the
+# vending machines in the south-east one. No townhouse stands anywhere
 b.stamp('tree-snow', 2, 34); b.stamp('tree-snow', 12, 34)
 b.stamp('lantern-red', 7, 35)
 b.stamp('shrub-small-snow', 3, 39); b.stamp('shrub-small-snow', 12, 39)
@@ -311,17 +338,80 @@ b.stamp('shrub-small-snow', 5, 36); b.stamp('shrub-small-snow', 10, 36)
 b.stamp('tree-snow', 52, 36); b.stamp('tree-snow', 48, 34)
 b.stamp('vending-red', 49, 38); b.stamp('vending-white', 50, 38)
 
-# ---- borders: snowy hedges west / east, a fence along the south (continuous
-#      with the arcade's south row - a gap would let the player slip round behind) -----------------
-for y in range(7, 41, 2):
+# ---- Susukino (issue #219, stage 4): the neon crossing, on dark wet asphalt
+#      and the streetcar's rails. Everything stands on row FEET and faces the
+#      tram street; the strip behind (BACK) is closed, so nobody gets between
+#      Susukino and the arcade's back wall ---------------------------------------
+WET_ASPHALT = 'susukino-asphalt-autotile'      # dark wet asphalt with the neon lying in it: Susukino's alone
+b.autotile(WET_ASPHALT, set(rect(2, TRAM_STREET, W - 3, TRAM_STREET))
+           | set().union(*(rect(x0, BACK, x1, FEET) for x0, x1 in ARCADE)))
+# east of the avenue: the neon building on the corner (its lobby is opened by
+# generate_houses.py --lobbies), the karaoke bar (a shop floor: --shops), a pole
+# of neon signs after each. The top of the fox board rises over the arcade's
+# back row; everything under it is solid
+NEON, KARAOKE = (33, FEET - 6), (39, FEET - 4)
+b.stamp('susukino-neon-corner', *NEON)
+b.stamp('susukino-karaoke', *KARAOKE)
+for x in (38, 43):                                      # ...in the gap after it, on a ploughed bank
+    b.stamp('susukino-neon-lanterns', x, FEET - 1)
+    bank(col=x, cells=(BACK, BACK + 1)); b.solid(x, FEET - 1)
+for x in list(range(NEON[0], NEON[0] + 5)) + list(range(KARAOKE[0], KARAOKE[0] + 4)):
+    b.solid(x, BACK)
+# west of the avenue: the ramen alley. Three counters under noren stand against
+# the arcade's back wall (feet on row 44); the alley is row 45, one cell wide,
+# closed from the street by a ploughed bank with lantern posts and at its ends
+# by banks, and entered under the ramen gate at its east end (28,46 -> 28,45)
+ALLEY = FEET - 1
+RAMEN_GATE = (27, FEET - 2)
+for i, x in enumerate((18, 21, 24)):
+    b.stamp('susukino-ramen-stall-' + 'aba'[i], x, ALLEY - 3)
+b.stamp('susukino-ramen-gate', *RAMEN_GATE)
+for x in (27, 28, 29):                                  # behind the gate's board: the bank the plough left
+    b.stamp('snowbank-h', x, BACK); b.solid(x, BACK + 1)
+bank(col=17, cells=(BACK, BACK + 1, ALLEY)); bank(col=29, cells=(ALLEY,))
+POSTS = (21, 26)                                        # lantern posts on the bank: they light the alley
+for x in range(17, 27):
+    if x in POSTS:
+        b.stamp('ramen-alley-lanterns', x, FEET - 1)
+    else:
+        b.stamp('snowbank-pile' if x == 17 else 'snowbank-h', x, FEET)
+# the streetcar: overhead-wire poles along the south kerb (the arm reaches over
+# the rails), and the stop outside the alley - a strip of platform on the south
+# side of the track, a bench and the stop sign on the kerb behind it
+TRAM_STOP = 23
+POLES = (6, 18, 34, 48)
+STOP_BENCH, STOP_SIGN = (21, KERB), (25, KERB)
+b.autotile('light-concrete-autotile', rect(20, RAIL + 1, 26, RAIL + 1))
+for x in POLES:
+    b.stamp('tram-pole', x, KERB - 2)
+b.stamp('odori-bench', *STOP_BENCH)
+b.stamp('bus-stop', *STOP_SIGN)
+# the two ends of the new rows, west of the west street and east of the east
+# one: snow under trees, a bank along the kerb with a way through
+for trees, banks, heaps, pole in (((3, 9), (2, 3, 4, 8, 9, 10), (5, 11), 12),
+                                  ((48, 51), (47, 48, 52, 53), (49,), 50)):
+    for x in trees:
+        b.stamp('tree-snow', x, BACK)                 # trunk on row 45
+    bank(row=FEET, cells=banks, heaps=[(x, FEET) for x in heaps])
+    b.stamp('susukino-neon-lanterns', pole, FEET - 1)
+
+# ---- borders: snowy hedges west / east, broken only by the tram track (the
+#      rails run out of town through the hedge: those cells are closed); a fence
+#      along the south kerb, and along row 42 beside the arcade (continuous with
+#      its south row - a gap would let the player slip round behind) ------------
+for y in list(range(7, 41, 2)) + [BACK, BACK + 2]:
     b.stamp('shrub-large-snow', 0, y); b.stamp('shrub-large-snow', W - 2, y)
 for x in (0, 1, W - 2, W - 1):
     b.stamp('shrub-small-snow', x, 41)
+    b.stamp('shrub-small-snow', x, TRAM_STREET); b.stamp('shrub-small-snow', x, RAIL + 1)
+    b.solid(x, RAIL)
 for x in (0, W - 1):
-    b.stamp('shrub-small-snow', x, 6); b.stamp('shrub-small-snow', x, 42)
+    b.stamp('shrub-small-snow', x, 6); b.stamp('shrub-small-snow', x, 42); b.stamp('shrub-small-snow', x, KERB)
 for i, x in enumerate(range(1, W - 1)):
-    if not (17 <= x <= 28 or 34 <= x <= 42):          # the arcade's south row stands on the line there
+    if x <= 13 or x >= 47:                            # the corners' fence; the arcade's south row and the streets are between
         b.fence(x, 42, i)
+    if x not in POLES and x not in (STOP_BENCH[0], STOP_BENCH[0] + 1, STOP_SIGN[0]):
+        b.fence(x, KERB, i)
 
 # isolated: the ONLY way out is the station's doors into SapporoStation (the
 # konbini and the discount store lead to their own interiors and back).
@@ -335,17 +425,26 @@ prev = cfg['rooms'].get('Sapporo', {})
 # Each is moved only from the cell they had before, so a later edit stays. Julia's
 # line pointed at the Clock Tower she stood by: at the castle it names the castle
 # (only that exact line, and only while she stands at the castle).
-PARK_CAST = {'Sam': ((21, 27), (CORN[0] + 3, CORN[1] + 3)), 'Julia': ((39, 19), (CASTLE[0] + 2, CASTLE[1] + 4)),
-             'Xander': ((35, 17), (GATE[0], GATE[1] + 4)), 'Khoi': ((38, 8), (CRAB[0] + 2, CRAB[1] + 4))}
+# Stage 4 stood two in Susukino: Dylan beside the neon corner's door ("Susukino
+# crossing", from the station plaza) and Khoi on the street by the ramen gate
+# ("ramen alley", from the crab shop - a stage 3 move, so his are two steps):
+# two cells west of the gate's mouth, which a wanderer (two cells from home)
+# therefore never stands in - the alley is one cell wide and has no other way out.
+# Bailey stays at the station and Damian at the Clock Tower.
+PARK_CAST = [('Sam', (21, 27), (CORN[0] + 3, CORN[1] + 3)), ('Julia', (39, 19), (CASTLE[0] + 2, CASTLE[1] + 4)),
+             ('Xander', (35, 17), (GATE[0], GATE[1] + 4)), ('Khoi', (38, 8), (CRAB[0] + 2, CRAB[1] + 4)),
+             ('Khoi', (CRAB[0] + 2, CRAB[1] + 4), (RAMEN_GATE[0] - 2, TRAM_STREET)),
+             ('Dylan', (24, 15), (NEON[0] + 3, TRAM_STREET))]
+PARK_AT = {'Julia': (CASTLE[0] + 2, CASTLE[1] + 4)}
 PARK_LINES = {'Julia': ("That's the Sapporo Clock Tower behind me.", "That's the snow castle behind me. Three storeys of it.")}
 for npc in prev.get('npcs', []):
-    was, now = PARK_CAST.get(npc.get('name'), (None, None))
     if npc.get('trip') != 'devhouse3' or npc.get('stay') != 'Sapporo':
         continue
-    if (npc['gridX'], npc['gridY']) == was:
-        npc['gridX'], npc['gridY'] = now
+    for who, was, now in PARK_CAST:
+        if who == npc.get('name') and (npc['gridX'], npc['gridY']) == was:
+            npc['gridX'], npc['gridY'] = now
     said, says = PARK_LINES.get(npc['name'], (None, None))
-    if (npc['gridX'], npc['gridY']) == now and said in npc.get('dialogue', []):
+    if (npc['gridX'], npc['gridY']) == PARK_AT.get(npc['name']) and said in npc.get('dialogue', []):
         npc['dialogue'] = [says if line == said else line for line in npc['dialogue']]
 # the konbini door keeps the transporter generate_konbinis.py wired onto it;
 # with none to keep (a first build) it is sealed until that runs
@@ -354,7 +453,7 @@ if not konbini_entry:
     b.solid(*konbini_door)
 b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
 # (listed in the order they already are: generate_konbinis.py appends its door)
-cfg['rooms']['Sapporo'] = b.room('Sapporo', npcs=prev.get('npcs', []), transporters=rg.kept_order(prev, [
+room = b.room('Sapporo', npcs=prev.get('npcs', []), transporters=rg.kept_order(prev, [
     # into the station at its entry cell (generate_stations.py: a large station's is not 11,11)
     rg.transporter(x, y, 'SapporoStation',
                    *cfg.get('stations', {}).get('SapporoStation', {}).get('entry', [11, 11]), hidden=True)
@@ -362,7 +461,14 @@ cfg['rooms']['Sapporo'] = b.room('Sapporo', npcs=prev.get('npcs', []), transport
 ] + ([konbini_entry] if konbini_entry else []) + [
     don.door_transporter('Sapporo', store_door),
 ]))
+# the streetcar (src/AmbientTrams.js): the line is the rails of its row, edge to
+# edge, so the car comes in from off the map, stops outside the ramen alley and
+# leaves the other side; the next runs back mirrored
+room['tramways'] = [{'row': RAIL, 'sprite': 'sapporo-streetcar_0_0', 'speed': 160, 'headway': 20,
+                     'stops': [TRAM_STOP], 'dwell': 5}]
+cfg['rooms']['Sapporo'] = room
 
 rg.save_config(cfg)
 print(f'Sapporo {W}x{H}; station doors at {station_doors} -> SapporoStation; '
-      f'Clock Tower at {CLOCK}, TV Tower at {TOWER}, Tanukikoji gate at {GATE}, konbini at {KONBINI}')
+      f'Clock Tower at {CLOCK}, TV Tower at {TOWER}, Tanukikoji gate at {GATE}, konbini at {KONBINI}; '
+      f'Susukino: neon corner at {NEON}, karaoke at {KARAOKE}, ramen gate at {RAMEN_GATE}, streetcar stop at column {TRAM_STOP}')

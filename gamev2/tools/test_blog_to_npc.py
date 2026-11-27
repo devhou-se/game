@@ -377,8 +377,20 @@ def test_spots(cfg):
             assert room_key in cfg['rooms'], f'{label}: no room {room_key!r}'
             assert label in by_room.get(room_key, {}), f'{label} is not found in {room_key}'
         if 'rooms' in options:
+            # ...nowhere else, unless another row carries the same label for another town: Sapporo's
+            # `ramen alley` hangs on Susukino's ramen gate, Asahikawa's on the generic ramen-banner row
+            # (issue #219). An unscoped row counts for the towns that hold its sprite
             offered = {r for r in by_room if label in by_room[r]}
-            assert offered == set(options['rooms']), (label, offered)
+            expected = set()
+            for other_prefix, other_label, _, other in map(b.landmark_fields, b.LANDMARKS):
+                if other_label == label:
+                    expected |= set(other['rooms']) if 'rooms' in other else {
+                        r for r in by_room if any(key.startswith(other_prefix) for layer in cfg['rooms'][r]['layers']
+                                                  for key in b.decode_tiles(cfg, layer).values())}
+            assert offered == expected, (label, offered, expected)
+    # the two ramen alleys: each town's own, at its own sprite
+    assert by_room['Sapporo']['ramen alley'] == (25, 47), by_room['Sapporo']['ramen alley']
+    assert sorted(r for r in by_room if 'ramen alley' in by_room[r]) == ['Asahikawa', 'Sapporo']
     # ... and that filter is doing something: the gate's sprite is in both towns
     def has_tile(room_key, prefix):
         return any(key.startswith(prefix) for layer in cfg['rooms'][room_key]['layers']

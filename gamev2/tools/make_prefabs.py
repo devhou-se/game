@@ -217,6 +217,28 @@ PREFABS = {
                                      colliders=[(x, y) for x in range(3) for y in (1, 2)], doors=[]),
     'tanukikoji-south-row-b':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'tanukikoji-south-row-b_0_0')],
                                      colliders=[(x, y) for x in range(3) for y in (1, 2)], doors=[]),
+    # ---- Susukino and the streetcar (issue #219, stage 4). The neon corner (5x7)
+    # collides from its second row down: only the parapet and the top of the fox
+    # board are walk-behind, over the arcade street's last row north of it. The
+    # karaoke front (4x5) is solid all over. Each has its door in the bottom row.
+    'susukino-neon-corner':     building(5, 7, door=2, roof=1),
+    'susukino-karaoke':         building(4, 5, door=1, roof=0),
+    # The ramen alley's gate: the posts collide, you walk through the middle cell
+    # under the board. A ramen counter is solid all over, as a yatai is.
+    'susukino-ramen-gate':      dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'susukino-ramen-gate_0_0')],
+                                     colliders=[(0, 2), (2, 2)], doors=[]),
+    'susukino-ramen-stall-a':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'susukino-ramen-stall-a_0_0')],
+                                     colliders=[(x, y) for x in range(3) for y in range(3)], doors=[]),
+    'susukino-ramen-stall-b':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'susukino-ramen-stall-b_0_0')],
+                                     colliders=[(x, y) for x in range(3) for y in range(3)], doors=[]),
+    # Poles: the foot collides, the signs / lanterns / bracket arm are overhead.
+    # (Their keys end `-lanterns`, so the lamp rule lights the first two at night.)
+    'susukino-neon-lanterns':   dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'susukino-neon-lanterns_0_0')],
+                                     colliders=[(0, 1)], doors=[]),
+    'ramen-alley-lanterns':     dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'ramen-alley-lanterns_0_0')],
+                                     colliders=[(0, 1)], doors=[]),
+    'tram-pole':                dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'tram-pole_0_0')],
+                                     colliders=[(0, 2)], doors=[]),
     # The bridge over Asahikawa's frozen river: a flat deck you walk ON. It sits
     # on Non-Collidables with a negative depthBias (spriteMetadata, written by
     # generate_hokkaido.py) so it draws over the ice but under everyone on it.

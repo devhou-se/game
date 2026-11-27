@@ -50,6 +50,7 @@ TOWER_DOORS = {
     'highrise-yellow_0_0': [(1, 7)], 'highrise-blue_0_0': [(2, 10)], 'highrise-glass_0_0': [(1, 9), (2, 9)],
     'highrise-apartment_0_0': [(2, 7)], 'midrise-apartment_0_0': [(2, 5)],
     'sapporo-office-brick_0_0': [(2, 6)], 'sapporo-office-glass_0_0': [(2, 5)],
+    'susukino-neon-corner_0_0': [(2, 6)],       # Susukino's tenant building (issue #219, stage 4)
 }
 LOBBY_PREFIX = 'Lobby'      # rooms.Lobby<Town><n>
 # The shrine halls tools/generate_shrines.py can open (issue #212): the hall's
@@ -58,9 +59,10 @@ LOBBY_PREFIX = 'Lobby'      # rooms.Lobby<Town><n>
 SHRINE_DOORS = {'shrine-building_0_0': [(1, 4)], 'dazaifu-hall_0_0': [(3, 4)]}
 SHRINE_PREFIX = 'Shrine'    # rooms.Shrine<Town><n>, the worship halls generate_shrines.py owns
 # The shopfronts the same generator gives a small shop floor (issue #219, stage 3,
-# `generate_houses.py --shops`): the sprite -> its door cells. Tanukikoji's three.
+# `generate_houses.py --shops`): the sprite -> its door cells. Tanukikoji's three,
+# and Susukino's karaoke bar (stage 4).
 SHOP_DOORS = {'tanukikoji-shop-souvenir_0_0': [(1, 3)], 'tanukikoji-shop-crab_0_0': [(1, 3)],
-              'tanukikoji-shop-drug_0_0': [(1, 3)]}
+              'tanukikoji-shop-drug_0_0': [(1, 3)], 'susukino-karaoke_0_0': [(1, 4)]}
 SHOP_PREFIX = 'Shop'        # rooms.Shop<Town><n>
 # The palace's audience hall (issue #215, tools/generate_palace.py): the foot of
 # each end tower of the palace building (`pagoda-floor`, under its `pagoda-roof`)

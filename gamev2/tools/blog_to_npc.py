@@ -226,6 +226,12 @@ LANDMARKS = [
     ('tanukikoji-gate_', 'Tanukikoji arcade', (0, 4), {'rooms': ('Sapporo',)}),            # inside the gate, at its west post
     ('tanukikoji-shop-crab_', 'the crab shop', (2, 4), {'rooms': ('Sapporo',)}),           # under the crab, east of the door
     ('tanukikoji-shop-souvenir_', 'the souvenir shop', (0, 4), {'rooms': ('Sapporo',)}),   # at the window, west of the door
+    # Susukino (issue #219, stage 4): each stands on the tram street's north side, beside a door or the gate's
+    # mouth, never in front of one. Sapporo's `ramen alley` is its own row: the generic one below hangs on a
+    # ramen banner, which only Asahikawa has
+    ('susukino-neon-corner_', 'Susukino crossing', (3, 7), {'rooms': ('Sapporo',)}),       # under the fox board, east of the door
+    ('susukino-ramen-gate_', 'ramen alley', (-2, 3), {'rooms': ('Sapporo',)}),             # on the street west of the gate: a wanderer (two cells) never reaches its mouth
+    ('bus-stop_', 'the streetcar stop', (-1, -1), {'rooms': ('Sapporo',)}),                # on the platform, beside the stop sign
     ('asahikawa-bridge_', 'the bridge over the frozen river', (1, -1)),   # the north bridgehead
     ('ramen-banner_', 'ramen alley', (-1, 2)),                     # on the lane, outside a shop
     # Sendai (issue #66). Each stands its visitor in the open, in front
@@ -598,7 +604,7 @@ def walkable_near(cfg, room_key, gx, gy, occupied=frozenset(), allowed=None, rea
 # the spot under the park's lanterns, "Sapporo · Odori Park (area)" the park
 AREA = ' (area)'
 # ground nobody is stood on for an area: carriageway, rails, a zebra crossing
-NOT_PLAIN = ('road', 'toyama-tram-rail', 'train-track', 'crossing-')
+NOT_PLAIN = ('road', 'toyama-tram-rail', 'tram-rail', 'train-track', 'crossing-')
 
 
 def districts_of(cfg, room_key):
@@ -686,7 +692,7 @@ def area_cell(cfg, room_key, district, occupied=frozenset()):
 
     wet = {tuple(map(int, xy.split(','))) for layer in cfg['rooms'][room_key].get('layers', [])
            if not layer.get('collision') for xy, key in decode_tiles(cfg, layer).items()
-           if layer['name'] == 'Water' or 'stairs' in key or key.startswith('train-track')}
+           if layer['name'] == 'Water' or 'stairs' in key or key.startswith(('train-track', 'tram-rail'))}
     ax, ay = district.get('stand') or ((x0 + x1) // 2, (y0 + y1) // 2)
     reach = max(cells_w, cells_h)
     return (walkable_near(cfg, room_key, ax, ay, occupied, allowed=allowed, reach=reach)

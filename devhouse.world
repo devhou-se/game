@@ -38,9 +38,9 @@
     {
       "fileName": "gamev2/tiled/sapporo.tmj",
       "x": 256,
-      "y": -3264,
+      "y": -3776,
       "width": 3584,
-      "height": 2752
+      "height": 3264
     },
     {
       "fileName": "gamev2/tiled/asahikawa.tmj",
