@@ -204,7 +204,7 @@ class WorldModel {
         if (table) return table;
         const npc = this.room.npcs.find(n => n.gridX === x && n.gridY === y);
         if (npc) return { kind: 'npc', group: 'npc', npc };
-        return ['flights', 'shop', 'water', 'shrine', 'pond', 'clock', 'flavour'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
+        return ['flights', 'shop', 'water', 'shrine', 'palace', 'pond', 'clock', 'flavour'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
     }
 
     describe(i) {
@@ -232,6 +232,8 @@ class WorldModel {
         if (i.kind === 'water') return 'a free cup of water: a little energy, up to a cap (Energy.WATER_CAP)';
         if (i.kind === 'offering') return 'makes an offering (¥5 from the wallet): the bell rings and a blessing is said';
         if (i.kind === 'omikuji') return 'draws the day\'s fortune (¥100, one a game day; the same slip is read back until the date changes)';
+        if (i.kind === 'audience') return 'requests an audience at the empty seat: one of a handful of dry answers, in turn';
+        if (i.kind === 'guestbook') return 'signs the visitors\' book (free, once a game day; kept in the save)';
         if (i.kind === 'pond') return 'casts a fishing line (needs the fishing rod); a catch goes into the bag to sell';
         if (i.kind === 'clock') return 'opens the time-travel date picker';
         if (i.group === 'flavour') return `says: "${i.say}"`;

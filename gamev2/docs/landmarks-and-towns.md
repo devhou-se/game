@@ -609,3 +609,59 @@ the roll-out, Machi is being deleted.
   it for every dated position). `the shrine` LANDMARK stands its visitor at building cell `(1, 6)`, the foot
   of the two steps: two cells below the door, not in front of it, and walked round by the side of the
   bottom step.
+
+### The palace's audience hall (issue #215)
+
+**What "the palace" is on the map.** Inside the moat of the Tokyo district `Tokyo` (display name "Imperial
+Palace") stands one long blue-roofed building: a central hall, three `temple-hallway` pieces either side of
+it and a three-storey tower (`pagoda-roof` over `pagoda-floor`) at each end. The central hall is the `shrine`
+prefab and opens into its worship hall, "Palace Shrine" (`ShrineTokyo1`, see above): that door is untouched.
+The towers are the palace's own doors: the foot of each (building cell `(1, 2)` of its `pagoda-floor`:
+`Tokyo` 19,22 and 41,22) carries a hidden transporter into ONE interior, `PalaceHallTokyo1` (HUD: `Palace
+Hall`, the Map footer `Palace Hall (in Tokyo)`). You come in at the foot of a side corridor and go out by
+either door: the west mats put you on 19,23, the east mats on 41,23, so the hall is also a way through.
+
+- **`tools/generate_palace.py`** owns the interior and the two doors, in the shrine generator's pattern: the
+  room is rebuilt from scratch (its NPCs kept); in the host, which is a ported map with no generator, it
+  removes the one collider on each door cell and puts the transporter on it, replaced in place, and touches
+  nothing else. A re-run is a no-op, and from a sealed palace it rebuilds the same world (`palace.test.js`).
+  `.agent-queue/items/palace_apply.sh` is the whole thing for a checkout whose palette has moved on (art,
+  generator, `config_to_tiled`, lint, the doorway check, the five gates).
+- **Door keeping.** The room carries `palace: {host, doors}` and `'PalaceHall'` is a row of
+  `roomgen.OWNED_DOORS` (`PALACE_DOORS`: the `pagoda-floor` sprite, on `Over Floor`, which is why
+  `roomgen.DOOR_LAYERS` names two layers). A pagoda in another town is the same sprite and is not a palace: a
+  door counts only when it leads into a room with the marker.
+- **What is inside** (26x22; the floor is 24x15), an Edo audience hall (ohiroma):
+  - the back wall, three rows tall, under the edge of a coffered ceiling: twelve cells of gold-leaf screens
+    painted as one picture (`mural`: an old pine, cranes, gold cloud, water), staggered shelves
+    (`alcove-shelves`) to their left and tasselled lacquer doors (`alcove-doors`) to their right;
+  - the dais (`dais`, 12x3, solid): a matted floor one step up with the lord's empty seat, his arm rest and
+    sword, two candle stands, two braziers; a suit of armour west of it, a rack of swords east;
+  - a tatami hall, the retainers' cushions in two rows, six gilt lamps hung over it (`lamp-hang`, Tops);
+  - a side corridor (engawa) of boards two cells wide down each side, daylight through its paper screens
+    lying across it (`sun-w` / `sun-e`, flat), separated from the mats by vermilion-and-black pillars;
+  - a long corridor across the front between the two doors, walled off from the hall by two runs of painted
+    screens (`fusuma-tiger`, `fusuma-waves`, 6x2) with a four-cell way through between them;
+  - in that corridor: the visitors' book and the guard's rack of polearms by the west door; a waiting room
+    at the east end, a folding screen (`byobu`), tea on a low table, cushions.
+- **Depth** (see `occlusion.md`): pillars are 1x3 with only the foot solid; the painted screens are two rows
+  with only the foot row solid, so from the hall you walk behind their heads and they fade; the armour, the
+  swords, the lamps, the folding screen and the book stand are solid at the foot only; the hung lamps are
+  `Tops` with a `depthBias`.
+- **Lantern light.** `interior` (never offered to the blog pipeline) and `lanternLight`: at night only the
+  hall dims warm and its lights come on. They are not `*-lanterns*` tiles: each has its spots in
+  `Glows.SPRITES` with numeric colours (`palace-in-andon`, `-lamp-hang`, `-guardpost`, and on `-dais` the two
+  candles, which breathe, and the braziers' embers).
+- **Something to do** (`src/PalaceVisit.js`, two `palace` rules and three `flavour` rules in
+  `Interactions.js`; the orchestrator's proposal, not confirmed by the owner - the file's header says how to
+  take it out): bump the dais and you request an audience; one of six dry answers, in turn. Bump the armour,
+  the swords or the guard's post for a line. Bump the visitors' book and you sign it: free, once a game day,
+  kept as `guestbook: {date, n}` in the shop's save blob (see `shop-and-economy.md`); a second bump that day
+  reads it back. No overlay, no key; one answer per bump by the offering box's rule (`ShrineVisit.fresh` /
+  `.carried`).
+- **Art**: `tools/generate_palace_art.py` (needs Pillow; `--preview out.png`) draws all 32 sprites
+  (`palace-in-<piece>`) as shaded pixel art at the shrine kit's scale; every scatter is seeded, so a re-run
+  is byte-identical. It and the generator are in `check_generators.py`.
+- **Doors and blog NPCs**: no dated position, district stand cell or landmark stand cell is on a tower door
+  or the cell in front of it (`palace.test.js` holds it for every date); `the Imperial Palace gate` (28,34)
+  and `the palace moat` (20,33) are far from both.

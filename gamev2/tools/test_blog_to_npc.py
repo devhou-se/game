@@ -505,9 +505,10 @@ def test_city_reach(cfg):
 
     # Tokyo has seams and one door of its own, into its shrine hall (#212; it
     # had none before) - and is still judged (it used to fall back to "no
-    # filter"); nobody is judged from the seams alone
+    # filter"); nobody is judged from the seams alone. Since #215 also the two
+    # tower doors of the palace, both into its one audience hall
     assert [t['targetRoom'] for t in cfg['rooms']['Tokyo']['transporters']
-            if t['targetRoom'] not in names] == ['ShrineTokyo1']
+            if t['targetRoom'] not in names] == ['ShrineTokyo1', 'PalaceHallTokyo1', 'PalaceHallTokyo1']
     reach = {name: b.reachable_cells(cfg, name) for name in names}
     for name in names:
         assert reach[name], f'{name}: nothing reachable'

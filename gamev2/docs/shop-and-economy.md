@@ -167,7 +167,9 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   plus `omikuji: {date, i}` once a fortune has been drawn at a shrine (`ShrineVisit`, see "Shrine worship
   halls" in `landmarks-and-towns.md`; `Shop.omikujiOf` drops anything that is not one). The wallet also pays
   the shrine's offering (¥5) and fortune (¥100): neither is a purchase, so neither feeds the energy meter
-  nor stamps the Stamp Card.
+  nor stamps the Stamp Card. And `guestbook: {date, n}` once the palace's visitors' book has been signed
+  (`PalaceVisit`, see "The palace's audience hall" there; `Shop.guestbookOf`): the day it was last signed and
+  how many times in all. Both fields are absent until used, and a blob without them loads and saves unchanged.
   `until` is an absolute epoch-ms expiry, so buffs survive reloads and room changes
   and lapse on time; on load it is clamped to the item's own duration and effects
   for unknown items are dropped. Older blobs load as-is and are rewritten as v4 on

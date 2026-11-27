@@ -183,6 +183,26 @@ Glows.SPRITES = {
     'snowfest-stall-drinks_0_0': [
         { x: 1.5, y: 1.6, r: 1.4, ry: 0.9, color: Glows.WARM },
     ],
+    // the palace's audience hall (issue #215, art: tools/generate_palace_art.py; the room is
+    // `lanternLight`, so these are lit at night and only then). 1x2: a standing paper lamp
+    'palace-in-andon_0_0': [
+        { x: 0.5, y: 0.95, r: 1.5, color: 0xffc878, a: 0.9 },
+    ],
+    // 1x2: a gilt lamp hung from the ceiling
+    'palace-in-lamp-hang_0_0': [
+        { x: 0.5, y: 1.0, r: 1.7, color: 0xffb860 },
+    ],
+    // 12x3: the two candles either side of the seat (they breathe), the embers of the two braziers
+    'palace-in-dais_0_0': [
+        { x: 4.05, y: 0.45, r: 1.3, color: 0xffd890, pulse: { period: 2600, depth: 0.3 } },
+        { x: 7.95, y: 0.45, r: 1.3, color: 0xffd890, pulse: { period: 3100, depth: 0.3 } },
+        { x: 2.5, y: 1.6, r: 0.7, color: 0xff7848, a: 0.6 },
+        { x: 9.5, y: 1.6, r: 0.7, color: 0xff7848, a: 0.6 },
+    ],
+    // 3x2: the watch's lamp at the end of the rack
+    'palace-in-guardpost_0_0': [
+        { x: 2.55, y: 0.95, r: 1.2, color: 0xffc878, a: 0.9 },
+    ],
 };
 
 if (typeof window !== 'undefined') window.Glows = Glows;

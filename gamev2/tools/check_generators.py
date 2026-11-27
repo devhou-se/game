@@ -47,7 +47,7 @@ GENERATORS = [
     'generate_fukuoka',
     'generate_airports', 'generate_sanfranbourne',
     'generate_konbinis', 'generate_discount_stores', 'generate_stations',
-    'generate_izakaya', 'generate_houses', 'generate_shrines',
+    'generate_izakaya', 'generate_houses', 'generate_shrines', 'generate_palace',
 ]
 GENERATORS += ['generate_kanazawa', 'generate_shirakawago', 'generate_toyama']     # Hokuriku (issue #68)
 # config `districts` from tools/districts.py: last, it reads where the landmarks of every room stand (issue #219)
@@ -63,7 +63,7 @@ ART_TOOLS = [
     'make_road_tiles', 'generate_ads', 'generate_cast', 'extract_city',
     'extract_dotonbori', 'extract_shrine', 'extract_street', 'extract_train',
     'extract_train_interior', 'extract_station', 'generate_station_art',
-    'generate_fukuoka_art', 'extract_house_interior', 'generate_house_art', 'generate_shrine_art',
+    'generate_fukuoka_art', 'extract_house_interior', 'generate_house_art', 'generate_shrine_art', 'generate_palace_art',
     'make_japan_map',
     'generate_sanfranbourne_art',
 ]

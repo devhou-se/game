@@ -28,10 +28,12 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/systems/Occlusion.js` - Scenery fades while someone stands hidden behind it, and their name label
   with it (see "Walking behind things" in `occlusion.md`)
 - `src/utils/Interactions.js` - The one table of what a bump opens (shops, ponds, clocks, a home's flavour lines, the drinking
-  table, a shrine's offering box and fortune stand). `Shop`, `Fishing`, `DrinkingGame`, `ShrineVisit`, `GameScene` and `tools/play.js` all read it; add a rule here
+  table, a shrine's offering box and fortune stand, the palace's dais and visitors' book). `Shop`, `Fishing`, `DrinkingGame`, `ShrineVisit`, `PalaceVisit`, `GameScene` and `tools/play.js` all read it; add a rule here
   rather than a tile-name check in a feature file
 - `src/ShrineVisit.js` - The offering box and the fortune stand inside a shrine's worship hall (see "Shrine worship halls"
   in `landmarks-and-towns.md`)
+- `src/PalaceVisit.js` - Requesting an audience at the dais and signing the visitors' book inside the palace's audience hall
+  (see "The palace's audience hall" in `landmarks-and-towns.md`)
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
 - `src/Energy.js` - The rules of the energy meter and the konbini stamp card (`Energy`, `Stamps`: pure functions, no Phaser);
   `Shop` holds the state and draws the meter (see "Energy and the stamp card" in `shop-and-economy.md`)

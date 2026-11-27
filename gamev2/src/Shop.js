@@ -182,6 +182,8 @@ class Shop {
         this.hints = Stamps.clean(raw.hints);       // one-time hints already given
         // the day's omikuji, {date, i}, when one has been drawn (ShrineVisit; absent in older blobs)
         this.omikuji = Shop.omikujiOf(raw.omikuji);
+        // the palace's visitors' book, {date, n}, once it has been signed (PalaceVisit; absent in older blobs)
+        this.guestbook = Shop.guestbookOf(raw.guestbook);
 
         // effects are saved as {id, until}; the numbers come back from the
         // catalogue, and an expiry can never be further off than the item lasts
@@ -203,6 +205,7 @@ class Shop {
                 v: 4, money: this.money, items: this.items, effects, used: this.used, caught: this.caught,
                 energy: Math.round(this.energy * 100) / 100, stamps: this.stamps, hints: this.hints };
             if (this.omikuji) blob.omikuji = this.omikuji;   // only once a fortune has been drawn
+            if (this.guestbook) blob.guestbook = this.guestbook;   // only once the palace's book has been signed
             localStorage.setItem(this.STORE_KEY, JSON.stringify(blob));
         } catch (e) { /* private mode etc — play on without persistence */ }
     }
@@ -829,6 +832,13 @@ Shop.omikujiOf = (raw) => {
     if (!raw || typeof raw !== 'object' || !/^\d{4}-\d{2}-\d{2}$/.test(String(raw.date))) return null;
     const i = Math.floor(Number(raw.i));
     return i >= 0 ? { date: raw.date, i } : null;
+};
+
+/** The saved visitors' book as {date, n} (the day last signed, signatures in all), or null for anything else. */
+Shop.guestbookOf = (raw) => {
+    if (!raw || typeof raw !== 'object' || !/^\d{4}-\d{2}-\d{2}$/.test(String(raw.date))) return null;
+    const n = Math.floor(Number(raw.n));
+    return n >= 1 ? { date: raw.date, n } : null;
 };
 
 /** How long a toast stays up before it fades — longer lines get longer. */

@@ -18,6 +18,9 @@ const Interactions = {
         // inside a shrine's worship hall (tools/generate_shrines.py; src/ShrineVisit.js)
         { kind: 'offering', group: 'shrine', pattern: /^shrine-in-saisen/, footprint: true },
         { kind: 'omikuji', group: 'shrine', pattern: /^shrine-in-omikuji_/, footprint: true },
+        // inside the palace's audience hall (tools/generate_palace.py; src/PalaceVisit.js)
+        { kind: 'audience', group: 'palace', pattern: /^palace-in-dais/, footprint: true },
+        { kind: 'guestbook', group: 'palace', pattern: /^palace-in-guestbook/, footprint: true },
         { kind: 'pond', group: 'pond', pattern: /^pond-autotile/ },
         { kind: 'clock', group: 'clock', pattern: /^(office-clock|office-poster-menu)/ },
         // a home's furniture (issue #208, tools/generate_houses.py): a bump says one line
@@ -30,6 +33,10 @@ const Interactions = {
         // a tower's lobby (issue #216, the same generator): the directory board and the lifts
         { kind: 'directory', group: 'flavour', pattern: /^lobby-directory/, footprint: true, say: 'every floor has a name on it. none of them is expecting you' },
         { kind: 'lift', group: 'flavour', pattern: /^lobby-lift/, footprint: true, say: 'the lift wants a pass. the lobby is as far as you go' },
+        // the palace's audience hall (issue #215): the armour, the swords, the guard's post
+        { kind: 'armour', group: 'flavour', pattern: /^palace-in-armour/, footprint: true, say: 'the armour has not been worn in two hundred years. it still looks ready before you do' },
+        { kind: 'swords', group: 'flavour', pattern: /^palace-in-swords/, footprint: true, say: 'three swords on a rack, peace-knotted. the sign you cannot read says do not touch' },
+        { kind: 'guard-post', group: 'flavour', pattern: /^palace-in-guardpost/, footprint: true, say: 'the guard has stepped out. his man-catcher has not' },
         // the home city (issue #218)
         { kind: 'clocks', group: 'flavour', pattern: /^sfb-clocks-station/, footprint: true, say: 'everybody meets under the clocks. nobody has ever caught a train here' },
         { kind: 'sea-lions', group: 'flavour', pattern: /^sfb-sea-lions/, footprint: true, say: 'the sea lions bark at you. one of them is eating somebody\'s chips' },
