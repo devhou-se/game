@@ -42,6 +42,9 @@ no other file needs an edit, and a name already used anywhere is an error.
 overlays collision, unreachable cells, teleports (arrows to their targets), train links, interactions and
 where each person stands on a chosen day. Click a cell for its tiles, what a bump does, the NPC's lines
 and photo, and the `play.js` command that puts you there. Maps are still edited in Tiled.
+Rooms are laid out by where their towns are in Japan (`config.json` `places`, through `WorldModel.geoOf`):
+Hokkaido top right, Fukuoka bottom left, a station or an interior beside its town. The links still decide
+what sits next to what, and SanFranbourne sits where the in-game Map draws it, off the south-east.
 Tokyo is drawn as the one stitched city the game plays (woodland included, the four districts outlined and
 named inside it; the inspector gives the district's own cell and the city cell, the owning district where two
 overlap); the **Stitched** button, or `/studio/?stitch=0`, shows the four rooms joined by seam teleports instead.

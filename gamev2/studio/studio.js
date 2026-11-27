@@ -460,7 +460,18 @@ function links(keys) {
     return out;
 }
 
+// WorldModel.geoOf in cells, spread to suit the rooms' total area
+function geo(keys) {
+    const at = WorldModel.geoOf(S.model.config, keys);
+    const span = (i) => Math.max(...Object.values(at).map(p => p[i])) - Math.min(...Object.values(at).map(p => p[i]));
+    const scale = Math.sqrt(keys.reduce((sum, k) => sum + S.rooms[k].w * S.rooms[k].h, 0) * SPREAD) / Math.max(span(0), span(1), 1);
+    for (const p of Object.values(at)) { p[0] *= scale; p[1] *= scale; }
+    return at;
+}
+
 const THROUGH = 4;
+const GEO = 2;
+const SPREAD = 3;
 const CROSS = 8;
 const GAP = 4;
 // Rooms arrive one per frame as the greedy pass places them, the anneal runs between frames, then
@@ -469,7 +480,7 @@ function relayout() {
     const keys = S.model.runtimeRooms();
     prepare(keys);
     const rooms = Object.fromEntries(keys.map(k => [k, { x: 0, y: 0, w: S.rooms[k].w, h: S.rooms[k].h }]));
-    const gen = placeRooms(rooms, links(keys));
+    const gen = placeRooms(rooms, links(keys), geo(keys));
     const place = (k) => Object.assign(S.rooms[k], { x: rooms[k].x, y: rooms[k].y });
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
         let r;
@@ -520,7 +531,7 @@ function glide(keys, to) {
     requestAnimationFrame(step);
 }
 
-function* placeRooms(rooms, links) {
+function* placeRooms(rooms, links, geo) {
     const keys = Object.keys(rooms);
     const byRoom = Object.fromEntries(keys.map(k => [k, []]));
     const weight = Object.fromEntries(keys.map(k => [k, 0]));
@@ -568,11 +579,13 @@ function* placeRooms(rooms, links) {
         }
         return c;
     };
-    const roomCost = (k, placed) => byRoom[k].reduce((c, l) => c + (live(l) ? linkCost(l, placed) : 0), 0);
+    const geoCost = (k) => geo[k] ? GEO * Math.hypot(rooms[k].x + rooms[k].w / 2 - geo[k][0], rooms[k].y + rooms[k].h / 2 - geo[k][1]) : 0;
+    const roomCost = (k, placed) => byRoom[k].reduce((c, l) => c + (live(l) ? linkCost(l, placed) : 0), geoCost(k));
     const movedCost = (moved) => {
         const touched = new Set();
         for (const k of moved) for (const l of byRoom[k]) touched.add(l);
         let c = crossCost(touched);
+        for (const k of moved) c += geoCost(k);
         for (const l of touched) c += linkCost(l, placed);
         for (const l of links) {
             if (touched.has(l)) continue;
@@ -584,7 +597,7 @@ function* placeRooms(rooms, links) {
 
     const placed = new Set();
     const spots = (k, others) => {
-        const r = rooms[k], out = [];
+        const r = rooms[k], out = geo[k] ? [[Math.round(geo[k][0] - r.w / 2), Math.round(geo[k][1] - r.h / 2)]] : [];
         for (const o of others) {
             if (o === k) continue;
             const p = rooms[o];
@@ -594,6 +607,7 @@ function* placeRooms(rooms, links) {
         return out;
     };
     const seed = keys.slice().sort((a, b) => weight[b] - weight[a] || area(b) - area(a))[0];
+    if (geo[seed]) [rooms[seed].x, rooms[seed].y] = [Math.round(geo[seed][0] - rooms[seed].w / 2), Math.round(geo[seed][1] - rooms[seed].h / 2)];
     placed.add(seed);
     yield seed;
     while (placed.size < keys.length) {

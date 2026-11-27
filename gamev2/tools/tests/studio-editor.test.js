@@ -1,4 +1,4 @@
-module.exports = ({ test, assert, fs, path, GV2, game }) => {
+module.exports = ({ test, assert, fs, path, GV2, game, load }) => {
     test('studio stacks overlapping districts the way the stitched city does: the later one on top', () => {
         const stackOrder = game('WorldModel.stackOrder');
         const cities = { C: { rooms: [{ room: 'Tokyo' }, { room: 'Market' }, { room: 'Gone' }, { room: 'Palace' }, { room: 'Park' }] } };
@@ -21,6 +21,26 @@ module.exports = ({ test, assert, fs, path, GV2, game }) => {
             assert.strictEqual(order.indexOf(a) < order.indexOf(b), rank[a] < rank[b], `${a} / ${b}`);
         }
         assert.ok(overlaps >= 3, 'Tokyo/Market, Market/Palace and Palace/Park overlap');
+    });
+
+    test('studio lays rooms out by where their towns are in Japan', () => {
+        if (game('typeof Places') === 'undefined') load('utils/Places.js');
+        const geoOf = game('WorldModel.geoOf');
+        const config = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const keys = ['Asahikawa', 'Sapporo', 'Sendai', 'TokyoCity', 'HokurikuCity', 'Osaka', 'Fukuoka', 'SanFranbourne',
+            'KonbiniFukuoka1', 'FukuokaStation', 'HanedaAirport', 'Kanazawa', 'Toyama', 'Shirakawago', 'Nowhere'];
+        const at = geoOf(config, keys);
+        const east = (...list) => list.forEach((k, i) => i && assert.ok(at[list[i - 1]][0] < at[k][0], `${list[i - 1]} is west of ${k}`));
+        const south = (...list) => list.forEach((k, i) => i && assert.ok(at[list[i - 1]][1] < at[k][1], `${list[i - 1]} is north of ${k}`));
+        east('Fukuoka', 'Osaka', 'HokurikuCity', 'TokyoCity', 'Sendai', 'Sapporo', 'Asahikawa');
+        south('Asahikawa', 'Sapporo', 'Sendai', 'HokurikuCity', 'TokyoCity', 'Osaka', 'Fukuoka');
+        east('TokyoCity', 'SanFranbourne');
+        south('TokyoCity', 'SanFranbourne');
+        assert.deepStrictEqual([at.KonbiniFukuoka1, at.FukuokaStation], [at.Fukuoka, at.Fukuoka], 'an interior and a station are where their town is');
+        assert.deepStrictEqual(at.HanedaAirport, at.TokyoCity, 'an airport is where the town it serves is');
+        east('Kanazawa', 'HokurikuCity', 'Toyama');
+        south('Toyama', 'HokurikuCity', 'Shirakawago');
+        assert.ok(!('Nowhere' in at), 'a room with no town is not pulled anywhere');
     });
 
     test('studio: a second click on the selected cell picks the district underneath', () => {

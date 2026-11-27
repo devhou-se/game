@@ -418,6 +418,23 @@ class WorldModel {
         return order;
     }
 
+    // Where each of `keys` (rooms or cities) is in the world, as { key: [east, south] } in degrees of
+    // latitude: its town's `geo` (Places.of: a station, an airport or an interior is where its town is),
+    // a city the mean of its districts' towns. A room with no town is left out. Whoever lays rooms out
+    // together (the studio) pulls each toward it, so towns keep their real directions from one another.
+    static geoOf(config, keys) {
+        const places = Object.fromEntries(Places.list(config).map((p) => [p.key, p]));
+        const out = {};
+        for (const k of keys) {
+            const city = (config.cities || {})[k];
+            const towns = [...new Set((city ? (city.rooms || []).map((r) => r.room) : [k]).map((r) => Places.of(config, r)))].filter((t) => t);
+            if (!towns.length) continue;
+            const mean = (f) => towns.reduce((sum, t) => sum + f(places[t]), 0) / towns.length;
+            out[k] = [mean((p) => p.lon) * Math.cos(38 * Math.PI / 180), -mean((p) => p.lat)];
+        }
+        return out;
+    }
+
     // Which of the cells stacked at one spot (bottom first, as stackOrder lists their rooms) a click
     // picks: the top one, or, when the cell already selected is one of them, the next one down (wrapping
     // back to the top) - so a covered district's cells, its seam transporters among them, can be reached.
