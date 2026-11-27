@@ -113,18 +113,29 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   `(2,43)`, `road-plain` inside). Tokyo's column 0 is now the west edge of the city: there is no wood west of it.
 - **Road junctions are plain boxes** (issue #179): the port drew every three-cell road straight through
   each junction, so a joining road's mouth was closed by the other road's kerb and its centre line ran
-  on into the junction. **`python3 tools/square_junctions.py`** lays each of the twelve 3x3 boxes in
-  Tokyo, Market and Park the way #147 laid the west gate: `road-plain` throughout, the kerb along a
+  on into the junction. **`python3 tools/square_junctions.py`** lays each of the thirteen 3x3 boxes in
+  Tokyo, Market, Palace and Park the way #147 laid the west gate: `road-plain` throughout, the kerb along a
   CLOSED side (the far side of a T, the outside of a bend), a mitred `road-corner-*` where two closed
   sides meet. `JUNCTIONS` lists them per district (top-left cell + closed sides); a box may hang over
   the map edge - the Tokyo/Market road is half in each map - and the neighbour's entry lays the rest.
   Sides are as the district reads on its own (`?stitch=0`): Park's top row is a kerb there, and
-  `cities.TokyoCity.patch` opens it (`Park` cells `0,0 1,0 54,0 55,0 56,0`) where Palace's roads run
+  `cities.TokyoCity.patch` opens it (`Park` cells `0,0 1,0 54,0 55,0`) where Palace's roads run
   in. Park's west road is half in the woods, so `cities.TokyoCity.backdrop.edges` gives it its kerb
   beside `road-plain` as well and a `road-corner-sw` beside the bottom kerb. Idempotent; a new junction
   is one more entry (then `config_to_tiled.py` for the districts and `make_worldmap.py`).
   `ARMS` in the same tool lays a stretch of an east-west road the port paved over as road (issue #194:
   two cells of brick across the avenue either side of the Tokyo/Market crossroads).
+- **The east road is the edge of the city** (issue #240): the port ran every east-west road of Market,
+  Palace and Park on across the pavement east of the east road, two cells to the edge of the map and
+  nothing, so that road read as four crossroads. A road leaves a junction only if it leads somewhere:
+  those four boxes are closed on the east (`Market` `(54,3,'NE')` and `Park` `(54,39,'SE')` are bends
+  with a `road-corner-*`, `Market` `(54,42,'E')` and `Park` `(54,0,'NE')` carry the kerb straight
+  down), and `PAVEMENT` in the same tool lays the stubs as the two-cell pavement they cut through
+  (`edge-w` by the kerb, `edge-e` on the map's edge; round a bend the outer corner is a `corner-*` and
+  the inner one `center`, as at Tokyo's western bends). Palace's own map has Park's top-right box
+  too (`(54,18,'E')`: Park owns those rows when stitched), and the patch gives stitched `Park` `56,0`
+  the kerb (`road-edge-right`), not `road-plain`. The three one-row side lanes across that pavement
+  (`road-2-tile-vertical`, Market rows 15, 24 and 32) are not junctions: the kerb passes them.
 - **`?stitch=0`** is the safety valve: no cities, the districts are separate rooms joined by the fade
   transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).
 - **The second city** (issue #68): `HokurikuCity` stitches Kanazawa, Shirakawa-go and Toyama (see

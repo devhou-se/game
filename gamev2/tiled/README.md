@@ -239,9 +239,10 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   tiles. An odd-width road uses `road-div-vertical` / `road-div-horizontal` as before.
 - **A road junction is a plain 3x3 box** (issues #147 / #179): `road-plain` inside, the kerb only along
   a side no road leaves by, a `road-corner-*` on the outside of a bend. Never run `road-edge-*` across
-  the mouth of a joining road or a centre line into the box. The ported districts' boxes are listed
-  in `tools/square_junctions.py` (idempotent: add the junction there and re-run it); generators lay
-  theirs by hand (Osaka's avenue, Sapporo).
+  the mouth of a joining road or a centre line into the box. A road leaves a box only if it leads
+  somewhere: beside the edge of a map that side is closed and paved, not a two-cell stub (issue
+  #240). The ported districts' boxes are listed in `tools/square_junctions.py` (idempotent: add the
+  junction there and re-run it); generators lay theirs by hand (Osaka's avenue, Sapporo).
 - **A bridge deck over water gets a parapet and a shadow** (issue #180): `bridge-parapet-w|e` on the
   deck's two edge cells and `bridge-shade-w|e` on the water cells beside them, all on
   `Non-Collidables` (flat sprites with a negative `depthBias`, from `tools/make_bridge_tiles.py`). No

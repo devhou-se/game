@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""square_junctions.py — road junctions in the ported districts are plain boxes (issues #147, #179).
+"""square_junctions.py — road junctions in the ported districts are plain boxes (issues #147, #179, #240).
 
 The Godot port drew a three-cell road (kerb / centre line / kerb) straight
 through every junction, so wherever a road joined another its mouth was closed
@@ -28,8 +28,18 @@ ARMS lists stretches of an east-west road that the port paved over (issue
 crossroads, which no other arm of any junction has). Each is laid as the road
 it interrupts: kerb / centre line / kerb, up to the box.
 
+A road that leaves a junction must lead somewhere. The port ran every
+east-west road of Market, Palace and Park on across the pavement beyond the
+east road and off the edge of the city, two cells on, so the east road read as
+four crossroads on the edge of the map (issue #240). Those boxes are closed on
+the east (the kerb runs straight down the east road; the avenue at the top and
+the south road at the bottom end in a bend), and PAVEMENT lays the two-cell
+stubs as the pavement they cut through. The same junction is in Palace's own
+map (its rows 18..20 are Park's top three, and Park owns them in the stitched
+city), so Palace has that one box and stub too.
+
 Idempotent. Edits config.json only: follow with
-    python3 tools/config_to_tiled.py Tokyo Market Park
+    python3 tools/config_to_tiled.py Tokyo Market Palace Park
     /Library/Developer/CommandLineTools/usr/bin/python3 tools/make_worldmap.py
 
 Run from gamev2/:  python3 tools/square_junctions.py [--dry-run]
@@ -47,14 +57,17 @@ JUNCTIONS = {
     'Market': [
         (-1, 3, 'N'),       # the other half of the two above
         (-1, 42, ''),
-        (54, 3, 'N'),       # north-east: the east road leaves the avenue
-        (54, 42, ''),       # east crossroads
+        (54, 3, 'NE'),      # north-east bend: the avenue turns south into the east road (#240)
+        (54, 42, 'E'),      # the east road; the road from the Tokyo/Market crossroads ends on it (#240)
+    ],
+    'Palace': [
+        (54, 18, 'E'),      # Park's top-right box, in Palace's own map (#240); the stitched city draws Park's
     ],
     'Park': [
         (-1, 0, 'N'),       # top-left: the west road leaves the Palace/Park road
-        (54, 0, 'N'),       # top-right
+        (54, 0, 'NE'),      # top-right: the Palace/Park road ends on the east road (#240)
         (-1, 39, 'S'),      # bottom-left bend (its west kerb is in the woods: cities.backdrop.edges)
-        (54, 39, 'S'),      # bottom-right: the east road ends on the south road
+        (54, 39, 'SE'),     # bottom-right bend: the east road turns west into the south road (#240)
     ],
 }
 
@@ -64,6 +77,25 @@ ARMS = {
     'Market': [(2, 42, 2)],     # east of it
 }
 ARM = ['road-edge-top_0_0', 'road-div-horizontal_0_0', 'road-edge-bottom_0_0']
+
+# district -> [(x, y, rows)]: pavement from cell (x, y) down, one string per row, one brick piece per cell.
+# The pavement east of the east road is two cells wide: `edge-w` along the kerb, `edge-e` along the edge
+# of the map. Each entry runs from the pavement above a closed stub to the pavement below it, so the
+# corner pieces that turned into the stub become the straight run; round a bend the outer corner is a
+# `corner-*` and the inner one `center`, as at Tokyo's two western bends.
+BRICK = 'flat-grey-brick-autotile_'
+RUN = 'edge-w edge-e'
+PAVEMENT = {
+    'Market': [
+        (57, 1, ['edge-n corner-ne', 'center edge-e'] + [RUN] * 5),         # round the north-east bend
+        (57, 40, [RUN] * 7),                                                # past the east crossroads' stub
+    ],
+    'Palace': [(57, 16, [RUN] * 6)],                                        # to the bottom of the map
+    'Park': [
+        (57, 0, [RUN] * 5),                                                 # from the top of the map
+        (57, 37, [RUN] * 5 + ['center edge-e', 'edge-s corner-se']),        # round the south-east bend
+    ],
+}
 
 PLAIN = 'road-plain_0_0'
 EDGE = {'N': 'road-edge-top_0_0', 'S': 'road-edge-bottom_0_0', 'W': 'road-edge-left_0_0', 'E': 'road-edge-right_0_0'}
@@ -112,6 +144,13 @@ def main():
                     if floor.get(f'{x},{y}') != want:
                         floor[f'{x},{y}'] = want
                         changed.append(f'{x},{y}')
+        for (x0, y0, rows) in PAVEMENT.get(name, []):
+            for dy, row in enumerate(rows):
+                for dx, piece in enumerate(row.split()):
+                    want = pidx(BRICK + piece)
+                    if floor.get(f'{x0 + dx},{y0 + dy}') != want:
+                        floor[f'{x0 + dx},{y0 + dy}'] = want
+                        changed.append(f'{x0 + dx},{y0 + dy}')
         total += len(changed)
         if changed:
             print(f'{name}: {len(changed)} cell(s): {" ".join(changed)}')
