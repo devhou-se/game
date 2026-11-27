@@ -6,29 +6,39 @@ ONLY by train: the doors under the station's star clock on the north side lead
 into the SapporoStation interior (built by generate_stations.py). Unlike the
 other towns it is laid out on a street GRID, the way Sapporo is.
 
-It is being rebuilt district by district (issue #219). Stage 1, the north, is
-done - two districts with ground and buildings of their own:
+It is being rebuilt district by district (issue #219). Stages 1 to 3 are done -
+four districts with ground and buildings of their own:
 
-  SAPPORO STATION FRONT   red basket-weave brick (arcade-brick-autotile). The
-          station front with the star clock stands across the rail line; its
+  SAPPORO STATION FRONT   grey stone slabs (brown-brick-autotile; it stood on
+          the arcade's red brick until stage 3 gave that to Tanukikoji alone).
+          The station front with the star clock stands across the rail line; its
           plaza runs down to Kita-Odori west of the avenue. West of the plaza,
-          on the same brick, the red-brick government hall (Akarenga, sealed:
+          on the same slabs, the red-brick government hall (Akarenga, sealed:
           a landmark) and the glass KITA office block, then the discount store.
   CLOCK TOWER BLOCK       dark setts (flat-grey-brick-autotile), east of the
-          avenue: the SAPPORO CLOCK TOWER where it always stood, the konbini,
-          and the red-brick office block in the north-east corner.
+          avenue: the SAPPORO CLOCK TOWER where it always stood and the
+          red-brick office block in the north-east corner.
+  ODORI PARK              the snow festival on a packed-snow path (stage 2).
+  TANUKIKOJI              the covered shopping arcade south of Minami-Odori, on
+          red basket-weave brick (arcade-brick-autotile, its alone): two
+          stretches of one street, west and east of the station avenue. Its
+          north row (rows 34-37) is shopfronts under one glass roof - the
+          souvenir shop, the TANUKI KOJI gate you walk through from
+          Minami-Odori, the crab shop; across the avenue the drugstore and the
+          town's 7-Eleven - with an upright sign at each end; its south row
+          (rows 40-42) is the backs of the next street's shops, whose roof
+          overhangs the street's southern row (you walk under it and it
+          fades). The three shops open into shop interiors
+          (tools/generate_houses.py --shops Sapporo; roomgen.SHOP_DOORS).
+          No townhouse is left in Sapporo, so it has no House interior.
 
   The two office blocks open into lobbies (tools/generate_houses.py --lobbies
   Sapporo; their doors are in roomgen.TOWER_DOORS, and roomgen.save_config
   keeps them through a rebuild). No generic townhouse stands in the north.
 
-Still to come (stages 2-4): Odori Park, Tanukikoji, Susukino. Until then:
-
-  middle  Kita-Odori street, then ODORI PARK - a boulevard strip of snow trees
-          and lanterns with a path down the middle, cut by the three
-          north-south streets - and the SAPPORO TV TOWER at its east end
-  south   Minami-Odori street, then houses, and a frozen-pond park corner in
-          the south-west
+Still to come (stage 4): Susukino and the streetcar, south of the arcade. Until
+then the south-west and south-east corners are plain snow with trees, and the
+arcade's south row closes the town where the fence did.
 
 Streets: two east-west (rows 20-22 and 31-33) and three north-south (columns
 14-16, 30-32 the station avenue, and 44-46), plain asphalt where they cross.
@@ -57,7 +67,8 @@ Run from gamev2/:
     python3 tools/generate_konbinis.py Sapporo    # KonbiniSapporo1 + its door (first build, or the store moved)
     python3 tools/generate_discount_stores.py Sapporo   # DonTakoteSapporo (door wired here)
     python3 tools/generate_stations.py            # builds SapporoStation + registry
-    python3 tools/generate_houses.py Sapporo            # HouseSapporo<n> (the houses in the south)
+    python3 tools/generate_houses.py Sapporo            # removes the House interiors of townhouses that are gone
+    python3 tools/generate_houses.py --shops Sapporo    # ShopSapporo<n> (Tanukikoji's three shops)
     python3 tools/generate_houses.py --lobbies Sapporo  # LobbySapporo<n> (the two office blocks)
     node tools/play.js lint Sapporo            (and SapporoStation, KonbiniSapporo1)
     python3 tools/config_to_tiled.py Sapporo SapporoStation KonbiniSapporo1 DonTakoteSapporo
@@ -111,7 +122,8 @@ for x in range(3, W - 3, 6):                          # drifts beyond the tracks
     b.stamp('shrub-large-snow', x, 0)
 
 # ---- the two northern districts' own ground (issue #219, stage 1) ---------------
-STATION_BRICK = 'arcade-brick-autotile'       # Sapporo Station front: red basket-weave brick
+STATION_BRICK = 'brown-brick-autotile'        # Sapporo Station front: grey stone slabs (the red brick is Tanukikoji's)
+ARCADE_BRICK = 'arcade-brick-autotile'        # Tanukikoji: red basket-weave brick, nowhere else
 CLOCK_SETTS = 'flat-grey-brick-autotile'      # Clock Tower block: dark setts
 STATION = (24, 4)                             # the station front, 10x7: its feet on row 10
 # Station front: the strip the station stands on and the yard east of it, the
@@ -127,8 +139,18 @@ station_doors = b.stamp('sapporo-station-front', *STATION, seal=False)
 
 # ---- paving: the pavements, Odori's path, the TV Tower's plaza -------------------
 b.autotile('light-concrete-autotile', rect(2, 19, 53, 19))       # north pavement of Kita-Odori
-b.autotile('light-concrete-autotile', rect(2, 34, 53, 34))       # south pavement of Minami-Odori
-b.autotile('light-concrete-autotile', rect(2, 41, 53, 41))       # the lane the houses front on
+# Tanukikoji (issue #219, stage 3): two stretches of one east-west street, either
+# side of the station avenue. The arcade's north row stands on Minami-Odori's
+# kerb, so the street's south pavement and the lane along the south fence stop
+# at the arcade and go on beyond it
+ARCADE = ((17, 29), (33, 43))         # each stretch's first and last column
+NORTH_ROW, STREET, SOUTH_ROW = 34, (38, 40), 40      # shopfronts' top row; the street's rows; the south row's top row
+GATE = (21, NORTH_ROW)                # the TANUKI KOJI gate, 4x4: you walk through columns 22-23
+in_arcade = lambda x: any(x0 <= x <= x1 for x0, x1 in ARCADE)
+for row in (34, 41):                  # the south pavement of Minami-Odori; the lane along the south fence
+    b.autotile('light-concrete-autotile', [(x, row) for x in range(2, 54) if not in_arcade(x)])
+b.autotile(ARCADE_BRICK, set().union(*(rect(x0, STREET[0], x1, STREET[1]) for x0, x1 in ARCADE))
+           | set(rect(GATE[0] + 1, NORTH_ROW, GATE[0] + 2, NORTH_ROW + 3)))     # ...and the way in under the gate
 # Odori Park's own ground (issue #219, stage 2): a path of packed snow down the
 # middle of the boulevard, opening into a court, a plaza and four ways in
 ODORI_PATH = 'snow-path-autotile'
@@ -178,9 +200,7 @@ b.stamp('sapporo-clock-tower', *CLOCK)
 b.stamp('lantern-red', 36, 17); b.stamp('lantern-red', 42, 17)
 b.stamp('shrub-small-snow', 34, 12); b.stamp('shrub-small-snow', 43, 12)
 b.stamp('tree-snow', 34, 13)
-KONBINI = (44, 15)
-konbini_door = b.stamp('seven-eleven', *KONBINI, seal=False)[0]   # wired by generate_konbinis.py; kept below
-b.stamp('sign-7-11', 47, 17)
+b.stamp('tree-snow', 45, 15)                          # where the konbini stood until it moved to the arcade (stage 3)
 b.stamp('sapporo-office-brick', 49, 9)
 b.stamp('tree-snow', 45, 9); b.stamp('tree-snow', 40, 7)
 b.stamp('shrub-small-snow', 48, 13)
@@ -188,7 +208,7 @@ b.stamp('shrub-small-snow', 48, 13)
 # lamps along the pavements (clear of the konbini door and the crossings)
 for x in (3, 8, 15, 22, 28, 34, 42, 52):                # 52: clear of the TV Tower's mast
     b.stamp('lamp-blue', x, 19)
-for x in (5, 11, 20, 27, 36, 41, 50):
+for x in (5, 11, 50):                                   # (the arcade's roof stands on the kerb between them)
     b.stamp('lamp-blue', x, 34)
 
 # ---- Odori Park: rows 23-30, cut into three blocks by the north-south streets
@@ -251,24 +271,48 @@ b.stamp('sapporo-tv-tower', *TOWER)
 b.stamp('lamp-blue', 47, 30); b.stamp('lamp-blue', 52, 30)
 b.stamp('shrub-small-snow', 53, 24); b.stamp('shrub-small-snow', 53, 27)
 
-# ---- south: houses fronting the lane, and a park corner (stages 3-4) -----------
-for x in (18, 22, 26):
-    b.stamp(('house-red', 'house-blue', 'house-black')[(x // 4) % 3], x, 35)
-b.stamp('house-black', 34, 35); b.stamp('house-red', 38, 35)
-b.stamp('vending-white', 42, 38)
-b.stamp('house-blue', 48, 35)
-b.stamp('tree-snow', 52, 36)
-b.stamp('vending-red', 47, 38)
+# ---- Tanukikoji, the covered arcade (issue #219, stage 3). North row, rows 34-37,
+#      feet on row 37: shopfronts under one glass roof, solid from the roof down
+#      (nobody walks behind a shopfront), an upright sign closing each end and a
+#      ploughed bank between the sign and the kerb. West stretch: the souvenir
+#      shop, the gate (the way in from Minami-Odori and Odori Park), the crab
+#      shop. East stretch: the drugstore and the town's 7-Eleven. The three shops'
+#      doors are opened by generate_houses.py --shops; the konbini's by
+#      generate_konbinis.py (kept below) ---------------------------------------
+SOUVENIR, CRAB, DRUG, KONBINI = (18, NORTH_ROW), (25, NORTH_ROW), (35, NORTH_ROW), (38, NORTH_ROW)
+b.stamp('tanukikoji-end-sign', 17, NORTH_ROW)
+b.stamp('tanukikoji-shop-souvenir', *SOUVENIR)
+b.stamp('tanukikoji-gate', *GATE)
+b.stamp('tanukikoji-shop-crab', *CRAB)
+b.stamp('tanukikoji-end-sign', 28, NORTH_ROW)
+b.stamp('tanukikoji-end-sign', 34, NORTH_ROW)
+b.stamp('tanukikoji-shop-drug', *DRUG)
+konbini_door = b.stamp('seven-eleven', *KONBINI, seal=False)[0]   # wired by generate_konbinis.py; kept below
+b.stamp('tanukikoji-end-sign', 41, NORTH_ROW)
+b.stamp('sign-7-11', 42, NORTH_ROW + 2)                 # foot on row 37, at the arcade's east end; the bank closes in behind it
+bank(col=29, cells=range(NORTH_ROW, NORTH_ROW + 4)); bank(col=33, cells=range(NORTH_ROW, NORTH_ROW + 4))
+bank(col=43, cells=range(NORTH_ROW, NORTH_ROW + 4)); bank(col=42, cells=(NORTH_ROW, NORTH_ROW + 1))
+# South row, rows 40-42: the backs of the next street's shops under the same
+# roof. The top row is roof only and overhangs the street's southern row; the
+# two rows under it are solid and stand where the south fence did
+for i, x in enumerate(range(17, 29, 3)):
+    b.stamp('tanukikoji-south-row-' + 'ab'[i % 2], x, SOUTH_ROW)
+for i, x in enumerate(range(34, 43, 3)):
+    b.stamp('tanukikoji-south-row-' + 'ba'[i % 2], x, SOUTH_ROW)
+for x in (29, 33, 43):                                  # the odd cell at a stretch's end
+    b.stamp('shrub-small-snow', x, 41)
 
-# the park corner in the south-west: snow, trees and a lantern (the frozen pond
-# went with stage 2 - Asahikawa keeps the frozen water - and so did the sakura)
+# the two south corners wait for stage 4 (Susukino): snow, trees, a lantern, and
+# the vending machines in the south-east one. No townhouse stands anywhere
 b.stamp('tree-snow', 2, 34); b.stamp('tree-snow', 12, 34)
 b.stamp('lantern-red', 7, 35)
 b.stamp('shrub-small-snow', 3, 39); b.stamp('shrub-small-snow', 12, 39)
 b.stamp('shrub-small-snow', 5, 36); b.stamp('shrub-small-snow', 10, 36)
+b.stamp('tree-snow', 52, 36); b.stamp('tree-snow', 48, 34)
+b.stamp('vending-red', 49, 38); b.stamp('vending-white', 50, 38)
 
-# ---- borders: snowy hedges west / east, a fence along the south (continuous -
-#      a gap would let the player slip round behind the fences) -----------------
+# ---- borders: snowy hedges west / east, a fence along the south (continuous
+#      with the arcade's south row - a gap would let the player slip round behind) -----------------
 for y in range(7, 41, 2):
     b.stamp('shrub-large-snow', 0, y); b.stamp('shrub-large-snow', W - 2, y)
 for x in (0, 1, W - 2, W - 1):
@@ -276,7 +320,8 @@ for x in (0, 1, W - 2, W - 1):
 for x in (0, W - 1):
     b.stamp('shrub-small-snow', x, 6); b.stamp('shrub-small-snow', x, 42)
 for i, x in enumerate(range(1, W - 1)):
-    b.fence(x, 42, i)
+    if not (17 <= x <= 28 or 34 <= x <= 42):          # the arcade's south row stands on the line there
+        b.fence(x, 42, i)
 
 # isolated: the ONLY way out is the station's doors into SapporoStation (the
 # konbini and the discount store lead to their own interiors and back).
@@ -284,11 +329,14 @@ for i, x in enumerate(range(1, W - 1)):
 prev = cfg['rooms'].get('Sapporo', {})
 # The devhouse 3 base cast of the park stands at its named spots (issue #219,
 # stage 2): Sam beside the corn tent ("the snow festival stalls"), Julia at the
-# foot of the snow castle's steps ("the snow castle"). Each is moved only from
-# the cell they had before the park was rebuilt, so a later edit stays. Julia's
+# foot of the snow castle's steps ("the snow castle"). Two more stand in the
+# arcade (stage 3): Xander inside the gate ("Tanukikoji arcade"), Khoi beside
+# the crab shop's door ("the crab shop"); neither's lines say where they stand.
+# Each is moved only from the cell they had before, so a later edit stays. Julia's
 # line pointed at the Clock Tower she stood by: at the castle it names the castle
 # (only that exact line, and only while she stands at the castle).
-PARK_CAST = {'Sam': ((21, 27), (CORN[0] + 3, CORN[1] + 3)), 'Julia': ((39, 19), (CASTLE[0] + 2, CASTLE[1] + 4))}
+PARK_CAST = {'Sam': ((21, 27), (CORN[0] + 3, CORN[1] + 3)), 'Julia': ((39, 19), (CASTLE[0] + 2, CASTLE[1] + 4)),
+             'Xander': ((35, 17), (GATE[0], GATE[1] + 4)), 'Khoi': ((38, 8), (CRAB[0] + 2, CRAB[1] + 4))}
 PARK_LINES = {'Julia': ("That's the Sapporo Clock Tower behind me.", "That's the snow castle behind me. Three storeys of it.")}
 for npc in prev.get('npcs', []):
     was, now = PARK_CAST.get(npc.get('name'), (None, None))
@@ -317,4 +365,4 @@ cfg['rooms']['Sapporo'] = b.room('Sapporo', npcs=prev.get('npcs', []), transport
 
 rg.save_config(cfg)
 print(f'Sapporo {W}x{H}; station doors at {station_doors} -> SapporoStation; '
-      f'Clock Tower at {CLOCK}, TV Tower at {TOWER}, konbini at {KONBINI}')
+      f'Clock Tower at {CLOCK}, TV Tower at {TOWER}, Tanukikoji gate at {GATE}, konbini at {KONBINI}')

@@ -53,14 +53,27 @@ reception desk, a sofa either side of a glass table, a palm in each corner,
 and the entrance mat below the middle of the floor. A bump on the directory
 or on a lift says one line. Nobody works there yet.
 
+A THIRD KIND, THE SHOP (issue #219, `--shops`): a shopfront in
+roomgen.SHOP_DOORS (Tanukikoji's souvenir shop, crab shop and drugstore) gets a
+door into a `Shop<Town><n>` room, by the same rules. THE SHOP FLOOR is one
+layout (SHOP): a white back wall with posters, shelves against it, seven by
+five cells of floor, a counter with a till, a plant in each front corner and
+the mat below the middle. It reuses the konbini's furniture. The room is named
+by what the front sells (SHOP_TYPES: 'Souvenirs · Sapporo'), its shelves are
+that type's, and a bump on the counter opens the shop list of that type
+(`shopMenu`, a row of Shop.VENUES: two or three things from the existing
+catalogue). It is not a store: `shopEnabled: false`, so no stamp, and the
+shelves are only to look at.
+
 Art: tools/extract_house_interior.py (floorboards, a house plant) and
 tools/generate_house_art.py (everything else, the lobby's too). Run both first.
 
 Run from gamev2/:
     python3 tools/generate_houses.py Asahikawa [<Town> ...]   # build / rebuild those towns' houses
     python3 tools/generate_houses.py --lobbies Osaka [...]    # build / rebuild those towns' tower lobbies
-    python3 tools/generate_houses.py                          # rebuild every town's houses and lobbies that has them
-    python3 tools/generate_houses.py --dry-run [--lobbies] <Town> ...   # say what would be built; write nothing
+    python3 tools/generate_houses.py --shops Sapporo [...]    # build / rebuild those towns' shop floors
+    python3 tools/generate_houses.py                          # rebuild every town's houses, lobbies and shops that has them
+    python3 tools/generate_houses.py --dry-run [--lobbies | --shops] <Town> ...   # say what would be built; write nothing
     python3 tools/generate_houses.py --variants               # every house layout as JSON, nothing written
     python3 tools/generate_houses.py --help                   # this text; nothing is run (an unknown option is an error)
 Then:   python3 tools/config_to_tiled.py <each House / Lobby room + the towns>
@@ -161,13 +174,37 @@ LOBBY_FURNITURE = {'P': ('lobby-plant_0_0', 1), 'R': ('lobby-desk_0_0', 3), 'S':
                    'B': ('lobby-sofa-back_0_0', 2), 'T': ('lobby-table_0_0', 2)}
 LOBBY_FLAVOUR = ('lobby-directory', 'lobby-lift')
 
-# The two kinds of building this generator opens: the room-key prefix, the key
+# The shop floor behind a shopfront (issue #219): one layout, on a floor SW x SH cells:
+#   wall:  w white wall   p a poster on it
+#   floor: . free   S a shelf (the type's own, against the wall)   Cc the counter (2x1, the till on its
+#          right half)   P a plant
+SW, SH = 7, 5
+SX, SY = (ROOM_W - SW) // 2, 5
+SHOP = dict(wall='wpwwwpw',
+            floor=['SS...SS',
+                   '.......',
+                   '.Cc....',
+                   '.......',
+                   'P.....P'],
+            door=3)
+# what a shopfront sells: the sprite family -> (room label, Shop.VENUES id, its shelves)
+SHOP_TYPES = {
+    'tanukikoji-shop-souvenir': ('Souvenirs', 'souvenirs', 'office-shelf-snacks_0_0'),
+    'tanukikoji-shop-crab': ('Crab shop', 'crab', 'office-freezer_0_0'),
+    'tanukikoji-shop-drug': ('Drugstore', 'drugstore', 'office-shelf-glass_0_0'),
+}
+SHOP_FLAVOUR = ('office-counter2',)
+
+# The kinds of building this generator opens: the room-key prefix, the key
 # on the interior that marks it (and holds its host and door), the sprites that
 # carry its doors -> the door cells relative to the sprite, and its name.
 KINDS = {
     'house': dict(prefix=rg.HOUSE_PREFIX, marker='house', label='House', what='house',
                   doors={k: [v] for k, v in rg.HOUSE_DOORS.items()}),
     'lobby': dict(prefix=rg.LOBBY_PREFIX, marker='lobby', label='Lobby', what='tower', doors=rg.TOWER_DOORS),
+    # a shop is named by its type (`labels`), numbered only among its own type
+    'shop': dict(prefix=rg.SHOP_PREFIX, marker='shop', label='Shop', what='shop', doors=rg.SHOP_DOORS,
+                 labels={family: t[0] for family, t in SHOP_TYPES.items()}),
 }
 
 
@@ -310,6 +347,51 @@ def build_lobby(name, host, front):
     return room, arrive
 
 
+def build_shop(name, host, front, family):
+    """(room, arrival cell) for the shop floor behind a shopfront of `family`: the one layout, SHOP."""
+    _, menu, shelf = SHOP_TYPES[family]
+    b = rg.Builder(ROOM_W, ROOM_H)
+    b.fill('office-void-autotile')
+
+    def solid(key, x, y, w=1):
+        b.put('Collidables', x, y, key)
+        for dx in range(w):
+            b.solid(x + dx, y)
+
+    ex, ey = SX + SHOP['door'], SY + SH              # the way out: one cell below the floor, the mat on it
+    for c in range(SW):
+        for r in range(SH):
+            b.put('Floor', SX + c, SY + r, 'office-warm-autotile_center')
+    b.put('Floor', ex, ey, 'office-warm-autotile_center')
+    b.put('Over Floor', ex, ey, 'lobby-mat_0_0')
+    assert len(SHOP['wall']) == SW and len(SHOP['floor']) == SH, 'the shop does not fit its floor'
+    posters = ['office-poster-menu_0_0', 'office-poster-photo_0_0']
+    for c, ch in enumerate(SHOP['wall']):            # the back wall, one row of it, as a konbini's
+        solid('office-wall-white_0_0', SX + c, SY - 1)
+        if ch == 'p':
+            b.put('Other', SX + c, SY - 1, posters.pop(0))
+    for r, row in enumerate(SHOP['floor']):
+        assert len(row) == SW, row
+        for c, ch in enumerate(row):
+            if ch == 'S':
+                solid(shelf, SX + c, SY + r)
+            elif ch == 'P':
+                solid('office-plant-a_0_0', SX + c, SY + r)
+            elif ch == 'C':
+                solid('office-counter2_0_0', SX + c, SY + r, 2)
+                b.put('Tops', SX + c + 1, SY + r, 'office-register_0_0')
+
+    room = b.room(name, transporters=[rg.transporter(ex, ey, host, front[0], front[1], hidden=True)])
+    x1, y1 = SX + SW, SY + SH                        # movement is confined to the lit floor and the mat
+    room['boundary'] = [[SX, SY], [x1, SY], [x1, y1], [ex + 1, y1], [ex + 1, ey + 1], [ex, ey + 1], [ex, y1], [SX, y1]]
+    room['interior'] = True          # never graded by day / night, never offered to the blog pipeline
+    room['shopEnabled'] = False      # not a store: no stamp, and the shelves are only to look at...
+    room['shopMenu'] = menu          # ...but the counter sells this type's short list (Shop.VENUES)
+    arrive = (ex, ey - 1)
+    check_interior(name, room, arrive, floor=(SX, SY, SW, SH), flavour=SHOP_FLAVOUR, wide=())
+    return room, arrive
+
+
 def check_interior(name, room, arrive, floor=(FX, FY, FW, FH), flavour=FLAVOUR, wide=('home-kotatsu', 'home-irori')):
     """Every free cell of the home (or lobby) can be walked to from the way
     in, and every flavour object can be bumped from the cell in front of it."""
@@ -409,8 +491,16 @@ def find_houses(cfg, host, kind='house'):
                 h['skipped'] = why[door]
         houses.append(h)
     where = room.get('name', host)
+    labels, ordinal = K.get('labels'), {}
     for h in houses:
-        if 'key' in h:
+        if 'key' not in h:
+            continue
+        if labels:                  # named by its type, numbered only where the town has several of that type
+            label = labels[h['family']]
+            ordinal[label] = ordinal.get(label, 0) + 1
+            several = sum(1 for o in houses if 'key' in o and labels[o['family']] == label) > 1
+            h['name'] = f"{label} · {where}" + (f' {ordinal[label]}' if several else '')
+        else:
             h['name'] = f"{K['label']} · {where}" + (f" {h['key'][len(K['prefix'] + host):]}" if n > 1 else '')
     return houses
 
@@ -471,6 +561,10 @@ def apply(cfg, host, kind='house'):
             interior, arrive = build_interior(h['name'], host, h['front'], h['layout'], seed_of(host, h['door']))
             interior[marker] = {'host': host, 'door': list(h['door']), 'layout': h['layout']}
             said = f"the {h['layout']} room"
+        elif kind == 'shop':
+            interior, arrive = build_shop(h['name'], host, h['front'], h['family'])
+            interior[marker] = {'host': host, 'door': list(h['door']), 'type': SHOP_TYPES[h['family']][1]}
+            said = f"the {SHOP_TYPES[h['family']][1]} shop floor"
         else:
             interior, arrive = build_lobby(h['name'], host, h['front'])
             interior[marker] = {'host': host, 'door': list(h['door']), 'doors': [list(d) for d in h['doors']]}
@@ -513,17 +607,19 @@ def variants():
 
 
 def main(argv):
-    named = rg.cli(__doc__, argv, ('--variants', '--dry-run', '--lobbies'))   # --help: usage, nothing run
+    named = rg.cli(__doc__, argv, ('--variants', '--dry-run', '--lobbies', '--shops'))   # --help: usage, nothing run
     cfg = rg.load_config()
     if '--variants' in argv:
         print(json.dumps({'tilePalette': cfg['tilePalette'], 'variants': variants()}))
         return 0
     dry, lobbies = '--dry-run' in argv, '--lobbies' in argv
+    only = 'lobby' if lobbies else 'shop' if '--shops' in argv else None
     have = {kind: sorted({r[K['marker']]['host'] for r in cfg['rooms'].values() if r.get(K['marker'])})
             for kind, K in KINDS.items()}
-    # named towns: their houses, or with --lobbies their towers; no town: everything there is, of both kinds
-    jobs = [('lobby' if lobbies else 'house', t) for t in named] if named else \
-        [(kind, t) for kind in (['lobby'] if lobbies else KINDS) for t in have[kind]]
+    # named towns: their houses, or with --lobbies their towers, or with --shops their shops;
+    # no town: everything there is, of every kind
+    jobs = [(only or 'house', t) for t in named] if named else \
+        [(kind, t) for kind in ([only] if only else KINDS) for t in have[kind]]
     unknown = [t for t in named if t not in cfg['rooms'] or cfg['rooms'][t].get('interior')
                or t in cfg.get('stations', {})]
     if unknown:
@@ -542,7 +638,7 @@ def main(argv):
         print(f"\ndry run: {len(built)} interior(s) would be written, nothing was.")
         return 0
     rg.save_config(cfg)
-    print(f"\n{len(built)} {'lobby' if lobbies else 'house'} interior(s) written. Now run config_to_tiled, then play.js lint, for:")
+    print(f"\n{len(built)} {only or 'house'} interior(s) written. Now run config_to_tiled, then play.js lint, for:")
     print('  ' + ' '.join(built + towns))
     return 0
 

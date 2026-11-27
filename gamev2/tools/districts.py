@@ -26,7 +26,7 @@ step 1: labels only, no map changes). The game itself does not read
 
 The names are the redesign plan's going-forward ones wherever that area is on
 today's map; the bounds are today's map. An area the plan names that is not
-built yet (Sapporo's Tanukikoji and Susukino, Asahikawa's zoo gate,
+built yet (Sapporo's Susukino, Asahikawa's zoo gate,
 Shirakawa-go's ryokan, Ueno and Shibuya in Tokyo's Park) has NO district:
 add it with the map change that builds it. A room need not be covered edge
 to edge, and districts of one room never overlap.
@@ -87,15 +87,19 @@ DISTRICTS = {
     # --- Hokkaido ---------------------------------------------------------
     'Sapporo': [
         d('station-front', 'Sapporo Station front',
-          'the star-clock station front on its red-brick plaza: arrivals, the meeting point, the walk out into the snow',
+          'the star-clock station front on its stone-paved plaza: arrivals, the meeting point, the walk out into the snow',
           (21, 6, 33, 19), stand=(26, 15)),
         d('clock-tower', 'Clock Tower block',
-          'the Sapporo Clock Tower on dark setts beside a red-brick office block, the 7-Eleven next to it',
+          'the Sapporo Clock Tower on dark setts beside a red-brick office block',
           (34, 6, 53, 19), stand=(38, 18)),
         d('odori-park', 'Odori Park',
           'the long snowy boulevard park in the snow festival: the snow castle and sculptures, corn and hot-drink '
           'stalls, the frozen fountain, the Sapporo TV Tower at its east end',
           (2, 23, 53, 30), stand=(21, 27)),
+        d('tanukikoji', 'Tanukikoji',
+          'the covered shopping arcade on red brick under a glass roof: souvenirs, the crab shop, a drugstore, '
+          'the 7-Eleven, in through the tanuki gate',
+          (17, 34, 43, 42), stand=(24, 39)),
     ],
     'Asahikawa': [
         d('station-front', 'Station front and Heiwa-dori',

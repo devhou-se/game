@@ -13,8 +13,8 @@ sealed and lead nowhere, except the discount store's, which opens into its Don T
 see Shop, Food and Drink). Of the ported houses, one opens: the red house at Market `(6,33)` is the Izakaya
 (issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`). Houses (the
 `house-*` townhouses, and a machiya with no shop sign) get a generic home interior from
-`tools/generate_houses.py` - in Asahikawa, Fukuoka, Market, Osaka, Sapporo and Sendai (issue #208, see House interiors). The high-rises and
-apartment blocks get a lobby from the same tool (`--lobbies`; Osaka's three and Sapporo's two office blocks so far, issues #216 and #219, see Tower lobbies).
+`tools/generate_houses.py` - in Asahikawa, Fukuoka, Market, Osaka and Sendai (issue #208, see House interiors; Sapporo's last townhouses went when Tanukikoji was built, #219). The high-rises and
+apartment blocks get a lobby from the same tool (`--lobbies`; Osaka's three and Sapporo's two office blocks so far, issues #216 and #219, see Tower lobbies), and a shopfront in `roomgen.SHOP_DOORS` a small shop floor (`--shops`; Tanukikoji's three, see Shop floors).
 
 | Prefab | Cells | Placed in |
 |---|---|---|
@@ -123,7 +123,7 @@ graded at night.
 - **Where they come from**: the sprite's `glow` list in `config.json` `spriteMetadata` if it has one (an empty list
   turns the sprite off), else its row in `Glows.SPRITES`. The table exists because Sapporo's art landed before its
   sprites were registered; a row can be moved into `spriteMetadata` as it is. It holds `susukino-neon-corner`,
-  `susukino-karaoke`, `susukino-ramen-gate`, `tanukikoji-gate`, `sapporo-station-front`, `sapporo-konbini` and the
+  `susukino-karaoke`, `susukino-ramen-gate`, `tanukikoji-gate` and the three `tanukikoji-shop-*` (placed in Tanukikoji since stage 3: the bulbs under the arch, the shops' lit windows), `sapporo-station-front`, `sapporo-konbini` and the
   two `snowfest-stall-*` (placed in Odori Park since stage 2, with `odori-lamp-post`, which the lamp rule lights; pink / cyan / yellow / green boards, warm windows, the cool white of the station's clock
   and name board). `susukino-neon-lanterns` and `ramen-alley-lanterns` are lanterns by name and are lit by the
   lamp rule, so they are not in it. **Only the station front and the two stalls are placed so far** (stages 1-2 of

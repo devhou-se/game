@@ -84,7 +84,7 @@ LOOKS = {
 # later (by hand, tools/npc_state.py or the blog pipeline) is never undone.
 # The lines are placeholders: friendly, undated, and no facts about anyone.
 HOME = {
-    'khoi': ('Sapporo', 38, 8, [
+    'khoi': ('Sapporo', 27, 38, [
         "Hey, I'm Khoi.",
         "Devhouse 3 is on: Hokkaido, in the snow.",
     ]),
@@ -92,7 +92,7 @@ HOME = {
         "Hi, I'm Sam!",
         "Sapporo first, then Asahikawa. I'm looking forward to all of it.",
     ]),
-    'xander': ('Sapporo', 35, 17, [
+    'xander': ('Sapporo', 21, 38, [
         "Xander here.",
         "Hokkaido with the devhouse crew. This should be a good one.",
     ]),

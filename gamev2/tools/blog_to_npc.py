@@ -225,6 +225,10 @@ LANDMARKS = [
     ('snow-sculpture-bear_', 'the snow bear', (1, 2), {'rooms': ('Sapporo',)}),            # the path in front of it
     ('snowfest-stall-corn_', 'the snow festival stalls', (3, 3), {'rooms': ('Sapporo',)}),   # the path, beside the corn tent's counter
     ('odori-fountain_', 'the Odori fountain', (1, 3), {'rooms': ('Sapporo',)}),            # the plaza, south of the basin
+    # Tanukikoji, the covered arcade (issue #219, stage 3): each stands on the arcade street, beside a door, never in front of one
+    ('tanukikoji-gate_', 'Tanukikoji arcade', (0, 4), {'rooms': ('Sapporo',)}),            # inside the gate, at its west post
+    ('tanukikoji-shop-crab_', 'the crab shop', (2, 4), {'rooms': ('Sapporo',)}),           # under the crab, east of the door
+    ('tanukikoji-shop-souvenir_', 'the souvenir shop', (0, 4), {'rooms': ('Sapporo',)}),   # at the window, west of the door
     ('asahikawa-bridge_', 'the bridge over the frozen river', (1, -1)),   # the north bridgehead
     ('ramen-banner_', 'ramen alley', (-1, 2)),                     # on the lane, outside a shop
     ('ice-pond-autotile_corner-nw', 'the frozen pond', (0, -1)),   # on the bank (the ice is solid)

@@ -57,12 +57,18 @@ LOBBY_PREFIX = 'Lobby'      # rooms.Lobby<Town><n>
 # cell (the top step of the `shrine` / `shrine-red` prefab; Dazaifu's own hall).
 SHRINE_DOORS = {'shrine-building_0_0': [(1, 4)], 'dazaifu-hall_0_0': [(3, 4)]}
 SHRINE_PREFIX = 'Shrine'    # rooms.Shrine<Town><n>, the worship halls generate_shrines.py owns
+# The shopfronts the same generator gives a small shop floor (issue #219, stage 3,
+# `generate_houses.py --shops`): the sprite -> its door cells. Tanukikoji's three.
+SHOP_DOORS = {'tanukikoji-shop-souvenir_0_0': [(1, 3)], 'tanukikoji-shop-crab_0_0': [(1, 3)],
+              'tanukikoji-shop-drug_0_0': [(1, 3)]}
+SHOP_PREFIX = 'Shop'        # rooms.Shop<Town><n>
 # Every kind of interior whose door a town generator neither builds nor knows
 # about, and save_config therefore keeps through a town rebuild (keep_house_doors):
 # room-key prefix -> (the key on the interior that says its generator owns it, its door sprites).
 # A new kind is one more row here, and a `{host, door}` marker on its rooms.
 OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()}),
                LOBBY_PREFIX: ('lobby', TOWER_DOORS),
+               SHOP_PREFIX: ('shop', SHOP_DOORS),
                SHRINE_PREFIX: ('shrine', SHRINE_DOORS)}
 _house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior
 

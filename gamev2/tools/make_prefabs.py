@@ -198,6 +198,25 @@ PREFABS = {
     'snowbank-h':            dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'snowbank-h_0_0')], colliders=[(0, 0)], doors=[]),
     'snowbank-v':            dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'snowbank-v_0_0')], colliders=[(0, 0)], doors=[]),
     'snowbank-pile':         dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'snowbank-pile_0_0')], colliders=[(0, 0)], doors=[]),
+    # ---- Tanukikoji, the covered arcade (issue #219, stage 3). A north-row shop is
+    # solid from its glass roof down (nobody walks behind a shopfront); its door is
+    # the middle cell of the bottom row. The upright sign that ends the row is solid.
+    'tanukikoji-shop-souvenir': building(3, 4, door=1, roof=0),
+    'tanukikoji-shop-crab':     building(3, 4, door=1, roof=0),
+    'tanukikoji-shop-drug':     building(3, 4, door=1, roof=0),
+    'tanukikoji-end-sign':      dict(w=1, h=4, sprites=[('Collidables', 0, 0, 'tanukikoji-end-sign_0_0')],
+                                     colliders=[(0, y) for y in range(4)], doors=[]),
+    # The gate: its two outer columns are solid top to bottom (the posts, and the
+    # ends of the board over them), so the way through is the two middle columns
+    # and nobody steps sideways under the arch. You walk under the board: it fades.
+    'tanukikoji-gate':          dict(w=4, h=4, sprites=[('Collidables', 0, 0, 'tanukikoji-gate_0_0')],
+                                     colliders=[(x, y) for x in (0, 3) for y in range(4)], doors=[]),
+    # The south row (the backs of the next street's shops): the top row is roof
+    # only and overhangs the arcade street - walked under, faded by Occlusion.
+    'tanukikoji-south-row-a':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'tanukikoji-south-row-a_0_0')],
+                                     colliders=[(x, y) for x in range(3) for y in (1, 2)], doors=[]),
+    'tanukikoji-south-row-b':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'tanukikoji-south-row-b_0_0')],
+                                     colliders=[(x, y) for x in range(3) for y in (1, 2)], doors=[]),
     # The bridge over Asahikawa's frozen river: a flat deck you walk ON. It sits
     # on Non-Collidables with a negative depthBias (spriteMetadata, written by
     # generate_hokkaido.py) so it draws over the ice but under everyone on it.

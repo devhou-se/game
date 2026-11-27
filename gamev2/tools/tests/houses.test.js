@@ -273,7 +273,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         for (const f of ['generate_shrines.py', 'generate_konbinis.py']) {
             assert.ok(tool(f).indexOf('rg.cli(__doc__, sys.argv[1:])') < tool(f).indexOf('rg.load_config()'), f);
         }
-        assert.ok(/def main\(argv\):\n    named = rg\.cli\(__doc__, argv, \('--variants', '--dry-run', '--lobbies'\)\)[^\n]*\n    cfg = rg\.load_config\(\)/.test(tool('generate_houses.py')));
+        assert.ok(/def main\(argv\):\n    named = rg\.cli\(__doc__, argv, \('--variants', '--dry-run', '--lobbies', '--shops'\)\)[^\n]*\n    cfg = rg\.load_config\(\)/.test(tool('generate_houses.py')));
         assert.ok(/def main\(argv\):\n    hosts = rg\.cli\(__doc__, argv\) or ALL_HOSTS/.test(tool('generate_discount_stores.py')));
     });
 
@@ -325,7 +325,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         });
     });
 
-    test('the roll-out: houses in Asahikawa, Fukuoka, Market, Osaka, Sapporo and Sendai, and nowhere else (#208)', () => {
+    test('the roll-out: houses in Asahikawa, Fukuoka, Market, Osaka and Sendai, and nowhere else (#208)', () => {
         const c = cfg(), name = (t) => c.tilePalette[t];
         const byTown = {};
         for (const [key, room] of houses(c)) (byTown[room.house.host] = byTown[room.house.host] || []).push(Number(key.match(/\d+$/)[0]));
@@ -334,8 +334,10 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         // south wall have no cell to stand on at their doors), so Sendai's start at 2
         assert.deepStrictEqual(byTown, {
             Asahikawa: [1, 2, 3], Fukuoka: [1, 2, 3, 4], Market: [1, 2, 3], Osaka: [1, 2, 3],
-            Sapporo: [1, 2, 3, 4, 5, 6], Sendai: [2, 3, 4, 5],     // Sapporo's north-east house went with the rebuild of the north (#219)
+            Sendai: [2, 3, 4, 5],     // Sapporo has none: its last six townhouses went when Tanukikoji was built (#219, stage 3)
         });
+        assert.deepStrictEqual(Object.keys(c.rooms).filter((k) => /^HouseSapporo/.test(k)), []);
+        assert.deepStrictEqual(fs.readdirSync(path.join(GV2, 'tiled')).filter((f) => /^housesapporo/.test(f)), []);
         // with this many, all four layouts are in the game
         assert.deepStrictEqual([...new Set(houses(c).map(([, r]) => r.house.layout))].sort(), ['flat', 'futon', 'hearth', 'kotatsu']);
         // every house front in those towns is a house, a door that was there before (a station, the Izakaya),

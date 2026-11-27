@@ -1,6 +1,7 @@
 // Sapporo's rebuild (issue #219). Stage 1 is the north of the town: the Sapporo Station front and the
-// Clock Tower block. Stage 2 is Odori Park. All of it is data the generators write (tools/generate_sapporo.py,
-// generate_sapporo_art.py, make_prefabs.py, generate_stations.py, generate_houses.py --lobbies).
+// Clock Tower block. Stage 2 is Odori Park. Stage 3 is Tanukikoji, the covered arcade. All of it is data the
+// generators write (tools/generate_sapporo.py, generate_sapporo_art.py, make_prefabs.py, generate_stations.py,
+// generate_konbinis.py, generate_houses.py --lobbies / --shops).
 module.exports = ({ test, assert, fs, path, GV2 }) => {
     const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
     const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
@@ -68,7 +69,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.deepStrictEqual(at('sapporo-office-brick_0_0'), [[49, 9]]);
         assert.deepStrictEqual(at('sapporo-clock-tower_0_0'), [[37, 11]], 'the Clock Tower has not moved');
         assert.deepStrictEqual(at('sapporo-tv-tower_0_0'), [[47, 17]], 'the TV Tower has not moved');
-        assert.deepStrictEqual(at('seven-eleven_0_0'), [[44, 15]]);
+        assert.deepStrictEqual(at('seven-eleven_0_0'), [[38, 34]], 'the konbini moved to the arcade with stage 3');
         assert.deepStrictEqual(at('discount-store_0_0'), [[16, 11]]);
         // the grid: two east-west streets and three north-south, three cells wide each, none moved or narrowed
         const road = (x, y) => /^road-/.test(floor(x, y));
@@ -80,25 +81,25 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         // the government hall is a landmark: sealed, no way in
         assert.ok(solid(5, 16) && !doorAt(5, 16));
         // the way in to the other interiors of the north is untouched
-        assert.strictEqual(doorAt(45, 18).targetRoom, 'KonbiniSapporo1');
         assert.strictEqual(doorAt(18, 18).targetRoom, 'DonTakoteSapporo');
-        // every door of the town is one of: the station's pair, the konbini, the store, a house, a lobby
+        // every door of the town is one of: the station's pair, the konbini, the store, a lobby, a shop - no house is left
         const kinds = room.transporters.map((t) => t.targetRoom.replace(/\d+$/, '')).sort();
-        assert.deepStrictEqual([...new Set(kinds)], ['DonTakoteSapporo', 'HouseSapporo', 'KonbiniSapporo', 'LobbySapporo', 'SapporoStation']);
+        assert.deepStrictEqual([...new Set(kinds)], ['DonTakoteSapporo', 'KonbiniSapporo', 'LobbySapporo', 'SapporoStation', 'ShopSapporo']);
     });
 
     test('Sapporo: the two northern districts stand on ground of their own (#219)', () => {
         const fam = (x, y) => floor(x, y).replace(/_[a-z-]+$/, '');
         // Station front: the plaza, the strip by the station and the forecourt of the west row
         for (const [x, y] of [[23, 11], [29, 18], [26, 14], [28, 11], [29, 11], [36, 9], [5, 17], [12, 18]]) {
-            assert.strictEqual(fam(x, y), 'arcade-brick-autotile', `${x},${y}`);
+            assert.strictEqual(fam(x, y), 'brown-brick-autotile', `${x},${y}`);      // stone slabs: the red brick is Tanukikoji's alone (stage 3)
         }
         // Clock Tower block: from the avenue to the east hedge
         for (const [x, y] of [[34, 12], [39, 18], [43, 15], [47, 14], [53, 18], [51, 16]]) {
             assert.strictEqual(fam(x, y), 'flat-grey-brick-autotile', `${x},${y}`);
         }
         // neither is the paving of anywhere else in town, and the two differ
-        for (let y = KITA; y < H; y++) for (let x = 0; x < W; x++) assert.notStrictEqual(fam(x, y), 'arcade-brick-autotile', `${x},${y}`);
+        for (let y = KITA; y < H; y++) for (let x = 0; x < W; x++) assert.notStrictEqual(fam(x, y), 'brown-brick-autotile', `${x},${y}`);
+        for (let y = 0; y < KITA; y++) for (let x = 0; x < W; x++) assert.notStrictEqual(fam(x, y), 'arcade-brick-autotile', `${x},${y}`);
         for (let y = 0; y < KITA; y++) for (let x = 0; x < W; x++) assert.notStrictEqual(fam(x, y), 'grey-brick-autotile', `${x},${y}`);
         // the pavement along Kita-Odori is still pavement
         for (let x = 2; x <= 53; x++) if (x < 30 || x > 32) assert.strictEqual(fam(x, 19), 'light-concrete-autotile', `${x},19`);    // 30-32: the avenue
@@ -152,10 +153,16 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             assert.ok(!seen.has(k), `two of the cast on ${k}`);
             seen.add(k);
         }
-        // spread over both northern districts and the park: stage 2 stood Sam beside the corn tent and
-        // Julia at the snow castle (she was on the Clock Tower's own stand cell); nobody else moved
+        // spread over both northern districts, the park and the arcade: stage 2 stood Sam beside the corn tent and
+        // Julia at the snow castle (she was on the Clock Tower's own stand cell); stage 3 stood Xander inside the
+        // Tanukikoji gate (from 35,17 by the Clock Tower) and Khoi beside the crab shop's door (from 38,8); nobody else moved
         const where = Object.fromEntries(cast.map((n) => [n.name, [n.gridX, n.gridY]]));
-        assert.deepStrictEqual(where, { Khoi: [38, 8], Sam: [20, 26], Xander: [35, 17], Bailey: [30, 11], Damian: [36, 12], Dylan: [24, 15], Julia: [6, 27] });
+        assert.deepStrictEqual(where, { Khoi: [27, 38], Sam: [20, 26], Xander: [21, 38], Bailey: [30, 11], Damian: [36, 12], Dylan: [24, 15], Julia: [6, 27] });
+        // neither of the two says where they stand, so their lines are as they were
+        for (const who of ['Khoi', 'Xander']) {
+            const lines = cast.find((n) => n.name === who).dialogue.join(' ');
+            assert.ok(!/Clock Tower|station|behind me|here by|next to/i.test(lines), `${who}: ${lines}`);
+        }
         // and Julia's line names what is behind her now, not the Clock Tower she left
         const julia = cast.find((n) => n.name === 'Julia');
         assert.ok(julia.dialogue.some((l) => /snow castle/.test(l)) && !julia.dialogue.some((l) => /Clock Tower/.test(l)), julia.dialogue.join(' | '));
@@ -241,9 +248,6 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         for (const l of ['Water', 'Collidables', 'Tops']) {
             for (const t of Object.values(layer(l))) assert.ok(!/^ice-pond|^sakura/.test(name(t)), name(t));
         }
-        // nothing of stages 3-4 moved: the south lane's houses are where they were
-        const houses = room.transporters.filter((t) => /^HouseSapporo/.test(t.targetRoom)).map((t) => t.targetRoom).sort();
-        assert.deepStrictEqual(houses, ['HouseSapporo1', 'HouseSapporo2', 'HouseSapporo3', 'HouseSapporo4', 'HouseSapporo5', 'HouseSapporo6']);
     });
 
     test('Odori Park: nobody walks inside a sculpture, a tent or the fountain, and each can be walked up to (#219)', () => {
@@ -307,6 +311,152 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         for (const key of ['snow-sculpture-castle_0_0', 'snow-sculpture-tanuki_0_0', 'snow-sculpture-bear_0_0', 'snowfest-stall-corn_0_0',
             'snowfest-stall-drinks_0_0', 'odori-fountain_0_0', 'odori-lamp-post_0_0', 'odori-bench_0_0', 'snowbank-h_0_0', 'snowbank-v_0_0',
             'snowbank-pile_0_0', 'snow-path-autotile_center']) {
+            assert.ok(cfg.spriteMetadata[key] && cfg.tileNames[key] && cfg.tilePalette.includes(key), key);
+        }
+    });
+
+    // ---- stage 3: Tanukikoji, the covered arcade south of Minami-Odori --------------------------------
+    const ARCADE = [[17, 29], [33, 43]];        // the two stretches of the street, either side of the avenue
+    const inArcade = (x) => ARCADE.some(([x0, x1]) => x >= x0 && x <= x1);
+
+    test('Tanukikoji: one street on red brick that is its alone, under a roof from both sides (#219)', () => {
+        // rows 38-40 of both stretches, and the way in under the gate: arcade-brick, and nowhere else in town
+        const brick = new Set();
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (fam(x, y) === 'arcade-brick-autotile') brick.add(`${x},${y}`);
+        const want = new Set();
+        for (const [x0, x1] of ARCADE) for (let x = x0; x <= x1; x++) for (let y = 38; y <= 40; y++) want.add(`${x},${y}`);
+        for (const x of [22, 23]) for (let y = 34; y <= 37; y++) want.add(`${x},${y}`);
+        assert.deepStrictEqual([...brick].sort(), [...want].sort());
+        for (const k of want) assert.ok(reach.has(k), `${k} of the arcade street can be walked`);
+        // the north row: shopfronts, the gate, the konbini, an upright sign at each end of each stretch
+        assert.deepStrictEqual(at('tanukikoji-shop-souvenir_0_0'), [[18, 34]]);
+        assert.deepStrictEqual(at('tanukikoji-gate_0_0'), [[21, 34]]);
+        assert.deepStrictEqual(at('tanukikoji-shop-crab_0_0'), [[25, 34]]);
+        assert.deepStrictEqual(at('tanukikoji-shop-drug_0_0'), [[35, 34]]);
+        assert.deepStrictEqual(at('tanukikoji-end-sign_0_0').sort((a, b) => a[0] - b[0]), [[17, 34], [28, 34], [34, 34], [41, 34]]);
+        // the south row: seven modules, never two alike side by side, their roof over the street's south row
+        const south = [...at('tanukikoji-south-row-a_0_0').map((c) => [...c, 'a']), ...at('tanukikoji-south-row-b_0_0').map((c) => [...c, 'b'])]
+            .sort((p, q) => p[0] - q[0]);
+        assert.deepStrictEqual(south.map(([x, y]) => [x, y]), [[17, 40], [20, 40], [23, 40], [26, 40], [34, 40], [37, 40], [40, 40]]);
+        south.forEach(([x, , v], i) => { if (i && south[i - 1][0] === x - 3) assert.notStrictEqual(south[i - 1][2], v, `two alike at ${x}`); });
+        for (const [x] of south) for (let dx = 0; dx < 3; dx++) {
+            assert.ok(!solid(x + dx, 40), `${x + dx},40 is walked under the roof`);
+            assert.ok(solid(x + dx, 41) && solid(x + dx, 42), `${x + dx}: the south row is a wall`);
+        }
+        // no generic townhouse, anywhere in Sapporo, and no House interior left behind
+        for (const t of Object.values(layer('Collidables'))) assert.ok(!/^(building-entrance|house-|machiya-)/.test(name(t)), name(t));
+        assert.deepStrictEqual(Object.keys(cfg.rooms).filter((k) => /^HouseSapporo/.test(k)), []);
+        // the streets the arcade crosses are still streets, and stage 4's ground is untouched: the avenue runs to row 40
+        for (let y = 34; y <= 40; y++) for (const x of [14, 15, 16, 30, 31, 32, 44, 45, 46]) assert.ok(/^road-/.test(floor(x, y)), `${x},${y}`);
+        for (const t of Object.values(layer('Floor'))) assert.ok(!/^tram-rail/.test(name(t)), 'no rails yet: stage 4');
+        assert.ok(!room.tramways, 'no streetcar yet: stage 4');
+    });
+
+    test('Tanukikoji: you come in under the gate or at either end, and nobody gets behind a shopfront (#219)', () => {
+        // through the gate from Minami-Odori: two cells wide, its posts and the ends of its board solid
+        const gate = prefab('tanukikoji-gate');
+        assert.deepStrictEqual([...gate.cells].sort(), ['0,0', '0,1', '0,2', '0,3', '3,0', '3,1', '3,2', '3,3']);
+        for (const x of [22, 23]) for (let y = 33; y <= 38; y++) assert.ok(reach.has(`${x},${y}`), `${x},${y} is the way in`);
+        // at each end the street meets the road beside it
+        for (const [x, y] of [[16, 39], [30, 39], [32, 39], [44, 39]]) assert.ok(reach.has(`${x},${y}`) && /^road-/.test(floor(x, y)), `${x},${y}`);
+        // no cell of the north row but a door and the gate's way through can be stood on, roof row included, kerb to kerb
+        const doors = [[19, 37], [26, 37], [36, 37], [39, 37]];
+        for (let x = 17; x <= 43; x++) {
+            if (!inArcade(x)) continue;
+            for (let y = 34; y <= 37; y++) {
+                const open = (x === 22 || x === 23) || doors.some(([dx, dy]) => dx === x && dy === y);
+                assert.strictEqual(reach.has(`${x},${y}`), open, `${x},${y}`);
+                if (!(x === 42 && y === 36)) assert.strictEqual(solid(x, y), !open, `${x},${y}`);      // 42,36: the 7-Eleven sign's top, walled in
+            }
+        }
+        // nothing south of the street can be reached: the south row and the fence are one closed line
+        for (let x = 0; x < W; x++) assert.ok(!reach.has(`${x},42`), `${x},42`);
+        for (let x = 17; x <= 43; x++) if (inArcade(x)) assert.ok(!reach.has(`${x},41`), `${x},41`);
+        // the shop prefabs are solid all over (no walk-behind roof row) with the door in the middle of the bottom row
+        for (const k of ['souvenir', 'crab', 'drug']) {
+            const p = prefab(`tanukikoji-shop-${k}`);
+            assert.strictEqual(p.cells.size, 12, k);
+            assert.deepStrictEqual(p.doors, [[1, 3]], k);
+        }
+    });
+
+    test('Tanukikoji: no sealed building - each shop opens into a shop floor that sells, the konbini is on the arcade (#219)', () => {
+        const shops = { ShopSapporo1: [19, 37, 'Souvenirs · Sapporo', 'souvenirs'], ShopSapporo2: [26, 37, 'Crab shop · Sapporo', 'crab'],
+            ShopSapporo3: [36, 37, 'Drugstore · Sapporo', 'drugstore'] };
+        assert.deepStrictEqual(Object.keys(cfg.rooms).filter((k) => /^Shop/.test(k)).sort(), Object.keys(shops));
+        const ctx = require('vm').createContext({ window: {} });
+        require('vm').runInContext(fs.readFileSync(path.join(GV2, 'src', 'utils', 'Interactions.js'), 'utf8') + '\nthis.Interactions = Interactions;', ctx);
+        const src = fs.readFileSync(path.join(GV2, 'src', 'Shop.js'), 'utf8');
+        const catalogue = new Set([...src.matchAll(/\{ id: '([a-z-]+)',\s+name:/g)].map((m) => m[1]));
+        for (const [key, [x, y, title, menu]] of Object.entries(shops)) {
+            const r = cfg.rooms[key];
+            // the door pairs both ways: in to the cell above the mat, out to the street cell in front of the door
+            const d = doorAt(x, y);
+            assert.ok(d && d.targetRoom === key && !solid(x, y), `${key}: its door at ${x},${y}`);
+            assert.deepStrictEqual(r.transporters.map((t) => [t.targetRoom, t.targetX, t.targetY]), [['Sapporo', x, y + 1]], key);
+            assert.deepStrictEqual([d.targetX, d.targetY], [r.transporters[0].gridX, r.transporters[0].gridY - 1], key);
+            assert.ok(reach.has(`${x},${y + 1}`), `${key}: the cell in front of its door`);
+            // what it is: an interior named by its type, not a store (no stamp), with that type's list on the counter
+            assert.strictEqual(r.name, title);
+            assert.ok(r.interior === true && r.shopEnabled === false && r.shopMenu === menu, key);
+            assert.deepStrictEqual(r.shop, { host: 'Sapporo', door: [x, y], type: menu });
+            const hit = ctx.Interactions.match('office-counter2_0_0', r, { [menu]: {} });
+            assert.deepStrictEqual({ ...hit }, { kind: menu, group: 'shop', footprint: true }, `${key}: a bump on the counter opens its list`);
+            assert.strictEqual(ctx.Interactions.match('office-shelf-snacks_0_0', r, { [menu]: {} }), null, 'the shelves are only to look at');
+            // one layout: a counter with a till, four shelves at the back wall, the mat
+            const keys = Object.values(layer('Collidables', r)).map(name).concat(Object.values(layer('Tops', r)).map(name), Object.values(layer('Over Floor', r)).map(name));
+            assert.strictEqual(keys.filter((k) => k === 'office-counter2_0_0').length, 1, key);
+            assert.ok(keys.includes('office-register_0_0') && keys.includes('lobby-mat_0_0'), key);
+            // its list: two or three things, every one of them in the catalogue
+            const row = new RegExp(`${menu}:\\s*\\{ title: '[A-Z ]+',\\s*sells: i => \\[([^\\]]+)\\]\\.includes\\(i\\.id\\) \\}`).exec(src);
+            assert.ok(row, `Shop.VENUES.${menu}`);
+            const ids = row[1].split(',').map((s) => s.trim().replace(/'/g, ''));
+            assert.ok(ids.length >= 2 && ids.length <= 3 && ids.every((id) => catalogue.has(id)), `${menu}: ${ids}`);
+        }
+        // the same floor plan in all three (one layout): only the shelves differ
+        const plan = (k) => JSON.stringify(Object.keys(layer('Colliders', cfg.rooms[k])).sort());
+        assert.ok(plan('ShopSapporo1') === plan('ShopSapporo2') && plan('ShopSapporo2') === plan('ShopSapporo3'));
+        // the 7-Eleven: on the arcade, same room key and name (the Stamp Card's), its door pairs both ways
+        const k = cfg.rooms.KonbiniSapporo1, kd = doorAt(39, 37);
+        assert.strictEqual(k.name, '7-Eleven · Sapporo');
+        assert.ok(kd && kd.targetRoom === 'KonbiniSapporo1' && !solid(39, 37) && fam(39, 38) === 'arcade-brick-autotile');
+        for (const t of k.transporters) assert.deepStrictEqual([t.targetRoom, t.targetX, t.targetY], ['Sapporo', 39, 38]);
+        assert.ok(k.transporters.some((t) => t.gridX === kd.targetX && t.gridY === kd.targetY + 1), 'you arrive just inside its mat');
+        assert.ok(!doorAt(45, 18) && !solid(45, 18), 'nothing is left of the old door by the Clock Tower');
+        assert.strictEqual(room.transporters.filter((t) => /^Konbini/.test(t.targetRoom)).length, 1);
+    });
+
+    test('Tanukikoji: its landmarks, its district and the glow of its gate (#219)', () => {
+        const py = fs.readFileSync(path.join(GV2, 'tools', 'blog_to_npc.py'), 'utf8');
+        const spots = { 'Tanukikoji arcade': ['tanukikoji-gate_', 21, 38], 'the crab shop': ['tanukikoji-shop-crab_', 27, 38],
+            'the souvenir shop': ['tanukikoji-shop-souvenir_', 18, 38] };
+        for (const [label, [prefix, sx, sy]] of Object.entries(spots)) {
+            const m = new RegExp(`\\('${prefix}', '${label}', \\((-?\\d+), (-?\\d+)\\), \\{'rooms': \\('Sapporo',\\)\\}\\)`).exec(py);
+            assert.ok(m, label);
+            const [[ox, oy]] = at(prefix + '0_0');
+            assert.deepStrictEqual([ox + Number(m[1]), oy + Number(m[2])], [sx, sy], label);
+            // a stand cell is on the arcade street, never a door or the cell in front of one
+            assert.ok(reach.has(`${sx},${sy}`) && fam(sx, sy) === 'arcade-brick-autotile', label);
+            assert.ok(!doorAt(sx, sy) && !doorAt(sx, sy - 1), `${label} stands at a door`);
+        }
+        const d = cfg.districts.Sapporo.find((x) => x.key === 'tanukikoji');
+        assert.deepStrictEqual([d.name, d.bounds, d.stand], ['Tanukikoji', [17, 34, 43, 42], [24, 39]]);
+        assert.deepStrictEqual(d.spots, ['Tanukikoji arcade', 'the 7-Eleven', 'the crab shop', 'the souvenir shop']);
+        assert.ok(/covered shopping arcade/.test(d.description) && /souvenirs/.test(d.description) && /crab/.test(d.description) && /7-Eleven/.test(d.description));
+        assert.ok(reach.has(d.stand.join(',')) && !doorAt(d.stand[0], d.stand[1] - 1));
+        // the 7-Eleven left the Clock Tower block's list and words
+        const clock = cfg.districts.Sapporo.find((x) => x.key === 'clock-tower');
+        assert.deepStrictEqual(clock.spots, ['the Sapporo Clock Tower']);
+        assert.ok(!/7-Eleven/.test(clock.description));
+        // districts of one room never overlap
+        const ds = cfg.districts.Sapporo;
+        for (const a of ds) for (const b of ds) if (a !== b) {
+            assert.ok(a.bounds[2] < b.bounds[0] || b.bounds[2] < a.bounds[0] || a.bounds[3] < b.bounds[1] || b.bounds[3] < a.bounds[1], `${a.key} / ${b.key}`);
+        }
+        // the gate glows at night from the Glows table; everything placed is registered
+        assert.ok(/'tanukikoji-gate_0_0': \[/.test(fs.readFileSync(path.join(GV2, 'src', 'utils', 'Glows.js'), 'utf8')));
+        for (const key of ['tanukikoji-gate_0_0', 'tanukikoji-shop-souvenir_0_0', 'tanukikoji-shop-crab_0_0', 'tanukikoji-shop-drug_0_0',
+            'tanukikoji-end-sign_0_0', 'tanukikoji-south-row-a_0_0', 'tanukikoji-south-row-b_0_0']) {
             assert.ok(cfg.spriteMetadata[key] && cfg.tileNames[key] && cfg.tilePalette.includes(key), key);
         }
     });

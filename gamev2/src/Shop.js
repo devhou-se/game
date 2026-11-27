@@ -877,6 +877,11 @@ Shop.VENUES = {
     izakaya: { title: 'IZAKAYA',         sells: i => i.where === 'izakaya', buys: true, grills: true },
     // Odori Park's hot-drinks tent (issue #219): the two warm ones off the machine's list
     stall:   { title: 'HOT DRINKS',      sells: i => i.id === 'canned-coffee' || i.id === 'green-tea' },
+    // Tanukikoji's three shops (issue #219; a Shop<Town><n> room's `shopMenu`, tools/generate_houses.py
+    // --shops): a short list each off the existing catalogue, over the counter; no stamp, no fish bought
+    souvenirs: { title: 'OMIYAGE',    sells: i => ['melon-pan', 'ramune', 'green-tea'].includes(i.id) },
+    crab:      { title: 'CRAB SHOP',  sells: i => ['onigiri', 'nikuman'].includes(i.id) },
+    drugstore: { title: 'DRUGSTORE',  sells: i => ['zone-energy', 'canned-coffee', 'green-tea'].includes(i.id) },
     // the airport pub (issue #218): the izakaya's drinks and food, over the bar; it buys no fish
     pub:     { title: 'AIRPORT PUB',     sells: i => i.where === 'izakaya' },
 };

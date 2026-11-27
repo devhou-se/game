@@ -83,7 +83,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
   `districts`; the HUD names the ROOM (`hudRoomName`), which for Tokyo's four ported rooms is the district.
 - **Names are the redesign plan's, bounds are today's map.** A district the plan names that is not built yet
   has NO entry: Ueno and Shibuya (Park is one district, "Park", whose description says it stands in for both),
-  Sapporo's Tanukikoji and Susukino, Asahikawa's zoo gate, Shirakawa-go's ryokan, Osaka's station front (a
+  Sapporo's Susukino, Asahikawa's zoo gate, Shirakawa-go's ryokan, Osaka's station front (a
   threshold, not a district). Add it in the change that builds it. Machi, Inaka and Yukimura (being deleted)
   have none; San Franbourne (#218) was not on master when this landed: give it districts when it is.
 
@@ -93,7 +93,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Market | Asakusa |
 | Palace | Marunouchi |
 | Park | Park |
-| Sapporo | Sapporo Station front, Clock Tower block, Odori Park |
+| Sapporo | Sapporo Station front, Clock Tower block, Odori Park, Tanukikoji |
 | Asahikawa | Station front and Heiwa-dori, Ramen alley, Asahibashi and the riverbank |
 | Osaka | Dotonbori, Shinsekai |
 | Sendai | Sendai Station front, Aoba Castle ruins, Downtown, Zuihoden, Nikka distillery, Samurai quarter, Matsushima bay |
@@ -223,15 +223,15 @@ pipeline has placed someone there.
 - **Sapporo** (`tools/generate_sapporo.py`, 56x43) is the one town on a street GRID: two east-west streets
   (rows 20-22, 31-33) and three north-south (columns 14-16, 30-32 the station avenue, 44-46), `road-plain`
   asphalt where they cross (roads are ordinary walkable Floor tiles). It is being rebuilt district by
-  district (issue #219); **stages 1 and 2, the north and Odori Park, are done**: three districts, each on
+  district (issue #219); **stages 1 to 3, the north, Odori Park and Tanukikoji, are done**: four districts, each on
   ground of its own.
-  **Sapporo Station front** (red basket-weave brick, `arcade-brick-autotile`): the station front with the
+  **Sapporo Station front** (grey stone slabs, `brown-brick-autotile`; stage 1 had borrowed the arcade's red brick, which stage 3 gave back to Tanukikoji alone): the station front with the
   star clock (`sapporo-station-front`, 10x7 at (24,4), across the rail line; its pair of doors (28,10) and
   (29,10) both lead into `SapporoStation`, and you come out on (28,11)), the plaza below it, and west of
-  the plaza on the same brick the red-brick government hall (`sapporo-akarenga` at (2,11), a landmark:
+  the plaza on the same slabs the red-brick government hall (`sapporo-akarenga` at (2,11), a landmark:
   sealed), the glass KITA office block (`sapporo-office-glass`) and the discount store. **Clock Tower
   block** (dark setts, `flat-grey-brick-autotile`, east of the avenue): the **Clock Tower** where it always
-  stood, the konbini (`KonbiniSapporo1`) and the red-brick office block (`sapporo-office-brick`). The two
+  stood and the red-brick office block (`sapporo-office-brick`); the konbini moved to the arcade with stage 3. The two
   office blocks open into lobbies (`LobbySapporo1`, `LobbySapporo2`, see Tower lobbies); no generic
   townhouse and no Osaka high-rise stands north of Kita-Odori. **Odori Park** (rows 23-30 between the two
   streets, a path of packed snow - `snow-path-autotile` - on snow, rows 26-27 from block to block) is the
@@ -248,9 +248,22 @@ pipeline has placed someone there.
   one, and each has free ground along its south side. A bump on the hot-drinks tent opens a shop list (HOT
   DRINKS: Canned Coffee and Green Tea, `Shop.VENUES.stall`); the corn tent, the three sculptures and the
   fountain each say one line (`Interactions.RULES`, group `flavour`). The frozen pond in the south-west
-  corner went with stage 2 (Asahikawa keeps the frozen water), and the sakura with it. Still to come (stages
-  3-4: Tanukikoji, Susukino), and until then as it was: south of Minami-Odori, houses on a lane and a snowy
-  park corner. The west row is closed by a shrub in each gap and a hedge behind it; the
+  corner went with stage 2 (Asahikawa keeps the frozen water), and the sakura with it. **Tanukikoji**
+  (stage 3, south of Minami-Odori, on red basket-weave brick, `arcade-brick-autotile`, its alone) is the covered
+  shopping arcade: one east-west street (rows 38-40) in two stretches, columns 17-29 and 33-43, either side of
+  the station avenue, which it crosses in the open. Its north row (rows 34-37, feet on row 37, standing on
+  Minami-Odori's kerb where the south pavement was) is shopfronts under one glass roof, solid from the roof
+  down: west, an upright sign (`tanukikoji-end-sign`), the souvenir shop (18,34), the **TANUKI KOJI gate**
+  (`tanukikoji-gate` at (21,34): you walk through its two middle columns, 22-23, from Minami-Odori; its outer
+  columns are solid; the board fades while you are under it), the crab shop (25,34), a sign; east, a sign, the
+  drugstore (35,34), the town's 7-Eleven (38,34, `KonbiniSapporo1`, same key and name as before the move), a
+  sign and the 7-Eleven's own. Its south row (rows 40-42, `tanukikoji-south-row-a` / `-b` alternating) is the
+  backs of the next street's shops: the top row is roof only and overhangs the street's southern row (walked
+  under; Occlusion fades the module), the two rows below are solid and stand where the south fence did. The
+  three shops open into shop floors (`ShopSapporo1..3`, see Shop floors) - no building of the arcade is sealed.
+  The six townhouses that stood here are gone and so are `HouseSapporo1..6`: Sapporo has no House interior.
+  The gate and the shops' windows glow at night (`Glows.SPRITES`). Still to come (stage 4: Susukino and the
+  streetcar, south of the arcade); until then the two south corners are snow and trees. The west row is closed by a shrub in each gap and a hedge behind it; the
   station front, the government hall and the office blocks collide up to their roof lines (nothing of the
   station is walk-behind; of an office block only its top row), and both towers collide along their
   silhouettes (see their prefab comments): the Clock
@@ -277,7 +290,8 @@ pipeline has placed someone there.
   in `spriteMetadata` / `tileNames`. A piece gets a prefab in `make_prefabs.py` when a stage places it
   (stage 1: `sapporo-station-front`, `sapporo-akarenga`, `sapporo-office-brick`, `sapporo-office-glass`;
   stage 2: the three `snow-sculpture-*`, the two `snowfest-stall-*`, `odori-fountain`, `odori-lamp`,
-  `odori-bench`, the three `snowbank-*`).
+  `odori-bench`, the three `snowbank-*`; stage 3: the three `tanukikoji-shop-*`, `tanukikoji-gate`,
+  `tanukikoji-end-sign`, `tanukikoji-south-row-a` / `-b`; `tanukikoji-rib` and `sapporo-konbini` are drawn and not placed).
   `--sheet`, `--scenes` and `--manifest` write a contact sheet, mock scenes and the door / footprint table.
 - **Flat sprites over water**: `Over Floor` and `Water` share one fixed depth, so a multi-cell sprite on
   `Over Floor` is drawn UNDER water tiles. The bridge therefore sits on `Non-Collidables` with
@@ -481,6 +495,25 @@ that cell, for a machiya that is a house).
   `config_to_tiled.py <House rooms> <Town>`, `play.js lint` for each. Nothing outdoors changes to the eye,
   so the world map is not rebuilt. To see a layout that no town has yet: `generate_houses.py --variants`
   prints all four, plain and mirrored, as JSON (what `tools/tests/houses.test.js` checks).
+
+### Shop floors: a door into a shopfront (issue #219)
+
+A third row of the same generator's `KINDS` table: `tools/generate_houses.py --shops <Town> [<Town> ...]` gives
+every shopfront in `roomgen.SHOP_DOORS` a `Shop<Town><n>` room, found, numbered (door order), skipped, sealed,
+re-run and kept through a town rebuild exactly as a house or a lobby is. **Applied to Sapporo**: Tanukikoji's
+souvenir shop, crab shop and drugstore are `ShopSapporo1..3`.
+
+- **One layout** (`SHOP`): a white back wall with two posters, two shelves either side against it, seven by five
+  cells of floor, a counter with a till, a plant in each front corner, the mat below the middle. All of it is the
+  konbini's furniture (`office-*`) and the lobby's mat; no new art.
+- **Named by what the front sells** (`SHOP_TYPES`: sprite family -> label, list, shelves): `Souvenirs · Sapporo`,
+  `Crab shop · Sapporo`, `Drugstore · Sapporo` (numbered only where a town has several of one type).
+- **It sells**: the room is `interior`, `shopEnabled: false` (not a store: no stamp, no Konbini Pilgrim, the
+  shelves are only to look at) and `shopMenu: souvenirs | crab | drugstore`, so a bump on the counter opens that
+  row of `Shop.VENUES` - two or three things off the existing catalogue (see Shop). The room's `shop` marker is
+  `{host, door, type}`.
+- A new shopfront elsewhere is a row in `roomgen.SHOP_DOORS` and one in `SHOP_TYPES` (and a `Shop.VENUES` row
+  if it sells something else).
 
 ### Tower lobbies: a door into every high-rise (issue #216)
 

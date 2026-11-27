@@ -78,12 +78,14 @@ creator's composite (head / torso / legs / beard donors + recolours), run offlin
   measured palettes of the hand-drawn five); a hand-drawn replacement can be added there.
 - **Base NPCs** come from the same tool (`HOME`: room, cell, two placeholder lines that state no facts about
   anyone). They are added only while the room has no NPC of that name, so later edits and the blog pipeline's
-  states are never undone. All three stand in Sapporo — Khoi in the yard east of the station front (38,8), Sam in Odori
-  Park beside the corn tent (20,26, the spot `the snow festival stalls`), Xander on the Clock Tower block's setts (35,17) — and are marked `"trip": "devhouse3",
+  states are never undone. All three stand in Sapporo — Khoi in the Tanukikoji arcade beside the crab shop's door (27,38, the spot `the crab shop`), Sam in Odori
+  Park beside the corn tent (20,26, the spot `the snow festival stalls`), Xander inside the Tanukikoji gate (21,38, `Tanukikoji arcade`) — and are marked `"trip": "devhouse3",
   "stay": "Sapporo"`, so they are there on devhouse 3's Sapporo days only (issue #131, see Trips), until
   their first post moves them. The rest of the devhouse 3 base cast (the other four in Sapporo, all seven
-  in Asahikawa) is plain config data with the same marks. `generate_sapporo.py` moved two of them when it
-  rebuilt Odori Park (`PARK_CAST`, only from the cell they had before): Sam from (21,27), and Julia from the
+  in Asahikawa) is plain config data with the same marks. `generate_sapporo.py` moved four of them as it
+  rebuilt the town (`PARK_CAST`, only from the cell they had before): with stage 3, Khoi from the yard east of the
+  station front (38,8) and Xander from the Clock Tower block (35,17), whose lines say nothing of where they stand;
+  with stage 2, Sam from (21,27), and Julia from the
   Clock Tower's stand cell (39,19) to the foot of the snow castle's steps (6,27, `the snow castle`), where her
   second line names the castle instead of the Clock Tower (`PARK_LINES`).
 - **Blog authors** (`AUTHOR_NPCS` in `tools/blog_to_npc.py`, GitHub login → NPC name): the three are listed

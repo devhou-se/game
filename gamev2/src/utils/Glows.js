@@ -159,6 +159,11 @@ Glows.SPRITES = {
         { x: 2.0, y: 1.9, r: 1.9, ry: 0.8, color: Glows.YELLOW, a: 0.8, pulse: { period: 2400, depth: 0.25 } },
         { x: 2.0, y: 0.7, r: 0.8, color: Glows.WARM, a: 0.5 },
     ],
+    // 3x4 each: the lit windows of the arcade's three shops (issue #219, stage 3) - warm for the gift
+    // boxes and the lamplit crab shop, cool white for the drugstore's shelves
+    'tanukikoji-shop-souvenir_0_0': [{ x: 1.5, y: 2.9, r: 1.5, ry: 0.8, color: Glows.WARM, a: 0.6 }],
+    'tanukikoji-shop-crab_0_0': [{ x: 1.5, y: 2.9, r: 1.5, ry: 0.8, color: Glows.WARM, a: 0.6 }],
+    'tanukikoji-shop-drug_0_0': [{ x: 1.5, y: 2.9, r: 1.5, ry: 0.8, color: Glows.COOL, a: 0.55 }],
     // 10x7: the star clock, the name board, the shop windows either side of the doors
     'sapporo-station-front_0_0': [
         { x: 5.0, y: 2.5, r: 1.3, color: Glows.COOL, a: 0.7 },
