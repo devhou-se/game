@@ -158,7 +158,9 @@ Serve `gamev2/` (a server is usually already on :8000, else
 
 ## 7. Ship
 
-Commit directly to master (repo rules: no attribution, no PRs, no branches)
-with the room script + config.json + tiled/*.tmj (+ devhouse.world), then
-push. Leave the local server running and tell the user where to walk to reach
-the new room.
+Commit the room script + config.json + tiled/*.tmj (+ devhouse.world), no
+attribution. Working by hand, commit directly to master (repo rules: no PRs,
+no branches), then push. Under Workshop, commit on the ticket's
+`workshop/<n>-<slug>` branch and do not push: Workshop opens the pull request
+(root `CLAUDE.md`, Git Workflow). Leave the local server running and tell the
+user where to walk to reach the new room.

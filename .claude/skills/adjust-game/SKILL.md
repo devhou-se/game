@@ -115,6 +115,9 @@ If sprite sizes differ when swapping A→B, re-anchor so the FEET line up
 
 ## 6. Ship
 
-Commit directly to master (no attribution, no PRs, no branches) with a
-message that states the adjustment in the user's terms plus what it entailed
-mechanically; push. Tell the user where to look in-game to see the change.
+Commit with a message that states the adjustment in the user's terms plus
+what it entailed mechanically, no attribution. Working by hand, commit
+directly to master (no PRs, no branches) and push. Under Workshop, commit on
+the ticket's `workshop/<n>-<slug>` branch and do not push: Workshop opens the
+pull request (root `CLAUDE.md`, Git Workflow). Tell the user where to look
+in-game to see the change.

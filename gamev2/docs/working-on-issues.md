@@ -1,12 +1,37 @@
 # Working on issues
 
 How any agent (or person) picks up, builds, checks and lands work on this repository. Several agents work
-here at once and all push to `master`, so the rules below are about not colliding and not breaking the live
-site. The game rules themselves are in `../CLAUDE.md` and the topic files it indexes.
+here at once and everything ends up on `master`, which deploys, so the rules below are about not colliding
+and not breaking the live site. The game rules themselves are in `../CLAUDE.md` and the topic files it indexes.
+
+## Two ways work lands
+
+Work reaches `master` in one of two ways. Find out which one you are in before you start; the sections below
+say where they differ, and everything else (the checks, verifying as a player, tests and docs, the commit
+message) is the same in both.
+
+- **By hand.** A person or an agent they are running picks an issue, claims it, commits on `master` in their
+  own worktree and pushes. No feature branches, no pull requests. This is the workflow unless you were told
+  otherwise.
+- **Workshop.** Workshop is the automated pipeline that takes a ticket through design, implementation and
+  code review, one unattended agent per stage. You are in it if your instructions say so; the checkout is
+  then already on a branch named `workshop/<n>-<slug>` cut from `master`. You commit on that branch and stop:
+  Workshop pushes it, opens and updates the pull request, labels the ticket and posts your summary. You do not
+  push, switch branches, open a pull request, or label, comment on or close the issue yourself, and you
+  usually could not (the container has no GitHub access). Where Workshop's instructions for the run and this
+  file disagree, Workshop's instructions win.
 
 ## 1. Issues: claim, label, report
 
 Issues are in `devhou-se/game` (`gh issue list -R devhou-se/game`).
+
+**Under Workshop** the ticket is claimed for you and its `workshop/*` labels are the claim, so skip the
+claiming, labelling and commenting below. The summary you return takes the place of the closing comment: say
+what changed, how it was checked, what was not checked and anything you noticed outside the ticket (Workshop
+may raise a ticket from that; do not work on it). If you cannot go on without an owner decision, stop and
+return your questions instead of guessing. A larger ticket has a design file, `docs/workshop/<n>-<slug>.md`,
+to follow; small ones normally have none. The rest of this section is for work by hand, except the commit
+reference and the standing owner decisions, which hold for everyone.
 
 - **Claim before you start.** Add the `in-progress` label and post one comment:
   `Claimed by <who you are>. Touching: <rooms / files / "code only">.` Check first that the issue is not
@@ -14,6 +39,9 @@ Issues are in `devhou-se/game` (`gh issue list -R devhou-se/game`).
   done and what is left.
 - **Do not take** an issue labelled `needs-decision`, `needs-art`, `blocked-external` or `parked` unless the
   owner has answered on it. Each has a comment saying what it is waiting for.
+- **Do not take an issue that Workshop has.** Labels starting `workshop/` (its stage, its size, whether it is
+  running) are set and removed by Workshop; leave them alone, and treat an issue that carries a
+  `workshop/stage:*` label as claimed unless the owner hands it to you.
 - **One commit references its issue**: the message ends `(#N)`.
 - **When you finish**: comment what changed, how it was checked and what was not checked, then close the issue
   only if everything it asks for is done. Otherwise remove `in-progress` and say what is left.
@@ -25,7 +53,7 @@ Issues are in `devhou-se/game` (`gh issue list -R devhou-se/game`).
 
 Labels: `in-progress` (someone is on it now), `needs-decision` (owner must choose), `needs-art` (needs drawn
 assets), `blocked-external` (needs a key, a file or another repository), `parked` (set aside on purpose),
-`devhouse-3` (needed for the February 2027 trip).
+`devhouse-3` (needed for the February 2027 trip), `workshop/*` (Workshop's own, above).
 
 Standing owner decisions that override anything older in an issue:
 
@@ -39,7 +67,8 @@ Standing owner decisions that override anything older in an issue:
 ## 2. Not colliding with other agents
 
 - **Work in your own git worktree**, not in a checkout another agent is using:
-  `git worktree add --detach ../game-<you> origin/master`.
+  `git worktree add --detach ../game-<you> origin/master`. Under Workshop the checkout is already yours alone,
+  on the ticket's branch: stay on it.
 - **Map data is serial.** `gamev2/config.json` rooms and `tilePalette`, `gamev2/tiled/*.tmj`, town generators,
   `devhouse.world` and `gamev2/assets/map` conflict as soon as two changes touch them, because the palette is
   positional. So:
@@ -49,6 +78,9 @@ Standing owner decisions that override anything older in an issue:
     beside it.
   - A map change in a different room is fine, but expect to replay your data when master moves (below).
   - Do not add interiors to a town that is waiting for its redesign rebuild; its doors would be redone.
+  - Under Workshop you cannot read the claims. Build on the `origin/master` you were given and name the rooms
+    and map data you touched in your summary, so whoever merges the pull request can see what it collides
+    with. A map pull request that master has moved under is replayed the same way (below) before it merges.
 - **Code-only and art-only work never waits.** A change that touches no map data (source, tests, docs, new
   sprites and their art tool) can be built and landed at any time.
 - **When master moved under a map change**: rebase; for `gamev2/config.json`, `gamev2/tiled/`, `devhouse.world`
@@ -69,7 +101,7 @@ Useful URL parameters: `?notitle=1&nointro=1`, `?date=YYYY-MM-DD`, `?tod=day|nig
 
 ## 4. Checks before you push
 
-From `gamev2/`, all must pass:
+From `gamev2/`, all must pass (under Workshop: before you return your result, since Workshop does the push):
 
 ```bash
 node tools/test_game.js                 # unit tests (about 90 s)
@@ -105,7 +137,9 @@ Tests passing is not the bar; the change working for a player is.
 - **Look at screenshots.** For art and maps, open the render or the screenshot and judge it honestly: does it
   read as the place, does anything float, can you walk behind or inside a building.
 - No console or page errors.
-- Say in your issue comment what you verified and, separately, what you did not.
+- Say in your issue comment (under Workshop, your summary) what you verified and, separately, what you did not.
+- A Workshop container may have no browser. Then run everything that needs none, say in your summary what a
+  player-visible change still needs checked, and ask for the ticket to get the `workshop/needs:browser` label.
 
 ## 6. Tests and docs are part of the change
 
@@ -118,10 +152,27 @@ Tests passing is not the bar; the change working for a player is.
 
 ## 7. Landing
 
-- Commit on `master`, one change per commit, message `gamev2: <what changed, in plain words> (#N)`. No
-  attribution lines, no pull requests, no long-lived branches.
+In both workflows: one change per commit, message `gamev2: <what changed, in plain words> (#N)`, no
+attribution lines.
+
+**Under Workshop:**
+
+- Commit on the ticket's `workshop/<n>-<slug>` branch and leave it there. Do not push or open the pull
+  request: Workshop pushes the branch and opens the pull request, with your summary as its description, and
+  its Code reviewer stage reads the change before the owner merges it. That covers the diff-reading half of the
+  independent review below; playing the change stays with your own verification (the `workshop/needs:browser`
+  label gives the run a browser) or the owner before merging.
+- Merging the pull request is the push to `master`, so the deploy below runs then. You cannot watch it; the
+  person who merges does. The "Checks" workflow below runs on the pull request as a second signal.
+
+**By hand:**
+
+- Commit on `master`. No pull requests, no long-lived branches.
 - **Fetch and rebase immediately before pushing**, re-run the checks if master moved, then push. Other agents
-  and `dylan-botler[bot]` push to master during the day.
+  and `dylan-botler[bot]` push to master during the day, and Workshop's pull requests are merged into it.
+
+**In both workflows:**
+
 - A change that touches camera, city stitching, the trips or date model, input routing, the save blob, the blog
   pipeline, or more than about six source files gets an independent review before it lands: a second agent
   that plays the change and reads the diff. Small fixes and art-only commits land on green checks.
@@ -132,6 +183,8 @@ Tests passing is not the bar; the change working for a player is.
   and it does not gate the deploy: it is a second signal, not a replacement for running the checks yourself.
 
 ## 8. When something is broken
+
+Under Workshop, "say so on the issue" below means say so in your summary.
 
 - **A check fails on master before your change**: say so on the issue, find the commit (`git log`,
   `git bisect`), and fix forward in its own commit. Do not build on a red master.

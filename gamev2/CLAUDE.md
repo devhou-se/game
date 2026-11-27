@@ -67,8 +67,9 @@ python3 tools/sync_cities.py --check    # config `cities` and devhouse.world agr
 ## Working on issues
 
 Claiming an issue, working beside other agents, verifying as a player, landing and fixing are in
-`docs/working-on-issues.md`. Read it before starting: several agents push to `master`, and map data is
-changed by one agent per town at a time.
+`docs/working-on-issues.md`. Read it before starting: several agents push to `master`, Workshop's agents
+commit on a `workshop/<n>-<slug>` branch that lands through a pull request instead, and map data is changed
+by one agent per town at a time.
 
 ## Rules for every change
 
@@ -125,7 +126,7 @@ be found here.
 | `landmarks-and-towns.md` | Featured locations / landmarks, Osaka, adding a landmark, Hokkaido (Sapporo, Asahikawa, snow, konbini interiors per host, build order), House interiors, Tower lobbies, the Devhouses of Tokyo and Osaka | adding a landmark, a town, a konbini or discount store to a town, opening a town's houses |
 | `buildings-and-street-props.md` | Generic city buildings (high-rises, discount store, machiya), Street accessories (traffic lights, crossings, kerbside props, Osaka's roads, no bins), Neon and lit fronts at night (`Glows.js`) | placing buildings or street furniture; `TrafficLights.js`; making a sprite glow at night |
 | `generators-and-checks.md` | `check_generators.py`, Generated rooms stay regenerable, the world map (`make_worldmap.py`), Asset Generation | editing a generated room, a generator, an art tool, or the world map |
-| `working-on-issues.md` | Issues and labels, not colliding with other agents, running, the checks, verifying as a player, landing, fixing | starting any issue; before every push |
+| `working-on-issues.md` | The two ways work lands (by hand on `master`, Workshop branches and pull requests), issues and labels, not colliding with other agents, running, the checks, verifying as a player, landing, fixing | starting any issue; before every push |
 | `tools-play-test-studio.md` | `tools/play.js`, `tools/test_game.js`, Studio, Visual Editor | using or changing the terminal tools, `world-model.js`, `/studio/`, `/editor/` |
 
 Where to start for common jobs:

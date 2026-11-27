@@ -48,31 +48,49 @@ Anything a player can see also needs the browser regression, `gamev2/tools/brows
 **`gamev2/docs/working-on-issues.md` is the full guide** to claiming an issue, not colliding with other agents,
 running, checking, verifying as a player, landing and fixing. The short version:
 
-- **Several agents push to `master` at once.** Work in your own git worktree
+- **Work lands in one of two ways.** By hand, a person or their agent claims an issue and pushes to `master`.
+  Under **Workshop**, the automated pipeline, the agent is started on a `workshop/<n>-<slug>` branch, commits
+  there, and Workshop pushes it and opens the pull request. You are under Workshop only if your instructions
+  say so; then Workshop's instructions win wherever they differ from these files.
+- **Several agents push to `master` at once.** By hand, work in your own git worktree
   (`git worktree add --detach ../game-<you> origin/master`), and fetch and rebase immediately before every push.
-- **Claim an issue before you start**: add the `in-progress` label and comment who you are and which rooms or
-  files you will touch. Do not take issues labelled `needs-decision`, `needs-art`, `blocked-external` or
-  `parked`. When you finish or stop, comment what was done, how it was checked and what is left, and remove
-  `in-progress`. Do not file follow-up issues unless the owner asks.
+  Under Workshop the checkout is already yours: stay on its branch.
+- **Claim an issue before you start** (by hand): add the `in-progress` label and comment who you are and which
+  rooms or files you will touch. Do not take issues labelled `needs-decision`, `needs-art`, `blocked-external`
+  or `parked`, or one Workshop has (a `workshop/stage:*` label). When you finish or stop, comment what was
+  done, how it was checked and what is left, and remove `in-progress`. Do not file follow-up issues unless the
+  owner asks. Under Workshop the ticket is already claimed and Workshop does the labels and comments: put all
+  of that, and anything you noticed outside the ticket, in the summary you return.
 - **Map data is serial.** `gamev2/config.json` rooms and palette, `gamev2/tiled/`, town generators and
   `devhouse.world` conflict when two changes touch them. Only one agent rebuilds a given town at a time; check
-  the other `in-progress` claims. Code-only and art-only work can run and land at any time.
+  the other `in-progress` claims, or under Workshop, where you cannot, name the rooms you touched in your
+  summary. Code-only and art-only work can run and land at any time.
 - **All checks pass before a push** (below, plus the browser regression for anything a player can see), and the
   change is **verified by playing it** in a browser with real keys and touches, on desktop and a phone size,
-  with screenshots looked at.
-- **Watch the deploy** after each push and say so if it fails. Fix forward.
+  with screenshots looked at. Under Workshop that is before you return your result; say what you could not
+  check.
+- **Watch the deploy** after each push and say so if it fails. Fix forward. (A Workshop change deploys when
+  its pull request is merged; whoever merges watches.)
 
 ## Git Workflow
 
-When making commits:
+In both workflows:
+- One change per commit; the message is `gamev2: <what changed, in plain words> (#N)`
+- Do NOT include Claude attribution in commit messages
+
+Working by hand (the default):
 - Commit directly to master branch
 - Use force push when needed, but never over commits that are not yours: fetch first, and if master has moved, rebase
-- Do NOT include Claude attribution in commit messages
 - Do NOT create pull requests
 - Do NOT create feature branches (a pushed `wip/<issue>-<slug>` branch is allowed only to park unfinished work
   when you stop, and the issue must say so)
-- One change per commit; the message is `gamev2: <what changed, in plain words> (#N)`
 - Fetch and rebase onto `origin/master` immediately before pushing
+
+Under Workshop (your instructions say so, and the checkout is on a `workshop/<n>-<slug>` branch):
+- Commit on that branch; do NOT commit to master or switch branches
+- Do NOT push, and do NOT create the pull request yourself: Workshop pushes the branch and opens the pull
+  request from your summary
+- Do NOT label, comment on or close the issue; Workshop updates the ticket
 
 ## CI/CD Pipeline
 
