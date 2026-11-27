@@ -20,6 +20,7 @@ Then: config_to_tiled.py MyRoom (and any room whose transporters you touched —
 the game reads the .tmj!), then play.js lint MyRoom.
 """
 import json, os, sys
+import chikagai as _chikagai
 import prefab as _prefab
 
 LAYER_NAMES = ['Floor', 'Over Floor', 'Water', 'Non-Collidables', 'Collidables', 'Other', 'Tops', 'Colliders']
@@ -68,6 +69,10 @@ SHOP_PREFIX = 'Shop'        # rooms.Shop<Town><n>
 # only a door that leads into a room carrying the `palace` marker counts.
 PALACE_DOORS = {'pagoda-floor_0_0': [(1, 2)]}
 PALACE_PREFIX = 'PalaceHall'    # rooms.PalaceHall<Host><n>
+# The street entrances of a town's underground arcade (tools/generate_chikagai.py):
+# the entrance's sprite -> its pair of door cells (the foot of its steps).
+CHIKAGAI_DOORS = {f'{_chikagai.ENTRANCE}_0_0': _chikagai.ENTRANCE_DOORS}
+CHIKAGAI_PREFIX = 'Chikagai'    # rooms.Chikagai<Town>
 # Every kind of interior whose door a town generator neither builds nor knows
 # about, and save_config therefore keeps through a town rebuild (keep_house_doors):
 # room-key prefix -> (the key on the interior that says its generator owns it, its door sprites).
@@ -76,7 +81,8 @@ OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()})
                LOBBY_PREFIX: ('lobby', TOWER_DOORS),
                SHOP_PREFIX: ('shop', SHOP_DOORS),
                SHRINE_PREFIX: ('shrine', SHRINE_DOORS),
-               PALACE_PREFIX: ('palace', PALACE_DOORS)}
+               PALACE_PREFIX: ('palace', PALACE_DOORS),
+               CHIKAGAI_PREFIX: ('chikagai', CHIKAGAI_DOORS)}
 DOOR_LAYERS = ('Collidables', 'Over Floor')   # where a door sprite is laid (a tower's foot is on Over Floor)
 _house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior
 

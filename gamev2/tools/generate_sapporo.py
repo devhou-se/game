@@ -70,9 +70,11 @@ Run from gamev2/:
     python3 tools/generate_houses.py Sapporo            # removes the House interiors of townhouses that are gone
     python3 tools/generate_houses.py --shops Sapporo    # ShopSapporo<n> (Tanukikoji's three shops)
     python3 tools/generate_houses.py --lobbies Sapporo  # LobbySapporo<n> (the two office blocks)
+    python3 tools/generate_chikagai.py Sapporo          # ChikagaiSapporo (the underground arcade) + its four entrances
     node tools/play.js lint Sapporo            (and SapporoStation, KonbiniSapporo1)
     python3 tools/config_to_tiled.py Sapporo SapporoStation KonbiniSapporo1 DonTakoteSapporo
 """
+import chikagai
 import roomgen as rg
 from roomgen import rect
 import generate_discount_stores as don
@@ -255,7 +257,7 @@ bank(col=17, cells=(28, 29)); bank(col=29, cells=(28, 29))
 # of the path between two lamps, benches on the lawn, children's heaps of snow
 BEAR = (38, 24)
 b.stamp('snow-sculpture-bear', *BEAR)                 # feet on row 25
-b.stamp('tree-snow', 33, 23); b.stamp('tree-snow', 42, 23)       # trunks on row 25
+b.stamp('tree-snow', 42, 23)                          # trunk on row 25 (the arcade's Odori entrance stands in the other corner)
 b.stamp('tree-snow', 33, 28)                          # trunk on row 30
 b.stamp('odori-lamp', 37, 24); b.stamp('odori-lamp', 41, 24)     # either side of the bear
 b.stamp('odori-lamp', 37, 28); b.stamp('odori-lamp', 40, 28)     # either side of the way in from Minami-Odori
@@ -269,7 +271,6 @@ bank(row=30, cells=(35, 36, 37, 40, 41, 42), heaps=[(43, 30), (42, 29), (43, 29)
 TOWER = (47, 17)
 b.stamp('sapporo-tv-tower', *TOWER)
 b.stamp('lamp-blue', 47, 30); b.stamp('lamp-blue', 52, 30)
-b.stamp('shrub-small-snow', 53, 24); b.stamp('shrub-small-snow', 53, 27)
 
 # ---- Tanukikoji, the covered arcade (issue #219, stage 3). North row, rows 34-37,
 #      feet on row 37: shopfronts under one glass roof, solid from the roof down
@@ -311,6 +312,13 @@ b.stamp('shrub-small-snow', 5, 36); b.stamp('shrub-small-snow', 10, 36)
 b.stamp('tree-snow', 52, 36); b.stamp('tree-snow', 48, 34)
 b.stamp('vending-red', 49, 38); b.stamp('vending-white', 50, 38)
 
+# ---- the stairs down to the underground arcade (tools/chikagai.py says where; its
+#      doors are opened by tools/generate_chikagai.py and kept by roomgen.save_config):
+#      beside the station's doors, in Odori Park on the path, tucked in by the TV
+#      Tower (reached up the plaza's east side), and east of Tanukikoji ---------------
+for e in chikagai.TOWNS['Sapporo']['exits'].values():
+    b.stamp(chikagai.ENTRANCE, *e['street'])
+
 # ---- borders: snowy hedges west / east, a fence along the south (continuous
 #      with the arcade's south row - a gap would let the player slip round behind) -----------------
 for y in range(7, 41, 2):
@@ -324,7 +332,8 @@ for i, x in enumerate(range(1, W - 1)):
         b.fence(x, 42, i)
 
 # isolated: the ONLY way out is the station's doors into SapporoStation (the
-# konbini and the discount store lead to their own interiors and back).
+# konbini, the discount store and the underground arcade lead to their own
+# interiors and back).
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) - keep them.
 prev = cfg['rooms'].get('Sapporo', {})
 # The devhouse 3 base cast of the park stands at its named spots (issue #219,

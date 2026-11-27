@@ -305,7 +305,7 @@ pipeline has placed someone there.
 - **Build order**: `generate_hokkaido.py`, `generate_sapporo_art.py`, `make_prefabs.py`, `generate_sapporo.py`,
   `generate_asahikawa.py`, `generate_konbinis.py Sapporo`, `generate_discount_stores.py Sapporo`,
   `generate_stations.py` (the towns fence and seal themselves - `b.finish()`; the station's way out is
-  `TOWN_DOORS` there), `generate_houses.py Sapporo` and `generate_houses.py --lobbies Sapporo`, then
+  `TOWN_DOORS` there), `generate_houses.py Sapporo` and `generate_houses.py --lobbies Sapporo`, `generate_chikagai.py Sapporo` (see Underground arcades), then
   `config_to_tiled.py Sapporo Asahikawa SapporoStation AsahikawaStation KonbiniSapporo1 DonTakoteSapporo`
   and the House / Lobby rooms
   (it takes any number of rooms and fails, writing nothing, on a name that is not a room - #102) and
@@ -609,6 +609,42 @@ the roll-out.
   it for every dated position). `the shrine` LANDMARK stands its visitor at building cell `(1, 6)`, the foot
   of the two steps: two cells below the door, not in front of it, and walked round by the side of the
   bottom step.
+
+### Underground arcades (chikagai)
+
+Japanese cities run a shopping arcade under their main streets, reached by stairs from the pavement. A town
+gets one from three files: `tools/chikagai.py` (data only: the arcade's shape, its shopfronts, its exits and
+where each exit's entrance stands on the street), `tools/generate_chikagai.py [Host ...]` (the room
+`Chikagai<Host>` and the doors into it) and `tools/generate_chikagai_art.py` (the `chika-*` sprites and the
+street entrance, `chikagai-entrance-snow`, 2x3: solid but for the foot of its steps, a pair of door cells).
+
+- **The town's own generator stamps the entrances** where the table says (`chikagai.TOWNS[town]['exits'][slug]
+  ['street']`), sealed; `generate_chikagai.py` opens them and wires both door cells of each, and
+  `roomgen.save_config` keeps those doors through a town rebuild (`OWNED_DOORS`, marker `chikagai` on the room,
+  as a house's or a lobby's). Walking onto the steps takes you down to the foot of the matching stairs; each
+  exit brings you back up onto the cell in front of its entrance.
+- **The room** is a cross of corridors: an east-west hall with 3x2 shopfronts set into its north wall behind a
+  tan apron, and a stem north and south. Exits in a north wall are stairs under a yellow exit sign with the
+  place's name (`chika-exit-<slug>`, drawn from the table); one in a south wall is steps in the front wall under
+  a hanging sign (`chika-sign-<slug>`). Tactile paving runs from every exit to a line down the hall; pillars,
+  benches and planters stand south of it (the station interior's sprites); coin lockers and a floor map at the
+  foot of the north stairs; capsule machines at the hall's west end. Movement is held by the room's `boundary`
+  (the floor and the stairs), so the walls need no colliders.
+- **What a bump does** (`Interactions.RULES`, `Shop.VENUES`): the bakery, the coffee counter and the standing
+  bar sell a short list (see Shop); the bookshop, the florist, the shuttered front, the capsule machines and the
+  map say one line. The room is `interior` and `shopEnabled: false`: no day/night grade, never offered to the
+  blog pipeline, no stamp.
+- **Sapporo** has the first: **Aurora Town** (`ChikagaiSapporo`, 42x21). Its four entrances are beside the
+  station's doors (28,13), in Odori Park's east block on the path (33,23, where a tree stood), tucked in by the
+  TV Tower (52,24, reached up the plaza's east side; the two shrubs there went) and east of Tanukikoji (47,37).
+  Underground the station stairs are at the head of the north stem, Odori Park's and the TV Tower's at the two
+  ends of the hall, Tanukikoji's at the foot of the south stem. When stage 4 builds Susukino the south exit
+  belongs there: move its `street` cell in the table and re-run both generators.
+- **Another town**: add a row to `chikagai.TOWNS`, stamp `chikagai.ENTRANCE` at each exit's `street` cell in the
+  town's generator, run `generate_chikagai_art.py` (exit signs), `generate_chikagai.py <Town>`, then
+  `config_to_tiled.py Chikagai<Town> <Town>` and `play.js lint` for both. The entrance art has snow on its
+  roof; a town without snow needs a second entrance sprite first.
+- Tests: `tools/tests/chikagai.test.js`.
 
 ### The palace's audience hall (issue #215)
 

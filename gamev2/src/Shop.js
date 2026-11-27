@@ -892,6 +892,10 @@ Shop.VENUES = {
     souvenirs: { title: 'OMIYAGE',    sells: i => ['melon-pan', 'ramune', 'green-tea'].includes(i.id) },
     crab:      { title: 'CRAB SHOP',  sells: i => ['onigiri', 'nikuman'].includes(i.id) },
     drugstore: { title: 'DRUGSTORE',  sells: i => ['zone-energy', 'canned-coffee', 'green-tea'].includes(i.id) },
+    // an underground arcade's three counters (tools/generate_chikagai.py): short lists off the catalogue; no stamp, no fish bought
+    bakery:   { title: 'BAKERY',    sells: i => ['melon-pan', 'nikuman', 'canned-coffee'].includes(i.id) },
+    kissa:    { title: 'KISSATEN',  sells: i => ['canned-coffee', 'green-tea', 'melon-pan'].includes(i.id) },
+    standbar: { title: 'STAND BAR', sells: i => ['highball', 'nama-beer', 'edamame', 'karaage'].includes(i.id) },
     // the airport pub (issue #218): the izakaya's drinks and food, over the bar; it buys no fish
     pub:     { title: 'AIRPORT PUB',     sells: i => i.where === 'izakaya' },
 };

@@ -11,6 +11,10 @@ const Interactions = {
         { kind: 'flights', group: 'flights', pattern: /^airport-(gate|board)/, footprint: true },
         // Odori Park's hot-drinks tent (issue #219): a stall that sells over its counter, as a machine does
         { kind: 'stall', group: 'shop', pattern: /^snowfest-stall-drinks/, footprint: true },
+        // an underground arcade (tools/generate_chikagai.py): three of its shopfronts sell over the counter
+        { kind: 'bakery', group: 'shop', pattern: /^chika-shop-bakery/, footprint: true },
+        { kind: 'kissa', group: 'shop', pattern: /^chika-shop-kissa/, footprint: true },
+        { kind: 'standbar', group: 'shop', pattern: /^chika-shop-bar/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^office-(shelf-drinks|shelf-glass|fridge|freezer)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^office-shelf-snacks/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },
@@ -47,6 +51,12 @@ const Interactions = {
         { kind: 'snow-bear', group: 'flavour', pattern: /^snow-sculpture-bear/, footprint: true, say: 'a snow bear with a salmon. he will not finish it before april' },
         { kind: 'fountain', group: 'flavour', pattern: /^odori-fountain/, footprint: true, say: 'the fountain is off for the winter. the lights under the ice are not' },
         // ...and the people folded double at the waist on its pavements: one line each
+        // an underground arcade's other fronts and furniture
+        { kind: 'bookshop', group: 'flavour', pattern: /^chika-shop-books/, footprint: true, say: 'this week\'s manga, tied shut with string. everyone is reading them standing up anyway' },
+        { kind: 'florist', group: 'flavour', pattern: /^chika-shop-flowers/, footprint: true, say: 'tulips in february. down here it is always spring' },
+        { kind: 'shutter', group: 'flavour', pattern: /^chika-shop-shutter/, footprint: true, say: 'the shutter is down. the notice says tenant wanted' },
+        { kind: 'gacha', group: 'flavour', pattern: /^chika-gacha/, footprint: true, say: 'capsule toys, three hundred yen a turn. the one you want is always at the bottom' },
+        { kind: 'floor-map', group: 'flavour', pattern: /^chika-map/, footprint: true, say: 'you are here. so, apparently, is everything else' },
         { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-a/, footprint: true, say: 'he has been like this since tuesday' },
         { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-b/, footprint: true, say: 'still standing. technically' },
         { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-c/, footprint: true, say: 'three trams have come and gone. he was not waiting for one' },

@@ -19,6 +19,7 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 | the pub's bar in an airport lounge (`airport-bar*`, issue #218) | `pub` — the izakaya's drinks and food, titled AIRPORT PUB; buys no fish, no stamp |
 | the hot-drinks tent in Sapporo's Odori Park (`snowfest-stall-drinks*`, any cell of the tent, issue #219) | `stall` — Canned Coffee and Green Tea, titled HOT DRINKS; no stamp |
 | the counter (`office-counter2*`) of a Tanukikoji shop floor (`Shop<Town><n>`, `"shopMenu": "souvenirs"` / `"crab"` / `"drugstore"`, issue #219) | that list — OMIYAGE: Green Tea, Ramune, Melon Pan; CRAB SHOP: Onigiri, Nikuman; DRUGSTORE: Zone Energy, Green Tea, Canned Coffee; no stamp, buys no fish |
+| three shopfronts of an underground arcade (`chika-shop-bakery*` / `-kissa*` / `-bar*`, any cell of the front, `tools/generate_chikagai.py`) | `bakery` — BAKERY: Melon Pan, Nikuman, Canned Coffee; `kissa` — KISSATEN: Canned Coffee, Green Tea, Melon Pan; `standbar` — STAND BAR: Highball, Nama Beer, Edamame, Karaage; no stamp, buys no fish |
 | `office-shelf-drinks` / `-shelf-glass` / `office-fridge` / `office-freezer` in a konbini | `drinks` — the drinks only |
 | `office-shelf-snacks` in a konbini | `snacks` — the food only |
 | `office-counter2*` (the bar) in a room with `"shopMenu": "izakaya"` | `izakaya` — items with `where: 'izakaya'` |

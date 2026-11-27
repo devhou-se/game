@@ -211,6 +211,11 @@ PREFABS = {
     # and nobody steps sideways under the arch. You walk under the board: it fades.
     'tanukikoji-gate':          dict(w=4, h=4, sprites=[('Collidables', 0, 0, 'tanukikoji-gate_0_0')],
                                      colliders=[(x, y) for x in (0, 3) for y in range(4)], doors=[]),
+    # The street entrance of an underground arcade (tools/generate_chikagai.py): a
+    # glass canopy over steps going down. You walk onto the steps from the south -
+    # the bottom row is its pair of doors - and the rest is solid.
+    'chikagai-entrance-snow':   dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'chikagai-entrance-snow_0_0')],
+                                     colliders=[(x, y) for x in range(2) for y in (0, 1)], doors=[(0, 2), (1, 2)]),
     # The south row (the backs of the next street's shops): the top row is roof
     # only and overhangs the arcade street - walked under, faded by Occlusion.
     'tanukikoji-south-row-a':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'tanukikoji-south-row-a_0_0')],

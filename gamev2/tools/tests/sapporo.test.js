@@ -84,7 +84,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.strictEqual(doorAt(18, 18).targetRoom, 'DonTakoteSapporo');
         // every door of the town is one of: the station's pair, the konbini, the store, a lobby, a shop - no house is left
         const kinds = room.transporters.map((t) => t.targetRoom.replace(/\d+$/, '')).sort();
-        assert.deepStrictEqual([...new Set(kinds)], ['DonTakoteSapporo', 'KonbiniSapporo', 'LobbySapporo', 'SapporoStation', 'ShopSapporo']);
+        assert.deepStrictEqual([...new Set(kinds)], ['ChikagaiSapporo', 'DonTakoteSapporo', 'KonbiniSapporo', 'LobbySapporo', 'SapporoStation', 'ShopSapporo']);
     });
 
     test('Sapporo: the two northern districts stand on ground of their own (#219)', () => {
@@ -229,7 +229,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         const own = BLOCKS.map(([x0, x1]) => placed().filter(([x, y, k]) => x >= x0 && x <= x1 && y >= 23 && y <= 30
             && !/^(odori-lamp-post|odori-bench|snowbank-|tree-3-)/.test(k)).map(([, , k]) => k.replace(/_0_0$/, '')).sort());
         assert.deepStrictEqual(own, [['snow-sculpture-castle', 'snow-sculpture-tanuki'],
-            ['odori-fountain', 'snowfest-stall-corn', 'snowfest-stall-drinks'], ['snow-sculpture-bear']]);
+            ['odori-fountain', 'snowfest-stall-corn', 'snowfest-stall-drinks'], ['chikagai-entrance-snow', 'snow-sculpture-bear']]);
         // every block is lit and has somewhere to sit, and the old rows of red lanterns are gone
         for (const [x0, x1] of BLOCKS) {
             const here = placed().filter(([x, y]) => x >= x0 && x <= x1 && y >= 23 && y <= 30).map(([, , k]) => k);

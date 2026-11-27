@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 10,
- "nextobjectid": 137,
+ "nextobjectid": 147,
  "properties": [
   {
    "name": "gv2room",
@@ -34,7 +34,7 @@
    "name": "gamev2",
    "tilewidth": 64,
    "tileheight": 64,
-   "tilecount": 106,
+   "tilecount": 107,
    "columns": 0,
    "objectalignment": "topleft",
    "grid": {
@@ -677,6 +677,12 @@
      "id": 150,
      "image": "../assets/sprites/tanukikoji-south-row-b_0_0.png",
      "imagewidth": 192,
+     "imageheight": 192
+    },
+    {
+     "id": 151,
+     "image": "../assets/sprites/chikagai-entrance-snow_0_0.png",
+     "imagewidth": 128,
      "imageheight": 192
     }
    ],
@@ -7817,7 +7823,6 @@
     0,
     0,
     0,
-    82,
     0,
     0,
     0,
@@ -7985,7 +7990,8 @@
     0,
     0,
     0,
-    82,
+    0,
+    0,
     0,
     0,
     0,
@@ -9399,6 +9405,16 @@
     },
     {
      "id": 55,
+     "gid": 152,
+     "name": "chikagai-entrance-snow_0_0",
+     "x": 1792,
+     "y": 832,
+     "width": 128,
+     "height": 192,
+     "visible": true
+    },
+    {
+     "id": 56,
      "gid": 145,
      "name": "tanukikoji-end-sign_0_0",
      "x": 1792,
@@ -9408,7 +9424,7 @@
      "visible": true
     },
     {
-     "id": 56,
+     "id": 57,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 192,
@@ -9418,7 +9434,7 @@
      "visible": true
     },
     {
-     "id": 57,
+     "id": 58,
      "gid": 118,
      "name": "odori-lamp-post_0_0",
      "x": 192,
@@ -9428,7 +9444,7 @@
      "visible": true
     },
     {
-     "id": 58,
+     "id": 59,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 2112,
@@ -9438,17 +9454,17 @@
      "visible": true
     },
     {
-     "id": 59,
-     "gid": 85,
-     "name": "tree-3-base-shadow-snow_0_0",
+     "id": 60,
+     "gid": 152,
+     "name": "chikagai-entrance-snow_0_0",
      "x": 2112,
-     "y": 1600,
+     "y": 1472,
      "width": 128,
-     "height": 64,
+     "height": 192,
      "visible": true
     },
     {
-     "id": 60,
+     "id": 61,
      "gid": 85,
      "name": "tree-3-base-shadow-snow_0_0",
      "x": 2112,
@@ -9458,7 +9474,7 @@
      "visible": true
     },
     {
-     "id": 61,
+     "id": 62,
      "gid": 85,
      "name": "tree-3-base-shadow-snow_0_0",
      "x": 2176,
@@ -9468,7 +9484,7 @@
      "visible": true
     },
     {
-     "id": 62,
+     "id": 63,
      "gid": 145,
      "name": "tanukikoji-end-sign_0_0",
      "x": 2176,
@@ -9478,7 +9494,7 @@
      "visible": true
     },
     {
-     "id": 63,
+     "id": 64,
      "gid": 151,
      "name": "tanukikoji-south-row-b_0_0",
      "x": 2176,
@@ -9488,7 +9504,7 @@
      "visible": true
     },
     {
-     "id": 64,
+     "id": 65,
      "gid": 116,
      "name": "odori-bench_0_0",
      "x": 2240,
@@ -9498,7 +9514,7 @@
      "visible": true
     },
     {
-     "id": 65,
+     "id": 66,
      "gid": 148,
      "name": "tanukikoji-shop-drug_0_0",
      "x": 2240,
@@ -9508,7 +9524,7 @@
      "visible": true
     },
     {
-     "id": 66,
+     "id": 67,
      "gid": 78,
      "name": "sapporo-clock-tower_0_0",
      "x": 2368,
@@ -9518,7 +9534,7 @@
      "visible": true
     },
     {
-     "id": 67,
+     "id": 68,
      "gid": 118,
      "name": "odori-lamp-post_0_0",
      "x": 2368,
@@ -9528,7 +9544,7 @@
      "visible": true
     },
     {
-     "id": 68,
+     "id": 69,
      "gid": 118,
      "name": "odori-lamp-post_0_0",
      "x": 2368,
@@ -9538,7 +9554,7 @@
      "visible": true
     },
     {
-     "id": 69,
+     "id": 70,
      "gid": 150,
      "name": "tanukikoji-south-row-a_0_0",
      "x": 2368,
@@ -9548,7 +9564,7 @@
      "visible": true
     },
     {
-     "id": 70,
+     "id": 71,
      "gid": 128,
      "name": "snow-sculpture-bear_0_0",
      "x": 2432,
@@ -9558,7 +9574,7 @@
      "visible": true
     },
     {
-     "id": 71,
+     "id": 72,
      "gid": 80,
      "name": "seven-eleven_0_0",
      "x": 2432,
@@ -9568,7 +9584,7 @@
      "visible": true
     },
     {
-     "id": 72,
+     "id": 73,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 2496,
@@ -9578,7 +9594,7 @@
      "visible": true
     },
     {
-     "id": 73,
+     "id": 74,
      "gid": 129,
      "name": "snow-sculpture-castle_0_0",
      "x": 256,
@@ -9588,7 +9604,7 @@
      "visible": true
     },
     {
-     "id": 74,
+     "id": 75,
      "gid": 116,
      "name": "odori-bench_0_0",
      "x": 256,
@@ -9598,7 +9614,7 @@
      "visible": true
     },
     {
-     "id": 75,
+     "id": 76,
      "gid": 118,
      "name": "odori-lamp-post_0_0",
      "x": 2560,
@@ -9608,7 +9624,7 @@
      "visible": true
     },
     {
-     "id": 76,
+     "id": 77,
      "gid": 151,
      "name": "tanukikoji-south-row-b_0_0",
      "x": 2560,
@@ -9618,7 +9634,7 @@
      "visible": true
     },
     {
-     "id": 77,
+     "id": 78,
      "gid": 85,
      "name": "tree-3-base-shadow-snow_0_0",
      "x": 2560,
@@ -9628,7 +9644,7 @@
      "visible": true
     },
     {
-     "id": 78,
+     "id": 79,
      "gid": 118,
      "name": "odori-lamp-post_0_0",
      "x": 2624,
@@ -9638,7 +9654,7 @@
      "visible": true
     },
     {
-     "id": 79,
+     "id": 80,
      "gid": 116,
      "name": "odori-bench_0_0",
      "x": 2624,
@@ -9648,7 +9664,7 @@
      "visible": true
     },
     {
-     "id": 80,
+     "id": 81,
      "gid": 145,
      "name": "tanukikoji-end-sign_0_0",
      "x": 2624,
@@ -9658,7 +9674,7 @@
      "visible": true
     },
     {
-     "id": 81,
+     "id": 82,
      "gid": 85,
      "name": "tree-3-base-shadow-snow_0_0",
      "x": 2688,
@@ -9668,7 +9684,7 @@
      "visible": true
     },
     {
-     "id": 82,
+     "id": 83,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 2880,
@@ -9678,7 +9694,7 @@
      "visible": true
     },
     {
-     "id": 83,
+     "id": 84,
      "gid": 85,
      "name": "tree-3-base-shadow-snow_0_0",
      "x": 2880,
@@ -9688,7 +9704,7 @@
      "visible": true
     },
     {
-     "id": 84,
+     "id": 85,
      "gid": 85,
      "name": "tree-3-base-shadow-snow_0_0",
      "x": 2880,
@@ -9698,7 +9714,7 @@
      "visible": true
     },
     {
-     "id": 85,
+     "id": 86,
      "gid": 79,
      "name": "sapporo-tv-tower_0_0",
      "x": 3008,
@@ -9708,7 +9724,17 @@
      "visible": true
     },
     {
-     "id": 86,
+     "id": 87,
+     "gid": 152,
+     "name": "chikagai-entrance-snow_0_0",
+     "x": 3008,
+     "y": 2368,
+     "width": 128,
+     "height": 192,
+     "visible": true
+    },
+    {
+     "id": 88,
      "gid": 85,
      "name": "tree-3-base-shadow-snow_0_0",
      "x": 3072,
@@ -9718,7 +9744,7 @@
      "visible": true
     },
     {
-     "id": 87,
+     "id": 89,
      "gid": 113,
      "name": "sapporo-office-brick_0_0",
      "x": 3136,
@@ -9728,7 +9754,7 @@
      "visible": true
     },
     {
-     "id": 88,
+     "id": 90,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3264,
@@ -9738,7 +9764,17 @@
      "visible": true
     },
     {
-     "id": 89,
+     "id": 91,
+     "gid": 152,
+     "name": "chikagai-entrance-snow_0_0",
+     "x": 3328,
+     "y": 1536,
+     "width": 128,
+     "height": 192,
+     "visible": true
+    },
+    {
+     "id": 92,
      "gid": 85,
      "name": "tree-3-base-shadow-snow_0_0",
      "x": 3328,
@@ -9748,7 +9784,7 @@
      "visible": true
     },
     {
-     "id": 90,
+     "id": 93,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
@@ -9758,7 +9794,7 @@
      "visible": true
     },
     {
-     "id": 91,
+     "id": 94,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
@@ -9768,7 +9804,7 @@
      "visible": true
     },
     {
-     "id": 92,
+     "id": 95,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
@@ -9778,7 +9814,7 @@
      "visible": true
     },
     {
-     "id": 93,
+     "id": 96,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
@@ -9788,7 +9824,7 @@
      "visible": true
     },
     {
-     "id": 94,
+     "id": 97,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
@@ -9798,7 +9834,7 @@
      "visible": true
     },
     {
-     "id": 95,
+     "id": 98,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
@@ -9808,7 +9844,7 @@
      "visible": true
     },
     {
-     "id": 96,
+     "id": 99,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
@@ -9818,7 +9854,7 @@
      "visible": true
     },
     {
-     "id": 97,
+     "id": 100,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
@@ -9828,7 +9864,7 @@
      "visible": true
     },
     {
-     "id": 98,
+     "id": 101,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
@@ -9838,41 +9874,11 @@
      "visible": true
     },
     {
-     "id": 99,
-     "gid": 81,
-     "name": "shrub-large-circle-snow_0_0",
-     "x": 3456,
-     "y": 1856,
-     "width": 128,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 100,
-     "gid": 81,
-     "name": "shrub-large-circle-snow_0_0",
-     "x": 3456,
-     "y": 1984,
-     "width": 128,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 101,
-     "gid": 81,
-     "name": "shrub-large-circle-snow_0_0",
-     "x": 3456,
-     "y": 2112,
-     "width": 128,
-     "height": 128,
-     "visible": true
-    },
-    {
      "id": 102,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
-     "y": 2240,
+     "y": 1856,
      "width": 128,
      "height": 128,
      "visible": true
@@ -9882,7 +9888,7 @@
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
-     "y": 2368,
+     "y": 1984,
      "width": 128,
      "height": 128,
      "visible": true
@@ -9892,7 +9898,7 @@
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
-     "y": 2496,
+     "y": 2112,
      "width": 128,
      "height": 128,
      "visible": true
@@ -9902,7 +9908,7 @@
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
-     "y": 448,
+     "y": 2240,
      "width": 128,
      "height": 128,
      "visible": true
@@ -9912,13 +9918,43 @@
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 3456,
-     "y": 576,
+     "y": 2368,
      "width": 128,
      "height": 128,
      "visible": true
     },
     {
      "id": 107,
+     "gid": 81,
+     "name": "shrub-large-circle-snow_0_0",
+     "x": 3456,
+     "y": 2496,
+     "width": 128,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 108,
+     "gid": 81,
+     "name": "shrub-large-circle-snow_0_0",
+     "x": 3456,
+     "y": 448,
+     "width": 128,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 109,
+     "gid": 81,
+     "name": "shrub-large-circle-snow_0_0",
+     "x": 3456,
+     "y": 576,
+     "width": 128,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 110,
      "gid": 116,
      "name": "odori-bench_0_0",
      "x": 512,
@@ -9928,7 +9964,7 @@
      "visible": true
     },
     {
-     "id": 108,
+     "id": 111,
      "gid": 81,
      "name": "shrub-large-circle-snow_0_0",
      "x": 576,
@@ -14843,7 +14879,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 109,
+     "id": 112,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 704,
@@ -14853,7 +14889,7 @@
      "visible": true
     },
     {
-     "id": 110,
+     "id": 113,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 768,
@@ -14863,7 +14899,7 @@
      "visible": true
     },
     {
-     "id": 111,
+     "id": 114,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 1152,
@@ -14873,7 +14909,7 @@
      "visible": true
     },
     {
-     "id": 112,
+     "id": 115,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 128,
@@ -14883,7 +14919,7 @@
      "visible": true
     },
     {
-     "id": 113,
+     "id": 116,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 128,
@@ -14893,7 +14929,7 @@
      "visible": true
     },
     {
-     "id": 114,
+     "id": 117,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 1344,
@@ -14903,7 +14939,7 @@
      "visible": true
     },
     {
-     "id": 115,
+     "id": 118,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 1664,
@@ -14913,7 +14949,7 @@
      "visible": true
     },
     {
-     "id": 116,
+     "id": 119,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 1728,
@@ -14923,17 +14959,7 @@
      "visible": true
     },
     {
-     "id": 117,
-     "gid": 86,
-     "name": "tree-3-top-snow_0_0",
-     "x": 2112,
-     "y": 1472,
-     "width": 128,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 118,
+     "id": 120,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 2112,
@@ -14943,7 +14969,7 @@
      "visible": true
     },
     {
-     "id": 119,
+     "id": 121,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 2176,
@@ -14953,7 +14979,7 @@
      "visible": true
     },
     {
-     "id": 120,
+     "id": 122,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 2560,
@@ -14963,7 +14989,7 @@
      "visible": true
     },
     {
-     "id": 121,
+     "id": 123,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 2688,
@@ -14973,7 +14999,7 @@
      "visible": true
     },
     {
-     "id": 122,
+     "id": 124,
      "gid": 1,
      "name": "7-11-sign-left_0_0",
      "x": 2688,
@@ -14983,7 +15009,7 @@
      "visible": true
     },
     {
-     "id": 123,
+     "id": 125,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 2880,
@@ -14993,7 +15019,7 @@
      "visible": true
     },
     {
-     "id": 124,
+     "id": 126,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 2880,
@@ -15003,7 +15029,7 @@
      "visible": true
     },
     {
-     "id": 125,
+     "id": 127,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 3072,
@@ -15013,7 +15039,7 @@
      "visible": true
     },
     {
-     "id": 126,
+     "id": 128,
      "gid": 86,
      "name": "tree-3-top-snow_0_0",
      "x": 3328,
@@ -15808,8 +15834,8 @@
     0,
     0,
     0,
-    0,
-    0,
+    23,
+    23,
     0,
     0,
     0,
@@ -15864,8 +15890,8 @@
     0,
     0,
     0,
-    0,
-    0,
+    23,
+    23,
     0,
     0,
     0,
@@ -16370,11 +16396,11 @@
     23,
     23,
     23,
-    0,
     0,
     0,
     0,
-    0,
+    23,
+    23,
     0,
     0,
     23,
@@ -16426,11 +16452,11 @@
     23,
     23,
     23,
-    0,
     0,
     0,
     0,
-    0,
+    23,
+    23,
     0,
     0,
     0,
@@ -16448,7 +16474,7 @@
     23,
     23,
     0,
-    0,
+    23,
     23,
     23,
     23,
@@ -16485,8 +16511,8 @@
     0,
     0,
     0,
-    23,
-    23,
+    0,
+    0,
     0,
     0,
     23,
@@ -16504,12 +16530,12 @@
     23,
     23,
     0,
-    0,
-    0,
     23,
     23,
     23,
     23,
+    23,
+    23,
     0,
     0,
     23,
@@ -16617,7 +16643,7 @@
     23,
     23,
     0,
-    23,
+    0,
     23,
     23,
     23,
@@ -17168,11 +17194,11 @@
     23,
     23,
     23,
-    0,
     0,
     0,
     0,
-    0,
+    23,
+    23,
     0,
     0,
     0,
@@ -17182,7 +17208,6 @@
     23,
     23,
     23,
-    0,
     0,
     0,
     0,
@@ -17228,7 +17253,8 @@
     0,
     0,
     0,
-    0,
+    23,
+    23,
     23,
     23,
     0,
@@ -17490,7 +17516,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 127,
+     "id": 129,
      "name": "transporter",
      "point": true,
      "x": 1184.0,
@@ -17527,7 +17553,7 @@
      ]
     },
     {
-     "id": 128,
+     "id": 130,
      "name": "transporter",
      "point": true,
      "x": 1824.0,
@@ -17564,7 +17590,7 @@
      ]
     },
     {
-     "id": 129,
+     "id": 131,
      "name": "transporter",
      "point": true,
      "x": 1888.0,
@@ -17601,7 +17627,7 @@
      ]
     },
     {
-     "id": 130,
+     "id": 132,
      "name": "transporter",
      "point": true,
      "x": 3296.0,
@@ -17638,7 +17664,7 @@
      ]
     },
     {
-     "id": 131,
+     "id": 133,
      "name": "transporter",
      "point": true,
      "x": 800.0,
@@ -17675,7 +17701,7 @@
      ]
     },
     {
-     "id": 132,
+     "id": 134,
      "name": "transporter",
      "point": true,
      "x": 2528.0,
@@ -17712,7 +17738,7 @@
      ]
     },
     {
-     "id": 133,
+     "id": 135,
      "name": "transporter",
      "point": true,
      "x": 1248.0,
@@ -17749,7 +17775,7 @@
      ]
     },
     {
-     "id": 134,
+     "id": 136,
      "name": "transporter",
      "point": true,
      "x": 1696.0,
@@ -17786,7 +17812,7 @@
      ]
     },
     {
-     "id": 135,
+     "id": 137,
      "name": "transporter",
      "point": true,
      "x": 2336.0,
@@ -17823,7 +17849,303 @@
      ]
     },
     {
-     "id": 136,
+     "id": 138,
+     "name": "transporter",
+     "point": true,
+     "x": 1824.0,
+     "y": 992.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ChikagaiSapporo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 5
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 139,
+     "name": "transporter",
+     "point": true,
+     "x": 1888.0,
+     "y": 992.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ChikagaiSapporo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 5
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 140,
+     "name": "transporter",
+     "point": true,
+     "x": 2144.0,
+     "y": 1632.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ChikagaiSapporo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 141,
+     "name": "transporter",
+     "point": true,
+     "x": 2208.0,
+     "y": 1632.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ChikagaiSapporo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 142,
+     "name": "transporter",
+     "point": true,
+     "x": 3360.0,
+     "y": 1696.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ChikagaiSapporo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 38
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 143,
+     "name": "transporter",
+     "point": true,
+     "x": 3424.0,
+     "y": 1696.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ChikagaiSapporo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 38
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 144,
+     "name": "transporter",
+     "point": true,
+     "x": 3040.0,
+     "y": 2528.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ChikagaiSapporo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 29
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 17
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 145,
+     "name": "transporter",
+     "point": true,
+     "x": 3104.0,
+     "y": 2528.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ChikagaiSapporo"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 29
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 17
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 146,
      "name": "boundary",
      "x": 0,
      "y": 0,
