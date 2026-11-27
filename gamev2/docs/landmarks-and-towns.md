@@ -995,7 +995,17 @@ walked behind, as they always were; only the two door cells opened.)
   - the back wall, **five** rows tall (the pub's and the distillery's are three): six piers (`wall-pier`,
     1x5) and between them five shopfronts (`front-fashion`, `-toys`, `-okonomiyaki`, `-cafe`, `-ramen`, 4x5:
     one function, the `FRONTS` table). The top two rows of every piece are two gallery levels: small lit
-    fronts, a glass rail, a terracotta balcony that bows out over each shop;
+    fronts, a glass rail, a terracotta balcony that bows out over each shop. Every piece is an entry of
+    `game.lookUp.sprites` (0: the wall stands on the floor; written by the art tool's `LOOK_UP`, issue #258),
+    so on the north bank the camera looks up at it ("Looking up at landmarks" in `hud-input-touch.md`). A
+    landscape phone shows 7.5 rows and its ordinary camera showed a row and a half of the wall to somebody
+    standing against it; now all five rows are in view from against the wall (the top one partly behind the
+    bar, which is as far as the view goes with two rows kept under the player), one row fewer for each row
+    you step back, and the reach has faded out by the canal. That is 844x390; a phone under 400 px tall
+    (667x375) has its controls over the canvas's bottom corners, the look-up keeps that strip under the
+    player clear as well, and so it only narrows the deadzone there: one row more of the wall than before,
+    the galleries still off the top. A desktop window only narrows its deadzone too, which keeps the wall's
+    top clear of the bar;
   - **the canal** through the middle of the floor, three rows from wall to wall (`canal-n-a/-b`, `canal-a/-b`,
     `canal-s-a/-b`): the same teal water, cream coping with a terracotta band and brick quay as the street
     canal `generate_fukuoka_town_art.py` draws for #219 (whose `fukuoka-canal*` sprites are not registered or
@@ -1014,8 +1024,8 @@ walked behind, as they always were; only the two door cells opened.)
   `mall-fashion`, `mall-toys`, `mall-okonomiyaki`, `mall-cafe`, `mall-ramen` in `Interactions.js`); cross the
   bridges. The water itself says nothing. No venue, no stamp, no new overlay, key or save field.
 - **Art**: `tools/generate_mall_art.py` (needs Pillow; `--preview out.png`) draws the 23 sprites
-  (`mall-in-<piece>`); the frame is the pub art tool's, in cream and terracotta. It and the generator are in
-  `check_generators.py`.
+  (`mall-in-<piece>`) and marks the back wall's pieces for the camera (`LOOK_UP`); the frame is the pub art
+  tool's, in cream and terracotta. It and the generator are in `check_generators.py`.
 - **Doors and blog NPCs**: no dated position or district stand cell is on a door or the cell in front of one,
   and a wanderer never steps there. The `Canal City` LANDMARK stands its visitor on the plaza beside the doors
   (the sprite's cell + (2,6): Julia on 10 November 2025). Post 727 stays outside: moving it into the atrium

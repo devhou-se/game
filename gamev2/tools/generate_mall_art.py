@@ -32,8 +32,10 @@ terracotta band, terracotta brick quay. All sprites are `mall-in-<piece>`:
   palm                    1x2 a palm in a terracotta tub
 
 Run from gamev2/:  python3 tools/generate_mall_art.py [--preview out.png]
-Needs Pillow. Registers the sprites in config.json spriteMetadata + tileNames.
+Needs Pillow. Registers the sprites in config.json spriteMetadata + tileNames,
+and the back wall's pieces in game.lookUp.sprites (issue #258).
 """
+import json
 import random
 import sys
 
@@ -615,6 +617,19 @@ def sprites():
 # taiko bridge does (FLAT); the light through the door lies on the floor, as the pub's.
 DEPTH_BIAS = {'mall-in-bridge': -200, 'mall-in-doorlight': -40}
 
+# Worth looking up at from the north bank (issue #258): sprite family -> rows of
+# building below the sprite (config game.lookUp.sprites, see "Looking up at
+# landmarks" in hud-input-touch.md). The back wall is five rows tall and stands
+# on the floor (0), and a landscape phone shows seven and a half rows: its
+# ordinary camera showed a row and a half of the wall to somebody standing
+# against it, and neither gallery. The whole wall is marked, piers and
+# shopfronts, so the view is the same from one end of it to the other; the
+# reach has faded out by the canal.
+LOOK_UP = {'mall-in-wall-pier': 0, **{f'mall-in-front-{name}': 0 for name in FRONTS}}
+
 
 if __name__ == '__main__':
     register(sprites(), DEPTH_BIAS, sys.argv)
+    cfg = json.load(open('config.json'))
+    cfg['game']['lookUp']['sprites'].update(LOOK_UP)
+    json.dump(cfg, open('config.json', 'w'), indent=2, sort_keys=True)

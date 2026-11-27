@@ -180,7 +180,8 @@ The game always renders 1280x960; everything below is about showing that on anyt
     and the roof of an eight-row shrine hall, or most of a tower, is off the top of the screen. In
     front of a landmark MARKED AS DATA — config `game.lookUp.sprites`, `{sprite family: rows}`: the
     shrine halls, pagodas, torii, Tokyo Tower and Station, Tsutenkaku, the Dotonbori arch and wheel,
-    Sapporo's two towers, and indoors the roof over a pagoda's top storey (#214); never every tall sprite,
+    Sapporo's two towers, and indoors the roof over a pagoda's top storey (#214) and the five-row back wall
+    of Canal City's atrium, from its north bank (#258); never every tall sprite,
     so a high-rise, a tree or a house changes nothing —
     the world camera follows a point above the player (`cameras.main.followOffset.y`) with a
     narrower deadzone (`uiScale.setDeadzoneShare`), so the landmark's top comes to sit a quarter cell

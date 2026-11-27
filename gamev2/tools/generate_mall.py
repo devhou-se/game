@@ -20,7 +20,8 @@ Inside (28x23; art: tools/generate_mall_art.py) is a bright atrium, not a mall
 to shop in:
   * the back wall, five rows tall: five shopfronts between piers (bump one
     for a line about it), and over them two gallery levels of curved
-    terracotta balconies and small lit fronts;
+    terracotta balconies and small lit fronts. The camera looks up at it from
+    the north bank (game.lookUp.sprites, written by the art tool: issue #258);
   * the canal through the middle of the floor, three rows of it, the same
     water and quays as the canal outside. It is drawn, not `pond-autotile`:
     nobody fishes indoors. Solid, except under the two bridges;

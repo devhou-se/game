@@ -177,6 +177,52 @@ module.exports = (helpers) => {
         assert.ok(!/mall-in-|MallFukuoka/.test(src('GameScene.js')) && !/mall/i.test(src('Shop.js')), 'six rows in one table');
     });
 
+    test('on a landscape phone the camera looks up at Canal City\'s back wall from the north bank: all five rows of it from against it, and south of the canal it is the ordinary camera (#258)', () => {
+        const c = cfg(), room = c.rooms[KEY], look = c.game.lookUp, G = 64;
+        if (!game('typeof LandmarkView !== "undefined"')) helpers.load('systems/LandmarkView.js');
+        const LandmarkView = game('LandmarkView');
+        // every piece of the wall is marked, by the art tool, and stands on the floor (no rows under it); nothing else of the atrium is
+        const WALL = ['wall-pier', ...FRONTS.map((f) => `front-${f}`)].map((p) => `mall-in-${p}`);
+        assert.deepStrictEqual(Object.keys(look.sprites).filter((k) => /^mall-in-/.test(k)).sort(), [...WALL].sort());
+        for (const family of WALL) assert.strictEqual(look.sprites[family], 0, family);
+        const art = I.tool('generate_mall_art.py');
+        assert.ok(/^LOOK_UP = \{'mall-in-wall-pier': 0, \*\*\{f'mall-in-front-\{name\}': 0 for name in FRONTS\}\}$/m.test(art));
+        assert.ok(/cfg\['game'\]\['lookUp'\]\['sprites'\]\.update\(LOOK_UP\)/.test(art), 'the art tool writes them');
+        const marks = plain(LandmarkView.index(WALL.flatMap((family) => I.placed(room, c, `${family}_0_0`).map(([x, y]) => {
+            const [w, h] = I.size(c, `${family}_0_0`);
+            return { key: `${family}_0_0`, left: x * G, top: y * G, width: w * G, height: h * G };
+        })), look.sprites, G));
+        assert.strictEqual(marks.length, 6 + FRONTS.length);
+        // together they are the wall: five rows from one side wall to the other, their foot the floor's first row
+        const cells = I.floor(room), xs = [...new Set(cells.map(([x]) => x))], first = Math.min(...cells.map(([, y]) => y));
+        assert.ok(marks.every((m) => m.top === G && m.feet === first * G && m.feet - m.top === 5 * G));
+        assert.deepStrictEqual([Math.min(...marks.map((m) => m.left)), Math.max(...marks.map((m) => m.right))], [xs[0] * G, (xs[xs.length - 1] + 1) * G]);
+        // a landscape phone (844x390): the world at 2x, 7.5 rows of it in view, the bar over half a row, the room 23 rows tall
+        const phone = { viewH: 480, bar: 34.4, deadzone: 128, foot: 128 }, desk = { viewH: 960, bar: 40, deadzone: 256, foot: 128 };
+        const aim = (x, y, view = phone) => plain(LandmarkView.aim(Object.assign({ x: x * G + 32, y: y * G + 32, landmarks: marks, grid: G,
+            cells: look.cells, fade: look.fade, side: look.side }, view)));
+        // against the wall and two rows back from it, end to end, the camera is as far up as it goes with two rows kept under you...
+        for (const x of xs) for (let y = first; y < first + look.cells; y++) assert.deepStrictEqual(aim(x, y), { weight: 1, offset: 480 / 2 - 128 }, `north bank ${x},${y}`);
+        // ...so against the wall the view's top is the wall's: both gallery levels and the shop signs are in it, where the
+        // ordinary camera, trailing you north, left its top more than two rows down the wall
+        assert.strictEqual(first * G + 32 - aim(xs[5], first).offset - 480 / 2, marks[0].top);
+        assert.ok(first * G + 32 + 128 / 2 - 480 / 2 > marks[0].top + 2 * G, 'the ordinary camera sat more than two rows lower');
+        // it lets go as you walk down to the quay, is all but gone on the canal's first row, and from there south
+        // (the rest of the bridges, the south bank, the door) it is the ordinary camera
+        const { rows, under } = water(room, c), bridge = [...under][0];
+        for (let y = first + look.cells; y <= rows[0]; y++) assert.ok(aim(bridge, y).weight < aim(bridge, y - 1).weight && aim(bridge, y).weight > 0, `row ${y}`);
+        assert.ok(aim(bridge, rows[0]).weight < 0.2);
+        for (const [x, y] of cells) if (y > rows[0]) assert.deepStrictEqual(aim(x, y), { weight: 0, offset: 0 }, `south of the quay ${x},${y}`);
+        // a desktop window is tall enough for the wall and you: against the wall it follows you no higher and only gives
+        // up the slack of its deadzone, and over those same rows the wall's top stays clear of the bar
+        const near = aim(xs[5], first, desk);
+        assert.ok(near.offset === 0 && near.weight > 0.5, JSON.stringify(near));
+        for (let y = first; y < first + look.cells; y++) {
+            const a = aim(xs[5], y, desk);
+            assert.ok(y * G + 32 - a.offset + 256 * (1 - a.weight) / 2 - 960 / 2 <= marks[0].top - 40, `desktop row ${y}: ${JSON.stringify(a)}`);
+        }
+    });
+
     test('the room is "Canal City" on the bar, short enough to count down on a phone, and the map says it is in Fukuoka (#217)', () => {
         I.named(cfg(), 'Canal City (in Fukuoka)');
     });

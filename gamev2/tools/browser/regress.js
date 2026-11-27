@@ -1758,6 +1758,60 @@ async function phones() {
             need(errors.length === 0, { errors });
         });
 
+        // a back wall taller than the phone's view shows (issue #258): up to Canal City's wall on the d-pad, and the
+        // camera looks up at all five rows of it
+        await cleanly('phone-landscape-atrium-wall', async () => {
+            const spot = await page.evaluate(() => {
+                const { s, rm } = __t, G = s.GRID_SIZE;
+                const room = Object.keys(s.config.rooms).find(k => s.config.rooms[k].mall);
+                if (!room || !rm.rooms[room]) return null;
+                const mat = rm.rooms[room].transporters[0];
+                __t.place(room, mat.gridX, mat.gridY - 1);
+                // the wall is what the camera looks up at there (roomManager.landmarks): two cells south of its foot,
+                // with open floor up to it and the wall itself next
+                const marks = rm.landmarks || [];
+                if (!marks.length) return { room, marks: 0 };
+                const top = Math.min(...marks.map(m => m.top)), feet = Math.max(...marks.map(m => m.feet)) / G;
+                for (let x = 0; x < __t.size().w; x++) {
+                    if ([0, 1, 2].every(d => __t.open(x, feet + d)) && !__t.free(x, feet - 1)) {
+                        return __t.place(room, x, feet + 2) && { room, x, feet, top, G, foot: LandmarkView.FOOT, marks: marks.length };
+                    }
+                }
+                return { room, marks: marks.length };
+            });
+            need(spot && spot.feet, { noOpenFloorInFrontOfAWallTheCameraLooksUpAt: spot });
+            await idle(page);
+            const up = await page.evaluate(() => {
+                const b = [...document.querySelectorAll('#touch-controls .tc-padzone .tc-pad')].find(q => q.textContent === '▲'), q = b && b.getBoundingClientRect();
+                return q && { x: Math.round(q.left + q.width / 2), y: Math.round(q.top + q.height / 2) };
+            });
+            need(up, 'no ▲ on the d-pad');
+            const cdp = await context.newCDPSession(page);
+            for (let y = spot.feet + 1; y >= spot.feet; y--) {
+                await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [up] });
+                const going = await until(page, '__t.s.player.isMoving', 2000);
+                await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+                need(going && await until(page, `__t.at(${spot.x}, ${y}) && __t.idle()`, 2500), { dpadDidNotStepNorth: await page.evaluate('__t.pos()'), to: y });
+                need(await until(page, '!Object.values(__t.s.touchControls.state).some(Boolean)', 1500), 'the d-pad stayed held after the touch ended');
+                await frames(page);
+            }
+            // the camera eases up (LandmarkView.EASE_MS): wait for the wall's top, not for a time
+            const view = () => page.evaluate(() => {
+                const { s } = __t, v = s.cameras.main.worldView, G = s.GRID_SIZE;
+                return { top: v.y, bottom: v.bottom, bar: s.hudCover(), offset: s.cameras.main.followOffset.y, weight: s.landmarkView.weight,
+                    under: (v.bottom - s.player.sprite.y) / G, pos: __t.pos(), screen: __t.onScreen() };
+            });
+            const seen = await until(page, `__t.s.cameras.main.worldView.y <= ${spot.top} + 1`, 4000);
+            const st = await view();
+            need(seen && st.offset > 0, { wallTopOffTheScreen: st, spot });
+            // all of it: its top in the view with no more than part of its top row behind the bar, its foot and you above the fold
+            need(st.top + st.bar < spot.top + spot.G && st.bottom >= (spot.feet + 1) * spot.G, { wallNotAllInView: st, spot });
+            need(st.under >= spot.foot - 0.01 && st.screen.inView && st.screen.inWindow && st.screen.visible, { playerLostUnderTheWall: st });
+            await page.screenshot({ path: path.join(SHOTS, 'regress_phone_atrium.png') });
+            await page.evaluate('__t.home()');
+            need(errors.length === 0, { errors });
+        });
+
         // the lift up the tower on the phone (issue #242): the picture fits the screen, its hint and its counter can be read
         await check('phone-landscape-lift', async () => {
             const { pic } = await liftOnPhone(page, 'regress_phone_lift.png');
