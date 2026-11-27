@@ -27,7 +27,8 @@
  *  - Hint lines (anything worded by Hints.text) never go below
  *    UIScale.MIN_HINT CSS px: they are scaled up in place when their panel
  *    could not be magnified enough. So is any other single line of overlay
- *    text under UIScale.MIN_TEXT CSS px, by at most a quarter, and a float.
+ *    text under UIScale.MIN_TEXT CSS px, by at most a quarter, and a float
+ *    (a float's line too long for that is broken by its owner: floatWidth).
  *
  * On a portrait phone the window shows only a tall slice of the canvas
  * (`Viewport.current.crop`). All three cameras are given that slice as their
@@ -163,6 +164,17 @@ class UIScale {
         return `${Math.round(parseFloat(size) * Math.min(UIScale.MAX_TEXT_GROWTH, this.wanted()))}px`;
     }
 
+    /**
+     * For whoever builds a float Text (the toast): the widest it can be at
+     * overlay `y` in this view and still be shown at the text floor
+     * (UIScale.floatWidth). Infinity on a desktop-sized window.
+     */
+    floatWidth(font, y) {
+        const main = this.scene.cameras.main, W = main.width;
+        return UIScale.floatWidth(font, this.down(), UIScale.floatRoom(y, W, main.height, UIScale.insets()),
+            W < this.scene.scale.width);
+    }
+
     /** Once a frame, after the display list is depth-sorted and before it is drawn. */
     update() {
         const scene = this.scene, main = scene.cameras.main, list = scene.children.list;
@@ -235,14 +247,10 @@ class UIScale {
         // floats are magnified like the overlay they are over (never shrunk
         // with it), less if that would make them wider than the canvas — or
         // than the gap between the touch controls, down where those are
-        // (a line of text, in a whole view, at least as big as UIScale.MIN_TEXT)
+        // (text, in a whole view, at least as big as UIScale.MIN_TEXT: floatScale)
         const down = this.down();
-        const floatScale = (o) => {
-            const low = o.y > H - insets.bottom - UIScale.MARGIN;
-            const room = W - 2 * UIScale.MARGIN - (low ? insets.left + insets.right : 0);
-            const least = o.type === 'Text' && !cropped ? UIScale.MIN_TEXT * down / parseFloat(o.style.fontSize) : 1;
-            return Math.min(Math.max(1, fit.zoom, least), room / o.width);
-        };
+        const floatScale = (o) => UIScale.floatScale(o.type === 'Text' ? parseFloat(o.style.fontSize) : 0,
+            fit.zoom, down, UIScale.floatMost(o, UIScale.floatRoom(o.y, W, H, insets), H), cropped);
         for (const o of floats) o._uiSlide = 0;
         if (!alone && floats.length) {
             // is a float on the panel with no strip to slide into?
@@ -450,6 +458,64 @@ class UIScale {
         const floor = hint ? UIScale.MIN_HINT : UIScale.MIN_TEXT;
         const most = hint ? UIScale.MAX_HINT_GROWTH : UIScale.MAX_TEXT_FLOOR_GROWTH;
         return Math.max(1, Math.min(most, floor / css, Math.max(1, room)));
+    }
+
+    /**
+     * Canvas px a float standing at overlay `y` has across: the view less
+     * its margins, and less the touch controls down where those are.
+     */
+    static floatRoom(y, W, H, insets) {
+        const ins = insets || UIScale.NO_INSETS;
+        const low = y > H - ins.bottom - UIScale.MARGIN;
+        return W - 2 * UIScale.MARGIN - (low ? ins.left + ins.right : 0);
+    }
+
+    /**
+     * The most a float (`{ width, height, y, originY }`, as authored) can be
+     * magnified about its origin where it stands: no wider than its `room`,
+     * and its lower part no further down than the bottom margin of a view
+     * `H` tall — which only a float of several lines ever reaches (a toast
+     * broken in two, see floatWidth), and which never shrinks one.
+     */
+    static floatMost(o, room, H) {
+        const reach = o.height * (1 - o.originY), space = H - UIScale.MARGIN - o.y;
+        const tall = reach > 0 && space > 0 ? Math.max(1, space / reach) : Infinity;
+        return Math.min(room / o.width, tall);
+    }
+
+    /**
+     * The least a float that is a Text of `font` px is magnified: so that it
+     * is not shown under the text floor (UIScale.MIN_TEXT CSS px, the #200
+     * rule) when the canvas is shown at 1 / `down`. 1 for a float that is not
+     * text (`font` 0), and in a cropped view, where the floor is not kept.
+     */
+    static floatFloor(font, down, cropped) {
+        return font && !cropped ? Math.max(1, UIScale.MIN_TEXT * down / font) : 1;
+    }
+
+    /**
+     * How much a float is magnified: like the overlay it is over (`zoom`),
+     * never shrunk with it, text at least to its floor (floatFloor) — and
+     * never past `most`, what its room allows (floatMost), which wins: a
+     * float is on the screen before it is big.
+     */
+    static floatScale(font, zoom, down, most, cropped) {
+        return Math.min(Math.max(zoom, UIScale.floatFloor(font, down, cropped)), most);
+    }
+
+    /**
+     * The widest a float Text of `font` px can be made (px as authored,
+     * padding and all) and still be shown at its floor in `room` canvas px.
+     * A line longer than that would be shown under the floor, and a float
+     * cannot be re-flowed in place, so it is for its owner to break before
+     * it is drawn (the shop's toast does: Shop.toastLines). Infinity where
+     * the floor asks nothing (the canvas is shown large enough for the font:
+     * a desktop, a tablet) or is not kept (a cropped view): nothing is
+     * broken there.
+     */
+    static floatWidth(font, down, room, cropped) {
+        const least = UIScale.floatFloor(font, down, cropped);
+        return least > 1 ? room / least : Infinity;
     }
 
     /**

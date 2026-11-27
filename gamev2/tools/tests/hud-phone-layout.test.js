@@ -393,4 +393,142 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         const src = fs.readFileSync(path.join(GV2, 'src', 'systems', 'UIScale.js'), 'utf8');
         assert.ok(/if \(!hint && \(cropped \|\| o\.style\.wordWrapWidth \|\| o\.text\.indexOf\('\\n'\) >= 0\)\) continue;/.test(src));
     });
+
+    // The shop's toast in a window `w` x `h` (touch controls or not), over an overlay magnified `zoom` times: the
+    // lines Shop.toast breaks it into, and how UIScale then shows it. Its face is monospaced: half its size a character.
+    const toastIn = (msg, w, h, touch, zoom) => {
+        const U = game('UIScale'), S = game('Shop'), V = game('Viewport'), T = S.TOAST;
+        const l = V.layout(w, h, touch), down = 1 / l.scale, cropped = l.crop.left + l.crop.right > 0;
+        const W = V.WIDTH - l.crop.left - l.crop.right, H = V.HEIGHT, y = H - T.above;
+        const wide = (line) => 2 * T.padX + line.length * T.font / 2;
+        const room = U.floatRoom(y, W, H, l.insets), widest = U.floatWidth(T.font, down, room, cropped);
+        const lines = S.toastLines(msg, wide(msg), widest, 2 * T.padX).split('\n');
+        const o = { width: Math.max(...lines.map(wide)), height: 2 * T.padY + lines.length * T.font, y, originY: 0.5 };
+        const one = { width: wide(msg), height: 2 * T.padY + T.font, y, originY: 0.5 };
+        const scale = (box) => U.floatScale(T.font, zoom, down, U.floatMost(box, room, H), cropped);
+        const k = scale(o);
+        return {
+            lines, widest, room, down, insets: l.insets, scale: k, css: T.font * k / down, unbroken: T.font * scale(one) / down,
+            width: o.width * k, top: y - o.height * k / 2, bottom: y + o.height * k / 2, H,
+        };
+    };
+
+    test('the energy hint and the peckish line are toasted at 10 CSS px or more on a landscape phone, in the room they have (#220)', () => {
+        const U = game('UIScale'), E = game('Energy'), S = game('Shop');
+        // alone on the screen (the overlay's zoom is 1 until UIScale fits it), over a list, and as big as overlays get
+        for (const zoom of [1, 1.21, 2.36, 3]) {
+            for (const [w, h] of [[844, 390], [667, 375]]) {
+                for (const msg of [E.HINT, E.PECKISH]) {
+                    const t = toastIn(msg, w, h, true, zoom), at = `${JSON.stringify(t.lines)} at ${w}x${h}, zoom ${zoom}`;
+                    // the #200 floor, the same constant: no second rule
+                    assert.ok(t.css >= U.MIN_TEXT - 1e-9, `${t.css} CSS px: ${at}`);
+                    // on the screen: between the margins, and between the touch controls where they reach over the canvas
+                    assert.ok(t.width <= t.room + 1e-9 && t.room <= 1280 - 2 * U.MARGIN - t.insets.left - t.insets.right, at);
+                    assert.ok(t.bottom <= t.H - U.MARGIN + 1e-9, `bottom ${t.bottom}: ${at}`);
+                    // in the lower half: nowhere near the HUD bar or the meter under it
+                    assert.ok(t.top > t.H / 2, `top ${t.top}: ${at}`);
+                    assert.strictEqual(t.lines.join(' '), msg);
+                }
+            }
+        }
+        // 844x390 has the whole width (the controls are beside the canvas): one line each, as it was. The numbers are
+        // what a phone-sized browser measured, at the zoom UIScale gave each toast alone on the screen
+        assert.strictEqual(toastIn(E.HINT, 844, 390, true, 1).lines.length, 1);
+        assert.ok(Math.abs(toastIn(E.HINT, 844, 390, true, 1.47).css - 11.94) < 0.01);
+        assert.ok(Math.abs(toastIn(E.PECKISH, 844, 390, true, 2.36).css - 19.17) < 0.01);
+        // 667x375: the controls are over the canvas's bottom corners, and on one line the hint was 9.77 CSS px between
+        // them whatever the zoom. It is broken in two, evenly; the peckish line fits and is not
+        const small = toastIn(E.HINT, 667, 375, true, 2.36);
+        assert.ok(small.insets.left > 0 && small.insets.right > 0);
+        assert.ok(small.unbroken < U.MIN_TEXT && Math.abs(small.unbroken - 9.77) < 0.01, `${small.unbroken}`);
+        assert.ok(toastIn(E.HINT, 667, 375, true, 1).unbroken < U.MIN_TEXT);
+        assert.deepStrictEqual(small.lines, ['getting peckish: food and drink from a', 'konbini or a vending machine fills the meter']);
+        assert.ok(Math.abs(small.css - 18.05) < 0.01, `${small.css}`);
+        const peckish = toastIn(E.PECKISH, 667, 375, true, 2.36);
+        assert.strictEqual(peckish.lines.length, 1);
+        assert.ok(Math.abs(peckish.css - 15.67) < 0.01 && peckish.unbroken === peckish.css);
+        // the floor is UIScale.MIN_TEXT, and the widest line is what the room holds at it
+        assert.strictEqual(U.floatFloor(20, 2.56, false), U.MIN_TEXT * 2.56 / 20);
+        assert.strictEqual(U.floatWidth(20, 2.56, 1063, false), 1063 / (U.MIN_TEXT * 2.56 / 20));
+        assert.strictEqual(U.floatFloor(0, 2.56, false), 1);        // not text: no floor
+        // room: the view less its margins, less the controls only down where they are
+        const ins = { left: 100, right: 93, bottom: 200 };
+        assert.strictEqual(U.floatRoom(880, 1280, 960, ins), 1280 - 2 * U.MARGIN - 193);
+        assert.strictEqual(U.floatRoom(400, 1280, 960, ins), 1280 - 2 * U.MARGIN);
+        assert.strictEqual(U.floatRoom(880, 1280, 960), 1280 - 2 * U.MARGIN);
+        // the room wins over the floor and over the overlay's zoom; a float of several lines stops at the bottom margin,
+        // which never shrinks one, and a float standing on its origin has no such limit
+        assert.strictEqual(U.floatScale(20, 3, 2.56, 1.25, false), 1.25);
+        assert.strictEqual(U.floatScale(20, 1, 2.56, 5, false), 1.28);
+        assert.strictEqual(U.floatScale(20, 2, 2.56, 5, false), 2);
+        assert.strictEqual(U.floatMost({ width: 400, height: 52, y: 880, originY: 0.5 }, 2000, 960), (960 - U.MARGIN - 880) / 26);
+        assert.strictEqual(U.floatMost({ width: 400, height: 52, y: 880, originY: 0.5 }, 1000, 960), 2.5);
+        assert.strictEqual(U.floatMost({ width: 400, height: 52, y: 940, originY: 0.5 }, 1000, 960), 1);
+        assert.strictEqual(U.floatMost({ width: 400, height: 32, y: 480, originY: 1 }, 1000, 960), 2.5);
+        // Shop.toast asks UIScale how wide a line can be, and breaks it before anything is drawn
+        const src = fs.readFileSync(path.join(GV2, 'src', 'Shop.js'), 'utf8');
+        assert.ok(/widest = ui \? ui\.floatWidth\(T\.font, y\) : Infinity;\s*if \(o\.width > widest\) o\.setText\(Shop\.toastLines\(msg, o\.width, widest, 2 \* T\.padX\)\);/.test(src));
+        assert.deepStrictEqual([S.TOAST.font, S.TOAST.padX, S.TOAST.padY, S.TOAST.above], [20, 10, 6, 80]);
+    });
+
+    test('a toast is not broken, and is as big as it was, on a desktop, a tablet and a portrait phone (#220)', () => {
+        const U = game('UIScale'), E = game('Energy');
+        // desktop 1280x960: one line at its own 20px, whatever it says
+        for (const msg of [E.HINT, E.PECKISH, 'x'.repeat(120)]) {
+            const t = toastIn(msg, 1280, 960, false, 1);
+            assert.deepStrictEqual([t.lines.length, t.widest, t.down], [1, Infinity, 1]);
+            if (msg.length < 120) assert.deepStrictEqual([t.scale, t.css], [1, 20]);
+        }
+        // a small desktop window and a tablet with touch controls show 20px text at 10 CSS px or more as it is
+        for (const [w, h, touch] of [[1024, 768, true], [1180, 820, true], [800, 600, false], [640, 480, false]]) {
+            const t = toastIn(E.HINT, w, h, touch, 1);
+            assert.deepStrictEqual([t.lines.length, t.widest], [1, Infinity], `${w}x${h}`);
+            assert.ok(t.css >= U.MIN_TEXT, `${w}x${h}`);
+        }
+        // the cropped portrait view keeps no floor (#200 left it alone, and so does this)
+        const port = toastIn(E.HINT, 390, 844, true, 1);
+        assert.deepStrictEqual([port.lines.length, port.widest], [1, Infinity]);
+        assert.strictEqual(U.floatFloor(20, 3, true), 1);
+        assert.strictEqual(U.floatWidth(20, 3, 500, true), Infinity);
+        // what floats were given before: the overlay's zoom, never under 1, text to the floor, the room over both
+        const before = (font, zoom, down, room, width, cropped) =>
+            Math.min(Math.max(1, zoom, font && !cropped ? U.MIN_TEXT * down / font : 1), room / width);
+        for (const down of [1, 1.25, 2.4615, 2.56, 3]) {
+            for (const zoom of [0.8, 1, 1.21, 2.36]) {
+                for (const [font, width, room] of [[20, 850, 1063], [20, 850, 1256], [20, 530, 1063], [22, 500, 536], [0, 300, 1256]]) {
+                    for (const cropped of [false, true]) {
+                        const most = U.floatMost({ width, height: 32, y: 880, originY: 0.5 }, room, 960);
+                        assert.strictEqual(U.floatScale(font, zoom, down, most, cropped), before(font, zoom, down, room, width, cropped));
+                    }
+                }
+            }
+        }
+    });
+
+    test('a toast too long for its line is broken at spaces into the fewest lines, as even as they come (#220)', () => {
+        const lines = game('Shop.toastLines'), wide = (s) => 20 + 10 * s.length;
+        const broken = (msg, widest) => lines(msg, wide(msg), widest, 20).split('\n');
+        // it fits, or nothing says how wide: as it was said
+        assert.strictEqual(lines('bought Onigiri', 160, 830, 20), 'bought Onigiri');
+        assert.strictEqual(lines('bought Onigiri', 160, 160, 20), 'bought Onigiri');
+        assert.strictEqual(lines('a b c', 70, Infinity, 20), 'a b c');
+        assert.strictEqual(lines('', 20, 10, 20), '');
+        for (const msg of [game('Energy.HINT'), 'a cup of water. you are not that thirsty: something from the shelves would do more',
+            'Fishing Rod: sell it at a konbini counter or the izakaya (¥1,200) — the izakaya grills it too']) {
+            for (const widest of [830, 640, 420, 300]) {
+                const got = broken(msg, widest), n = got.length, at = `${JSON.stringify(got)} in ${widest}`;
+                assert.strictEqual(got.join(' '), msg, at);                              // every word, in order, none cut
+                assert.ok(got.every((l) => wide(l) <= widest), at);                      // each line fits
+                assert.ok(n >= Math.ceil((wide(msg) - 20) / (widest - 20)), at);
+                assert.ok(n > 1 && n <= Math.ceil((wide(msg) - 20) / (widest - 20)) + 1, at);     // no more lines than it takes
+                // even: no line is a stray word, the longest is no longer than it has to be to keep that few lines
+                const longest = Math.max(...got.map((l) => l.length));
+                assert.ok(Math.min(...got.map((l) => l.length)) >= longest / 2, at);
+                if (longest > Math.ceil(msg.length / n)) assert.ok(broken(msg, wide('x'.repeat(longest - 1))).length > n, at);
+            }
+        }
+        // one word longer than a line keeps a line to itself, and is not cut
+        assert.deepStrictEqual(broken('supercalifragilistic toast', 120), ['supercalifragilistic', 'toast']);
+        assert.deepStrictEqual(broken('abcdefghijklmnopqrstuvwxyz', 120), ['abcdefghijklmnopqrstuvwxyz']);
+    });
 };

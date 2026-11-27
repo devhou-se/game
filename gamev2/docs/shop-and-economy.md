@@ -215,7 +215,7 @@ draws the meter and pays the rewards; tests are `tools/tests/energy.test.js`.
 | Drain | `Energy.CELLS` = 1800 cells of walking empty a full meter (`Energy.stepCost()` = 100/1800 a cell). A walked cell is 200 ms, so that is **6 minutes of walking, 3 of pure sprinting** (a sprint, or a speed drink, covers more cells a second and so drains faster by the clock). Standing, talking, menus, mini-games and train rides cost nothing; a bump that does not move you costs nothing (`InputHandler.handlePlayerMovement` calls `shop.walked()` only when the step started). |
 | Well fed, `>= Energy.WELL_FED` (70) | sprint is x`Energy.WELL_FED_SPRINT` (2.25) instead of x2. Meter green. |
 | Normal | sprint x2. Meter amber. |
-| Low, `<= Energy.LOW` (25) | nothing changes; the meter is red. The first time ever it gets here a one-line hint is toasted (`Energy.HINT`, remembered in the save as `hints.low`). |
+| Low, `<= Energy.LOW` (25) | nothing changes; the meter is red. The first time ever it gets here a hint is toasted (`Energy.HINT`, remembered in the save as `hints.low`). |
 | Peckish, 0 | **SHIFT / the sprint pill does nothing** and a toast says so (`Energy.PECKISH`, every time the meter empties, and again - at most once per `Energy.REMIND_MS`, 10 s - whenever sprint is held while walking on an empty meter: `Shop.sprintHeld`, so a save loaded at zero is told too). The touch sprint pill is dimmed with a dashed border while the meter is empty (`tc-nosprint` on the touch root, set by `Shop.updateEffectChip`; not while a shop list is open, where the pill is SHIFT). Walking speed is unchanged, speed drinks still work, and nothing else is ever blocked: you can walk, talk, shop, fish, play the drinking game and ride trains on an empty meter. |
 
 - **Refilling**: using any food or drink adds its `energy` (`Energy.valueOf(item)`; the use toast ends
@@ -239,6 +239,13 @@ draws the meter and pays the rewards; tests are `tools/tests/energy.test.js`.
 - **Lines wait their turn**: the hint, the peckish line and a stamp earned by "buy & use now" go
   into `shop.notices` and are toasted by the same 250 ms timer as "X wore off", never over another
   toast or an open list. Eating or a cup of water drops a queued peckish line.
+- **A toast is one line, except where a phone cannot show that line at 10 CSS px** (#220): `Shop.toast`
+  breaks a message too long for the gap between a small landscape phone's touch controls into even
+  lines (`Shop.toastLines`, asked of `uiScale.floatWidth`; the toast's font, padding and height above
+  the bottom edge are `Shop.TOAST`). At 667x375 that is any message of more than 81 characters: the
+  energy hint, the "not that thirsty" water line, a fish's sell line, the longer shrine lines. The
+  peckish line fits on one. `shop.toastText()` returns the message as it was said, without the line
+  breaks. See [hud-input-touch.md](hud-input-touch.md).
 - **The safety net** (a player cannot be left unable to eat): an empty meter costs only the sprint;
   a konbini's **water cooler** (`office-watercooler`, the `water` rule in `Interactions.js`; eight of
   the eleven 7-Elevens have one in a back corner) gives a free cup on a bump, `+Energy.WATER` (20)
