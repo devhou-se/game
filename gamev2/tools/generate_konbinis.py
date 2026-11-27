@@ -18,7 +18,10 @@ every fixture that sells, a free side on everything else you can bump.
 
 The art is the konbini-* kit (tools/generate_konbini_art.py) and the drinks
 cooler office-fridge_0_0 (tools/generate_cooler_art.py). The legacy hand-made
-'Konbini' room, if one is still in the config, is dropped.
+'Konbini' room, if one is still in the config, is dropped. A store that is no
+longer on its host's map loses its room (Konbini<Host><n>: stores are numbered
+per host, so it is the highest number that goes), the room's tiled/*.tmj and
+its old door on the next run (roomgen.drop_stale, issue #243).
 
 Run from gamev2/:  python3 tools/generate_konbini_art.py            (needs Pillow; only when the kit changes)
                    python3 tools/generate_konbinis.py [Host ...]    (--help: this text, nothing run)
@@ -26,6 +29,7 @@ Then:              python3 tools/config_to_tiled.py <each new room + hosts>
                    node tools/play.js lint <each new room + hosts>
 """
 import random
+import re
 import sys
 
 import interiors
@@ -238,6 +242,13 @@ for store in stores:
     print(f"built  {store['key']} — door {store['door']}, "
           f"{cfg['rooms'][store['key']]['worldWidth'] // 64}x"
           f"{cfg['rooms'][store['key']]['worldHeight'] // 64}")
+
+# what an earlier run left for a store that is gone: its old door (its transporter dropped), and
+# the host's rooms that no store claims any more (deleted; rg.save_config deletes their maps)
+for host in HOSTS:
+    stale = [k for k in cfg['rooms'] if re.fullmatch(f'Konbini{re.escape(host)}\\d+', k) and k not in new_rooms]
+    for line in rg.drop_stale(cfg, host, 'Konbini', [s['door'] for s in stores if s['host'] == host], stale):
+        print(line)
 
 rg.save_config(cfg)
 print(f"\n{len(new_rooms)} interiors written. Now run config_to_tiled, then play.js lint, for:")

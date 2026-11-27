@@ -6,6 +6,9 @@ HOUSES in the town's map data, builds one small interior room per house from a
 layout rule, opens the house's front door (collider off, a hidden transporter
 on the door cell, replaced in place) and wires the way back out to the
 pavement cell in front of it. A re-run on an unchanged world is a no-op.
+A house that is no longer on the town's map loses its room, the room's
+tiled/*.tmj and its old door on the next run (roomgen.drop_stale, issue #243;
+houses are numbered per town, so it is the highest number that goes).
 
 WHAT COUNTS AS A HOUSE (roomgen.HOUSE_DOORS):
   * the three townhouse prefabs house-blue / house-red / house-black, found by
@@ -483,13 +486,6 @@ def apply(cfg, host, kind='house'):
     for h in candidates:
         if 'excluded' in h:
             lines.append(f"not a {what}  {host} {h['family']} at {h['origin']} - {h['excluded']}")
-    # rooms of this town from an earlier run that no house claims any more
-    for key in [k for k, r in cfg['rooms'].items() if (r.get(marker) or {}).get('host') == host]:
-        if key not in {h['key'] for h in houses if 'skipped' not in h}:
-            was = cfg['rooms'][key][marker]
-            for cell in was.get('doors') or [was['door']]:
-                rg.shut_door(room, cell, prefix)
-            del cfg['rooms'][key]
     for h in houses:
         if 'skipped' in h:
             for cell in h['all_doors']:
@@ -518,6 +514,10 @@ def apply(cfg, host, kind='house'):
             rg.open_door(room, cell, h['key'], arrive)
         built.append(h['key'])
         lines.append(f"built    {h['key']} \"{h['name']}\" - {h['family']}, door {h['door']}, {said}")
+    # what an earlier run left for a building that is gone: its old door (shut), and the town's rooms
+    # that no house claims any more (deleted; rg.save_config deletes their maps)
+    stale = [k for k, r in cfg['rooms'].items() if (r.get(marker) or {}).get('host') == host and k not in built]
+    lines += rg.drop_stale(cfg, host, prefix, [c for h in houses if h['key'] in built for c in h['doors']], stale)
     return built, lines
 
 

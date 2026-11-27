@@ -122,6 +122,7 @@ OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()})
                MALL_PREFIX: ('mall', MALL_DOORS)}
 DOOR_LAYERS = ('Collidables', 'Over Floor')   # where a door sprite is laid (a tower's foot is on Over Floor)
 _house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior
+_rooms_loaded = set()       # the room keys load_config read: save_config deletes the map of each it no longer saves
 
 
 def owned_door(cfg, t):
@@ -171,10 +172,15 @@ def cli(doc, argv, flags=()):
 
 
 def load_config(path='config.json'):
+    """The config at `path`, and what save_config needs to know of it as it was
+    loaded: the doors into the OWNED_DOORS interiors (keep_house_doors) and the
+    room keys (a room that is loaded and not saved loses its Tiled map)."""
     global _cfg, _pal, _idx
     _cfg = json.load(open(path))
     _pal = _cfg['tilePalette']
     _idx = {k: i for i, k in enumerate(_pal)}
+    _rooms_loaded.clear()
+    _rooms_loaded.update(_cfg['rooms'])
     _house_doors.clear()
     for key, room in _cfg['rooms'].items():
         ts = room.get('transporters', [])
@@ -220,9 +226,28 @@ def keep_house_doors(cfg):
 
 
 def save_config(cfg=None, path='config.json'):
+    """Write `cfg` to `path`, the house doors a rebuild dropped put back
+    (keep_house_doors), and delete the Tiled map of every room that was loaded
+    and is not saved (issue #243): tiled/<room>.tmj beside `path`, each one
+    printed as `deleted  tiled/<room>.tmj`. A generator that drops the room of
+    a building that is gone therefore leaves no map behind, and one that never
+    saves (--dry-run) deletes nothing. Nothing is deleted through a symlinked
+    tiled/ (a scratch project that links the committed maps): the map is
+    printed as `kept` instead."""
     cfg = cfg or _cfg
     keep_house_doors(cfg)
     open(path, 'w').write(json.dumps(cfg, indent=2, sort_keys=True))
+    tiled = os.path.join(os.path.dirname(path), 'tiled')
+    live = {key.lower() for key in cfg['rooms']}
+    for name in sorted({key.lower() for key in _rooms_loaded if key not in cfg['rooms']} - live):
+        file = os.path.join(tiled, name + '.tmj')
+        if not os.path.isfile(file):
+            continue
+        if os.path.islink(tiled):
+            print(f'kept     tiled/{name}.tmj (tiled is a symlink)')
+        else:
+            os.remove(file)
+            print(f'deleted  tiled/{name}.tmj')
 
 
 def pidx(key):
@@ -592,11 +617,49 @@ def open_door(host_room, cell, target, arrive):
 
 
 def shut_door(host_room, cell, prefix):
-    """Seal the door on `cell` of `host_room` again: a collider on it, and its
-    transporter dropped if it leads into a room named `prefix`... (another kind's
-    door on the same cell is left alone)."""
+    """Shut the door on `cell` of `host_room` that leads into a room named
+    `prefix`...: its transporter is dropped, and the doorway is sealed with a
+    collider only if it is still there - a building of that kind (the
+    prefix's OWNED_DOORS sprites) still has its door on the cell, and no other
+    kind's transporter is left on it. So a house that must stay sealed, or the
+    unopened door of a tower's pair, is sealed; a cell whose building is gone
+    (open ground now, or outside a resized room), a doorway another kind uses
+    and a prefix with no OWNED_DOORS row (a konbini) are left as they are
+    (issue #243). It never removes a collider."""
+    x, y = cell
+    host_room['transporters'] = [t for t in host_room.get('transporters', [])
+                                 if not ((t['gridX'], t['gridY']) == (x, y) and t['targetRoom'].startswith(prefix))]
+    sprites = OWNED_DOORS[prefix][1] if prefix in OWNED_DOORS else None
+    if not sprites or not house_door_at(host_room, x, y, sprites):
+        return
+    if any((t['gridX'], t['gridY']) == (x, y) for t in host_room['transporters']):
+        return
     for layer in host_room['layers']:
         if layer['name'] == 'Colliders':
-            layer['tiles'][f'{cell[0]},{cell[1]}'] = pidx('gk_blank')
-    host_room['transporters'] = [t for t in host_room.get('transporters', [])
-                                 if not ((t['gridX'], t['gridY']) == tuple(cell) and t['targetRoom'].startswith(prefix))]
+            layer['tiles'][f'{x},{y}'] = pidx('gk_blank')
+
+
+def drop_stale(cfg, host, prefix, opened, stale):
+    """What a generator that numbers its rooms per town (`prefix`<host><n>) runs
+    once it has built `host`'s rooms, to clean up after a building that is gone
+    (issue #243). Every door of `host` that leads into a `prefix`... room from a
+    cell that is not in `opened` (the door cells this run opened) is shut
+    (shut_door): the old door of a removed building, also when renumbering has
+    left it pointing into a room that is still built. Every room in `stale` (the
+    keys of the host's rooms this run did not build) is deleted; save_config then
+    deletes its Tiled map. Returns the report lines, one per door and per room."""
+    room = cfg['rooms'][host]
+    opened = {tuple(c) for c in opened}
+    lines, shut = [], set()
+    for t in list(room.get('transporters', [])):
+        cell = (t['gridX'], t['gridY'])
+        if t['targetRoom'].startswith(prefix) and cell not in opened and cell not in shut:
+            shut_door(room, cell, prefix)
+            shut.add(cell)
+            lines.append(f"shut     {host} door {cell} - it led into {t['targetRoom']}; no {prefix} door is there now")
+    for key in list(stale):
+        npcs = [n.get('name', '?') for n in cfg['rooms'][key].get('npcs', [])]
+        del cfg['rooms'][key]
+        lines.append(f'removed  {key} - nothing in {host} claims it any more'
+                     + (f", and its NPCs went with it: {', '.join(npcs)}" if npcs else ''))
+    return lines

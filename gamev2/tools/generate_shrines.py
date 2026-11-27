@@ -12,6 +12,9 @@ and opens the hall's door onto it, the way generate_konbinis.py does for a
 Nothing else in the host is touched. A town generator that rebuilds the host
 seals the hall again and knows nothing of this door: roomgen.save_config puts it
 back (OWNED_DOORS / keep_house_doors, the mechanism that keeps a house's door).
+A hall that is no longer on the host's map loses its room, the room's
+tiled/*.tmj and its old door on the next run (roomgen.drop_stale, issue #243;
+halls are numbered per town, so it is the highest number that goes).
 
 What is inside (art: tools/generate_shrine_art.py, the garland rope from
 tools/extract_shrine.py): the inner sanctuary on a raised floor at the back,
@@ -35,8 +38,9 @@ Three variants:
 
 Run from gamev2/:  python3 tools/generate_shrines.py [Host ...]     (--help: this text, nothing run)
 With no host it rebuilds the shrines that are already wired (what
-check_generators.py runs); name a host to give its halls an interior for the
-first time. Then:  python3 tools/config_to_tiled.py <each new room + hosts>
+check_generators.py runs), and visits a town whose rooms say it had a hall and
+that has no door into one left; name a host to give its halls an interior for
+the first time. Then:  python3 tools/config_to_tiled.py <each new room + hosts>
                    node tools/play.js lint <each new room + hosts>
 (.agent-queue/items/shrines_apply.sh does all of it, and the gates.)
 """
@@ -67,9 +71,16 @@ PREFIX = rg.SHRINE_PREFIX   # room keys; roomgen.OWNED_DOORS keeps these doors t
 
 
 def wired_hosts():
-    """Hosts that already have a door into a shrine interior."""
-    return [k for k, r in cfg['rooms'].items()
-            if any(t['targetRoom'].startswith(PREFIX) for t in r.get('transporters', []))]
+    """Hosts that already have a door into a shrine interior, then the hosts a
+    worship hall's `shrine` marker names that have none: a town that lost its
+    only hall, whose room is still to be dropped."""
+    hosts = [k for k, r in cfg['rooms'].items()
+             if any(t['targetRoom'].startswith(PREFIX) for t in r.get('transporters', []))]
+    for r in cfg['rooms'].values():
+        host = (r.get('shrine') or {}).get('host')
+        if host and host not in hosts:
+            hosts.append(host)
+    return hosts
 
 
 HOSTS = ARGS or wired_hosts()
@@ -223,6 +234,13 @@ for hall in halls:
     print(f"built  {hall['key']} ({hall['look']}, {hall['size']}) - {hall['name']}: "
           f"{hall['host']} door {hall['door']}, front {hall['front']}, "
           f"{room['worldWidth'] // 64}x{room['worldHeight'] // 64}")
+
+# what an earlier run left for a hall that is gone: its old door (shut), and the host's rooms that
+# no hall claims any more (deleted; rg.save_config deletes their maps)
+for host in HOSTS:
+    stale = [k for k, r in cfg['rooms'].items() if (r.get('shrine') or {}).get('host') == host and k not in built]
+    for line in rg.drop_stale(cfg, host, PREFIX, [h['door'] for h in halls if h['host'] == host], stale):
+        print(line)
 
 rg.save_config(cfg)
 print(f"\n{len(built)} shrine interiors written. Now run config_to_tiled, then play.js lint, for:")

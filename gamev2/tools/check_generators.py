@@ -15,7 +15,9 @@ edit can be folded back into the generator (or kept by it, the way NPCs are).
 
 The same holds one step on: `config_to_tiled` re-seeds every room that has a
 tiled/<room>.tmj and fails if a map changed (a config edit whose map was not
-re-seeded, or a map edited by hand), and each art / prefab tool must rebuild
+re-seeded, or a map edited by hand), if a tiled/*.tmj has no room, or if a
+room has no map (unmatched_maps, issue #243: a removed building's map left
+behind, a new room never seeded), and each art / prefab tool must rebuild
 the committed assets/sprites and tiled/prefabs. Whatever a tool writes under
 OUTPUTS is compared, so a room generator that touched a sprite fails too.
 
@@ -135,6 +137,20 @@ def tiled_rooms(root='.'):
     return [r for r in rooms if os.path.exists(os.path.join(root, 'tiled', r.lower() + '.tmj'))]
 
 
+def unmatched_maps(root='.'):
+    """Where config.json's rooms and the top level of tiled/ are out of step:
+    ['tiled/x.tmj has no room in config.json: delete it', ...] for each map
+    whose name is no room's key in lower case, then ['room X has no
+    tiled/x.tmj: run config_to_tiled.py X', ...] for each room without a map.
+    tiled/prefabs/ is not looked at."""
+    rooms = json.load(open(os.path.join(root, 'config.json')))['rooms']
+    tiled = os.path.join(root, 'tiled')
+    maps = sorted(f[:-4] for f in os.listdir(tiled) if f.endswith('.tmj') and os.path.isfile(os.path.join(tiled, f)))
+    keys = {r.lower() for r in rooms}
+    return [f'tiled/{m}.tmj has no room in config.json: delete it' for m in maps if m not in keys] + \
+           [f'room {r} has no tiled/{r.lower()}.tmj: run config_to_tiled.py {r}' for r in rooms if r.lower() not in maps]
+
+
 def files_under(base, rel):
     """Paths (relative to base) of every file under base/rel."""
     out = set()
@@ -247,13 +263,17 @@ def check(names, root='.'):
             run = subprocess.run([sys.executable, f'tools/{name}.py'] + args, cwd=work,
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             files = restore(root, work)     # also after a crash: it may have written some
+            # a map without a room, a room without a map: no re-seed shows either
+            unmatched = unmatched_maps(root) if name == TILED else []
             if run.returncode != 0:
                 last = (run.stdout.strip().splitlines() or ['no output'])[-1]
-                failures[name] = [f'exited {run.returncode}: {last}']
+                failures[name] = [f'exited {run.returncode}: {last}'] + unmatched
                 continue
             regenerated = open(scratch).read()
+            if unmatched:
+                failures[name] = unmatched
             if regenerated != committed:
-                failures[name] = describe(json.loads(committed), json.loads(regenerated))
+                failures[name] = failures.get(name, []) + describe(json.loads(committed), json.loads(regenerated))
             if files:
                 more = [f'+{len(files) - 12} more file(s)'] if len(files) > 12 else []
                 failures[name] = failures.get(name, []) + files[:12] + more

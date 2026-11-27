@@ -23,8 +23,8 @@ A generator makes the calls in this order (docs/generators-and-checks.md,
 
 What stays in the generator: which sprite in a town is its door, its art and
 layout, its marker and flags, its name and what it prints. The door in the
-host room is roomgen's (open_door / shut_door / pin, beside the kept-door
-rules); so is everything a town generator also needs (Builder.prop / stand /
+host room is roomgen's (open_door / shut_door / pin and drop_stale, beside
+the kept-door rules); so is everything a town generator also needs (Builder.prop / stand /
 place, sprite_cells, register_metadata). This module holds only what is about
 a void-shell room, and imports nothing but roomgen.
 """

@@ -305,7 +305,12 @@ pipeline has placed someone there.
   only those hosts' stores (`generate_konbinis.py Sapporo`), leaving every other konbini room untouched.
   `generate_sapporo.py` re-seals the konbini door, so run it after every Sapporo regeneration. (The
   discount store's door is wired by `generate_sapporo.py` itself and survives a regeneration; its
-  interior is `generate_discount_stores.py Sapporo`.)
+  interior is `generate_discount_stores.py Sapporo`.) **Removing a store** (issue #243): take the building
+  out of the host, then run the generator for that host (`generate_konbinis.py Market`,
+  `generate_discount_stores.py Sapporo`). The stores are renumbered in door order, and the run deletes the
+  room nothing claims any more (`removed  KonbiniMarket6 ...`), its `tiled/` map and the door that led into
+  it (`roomgen.drop_stale`, `generators-and-checks.md` "Interior building blocks"); there is nothing to
+  delete by hand, and `check_generators.py` fails for a map left without a room.
 - **Konbini interiors** (issue #221): a store is a Pokémon Mart's plan dressed as a 7-Eleven, a lit
   floor in the void of a 20x15 room like a house's. The back wall is two rows (`konbini-wall`, with the
   clock and the tobacco rack over the till) and the floor six: the clerk's counter nook in one back
@@ -512,7 +517,11 @@ A machiya's doorway is the one cell of its footprint you can step onto (`sendai.
   into a `House...` room that still exists, where the house still stands and the rebuild put no other door),
   in the order they were in. The same function keeps every kind of interior listed in `roomgen.OWNED_DOORS`
   (a tower's lobby and a shrine's worship hall are the other two). A house the generator moved or removed stays sealed until `generate_houses.py`
-  is run for the town, which also deletes the rooms no house claims any more.
+  is run for the town, which also deletes the rooms no house claims any more, their `tiled/` maps and, in a
+  ported town where the map still carries it, the door that led into them (issue #243: `roomgen.drop_stale`,
+  the same for lobbies, shop floors, pagodas, shrine halls, 7-Elevens and discount stores; the run prints
+  `removed`, `deleted` and `shut` lines, and `--dry-run` deletes nothing). The old doorway is sealed only if
+  a house still stands on it: where the building is gone the cell stays as the town left it.
 - **Art**: none of the GuttyKreum packs has a home interior (they are exteriors and a train car;
   there is no `Modern_Interiors`). `tools/extract_house_interior.py` takes what fits - floorboards from the
   Train Interiors car floor (`home-wood-floor`), a potted plant from the Japanese City pack (`home-plant`) -
@@ -619,7 +628,7 @@ A town's only lobby has no number. The way out of each is the cell below its (fi
   Tests: `tools/tests/lobbies.test.js`, and `tools/tests/career.test.js` for the job.
 - **A town redesign** that keeps a tower keeps its lobby door (`roomgen.save_config`); one that removes a
   tower leaves a `Lobby` room behind until `generate_houses.py --lobbies <Town>` is run again, which drops it
-  and renumbers the rest.
+  and its `tiled/` map and renumbers the rest.
 
 ### Shrine worship halls (issue #212)
 
@@ -638,6 +647,10 @@ building cell `(3, 4)`, the right half of its two-wide steps, in line with the b
   rebuilds the halls already wired (what `check_generators.py` runs); a host is named the first time.
   `.agent-queue/items/shrines_apply.sh <Host> ...` is the whole roll-out for a town (art, generator,
   `config_to_tiled`, lint, the five gates).
+- **Removing a hall** (issue #243): take it out of the host and re-run the generator, with the host or with
+  no argument (a town named by a hall's `shrine` marker is visited even when its last door is gone). The
+  halls left are renumbered in door order, and the room nothing claims any more, its `tiled/` map and the
+  door into it are deleted by the run (`roomgen.drop_stale`); nothing is deleted by hand.
 - **A town generator keeps the door.** A generated town rebuilds its room and stamps the hall sealed;
   `roomgen.save_config` then puts the door back exactly as it does a house's (`keep_house_doors`, see House
   interiors): the hall's room carries `shrine: {host, door, look, size}`, and `'Shrine'` is a row of

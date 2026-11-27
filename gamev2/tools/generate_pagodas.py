@@ -15,7 +15,9 @@ rules: find_houses), and so does one whose door already leads somewhere - the
 palace's end towers are `pagoda-floor` too, laid flat on Over Floor, and are
 the palace hall's. Nothing else in the host is touched. A town generator that
 rebuilds the host seals the pagoda again and knows nothing of this door:
-roomgen.save_config puts it back (OWNED_DOORS / keep_house_doors).
+roomgen.save_config puts it back (OWNED_DOORS / keep_house_doors). A pagoda
+that is no longer on the town's map loses its room, the room's tiled/*.tmj and
+its old door on the next run (roomgen.drop_stale, issue #243).
 
 What is inside (art: tools/generate_pagoda_art.py): the whole tower cut open,
 in one room. Every storey is a floor of its own, one above the other and
@@ -199,12 +201,6 @@ def apply(host):
     for p in found:
         if 'excluded' in p:
             print(f"not a pagoda  {host} {p['family']} at {p['origin']} - {p['excluded']}")
-    # rooms of this town from an earlier run that no pagoda claims any more
-    for key in [k for k, r in cfg['rooms'].items() if (r.get(MARKER) or {}).get('host') == host]:
-        if key not in {p['key'] for p in opened}:
-            for cell in cfg['rooms'][key][MARKER]['doors']:
-                rg.shut_door(room, cell, PREFIX)
-            del cfg['rooms'][key]
     for p in pagodas:
         if 'skipped' in p:
             for cell in p['all_doors']:
@@ -225,6 +221,11 @@ def apply(host):
         built.append(p['key'])
         print(f"built    {p['key']} \"{p['name']}\" - {p['family']}, {p['storeys']} storeys, "
               f"doors {p['doors']}, front {p['front']}, {interior['worldWidth'] // 64}x{interior['worldHeight'] // 64}")
+    # what an earlier run left for a pagoda that is gone: its old door (shut), and the town's rooms
+    # that no pagoda claims any more (deleted; rg.save_config deletes their maps)
+    stale = [k for k, r in cfg['rooms'].items() if (r.get(MARKER) or {}).get('host') == host and k not in built]
+    for line in rg.drop_stale(cfg, host, PREFIX, [c for p in opened for c in p['doors']], stale):
+        print(line)
     if not pagodas:
         print(f'no pagoda in {host}')
     return built

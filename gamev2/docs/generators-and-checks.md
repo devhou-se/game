@@ -43,6 +43,13 @@ with a Pillow that draws the same pixels will do, not only the macOS one:
   moves something: draw the committed pixels with rectangles and points, do not regenerate the art to suit one
   version.
 
+**Rooms and maps are one to one** (`unmatched_maps`, issue #243): under `config_to_tiled` the check also fails
+for a `tiled/<name>.tmj` that no room in `config.json` has (`... has no room in config.json: delete it`) and
+for a room with no map (`room <Key> has no tiled/<key>.tmj: run config_to_tiled.py <Key>`). A map nobody
+loads is otherwise invisible: Tiled and `devhouse.world` still show it, and nothing else fails. The interior
+generators delete the map themselves when a building goes (see "Interior building blocks"), so the first
+line means a room was deleted by hand.
+
 `tools/districts.py` is one of the generators checked: it writes config `districts` (the named areas of every
 town, `landmarks-and-towns.md` "Districts") from its own `DISTRICTS` list and each landmark's standing cell,
 so a map change that moves a landmark across a district's edge shows as `DRIFT districts.py`: re-run it.
@@ -133,7 +140,17 @@ A new interior is a short script that puts shared blocks together and adds only 
 2. **The door in the host room**, in `roomgen.py` beside the kept-door rules: `rg.open_door(host_room, cell,
    target, arrive)` takes the doorway's collider off and pins a hidden transporter onto it; `rg.pin(items,
    item)` is the rule under it (replace the entry on that cell where it sits, delete later ones, append only
-   a new one, so a re-run moves nothing); `rg.shut_door(host_room, cell, prefix)` seals it again.
+   a new one, so a re-run moves nothing); `rg.shut_door(host_room, cell, prefix)` takes the transporter
+   into a `<prefix>...` room off the cell, and seals the cell only where a doorway of that kind
+   (`OWNED_DOORS`) still stands on it and no other door is left there, so the cell of a building that is
+   gone stays as the town left it. **When a building goes** (issue #243): a generator that numbers its rooms
+   per town ends its run with `rg.drop_stale(cfg, host, prefix, opened, stale)`, which shuts every door of
+   that prefix on a cell the run did not open (`opened`), deletes the rooms in `stale` (the ones of that host
+   the run did not build: the highest numbers, since the rest are renumbered) and returns the `shut` /
+   `removed` lines to print, a room's NPCs named if it had any. `rg.save_config` then deletes
+   `tiled/<key>.tmj` of every room that was loaded and is not saved (`deleted  tiled/...`). It never deletes
+   through a symlinked `tiled/` (a test's scratch copy linking the committed maps): the map is printed as
+   `kept` instead. Nothing is deleted on a `--dry-run`, which does not save.
 3. **The shell, `tools/interiors.py`**: `Interior(fw, fh)` is a room of void with a `fw`x`fh` floor, and every
    call on it is in **floor coordinates** (`(0, 0)` the floor's top-left cell, row `-1` the wall above it, row
    `fh` the row below it). A generator calls, in this order: `floor(key_of)`; `back_wall(pieces, depth)`,
@@ -175,6 +192,10 @@ What a new interior has to decide beyond that:
 
 - **Who keeps its door through a town rebuild**: a row in `roomgen.OWNED_DOORS` and a `{host, door}` marker on
   the room (the `tearoom=` above), or `roomgen.kept_door` in the town's own generator.
+- **What happens when its building is removed**: if its rooms are numbered per town, it calls
+  `rg.drop_stale` before it saves (above), and a run with no argument also visits a host that a marker
+  names and no door is wired in any more (`generate_shrines.wired_hosts`), so the town that lost its only
+  one is cleaned up too. `tools/tests/stale-interiors.test.js` has a case per generator: add one.
 - **`shopEnabled=False`, unless it is a store.** `interior: true` alone makes every counter a konbini's
   (`Interactions.js`, `Energy.isStore`). `room()` sets `interior` and nothing else.
 - `lanternLight` / `shopMenu` if it wants them, and a rule in `Shop.VENUES` / `Interactions.js` for anything a

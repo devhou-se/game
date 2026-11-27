@@ -49,7 +49,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.deepStrictEqual(out.cells, [[2, 1], [128, 64]]);
     });
 
-    test('rg.pin replaces on the cell in place, rg.open_door opens a door once and for all, rg.shut_door drops only its own kind', () => {
+    test('rg.pin replaces on the cell in place, rg.open_door opens a door once and for all, rg.shut_door seals only a doorway that still stands', () => {
         const out = python([
             "T = lambda x, y, room: rg.transporter(x, y, room, 0, 0)",
             "ts = [T(1, 1, 'A'), T(2, 2, 'B'), T(1, 1, 'C'), T(3, 3, 'D'), T(1, 1, 'E')]",
@@ -67,11 +67,26 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             "out['open'] = json.loads(json.dumps(host))",
             "rg.open_door(host, (4, 4), 'TeaRoomMarket1', (9, 8))",
             "out['twice'] = json.loads(json.dumps(host))",
-            "rg.shut_door(host, (4, 4), 'Other')",                             // another kind's door on the cell: sealed, kept
-            "out['others'] = [sorted(host['layers'][1]['tiles']), len(host['transporters'])]",
-            "rg.shut_door(host, (4, 4), 'TeaRoom')",
-            "out['shut'] = [sorted(host['layers'][1]['tiles']), host['transporters'], sorted(host['layers'][0]['tiles'])]",
+            // shut_door (#243). A townhouse front on the host: its door is the cell (4, 4)
+            "host['layers'].append({'name': 'Collidables', 'tiles': {'3,4': rg.pidx('building-entrance-1_0_0')}})",
+            "state = lambda: [sorted(host['layers'][1]['tiles']), [t['targetRoom'] for t in host['transporters']]]",
+            "rg.shut_door(host, (4, 4), 'House')",                             // another kind's door on the cell: kept, and not sealed
+            "out['others'] = state()",
+            "rg.shut_door(host, (4, 4), 'TeaRoom')",                           // a prefix with no OWNED_DOORS row: its door dropped, nothing sealed
+            "out['unknown'] = state()",
+            "rg.open_door(host, (4, 4), 'HouseMarket1', (9, 8))",
+            "rg.shut_door(host, (4, 4), 'House')",                             // a house that stands: its door dropped, the doorway sealed
+            "out['shut'] = state() + [sorted(host['layers'][0]['tiles'])]",
             "out['blank'] = rg._pal[host['layers'][1]['tiles']['4,4']]",
+            "rg.shut_door(host, (4, 4), 'House')",
+            "out['shutTwice'] = state()",
+            "rg.open_door(host, (4, 4), 'HouseMarket1', (9, 8))",
+            "del host['layers'][2]['tiles']['3,4']",                           // the house is gone: its door dropped, the cell left open
+            "rg.shut_door(host, (4, 4), 'House')",
+            "out['gone'] = state()",
+            "host['transporters'].append(T(40, -3, 'HouseMarket2'))",          // a cell outside the room: its door dropped, nothing written
+            "rg.shut_door(host, (40, -3), 'House')",
+            "out['outside'] = state()",
         ].join('\n'));
         assert.strictEqual(out.same, true);
         assert.deepStrictEqual(out.replaced, ['Z', 'B', 'D'], 'in place, the later ones on the cell gone');
@@ -81,9 +96,76 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.deepStrictEqual(out.open.layers[1].tiles, { '5,4': 0 }, 'only the doorway is unsealed');
         assert.deepStrictEqual(out.open.transporters, [out.door]);
         assert.deepStrictEqual(out.twice, out.open);
-        assert.deepStrictEqual(out.others, [['4,4', '5,4'], 1]);
+        assert.deepStrictEqual(out.others, [['5,4'], ['TeaRoomMarket1']], 'a doorway another kind uses stays open');
+        assert.deepStrictEqual(out.unknown, [['5,4'], []]);
         assert.deepStrictEqual(out.shut, [['4,4', '5,4'], [], ['4,4']]);
         assert.strictEqual(out.blank, 'gk_blank');
+        assert.deepStrictEqual(out.shutTwice, [['4,4', '5,4'], []]);
+        assert.deepStrictEqual(out.gone, [['5,4'], []], 'no collider where no house stands');
+        assert.deepStrictEqual(out.outside, [['5,4'], []]);
+    });
+
+    test('rg.drop_stale shuts the doors the run did not open and deletes the rooms it did not build (#243)', () => {
+        const out = python([
+            "T = lambda x, y, room: rg.transporter(x, y, room, 0, 0)",
+            // a town with two house fronts (doors on (4, 4) and (14, 4)); a third house, on (9, 9), is gone
+            "front = rg.pidx('building-entrance-1_0_0')",
+            "town = {'layers': [{'name': 'Colliders', 'tiles': {}}, {'name': 'Collidables', 'tiles': {'3,4': front, '13,4': front}}],",
+            "        'transporters': [T(4, 4, 'HouseTown1'), T(9, 9, 'HouseTown2'), T(14, 4, 'HouseTown3'), T(1, 1, 'ShopTown1'), T(9, 9, 'HouseTown2')]}",
+            "world = {'rooms': {'Town': town, 'HouseTown1': {}, 'HouseTown2': {'npcs': []}, 'ShopTown1': {},",
+            "                   'HouseTown3': {'npcs': [{'name': 'Aiko'}, {'name': 'Ben'}]}}}",
+            // the run opened (4, 4) only: (9, 9) has no house, (14, 4) has one that was not opened
+            "out['lines'] = rg.drop_stale(world, 'Town', 'House', [[4, 4]], ['HouseTown2', 'HouseTown3'])",
+            "out['rooms'] = sorted(world['rooms'])",
+            "out['doors'] = [[t['gridX'], t['gridY'], t['targetRoom']] for t in town['transporters']]",
+            "out['solid'] = sorted(town['layers'][0]['tiles'])",
+            "out['again'] = rg.drop_stale(world, 'Town', 'House', [(4, 4)], [])",
+        ].join('\n'));
+        assert.deepStrictEqual(out.lines, [
+            'shut     Town door (9, 9) - it led into HouseTown2; no House door is there now',
+            'shut     Town door (14, 4) - it led into HouseTown3; no House door is there now',
+            'removed  HouseTown2 - nothing in Town claims it any more',
+            'removed  HouseTown3 - nothing in Town claims it any more, and its NPCs went with it: Aiko, Ben',
+        ]);
+        assert.deepStrictEqual(out.rooms, ['HouseTown1', 'ShopTown1', 'Town']);
+        assert.deepStrictEqual(out.doors, [[4, 4, 'HouseTown1'], [1, 1, 'ShopTown1']], 'the opened door and another kind\'s are kept');
+        assert.deepStrictEqual(out.solid, ['14,4'], 'sealed where a house still stands, open where none does');
+        assert.deepStrictEqual(out.again, []);
+    });
+
+    test('rg.save_config deletes the map of a room that was loaded and is not saved, and no other (#243)', () => {
+        const out = python([
+            "import os, tempfile, io, contextlib",
+            "top = tempfile.mkdtemp(prefix='gamev2-save-')",
+            "path = os.path.join(top, 'config.json')",
+            "os.makedirs(os.path.join(top, 'tiled', 'prefabs'))",
+            // Gone has a map, NoMap has none; Kept and KEPT share one file name; other.tmj is nobody's
+            "json.dump({'tilePalette': [], 'rooms': {k: {} for k in ('Town', 'Gone', 'NoMap', 'Kept', 'KEPT')}}, open(path, 'w'))",
+            "for f in ('town.tmj', 'gone.tmj', 'kept.tmj', 'other.tmj', os.path.join('prefabs', 'gone.tmj')):",
+            "    open(os.path.join(top, 'tiled', f), 'w').write('{}')",
+            "maps = lambda: sorted(os.listdir(os.path.join(top, 'tiled')))",
+            "said = io.StringIO()",
+            "with contextlib.redirect_stdout(said):",
+            "    world = rg.load_config(path)",
+            "    rg.save_config(world, path)",                                  // nothing dropped: nothing deleted
+            "    out['same'] = maps()",
+            "    for k in ('Gone', 'NoMap', 'KEPT'):",
+            "        del world['rooms'][k]",
+            "    world['rooms']['New'] = {}",
+            "    rg.save_config(world, path)",
+            "    rg.save_config(world, path)",                                  // and again: the map is gone already
+            "out['said'] = said.getvalue().splitlines()",
+            "out['maps'] = maps()",
+            "out['prefab'] = os.listdir(os.path.join(top, 'tiled', 'prefabs'))",
+            "out['rooms'] = sorted(json.load(open(path))['rooms'])",
+            "import shutil; shutil.rmtree(top)",
+            "rg.load_config()",                                                 // the committed world again, as the HEAD left it
+        ].join('\n'));
+        assert.deepStrictEqual(out.same, ['gone.tmj', 'kept.tmj', 'other.tmj', 'prefabs', 'town.tmj']);
+        assert.deepStrictEqual(out.said, ['deleted  tiled/gone.tmj']);
+        assert.deepStrictEqual(out.maps, ['kept.tmj', 'other.tmj', 'prefabs', 'town.tmj'], 'a live room\'s map and a stray one are not touched');
+        assert.deepStrictEqual(out.prefab, ['gone.tmj']);
+        assert.deepStrictEqual(out.rooms, ['Kept', 'New', 'Town']);
     });
 
     test('the worked example in docs/generators-and-checks.md builds: a tea room on the Interior shell, wired to its door', () => {

@@ -26,6 +26,8 @@ Hosts and their generators:
                    surgically (lifts the one collider, adds the transporter)
                    and touches nothing else. It does the same, idempotently,
                    for the generated hosts.
+A facade that is no longer on its host's map loses its room, the room's
+tiled/*.tmj and its old door on the next run (roomgen.drop_stale, issue #243).
 
 Run from gamev2/:  python3 tools/generate_discount_art.py     # once: signage (Pillow)
                    python3 tools/generate_discount_stores.py [Host ...]
@@ -33,6 +35,7 @@ Then:              python3 tools/config_to_tiled.py <each store room + its host>
                    node tools/play.js lint <each store room + its host>
 """
 import random
+import re
 import sys
 
 import interiors
@@ -171,7 +174,8 @@ def main(argv):
             assert not k.startswith('don-takote'), f'{k}: run tools/generate_discount_art.py first'
     rg.register_metadata(cfg, KEYS)
     built = []
-    for store in find_stores(cfg, hosts):
+    stores = find_stores(cfg, hosts)
+    for store in stores:
         host = cfg['rooms'][store['host']]
         solid = {xy for L in host['layers'] if L.get('collision') for xy in L['tiles']}
         fx, fy = store['front']
@@ -185,6 +189,12 @@ def main(argv):
         rg.open_door(host, store['door'], store['key'], ARRIVE)
         built.append(store['key'])
         print(f"built  {store['key']} ({store['name']}) - door {store['door']} in {store['host']}")
+    # what an earlier run left for a store that is gone: its old door (its transporter dropped), and
+    # the host's rooms that no facade claims any more (deleted; rg.save_config deletes their maps)
+    for host in hosts:
+        stale = [k for k in cfg['rooms'] if re.fullmatch(f'DonTakote{re.escape(host)}\\d*', k) and k not in built]
+        for line in rg.drop_stale(cfg, host, 'DonTakote', [s['door'] for s in stores if s['host'] == host], stale):
+            print(line)
     rg.save_config(cfg)
     print(f'\n{len(built)} interiors written. Now run config_to_tiled, then play.js lint, for:')
     print('  ' + ' '.join(built + hosts))
