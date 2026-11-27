@@ -13,8 +13,9 @@ are only a fallback (`?maps=config`, or any room whose `.tmj` fails to load).
 ## Workflow
 
 1. Open **`devhouse.world` at the repo root** (`open -a Tiled devhouse.world`) —
-   it shows all four rooms in one view, laid out in their true overworld
-   positions (roads line up across the map seams). Click a room to edit it.
+   it shows every outdoor map in one view (interiors are not in it): Tokyo's
+   four districts in their true overworld positions (roads line up across the
+   map seams), the other towns around them. Click a room to edit it.
    Individual maps also open directly (e.g. `tiled/tokyo.tmj`), and
    `devhouse.tiled-project` at the root gives a project sidebar.
 2. Edit and save (keep the JSON `.tmj` format).
@@ -65,8 +66,9 @@ edit in the Tiled app. A prefab carries:
   everywhere in Tiled);
 - its **doors** as `kind=door` point objects on a `Meta` layer — the default
   transporter location. Generators leave a wired door open and attach a hidden
-  transporter to it (the Machi 7-Eleven's door leads into the `Konbini`
-  interior room this way); unwired doors are sealed solid automatically.
+  transporter to it (the Sapporo 7-Eleven's door leads into the
+  `KonbiniSapporo1` interior room this way); unwired doors are sealed solid
+  automatically.
 
 `tools/prefab.py` loads and stamps prefabs; `tools/make_prefabs.py` re-seeds
 the initial library; a town generator such as `tools/generate_asahikawa.py`
@@ -77,11 +79,11 @@ floors. An interior is built from the shared shell in `tools/interiors.py`
 
 ### Stamping a prefab into an existing (ported) room
 
-Generators call `b.stamp()`. For Tokyo / Market / Park / Palace and Machi, whose map lives in `config.json`,
-use `tools/stamp_prefab.py`:
+Generators call `b.stamp()`. For the ported rooms (Tokyo / Market / Park / Palace), which have no generator
+and whose map lives in `config.json`, use `tools/stamp_prefab.py`:
 
     python3 tools/stamp_prefab.py Market --add discount-store 46 22
-    python3 tools/stamp_prefab.py Machi --remove sakura-small 5 20 --add machiya-black 4 17 --dry-run
+    python3 tools/stamp_prefab.py Park --remove sakura-small 5 20 --add machiya-black 4 17 --dry-run
 
 It writes nothing unless the placement is clean: inside the room, not over another standing sprite
 (`--allow-overlap` to permit), no solid cell on a cell that is already solid, no transporter or dated NPC
@@ -100,10 +102,12 @@ drawn by `tools/generate_hokkaido.py` - see "Hokkaido: Sapporo and Asahikawa" in
 whose sprite carries a negative `depthBias` in `config.json` `spriteMetadata` (an `Over Floor` object would
 be drawn under the `Water` tiles).
 
-`devhouse.world` also holds the train-only towns at detached offsets, all CLEAR of the stitched city's
-bounding box (the Map draws the city's woodland over that whole box - issue #174): Yukimura above Machi,
-Inaka and Osaka in a column to the west,
-Sapporo and Asahikawa to the north.
+`devhouse.world` also holds the towns you cannot walk to from Tokyo (train or plane only) at detached
+offsets, laid out like Japan (north up; compass order, not true distance) and all CLEAR of a stitched city's
+bounding box (the Map draws the city's woodland over that whole box - issue #174): Sapporo, Asahikawa and
+Sendai to the north, Osaka to the west and Fukuoka far to the south-west of it, the Hokuriku city (Kanazawa,
+Shirakawa-go and Toyama, stitched like Tokyo's districts) to the north-west, San Franbourne far to the
+south-east.
 
 Street accessories (issue #19) come from `tools/extract_street.py` - see "Street accessories" in
 `gamev2/docs/buildings-and-street-props.md`: `traffic-light` (1x3, give stamp_prefab the TOP cell; the base two rows down is the solid
@@ -160,11 +164,9 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   prefab tools still rebuild `assets/sprites` and `tiled/prefabs` (#186). Make a
   surgical change (config edit + `config_to_tiled.py <Room>`) AND mirror it in
   the generator source, then run the check. Generators keep what they do not
-  own — NPCs, Machi's ad signage, a 7-Eleven door wired by
-  `generate_konbinis.py` — and run their own fence / track passes
-  (`b.finish()`), so each is a no-op on its own. `generate_machi.py` used to be
-  the exception (a re-run wiped the blog NPCs and signage and resurrected the
-  legacy `Konbini` room); it is back in step.
+  own — NPCs, a 7-Eleven door wired by `generate_konbinis.py`, the doors of
+  house and shrine interiors — and run their own fence / track passes
+  (`b.finish()`), so each is a no-op on its own.
 - **World seams are road-aligned by design** (`devhouse.world`): every
   adjacent room pair draws the same connecting road on both sides of the
   seam. A crossing is just hidden transporters on the edge cells of that road
@@ -174,7 +176,7 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   direction.
 - **The Tokyo districts are stitched into one map at runtime** (config
   `cities`, `src/systems/CityStitcher.js` — see "Stitched cities" in
-  `gamev2/docs/stitched-city.md`). The five maps stay separate files and you keep
+  `gamev2/docs/stitched-city.md`). The four maps stay separate files and you keep
   editing them one at a time, in their own cell coordinates, but in the game:
   - the seam transporters are ignored (keep them: `?stitch=0` uses them, and
     `play.js check` surveys that fallback too) and the player simply walks
@@ -187,7 +189,7 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
     — a collider lost to an overlap, a hole a `patch` left — and
     `render TokyoCity out.png` draws it with the woods. Coordinates stay the
     district's own everywhere (`where` -> `Market 5,24 (TokyoCity 111,24)`);
-    `--stitch=0` / `/studio/?stitch=0` give the five separate rooms;
+    `--stitch=0` / `/studio/?stitch=0` give the four separate rooms;
   - where two maps overlap (Tokyo/Market 1 column, Market/Palace 1 row,
     Palace/Park 4 rows) only the LATER map in `cities.<City>.rooms` is drawn
     and collides; the other map's tiles on those cells are dropped. Edit the
