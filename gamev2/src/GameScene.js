@@ -8,7 +8,11 @@ class GameScene extends Phaser.Scene {
 
     preload() {
         // Drive the HTML loading screen (index.html) with real progress
-        this.load.on('progress', (v) => { if (window.updateLoader) window.updateLoader(v); });
+        // (bootProgress: the deployed game's bar is mostly the images pack)
+        const boot = window.GAME_BUILD ? { images: 0, queued: false } : null;
+        let pack = boot;   // null once the boot is loading loose files
+        const onProgress = () => { if (window.updateLoader) window.updateLoader(GameScene.bootProgress(this.load.progress, pack)); };
+        this.load.on('progress', onProgress);
 
         // Load pixel fonts
         this.load.font('PressStart2P', 'fonts/PressStart2P-Regular.ttf');
@@ -17,40 +21,111 @@ class GameScene extends Phaser.Scene {
         // Japanese glyphs for all three (2 MB, so fetched after boot, not in this queue)
         this.load.once('complete', () => JapaneseFont.load(this.game));
 
-        // Load default sprites
-        this.load.image("background", "assets/background-grid.png");
-        this.load.image("tile", "assets/single-tile.png");
-        this.load.image("npc-tile", "assets/npc-tile.png");
-        this.load.image("transporter", "assets/transporter.png");
-        this.load.image("object-tile", "assets/object-tile.png");
+        // The boot pass is over: the bar is done with (the photos load later
+        // through this same loader), and so are the packs and their blob: URLs
+        this.load.once('complete', () => {
+            this.load.off('progress', onProgress);
+            Assets.release();
+            this.cache.json.remove('pack-data');
+            this.cache.binary.remove('pack-images');
+        });
 
-        // Load config with cache-busting
-        this.load.json("config", `config.json?t=${Date.now()}`);
+        // Working on the game: every file is loaded as it is
+        if (!boot) {
+            this.queueAssets();
+            return;
+        }
+
+        // The deployed game (tools/build_dist.js): the JSON and the images
+        // come in two packs, and everything else is queued from them once
+        // both are here (files added during a load join the same pass). If
+        // a pack cannot be had, the loose files are on the site too.
+        const build = window.GAME_BUILD, got = {};
+        let started = false;
+        const queue = (packed) => {
+            if (started) return;
+            started = true;
+            if (!packed || !Assets.install(got.data, got.images)) pack = null;
+            got.data = got.images = null;   // Assets and the caches hold them now
+            this.queueAssets();
+            // registered after queueAssets' own handler, so the sprites and maps are in the queue by now
+            this.load.once('filecomplete-json-config', () => { boot.queued = true; });
+        };
+        const arrived = (name) => (key, type, data) => {
+            got[name] = data;
+            if (name === 'images') boot.images = 1;
+            if (got.data && got.images) queue(true);
+        };
+        this.load.json('pack-data', build.data);
+        this.load.binary('pack-images', build.images);
+        this.load.once('filecomplete-json-pack-data', arrived('data'));
+        this.load.once('filecomplete-binary-pack-images', arrived('images'));
+        this.load.on('fileprogress', (file, fraction) => {
+            if (file.key !== 'pack-images' || started) return;
+            boot.images = fraction;
+            onProgress();
+        });
+        this.load.on('loaderror', (file) => {
+            if (file.key === 'pack-data' || file.key === 'pack-images') queue(false);
+        });
+    }
+
+    /**
+     * How full the loading bar is (0..1) when the loader's own progress is
+     * `v`. Loading loose files (`pack` null) that is `v`, as it always was.
+     * The deployed game spends most of the wait downloading the images
+     * pack: its download fraction (`pack.images`) fills the first 70%, and
+     * the loader's count of the files queued from the packs the rest. That
+     * count means something only once they are all queued (`pack.queued`):
+     * before that `v` is the share of the fonts and packs that are done.
+     */
+    static bootProgress(v, pack) {
+        if (!pack) return v;
+        return 0.7 * pack.images + (pack.queued ? 0.3 * v : 0);
+    }
+
+    /**
+     * Queue everything the game boots with. Every path goes through Assets
+     * (the parsed JSON or a blob: URL from the packs in the deployed game,
+     * the file itself otherwise): tools/build_dist.js runs preload() with
+     * a recording loader to decide what the packs hold, and fails on a load
+     * that bypasses Assets.
+     */
+    queueAssets() {
+        // Load default sprites
+        this.load.image("background", Assets.url("assets/background-grid.png"));
+        this.load.image("tile", Assets.url("assets/single-tile.png"));
+        this.load.image("npc-tile", Assets.url("assets/npc-tile.png"));
+        this.load.image("transporter", Assets.url("assets/transporter.png"));
+        this.load.image("object-tile", Assets.url("assets/object-tile.png"));
+
+        // Load config (cache-busted when it is the loose file)
+        this.load.json("config", Assets.json("config.json"));
 
         // world-map.json: where each room sits in the world (tools/make_worldmap.py)
         // — the stitched city's offsets are re-checked against it and trains
         // run the way their destination lies. Its picture is the studio's.
-        this.load.json('worldMap', `assets/map/world-map.json?t=${Date.now()}`);
+        this.load.json('worldMap', Assets.json('assets/map/world-map.json'));
         // Map screen: Japan, and the projection that puts a town's `geo` on
         // it (tools/make_japan_map.py)
-        this.load.json('japanMap', `assets/map/japan.json?t=${Date.now()}`);
-        this.load.image('japan-map', `assets/map/japan.png?t=${Date.now()}`);
+        this.load.json('japanMap', Assets.json('assets/map/japan.json'));
+        this.load.image('japan-map', Assets.url('assets/map/japan.png', true));
 
         // Advertisement signage (issue #26): the generated ad pool that
         // RoomManager.placeSignage mounts on building walls — regenerate
         // with tools/generate_ads.py
-        this.load.json('adsManifest', `assets/ads/manifest.json?t=${Date.now()}`);
+        this.load.json('adsManifest', Assets.json('assets/ads/manifest.json'));
         this.load.once('filecomplete-json-adsManifest', (key, type, data) => {
-            for (const ad of (data.ads || [])) this.load.image(ad.key, `assets/ads/${ad.file}`);
+            for (const ad of (data.ads || [])) this.load.image(ad.key, Assets.url(`assets/ads/${ad.file}`));
         });
 
         // Item icon art (issue #82): a PNG listed here replaces the icon
         // ItemIcons would otherwise draw — see assets/items/README.md
-        this.load.json('itemIconManifest', `assets/items/manifest.json?t=${Date.now()}`);
+        this.load.json('itemIconManifest', Assets.json('assets/items/manifest.json'));
         this.load.once('filecomplete-json-itemIconManifest', (key, type, data) => {
             const ids = Array.isArray(data && data.icons) ? data.icons : [];
             for (const id of ids) {
-                if (typeof id === 'string' && /^[\w-]+$/.test(id)) this.load.image(`item-${id}`, `assets/items/${id}.png?t=${Date.now()}`);
+                if (typeof id === 'string' && /^[\w-]+$/.test(id)) this.load.image(`item-${id}`, Assets.url(`assets/items/${id}.png`, true));
             }
         });
 
@@ -58,14 +133,14 @@ class GameScene extends Phaser.Scene {
         // the manifest are requested, so a character without art never 404s.
         // Dialogue and the title screen use `portrait-<name>` when it exists
         // and fall back to the character's sprite — see assets/portraits/README.md
-        this.load.json('portraitManifest', `assets/portraits/manifest.json?t=${Date.now()}`);
+        this.load.json('portraitManifest', Assets.json('assets/portraits/manifest.json'));
         this.load.once('filecomplete-json-portraitManifest', (key, type, data) => {
             // tolerate a hand-edited manifest that isn't { "portraits": [names] }
             const names = Array.isArray(data && data.portraits) ? data.portraits : [];
-            const t = Date.now(); // replaced art must not be served stale
             for (const name of names) {
                 if (typeof name !== 'string' || !/^[\w-]+$/.test(name)) continue;
-                this.load.image(`portrait-${name}`, `assets/portraits/${name}.png?t=${t}`);
+                // cache-busted: replaced art must not be served stale
+                this.load.image(`portrait-${name}`, Assets.url(`assets/portraits/${name}.png`, true));
             }
         });
 
@@ -76,24 +151,8 @@ class GameScene extends Phaser.Scene {
             // this and renders the rooms baked into config.json instead.
             if (new URLSearchParams(location.search).get('maps') !== 'config') {
                 for (const roomKey of Object.keys(data.rooms || {})) {
-                    this.load.json(`tiled-${roomKey}`, `tiled/${roomKey.toLowerCase()}.tmj?t=${Date.now()}`);
+                    this.load.json(`tiled-${roomKey}`, Assets.json(`tiled/${roomKey.toLowerCase()}.tmj`));
                 }
-            }
-
-            // Blog-post photos: dated NPC states may carry "photo": <post id>
-            // (written by tools/blog_to_npc.py alongside assets/photos/<id>.png);
-            // the dialogue box hangs the photo in a frame next to the author
-            const photoIds = new Set();
-            for (const room of Object.values(data.rooms || {})) {
-                for (const npc of room.npcs || []) {
-                    if (npc.photo) photoIds.add(npc.photo);
-                    for (const st of Object.values(npc.states || {})) {
-                        if (st.photo) photoIds.add(st.photo);
-                    }
-                }
-            }
-            for (const id of photoIds) {
-                this.load.image(`photo-${id}`, `assets/photos/${id}.png`);
             }
 
             const spriteMetadata = data.spriteMetadata || {};
@@ -109,6 +168,59 @@ class GameScene extends Phaser.Scene {
                 tempSpriteSystem.loadSpriteAssets.call(tempSpriteSystem, spriteKey, metadata);
             }
         });
+    }
+
+    /**
+     * Queue the blog-post photos: dated NPC states may carry "photo": <post id>
+     * (written by tools/blog_to_npc.py alongside assets/photos/<id>.png);
+     * the dialogue box hangs the photo in a frame next to the author.
+     */
+    queuePhotos(config) {
+        const photoIds = new Set();
+        for (const room of Object.values(config.rooms || {})) {
+            for (const npc of room.npcs || []) {
+                if (npc.photo) photoIds.add(npc.photo);
+                for (const st of Object.values(npc.states || {})) {
+                    if (st.photo) photoIds.add(st.photo);
+                }
+            }
+        }
+        for (const id of photoIds) {
+            this.load.image(`photo-${id}`, Assets.url(`assets/photos/${id}.png`));
+        }
+    }
+
+    /**
+     * Load the photos once the game is up. They are a third of the image
+     * bytes and are seen only in a dialogue, which shows no photo while its
+     * texture is missing (DialogueManager), so they do not hold up the boot.
+     * The deployed game has them in a pack of their own (a new post must
+     * not change the sprite pack); without it, they are the loose files.
+     */
+    loadPhotos() {
+        const build = window.GAME_BUILD;
+        // the pack could not be had: the photos are the loose files
+        const onError = (file) => { if (file.key === 'pack-photos') queue(null); };
+        let queued = false;
+        const queue = (buffer) => {
+            if (queued) return;
+            queued = true;
+            Assets.installPhotos(buffer);
+            this.queuePhotos(this.config);
+        };
+        this.load.once('complete', () => {
+            this.load.off('loaderror', onError);
+            Assets.release();
+            this.cache.binary.remove('pack-photos');
+        });
+        if (build && build.photos && Assets.photos) {
+            this.load.binary('pack-photos', build.photos);
+            this.load.once('filecomplete-binary-pack-photos', (key, type, data) => queue(data));
+            this.load.on('loaderror', onError);
+        } else {
+            this.queuePhotos(this.config);
+        }
+        this.load.start();
     }
 
     create() {
@@ -299,6 +411,8 @@ class GameScene extends Phaser.Scene {
 
             // playable — drop the loading screen
             if (window.hideLoader) window.hideLoader();
+            // and fetch what the boot did not wait for
+            this.loadPhotos();
 
             // title screen first (every load; ?notitle=1 skips it), then on
             // the first ever visit: make your own character before you set

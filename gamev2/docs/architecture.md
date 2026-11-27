@@ -1,6 +1,7 @@
 # Architecture
 
-The file map of `src/`, the core constants, grid movement and collision.
+The file map of `src/`, the core constants, grid movement and collision, and how the game's files are loaded
+(as they are when you work on it, packed by a build when it is deployed).
 
 A "see X" in the text names a section; if it is not in this file, the index in [`../CLAUDE.md`](../CLAUDE.md) says which file has it.
 
@@ -8,7 +9,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 
 ### File Structure
 
-- `index.html` - Entry point, loads Phaser CDN and game scripts from `src/`
+- `index.html` - Entry point, loads Phaser CDN and game scripts from `src/` (the list between its `build:scripts` marks)
 - `config.json` - JSON configuration file defining game constants, rooms, NPCs, and objects
 - `tiled/*.tmj` - Room maps, authored in the Tiled editor (the map source of truth at
   runtime — see `tiled/README.md`; config.json's room layers are only a fallback)
@@ -18,6 +19,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/systems/LandmarkView.js` - The camera looks up in front of a landmark marked in config `game.lookUp` (see Small Viewports and Touch)
 - `src/utils/Hints.js` - The one helper that words key hints for keyboard or touch (see Small Viewports and Touch)
 - `src/utils/Glows.js` - Glow spots a placed sprite lights at night: neon boards, lit fronts (see Neon and lit fronts at night)
+- `src/utils/Assets.js` - Where the files the scene loads come from: the file itself, or its copy in the deploy build's packs (see Loading and the deploy build)
 - `src/utils/JapaneseFont.js` + `fonts/` - The pixel fonts, and the Japanese face added to each of them (see Fonts and Japanese Text)
 - `src/AirTravel.js` - The flights between the two airports (issue #218): who can fly where, the cabin cutscene and its skip rule (see Airports and flights in `trains-and-stations.md`)
 - `src/utils/Places.js` - The towns as real places in Japan for the Map overlay: config `places`, which town a room is in, who is where, label layout (see The Map overlay in `hud-input-touch.md`)
@@ -123,3 +125,64 @@ were on it. Which furniture, and how, is one table, `Seats.RULES` in `src/utils/
 
 ### Character Sprite Positioning
 Sprites are centered at: `gridPos * GRID_SIZE + GRID_SIZE/2`
+
+## Loading and the deploy build
+
+Working on the game needs no build: `index.html` loads the scripts in its list one by one, and
+`GameScene.preload()` asks Phaser's loader for `config.json`, the `.tmj` maps and about a thousand small
+PNGs, each as its own request. That is fine from a local server and slow over a real network, so **what is
+deployed is a build** of the same files (issue #244).
+
+**In the game.** Every image and JSON file the scene loads goes through `src/utils/Assets.js`:
+
+- `Assets.json(path)` is what to give `load.json`: unbuilt, the path with a `?t=` cache-buster; built, the
+  parsed object from the data pack (Phaser's `load.json` takes either).
+- `Assets.url(path, bust)` is what to give `load.image` / `load.spritesheet`: unbuilt, the path (`bust`: with
+  a cache-buster, for art that is replaced under the same name); built, a `blob:` URL of the file's bytes in a
+  pack.
+
+Texture keys, frames and everything that reads them are the same either way. A file the packs do not have
+falls back to its path, and so does the whole game if a pack cannot be fetched: the built site also holds
+every loose file. The fonts are not packed (`load.font` fetches the file itself).
+
+`GameScene.preload()` queues the fonts, then either everything else (`queueAssets()`, unbuilt) or the two
+packs named in `window.GAME_BUILD`, and `queueAssets()` once both have arrived. The **photos** (a third of
+the image bytes, seen only in a dialogue) do not hold up the boot in either mode: `loadPhotos()` fetches them
+at the end of `create()`, after the loading screen is gone, and a dialogue opened before its photo has
+arrived shows none. When a load pass completes, `Assets.release()` revokes the `blob:` URLs and lets go of
+the packs. `src/game.js` sets the loader to 32 parallel downloads (Phaser's phone default is 6) and to load
+an image as an `<img>`, not an XHR.
+
+**The build.** `node tools/build_dist.js [--out <dir>] [--commit <sha>]` (from `gamev2/`; Node only, nothing
+to install) writes the published site to `dist/` at the repository root, which is not committed:
+
+| File | What it is |
+|---|---|
+| `pack/game.<hash>.js` | the scripts `index.html` lists, in its order, as one file |
+| `pack/data.<hash>.json` | `{ json: { path: parsed JSON }, images: { path: [offset, length] }, photos: { … } }` |
+| `pack/images.<hash>.bin` | every image the boot loads, end to end |
+| `pack/photos.<hash>.bin` | the NPC photos, fetched once the game is up (a new post changes only this pack and the data pack) |
+| `index.html` | the script list replaced by the bundle and `window.GAME_BUILD = { commit, data, images, photos }`; preload hints for the two packs the boot waits for |
+| everything else | a copy of `gamev2/` (no dotfiles, `node_modules` or `__pycache__`): the fallback files, `/studio/`, `/editor/` |
+
+`<hash>` is the first 12 hex digits of the file's SHA-256, so the same sources give the same names and bytes.
+`firebase.json` serves `/pack/**` as `immutable` for a year and `index.html` as `no-cache`: a returning
+player re-downloads only the page and whichever packs changed.
+
+**What goes in the packs is not listed anywhere.** The build runs the game's own `preload()` and
+`queuePhotos()` against a loader that only takes notes, with a recording `Assets`, and packs what they asked
+for. So:
+
+- a new sprite, map, manifest entry or photo is packed without touching the build;
+- a load that does not go through `Assets` **fails the build** (and `tools/tests/build.test.js`), as does a
+  file the game asks for that is not in `gamev2/`, or a loader method the recorder does not know (add it to
+  `recordLoads` in `tools/build_dist.js`);
+- the scripts become one file, so a file must not rely on being a script of its own (no `'use strict'` at the
+  top of a file).
+
+**The deploy** (`.github/workflows/firebase-hosting-gamev2.yml`) runs the build with the commit, publishes
+`dist/`, and is green only if the live `index.html` is the built one (it carries the commit) and a pack is
+served as `immutable`. A `firebase deploy` by hand publishes whatever is in `dist/`: run the build first.
+
+To play the built game: `node tools/build_dist.js`, then serve `dist/` (`python3 -m http.server 8001` from
+`dist/`). The browser regression runs against it the same way (`tools/browser/README.md`).

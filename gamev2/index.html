@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- build:head -->
     <!-- Phaser 4.2.0 (jsdelivr — cdnjs does not host 4.x yet). UMD build exposes the global `Phaser`. -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@4.2.0/dist/phaser.min.js" integrity="sha384-S2Fa3W1VpsLebg6TUrRVe7ARvEFhxxb28qjq4sGF1Y7f+jpcIxJts+GJYzC/fGxK" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <title>devhou.se game</title>
@@ -79,7 +80,11 @@
         };
     </script>
 
-    <!-- Game scripts, loaded in order with a cache-buster so edits always apply -->
+    <!-- build:scripts -->
+    <!-- Game scripts, loaded in order with a cache-buster so edits always apply.
+         The deploy build (tools/build_dist.js) puts its one bundle of this
+         list in place of everything between the two build:scripts markers,
+         and preload hints for its packs in place of build:head. -->
     <script>
         (function () {
             var v = Date.now();
@@ -94,6 +99,7 @@
                 'src/utils/Hints.js',
                 'src/utils/Glows.js',
                 'src/utils/JapaneseFont.js',
+                'src/utils/Assets.js',
                 'src/systems/Viewport.js',
                 'src/systems/UIScale.js',
                 'src/systems/RoomManager.js',
@@ -144,5 +150,6 @@
             });
         })();
     </script>
+    <!-- /build:scripts -->
 </body>
 </html>

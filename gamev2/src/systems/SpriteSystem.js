@@ -206,7 +206,8 @@ class SpriteSystem {
     }
 
     /**
-     * Load sprite assets dynamically based on metadata.
+     * Load sprite assets dynamically based on metadata (through Assets, like
+     * every load: the deploy build packs what this asks for).
      * The URLs carry no cache-buster (there are some 1500 files): firebase.json
      * serves every PNG `Cache-Control: no-cache`, so the browser re-checks each
      * one and a redrawn sprite is not drawn from its cache (issue #241).
@@ -219,7 +220,7 @@ class SpriteSystem {
 
         // Check if this sprite uses a sprite sheet
         if (isSpriteSheet) {
-            const spritePath = `assets/sprites/${spriteKey}.png`;
+            const spritePath = Assets.url(`assets/sprites/${spriteKey}.png`);
 
             // Configure sprite sheet frame dimensions
             const frameConfig = {
@@ -238,15 +239,14 @@ class SpriteSystem {
         // Multiple frames as separate images
         else if (frameCount > 1) {
             for (let i = 0; i < frameCount; i++) {
-                const framePath = `assets/sprites/${spriteKey}_frame_${i}.png`;
+                const framePath = Assets.url(`assets/sprites/${spriteKey}_frame_${i}.png`);
                 this.scene.load.image(`${spriteKey}_frame_${i}`, framePath);
             }
         }
         // Single frame sprite
         else {
-            const spritePath = `assets/sprites/${spriteKey}.png`;
             if (!this.scene.textures.exists(spriteKey)) {
-                this.scene.load.image(spriteKey, spritePath);
+                this.scene.load.image(spriteKey, Assets.url(`assets/sprites/${spriteKey}.png`));
             }
         }
     }

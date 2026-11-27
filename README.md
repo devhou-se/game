@@ -5,7 +5,8 @@ around Tokyo, Osaka, Hokkaido and the other places the devhouse trips went to, a
 those trips are the people you meet: every post puts its author somewhere in the world on its date, with
 something to say.
 
-It is built with [Phaser](https://phaser.io) and has no build step: the game is the files in `gamev2/`.
+It is built with [Phaser](https://phaser.io) and needs no build step to work on: the game is the files in
+`gamev2/`. Only the deploy builds anything: it packs those files into fewer, cacheable ones (below).
 
 ## Run it
 
@@ -41,6 +42,7 @@ Anything a player can see also has a browser regression: `gamev2/tools/browser/R
 | `.claude/skills/` | Agent skills for playing the game from a terminal and for generating or adjusting rooms |
 | `docs/workshop/` | Design notes written for individual issues |
 | `firebase.json`, `.firebaserc`, `.github/workflows/` | Hosting config and the two workflows below |
+| `dist/` | Not committed: the site the deploy publishes, written by `gamev2/tools/build_dist.js` |
 
 ## Read next
 
@@ -50,8 +52,11 @@ Anything a player can see also has a browser regression: `gamev2/tools/browser/R
 
 ## Pipelines
 
-- **Deploy GameV2 Canvas** (`.github/workflows/firebase-hosting-gamev2.yml`) publishes `gamev2/` to Firebase
-  Hosting on every push to `master` that touches it. The run is green only if the live site serves the commit.
+- **Deploy GameV2 Canvas** (`.github/workflows/firebase-hosting-gamev2.yml`) builds `gamev2/` into `dist/`
+  (`node tools/build_dist.js`: the scripts as one file, the game's JSON and images as three packs that
+  browsers cache for good) and publishes `dist/` to Firebase Hosting on every push to `master` that touches the
+  game. The run is green only if the live site serves the commit. A `firebase deploy` by hand needs the build
+  run first.
 - **Checks** (`.github/workflows/checks.yml`) runs the five checks above on pushes and pull requests. It does
   not gate the deploy.
 - Blog posts come from the separate [`devhou-se/www-jp`](https://github.com/devhou-se/www-jp) repository:

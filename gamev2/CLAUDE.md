@@ -19,7 +19,8 @@ Blog posts from the devhouse trips become dated NPCs you can walk up to and talk
 - **Engine**: Phaser 4.2.0 (loaded via CDN — jsdelivr, since cdnjs does not yet host 4.x)
 - **Languages**: JavaScript (ES6+ classes)
 - **Asset Generation**: Python 3 with PIL/Pillow
-- **No Build Process**: Direct HTML file execution
+- **No build to work on the game**: `index.html` runs the files as they are. The deploy builds what it
+  publishes (`tools/build_dist.js`; see Loading and the deploy build)
 
 ## Running the Game
 
@@ -85,7 +86,11 @@ by one agent per town at a time.
   rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth.
 - **Everything authored stays district-local.** The four Tokyo districts are stitched into one runtime
   room; coordinates in config, tools and docs are the district's own.
-- **New JS files** go in the script list in `index.html` (there is no build step).
+- **New JS files** go in the script list in `index.html`, between its `build:scripts` marks (the page loads
+  them one by one; the deploy build joins the same list into one file).
+- **Every image and JSON file the scene loads goes through `Assets`**: `load.image(key, Assets.url(path))`,
+  `load.json(key, Assets.json(path))` (`src/utils/Assets.js`). The deploy build packs exactly what those calls
+  ask for, and fails on a load that goes round them (see Loading and the deploy build).
 - **Input**: the whole game runs on WASD/arrows + SPACE/ENTER + SHIFT, with ESC as the single system key
   — no other bindings. Touch controls synthesize the same keys.
 - **Overlays** are registered in `src/systems/InputHandler.js`' overlay list, live at depth 2000+ (HUD
@@ -109,7 +114,7 @@ be found here.
 
 | File | Covers | Read before |
 |---|---|---|
-| `architecture.md` | File Structure (what each `src/` file is), Core Constants, Grid-Based Movement, Collision Detection, Sitting on furniture (`Seats.js`, `Seating.js`), sprite positioning | your first change; adding a source file; touching movement or collision; adding furniture to sit on |
+| `architecture.md` | File Structure (what each `src/` file is), Core Constants, Grid-Based Movement, Collision Detection, Sitting on furniture (`Seats.js`, `Seating.js`), sprite positioning, Loading and the deploy build (`Assets.js`, `tools/build_dist.js`, `dist/`, cache headers) | your first change; adding a source file; touching movement or collision; adding furniture to sit on; adding anything the game loads; the deploy |
 | `maps-and-rooms.md` | Room System: room definition, NPC dated `states`, **Default game date**, transporters, room fade, Boundary System | editing room data, NPC states, `?date=` / default-date logic |
 | `../tiled/README.md` | Editing maps in Tiled, prefabs, `stamp_prefab.py`, layers | any map or world edit (with the `generate-room` / `adjust-game` skills) |
 | `stitched-city.md` | Stitched cities: `TokyoCity`, `CityStitcher`, district coordinates, woods, depth, chunk streaming / performance, seams, `?stitch=0`, adding a district | anything that reads the current room, cell coordinates, tiles on screen, or Tokyo / Market / Palace / Park |

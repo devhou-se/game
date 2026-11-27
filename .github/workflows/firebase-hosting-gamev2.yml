@@ -18,12 +18,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # What is published is dist/, not gamev2/ (firebase.json): the scripts as one file and the game's JSON
+      # and images as three packs with content-hashed names. The built index.html carries the commit, so it
+      # differs for every commit and the VERIFY steps below can tell which one the live site serves.
+      - name: Build the published site
+        working-directory: gamev2
+        run: node tools/build_dist.js --commit "$GITHUB_SHA"
+
       # firebase-tools exit codes are unreliable (2026-07-02): 15.22.0 hard-
       # fails authenticating ('Premature close' fetching the OAuth token) and
       # 15.22.4 ('latest') authenticates fine but double-fires the release
       # call and exits non-zero AFTER the deploy has landed. So: deploy with
       # latest, allow failure, and let the VERIFY steps decide — the run is
-      # green iff the live site actually serves the commit's index.html.
+      # green iff the live site actually serves the commit's built index.html.
       - name: Deploy to Firebase
         id: deploy
         continue-on-error: true
@@ -43,7 +55,7 @@ jobs:
         run: |
           sleep 5
           curl -sf --max-time 20 https://game.devhou.se/index.html -o /tmp/live.html
-          cmp /tmp/live.html gamev2/index.html
+          cmp /tmp/live.html dist/index.html
 
       - name: Retry deploy (only if the live site doesn't match)
         if: steps.verify.outcome == 'failure'
@@ -62,5 +74,11 @@ jobs:
         run: |
           sleep 5
           curl -sf --max-time 20 https://game.devhou.se/index.html -o /tmp/live.html
-          cmp /tmp/live.html gamev2/index.html
+          cmp /tmp/live.html dist/index.html
           echo "live site matches the commit"
+          # the packs are cached for ever (firebase.json): fail if the header rule stopped matching them
+          pack=$(grep -o 'pack/data\.[0-9a-f]*\.json' dist/index.html | head -n 1)
+          test -n "$pack"
+          curl -sfI --max-time 20 "https://game.devhou.se/$pack" | tee /tmp/pack-headers.txt
+          grep -i '^cache-control:' /tmp/pack-headers.txt | grep -qi 'immutable'
+          echo "the packs are served as immutable"

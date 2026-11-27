@@ -99,6 +99,15 @@ Useful URL parameters: `?notitle=1&nointro=1`, `?date=YYYY-MM-DD`, `?tod=day|nig
 `node tools/play.js help` plays the game as text with no browser (walk, talk, ride, inspect, `lint`, `render`,
 `check`, `npcs`).
 
+There is no build to work on the game. What players get is a build of it (one script file and three packs
+of the JSON and images; "Loading and the deploy build" in `architecture.md`), which the deploy makes. To play
+that one, for a change to what the game loads or to the build itself:
+
+```bash
+node tools/build_dist.js            # writes ../dist (not committed)
+cd ../dist && python3 -m http.server 8001
+```
+
 ## 4. Checks before you push
 
 From `gamev2/`, all must pass (under Workshop: before you return your result, since Workshop does the push):
@@ -121,7 +130,9 @@ python3 tools/sync_cities.py --check    # config cities and devhouse.world agree
 - After changing what stands in a town: `python3 tools/check_distinct.py` must not report a city as worse;
   then `--update` the baseline in the same commit.
 - Anything a player can see: run the browser regression, `tools/browser/regress.js` (how:
-  `tools/browser/README.md`). It must print `20/20 checks passed` (the count grows; all must pass). On a slow
+  `tools/browser/README.md`). It must print `20/20 checks passed` (the count grows; all must pass).
+  A change to what the game loads, to `index.html`'s script list or to `tools/build_dist.js` runs it against
+  the built game too (a served `dist/`). On a slow
   machine that runs out of its 80 seconds, `REGRESS_TIME_SCALE=2` stretches the time limits and no assertion.
 - If Node cannot start in a sandbox, set `OPENSSL_CONF=/dev/null`.
 
@@ -179,7 +190,8 @@ attribution lines.
 - A change that touches camera, city stitching, the trips or date model, input routing, the save blob, the blog
   pipeline, or more than about six source files gets an independent review before it lands: a second agent
   that plays the change and reads the diff. Small fixes and art-only commits land on green checks.
-- Every push that touches `gamev2/**` deploys to game.devhou.se (workflow "Deploy GameV2 Canvas"). **Watch the
+- Every push that touches `gamev2/**` deploys to game.devhou.se (workflow "Deploy GameV2 Canvas"): the run
+  builds `dist/` with `tools/build_dist.js` and publishes that. **Watch the
   run** (`gh run list -R devhou-se/game --workflow "Deploy GameV2 Canvas" -L 3`) and say so if it fails.
 - A browser keeps what it has loaded. The game asks for its scripts, `config.json`, the Tiled maps and the
   manifests with a `?t=` cache-buster, and `firebase.json` serves every PNG with `Cache-Control: no-cache`, so
@@ -203,7 +215,9 @@ Under Workshop, "say so on the issue" below means say so in your summary.
 - **Your change broke something after landing**: fix forward with a new commit that says what it repairs and
   names the commit it follows. Revert only if the fix is not quick, and say so on the issue.
 - **A deploy failed**: read the run log before retrying; a root-only commit (nothing under `gamev2/`) does not
-  deploy and that is expected.
+  deploy and that is expected. A failed "Build the published site" step means the game asks for a file that is
+  not there, or loads one without going through `Assets` (`node tools/build_dist.js` says which). Do not run
+  `firebase deploy` by hand without running the build first: it publishes whatever is in `dist/`.
 - **A fix has landed and someone still sees the old thing**: compare what the live site serves with the commit
   before changing anything (`curl -s https://game.devhou.se/<path> | cmp - gamev2/<path>`). If they match, the
   browser is showing a cached file (section 7).

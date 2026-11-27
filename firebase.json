@@ -2,7 +2,7 @@
   "hosting": [
     {
       "site": "devhouse-game-canvas",
-      "public": "gamev2",
+      "public": "dist",
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -28,6 +28,10 @@
         {
           "source": "**/*.png",
           "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "/pack/**",
+          "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
         }
       ]
     }

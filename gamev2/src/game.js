@@ -20,6 +20,13 @@ const config = {
             gravity: { y: 0 },
             debug: false
         }
+    },
+    loader: {
+        // Phaser's desktop default; on Android it is 6, which queues the
+        // game's thousand-odd small files behind each other
+        maxParallelDownloads: 32,
+        // an <img> per image, not an XHR to a blob to an <img>
+        imageLoadType: 'HTMLImageElement'
     }
 };
 

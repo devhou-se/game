@@ -23,6 +23,11 @@ It needs `playwright-core` and a Chrome it can connect to; neither is vendored.
   heavy on the CPU.
 - Serve `gamev2/` on a port (`python3 -m http.server 8000`) and run
   `NODE_PATH=<dir with playwright-core>/node_modules PORT=8000 node tools/browser/regress.js`.
+- To check the game as it is deployed (one script bundle, the JSON and images in packs: "Loading and the
+  deploy build" in `docs/architecture.md`), build it and serve the build instead:
+  `node tools/build_dist.js`, then `python3 -m http.server 8001` from `../dist`, and `PORT=8001`. Do this for a
+  change to what the game loads, to `index.html`'s script list or to the build. `window.GAME_BUILD` is set
+  only in the built page.
 - `smoke.js` is the smallest example: it boots the game and fails on any error.
 - Screenshots go to `$SHOTS` (default: a folder in the system temp directory).
 

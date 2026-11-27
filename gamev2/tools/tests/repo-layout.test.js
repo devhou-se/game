@@ -55,8 +55,9 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             assert.ok(!fs.existsSync(path.join(ROOT, gone)), `${gone} is back`);
         }
         assert.ok(fs.existsSync(path.join(ROOT, 'AGENTS.md')), 'CLAUDE.md names AGENTS.md, so it exists');
-        // paths and tools that left with it (art-source/README.md and docs/workshop/ quote them on purpose)
-        const GODOT = /\bAssets\b|Scenes\/|\.tscn|\.tres|doport|render_godot|render_rect|parse_godot|PORT_SCENE|project\.godot|some-assets|TeamFolders/;
+        // paths and tools that left with it (art-source/README.md and docs/workshop/ quote them on purpose).
+        // Its Assets folder is matched as a path: `Assets` alone is the game's loader helper (src/utils/Assets.js, #244)
+        const GODOT = /\bAssets\/|\.\.\/Assets\b|Scenes\/|\.tscn|\.tres|doport|render_godot|render_rect|parse_godot|PORT_SCENE|project\.godot|some-assets|TeamFolders/;
         const dir = (rel, keep) => (fs.existsSync(path.join(ROOT, rel)) ? walk(path.join(ROOT, rel), keep).map((f) => `${rel}/${f}`) : []);
         const files = [
             ...dir('gamev2', (n) => /\.(py|js|md|html)$/.test(n)).filter((f) => f !== 'gamev2/tools/tests/repo-layout.test.js'),
@@ -69,9 +70,34 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             const hit = fs.readFileSync(path.join(ROOT, f), 'utf8').split('\n').findIndex((line) => GODOT.test(line));
             assert.ok(hit < 0, `${f}:${hit + 1} still points at the Godot project`);
         }
-        // the deploy publishes the game and nothing else
+        // the deploy publishes the game and nothing else: the build of gamev2/ that tools/build_dist.js writes (#244)
         const hosting = JSON.parse(fs.readFileSync(path.join(ROOT, 'firebase.json'), 'utf8')).hosting;
-        assert.deepStrictEqual(hosting.map((h) => [h.site, h.public]), [['devhouse-game-canvas', 'gamev2']]);
+        assert.deepStrictEqual(hosting.map((h) => [h.site, h.public]), [['devhouse-game-canvas', 'dist']]);
+    });
+
+    test('the deploy builds the game, publishes the build and caches the packs for ever (#244)', () => {
+        const [hosting] = JSON.parse(fs.readFileSync(path.join(ROOT, 'firebase.json'), 'utf8')).hosting;
+        // a pack's name is the hash of its bytes, so it never changes under a name; the page that names the
+        // packs is checked with the server on every visit. Everything else keeps Firebase's default.
+        const cache = (value) => [{ key: 'Cache-Control', value }];
+        // (the pages, fonts and PNGs are revalidated too: hosting.test.js and the #241 test hold those rules)
+        const packRules = hosting.headers.filter((h) => h.source === '/pack/**');
+        assert.deepStrictEqual(packRules, [{ source: '/pack/**', headers: cache('public, max-age=31536000, immutable') }]);
+        assert.ok(hosting.headers.some((h) => h.source === '/index.html' || h.source === '**/*.@(html|ttf)'), 'the page is revalidated');
+        // the build writes where firebase.json publishes from, and that folder is not committed
+        const tool = fs.readFileSync(path.join(GV2, 'tools', 'build_dist.js'), 'utf8');
+        assert.ok(tool.includes("path.join(ROOT, 'dist')"), 'build_dist.js writes ../dist by default');
+        assert.strictEqual(hosting.public, 'dist');
+        assert.ok(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').split('\n').includes('dist/'));
+
+        // the workflow builds before it deploys, and "is the live site this commit" compares the built page
+        const flow = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'firebase-hosting-gamev2.yml'), 'utf8');
+        const at = (text) => { const i = flow.indexOf(text); assert.ok(i >= 0, `the deploy workflow has no ${text}`); return i; };
+        assert.ok(at('actions/checkout@') < at('node tools/build_dist.js --commit "$GITHUB_SHA"'));
+        assert.ok(at('node tools/build_dist.js --commit "$GITHUB_SHA"') < at('FirebaseExtended/action-hosting-deploy@'));
+        assert.ok(!flow.includes('gamev2/index.html'), 'nothing compares the live site with the unbuilt page');
+        assert.strictEqual(flow.split('/tmp/live.html dist/index.html').length - 1, 2, 'both verify steps compare dist/index.html');
+        assert.ok(flow.includes('immutable'), 'the deploy checks the cache header of a pack');
     });
 
     test('a redrawn sprite is not drawn from the browser cache: the deploy has every PNG re-checked (#241)', () => {

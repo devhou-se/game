@@ -6,8 +6,8 @@ repository. `AGENTS.md` sends agents that read that file here.
 ## Project Overview
 
 The live game is the browser game in **`gamev2/`**, served at https://game.devhou.se. It is a 2D pixel-art
-grid game built with Phaser, with no build step, in which blog posts from the devhouse trips become dated NPCs
-you can walk up to and talk to.
+grid game built with Phaser, with no build step to work on it (only the deploy builds: see CI/CD Pipeline), in
+which blog posts from the devhouse trips become dated NPCs you can walk up to and talk to.
 
 **Read `gamev2/CLAUDE.md` before working on the game.** It is the real guide: architecture, the map and
 world tooling, the blog-to-NPC pipeline, fonts, phones, trips, and the checks to run.
@@ -94,9 +94,13 @@ Under Workshop (your instructions say so, and the checkout is on a `workshop/<n>
 
 ## CI/CD Pipeline
 
-- **Deploy GameV2 Canvas** (`.github/workflows/firebase-hosting-gamev2.yml`) deploys `gamev2/` to Firebase
+- **Deploy GameV2 Canvas** (`.github/workflows/firebase-hosting-gamev2.yml`) builds `gamev2/` into `dist/`
+  (`node tools/build_dist.js`; `dist/` is not committed) and deploys `dist/` to Firebase
   Hosting (project `devhouse-80936`, target `devhouse-game-canvas`) on every push to master that touches
   `gamev2/**` (or `firebase.json`, or the workflow itself), and can be run by hand. The run is green only if the live site serves the commit.
+  The build is one script file and three content-hashed packs of the game's JSON and images, which
+  `firebase.json` lets browsers cache for good; a `firebase deploy` by hand needs the build run first
+  ("Loading and the deploy build" in `gamev2/docs/architecture.md`).
   `firebase.json` serves the pages (`/`, `/studio/`, `/editor/` and every `.html`), the fonts (`.ttf`) and
   every PNG with `Cache-Control: no-cache`, so a returning browser checks for a new copy instead of using
   Firebase's one-hour default: a deploy's script list reaches it and redrawn art is not shown stale. A new page

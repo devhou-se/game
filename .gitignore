@@ -9,3 +9,6 @@ node_modules/
 # Firebase deploy cache, browser-tool output
 .firebase/
 .playwright-mcp/
+
+# the deploy build (gamev2/tools/build_dist.js); never committed
+dist/
