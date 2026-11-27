@@ -265,6 +265,19 @@ The game always renders 1280x960; everything below is about showing that on anyt
     that is a Text (the toast) is magnified to the same floor. Not in the cropped portrait view, and not
     wrapped or multi-line text, which cannot be re-flowed in place: keep paragraphs at 22px or more and
     single lines at 16px or more, and give a line room to grow about its origin.
+  - **A toast too long to be shown at that floor is broken into lines by the shop, not by UIScale** (#220).
+    A float is never wider than its room (`UIScale.floatRoom`: the view less its margins, and less the touch
+    controls down where they reach over the canvas), and the room wins over the floor
+    (`UIScale.floatScale`, `floatMost`). At 667x375 the room between the controls is 1063 canvas px, so one
+    line of more than 81 characters at the toast's 20px came out under 10 CSS px: the first-time energy
+    hint (83 characters) was 9.77. `Shop.toast` therefore asks `scene.uiScale.floatWidth(font, y)` for the
+    widest a line can be and still reach the floor, and breaks a longer message at its spaces into the
+    fewest, most even lines (`Shop.toastLines`) before it is drawn: the hint is two lines at 18 CSS px
+    there. `floatWidth` is `Infinity` where the floor asks nothing (the canvas is shown at half size or
+    more: a desktop, a tablet) or is not kept (the cropped portrait view), so a toast is one line there
+    as it always was, and 844x390, where the hint
+    already measured 11.9 CSS px on one line, is unchanged too. A float of several lines is not
+    magnified past the view's bottom margin. A new float Text with long lines should do as the toast does.
   - An overlay that already fills the canvas cannot be magnified; its text can use
     `scene.uiScale.textSize('14px')` instead (the map's labels do — up to 1.6x). The HUD bar shows
     through a dimmer and is taller where it is magnified, so anything such an overlay draws near the

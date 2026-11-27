@@ -264,4 +264,43 @@ module.exports = ({ test, assert, game, realConfig, shopWith }) => {
         assert.ok(Array.from(s.shop.notices).includes('★ achievement: Konbini Pilgrim'));
         assert.ok(s.shop.scene.achievementManager.stampProgress()[0].complete);
     });
+
+    test('energy: the hint is toasted in two lines between a small phone\'s touch controls, in one elsewhere, and toastText is what was said (#220)', () => {
+        const En = E(), U = game('UIScale'), T = game('Shop.TOAST');
+        // a Text as wide as its longest line in the toast's monospaced face
+        const text = (x, y, msg, style) => ({
+            x, y, text: msg, style, active: true,
+            get width() { return 2 * style.padding.x + Math.max(...this.text.split('\n').map((l) => l.length)) * parseFloat(style.fontSize) / 2; },
+            setText(t) { this.text = t; return this; }, setOrigin() { return this; }, setResolution() { return this; },
+            setScrollFactor() { return this; }, setDepth() { return this; }, destroy() { this.active = false; },
+        });
+        const shopIn = (uiScale) => Object.assign(game('Object.create(Shop.prototype)'), {
+            scene: { cameras: { main: { width: 1280, height: 960 } }, add: { text }, tweens: { add() {} }, uiScale },
+        });
+        // 667x375 with touch controls: the canvas is shown at 1 / 2.56, the controls reach over its bottom corners
+        const insets = game('Viewport.layout')(667, 375, true).insets;
+        const phone = shopIn({ floatWidth: (font, y) => U.floatWidth(font, 2.56, U.floatRoom(y, 1280, 960, insets), false) });
+        phone.toast(En.HINT);
+        const o = phone._toast;
+        assert.deepStrictEqual(o.text.split('\n'), ['getting peckish: food and drink from a', 'konbini or a vending machine fills the meter']);
+        assert.strictEqual(phone.toastText(), En.HINT);
+        assert.deepStrictEqual([o.x, o.y, o.style.fontSize, o.style.align, o.uiFloat], [640, 960 - T.above, '20px', 'center', true]);
+        // both lines can be shown at the floor in the room there is
+        assert.ok(o.width * U.MIN_TEXT * 2.56 / T.font <= U.floatRoom(o.y, 1280, 960, insets));
+        // the peckish line fits on one, and takes the hint's place
+        phone.toast(En.PECKISH);
+        assert.ok(!o.active);
+        assert.deepStrictEqual([phone._toast.text, phone.toastText()], [En.PECKISH, En.PECKISH]);
+        phone._toast.destroy();
+        assert.strictEqual(phone.toastText(), null);
+        // 844x390 (the controls are beside the canvas), a desktop, and a scene with no UIScale: one line
+        const wide = shopIn({ floatWidth: (font, y) => U.floatWidth(font, 1280 / 520, U.floatRoom(y, 1280, 960, game('Viewport.layout')(844, 390, true).insets), false) });
+        const desk = shopIn({ floatWidth: (font, y) => U.floatWidth(font, 1, U.floatRoom(y, 1280, 960, game('Viewport.layout')(1280, 960, false).insets), false) });
+        for (const shop of [wide, desk, shopIn(undefined)]) {
+            for (const msg of [En.HINT, En.PECKISH]) {
+                shop.toast(msg);
+                assert.deepStrictEqual([shop._toast.text, shop.toastText()], [msg, msg]);
+            }
+        }
+    });
 };
