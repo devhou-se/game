@@ -1,9 +1,10 @@
 # Browser regression (tools/browser)
 
 `regress.js` drives the real game in a headless Chrome: boot as a returning and a first-time player, walking and
-walls, a district seam (stitched and `?stitch=0`), a konbini in and out with its shop, NPC dialogue, the menu, Map
-and Time Travel, a shift at the job in a tower lobby, a train ride, a trip day and a lead-in day, a landscape and a portrait phone, night, and scenery
-fading over the player. It prints `ok` / `FAIL <name> <evidence>` per check and ends `N/N checks passed`
+walls, a district seam (stitched and `?stitch=0`), a konbini in and out with its shop, a Devhouse in by its street
+door and up its stair with the key held down (desktop and a landscape phone), NPC dialogue, the menu, Map and Time
+Travel, a shift at the job in a tower lobby, a train ride, a trip day and a lead-in day, a landscape and a portrait
+phone, night, and scenery fading over the player. It prints `ok` / `FAIL <name> <evidence>` per check and ends `N/N checks passed`
 (exit 1 on any failure; any console or page error is a failure). About 25 seconds.
 
 It lives in the repo so that a change which deliberately alters behaviour updates the assertion in the same commit.
@@ -23,4 +24,6 @@ It needs `playwright-core` and a Chrome it can connect to; neither is vendored.
 
 `open()` options: `{ touch, mobile, width, height }` for a phone, `{ now: '2027-02-20T12:00:00' }` to stub the clock,
 `{ fresh: true }` for a first-time player. `hold(page, key, doneFn)` holds a key until the game state says it took
-effect; a fixed short tap can be dropped when the frame rate dips.
+effect; a fixed short tap can be dropped when the frame rate dips. The one place a key is held for a fixed time is
+`devhouseStair`: a room change does not let go of a held key, and `hold()` lets go the moment its condition is true,
+which is the one moment a stair that bounces you between two floors cannot show.

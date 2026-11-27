@@ -62,7 +62,9 @@ crossings, traffic lights, track) counts neither for nor against a city.
   `_discount_stores`, `_stations`, `_izakaya` (the Izakaya interior plus its street door,
   lantern pair and two pinned ad boards in Market, see Shop, Food and Drink), `_houses` (every house
   interior and its door, see House interiors) and `_shrines` (the worship halls and the doors into
-  them, see "Shrine worship halls" in `landmarks-and-towns.md`), each run on its own. (The four that take
+  them, see "Shrine worship halls" in `landmarks-and-towns.md`) and `_devhouses` (the ten floors of
+  the two Devhouses, their stairs and their street doors in Park and Osaka, issue #69, see "The Devhouses of
+  Tokyo and Osaka" there), each run on its own. (The four that take
   town names - `_houses`, `_shrines`, `_konbinis`, `_discount_stores` - read their command line through
   `roomgen.cli`: `--help` / `-h` prints the tool's docstring and an unknown option is an error, exit 2,
   both before the config is loaded, so neither is taken for "no town named" and run for real, issue
@@ -221,3 +223,12 @@ blocks, the ice-cream chest, the magazine rack, the baskets and the mat. Fully p
 byte-identical; it writes each sprite's `spriteMetadata` and `tileNames` and `generate_konbinis.py`
 appends the keys to the palette as it places them. Sizes are whole cells and are what the plans in
 `generate_konbinis.py` assume - change the art, not the footprint. Needs Pillow.
+
+`tools/generate_devhouse_art.py [--preview out.png]` draws the 37 `devhouse-*` sprites (issue #69): the two
+buildings (`devhouse-tokyo_0_0` 5x8, `devhouse-osaka_0_0` 3x7; their prefabs are in `make_prefabs.py`), the
+stair tiles, the wet-room tile, gravel and stepping stone, the partitions, the locked door and the bamboo
+fence of the back wall, and the furniture and garden pieces the home kit did not have. Fully procedural, and
+drawn with rectangles and points only (no Pillow ellipse, polygon or slanted line, which move by a pixel
+between Pillow versions), so a re-run is byte-identical on any Pillow; it writes each sprite's
+`spriteMetadata` and `tileNames`, and `generate_devhouses.py` appends the keys to the palette as it places
+them. Sizes are whole cells and are what the floor grids assume. Needs Pillow.

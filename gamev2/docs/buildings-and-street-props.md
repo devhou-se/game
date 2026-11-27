@@ -27,6 +27,7 @@ apartment blocks get a lobby from the same tool (`--lobbies`; sixteen in the eig
 | `sapporo-office-brick` / `sapporo-office-glass` (Sapporo's own office blocks, `roof=1`: only the top row is walk-behind) | 4x7 / 5x6 | Sapporo (49,9) / (10,11) - each with a lobby |
 | `discount-store` (the "Don Quijote") | 5x8 | Market (46,22), Osaka (13,9) by the Dotonbori arch, Sapporo (16,11) - each with an interior |
 | `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Asahikawa's ramen alley, Sendai, Kanazawa, Toyama's old street, Fukuoka |
+| `devhouse-tokyo` (the trips' house in Minato, six storeys; `door=3`) / `devhouse-osaka` (the one on Dotonbori, four; `door=1`) | 5x8 / 3x7 | Park (10,9) under Tokyo Tower / Osaka (9,10) beside Don Takote - each opens onto its floors (issue #69, see "The Devhouses of Tokyo and Osaka"; art `tools/generate_devhouse_art.py`) |
 
 - **Art** is assembled by `tools/extract_city.py` from the GuttyKreum RPG Maker tile kits in `../Assets/GuttyKreum`
   (Osaka `GK_Osaka_C_2`, Dotonbori `GK_DB_B`, Japanese City `GK_JC_C_2`) - a kit holds a roof cap, one window
@@ -127,7 +128,9 @@ graded at night.
   two `snowfest-stall-*` (placed in Odori Park since stage 2, with `odori-lamp-post`, which the lamp rule lights; pink / cyan / yellow / green boards, warm windows, the cool white of the station's clock
   and name board). `susukino-neon-lanterns` and `ramen-alley-lanterns` are lanterns by name and are lit by the
   lamp rule, so they are not in it. **Only the station front and the two stalls are placed so far** (stages 1-2 of
-  the rebuild); the rest light nothing until a stage places them. A unit
+  the rebuild); the rest light nothing until a stage places them. Indoors the table also holds the temple hall's
+  lights and `devhouse-lantern_0_0`, the stone lantern in the Osaka Devhouse's roof garden (the one Devhouse floor
+  that is `lanternLight`, issue #69). A unit
   test (`tools/tests/glows-trams.test.js`) holds every glowing sprite, in the table or in `spriteMetadata`, to
   having art, spots on it and radii the cull allows; registering or placing one needs no change to it.
 - **Cost**: each spot is one Image of a single shared 96px halo texture (`glow-halo`, made the first time a room

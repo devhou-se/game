@@ -335,7 +335,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         // south wall have no cell to stand on at their doors), so Sendai's start at 2
         // (and 5..7 of Kanazawa are the roofs seen over Nagamachi's walls, in compounds nobody can walk into)
         assert.deepStrictEqual(byTown, {
-            Asahikawa: [1, 2, 3], Fukuoka: [1, 2, 3, 4], Kanazawa: [1, 2, 3, 4], Market: [1, 2, 3], Osaka: [1, 2, 3],
+            Asahikawa: [1, 2, 3], Fukuoka: [1, 2, 3, 4], Kanazawa: [1, 2, 3, 4], Market: [1, 2, 3], Osaka: [1, 2],
             Sendai: [2, 3, 4, 5],     // Sapporo has none: its last six townhouses went when Tanukikoji was built (#219, stage 3)
         });
         assert.deepStrictEqual(Object.keys(c.rooms).filter((k) => /^HouseSapporo/.test(k)), []);

@@ -48,7 +48,7 @@ GENERATORS = [
     'generate_airports', 'generate_sanfranbourne',
     'generate_konbinis', 'generate_discount_stores', 'generate_stations',
     'generate_izakaya', 'generate_houses', 'generate_shrines', 'generate_palace', 'generate_chikagai',
-    'generate_temple',
+    'generate_temple', 'generate_devhouses',
 ]
 GENERATORS += ['generate_kanazawa', 'generate_shirakawago', 'generate_toyama']     # Hokuriku (issue #68)
 # config `districts` from tools/districts.py: last, it reads where the landmarks of every room stand (issue #219)
@@ -73,6 +73,7 @@ ART_TOOLS += ['generate_hokuriku_art']
 ART_TOOLS += ['generate_sapporo_art']        # Sapporo's own art (issue #219)
 ART_TOOLS += ['generate_chikagai_art']       # the underground arcades and their street entrances
 ART_TOOLS += ['generate_konbini_art']        # the 7-Eleven interiors' kit (issue #221)
+ART_TOOLS += ['generate_devhouse_art']       # the two Devhouses and what stands in them (issue #69)
 # the art tools that also need a Japanese system font (generate_ads.find_font)
 FONT_TOOLS = ['generate_ads', 'extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS

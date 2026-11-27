@@ -519,11 +519,12 @@ class WorldModel {
         // A home's furniture that says a line when bumped (issue #208) is held to the till's
         // rule - some side of it can be walked to - and a home (config `house`) to the store's:
         // no floor its furniture has sealed off. A tower's lobby (config `lobby`, issue #216)
-        // is held to both, under the same two names; its reception desk and lifts (group
-        // `career`, issue #226) are furniture you bump as well, and are held to the first.
+        // and a floor of a Devhouse (config `devhouse`, issue #69) are held to both, under the
+        // same two names; a lobby's reception desk and lifts (group `career`, issue #226) are
+        // furniture you bump as well, and are held to the first.
         const flavour = !roomConfig.interior ? [] : ['flavour', 'career'].flatMap(group =>
             Interactions.all(room, roomConfig, { sizeOf: (key) => this.cells(key), venues: Shop.VENUES, group }));
-        const homely = roomConfig.house || roomConfig.lobby;
+        const homely = roomConfig.house || roomConfig.lobby || roomConfig.devhouse;
         const fromDoor = new Set();
         if (fixtures.length || flavour.length || homely) {
             const queue = room.transporters.map(t => [t.gridX, t.gridY]).filter(c => walkable(...c));

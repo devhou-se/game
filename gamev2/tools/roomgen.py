@@ -79,6 +79,12 @@ CHIKAGAI_PREFIX = 'Chikagai'    # rooms.Chikagai<Town>
 # temple door unless it leads into a room carrying the `temple` marker.
 TEMPLE_DOORS = {'shrine-walls_2_2': [(0, 0)]}
 TEMPLE_PREFIX = 'Temple'        # rooms.Temple<Host><n>
+# The trips' own two houses (issue #69, tools/generate_devhouses.py): each is one
+# sprite -> its street door, on the sprite's bottom row. Only the ground floor's
+# room carries a `door` in its marker: the stairs between floors lead into rooms
+# of the same prefix and are nobody's kept door.
+DEVHOUSE_DOORS = {'devhouse-tokyo_0_0': [(3, 7)], 'devhouse-osaka_0_0': [(1, 6)]}
+DEVHOUSE_PREFIX = 'Devhouse'    # rooms.Devhouse<City><n>F
 # Every kind of interior whose door a town generator neither builds nor knows
 # about, and save_config therefore keeps through a town rebuild (keep_house_doors):
 # room-key prefix -> (the key on the interior that says its generator owns it, its door sprites).
@@ -89,7 +95,8 @@ OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()})
                SHRINE_PREFIX: ('shrine', SHRINE_DOORS),
                PALACE_PREFIX: ('palace', PALACE_DOORS),
                CHIKAGAI_PREFIX: ('chikagai', CHIKAGAI_DOORS),
-               TEMPLE_PREFIX: ('temple', TEMPLE_DOORS)}
+               TEMPLE_PREFIX: ('temple', TEMPLE_DOORS),
+               DEVHOUSE_PREFIX: ('devhouse', DEVHOUSE_DOORS)}
 DOOR_LAYERS = ('Collidables', 'Over Floor')   # where a door sprite is laid (a tower's foot is on Over Floor)
 _house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior
 

@@ -84,6 +84,12 @@ const Interactions = {
         { kind: 'magazines', group: 'flavour', pattern: /^konbini-magazines/, footprint: true, say: 'this week\'s manga, thick as a brick and taped shut' },
         { kind: 'ice-cream', group: 'flavour', pattern: /^konbini-freezer/, footprint: true, say: 'ice cream, whatever the season. the lid is cold enough to stick to' },
         { kind: 'sundries', group: 'flavour', pattern: /^konbini-gondola-daily/, footprint: true, say: 'umbrellas, socks, phone chargers. everything you forgot to pack' },
+        // the Devhouses (issue #69). Not the tables or the chairs: you walk round them all day
+        { kind: 'locked-door', group: 'flavour', pattern: /^devhouse-door/, footprint: true, say: 'locked. whoever lives behind it is not one of us' },
+        { kind: 'bath', group: 'flavour', pattern: /^devhouse-bath/, footprint: true, say: 'the bath is full and hot. somebody has called it for after dinner' },
+        { kind: 'washer', group: 'flavour', pattern: /^devhouse-washer/, footprint: true, say: 'forty minutes left on the wash. it has said so for an hour' },
+        { kind: 'goldfish', group: 'flavour', pattern: /^devhouse-water-bowl/, footprint: true, say: 'two goldfish in a stone bowl. they have seen every stand-up this trip and have no notes' },
+        { kind: 'bunk', group: 'flavour', pattern: /^devhouse-bunk/, footprint: true, say: 'the top bunk was claimed on day one. the bottom one was what was left' },
     ],
 
     match(key, roomConfig, venues) {

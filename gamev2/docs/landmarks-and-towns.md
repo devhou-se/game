@@ -454,7 +454,7 @@ arguments it rebuilds every town that already has houses, and a re-run on an unc
 A town is given its houses by `.agent-queue/items/houses_apply.sh <Town> ...`, which runs the art tools,
 the generator, `config_to_tiled` and lint for the rooms touched, then the five checks.
 
-**Which towns have them** (21 houses; asserted by `houses.test.js`, "the roll-out"):
+**Which towns have them** (20 houses; asserted by `houses.test.js`, "the roll-out"):
 
 | Town | Houses | Stay sealed |
 |---|---|---|
@@ -462,7 +462,7 @@ the generator, `config_to_tiled` and lint for the rooms touched, then the five c
 | Fukuoka | `HouseFukuoka1..4` (two townhouses by the avenue, two machiya) | - |
 | Kanazawa (a district of Hokuriku) | `HouseKanazawa1..4`: the two machiya at the east end of Higashi Chaya's lane, the machiya downtown beside the whisky bar, the samurai's house in its court behind the Nagamachi gate | 5..7: the three roofs seen over Nagamachi's walls stand in compounds that are solid throughout - nobody can stand at their doors, so the numbers are kept and unused |
 | Market (a Tokyo district) | `HouseMarket1..3` (the shopfront townhouses on the south street) | the Izakaya's house keeps its own door |
-| Osaka | `HouseOsaka1..3` | - |
+| Osaka | `HouseOsaka1..2` (the two townhouses in Shinsekai) | - (the black townhouse's lot on Dotonbori is the Devhouse now, see "The Devhouses") |
 | Sapporo | none: its last six townhouses went when Tanukikoji was built (#219, stage 3) | - |
 | Sendai | `HouseSendai2..5` (the machiya row, one townhouse on the south lane) | 1: the courtyard house behind its earthen wall; 6..10: the row behind the south wall - nobody can stand at their doors, so the numbers are kept and unused |
 
@@ -854,3 +854,81 @@ be redone. `tools/generate_temple.py` is written for one hall; a second one is a
   wanders (two cells either way) but cannot close the doors: a wanderer never steps onto a transporter or a
   cell beside one (`NPCManager.atDoorway`), so the step under each leaf stays free, and wherever else he
   stands both leaves are still walked into from the street, stitched or not (`temple.test.js`).
+
+### The Devhouses of Tokyo and Osaka (issue #69)
+
+The two houses the trips stayed in, built from their real floor plans (the five images on the issue), a room
+per floor. `tools/generate_devhouses.py` owns all ten rooms and the two street doors; the art is the home kit
+plus `tools/generate_devhouse_art.py`.
+
+| | Tokyo | Osaka |
+|---|---|---|
+| Where | Minato: the paved square under Tokyo Tower's feet, in the district `Park` | Dotonbori, beside Don Takote, on the lot the black townhouse had |
+| Outside | `devhouse-tokyo` (5x8, six storeys), stamped at `Park` 10,9 | `devhouse-osaka` (3x7, four storeys), `b.stamp('devhouse-osaka', 9, 10)` in `generate_osaka.py` |
+| Street door | `Park` 13,16; you leave onto 13,17 | `Osaka` 10,16; you leave onto 10,17 |
+| Rooms | `DevhouseTokyo1F..6F` | `DevhouseOsaka1F..4F` |
+| Floors | 1F and 2F are not ours: a locked door and the stairs. 3F the kitchen, the long table and the sofa; 4F beds and a bunk; 5F the tatami room, the bath and the "Staff Only" door; 6F two beds, the small table, the washer | 1F the kitchen and the tall table; 2F two tatami bedrooms and the armchairs; 3F bedrooms and the washer; 4F a tatami room that opens onto a zen garden on the roof |
+
+- **`Park` is a ported map with no generator**, so the Tokyo building was stamped once
+  (`tools/stamp_prefab.py Park --add devhouse-tokyo 10 9`; a second run refuses, the cells are taken) and the
+  map is the source of truth for it. Osaka's is stamped, sealed, by its town generator on every rebuild. In
+  both hosts `generate_devhouses.py` finds the building by its sprite (exactly one), takes the collider off
+  the door cell (`roomgen.DEVHOUSE_DOORS`: the door's offset on each sprite) and wires a hidden transporter
+  onto it, replaced in place: a re-run leaves `config.json` byte-identical, and from two sealed houses it
+  builds the same world (`devhouse.test.js`).
+- **Names.** `Devhouse 3F · Tokyo`: the floor leads, so a phone's one-row bar, which has room only for the
+  part before the dot (`hudBrief`), says `Devhouse 3F` beside the countdown. `Places.of` follows doors to find
+  a room's town, and Tokyo's top floor is six stairs and a street door from its district: its hop limit is 8.
+- **A floor is data**: `FLOORS` in the generator is a grid of characters per floor (the legend is beside it:
+  `ONE` 1x1 pieces, `BIG` footprints with `+` for the rest of their cells, `TALL` pieces walked behind, `BACK`
+  the wall pieces), `ZONES` what the floor is laid with where it is not boards (tile in the wet rooms, tatami,
+  gravel), and each room is an `Interior` shell (`tools/interiors.py`) in a 20-wide room. Tokyo's 3F-6F are
+  14x8 floors; its 1F and 2F are the stair hall of those floors, two cells wide, **on the same room cells**,
+  so the stairs line up all the way down. Osaka's floors are 9x10. A `|` partition is drawn with
+  `devhouse-wall-v`, its last cell with `-wall-v-end`, and where a `-` wall meets it with `-wall-h`.
+  What each floor must hold (so many beds, chairs, the bath...) is counted from `config.json` by
+  `devhouse.test.js`; a grid may move a piece by a cell, the counts stay.
+- **Stairs are hidden exits laid with a stair tile**, the way a door mat is (`Interior.doorway(..., n=1, fy=,
+  inward=, mat='devhouse-stairs-up_0_0')`): `u` leads to the floor above, `d` to the one below. Every stair
+  cell has exactly one free cell directly north or south of it, its **arrival cell**. Taking `u` on floor N
+  puts you on the arrival cell of `d` on floor N+1, and that `d` puts you on the arrival cell of `u` on
+  floor N. An arrival cell is never an exit.
+- **The held-key rule.** A room change does not let go of a held key: after the fade the same step is taken
+  again from the cell you arrived on. So for every stair and street door, and every direction it can be
+  walked into from, that step repeated from the arrival cell at the other end must not land on another exit.
+  (With `u` and `d` side by side on one row, holding DOWN on Tokyo's ground-floor stair took you up and
+  straight back down for as long as you held it.) Tokyo's `d` is therefore inside the stair hall under a
+  `devhouse-stairwell`, walked into heading north, and its `u` on the front row, walked into heading south.
+  `devhouse.test.js` checks the rule from `config.json` for every exit, and `tools/browser/regress.js`
+  (`devhouse-stair-held`) holds a real key down through a flight in both houses. Move a stair only with
+  those two open.
+- **Door keeping.** Every floor carries `devhouse: {host, floor}` and only the ground floor also `door`:
+  `'Devhouse'` is a row of `roomgen.OWNED_DOORS`, so a rebuild of Osaka puts the street door back
+  (`keep_house_doors`), and because `owned_door` is asked about any transporter into a `Devhouse...` room,
+  a stair is not a kept door only because 2F and up have no `door` in their marker.
+- **The roof garden** (`DevhouseOsaka4F`, floor rows 0-3): raked gravel with stepping stones, a rock, shrubs,
+  a stone lantern, two seats, a side table and the goldfish bowl, behind a bamboo fence for a back wall. It
+  is the one floor with `lanternLight`: at night it dims and the stone lantern glows (its row in
+  `Glows.SPRITES`); the other nine are lit rooms.
+- **Something to bump** (five `flavour` rules in `Interactions.js`, each one dry line): the locked doors,
+  the bath, the washers, the goldfish bowl, the bunk. Not the chairs and not the tables: twenty chairs ring
+  tables you walk round, and a line on each would toast again and again. Nobody lives there and nothing is
+  sold; `interior` keeps the blog pipeline out, and the trips' `home` cells are where they were.
+- **Lint**: a Devhouse floor is held to the house rules (`house-sealed-floor`, `flavour-no-front`) through
+  its `devhouse` marker (`world-model.js`). The generator's shell asserts every free cell is reached from
+  the exits before it writes a room.
+- **Run order** (from `gamev2/`, Pillow needed; export `PYTHONDONTWRITEBYTECODE=1`, the tools' `.pyc`
+  files are tracked):
+
+  ```bash
+  python3 tools/generate_devhouse_art.py && python3 tools/make_prefabs.py
+  python3 tools/generate_osaka.py                 # stamps the Osaka building, sealed; keeps its door on a rebuild
+  python3 tools/generate_houses.py Osaka          # only when Osaka's houses changed
+  python3 tools/generate_devhouses.py
+  python3 tools/config_to_tiled.py Osaka Park <the ten rooms the generator lists>
+  node tools/play.js lint Park Osaka <the same>
+  python3 tools/make_worldmap.py                  # when an outside moved
+  ```
+
+  Everything here can be re-run at will. The `Park` stamp is not in the list: it was a one-off edit of a
+  ported room. After a rebase that lost it, stamp it again once, before `generate_devhouses.py`.

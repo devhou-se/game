@@ -213,6 +213,84 @@ async function profile(label, opts, body) {
     }
 }
 
+// ------------------------------------------------------------------ a Devhouse (issue #69)
+
+/**
+ * In by the street door of a Devhouse - the tallest one, or the other - with one real step: the room, the fade,
+ * the HUD name. Returns the house, for devhouseStair.
+ */
+async function devhouseEnter(page, tallest) {
+    const house = await page.evaluate((tallest) => {
+        const { s, rm } = __t, rooms = s.config.rooms;
+        // the ground floor of a Devhouse is the room whose marker carries the street door; its floors share its host
+        const floors = (k) => Object.values(rooms).filter(r => r.devhouse && r.devhouse.host === rooms[k].devhouse.host).length;
+        const grounds = Object.keys(rooms).filter(k => rooms[k].devhouse && rooms[k].devhouse.door && rm.rooms[k]).sort((a, b) => floors(b) - floors(a));
+        const key = tallest ? grounds[0] : grounds[grounds.length - 1];
+        if (!key || grounds.length < 2) return null;
+        const { host, door } = rooms[key].devhouse;
+        const at = rm.resolve(host, door[0], door[1]), n = rm.resolve(host, door[0], door[1] + 1);
+        const t = rm.rooms[at.room].transporters.find(t => t.gridX === at.x && t.gridY === at.y);
+        __t.place(n.room, n.x, n.y);
+        rm.__sw = 0; rm.__fade = 0;
+        return { key, floors: floors(key), outside: n.room, n: { x: n.x, y: n.y }, dx: at.x - n.x, dy: at.y - n.y, open: __t.open(n.x, n.y), quiet: __t.quiet(n.x, n.y, 1),
+            door: t && { room: t.targetRoom, x: t.targetX, y: t.targetY }, name: __t.roomName(key), brief: hudBrief(__t.roomName(key)) };
+    }, tallest);
+    need(house, 'no two Devhouses (config rooms with a `devhouse` marker that carries the street door)');
+    need(house.open && house.quiet && house.door && house.door.room === house.key, { noStreetDoorToWalkInto: house });
+    await idle(page);
+    await page.evaluate('__t.unsee()');
+    await step(page, house.dx, house.dy);
+    const st = await page.evaluate('({ pos: __t.pos(), hud: __t.hud(), sw: __t.rm.__sw, fade: __t.rm.__fade, seen: Object.assign({}, __t.seen), screen: __t.onScreen(), free: __t.free(__t.s.player.gridX, __t.s.player.gridY), portal: __t.portal(__t.s.player.gridX, __t.s.player.gridY) })');
+    need(st.pos.room === house.key && st.pos.x === house.door.x && st.pos.y === house.door.y, { notInside: st.pos, house });
+    need(st.sw === 1 && st.fade === 1 && st.seen.fade > 0 && st.seen.transition > 0, { noFadeThroughDoor: st });
+    // the floor is on the bar: the whole name where there is room, its short form ("Devhouse 1F") on a phone
+    need(st.hud.shown && st.hud.room.includes(house.brief) && /\dF$/.test(house.brief), { hud: st.hud.room, expected: house.brief });
+    need(st.free && !st.portal && st.screen.inView && st.screen.visible, { inside: st });
+    return house;
+}
+
+/**
+ * Up the ground floor's stair with the key HELD DOWN. A room change does not let go of a held key: after the
+ * fade the same step is taken again from the cell you arrive on, so a stair whose far end is beside the way back
+ * would take you up, straight back down, and so on for as long as you hold it. hold() cannot show that - it lets
+ * go the moment its condition is true - so this is the one place a key stays down for a fixed time: three
+ * flights' worth, the room read all the while.
+ */
+async function devhouseStair(page, house) {
+    need(house, 'needs devhouse-enter');
+    const stair = await page.evaluate((house) => {
+        const { s, rm } = __t, rooms = s.config.rooms;
+        if (rm.currentRoom !== house.key) __t.place(house.key, house.door.x, house.door.y);
+        // the way up: the ground floor's exit into another floor of the house, and the cells it is stepped onto from
+        const up = __t.room().transporters.find(t => rooms[t.targetRoom] && rooms[t.targetRoom].devhouse);
+        if (!up) return null;
+        const from = __t.DIRS.map(([dx, dy]) => ({ x: up.gridX - dx, y: up.gridY - dy, dx, dy })).filter(n => __t.open(n.x, n.y));
+        if (from.length === 1) __t.place(house.key, from[0].x, from[0].y);
+        rm.__sw = 0;
+        return { up: { x: up.gridX, y: up.gridY }, to: { room: up.targetRoom, x: up.targetX, y: up.targetY }, from, brief: hudBrief(__t.roomName(up.targetRoom)), pos: __t.pos() };
+    }, house);
+    need(stair && stair.from.length === 1, { noStairWithOneWayOntoIt: stair, house });
+    const [from] = stair.from;
+    await idle(page);
+    const key = KEYS[`${from.dx},${from.dy}`][0], rooms = [];
+    await page.keyboard.down(key);
+    try {
+        for (const t0 = Date.now(); Date.now() - t0 < 3000;) {
+            rooms.push(await page.evaluate('__t.rm.currentRoom'));
+            await page.waitForTimeout(100);
+        }
+    } finally { await page.keyboard.up(key); }
+    await idle(page);
+    const st = await page.evaluate('({ pos: __t.pos(), hud: __t.hud(), sw: __t.rm.__sw, screen: __t.onScreen(), portal: __t.portal(__t.s.player.gridX, __t.s.player.gridY) })');
+    // one flight, taken once: the ground floor, then the floor above, and never back
+    const runs = rooms.filter((r, i) => r !== rooms[i - 1]);
+    need(runs.length === 2 && runs[0] === house.key && runs[1] === stair.to.room && st.sw === 1, { bouncedOnTheStair: runs, switches: st.sw, key, stair });
+    need(st.pos.room === stair.to.room && st.pos.x === stair.to.x && st.pos.y === stair.to.y && !st.portal, { notAtTheHeadOfTheStair: st.pos, stair });
+    need(st.hud.room.includes(stair.brief) && stair.brief !== house.brief && st.screen.inView && st.screen.visible, { upstairs: st, expected: stair.brief });
+    await page.evaluate('__t.home()');
+    await idle(page);
+}
+
 // ------------------------------------------------------------------ the returning desktop player
 
 async function desktop(shared) {
@@ -466,6 +544,15 @@ async function desktop(shared) {
             need(st.free && !st.portal && st.screen.inView && st.screen.visible, { outside: st });
             need(st.hud.room.includes(await page.evaluate(d => __t.roomName(d), st.pos.district)), { hud: st.hud.room, district: st.pos.district });
         });
+
+        // 5b --------------------------------------------------------------- a Devhouse, by its street door and its stairs
+        let house = null;
+        await cleanly('devhouse-enter', async () => {
+            house = await devhouseEnter(page, true);
+            await page.screenshot({ path: path.join(SHOTS, 'regress_devhouse.png') });
+        });
+
+        await cleanly('devhouse-stair-held', async () => devhouseStair(page, house));
 
         // 5c --------------------------------------------------------------- a job in a tower: the desk, the lift, a shift
         await cleanly('career-shift', async () => {
@@ -1230,6 +1317,16 @@ async function phones() {
             await page.waitForTimeout(150);
             const out = await page.evaluate('({ pos: __t.pos(), overlays: __t.overlays(), controls: __t.s.touchControls.enabled })');
             need(out.overlays.length === 0 && out.pos.x === job.x && out.pos.y === job.y && out.controls, { afterTheShift: out, job });
+            need(errors.length === 0, { errors });
+        });
+
+        // the other Devhouse on the phone: the bar has no room for the whole name there, and says the floor
+        await check('phone-landscape-devhouse', async () => {
+            const house = await devhouseEnter(page, false);
+            const bar = await page.evaluate('__t.hud()');
+            need(bar.oneRow && bar.room.startsWith(house.brief), { floorNotOnTheBar: bar, expected: house.brief });
+            await page.screenshot({ path: path.join(SHOTS, 'regress_phone_devhouse.png') });
+            await devhouseStair(page, house);
             need(errors.length === 0, { errors });
         });
     });

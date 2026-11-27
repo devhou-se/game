@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 9,
- "nextobjectid": 80,
+ "nextobjectid": 82,
  "properties": [
   {
    "name": "gv2room",
@@ -34,7 +34,7 @@
    "name": "gamev2",
    "tilewidth": 64,
    "tileheight": 64,
-   "tilecount": 93,
+   "tilecount": 94,
    "columns": 0,
    "objectalignment": "topleft",
    "grid": {
@@ -600,6 +600,12 @@
      "image": "../assets/sprites/road-plain_0_0.png",
      "imagewidth": 64,
      "imageheight": 64
+    },
+    {
+     "id": 93,
+     "image": "../assets/sprites/devhouse-tokyo_0_0.png",
+     "imagewidth": 320,
+     "imageheight": 512
     }
    ],
    "wangsets": [
@@ -9157,6 +9163,16 @@
    "objects": [
     {
      "id": 1,
+     "gid": 94,
+     "name": "devhouse-tokyo_0_0",
+     "x": 640,
+     "y": 576,
+     "width": 320,
+     "height": 512,
+     "visible": true
+    },
+    {
+     "id": 2,
      "gid": 77,
      "name": "shrub-large-circle_0_0",
      "x": 1088,
@@ -9166,7 +9182,7 @@
      "visible": true
     },
     {
-     "id": 2,
+     "id": 3,
      "gid": 77,
      "name": "shrub-large-circle_0_0",
      "x": 1152,
@@ -9176,7 +9192,7 @@
      "visible": true
     },
     {
-     "id": 3,
+     "id": 4,
      "gid": 84,
      "name": "tree-1-base-shadow_0_0",
      "x": 1280,
@@ -9186,7 +9202,7 @@
      "visible": true
     },
     {
-     "id": 4,
+     "id": 5,
      "gid": 88,
      "name": "tree-3-base-shadow_0_0",
      "x": 1408,
@@ -9196,7 +9212,7 @@
      "visible": true
     },
     {
-     "id": 5,
+     "id": 6,
      "gid": 77,
      "name": "shrub-large-circle_0_0",
      "x": 1408,
@@ -9206,7 +9222,7 @@
      "visible": true
     },
     {
-     "id": 6,
+     "id": 7,
      "gid": 83,
      "name": "traffic-light_0_0",
      "x": 1536,
@@ -9216,7 +9232,7 @@
      "visible": true
     },
     {
-     "id": 7,
+     "id": 8,
      "gid": 75,
      "name": "seven-eleven_0_0",
      "x": 1536,
@@ -9226,7 +9242,7 @@
      "visible": true
     },
     {
-     "id": 8,
+     "id": 9,
      "gid": 86,
      "name": "tree-2-base-shadow_0_0",
      "x": 1600,
@@ -9236,7 +9252,7 @@
      "visible": true
     },
     {
-     "id": 9,
+     "id": 10,
      "gid": 83,
      "name": "traffic-light_0_0",
      "x": 1728,
@@ -9246,7 +9262,7 @@
      "visible": true
     },
     {
-     "id": 10,
+     "id": 11,
      "gid": 77,
      "name": "shrub-large-circle_0_0",
      "x": 1792,
@@ -9256,7 +9272,7 @@
      "visible": true
     },
     {
-     "id": 11,
+     "id": 12,
      "gid": 84,
      "name": "tree-1-base-shadow_0_0",
      "x": 1856,
@@ -9266,7 +9282,7 @@
      "visible": true
     },
     {
-     "id": 12,
+     "id": 13,
      "gid": 77,
      "name": "shrub-large-circle_0_0",
      "x": 1920,
@@ -9276,7 +9292,7 @@
      "visible": true
     },
     {
-     "id": 13,
+     "id": 14,
      "gid": 88,
      "name": "tree-3-base-shadow_0_0",
      "x": 1984,
@@ -9286,7 +9302,7 @@
      "visible": true
     },
     {
-     "id": 14,
+     "id": 15,
      "gid": 75,
      "name": "seven-eleven_0_0",
      "x": 2112,
@@ -9296,7 +9312,7 @@
      "visible": true
     },
     {
-     "id": 15,
+     "id": 16,
      "gid": 61,
      "name": "red-pagoda-small-base_0_0",
      "x": 2176,
@@ -9306,7 +9322,7 @@
      "visible": true
     },
     {
-     "id": 16,
+     "id": 17,
      "gid": 61,
      "name": "red-pagoda-small-base_0_0",
      "x": 2176,
@@ -9316,7 +9332,7 @@
      "visible": true
     },
     {
-     "id": 17,
+     "id": 18,
      "gid": 61,
      "name": "red-pagoda-small-base_0_0",
      "x": 2176,
@@ -9326,7 +9342,7 @@
      "visible": true
     },
     {
-     "id": 18,
+     "id": 19,
      "gid": 88,
      "name": "tree-3-base-shadow_0_0",
      "x": 2304,
@@ -9336,7 +9352,7 @@
      "visible": true
     },
     {
-     "id": 19,
+     "id": 20,
      "gid": 81,
      "name": "torii-red-feet_0_0",
      "x": 2368,
@@ -9346,7 +9362,7 @@
      "visible": true
     },
     {
-     "id": 20,
+     "id": 21,
      "gid": 77,
      "name": "shrub-large-circle_0_0",
      "x": 2432,
@@ -9356,7 +9372,7 @@
      "visible": true
     },
     {
-     "id": 21,
+     "id": 22,
      "gid": 84,
      "name": "tree-1-base-shadow_0_0",
      "x": 2432,
@@ -9366,7 +9382,7 @@
      "visible": true
     },
     {
-     "id": 22,
+     "id": 23,
      "gid": 81,
      "name": "torii-red-feet_0_0",
      "x": 2560,
@@ -9376,7 +9392,7 @@
      "visible": true
     },
     {
-     "id": 23,
+     "id": 24,
      "gid": 76,
      "name": "shrine-building_0_0",
      "x": 2560,
@@ -9386,7 +9402,7 @@
      "visible": true
     },
     {
-     "id": 24,
+     "id": 25,
      "gid": 86,
      "name": "tree-2-base-shadow_0_0",
      "x": 2624,
@@ -9396,7 +9412,7 @@
      "visible": true
     },
     {
-     "id": 25,
+     "id": 26,
      "gid": 77,
      "name": "shrub-large-circle_0_0",
      "x": 2816,
@@ -9406,7 +9422,7 @@
      "visible": true
     },
     {
-     "id": 26,
+     "id": 27,
      "gid": 1,
      "name": "bell-closed-red-baseless_0_0",
      "x": 2944,
@@ -9416,7 +9432,7 @@
      "visible": true
     },
     {
-     "id": 27,
+     "id": 28,
      "gid": 83,
      "name": "traffic-light_0_0",
      "x": 3392,
@@ -9426,7 +9442,7 @@
      "visible": true
     },
     {
-     "id": 28,
+     "id": 29,
      "gid": 72,
      "name": "road-mirror_0_0",
      "x": 3392,
@@ -9436,7 +9452,7 @@
      "visible": true
     },
     {
-     "id": 29,
+     "id": 30,
      "gid": 90,
      "name": "utility-pole_0_0",
      "x": 3392,
@@ -9446,7 +9462,7 @@
      "visible": true
     },
     {
-     "id": 30,
+     "id": 31,
      "gid": 83,
      "name": "traffic-light_0_0",
      "x": 3648,
@@ -9456,7 +9472,7 @@
      "visible": true
     },
     {
-     "id": 31,
+     "id": 32,
      "gid": 80,
      "name": "tokyo-tower-feet",
      "x": 512,
@@ -12121,7 +12137,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 32,
+     "id": 33,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 640,
@@ -12131,7 +12147,7 @@
      "visible": true
     },
     {
-     "id": 33,
+     "id": 34,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 704,
@@ -12141,7 +12157,7 @@
      "visible": true
     },
     {
-     "id": 34,
+     "id": 35,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 896,
@@ -12151,7 +12167,7 @@
      "visible": true
     },
     {
-     "id": 35,
+     "id": 36,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1024,
@@ -12161,7 +12177,7 @@
      "visible": true
     },
     {
-     "id": 36,
+     "id": 37,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1152,
@@ -12171,7 +12187,7 @@
      "visible": true
     },
     {
-     "id": 37,
+     "id": 38,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1216,
@@ -12181,7 +12197,7 @@
      "visible": true
     },
     {
-     "id": 38,
+     "id": 39,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1216,
@@ -12191,7 +12207,7 @@
      "visible": true
     },
     {
-     "id": 39,
+     "id": 40,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1280,
@@ -12201,7 +12217,7 @@
      "visible": true
     },
     {
-     "id": 40,
+     "id": 41,
      "gid": 85,
      "name": "tree-1-top_0_0",
      "x": 1280,
@@ -12211,7 +12227,7 @@
      "visible": true
     },
     {
-     "id": 41,
+     "id": 42,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1344,
@@ -12221,7 +12237,7 @@
      "visible": true
     },
     {
-     "id": 42,
+     "id": 43,
      "gid": 89,
      "name": "tree-3-top_0_0",
      "x": 1408,
@@ -12231,7 +12247,7 @@
      "visible": true
     },
     {
-     "id": 43,
+     "id": 44,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1536,
@@ -12241,7 +12257,7 @@
      "visible": true
     },
     {
-     "id": 44,
+     "id": 45,
      "gid": 87,
      "name": "tree-2-top_0_0",
      "x": 1600,
@@ -12251,7 +12267,7 @@
      "visible": true
     },
     {
-     "id": 45,
+     "id": 46,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1728,
@@ -12261,7 +12277,7 @@
      "visible": true
     },
     {
-     "id": 46,
+     "id": 47,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1792,
@@ -12271,7 +12287,7 @@
      "visible": true
     },
     {
-     "id": 47,
+     "id": 48,
      "gid": 85,
      "name": "tree-1-top_0_0",
      "x": 1856,
@@ -12281,7 +12297,7 @@
      "visible": true
     },
     {
-     "id": 48,
+     "id": 49,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 1920,
@@ -12291,7 +12307,7 @@
      "visible": true
     },
     {
-     "id": 49,
+     "id": 50,
      "gid": 89,
      "name": "tree-3-top_0_0",
      "x": 1984,
@@ -12301,7 +12317,7 @@
      "visible": true
     },
     {
-     "id": 50,
+     "id": 51,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 2048,
@@ -12311,7 +12327,7 @@
      "visible": true
     },
     {
-     "id": 51,
+     "id": 52,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 2048,
@@ -12321,7 +12337,7 @@
      "visible": true
     },
     {
-     "id": 52,
+     "id": 53,
      "gid": 62,
      "name": "red-pagoda-small-top_0_0",
      "x": 2176,
@@ -12331,7 +12347,7 @@
      "visible": true
     },
     {
-     "id": 53,
+     "id": 54,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 2176,
@@ -12341,7 +12357,7 @@
      "visible": true
     },
     {
-     "id": 54,
+     "id": 55,
      "gid": 62,
      "name": "red-pagoda-small-top_0_0",
      "x": 2176,
@@ -12351,7 +12367,7 @@
      "visible": true
     },
     {
-     "id": 55,
+     "id": 56,
      "gid": 62,
      "name": "red-pagoda-small-top_0_0",
      "x": 2176,
@@ -12361,7 +12377,7 @@
      "visible": true
     },
     {
-     "id": 56,
+     "id": 57,
      "gid": 82,
      "name": "torii-red-top_0_0",
      "x": 2304,
@@ -12371,7 +12387,7 @@
      "visible": true
     },
     {
-     "id": 57,
+     "id": 58,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 2304,
@@ -12381,7 +12397,7 @@
      "visible": true
     },
     {
-     "id": 58,
+     "id": 59,
      "gid": 89,
      "name": "tree-3-top_0_0",
      "x": 2304,
@@ -12391,7 +12407,7 @@
      "visible": true
     },
     {
-     "id": 59,
+     "id": 60,
      "gid": 85,
      "name": "tree-1-top_0_0",
      "x": 2432,
@@ -12401,7 +12417,7 @@
      "visible": true
     },
     {
-     "id": 60,
+     "id": 61,
      "gid": 82,
      "name": "torii-red-top_0_0",
      "x": 2496,
@@ -12411,7 +12427,7 @@
      "visible": true
     },
     {
-     "id": 61,
+     "id": 62,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 2496,
@@ -12421,7 +12437,7 @@
      "visible": true
     },
     {
-     "id": 62,
+     "id": 63,
      "gid": 63,
      "name": "red-shrine-top_0_0",
      "x": 2496,
@@ -12431,7 +12447,7 @@
      "visible": true
     },
     {
-     "id": 63,
+     "id": 64,
      "gid": 87,
      "name": "tree-2-top_0_0",
      "x": 2624,
@@ -12441,7 +12457,7 @@
      "visible": true
     },
     {
-     "id": 64,
+     "id": 65,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 2752,
@@ -12451,7 +12467,7 @@
      "visible": true
     },
     {
-     "id": 65,
+     "id": 66,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 2880,
@@ -12461,7 +12477,7 @@
      "visible": true
     },
     {
-     "id": 66,
+     "id": 67,
      "gid": 2,
      "name": "bell-red-top_0_0",
      "x": 2944,
@@ -12471,7 +12487,7 @@
      "visible": true
     },
     {
-     "id": 67,
+     "id": 68,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 320,
@@ -12481,7 +12497,7 @@
      "visible": true
     },
     {
-     "id": 68,
+     "id": 69,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 320,
@@ -12491,7 +12507,7 @@
      "visible": true
     },
     {
-     "id": 69,
+     "id": 70,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 3200,
@@ -12501,7 +12517,7 @@
      "visible": true
     },
     {
-     "id": 70,
+     "id": 71,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 3200,
@@ -12511,7 +12527,7 @@
      "visible": true
     },
     {
-     "id": 71,
+     "id": 72,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 384,
@@ -12521,7 +12537,7 @@
      "visible": true
     },
     {
-     "id": 72,
+     "id": 73,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 448,
@@ -12531,7 +12547,7 @@
      "visible": true
     },
     {
-     "id": 73,
+     "id": 74,
      "gid": 73,
      "name": "sakura-small_0_0",
      "x": 448,
@@ -13229,11 +13245,11 @@
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    30,
+    30,
+    30,
+    30,
+    30,
     0,
     0,
     0,
@@ -13288,11 +13304,11 @@
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    30,
+    30,
+    30,
+    30,
+    30,
     0,
     0,
     0,
@@ -13347,11 +13363,11 @@
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    30,
+    30,
+    30,
+    30,
+    30,
     0,
     0,
     0,
@@ -13406,11 +13422,11 @@
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    30,
+    30,
+    30,
+    30,
+    30,
     0,
     0,
     0,
@@ -13465,11 +13481,11 @@
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    30,
+    30,
+    30,
+    30,
+    30,
     0,
     0,
     0,
@@ -13524,11 +13540,11 @@
     0,
     0,
     0,
+    30,
+    30,
+    30,
     0,
-    0,
-    0,
-    0,
-    0,
+    30,
     0,
     0,
     0,
@@ -15196,7 +15212,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 74,
+     "id": 75,
      "name": "transporter",
      "point": true,
      "x": 1632.0,
@@ -15233,7 +15249,7 @@
      ]
     },
     {
-     "id": 75,
+     "id": 76,
      "name": "transporter",
      "point": true,
      "x": 2208.0,
@@ -15270,7 +15286,7 @@
      ]
     },
     {
-     "id": 76,
+     "id": 77,
      "name": "transporter",
      "point": true,
      "x": 2464.0,
@@ -15307,7 +15323,7 @@
      ]
     },
     {
-     "id": 77,
+     "id": 78,
      "name": "transporter",
      "point": true,
      "x": 2528.0,
@@ -15344,7 +15360,7 @@
      ]
     },
     {
-     "id": 78,
+     "id": 79,
      "name": "transporter",
      "point": true,
      "x": 2656.0,
@@ -15381,7 +15397,44 @@
      ]
     },
     {
-     "id": 79,
+     "id": 80,
+     "name": "transporter",
+     "point": true,
+     "x": 864.0,
+     "y": 1056.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "DevhouseTokyo1F"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 15
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 11
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 81,
      "name": "boundary",
      "x": 0,
      "y": 0,

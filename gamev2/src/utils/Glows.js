@@ -236,6 +236,11 @@ Glows.SPRITES = {
     'temple-in-kuden_0_0': [
         { x: 3.0, y: 1.8, r: 1.6, color: 0xffc060, a: 0.7 },
     ],
+    // the Osaka Devhouse's roof garden (issue #69, art: tools/generate_devhouse_art.py; the one
+    // floor that is `lanternLight`). 1x1: a stone lantern, its fire box lit
+    'devhouse-lantern_0_0': [
+        { x: 0.5, y: 0.45, r: 1.3, color: 0xffc878, a: 0.9 },
+    ],
 };
 
 if (typeof window !== 'undefined') window.Glows = Glows;

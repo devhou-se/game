@@ -124,6 +124,9 @@ PREFABS = {
     'highrise-blue':      building(5, 11, door=2),
     'highrise-glass':     building(4, 10, door=1, door_w=2),
     'highrise-apartment': building(5, 8, door=2),
+    # the trips' own two houses (issue #69): a room per floor behind each door, tools/generate_devhouses.py
+    'devhouse-tokyo':     building(5, 8, door=3),
+    'devhouse-osaka':     building(3, 7, door=1),
     'midrise-apartment':  building(5, 6, door=2),
     # the discount store ("Don Quijote"): generated parody sign over the facade
     'discount-store':     building(5, 8, door=2),

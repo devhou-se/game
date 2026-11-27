@@ -63,7 +63,8 @@ class Places {
         };
         const seen = new Set();
         let front = [room];
-        for (let hop = 0; hop < 4 && front.length; hop++) {
+        // 8: the top floor of the Tokyo Devhouse is six stairs and a street door from its district
+        for (let hop = 0; hop < 8 && front.length; hop++) {
             const next = [];
             for (const r of front) {
                 if (seen.has(r) || !config.rooms || !config.rooms[r]) continue;

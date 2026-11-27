@@ -167,13 +167,15 @@ ARCH = (21, 12)
 b.stamp('dotonbori-arch', *ARCH)
 b.stamp('lantern-red', 20, 10); b.stamp('lantern-red', 29, 10)
 
-# ---- west of the street: an office block, a townhouse and the discount store
-#      (ドン・タコーテ — Dotonbori's Don Quijote, by the arch and across from its
-#      ferris wheel). City buildings come from tools/extract_city.py; all feet
-#      on row 16-17 so the row reads as one street front. Doors sealed — no
-#      interiors — except the discount store's, which opens into DonTakoteOsaka
-#      (tools/generate_discount_stores.py builds the shop floor; issue #91). -----
-b.stamp('highrise-blue', 3, 7); b.stamp('house-black', 9, 11)
+# ---- west of the street: an office block, the trips' own four-storey house and
+#      the discount store (ドン・タコーテ — Dotonbori's Don Quijote, by the arch
+#      and across from its ferris wheel). City buildings come from
+#      tools/extract_city.py; all feet on row 16-17 so the row reads as one
+#      street front. Doors sealed here: the discount store's opens into
+#      DonTakoteOsaka (tools/generate_discount_stores.py builds the shop floor;
+#      issue #91), and the house's is opened, and kept through a rebuild of this
+#      room, by the tool that builds its floors (issue #69; roomgen.OWNED_DOORS). -----
+b.stamp('highrise-blue', 3, 7); b.stamp('devhouse-osaka', 9, 10)
 store_door = b.stamp('discount-store', 13, 9, seal=False)[0]
 b.stamp('lantern-red', 8, 16); b.stamp('lantern-red', 12, 16)
 b.stamp('vending-white', 18, 13); b.stamp('vending-red', 19, 13)
