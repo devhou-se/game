@@ -47,8 +47,10 @@ Run from gamev2/ (the whole region):
     python3 tools/generate_shirakawago.py
     python3 tools/generate_toyama.py
     python3 tools/generate_konbinis.py Kanazawa   # KonbiniKanazawa1 + its door
+    python3 tools/generate_houses.py Kanazawa     # HouseKanazawa1..4 + their doors (kept through a rebuild by roomgen)
     python3 tools/generate_stations.py            # KanazawaStation + registry
-    python3 tools/config_to_tiled.py Kanazawa Shirakawago Toyama KanazawaStation KonbiniKanazawa1
+    python3 tools/config_to_tiled.py Kanazawa Shirakawago Toyama KanazawaStation KonbiniKanazawa1 \
+        HouseKanazawa1 HouseKanazawa2 HouseKanazawa3 HouseKanazawa4
     python3 tools/sync_cities.py                  # after placing the three maps in ../devhouse.world
     node tools/play.js lint Kanazawa Shirakawago Toyama HokurikuCity
     python3 tools/make_worldmap.py

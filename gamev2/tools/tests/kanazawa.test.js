@@ -222,12 +222,18 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
                 }
             }
         }
-        // buildings are solid over their whole footprint, roof rows included
+        // buildings are solid over their whole footprint, roof rows included. The one cell of a building you
+        // can step onto is the doorway of a machiya that is a house (#208): the middle of its front row,
+        // a hidden door into a House room of that district, with the street in front of it
+        const doorway = (room, key, x, y, w, h, cx, cy) => /^machiya/.test(key) && cx === x + (w - 1) / 2 && cy === y + h - 1 &&
+            walkable(room, cx, cy + 1) && cfg.rooms[room].transporters.some((t) => t.hidden && t.gridX === cx && t.gridY === cy &&
+                ((cfg.rooms[t.targetRoom] || {}).house || {}).host === room);
         for (const room of DISTRICTS) {
             for (const key of Object.keys(sprites[room]).filter((k) => /^(highrise|midrise|machiya|kanazawa-chaya|kanazawa-whisky|shirakawa-gassho|toyama-glass|toyama-ramen)/.test(k))) {
                 const [w, h] = cells(key);
                 for (const [x, y] of sprites[room][key]) {
                     for (let cx = x; cx < x + w; cx++) for (let cy = y; cy < y + h; cy++) {
+                        if (doorway(room, key, x, y, w, h, cx, cy)) continue;
                         assert.ok(!walkable(room, cx, cy), `${room} ${key}: (${cx},${cy}) can be walked onto, behind the building`);
                     }
                 }

@@ -175,7 +175,10 @@ station: the owner's rule is that small places are walked to from their town, no
   cones). Between the gate and the avenue, **Kenrokuen**: the pond with the two-legged **Kotoji lantern** on
   its bank. South-west, **Nagamachi**: an earth lane between earthen walls (Sendai's wall, gate and pine
   sprites), the canal along it, a flat stone bridge (`kanazawa-canal-bridge`, `depthBias: -200`) to a samurai
-  gate and a house in its court. South-east, a shrine in a cedar wood (Teramachi, post 707).
+  gate and a house in its court. South-east, a shrine in a cedar wood (Teramachi, post 707). Four of its
+  houses can be walked into (`HouseKanazawa1..4`, `generate_houses.py Kanazawa`, see House interiors): the
+  two machiya on Higashi Chaya's lane, the machiya downtown and the samurai's house; the town generator
+  knows nothing of them (`roomgen.save_config` keeps their doors through a rebuild).
 - **Shirakawa-go** (`tools/generate_shirakawago.py`): the road in ends at a bus bay under a bear warning; the
   **suspension footbridge** (`shirakawa-bridge`, 8x2: the lower row is the deck, flat with `depthBias: -200`,
   the upper row its far cable) is the only way over the river - the deck row's six water cells are the only
@@ -198,9 +201,10 @@ station: the owner's rule is that small places are walked to from their town, no
   west road in from Kanazawa and on Toyama's south road in from Shirakawa-go (`Places.arrival`: a town
   with no station is entered from the side nearest a station).
 - **Build order**: `generate_hokuriku_art.py`, `make_prefabs.py`, `generate_kanazawa.py`,
-  `generate_shirakawago.py`, `generate_toyama.py`, `generate_konbinis.py Kanazawa`, `generate_stations.py`,
+  `generate_shirakawago.py`, `generate_toyama.py`, `generate_konbinis.py Kanazawa`, `generate_houses.py Kanazawa`,
+  `generate_stations.py`,
   the three maps in `../devhouse.world` (as `hokuriku.AT` places them), `config cities.HokurikuCity`,
-  `sync_cities.py`, `config_to_tiled.py Kanazawa Shirakawago Toyama KanazawaStation KonbiniKanazawa1`,
+  `sync_cities.py`, `config_to_tiled.py Kanazawa Shirakawago Toyama KanazawaStation KonbiniKanazawa1 HouseKanazawa1..4`,
   `play.js lint` for those and `HokurikuCity`, `make_worldmap.py`. In `devhouse.world` the region stands
   north-west of Tokyo and west of Sapporo (its box is x -112..-2, y -100..-34 in world
   cells), east of Fukuoka's east edge - Fukuoka stays the westernmost map - and across Sendai's band of latitude.
@@ -424,22 +428,24 @@ arguments it rebuilds every town that already has houses, and a re-run on an unc
 A town is given its houses by `.agent-queue/items/houses_apply.sh <Town> ...`, which runs the art tools,
 the generator, `config_to_tiled` and lint for the rooms touched, then the five checks.
 
-**Which towns have them** (23 houses; asserted by `houses.test.js`, "the roll-out"):
+**Which towns have them** (21 houses; asserted by `houses.test.js`, "the roll-out"):
 
 | Town | Houses | Stay sealed |
 |---|---|---|
 | Asahikawa | `HouseAsahikawa1..3` (cottages) | ramen alley's three machiya (shops) |
 | Fukuoka | `HouseFukuoka1..4` (two townhouses by the avenue, two machiya) | - |
+| Kanazawa (a district of Hokuriku) | `HouseKanazawa1..4`: the two machiya at the east end of Higashi Chaya's lane, the machiya downtown beside the whisky bar, the samurai's house in its court behind the Nagamachi gate | 5..7: the three roofs seen over Nagamachi's walls stand in compounds that are solid throughout - nobody can stand at their doors, so the numbers are kept and unused |
 | Market (a Tokyo district) | `HouseMarket1..3` (the shopfront townhouses on the south street) | the Izakaya's house keeps its own door |
 | Osaka | `HouseOsaka1..3` | - |
-| Sapporo | `HouseSapporo1..6` (the south lane; the north-east one went with the rebuild of the north, #219, and the rest moved up a number) | - |
+| Sapporo | none: its last six townhouses went when Tanukikoji was built (#219, stage 3) | - |
 | Sendai | `HouseSendai2..5` (the machiya row, one townhouse on the south lane) | 1: the courtyard house behind its earthen wall; 6..10: the row behind the south wall - nobody can stand at their doors, so the numbers are kept and unused |
 
-Palace, Park and Tokyo have no
-houses. A door in a district of the stitched city is like a konbini's there: the transporter and the way
+Palace, Park, Tokyo and Shirakawa-go have no
+houses; Toyama's old street has not been given its own yet. A door in a district of a stitched city (Market
+in Tokyo, Kanazawa in Hokuriku) is like a konbini's there: the transporter and the way
 back are in the district's own cells (`RoomManager.resolve`), with stitching on or `?stitch=0`.
-A machiya's doorway is the one cell of its footprint you can step onto (`sendai.test.js` allows exactly
-that cell, for a machiya that is a house).
+A machiya's doorway is the one cell of its footprint you can step onto (`sendai.test.js` and
+`kanazawa.test.js` allow exactly that cell, for a machiya that is a house).
 
 - **What is a house** (`roomgen.HOUSE_DOORS`): the three townhouse prefabs `house-blue` / `-red` / `-black`,
   found by their ground floor (`building-entrance-1/2/3`, door in the middle), and the machiya

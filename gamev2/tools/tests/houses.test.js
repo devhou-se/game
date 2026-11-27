@@ -325,15 +325,16 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         });
     });
 
-    test('the roll-out: houses in Asahikawa, Fukuoka, Market, Osaka and Sendai, and nowhere else (#208)', () => {
+    test('the roll-out: houses in Asahikawa, Fukuoka, Kanazawa, Market, Osaka and Sendai, and nowhere else (#208)', () => {
         const c = cfg(), name = (t) => c.tilePalette[t];
         const byTown = {};
         for (const [key, room] of houses(c)) (byTown[room.house.host] = byTown[room.house.host] || []).push(Number(key.match(/\d+$/)[0]));
         for (const list of Object.values(byTown)) list.sort((a, b) => a - b);
         // a skipped house keeps its number: Sendai 1 stands inside a walled compound (and 6..10 along the
         // south wall have no cell to stand on at their doors), so Sendai's start at 2
+        // (and 5..7 of Kanazawa are the roofs seen over Nagamachi's walls, in compounds nobody can walk into)
         assert.deepStrictEqual(byTown, {
-            Asahikawa: [1, 2, 3], Fukuoka: [1, 2, 3, 4], Market: [1, 2, 3], Osaka: [1, 2, 3],
+            Asahikawa: [1, 2, 3], Fukuoka: [1, 2, 3, 4], Kanazawa: [1, 2, 3, 4], Market: [1, 2, 3], Osaka: [1, 2, 3],
             Sendai: [2, 3, 4, 5],     // Sapporo has none: its last six townhouses went when Tanukikoji was built (#219, stage 3)
         });
         assert.deepStrictEqual(Object.keys(c.rooms).filter((k) => /^HouseSapporo/.test(k)), []);
@@ -360,6 +361,56 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         const sendai = c.rooms.Sendai, shut = tiles(sendai, 'Colliders');
         assert.ok('40,31' in shut && '40,32' in shut && !sendai.transporters.some((d) => d.gridX === 40 && d.gridY === 31), 'HouseSendai1 stays sealed');
         assert.ok(!c.rooms.HouseSendai1);
+        // the three houses behind Nagamachi's walls in Kanazawa: each door is shut, and so is the ground in front of it
+        const kanazawa = c.rooms.Kanazawa, walled = tiles(kanazawa, 'Colliders');
+        for (const [n, x, y] of [[5, 5, 50], [6, 11, 50], [7, 31, 50]]) {
+            assert.ok(name(tiles(kanazawa, 'Collidables')[`${x - 1},${y}`]) in FRONTS, `Kanazawa (${x},${y}) is not a house front`);
+            assert.ok(`${x},${y}` in walled && `${x},${y + 1}` in walled && !kanazawa.transporters.some((d) => d.gridX === x && d.gridY === y),
+                `HouseKanazawa${n} stays sealed`);
+            assert.ok(!c.rooms[`HouseKanazawa${n}`]);
+        }
+    });
+
+    test('Kanazawa\'s four houses open inside the stitched Hokuriku city and with ?stitch=0, and show all four layouts (#208)', () => {
+        const c = cfg(), name = (t) => c.tilePalette[t];
+        const town = c.rooms.Kanazawa, sprites = tiles(town, 'Collidables');
+        const mine = houses(c).filter(([, r]) => r.house.host === 'Kanazawa').sort(([a], [b]) => (a < b ? -1 : 1));
+        // the two machiya on Higashi Chaya's lane, the machiya downtown, the samurai's house in its court behind the gate
+        assert.deepStrictEqual(mine.map(([key, r]) => [key, ...r.house.door, r.house.layout]), [
+            ['HouseKanazawa1', 23, 18, 'kotatsu'], ['HouseKanazawa2', 28, 18, 'futon'],
+            ['HouseKanazawa3', 5, 28, 'flat'], ['HouseKanazawa4', 25, 49, 'hearth'],
+        ]);
+        assert.deepStrictEqual(mine.map(([, r]) => { const [x, y] = r.house.door; return name(sprites[`${x - 2},${y - 4}`]) || name(sprites[`${x - 1},${y}`]); }),
+            ['machiya-red_0_0', 'machiya-blue_0_0', 'machiya-black_0_0', 'building-entrance-2_0_0']);
+        // the doors that were there are still there, and the houses' are the only new ones
+        const others = town.transporters.filter((t) => !/^House/.test(t.targetRoom)).map((t) => t.targetRoom);
+        assert.deepStrictEqual([...new Set(others)].sort(), ['KanazawaStation', 'KonbiniKanazawa1', 'Shirakawago']);
+        assert.strictEqual(town.transporters.length, others.length + 4);
+        const station = town.transporters.find((t) => t.targetRoom === 'KanazawaStation');
+        for (const stitch of [true, false]) {
+            const { world } = worldWith(stitch);
+            const rm = world.roomManager, tag = stitch ? 'stitched' : '?stitch=0';
+            world.enter('Kanazawa', station.gridX, station.gridY + 1);
+            for (const [key, room] of mine) {
+                // on foot from the station house to the cell in front of the door, through no other door
+                const [dx, dy] = room.house.door, front = rm.resolve('Kanazawa', dx, dy + 1);
+                const route = world.path(front.x, front.y);
+                assert.ok(route, `${tag}: no way on foot to ${key}'s door`);
+                for (const dir of route) {
+                    const r = world.step(dir);
+                    assert.ok(r.moved && !r.transported, `${tag}: the walk to ${key} was stopped`);
+                }
+                assert.strictEqual(world.here().city, stitch ? 'HokurikuCity' : null, tag);
+                const inn = world.step('n');
+                assert.strictEqual(inn.transported && inn.transported.to, key, `${tag}: ${key}'s door does not open`);
+                assert.strictEqual(world.here().city, null, `${tag}: a house is its own room`);
+                // out by the mat: back in the district's own cell, in the city again when it is stitched
+                const out = world.step('s');
+                assert.ok(out.transported, `${tag}: ${key}: the mat is the way out`);
+                const here = world.here();
+                assert.deepStrictEqual([here.room, here.x, here.y, here.city], ['Kanazawa', dx, dy + 1, stitch ? 'HokurikuCity' : null], `${tag}: ${key}`);
+            }
+        }
     });
 
     test('what is not a house stays sealed: ramen alley, the shrine, the station house keeps its own door (#208)', () => {
