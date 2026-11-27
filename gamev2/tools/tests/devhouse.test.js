@@ -34,7 +34,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, worldWith, requi
     /**
      * THE HELD-KEY RULE. A room change does not let go of a held key, so the step that took you through an exit
      * is taken again from the cell you arrive on. Every exit of `rooms`, entered in each direction it can be
-     * entered from, whose repeated step lands on another exit: ["DevhouseTokyo1F 16,12 s -> DevhouseTokyo2F 15,12"].
+     * entered from, whose repeated step lands on another exit: ["DevhouseTokyo1F 14,11 s -> DevhouseTokyo2F 13,11"].
      */
     const bounces = (c, rooms) => {
         const out = [], entered = {};
@@ -135,12 +135,12 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, worldWith, requi
             }
         }
         // Tokyo: the ground floor and the one above are the stair hall of the floors over them, on the same room
-        // cells - a stair up at 16,12 and a stair down at 15,10 on every floor that has one, 1F's mat at 15,12
+        // cells - a stair up at 14,11 and a stair down at 13,9 on every floor that has one, 1F's mat at 13,11
         for (const n of floors('Tokyo')) {
             const cells = (m) => way(c, 'Tokyo', n, m).map((t) => [t.gridX, t.gridY, t.targetX, t.targetY]);
-            if (n < 6) assert.deepStrictEqual(cells(n + 1), [[16, 12, 15, 11]], `Tokyo ${n}F up`);
-            assert.deepStrictEqual(cells(n - 1), n === 1 ? [[15, 12, 13, 17]] : [[15, 10, 16, 11]], `Tokyo ${n}F down`);
-            if (n > 1) assert.deepStrictEqual(at(c.rooms[key('Tokyo', n)], c, 'devhouse-stairwell'), [[15, 9]], 'the stairwell over the way down');
+            if (n < 6) assert.deepStrictEqual(cells(n + 1), [[14, 11, 13, 10]], `Tokyo ${n}F up`);
+            assert.deepStrictEqual(cells(n - 1), n === 1 ? [[13, 11, 13, 17]] : [[13, 9, 14, 10]], `Tokyo ${n}F down`);
+            if (n > 1) assert.deepStrictEqual(at(c.rooms[key('Tokyo', n)], c, 'devhouse-stairwell'), [[13, 8]], 'the stairwell over the way down');
         }
         assert.deepStrictEqual(c.rooms.DevhouseTokyo1F.transporters.length + c.rooms.DevhouseTokyo2F.transporters.length, 4);
         assert.deepStrictEqual(Object.entries(HOUSES).map(([city]) => way(c, city, HOUSES[city].floors, HOUSES[city].floors + 1)), [[], []], 'no stair up from the top');
@@ -157,10 +157,10 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, worldWith, requi
         // holding DOWN on 1F's stair took you up to 2F, straight back down, and so on for ever
         const draft = cfg(), two = draft.rooms.DevhouseTokyo2F, down = two.transporters.find((t) => t.targetRoom === 'DevhouseTokyo1F');
         const up = draft.rooms.DevhouseTokyo1F.transporters.find((t) => t.targetRoom === 'DevhouseTokyo2F');
-        [down.gridX, down.gridY] = [15, 12];
-        tiles(two, 'Floor')['15,12'] = tiles(two, 'Floor')['16,12'];
-        [up.targetX, up.targetY] = [15, 11];
-        assert.deepStrictEqual(bounces(draft, exitsOf(draft)).out, ['DevhouseTokyo1F 16,12 s -> DevhouseTokyo2F 15,12', 'DevhouseTokyo2F 15,12 s -> DevhouseTokyo1F 16,12']);
+        [down.gridX, down.gridY] = [13, 11];
+        tiles(two, 'Floor')['13,11'] = tiles(two, 'Floor')['14,11'];
+        [up.targetX, up.targetY] = [13, 10];
+        assert.deepStrictEqual(bounces(draft, exitsOf(draft)).out, ['DevhouseTokyo1F 14,11 s -> DevhouseTokyo2F 13,11', 'DevhouseTokyo2F 13,11 s -> DevhouseTokyo1F 14,11']);
         // the generator says so where the stairs are drawn
         assert.ok(/THE HELD-KEY RULE/.test(tool('generate_devhouses.py')) && /devhouse\.test\.js/.test(tool('generate_devhouses.py')));
     });
@@ -267,13 +267,31 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, worldWith, requi
         }
         const rooms2F = at(c.rooms.DevhouseOsaka2F, c, 'home-bed').sort((a, b) => a[1] - b[1]);
         assert.ok(at(c.rooms.DevhouseOsaka2F, c, 'devhouse-wall-h').some(([, y]) => y > rooms2F[0][1] && y < rooms2F[1][1]), 'a wall between Osaka 2F\'s two bedrooms');
-        assert.deepStrictEqual(at(c.rooms.DevhouseTokyo6F, c, 'home-bed').sort((a, b) => a[1] - b[1]), [[3, 4], [3, 6]]);
+        assert.deepStrictEqual(at(c.rooms.DevhouseTokyo6F, c, 'home-bed').sort((a, b) => a[1] - b[1]), [[5, 4], [5, 6]]);
         // the wet rooms are tiled: the bath, the showers and the toilets stand on tile
         for (const k of ALL) {
             for (const sprite of ['devhouse-bath', 'devhouse-shower', 'devhouse-toilet']) {
                 for (const cell of at(c.rooms[k], c, sprite)) assert.strictEqual(floorAt(k, cell), 'devhouse-tile_0_0', `${k} ${sprite} ${cell}`);
             }
         }
+    });
+
+    test('Tokyo\'s Devhouse floors are 10x7 in the middle of the room, with about half the walking space of the 14x8 ones: at most 48 cells to stand on (#228)', () => {
+        const c = cfg();
+        const bare = [];
+        for (const n of [3, 4, 5, 6]) {
+            const k = key('Tokyo', n), room = c.rooms[k];
+            assert.deepStrictEqual([room.worldWidth / 64, room.worldHeight / 64], [20, 15], k);
+            // the floor itself: what is laid, the stairs aside (the way up is on the row below it)
+            const laid = Object.entries(tiles(room, 'Floor')).filter(([, id]) => c.tilePalette[id] !== VOID)
+                .map(([cell]) => cell.split(',').map(Number)).filter(([x, y]) => !exit(c, k, x, y));
+            const xs = laid.map(([x]) => x), ys = laid.map(([, y]) => y);
+            assert.deepStrictEqual([Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)], [5, 14, 4, 10], `${k}: five cells of void either side`);
+            assert.strictEqual(laid.length, 10 * 7 - 1, `${k}: every cell of it laid, one of them the stair down`);
+            bare.push(laid.filter(([x, y]) => stand(c, k, x, y)).length);
+        }
+        // 30 / 47 / 42 / 39 today, 71 / 88 / 81 / 80 on the 14x8 floors: a new piece goes on this footprint, not a wider one
+        assert.ok(bare.every((n) => n <= 48), `cells to stand on, 3F to 6F: ${bare}`);
     });
 
     test('the top of Osaka\'s Devhouse is a tatami room that opens onto a zen garden on the roof: gravel, stepping stones, a fence for a wall, and a night (#69)', () => {

@@ -1112,9 +1112,12 @@ plus `tools/generate_devhouse_art.py`.
   `ONE` 1x1 pieces, `BIG` footprints with `+` for the rest of their cells, `TALL` pieces walked behind, `BACK`
   the wall pieces), `ZONES` what the floor is laid with where it is not boards (tile in the wet rooms, tatami,
   gravel), and each room is an `Interior` shell (`tools/interiors.py`) in a 20-wide room. Tokyo's 3F-6F are
-  14x8 floors; its 1F and 2F are the stair hall of those floors, two cells wide, **on the same room cells**,
-  so the stairs line up all the way down. Osaka's floors are 9x10. A `|` partition is drawn with
-  `devhouse-wall-v`, its last cell with `-wall-v-end`, and where a `-` wall meets it with `-wall-h`.
+  10x7 floors, centred in the room; its 1F and 2F are the stair hall of those floors, two cells wide, **on the
+  same room cells**, so the stairs line up all the way down. Osaka's floors are 9x10. Tokyo's were 14x8 and
+  mostly bare boards: #228 kept the furniture and halved the walking space, and `devhouse.test.js` holds a
+  ceiling of 48 cells to stand on per floor, so a new piece goes on the existing footprint rather than a
+  wider one. A `|` partition is drawn with `devhouse-wall-v`, its last cell with `-wall-v-end`, and where a
+  `-` wall meets it with `-wall-h`.
   What each floor must hold (so many beds, chairs, the bath...) is counted from `config.json` by
   `devhouse.test.js`; a grid may move a piece by a cell, the counts stay.
 - **Stairs are hidden exits laid with a stair tile**, the way a door mat is (`Interior.doorway(..., n=1, fy=,

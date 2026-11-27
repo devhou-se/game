@@ -66,7 +66,7 @@ def shell(city, n):
     floors are the stair hall of the floors above, on the same room cells."""
     if city == 'Osaka':
         return 9, 10, 5, 4, 17
-    return (14, 8, 3, 4, 15) if n >= 3 else (2, 4, 15, 8, 15)
+    return (10, 7, 5, 4, 15) if n >= 3 else (2, 4, 13, 7, 15)
 
 
 # ---- the legend ---------------------------------------------------------------------------
@@ -95,9 +95,9 @@ BACK = {'p': 'home-wall-sand_0_0', 'n': 'home-wall-window-sand_0_0', 'u': 'home-
 STAIR = {'u': 'devhouse-stairs-up_0_0', 'd': 'devhouse-stairs-down_0_0'}
 
 # What the floor is laid with, where it is not boards: (kind, x0, y0, x1, y1), floor cells.
-WET = [('tile', 12, 0, 13, 2)]          # Tokyo's wet rooms, at the head of the stair hall
+WET = [('tile', 8, 0, 9, 2)]            # Tokyo's wet rooms, at the head of the stair hall
 ZONES = {
-    'T3F': WET, 'T4F': WET, 'T5F': WET + [('tatami', 0, 0, 6, 7)], 'T6F': WET,
+    'T3F': WET, 'T4F': WET, 'T5F': WET + [('tatami', 0, 0, 4, 6)], 'T6F': WET,
     'O1F': [('tile', 0, 0, 2, 2)],
     'O2F': [('tile', 0, 0, 2, 2), ('tatami', 0, 4, 2, 5), ('tatami', 0, 7, 2, 9)],
     'O3F': [('tile', 0, 0, 2, 2), ('tile', 7, 9, 8, 9), ('tatami', 4, 0, 8, 2), ('tatami', 0, 6, 2, 9)],
@@ -107,42 +107,38 @@ ZONES = {
 FLOORS = {
  'T1F': dict(wall='Lp', rows=['.p', '..', '..', '..'], front='=u'),
  'T2F': dict(wall='Lp', rows=['..', '#.', 'd.', '..'], front=' u'),
- 'T3F': dict(wall='ppnppppppnpppp', front='             u', rows=[
-    '....K+RK+..|bx',
-    'J.............',
-    '+..nnnn....|..',
-    '+..T+++....|--',
-    '...ssss.......',
-    '...........|#.',
-    'p..oooo....|d.',
-    '...X+X+....|..']),
- 'T4F': dict(wall='ppnpppnppppppp', front='             u', rows=[
-    'D.Y..Q+....|bx',
-    '..+...........',
-    '...........|..',
-    '...........|--',
-    '..............',
-    '...........|#.',
-    '.B..B..B...|d.',
-    '.+..+..+..p|..']),
- 'T5F': dict(wall='uuuupppppLpppp', front='             u', rows=[   # L: "Staff Only"
-    'D......|...|bA',
-    '.......|.....+',
-    '.F.F.F.|...|.x',
-    '.+.+.+.....|--',
-    '.......|......',
-    '..z.z..|...|#.',
-    '.......|...|d.',
-    'l.....p|..p|..']),
- 'T6F': dict(wall='ppnppppnpppppp', front='              ', rows=[   # two single beds end to end
-    'B..|.......|bm',
-    '+.............',
-    'B..|...wHe.|..',
-    '+..|...w+e.|--',
-    '..............',
-    '...........|#.',
-    '...........|d.',
-    'X+X+X+...p.|..']),
+ 'T3F': dict(wall='pnpppppppp', front='         u', rows=[
+    '..K+RK+|bx',
+    '..........',
+    'J.nnnn.|..',
+    '+.T+++.|--',
+    '+.ssss.|#.',
+    'p.oooo.|d.',
+    '..X+X+....']),
+ 'T4F': dict(wall='ppnppnpppp', front='         u', rows=[
+    'DY.Q+..|bx',
+    '.+........',
+    '.......|..',
+    '.......|--',
+    '.......|#.',
+    'B.B.B.p|d.',
+    '+.+.+.....']),
+ 'T5F': dict(wall='uuuuppLppp', front='         u', rows=[   # L: "Staff Only"
+    'D....|.|bA',
+    '.....|...+',
+    'F.F.F|.|.x',
+    '+.+.+|.|--',
+    '.......|#.',
+    '.z.z.|.|d.',
+    'l...p|....']),
+ 'T6F': dict(wall='pnppnppppp', front='          ', rows=[   # two single beds end to end
+    'B.|....|bm',
+    '+.........',
+    'B.|wHe.|..',
+    '+.|w+e.|--',
+    '.......|#.',
+    'p......|d.',
+    'X+X+X+....']),
  'O1F': dict(wall='pnppppppp', front='     =   ', rows=[
     'hb.|K+R..',
     '...|.....',
