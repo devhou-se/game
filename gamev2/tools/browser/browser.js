@@ -1,6 +1,7 @@
-// const { open } = require('./browser');
+// const { open, ready, hold, frames } = require('./browser');
 // const { page, errors, close, url } = await open({ storage: {k: 'v'}, touch: false, width: 1280, height: 960 });
 // Each open() is its own isolated context on the ONE shared browser. ALWAYS close() (try/finally).
+// A key goes down and up through hold(); a script that sends its own key-up waits frames(page) after it.
 const { chromium } = require('playwright-core');
 const PORT = process.env.PORT || 8123;
 const BASE = `http://127.0.0.1:${PORT}/`;
@@ -40,13 +41,23 @@ async function ready(page) {
     }, null, { timeout: 30000 });
 }
 
-// hold a key until `done()` (evaluated in the page) is true, at most `ms`; a short tap can be
-// dropped when the frame rate dips, so never rely on a fixed 80ms press
+// until the game has run `n` more frames: whatever went down or up before this has been read by the
+// game's once-a-frame input, at any frame rate
+async function frames(page, n = 2) {
+    const from = await page.evaluate('window.game.loop.frame');
+    try { await page.waitForFunction(`window.game.loop.frame >= ${from + n}`, null, { timeout: 5000 }); }
+    catch (e) { throw new Error(`the game ran fewer than ${n} frames in 5s`); }
+}
+
+// hold a key until `done()` (evaluated in the page) is true, at most `ms`, then let it go until the
+// game has run two frames with it up. A short tap can be dropped when the frame rate dips, so never
+// rely on a fixed 80ms press; and a release shorter than a frame is never seen by the game, so the
+// next press of that key is then not a press (#238)
 async function hold(page, key, done, ms = 1500) {
     await page.keyboard.down(key);
     try { await page.waitForFunction(done, null, { timeout: ms }); } catch (e) { /* caller asserts */ }
     await page.keyboard.up(key);
-    await page.waitForTimeout(120);
+    await Promise.all([page.waitForTimeout(120), frames(page)]);
 }
 
-module.exports = { open, ready, hold, BASE, PORT };
+module.exports = { open, ready, hold, frames, BASE, PORT };

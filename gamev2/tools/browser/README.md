@@ -9,6 +9,12 @@ Tower with the key held down, its skip on the way down (an instant press, down a
 Osaka's wheel (boarded by a bump, skipped, the key still held not boarding again). It prints `ok` / `FAIL <name> <evidence>` per check and ends `N/N checks passed`
 (exit 1 on any failure; any console or page error is a failure). About 25 seconds.
 
+The profiles (desktop, first-time, the two phones, the trip days) run one page at a time: a second page booting
+on the shared Chrome stalls the first one's frames, and a press or a tap that lands in a stalled frame is lost
+(#238). Two pages at a time a run took about 25 seconds on a fast machine and 75-90 seconds under software
+WebGL; one page at a time is slower than that and has not been timed yet (put the figures here when it has),
+so on a slow machine use `REGRESS_TIME_SCALE` (below).
+
 A run that has not finished after 80 seconds, or a check that takes more than 25, is a failure: a stalled browser
 must not hang the queue. On a slow machine (software WebGL on a loaded host, a Workshop container) see
 "A slow machine" below.
@@ -50,7 +56,11 @@ says when the limits are stretched, so a log shows it.
 
 `open()` options: `{ touch, mobile, width, height }` for a phone, `{ now: '2027-02-20T12:00:00' }` to stub the clock,
 `{ fresh: true }` for a first-time player. `hold(page, key, doneFn)` holds a key until the game state says it took
-effect; a fixed short tap can be dropped when the frame rate dips. The one place a key is held for a fixed time is
+effect, then lets it go until the game has run two frames with it up. The game reads the keys once a frame: a fixed
+short tap can be dropped when the frame rate dips, and a release shorter than a frame is never seen, so the next
+press of that key is not a press. `frames(page)` is that wait by itself, for a script that sends its own key-up; a
+tap on a touch button goes through `tap()` in `regress.js`, which waits for the button to let go of its key the
+same way. Never put a fixed gap between two presses or taps. The one place a key is held for a fixed time is
 `devhouseStair`: a room change does not let go of a held key, and `hold()` lets go the moment its condition is true,
 which is the one moment a stair that bounces you between two floors cannot show.
 

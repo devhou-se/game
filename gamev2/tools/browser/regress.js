@@ -11,8 +11,9 @@
 //  - expectations come from the game's own data in the page (config, Trips, roomManager, Occlusion),
 //    never from a cell, a date or an NPC name written here;
 //  - a check gets to its place through the game's own API (roomManager.switchRoomInstant) and does
-//    the last steps with real keys / real touches, held until the game has seen them (hold());
-//  - no fixed long waits: wait on game state;
+//    the last steps with real keys / real touches, held until the game has seen them, and let go until
+//    it has seen that too (hold(), tap());
+//  - no fixed long waits: wait on game state; never a fixed gap between two presses or taps;
 //  - a check that cannot find what it needs FAILS with what it looked for; it never passes empty.
 const path = require('path');
 const { limits } = require('./limits');
@@ -28,7 +29,7 @@ try { LIMITS = limits(process.env); } catch (e) {
 const { scale: SCALE, deadlineMs: DEADLINE_MS, checkMs: CHECK_MS } = LIMITS;
 const secs = (ms) => `${+(ms / 1000).toFixed(1)}s`;
 
-const { open, ready, hold } = require('./browser');
+const { open, ready, hold, frames } = require('./browser');
 
 const SHOTS = process.env.SHOTS || path.join(require('os').tmpdir(), 'gamev2-regress-shots');
 const QUIET = '?notitle=1&nointro=1';
@@ -50,6 +51,8 @@ function install() {
         at: (x, y) => s.player.gridX === x && s.player.gridY === y,
         pos: () => ({ room: rm.currentRoom, district: rm.currentDistrict(), x: s.player.gridX, y: s.player.gridY }),
         idle: () => !s.player.isMoving && !rm.isTransitioning && !(s.trainTravel && s.trainTravel.riding),
+        // no key the game reads is down (as the game last read them): a touch button has let go of its key
+        keysUp: () => { const i = s.inputHandler, c = i.cursors; return [c.up, c.down, c.left, c.right, i.wKey, i.aKey, i.sKey, i.dKey, i.escKey, i.enterKey, i.spaceKey, i.shiftKey].every(k => !k.isDown); },
         // what the game's own collision says about a cell of the current room (characters aside)
         free: (x, y) => rm.checkBoundary(x, y) && !rm.isBlocked(x, y) &&
             !rm.objectSprites.some(o => o.gridX === x && o.gridY === y),
@@ -231,6 +234,31 @@ async function press(page, key, expr, ms = 1500) {
     return page.evaluate(expr);
 }
 
+/** A real tap on a touch button: over when the game has seen its key go up again. Returns whether `expr` became true. */
+async function tap(page, at, expr, ms = 1500) {
+    await page.touchscreen.tap(at.x, at.y);
+    const ok = await until(page, expr, ms);
+    // the button holds its key 90ms and lets go on a timer: wait for that, not for a fixed time
+    need(await until(page, '__t.keysUp()', 5000), 'a touch control never let go of its key');
+    await frames(page);
+    return ok;
+}
+
+/**
+ * Checks that share a page, one after another: a console or page error during a check fails that check, and
+ * whatever it left up is taken down before the next one.
+ */
+const cleaner = (page, errors) => async (name, fn) => {
+    const before = errors.length;
+    await check(name, async () => {
+        await fn();
+        need(errors.length === before, { errors: errors.slice(before) });
+    });
+    // never let one check's leftovers into the next
+    await page.evaluate('window.__t && (__t.reset(), true)').catch(() => {});
+    await idle(page).catch(() => {});
+};
+
 async function check(name, fn) {
     const t = Date.now();
     let timer;
@@ -333,6 +361,7 @@ async function devhouseStair(page, house) {
             await page.waitForTimeout(100);
         }
     } finally { await page.keyboard.up(key); }
+    await frames(page);
     await idle(page);
     const st = await page.evaluate('({ pos: __t.pos(), hud: __t.hud(), sw: __t.rm.__sw, screen: __t.onScreen(), portal: __t.portal(__t.s.player.gridX, __t.s.player.gridY) })');
     // one flight, taken once: the ground floor, then the floor above, and never back
@@ -473,16 +502,7 @@ async function liftOnPhone(page, shot) {
 
 async function desktop(shared) {
     await profile('desktop', {}, async ({ page, url, errors }) => {
-        const cleanly = async (name, fn) => {
-            const before = errors.length;
-            await check(name, async () => {
-                await fn();
-                need(errors.length === before, { errors: errors.slice(before) });
-            });
-            // never let one check's leftovers into the next
-            await page.evaluate('window.__t && (__t.reset(), true)').catch(() => {});
-            await idle(page).catch(() => {});
-        };
+        const cleanly = cleaner(page, errors);
 
         // 1 ---------------------------------------------------------------- boot, returning player
         await cleanly('boot-returning', async () => {
@@ -1573,7 +1593,8 @@ async function trips(shared) {
 
 async function phones() {
     await profile('phone-landscape', { touch: true, mobile: true, width: 844, height: 390 }, async ({ page, context, url, errors }) => {
-        await check('phone-landscape-touch', async () => {
+        const cleanly = cleaner(page, errors);
+        await cleanly('phone-landscape-touch', async () => {
             await boot(page, url(`${QUIET}&touch=1`));
             await until(page, '__t.s.cameras.main.worldView.contains(__t.s.player.sprite.x, __t.s.player.sprite.y)', 2000);
             const st = await page.evaluate(() => {
@@ -1635,11 +1656,8 @@ async function phones() {
             need(let_go, 'the sprint pill stayed held after the touch ended');
             // the A / B buttons are real touches too: B opens the menu and closes it again
             const b = await page.evaluate('(r => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 }))(document.querySelector("#touch-controls .tc-b").getBoundingClientRect())');
-            await page.touchscreen.tap(b.x, b.y);
-            need(await until(page, '__t.s.menuManager.isVisible()', 1500), 'a tap on B did not open the menu');
-            await page.waitForTimeout(150);   // B's key-up is sent 90ms after a quick tap
-            await page.touchscreen.tap(b.x, b.y);
-            need(await until(page, '!__t.s.menuManager.isVisible()', 1500), 'a second tap on B did not close the menu');
+            need(await tap(page, b, '__t.s.menuManager.isVisible()'), 'a tap on B did not open the menu');
+            need(await tap(page, b, '!__t.s.menuManager.isVisible()'), 'a second tap on B did not close the menu');
 
             // a shift at work on the touch pad (issue #226): the d-pad bumps the lift and types, A starts, B clocks off and leaves
             const job = await page.evaluate(() => {
@@ -1671,8 +1689,7 @@ async function phones() {
             need(opened && await lifted(), { dpadBumpDidNotOpenTheShift: await work(), overlays: await page.evaluate('__t.overlays()') });
             need(/^A to start {4}B to leave$/.test((await work()).hint), { readyHint: await work() });
             const tapA = { x: Math.round((st.a[0] + st.a[2]) / 2), y: Math.round((st.a[1] + st.a[3]) / 2) };
-            await page.touchscreen.tap(tapA.x, tapA.y);
-            need(await until(page, '__t.s.career.state === "playing"', 1500), 'a tap on A did not start the shift');
+            need(await tap(page, tapA, '__t.s.career.state === "playing"'), 'a tap on A did not start the shift');
             const row = await work();
             need(row.at === 0 && row.hint === 'd-pad to type    B to clock off', { playingHint: row });
             // every arrow of the first ticket is a touch on the d-pad. The first one rolls off its arrow into the
@@ -1698,21 +1715,18 @@ async function phones() {
             }
             await page.screenshot({ path: path.join(SHOTS, 'regress_phone_career.png') });
             // B clocks off with the one ticket paid, and B again leaves; the menu does not open on it
-            await page.touchscreen.tap(b.x, b.y);
-            need(await until(page, '__t.s.career.state === "result"', 1500), 'a tap on B did not clock off');
+            need(await tap(page, b, '__t.s.career.state === "result"'), 'a tap on B did not clock off');
             const off = await page.evaluate('({ money: __t.s.shop.money, hint: __t.s.career.hintText.text, texts: __t.s.career.objs.filter(o => o.type === "Text" && o.visible).map(o => o.text) })');
             need(off.money === job.money + job.pay && off.texts.includes('CLOCKED OFF') && off.hint === 'A for another shift    B to leave', { clockedOff: off, job });
-            await page.waitForTimeout(150);   // B's key-up is sent 90ms after a quick tap
-            await page.touchscreen.tap(b.x, b.y);
-            need(await until(page, '!__t.s.career.isActive()', 1500), 'a second tap on B did not leave the shift');
-            await page.waitForTimeout(150);
+            need(await tap(page, b, '!__t.s.career.isActive()'), 'a second tap on B did not leave the shift');
+            // tap() has seen B's key go up and two frames run: a menu that B wrongly opened would be up by now
             const out = await page.evaluate('({ pos: __t.pos(), overlays: __t.overlays(), controls: __t.s.touchControls.enabled })');
             need(out.overlays.length === 0 && out.pos.x === job.x && out.pos.y === job.y && out.controls, { afterTheShift: out, job });
             need(errors.length === 0, { errors });
         });
 
         // the other Devhouse on the phone: the bar has no room for the whole name there, and says the floor
-        await check('phone-landscape-devhouse', async () => {
+        await cleanly('phone-landscape-devhouse', async () => {
             const house = await devhouseEnter(page, false);
             const bar = await page.evaluate('__t.hud()');
             need(bar.oneRow && bar.room.startsWith(house.brief), { floorNotOnTheBar: bar, expected: house.brief });
@@ -1816,10 +1830,10 @@ setTimeout(() => {
 (async () => {
     if (SCALE !== 1) console.log(`REGRESS_TIME_SCALE=${SCALE}: the run may take ${secs(DEADLINE_MS)} and a check ${secs(CHECK_MS)}; the assertions are unchanged`);
     const shared = {};
-    // the long desktop walk-through runs beside the short profiles: two pages at a time, never more
-    const side = (async () => { await firstTime(); await phones(); })();
+    // one page at a time: a second page booting on the shared Chrome stalls the first one's frames (#238)
     await desktop(shared);
-    await side;
+    await firstTime();
+    await phones();
     await trips(shared);
 
     await check('no-errors', async () => need(allErrors.length === 0, { errors: allErrors.slice(0, 10), count: allErrors.length }));
