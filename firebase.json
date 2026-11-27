@@ -10,13 +10,24 @@
       ],
       "headers": [
         {
+          "source": "/",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "/studio/",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "/editor/",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "**/*.@(html|ttf)",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
           "source": "**/*.png",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "no-cache"
-            }
-          ]
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
         }
       ]
     }

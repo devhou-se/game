@@ -184,8 +184,11 @@ attribution lines.
 - A browser keeps what it has loaded. The game asks for its scripts, `config.json`, the Tiled maps and the
   manifests with a `?t=` cache-buster, and `firebase.json` serves every PNG with `Cache-Control: no-cache`, so
   the art is re-checked on each load and a redrawn sprite shows on the next reload (issue #241: the fixed
-  sprite was live, and a browser drew the old one from its cache for up to an hour). `index.html` and the
-  fonts keep the host's default of an hour.
+  sprite was live, and a browser drew the old one from its cache for up to an hour). The pages (`index.html`,
+  which holds the list of scripts to load, and the Studio's and the editor's) and the fonts are served with
+  the same header (issue #250), so a deploy that adds a script reaches a returning browser on its next load.
+  Anything else asked for by a fixed URL (the editor's stylesheet, a voice clip) keeps the host's default of
+  an hour.
 - The "Checks" workflow (`.github/workflows/checks.yml`) runs the five checks of section 4 on every push to
   master and every pull request that touches the game. It installs the Pillow pinned in `tools/requirements-art.txt`, so it checks
   the art tools too (all but the two that need a Japanese system font, which it lists as `skip`),
