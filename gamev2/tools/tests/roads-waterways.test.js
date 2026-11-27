@@ -43,6 +43,33 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         }
     });
 
+    test('Osaka: the ferris wheel is two legs and a ring, with nothing drawn or solid between the legs (#241)', () => {
+        // the sheet parks a loose 2x1 tile in the gap, against the left leg: extract_dotonbori.py clears it (CLEAR),
+        // and the prefab no longer makes those two cells solid
+        const png = require(path.join(GV2, 'tools', 'png.js'));
+        const { width, height, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', 'dotonbori-wheel_0_0.png')));
+        assert.deepStrictEqual([width, height], [768, 768]);
+        const opaque = (col, row) => {
+            let n = 0;
+            for (let y = row * 64; y < row * 64 + 64; y++) for (let x = col * 64; x < col * 64 + 64; x++) if (data[(y * width + x) * 4 + 3]) n++;
+            return n;
+        };
+        for (let row = 4; row < 12; row++) {
+            for (let col = 4; col < 8; col++) assert.strictEqual(opaque(col, row), 0, `sprite cell ${col},${row} between the legs is not empty`);
+            for (const col of [2, 3, 8, 9]) assert.ok(opaque(col, row) > 1024, `sprite cell ${col},${row}: the leg is gone`);
+        }
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
+        const layer = (n) => (cfg.rooms.Osaka.layers.find((l) => l.name === n) || {}).tiles || {};
+        const at = Object.keys(layer('Collidables')).filter((xy) => name(layer('Collidables')[xy]) === 'dotonbori-wheel_0_0');
+        assert.strictEqual(at.length, 1, 'one wheel in Osaka');
+        const [wx, wy] = at[0].split(',').map(Number), colliders = layer('Colliders'), solid = [];
+        for (let dy = 0; dy < 12; dy++) for (let dx = 0; dx < 12; dx++) if (`${wx + dx},${wy + dy}` in colliders) solid.push(`${dx},${dy}`);
+        const legs = [];
+        for (let dy = 9; dy < 12; dy++) for (const dx of [2, 3, 8, 9]) legs.push(`${dx},${dy}`);
+        assert.deepStrictEqual(solid.sort(), legs.sort(), 'only the feet of the two legs are solid');
+    });
+
     test('Osaka: the canal is a declared waterway, open water except under the bridge, and the streets have centre lines', () => {
         // #61: AmbientBoats sails the room's `waterways`; #151: the four-cell street's line is the lane pair's shared edge
         const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));

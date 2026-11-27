@@ -102,10 +102,12 @@ PREFABS = {
     # the street runs straight under the sign through columns 1-6.
     'dotonbori-arch':  dict(w=8, h=6, sprites=[('Collidables', 0, 0, 'dotonbori-arch_0_0')],
                             colliders=[(x, y) for x in (0, 7) for y in (4, 5)], doors=[]),
-    # The oval ferris wheel: the two truss legs (columns 2-3 and 8-9) and the
-    # boarding gate between them collide; the rest of the ring is overhead.
+    # The oval ferris wheel: the two truss legs (columns 2-3 and 8-9) collide;
+    # the rest of the ring is overhead, and you walk between the legs. (Two
+    # cells by the left leg were solid for a loose tile of the sheet that was
+    # cut into the sprite, issue #241.)
     'dotonbori-wheel': dict(w=12, h=12, sprites=[('Collidables', 0, 0, 'dotonbori-wheel_0_0')],
-                            colliders=[(x, y) for x in (2, 3, 8, 9) for y in (9, 10, 11)] + [(4, 10), (5, 10)], doors=[]),
+                            colliders=[(x, y) for x in (2, 3, 8, 9) for y in (9, 10, 11)], doors=[]),
     # Tsutenkaku Tower: the legs and the body over the archway collide; the two
     # cells in the archway mouth stay open so you can step in under the tower.
     # The colliders follow the splay of the legs (row 9 = where they leave the

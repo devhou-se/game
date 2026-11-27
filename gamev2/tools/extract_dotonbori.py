@@ -14,6 +14,12 @@ bottom-aligned on a canvas that is a whole number of cells, so the posts / legs
 land exactly on cell columns (arch posts = columns 0 and 7; wheel legs =
 columns 2-3 and 8-9).
 
+The sheet is a tileset, so a loose tile is parked wherever there is room. One
+sits in the gap between the wheel's legs (a 32x16 piece of truss against the
+left leg): it is no part of the wheel, and in the game it showed as a stray
+piece beside the leg (issue #241). CLEAR lists such rectangles; they are
+emptied before the crop is scaled.
+
 Registers both keys in config.json spriteMetadata + tileNames (the game only
 loads a tile that has a spriteMetadata entry). Needs Pillow.
 
@@ -29,11 +35,17 @@ CROPS = {
     'dotonbori-arch_0_0':  ('dotonbori-arch',  (0, 384, 128, 480)),
     'dotonbori-wheel_0_0': ('dotonbori-wheel', (0, 32, 192, 224)),
 }
+# key -> rects on the sheet (native px) that hold a tile of something else
+CLEAR = {
+    'dotonbori-wheel_0_0': [(64, 192, 96, 208)],
+}
 
 im = Image.open(SHEET).convert('RGBA')
 cfg = json.load(open('config.json'))
 for key, (name, region) in CROPS.items():
     big = im.crop(region)
+    for x0, y0, x1, y1 in CLEAR.get(key, []):
+        big.paste((0, 0, 0, 0), (x0 - region[0], y0 - region[1], x1 - region[0], y1 - region[1]))
     big = big.resize((big.width * 4, big.height * 4), Image.NEAREST)
     assert big.width % 64 == 0 and big.height % 64 == 0, (key, big.size)
     big.save(f'assets/sprites/{key}.png')
