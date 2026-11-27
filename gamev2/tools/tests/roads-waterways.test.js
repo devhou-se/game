@@ -208,6 +208,47 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         }
     });
 
+    test('each district on its own (?stitch=0) has plain junction boxes too: Palace keeps a copy of both of Park\'s top ones (#247)', () => {
+        // the stitched city draws Park's rows there, so the test above never reads Palace's rows 18..20
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const bad = [];
+        const roads = {};
+        for (const room of cfg.cities.TokyoCity.rooms.map((m) => m.room)) {
+            const road = roads[room] = {};
+            for (const layer of cfg.rooms[room].layers) {
+                for (const [xy, t] of Object.entries(layer.tiles || {})) {
+                    const key = (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
+                    if (/^road-/.test(key)) road[xy] = key.replace(/_0_0$/, '');
+                }
+            }
+            const at = (x, y) => road[`${x},${y}`] || '';
+            for (const xy of Object.keys(road)) {
+                const [x, y] = xy.split(',').map(Number), t = road[xy];
+                if (t === 'road-div-vertical') {
+                    for (const ny of [y - 1, y + 1]) {
+                        if (/^road-(edge-(top|bottom)|div-horizontal)$/.test(at(x, ny))) bad.push(`${room} ${xy}: the line meets ${at(x, ny)} at ${x},${ny}`);
+                    }
+                }
+                if (t === 'road-div-horizontal') {
+                    for (const nx of [x - 1, x + 1]) {
+                        if (/^road-(edge-(left|right)|div-vertical)$/.test(at(nx, y))) bad.push(`${room} ${xy}: the line meets ${at(nx, y)} at ${nx},${y}`);
+                    }
+                }
+            }
+        }
+        assert.deepStrictEqual(bad, []);
+        // Palace's west road runs into the box from the north and out of it to the south: no kerb on either
+        // side of it, where Park's own top row is one, and the Palace/Park road opens into it from the east
+        const palace = (x, y) => roads.Palace[`${x},${y}`] || '';
+        for (const y of [18, 19, 20]) {
+            assert.deepStrictEqual([palace(0, y), palace(1, y)], ['road-plain', 'road-plain'], `Palace 0..1,${y}`);
+        }
+        for (const y of [17, 21]) {
+            assert.deepStrictEqual([palace(0, y), palace(1, y)], ['road-div-vertical', 'road-edge-right'], `Palace 0..1,${y}`);
+        }
+        assert.deepStrictEqual([18, 19, 20].map((y) => palace(2, y)), ['road-edge-top', 'road-div-horizontal', 'road-edge-bottom']);
+    });
+
     test("the east road is the city's edge: no road leaves it for the edge of the map (#240)", () => {
         // the port ran the avenue, the road from the Tokyo/Market crossroads, the Palace/Park road and
         // Park's south road on across the east pavement, two cells to the edge of the map and nothing

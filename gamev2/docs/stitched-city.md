@@ -113,7 +113,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   `(2,43)`, `road-plain` inside). Tokyo's column 0 is now the west edge of the city: there is no wood west of it.
 - **Road junctions are plain boxes** (issue #179): the port drew every three-cell road straight through
   each junction, so a joining road's mouth was closed by the other road's kerb and its centre line ran
-  on into the junction. **`python3 tools/square_junctions.py`** lays each of the thirteen 3x3 boxes in
+  on into the junction. **`python3 tools/square_junctions.py`** lays each of the fourteen 3x3 boxes in
   Tokyo, Market, Palace and Park the way #147 laid the west gate: `road-plain` throughout, the kerb along a
   CLOSED side (the far side of a T, the outside of a bend), a mitred `road-corner-*` where two closed
   sides meet. `JUNCTIONS` lists them per district (top-left cell + closed sides); a box may hang over
@@ -134,7 +134,9 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   (`edge-w` by the kerb, `edge-e` on the map's edge; round a bend the outer corner is a `corner-*` and
   the inner one `center`, as at Tokyo's western bends). Palace's own map has Park's top-right box
   too (`(54,18,'E')`: Park owns those rows when stitched), and the patch gives stitched `Park` `56,0`
-  the kerb (`road-edge-right`), not `road-plain`. The three one-row side lanes across that pavement
+  the kerb (`road-edge-right`), not `road-plain`. It has Park's top-left box as well (`(-1,18,'')`,
+  issue #247), with no closed side: the west road comes into it from the north there, where Park's
+  own map ends in a kerb. The three one-row side lanes across that pavement
   (`road-2-tile-vertical`, Market rows 15, 24 and 32) are not junctions: the kerb passes them.
 - **`?stitch=0`** is the safety valve: no cities, the districts are separate rooms joined by the fade
   transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).

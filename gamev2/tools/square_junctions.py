@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""square_junctions.py — road junctions in the ported districts are plain boxes (issues #147, #179, #240).
+"""square_junctions.py — road junctions in the ported districts are plain boxes (issues #147, #179, #240, #247).
 
 The Godot port drew a three-cell road (kerb / centre line / kerb) straight
 through every junction, so wherever a road joined another its mouth was closed
@@ -36,7 +36,9 @@ the east (the kerb runs straight down the east road; the avenue at the top and
 the south road at the bottom end in a bend), and PAVEMENT lays the two-cell
 stubs as the pavement they cut through. The same junction is in Palace's own
 map (its rows 18..20 are Park's top three, and Park owns them in the stitched
-city), so Palace has that one box and stub too.
+city), so Palace has that one box and stub too. It has Park's top-left box as
+well (issue #247), open on every side: in Palace's map the west road runs into
+it from the north and on out of the bottom of the map.
 
 Idempotent. Edits config.json only: follow with
     python3 tools/config_to_tiled.py Tokyo Market Palace Park
@@ -61,6 +63,7 @@ JUNCTIONS = {
         (54, 42, 'E'),      # the east road; the road from the Tokyo/Market crossroads ends on it (#240)
     ],
     'Palace': [
+        (-1, 18, ''),       # Park's top-left box, in Palace's own map (#247), where the west road runs on through it
         (54, 18, 'E'),      # Park's top-right box, in Palace's own map (#240); the stitched city draws Park's
     ],
     'Park': [
