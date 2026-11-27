@@ -328,7 +328,8 @@ pipeline has placed someone there.
   fixture with no free cell under one of its columns, or anything else you can bump with no free side.
   To add a plan, add a grid to `LAYOUTS` (a new piece
   also needs its letter in `AT_WALL` or `FURNITURE`, and a rule in `Interactions.js` if a bump on it
-  does something). The room's `boundary` is the floor, the mat and the two wall rows
+  does something, or a `Seats.RULES` row if it is something to sit on - "Sitting on furniture" in
+  `architecture.md`). The room's `boundary` is the floor, the mat and the two wall rows
   (`back_wall(..., view=True)`): the wall is solid,
   and with it the outline is taller than a landscape phone's view, so the camera follows you instead of
   being held to the floor with the wall off the top of the screen. The art is the `konbini-*` kit,
@@ -1157,7 +1158,9 @@ plus `tools/generate_devhouse_art.py`.
   `Glows.SPRITES`); the other nine are lit rooms.
 - **Something to bump** (five `flavour` rules in `Interactions.js`, each one dry line): the locked doors,
   the bath, the washers, the goldfish bowl, the bunk. Not the chairs and not the tables: twenty chairs ring
-  tables you walk round, and a line on each would toast again and again. Nobody lives there and nothing is
+  tables you walk round, and a line on each would toast again and again. The bath and the bunk are also seats
+  (issue #227, `Seats.js`): you get onto them instead of bumping them, and their line is said as you settle.
+  Nobody lives there and nothing is
   sold; `interior` keeps the blog pipeline out, and the trips' `home` cells are where they were.
 - **Lint**: a Devhouse floor is held to the house rules (`house-sealed-floor`, `flavour-no-front`) through
   its `devhouse` marker (`world-model.js`). The generator's shell asserts every free cell is reached from

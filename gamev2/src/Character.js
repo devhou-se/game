@@ -34,6 +34,9 @@ class Character {
         // Apply sprite configuration
         this.sprite.setScale(spriteConfig.scale);
         this.sprite.setOrigin(spriteConfig.anchorX, spriteConfig.anchorY);
+        this.anchorX = spriteConfig.anchorX;
+        this.anchorY = spriteConfig.anchorY;
+        this.lift = 0;      // pixels the sprite is drawn off its cell (setLift)
 
         // Characters spawn idle on their standing frame; the walk cycle only
         // plays while actually moving (see playWalkAnim/setIdleFrame).
@@ -145,6 +148,18 @@ class Character {
         const frameKey = `${dirKey}_frame_${idle}`;
         if (this.scene.textures.exists(frameKey)) this.sprite.setTexture(frameKey);
         else if (this.scene.textures.exists(dirKey)) this.sprite.setTexture(dirKey);
+    }
+
+    /**
+     * Draw the sprite `dy` pixels below (+) or above (-) its cell, as someone
+     * on a chair or in a bed is (Seating). Only the origin moves: sprite.x/y
+     * stay the cell's, so movement, collision, the camera and Occlusion see
+     * the character where they stand.
+     */
+    setLift(dy) {
+        if (dy === this.lift) return;
+        this.lift = dy;
+        this.sprite.setOrigin(this.anchorX, this.anchorY - dy / this.sprite.displayHeight);
     }
 
     startMovement(deltaX, deltaY, speedMultiplier = 1) {

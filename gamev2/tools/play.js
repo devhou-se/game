@@ -14,7 +14,7 @@ const sessionFile = () => path.join(os.tmpdir(), 'gamev2-play-' +
     crypto.createHash('sha1').update(CONFIG === path.join(GV2, 'config.json') ? GV2 : CONFIG).digest('hex').slice(0, 8) + '.json');
 
 const ctx = vm.createContext({ console, URLSearchParams, location: { search: '' } });
-for (const f of ['utils/ConfigCodec.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'systems/TiledAdapter.js',
+for (const f of ['utils/ConfigCodec.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'utils/Seats.js', 'systems/TiledAdapter.js',
     'systems/RoomManager.js', 'systems/CollisionSystem.js', 'systems/CityStitcher.js', 'Shop.js', 'TrainTravel.js',
     '../tools/world-model.js']) {
     vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
@@ -85,6 +85,13 @@ function draw(world, x0, y0, x1, y1, origin) {
         for (let x = i.x; x < i.x + i.w; x++) for (let y = i.y; y < i.y + i.h; y++) special.add(x + ',' + y);
     }
     const board = new Set(((world.station() || {}).board || []).map(c => c.join(',')));
+    // furniture to get on (Seats) is drawn as a seat where nothing with a glyph of its own claims the cell
+    const seatHere = (x, y) => {
+        const seat = world.seatAt(x, y);
+        if (!seat || !seat.solid) return false;
+        const i = special.has(x + ',' + y) ? world.interactionAt(x, y) : null;
+        return !(i && GLYPH[i.group]);
+    };
     const lines = [];
     const notes = [];
     for (let y = y0; y <= y1; y++) {
@@ -99,6 +106,11 @@ function draw(world, x0, y0, x1, y1, origin) {
             else if (npc) { c = npc.name[0].toUpperCase(); notes.push(`${c} ${npc.name} at ${at(x, y)}`); }
             else if (t) { c = '>'; notes.push(`> ${at(x, y)} to ${t.targetRoom} ${t.targetX},${t.targetY}${t.hidden ? ' (hidden)' : ''}`); }
             else if (board.has(k)) { c = 'T'; notes.push(`T ${at(x, y)} train boarding`); }
+            else if (seatHere(x, y)) {
+                const seat = world.seatAt(x, y);
+                c = 'h';
+                notes.push(`h ${at(seat.x, seat.y)} ${seat.kind}`);
+            }
             else if (special.has(k)) {
                 const i = world.interactionAt(x, y);
                 c = i ? (GLYPH[i.group] || OTHER) : (world.blocked.has(k) ? '#' : '.');
@@ -134,13 +146,19 @@ function report(world, r, dir) {
     return null;
 }
 
+// a step onto furniture (Seats) is said, and the walk carries on
+function sat(world, r, dir) {
+    const h = world.here();
+    return `${dir}: got on the ${r.seat.kind} at ${h.x},${h.y}` + (r.interaction ? `: ${world.describe(r.interaction)}` : '');
+}
+
 const COMMANDS = {
     help() {
         return [
             'where                      room, cell, date, character',
             'look [radius=10]           text map around you',
             'map [city]                 text map of the whole room (in a stitched city: the district you are in; "map city" draws all of it)',
-            'move <n|s|e|w> [count]...  walk; a blocked step bumps (talks, opens shops) like the game',
+            'move <n|s|e|w> [count]...  walk; a blocked step bumps (talks, opens shops) like the game, and a step straight into a seat gets you on it',
             'goto [room] <x> <y>        pathfind and walk; stops if a transporter takes you. Districts of a city are one walk: goto Market 5 24',
             'warp <room> [x y]          teleport (debug)',
             'ride <station>             take the train from a boarding cell',
@@ -160,7 +178,7 @@ const COMMANDS = {
             'reach [room]...            JSON: the cells of each room that can be walked to, in its own coordinates',
             'reset                      back to the start (the trip home), on the day the game opens on',
             '',
-            'Legend: @ you  # blocked  . walkable  > transporter  T train  $ shop  ~ pond  ? clock  ^ flights  % water  + shrine, temple or palace  * anything else a bump answers  D drinking game  J job  letters are NPCs',
+            'Legend: @ you  # blocked  . walkable  h seat (blocked; walk straight into it to get on)  > transporter  T train  $ shop  ~ pond  ? clock  ^ flights  % water  + shrine, temple or palace  * anything else a bump answers  D drinking game  J job  letters are NPCs',
             'Coordinates are always a room\'s own (a district\'s inside the stitched Tokyo city; cells of a neighbour are just past its edge).',
             'State persists between runs. With no arguments, commands are read from stdin, one per line.',
             '--stitch=0 (anywhere on the command line) models what ?stitch=0 plays: the districts as separate rooms joined by seam teleports.',
@@ -188,6 +206,7 @@ const COMMANDS = {
             for (let c = 0; c < count; c++) {
                 const r = w.step(dir);
                 if (r.crossed) lines.push(`${dir}: walked from ${r.crossed.from} into ${r.crossed.to}`);
+                if (r.seat) lines.push(sat(w, r, dir));
                 const msg = report(w, r, dir);
                 if (msg) { lines.push(msg); break; }
             }
@@ -262,8 +281,10 @@ const COMMANDS = {
         }
         const tr = w.room.transporters.find(t => t.gridX === x && t.gridY === y);
         if (tr) lines.push(`transporter to ${tr.targetRoom} ${tr.targetX},${tr.targetY}`);
+        const seat = w.seatAt(x, y);
+        if (seat) lines.push(`a seat (${seat.kind}): ` + (seat.solid ? 'walking straight into it gets you on it' : 'you sit when you stop here'));
         const i = w.interactionAt(x, y);
-        if (i) lines.push('bumping it: ' + w.describe(i));
+        if (i) lines.push((seat && seat.solid && i.group === 'flavour' ? 'getting on it: ' : 'bumping it: ') + w.describe(i));
         return lines.join('\n');
     },
     rooms(w) {

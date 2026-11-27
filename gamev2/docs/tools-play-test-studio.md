@@ -16,6 +16,10 @@ It plays the world the game plays: the Tokyo districts are stitched into one roo
 `CityStitcher` (see "Stitched cities" in `stitched-city.md`), so `goto Market 5 24` from Tokyo is one walk with no teleport,
 `where` reads `Market 5,24 (TokyoCity 111,24)`, and every coordinate you type or read is still the
 district's own. `--stitch=0` anywhere on the command line models what `?stitch=0` plays instead.
+Furniture you can sit on (`src/utils/Seats.js`) is `h` on `look` / `map`: blocked for `goto`, `reach` and
+`check`, which never route over it, but `move` straight into it gets you on it as the game does
+(`w: got on the bed at 5,6`, with the line it says if it has one) and carries on with its count.
+`WorldModel.step()` reports it as `{ moved: true, seat, interaction }`; `inspect` names the seat on a cell.
 
 `node tools/test_game.js` runs the game's own decision code in Node, with no browser: which train a
 station parks, the departures board's order and scrolling, room display names, the dialogue hint wording,

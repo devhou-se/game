@@ -68,6 +68,7 @@ $ 18,13 vending
 | `@` | you |
 | `#` | blocked (collider or outside the boundary) |
 | `.` | walkable |
+| `h` | a seat: blocked, but `move` straight into it gets you on it (chair, sofa, bench, bed...) |
 | `>` | transporter |
 | `T` | train boarding cell |
 | `$` | anything that opens a shop (vending machine, konbini counter or shelf, izakaya bar) |
@@ -87,6 +88,11 @@ Everything marked is also listed under the map with its exact cell.
 
 - `move <n|s|e|w> [count] ...` walks cell by cell: `move n 3 e 2`. It stops at
   the first blocked step and tells you what you bumped.
+- Furniture to sit on is an `h`. A `move` straight into it gets you on it, as
+  in the game (`w: got on the bed at 5,6`), and the walk carries on across it;
+  `goto` never routes over furniture, and `reach` does not count it. What the
+  tool cannot show is how it looks (the lift, the blanket over you): that is
+  `src/systems/Seating.js`, in a browser.
 - `goto [room] <x> <y>` pathfinds inside the current room and walks there
   (inside the Tokyo city name a district to cross into it: `goto Park 30 20`).
 - Stepping on a `>` changes room, exactly as in the game. `goto` treats

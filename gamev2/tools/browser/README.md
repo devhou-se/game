@@ -4,7 +4,7 @@
 walls, a district seam (stitched and `?stitch=0`), a konbini in and out with its shop, a Devhouse in by its street
 door and up its stair with the key held down (desktop and a landscape phone), NPC dialogue, the menu, Map and Time
 Travel, a shift at the job in a tower lobby, a train ride, a trip day and a lead-in day, a landscape and a portrait
-phone, night, and scenery fading over the player. It prints `ok` / `FAIL <name> <evidence>` per check and ends `N/N checks passed`
+phone, night, scenery fading over the player, and getting into a bed and onto a chair (and, with the d-pad, a sofa). It prints `ok` / `FAIL <name> <evidence>` per check and ends `N/N checks passed`
 (exit 1 on any failure; any console or page error is a failure). About 25 seconds.
 
 A run that has not finished after 80 seconds, or a check that takes more than 25, is a failure: a stalled browser

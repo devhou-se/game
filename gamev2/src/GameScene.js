@@ -161,6 +161,7 @@ class GameScene extends Phaser.Scene {
             this.roomManager = new RoomManager(this);
             this.collisionSystem = new CollisionSystem(this);
             this.occlusion = new Occlusion(this);   // scenery fades when someone is behind it
+            this.seating = new Seating(this);       // the player on a chair, a sofa, in a bed
             this.npcManager = new NPCManager(this);
             this.inputHandler = new InputHandler(this);
             this.achievementManager = new AchievementManager(this);
@@ -1215,7 +1216,10 @@ class GameScene extends Phaser.Scene {
      * @returns {boolean} True if movement is allowed
      */
     checkCollision(character, targetGridX, targetGridY, fromGridX, fromGridY) {
-        return this.collisionSystem.checkCollision(character, targetGridX, targetGridY, fromGridX, fromGridY);
+        // furniture to sit on stays blocked, but the player may step straight onto it (Seats)
+        return this.collisionSystem.checkCollision(character, targetGridX, targetGridY, fromGridX, fromGridY) ||
+            this.collisionSystem.checkSeatStep(character, this.roomManager.seatAt(targetGridX, targetGridY),
+                targetGridX, targetGridY, fromGridX, fromGridY);
     }
 
     /**
@@ -1273,11 +1277,12 @@ class GameScene extends Phaser.Scene {
         if (this.playerNameLabel && this.player) {
             this.playerNameLabel.setPosition(
                 this.player.sprite.x,
-                this.player.sprite.y - this.GRID_SIZE / 2 - 5
+                this.player.sprite.y + this.player.lift - this.GRID_SIZE / 2 - 5
             );
             this.playerNameLabel.setVisible(this.player.sprite.visible && this.npcManager.labelsShown());
         }
         this.updateCharacterDepths();
+        this.seating.update();
         this.occlusion.update();
         if (this.debugManager) this.debugManager.update();
         // a player who has left their start cell is where they chose to be (resettleNewPlayer)

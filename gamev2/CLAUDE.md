@@ -109,7 +109,7 @@ be found here.
 
 | File | Covers | Read before |
 |---|---|---|
-| `architecture.md` | File Structure (what each `src/` file is), Core Constants, Grid-Based Movement, Collision Detection, sprite positioning | your first change; adding a source file; touching movement or collision |
+| `architecture.md` | File Structure (what each `src/` file is), Core Constants, Grid-Based Movement, Collision Detection, Sitting on furniture (`Seats.js`, `Seating.js`), sprite positioning | your first change; adding a source file; touching movement or collision; adding furniture to sit on |
 | `maps-and-rooms.md` | Room System: room definition, NPC dated `states`, **Default game date**, transporters, room fade, Boundary System | editing room data, NPC states, `?date=` / default-date logic |
 | `../tiled/README.md` | Editing maps in Tiled, prefabs, `stamp_prefab.py`, layers | any map or world edit (with the `generate-room` / `adjust-game` skills) |
 | `stitched-city.md` | Stitched cities: `TokyoCity`, `CityStitcher`, district coordinates, woods, depth, chunk streaming / performance, seams, `?stitch=0`, adding a district | anything that reads the current room, cell coordinates, tiles on screen, or Tokyo / Market / Palace / Park |

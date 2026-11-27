@@ -88,6 +88,24 @@ class CollisionSystem {
     }
 
     /**
+     * Whether a step that checkCollision refused may be taken after all,
+     * onto furniture to sit on (issue #227; see Seats): the player only, one
+     * cell, straight, onto a solid seat cell with nothing and nobody on it.
+     * checkCollision is not changed by this - NPCs, paths and reach still
+     * see the furniture as blocked.
+     * @param {Character} character - The character attempting to move
+     * @param {Object|null} seat - The seat cell on the target (RoomManager.seatAt), if any
+     * @returns {boolean} True if the step is allowed
+     */
+    checkSeatStep(character, seat, targetGridX, targetGridY, fromGridX, fromGridY) {
+        if (!character.isPlayer || !Seats.canStepOn(seat, fromGridX, fromGridY, targetGridX, targetGridY)) return false;
+        if (!this.scene.roomManager.checkBoundary(targetGridX, targetGridY)) return false;
+        const cells = [{ x: targetGridX, y: targetGridY }];
+        return this.checkObjectCollision(cells) &&
+            this.checkCharacterCollision(character, targetGridX, targetGridY, fromGridX, fromGridY, cells);
+    }
+
+    /**
      * Check collision with layer tiles
      * @param {Array} cellsToCheck - Array of {x, y} cells to check
      * @returns {boolean} True if no collision

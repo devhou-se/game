@@ -24,7 +24,7 @@ const ctx = vm.createContext({
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/ConfigCodec.js', 'systems/TiledAdapter.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Hints.js', 'TrainTravel.js', 'StationPicker.js', 'DatePicker.js', 'DialogueManager.js', 'systems/Viewport.js', 'systems/UIScale.js', 'systems/TouchControls.js',
     'utils/JapaneseFont.js', 'ItemIcons.js', 'Energy.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'Career.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js',
-    'systems/RoomManager.js', 'systems/CollisionSystem.js', '../tools/world-model.js'].forEach(load);
+    'utils/Seats.js', 'systems/RoomManager.js', 'systems/CollisionSystem.js', '../tools/world-model.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 
 // The shipped world as the game sees it: config.json decoded, rooms from tiled/*.tmj.
@@ -109,7 +109,7 @@ const showdownWith = (money, player, bonus) => {
 // change the decoded config first.
 const worldWith = (stitch, edit) => {
     const w = vm.createContext({ console, URLSearchParams, location: { search: '' } });
-    for (const f of ['utils/ConfigCodec.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'systems/TiledAdapter.js',
+    for (const f of ['utils/ConfigCodec.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'utils/Seats.js', 'systems/TiledAdapter.js',
         'systems/RoomManager.js', 'systems/CollisionSystem.js', 'systems/CityStitcher.js', 'systems/Occlusion.js', 'Shop.js', 'TrainTravel.js',
         '../tools/world-model.js']) {
         vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), w, { filename: f });

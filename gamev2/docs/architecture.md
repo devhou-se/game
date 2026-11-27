@@ -30,6 +30,10 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/utils/Interactions.js` - The one table of what a bump opens (shops, ponds, clocks, a home's flavour lines, the drinking
   table, a shrine's offering box and fortune stand, the palace's dais and visitors' book, a temple's incense burner, offering box and fortune drawers, a pagoda's offering box and fittings, a tower lobby's reception desk and lifts). `Shop`, `Fishing`, `DrinkingGame`, `ShrineVisit`, `PalaceVisit`, `TempleVisit`, `Career`, `GameScene` and `tools/play.js` all read it; add a rule here
   rather than a tile-name check in a feature file
+- `src/utils/Seats.js` - The one table of furniture the player can get on (chairs, stools, sofas, benches, beds, futons, the bunk,
+  the bath) and the pose on each: the lift, the facing, the piece of its sprite drawn over the player (see Sitting on furniture)
+- `src/systems/Seating.js` - Draws the player on that furniture every frame: the lift, the facing, the sort, the cover
+  (see Sitting on furniture)
 - `src/ShrineVisit.js` - The offering box and the fortune stand inside a shrine's worship hall (see "Shrine worship halls"
   in `landmarks-and-towns.md`)
 - `src/PalaceVisit.js` - Requesting an audience at the dais and signing the visitors' book inside the palace's audience hall
@@ -85,6 +89,37 @@ All intermediate cells in movement path are checked for:
 - Stationary character positions
 - Moving character destinations
 - Path crossing (swap detection)
+
+### Sitting on furniture (issue #227)
+Chairs, stools, sofas, benches, beds, futons, the bunk, the bath and the toilet can be got onto. There is no
+sitting animation and no new art: the player stands on the furniture's cell and is drawn to look as if they
+were on it. Which furniture, and how, is one table, `Seats.RULES` in `src/utils/Seats.js` (pure, no Phaser).
+
+- **Getting on is a step.** The furniture's cells stay blocked: `checkCollision` is unchanged, so NPCs, the
+  model's paths and reach, `lint` and the blog pipeline all still see an obstacle. `GameScene.checkCollision`
+  then asks `CollisionSystem.checkSeatStep`, which lets through one thing only: the PLAYER's one-cell,
+  STRAIGHT step onto a solid seat cell (`RoomManager.seatAt`) with nobody and no object on it. Stepping off,
+  or along a sofa, is the same step; a held key walks across a row of chairs. A diagonal never gets on.
+- **A seat's cells** are the blocked cells of the sprite's footprint (`Seats.index`). A rule with `open: true`
+  is the other case - a bench drawn with its back to you over floor you walk on (`station-bench-back`): its
+  walkable cells take the pose when you stop there, and nothing about stepping or sorting changes.
+- **The pose** is `{ face, dy, cover }`, or one per footprint row for furniture you lie in. `dy` is the lift:
+  `Character.setLift` moves the sprite's origin, so the sprite's `x`/`y` (and with them the camera, Occlusion's
+  samples and the grid) stay on the cell; it slides from the old cell's lift to the new one's during the step
+  (`Seats.dyAt`). `face` turns the player once they stop (a dining chair faces its table). The name label
+  follows the lift.
+- **Layering** (`src/systems/Seating.js`, run from `GameScene.update` after `updateCharacterDepths()` and
+  before `occlusion.update()`): on solid furniture the player sorts at the furniture's foot row
+  (`Seats.footRow`) instead of their own, so they are drawn in front of the bed they lie in. `cover` is a
+  rectangle of the furniture's own sprite - a bed's blanket, the rim of the bath, the back of a chair seen
+  from behind - drawn again one depth step above the player: that is what tucks them in.
+- **A line the furniture says** (`Interactions`' `flavour` rules: the bunk, the bath) is said when the player
+  settles on it (once each time they get on that piece), under the same guards as a bump. Furniture that is not a seat
+  still says its line on the bump.
+- **Adding a seat** is one `Seats.RULES` row, provided the sprite stands on `Collidables` over colliders: a
+  `pattern` for its key, a `kind`, and a pose tuned by eye in the browser. `tools/tests/seats.test.js` fails a
+  row no sprite in the world matches, a pose array that is not one per sprite row, and a `cover` outside the
+  sprite. The kotatsu, tables and zabuton are deliberately not seats.
 
 ### Character Sprite Positioning
 Sprites are centered at: `gridPos * GRID_SIZE + GRID_SIZE/2`

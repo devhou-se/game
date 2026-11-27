@@ -118,6 +118,45 @@ function install() {
                 inWindow: cx >= 0 && cx <= window.innerWidth && cy >= 0 && cy <= window.innerHeight,
                 visible: p.visible && p.alpha === 1, win: [window.innerWidth, window.innerHeight] };
         },
+        // furniture to get onto (issue #227): a solid seat cell `want(seat, dx, dy)` picks, in an ordinary room, with
+        // open floor straight before it - and, with `wall`, something behind it that is neither floor nor seat, so
+        // a key held down ends on it. Puts the player on that floor: { room, x, y, dx, dy, from } or null
+        seatSpot: (want, wall) => {
+            const doors = Object.values(rm.rooms).flatMap(r => r.transporters || []);
+            for (const key of Object.keys(s.config.rooms)) {
+                const room = rm.rooms[key], door = doors.find(t => t.targetRoom === key);
+                if (!room || !door || rm.resolve(key, 0, 0).room !== key) continue;
+                // the room's seats from its map alone, to enter only a room that has one of the kind
+                const cells = Seats.index(room, { sizeOf: (k) => rm.sizeOf(k),
+                    isBlocked: (x, y) => room.layers.some(l => l.collision && l.tiles && l.tiles[x + ',' + y]) });
+                if (![...cells.values()].some(c => c.solid && DIRS.some(([dx, dy]) => want(c, dx, dy)))) continue;
+                T.place(key, door.targetX, door.targetY);
+                const { w, h } = T.size();
+                for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+                    const seat = rm.seatAt(x, y);
+                    if (!seat || !seat.solid || !T.quiet(x, y, 1)) continue;
+                    for (const [dx, dy] of DIRS) {
+                        const fx = x - dx, fy = y - dy;
+                        if (!want(seat, dx, dy) || !T.open(fx, fy) || !T.quiet(fx, fy, 1)) continue;
+                        if (wall && (T.free(x + dx, y + dy) || rm.seatAt(x + dx, y + dy))) continue;
+                        T.place(key, fx, fy);
+                        return { room: key, x, y, dx, dy, from: { x: fx, y: fy } };
+                    }
+                }
+            }
+            return null;
+        },
+        // how the player is drawn where they stand: the seat cell under them, its art, the covers shown
+        seated: () => {
+            const p = s.player, seat = rm.seatAt(p.gridX, p.gridY);
+            const rec = seat && rm.tileRecords.find(r => r.key === seat.key && r.gridX === seat.x && r.gridY === seat.y);
+            return { pos: T.pos(), lift: p.lift, facing: [p.facingX, p.facingY], depth: p.sprite.depth, feet: rm.yDepth((p.gridY + 1) * 10 + 5),
+                seat: seat && { kind: seat.kind, key: seat.key, row: seat.row, dy: seat.pose.dy || 0, face: Seating.FACE[seat.pose.face] || null,
+                    cover: seat.pose.cover || null, x: seat.x * s.GRID_SIZE, y: seat.y * s.GRID_SIZE },
+                art: rec ? { depth: rec.depth, fade: rec.fade === undefined ? null : rec.fade, alpha: rec.sprite ? rec.sprite.alpha : null } : null,
+                covers: s.seating.covers.filter(c => c.visible).map(c => ({ key: c.texture.key, depth: c.depth, x: c.x, y: c.y, alpha: c.alpha })),
+                screen: T.onScreen(), overlays: T.overlays() };
+        },
         // a direction the player can take one step in right now: { dx, dy } or null
         wayOut: () => {
             const p = s.player;
@@ -1022,6 +1061,50 @@ async function desktop(shared) {
             need(st.hud.room.includes(st0.nameB) && st.free && st.screen.inView && st.screen.visible && st.tiles > 0, { arrived: st, expected: st0.nameB });
         });
 
+        // 13 --------------------------------------------------------------- furniture to sit on (issue #227)
+        // (here, after the short profiles have finished, so the checks above keep their place beside them)
+        await cleanly('seats', async () => {
+            const near = (a, b) => Math.abs(a - b) < 1e-6;
+            // into a bed from the floor beside its pillow, the key held down against the wall behind it
+            const bed = await page.evaluate(() => __t.seatSpot((seat, dx, dy) => seat.kind === 'bed' && seat.row === 0 && !!seat.pose.cover && dy === 0, true));
+            need(bed, 'no bed with open floor beside its pillow and a wall behind it');
+            await idle(page);
+            // placed a moment ago: let a frame draw the player there
+            await until(page, '__t.s.cameras.main.worldView.contains(__t.s.player.sprite.x, __t.s.player.sprite.y) && Math.abs(__t.seated().depth - __t.seated().feet) < 1e-6', 2000);
+            const floor = await page.evaluate('__t.seated()');
+            need(!floor.seat && floor.lift === 0 && floor.covers.length === 0 && near(floor.depth, floor.feet), { notOnPlainFloorBesideTheBed: floor });
+            await hold(page, keyFor(bed.dx, bed.dy), `__t.at(${bed.x}, ${bed.y}) && __t.idle() && __t.s.player.lift !== 0`, 2500);
+            const inBed = await page.evaluate('__t.seated()');
+            need(inBed.pos.room === bed.room && inBed.pos.x === bed.x && inBed.pos.y === bed.y && inBed.seat && inBed.seat.kind === 'bed', { notOnTheBed: inBed.pos, bed });
+            // lying on the pillow, turned to the camera, drawn over the bed, and the bed's own blanket drawn over them: tucked in
+            need(inBed.lift === inBed.seat.dy && inBed.lift > 0 && inBed.seat.face && inBed.facing.join() === inBed.seat.face.join() && inBed.facing.join() === '0,1', { pose: inBed });
+            need(inBed.art && inBed.depth > inBed.art.depth && inBed.art.fade === null && (inBed.art.alpha === null || inBed.art.alpha === 1), { playerNotOverTheBed: inBed });
+            need(inBed.covers.length === 1 && inBed.covers[0].key === inBed.seat.key && inBed.covers[0].depth > inBed.depth && inBed.covers[0].alpha === 1 &&
+                inBed.covers[0].x === inBed.seat.x && inBed.covers[0].y === inBed.seat.y, { noBlanketOverThePlayer: inBed });
+            need(inBed.screen.visible && inBed.screen.inView && inBed.overlays.length === 0, { inBed });
+            await page.screenshot({ path: path.join(SHOTS, 'regress_seat_bed.png') });
+            // and out again: on the floor as before
+            await step(page, -bed.dx, -bed.dy);
+            const out = await page.evaluate('__t.seated()');
+            need(out.pos.x === bed.from.x && out.pos.y === bed.from.y && !out.seat && out.lift === 0 && out.covers.length === 0 && near(out.depth, out.feet) && near(out.depth, floor.depth), { stillInBed: out, bed });
+
+            // onto a dining chair from its side: one step, sat up on it, turned to face the table
+            const chair = await page.evaluate(() => __t.seatSpot((seat, dx, dy) => seat.kind === 'chair' && seat.pose.face === 'down' && !(dx === 0 && dy === 1)));
+            need(chair, 'no chair facing down with open floor at its side or foot');
+            await step(page, chair.dx, chair.dy);
+            need(await until(page, '__t.idle() && __t.s.player.lift !== 0', 1500), { notLiftedOntoTheChair: await page.evaluate('__t.seated()'), chair });
+            const sat = await page.evaluate('__t.seated()');
+            need(sat.pos.x === chair.x && sat.pos.y === chair.y && sat.seat && sat.seat.kind === 'chair', { notOnTheChair: sat.pos, chair });
+            need(sat.lift === sat.seat.dy && sat.lift < 0 && sat.facing.join() === '0,1', { pose: sat });
+            need(sat.art && sat.depth > sat.art.depth && sat.covers.length === 0 && sat.screen.visible && sat.overlays.length === 0, { sat });
+            await page.screenshot({ path: path.join(SHOTS, 'regress_seat_chair.png') });
+            await step(page, -chair.dx, -chair.dy);
+            const up = await page.evaluate('__t.seated()');
+            need(up.pos.x === chair.from.x && up.pos.y === chair.from.y && !up.seat && up.lift === 0 && near(up.depth, up.feet), { stillOnTheChair: up, chair });
+            await page.evaluate('__t.home()');
+            await idle(page);
+        });
+
         // 11 --------------------------------------------------------------- night
         await cleanly('night', async () => {
             await boot(page, url(`${QUIET}&tod=night`));
@@ -1340,6 +1423,29 @@ async function phones() {
             need(bar.oneRow && bar.room.startsWith(house.brief), { floorNotOnTheBar: bar, expected: house.brief });
             await page.screenshot({ path: path.join(SHOTS, 'regress_phone_devhouse.png') });
             await devhouseStair(page, house);
+            need(errors.length === 0, { errors });
+        });
+
+        // sitting down is a step like any other, so the d-pad does it: onto a sofa seen from the front (issue #227)
+        await check('phone-landscape-seat', async () => {
+            await page.evaluate('__t.reset()');   // whatever a failed check above left up
+            const sofa = await page.evaluate(() => __t.seatSpot((seat) => seat.kind === 'sofa' && seat.pose.face === 'down', true));
+            need(sofa, 'no sofa facing down with open floor before it and something solid behind it');
+            await idle(page);
+            const arrow = await page.evaluate((glyph) => {
+                const b = [...document.querySelectorAll('#touch-controls .tc-padzone .tc-pad')].find(q => q.textContent === glyph), q = b && b.getBoundingClientRect();
+                return q && { x: Math.round(q.left + q.width / 2), y: Math.round(q.top + q.height / 2) };
+            }, { '1,0': '▶', '-1,0': '◀', '0,1': '▼', '0,-1': '▲' }[`${sofa.dx},${sofa.dy}`]);
+            need(arrow, { noArrowFor: sofa });
+            const cdp = await context.newCDPSession(page);
+            await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [arrow] });
+            const there = await until(page, `__t.at(${sofa.x}, ${sofa.y}) && __t.idle() && __t.s.player.lift !== 0`, 2500);
+            await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+            const sat = await page.evaluate('Object.assign(__t.seated(), { state: Object.assign({}, __t.s.touchControls.state), controls: __t.s.touchControls.enabled })');
+            need(there && sat.seat && sat.seat.kind === 'sofa' && sat.lift === sat.seat.dy && sat.lift < 0 && sat.facing.join() === '0,1', { dpadDidNotSitThePlayerDown: sat, sofa });
+            need(sat.art && sat.depth > sat.art.depth && sat.screen.visible && sat.screen.inView && sat.screen.inWindow && sat.overlays.length === 0 && sat.controls, { sat });
+            await page.screenshot({ path: path.join(SHOTS, 'regress_phone_seat.png') });
+            need(await until(page, '!Object.values(__t.s.touchControls.state).some(Boolean)', 1500), 'the d-pad stayed held after the touch ended');
             need(errors.length === 0, { errors });
         });
     });

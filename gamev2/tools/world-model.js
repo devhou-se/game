@@ -170,6 +170,7 @@ class WorldModel {
         this.w = (room.worldWidth || this.WORLD_WIDTH) / this.GRID_SIZE;
         this.h = (room.worldHeight || this.WORLD_HEIGHT) / this.GRID_SIZE;
         this.blocked = rm.blockedCells;
+        this.seats = null;      // this room's seat cells, indexed on first use (seatAt)
     }
 
     get room() { return this.roomManager.rooms[this.roomManager.currentRoom]; }
@@ -178,6 +179,20 @@ class WorldModel {
     canStep(fx, fy, tx, ty) {
         if (tx < 0 || ty < 0 || tx >= this.w || ty >= this.h) return false;
         return this.collisionSystem.checkCollision(this.player, tx, ty, fx, fy);
+    }
+
+    /** The seat cell on a cell of the current room - furniture the player can get on (src/utils/Seats.js) - or null. */
+    seatAt(x, y) {
+        if (!this.seats) {
+            this.seats = Seats.index(this.room, { sizeOf: (key) => this.cells(key), isBlocked: (cx, cy) => this.blocked.has(cx + ',' + cy) });
+        }
+        return Seats.lookup(this.seats, x, y);
+    }
+
+    /** The one step canStep refuses and the game allows: the player, straight onto a seat (CollisionSystem.checkSeatStep). */
+    canSit(fx, fy, tx, ty) {
+        if (tx < 0 || ty < 0 || tx >= this.w || ty >= this.h) return false;
+        return this.collisionSystem.checkSeatStep(this.player, this.seatAt(tx, ty), tx, ty, fx, fy);
     }
 
     tilesAt(x, y) {
@@ -257,6 +272,14 @@ class WorldModel {
         const p = this.player;
         const tx = p.gridX + dx, ty = p.gridY + dy;
         if (!this.canStep(p.gridX, p.gridY, tx, ty)) {
+            if (this.canSit(p.gridX, p.gridY, tx, ty)) {
+                // onto a chair, a sofa, a bed: its line, if it has one, is said on getting on it (Seating)
+                const seat = this.seatAt(tx, ty), was = this.seatAt(p.gridX, p.gridY);
+                const same = was && was.key === seat.key && was.x === seat.x && was.y === seat.y;
+                const i = same ? null : this.interactionAt(tx, ty);
+                p.gridX = tx; p.gridY = ty;
+                return { moved: true, seat, interaction: i && i.group === 'flavour' ? i : null };
+            }
             return { moved: false, bumped: [tx, ty], interaction: this.interactionAt(tx, ty) };
         }
         const from = this.here().room;

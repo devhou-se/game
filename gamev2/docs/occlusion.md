@@ -42,5 +42,11 @@ drawn under it. `src/systems/Occlusion.js` keeps them in view with one rule for 
   the foot solid, so the shaft cells are walked behind and the pillar fades; its hanging pieces are `Tops`
   under four rows tall, lifted in front of the taller thing behind them with a `depthBias` (the rope over the
   sanctuary, the bell rope in front of the offering box).
+- **On furniture the player is not behind it** (issue #227, "Sitting on furniture" in `architecture.md`): on a
+  bed, a sofa or any other solid seat `Seating.update()` re-sorts the player at the furniture's foot row, after
+  `updateCharacterDepths()` and before `occlusion.update()`, so the furniture is under them and never counts as
+  hiding them (only art with a higher depth does). The seat's `cover` - the blanket - is an image of
+  Seating's own one depth step above the player, not a tile record: Occlusion does not know it and never
+  fades it. It is a strip of the furniture the player is in by design; do not make a cover of anything tall.
 - Layering consequences for maps: a walk-behind strip no longer hides anyone, so "the player vanishes
   behind X" is not a reason to add colliders any more (colliders are for where you cannot stand).

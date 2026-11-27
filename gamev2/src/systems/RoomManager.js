@@ -24,6 +24,7 @@ class RoomManager {
         this.tileRecords = [];       // one per tile: where, what, depth, bounds, live sprite
         this.blockedCells = new Set();   // "x,y" of every collision-layer tile
         this.interactionIndex = null;    // "x,y" -> interactions, built on the first bump (interactionAt)
+        this.seatIndex = null;           // "x,y" -> seat cell, built on first use (seatAt)
         this.signSprites = [];
         this.signArt = [];           // the signs as art records (Occlusion fades them like tiles)
         this.liveTiles = new Set();  // records that currently have a sprite
@@ -382,6 +383,7 @@ class RoomManager {
         this.tileRecords = [];
         this.blockedCells = new Set();
         this.interactionIndex = null;
+        this.seatIndex = null;
         this.landmarks = [];
         this.signSprites = [];
         this.signArt = [];
@@ -579,17 +581,32 @@ class RoomManager {
      */
     interactionAt(gridX, gridY, group) {
         if (!this.interactionIndex) {
-            const textures = this.scene.textures;
-            const cells = (px) => Math.max(1, Math.round(px / this.scene.GRID_SIZE));
-            const sizeOf = (key) => {
-                if (!textures.exists(key)) return [1, 1];
-                const image = textures.get(key).getSourceImage();
-                return [cells(image.width), cells(image.height)];
-            };
             this.interactionIndex = Interactions.index(this.rooms[this.currentRoom],
-                this.scene.config.rooms[this.currentRoom] || {}, { sizeOf, venues: Shop.VENUES });
+                this.scene.config.rooms[this.currentRoom] || {}, { sizeOf: (key) => this.sizeOf(key), venues: Shop.VENUES });
         }
         return Interactions.lookup(this.interactionIndex, gridX, gridY, group);
+    }
+
+    /**
+     * The seat cell of the current room on a cell - a chair, a sofa, a bed
+     * the player can get on (see Seats) - or null. Indexed on first use
+     * after a room load, like interactionAt: Seating asks every frame.
+     */
+    seatAt(gridX, gridY) {
+        if (!this.seatIndex) {
+            this.seatIndex = Seats.index(this.rooms[this.currentRoom],
+                { sizeOf: (key) => this.sizeOf(key), isBlocked: (x, y) => this.isBlocked(x, y) });
+        }
+        return Seats.lookup(this.seatIndex, gridX, gridY);
+    }
+
+    /** A sprite's footprint in cells, [w, h], from its texture ([1, 1] when it has none). */
+    sizeOf(key) {
+        const textures = this.scene.textures;
+        if (!textures.exists(key)) return [1, 1];
+        const cells = (px) => Math.max(1, Math.round(px / this.scene.GRID_SIZE));
+        const image = textures.get(key).getSourceImage();
+        return [cells(image.width), cells(image.height)];
     }
 
     /**
@@ -869,6 +886,7 @@ class RoomManager {
 
         // Re-grade day/night for the new room (interiors are never graded)
         if (this.scene.dayNight) this.scene.dayNight.onRoomChange();
+        if (this.scene.seating) this.scene.seating.onRoomChange();
     }
 
     /**
