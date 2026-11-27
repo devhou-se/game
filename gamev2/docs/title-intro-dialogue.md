@@ -12,7 +12,8 @@ the boot flow (the `CharacterCreator.shouldAutoShow()` check) as the `show(onSta
 game title (`config.game.title`), the devhouse members (`CharacterSelect.lineup()`, from `config.members`) lined up with a small hop
 travelling along the line, and a blinking start prompt, at depth 9000 on an opaque backdrop the colour of
 the HTML loader.
-- SPACE / ENTER / ESC (so touch A and B too) or a tap/click anywhere dismisses it. While it is up it is
+- SPACE / ENTER / ESC (so touch A and B too) or a tap/click anywhere dismisses it; the keys are read through
+  `InputHandler.pressed`, so the quickest tap counts (#253). While it is up it is
   **priority 0 in `InputHandler.handleInput()`**: no movement, menu or overlay input reaches the game.
   The triple-backtick debug chord is ignored too (`DebugManager.onBacktick` checks `titleScreen.isVisible()`).
 - **`?notitle=1` skips it** — use it in tests and dev URLs that drive input straight after boot

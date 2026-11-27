@@ -255,8 +255,8 @@ class AirTravel {
 
     /** Called every frame by InputHandler while flying (all other input is off). */
     handleInput() {
-        const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
-        if (JD(k.space) || JD(k.enter) || JD(k.esc)) this.skip();
+        // through the handler's latch: a tap that is down and up again inside one frame is a press too (#253)
+        if (this.scene.inputHandler.pressed(this.keys)) this.skip();
     }
 
     /** End the flight early, if it may be (canSkip). */
@@ -278,8 +278,7 @@ class AirTravel {
         this._land = null;
         this.lastFlight = { from: fromKey, to: toKey };
         scene.roomManager.isTransitioning = true;
-        const JD = Phaser.Input.Keyboard.JustDown;
-        [this.keys.enter, this.keys.space, this.keys.esc].forEach(JD);   // the press that boarded is not a skip
+        scene.inputHandler.forget(this.keys);   // the press that boarded is not a skip
 
         const player = scene.player;
         // black curtain under the cutscene: the room is swapped behind it

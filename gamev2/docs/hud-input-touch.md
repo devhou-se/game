@@ -48,6 +48,14 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
   walks the player or steps through the menu, so without it the W held to walk onto a station's board cell
   moved the departures list up a row as it opened, and the S that stepped down the menu moved the
   Character list. A key still down acts again only after it is released. A new overlay does the same.
+- **A key tapped between two frames is still a press** (issues #195, #253). Keys are read once a frame, and a
+  keydown and keyup that both land between two frames leave nothing to read: `isDown` is false again, and
+  Phaser takes `JustDown` back on the keyup (`Key.onUp`). It happens on a slow frame, and to a synthesized
+  press with no hold. `InputHandler` latches every keydown (`tapped`) until the next frame has read it:
+  `held(key)` for the world, the menu and dialogue, and `pressed(keys)` for the screens one press of any of
+  their keys ends - the title, a flight, a ride with a view - which begin with `forget(keys)`, so that a
+  press from before them is none. A new screen of that kind reads its keys the same way. The other overlays
+  still read `JustDown` alone, and do not see such a tap.
 - **Title screen**: SPACE/ENTER/ESC or a tap starts the game (`?notitle=1` skips the screen)
 - **Intro**: SPACE/ENTER or a tap turns the page, ESC skips (`?nointro=1` skips the first-visit intro)
 - **Character creator**: ↑/↓ pick a row, ←/→ change it, ENTER/SPACE plays, ESC cancels. RANDOM is the last

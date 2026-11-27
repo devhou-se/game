@@ -1050,7 +1050,9 @@ the mall's are; if the tower moves, run `generate_tower_deck.py` then `config_to
 - **Skipping and input.** Input is locked for the ride like a flight (`InputHandler` hands every frame to
   `ViewRide.handleInput` while `riding`; `roomManager.isTransitioning` holds the player). SPACE / ENTER / ESC
   (A / B on touch) or a tap anywhere ends it from `ViewRide.SKIP_AFTER` (0.7 s) after the picture comes up
-  (`ViewRide.canSkip`): a key still held from the walk in is not a skip. The hint under the picture is worded by
+  (`ViewRide.canSkip`): a key still held from the walk in is not a skip. The keys are read through the
+  handler's keydown latch (`InputHandler.pressed`), as the flight's are, so a tap that is down and up again
+  inside one frame skips too (#253). The hint under the picture is worded by
   `Hints.text` (`SPACE: skip the ride` / the tap wording). No new key, overlay or save field.
 - **On a phone** the picture is magnified as the world is, but never larger than the view less the room the
   hint needs under it (`ViewRide.layout`, `hintRoom`: `UIScale` draws the hint as large on the screen as on a

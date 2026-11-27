@@ -94,6 +94,37 @@ class InputHandler {
     }
 
     /**
+     * Was any of `keys` pressed since the last frame? For a screen that is
+     * asked every frame and that one press of any of its keys ends: the
+     * title, a flight, a ride with a view. Phaser's JustDown alone misses a
+     * quick tap: a keyup takes it back (Key.onUp), so a keydown and keyup
+     * that both land between two frames were never seen, and an instant SPACE
+     * did not skip the ride (issue #253). The keydown latch held() reads
+     * answers for those: Phaser hands out one Key per key code, so a
+     * screen's own addKeys are the keys setupKeys latched. Every key's
+     * JustDown is still read, so none is left raised for the overlay that
+     * opens next. `keys` is the screen's addKeys map; `justDown` is Phaser's
+     * (passed in by the tests).
+     */
+    pressed(keys, justDown = Phaser.Input.Keyboard.JustDown) {
+        let any = false;
+        for (const key of Object.values(keys)) {
+            if (justDown(key) || this.tapped.has(key)) any = true;
+        }
+        return any;
+    }
+
+    /**
+     * swallow() for a screen that reads its keys with pressed(): the press
+     * its keys are still holding is forgotten, and so is a tap latched for
+     * this frame, so that neither acts in it.
+     */
+    forget(keys, justDown = Phaser.Input.Keyboard.JustDown) {
+        InputHandler.swallow(keys, justDown);
+        for (const key of Object.values(keys)) this.tapped.delete(key);
+    }
+
+    /**
      * Hand this frame's input to whoever owns it
      */
     routeInput() {

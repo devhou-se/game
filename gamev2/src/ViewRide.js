@@ -323,8 +323,8 @@ class ViewRide {
 
     /** Called every frame by InputHandler while riding (all other input is off). */
     handleInput() {
-        const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
-        if (JD(k.space) || JD(k.enter) || JD(k.esc)) this.skip();
+        // through the handler's latch: a tap that is down and up again inside one frame is a press too (#253)
+        if (this.scene.inputHandler.pressed(this.keys)) this.skip();
     }
 
     /** End the ride early, if it may be (canSkip). */
@@ -345,8 +345,7 @@ class ViewRide {
         this._ride = ride;
         this._elapsed = 0;
         scene.roomManager.isTransitioning = true;
-        const JD = Phaser.Input.Keyboard.JustDown;
-        [this.keys.enter, this.keys.space, this.keys.esc].forEach(JD);   // a press from before the ride is not a skip
+        scene.inputHandler.forget(this.keys);   // a press from before the ride is not a skip
 
         // black curtain under the picture: the room is swapped behind it
         const curtain = scene.add.rectangle(0, 0, W, H, 0x000000)

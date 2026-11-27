@@ -272,7 +272,7 @@ module.exports = (helpers) => {
         assert.deepStrictEqual([0, V.SKIP_AFTER - 1, V.SKIP_AFTER, lift.ms - 1, lift.ms, lift.ms + 500].map((ms) => V.canSkip(lift, ms)), [false, false, true, true, false, false]);
         // the skip is the flight's: the same keys, and a tap
         const ride = src('ViewRide.js');
-        assert.ok(/JD\(k\.space\) \|\| JD\(k\.enter\) \|\| JD\(k\.esc\)/.test(ride) && /tap\.on\('pointerdown', \(\) => this\.skip\(\)\)/.test(ride));
+        assert.ok(/if \(this\.scene\.inputHandler\.pressed\(this\.keys\)\) this\.skip\(\);/.test(ride) && /tap\.on\('pointerdown', \(\) => this\.skip\(\)\)/.test(ride));
         assert.ok(/Hints\.text\(scene, 'SPACE: skip the ride', \{ tap: true \}\)/.test(ride), 'the hint is worded by Hints');
         assert.ok(!/addKey\(|KeyCodes\.(?!ENTER|SPACE|ESC)/.test(ride.replace(/const K = Phaser\.Input\.Keyboard\.KeyCodes;/, '')) && !/K\.(?!ENTER|SPACE|ESC)[A-Z]/.test(ride), 'no new bindings');
     });

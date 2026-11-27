@@ -5,7 +5,7 @@ walls, a district seam (stitched and `?stitch=0`), a konbini in and out with its
 door and up its stair with the key held down (desktop and a landscape phone), NPC dialogue, the menu, Map and Time
 Travel, a shift at the job in a tower lobby, a train ride, a trip day and a lead-in day, a landscape and a portrait
 phone, night, scenery fading over the player, getting into a bed and onto a chair (and, with the d-pad, a sofa), and the lift up Fukuoka
-Tower with the key held down, its skip on the way down, the deck by night and the ride's picture on both phones, and a turn on
+Tower with the key held down, its skip on the way down (an instant press, down and up with no hold), the deck by night and the ride's picture on both phones, and a turn on
 Osaka's wheel (boarded by a bump, skipped, the key still held not boarding again). It prints `ok` / `FAIL <name> <evidence>` per check and ends `N/N checks passed`
 (exit 1 on any failure; any console or page error is a failure). About 25 seconds.
 

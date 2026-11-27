@@ -54,8 +54,7 @@ class TitleScreen {
     show(onStart) {
         if (this.visible) return;
         this.onStart = onStart || null;
-        const JD = Phaser.Input.Keyboard.JustDown;
-        Object.values(this.keys).forEach(k => JD(k)); // swallow stale presses
+        this.scene.inputHandler.forget(this.keys); // swallow stale presses
         this.visible = true;
         this.render();
     }
@@ -74,10 +73,10 @@ class TitleScreen {
     }
 
     handleInput() {
-        const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
-        // evaluate all three so none is left "just down" for the next overlay
-        const pressed = [JD(k.space), JD(k.enter), JD(k.esc)].some(Boolean);
-        if (pressed) this.start();
+        // through the handler's latch, so a tap that is down and up again inside one frame
+        // starts the game too (#253); it reads all three, so none is left "just down" for
+        // the next overlay
+        if (this.scene.inputHandler.pressed(this.keys)) this.start();
     }
 
     render() {

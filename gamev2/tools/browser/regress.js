@@ -1226,8 +1226,10 @@ async function desktop(shared) {
             // the way down starts at the top
             need(held.m > lift.ride.top / 2 && held.m <= lift.ride.top, { counterOnTheWayDown: held.m, top: lift.ride.top });
             await page.waitForTimeout(120);
-            // pressed now, it ends the ride: long before the ride would have ended itself
-            need(await press(page, 'Space', '__t.s.viewRide.skipped'), 'SPACE did not skip the ride');
+            // pressed now, it ends the ride: long before the ride would have ended itself. An instant press,
+            // down and up again with no hold: both can land between two frames, and it is a skip all the same (#253)
+            await page.keyboard.press('Space');
+            need(await until(page, '__t.s.viewRide.skipped', 1500), 'an instant SPACE did not skip the ride');
             need(await until(page, '!__t.s.viewRide.riding && !__t.rm.isTransitioning', 4000), 'the skipped ride never ended');
             const st = await liftAfter(page);
             need(st.elapsed < lift.ride.ms, { notSkipped: st.elapsed, ride: lift.ride.ms });
@@ -1470,7 +1472,9 @@ async function firstTime() {
             // and the next visit goes straight to the world after the title
             await boot(page, url(''));
             need(await until(page, '__t.s.titleScreen.isVisible()', 3000), 'no title screen on the second visit');
-            need(await press(page, 'Enter', '!__t.s.titleScreen.isVisible()'), 'ENTER did not start the game from the title');
+            // an instant press, down and up again with no hold (#253)
+            await page.keyboard.press('Enter');
+            need(await until(page, '!__t.s.titleScreen.isVisible()', 1500), 'an instant ENTER did not start the game from the title');
             await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
             const again = await page.evaluate('({ overlays: __t.overlays(), sprite: __t.s.player.baseSpriteKey })');
             need(again.overlays.length === 0 && again.sprite === made.sprite, { secondVisit: again, made: made.sprite });

@@ -149,7 +149,9 @@ by air**. Config `airports` is the registry, written by `tools/generate_airports
   You step off in front of the other airport's gate (`arrive`).
 - **Input** is locked as on a train, except that a flight can be skipped: SPACE / ENTER / ESC (A / B on touch)
   or a tap, from `AirTravel.SKIP_AFTER` (0.7 s) after the cabin comes up (`AirTravel.canSkip`) - the press that
-  boarded cannot skip it. `InputHandler` hands every frame to `AirTravel.handleInput` while `flying`.
+  boarded cannot skip it. `InputHandler` hands every frame to `AirTravel.handleInput` while `flying`, which
+  reads the keys through the handler's keydown latch (`InputHandler.pressed`), so a tap that is down and up
+  again inside one frame skips too (#253; "Input Handling" in `hud-input-touch.md`).
 - **Rules as static functions** (`registry`, `destinations`, `canFly`, `direction`, `routeText`, `canSkip`,
   `progress`, `skyTime`, `skyAt`, `clouds`, `windows`), tested in `tools/tests/airports.test.js` with the template, the city and the rule
   that no train reaches it. `Trips.hopsFrom` counts a flight as one hop; `play.js` has `fly <airport>` and the

@@ -264,4 +264,127 @@ module.exports = ({ test, assert, fs, path, GV2, ctx, fired, load, game, require
         scene.trainTravel.riding = false;
         assert.strictEqual(frame(), '', 'a tap during a train ride does not fire after it');
     });
+
+    test('a skip key tapped between two frames still skips the flight and the ride, and starts the game from the title (#253)', () => {
+        for (const [name, file] of [['InputHandler', 'systems/InputHandler.js'], ['AirTravel', 'AirTravel.js'], ['DayNight', 'DayNight.js'],
+            ['ViewRide', 'ViewRide.js'], ['TitleScreen', 'TitleScreen.js']]) {
+            if (game(`typeof ${name}`) === 'undefined') load(file);
+        }
+        // Phaser 4.2's keyboard, as far as these screens use it: one Key per key code, whoever asks for it; a
+        // keydown raises _justDown and emits 'down', once per press (key repeat does neither); a keyup takes
+        // _justDown back (Key.onUp), so JustDown never sees a press that is already up again
+        const made = {};
+        const key = (code) => made[code] || (made[code] = { isDown: false, _justDown: false, fns: [], on(ev, fn) { if (ev === 'down') this.fns.push(fn); } });
+        const press = (k) => { if (!k.isDown) { k.isDown = true; k._justDown = true; k.fns.forEach((fn) => fn()); } };
+        const release = (k) => { k.isDown = false; k._justDown = false; };
+        const tap = (k) => { press(k); release(k); };               // keydown + keyup inside one frame
+        const JD = (k) => { if (k._justDown) { k._justDown = false; return true; } return false; };
+        const calls = [];
+        const scene = {
+            input: { keyboard: {
+                createCursorKeys: () => ({ up: key(38), down: key(40), left: key(37), right: key(39) }), addKey: key,
+                addKeys: (map) => Object.fromEntries(Object.entries(map).map(([name, code]) => [name, key(code)])),
+            } },
+            time: { now: 0 },
+            dialogueManager: { isVisible: () => false },
+            menuManager: { visible: false, isVisible() { return this.visible; }, toggle() { this.visible = !this.visible; calls.push('toggle'); },
+                selectPrevious: () => calls.push('prev'), selectNext: () => calls.push('next'), activate: () => calls.push('activate') },
+            player: { isMoving: false, startMovement: (x, y) => calls.push(`move ${x},${y}`) },
+            roomManager: { isTransitioning: false },
+        };
+        ctx.Phaser = { Input: { Keyboard: { KeyCodes: { SHIFT: 16, ESC: 27, ENTER: 13, SPACE: 32, W: 87, A: 65, S: 83, D: 68 }, JustDown: JD } } };
+        ctx.__scene = scene;
+        try {
+            const ih = scene.inputHandler = game('new InputHandler(__scene)');
+            ih.setupKeys();
+            const air = scene.airTravel = game('new AirTravel(__scene)');
+            const view = scene.viewRide = game('new ViewRide(__scene)');
+            const title = scene.titleScreen = game('new TitleScreen(__scene)');
+            assert.strictEqual(air.keys.space, ih.spaceKey, 'the screens read the keys the handler latches');
+            const frame = () => { calls.length = 0; ih.handleInput(); return calls.join(' | '); };
+            const A = game('AirTravel'), V = game('ViewRide');
+            let ended = 0;
+            const end = () => { ended++; };
+            const count = (what) => { ended = 0; assert.strictEqual(frame(), '', `${what}: nothing else acts`); return ended; };
+
+            // the flight, as go() leaves it once the cabin is up
+            air.flying = true; air._started = 0; air._land = end;
+            tap(air.keys.space);
+            assert.strictEqual(count('flight'), 0, 'not before SKIP_AFTER');
+            scene.time.now = A.SKIP_AFTER;
+            assert.strictEqual(count('flight'), 0, 'and the early tap is dropped, not saved up');
+            for (const name of ['space', 'enter', 'esc']) {
+                tap(air.keys[name]);
+                assert.strictEqual(count('flight'), 1, `a sub-frame ${name} tap skips the flight`);
+                assert.strictEqual(count('flight'), 0, 'once');
+            }
+            assert.strictEqual(air.skipped, true);
+            // a key that stays down is one press, however the two ways of seeing it add up...
+            press(air.keys.space); press(air.keys.enter);
+            assert.strictEqual(count('flight'), 1, 'two keys in one frame are one skip');
+            assert.strictEqual(count('flight'), 0);
+            assert.ok(Object.values(air.keys).every((k) => !k._justDown), 'every JustDown was read: none is left for the next overlay');
+            release(air.keys.space); release(air.keys.enter);
+            assert.strictEqual(count('flight'), 0, 'letting go is nothing');
+            // ...and the press that boarded is none: what go() forgets, held or already up again
+            press(air.keys.enter); tap(air.keys.space);
+            ih.forget(air.keys);
+            assert.strictEqual(count('flight'), 0, 'the press from before the flight does not skip it');
+            assert.strictEqual(count('flight'), 0, 'nor while it stays down');
+            release(air.keys.enter); tap(air.keys.enter);
+            assert.strictEqual(count('flight'), 1, 'released and pressed again, it does');
+            // the ESC that skipped does not open the menu on landing
+            tap(air.keys.esc);
+            assert.strictEqual(count('flight'), 1);
+            air.flying = false;
+            assert.strictEqual(frame(), '');
+
+            // the ride with a view, as run() leaves it once the picture is up
+            const lift = V.RIDES.lift;
+            view.riding = true; view._ride = lift; view._elapsed = V.SKIP_AFTER - 1; view._end = end;
+            tap(view.keys.space);
+            assert.strictEqual(count('ride'), 0, 'not before SKIP_AFTER');
+            view._elapsed = V.SKIP_AFTER;
+            for (const name of ['space', 'enter', 'esc']) {
+                tap(view.keys[name]);
+                assert.strictEqual(count('ride'), 1, `a sub-frame ${name} tap skips the ride`);
+                assert.strictEqual(count('ride'), 0, 'once');
+            }
+            assert.strictEqual(view.skipped, true);
+            press(view.keys.space);
+            assert.strictEqual(count('ride'), 1); assert.strictEqual(count('ride'), 0, 'a held key is one skip');
+            release(view.keys.space);
+            view._elapsed = lift.ms;
+            tap(view.keys.space);
+            assert.strictEqual(count('ride'), 0, 'not once it is ending');
+            view.riding = false;
+            assert.strictEqual(frame(), '');
+
+            // the title: any of the three starts the game, and the press does nothing else after it
+            for (const name of ['space', 'enter', 'esc']) {
+                title.visible = true; title.onStart = end;
+                assert.strictEqual(count('title'), 0);
+                tap(title.keys[name]);
+                assert.strictEqual(count('title'), 1, `a sub-frame ${name} tap starts the game`);
+                assert.strictEqual(title.isVisible(), false);
+                assert.strictEqual(count('title'), 0, 'and is over: no menu, no step');
+            }
+            title.visible = true; title.onStart = end;
+            press(title.keys.esc);
+            assert.strictEqual(count('title'), 1, 'a held key starts it too');
+            assert.strictEqual(count('title'), 0, 'and does not open the menu while it stays down');
+            release(title.keys.esc);
+            assert.strictEqual(count('title'), 0);
+        } finally { delete ctx.Phaser; delete ctx.__scene; }
+
+        // the three read their keys through the handler, and what they swallow as they begin is forgotten there too
+        const read = (f) => fs.readFileSync(path.join(GV2, 'src', f), 'utf8');
+        for (const [file, begin, input] of [['AirTravel.js', 'go(fromKey, toKey) {', 'this.skip()'], ['ViewRide.js', 'run(ride, dir, behind) {', 'this.skip()'],
+            ['TitleScreen.js', 'show(onStart) {', 'this.start()']]) {
+            const body = (open) => read(file).split('\n    ' + open)[1].split('\n    }\n')[0];
+            assert.ok(body('handleInput() {').includes(`if (this.scene.inputHandler.pressed(this.keys)) ${input};`), `${file} handleInput`);
+            assert.ok(/(this\.)?scene\.inputHandler\.forget\(this\.keys\);/.test(body(begin)), `${file} ${begin}`);
+            assert.ok(!read(file).includes('JustDown'), `${file} reads no key past the latch`);
+        }
+    });
 };
