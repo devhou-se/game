@@ -27,7 +27,8 @@ const Interactions = {
         { kind: 'guestbook', group: 'palace', pattern: /^palace-in-guestbook/, footprint: true },
         // inside a temple's main hall (tools/generate_temple.py; src/TempleVisit.js)
         { kind: 'incense', group: 'temple', pattern: /^temple-in-jokoro/, footprint: true },
-        { kind: 'offering', group: 'temple', pattern: /^temple-in-saisen/, footprint: true },
+        // (a pagoda's ground floor has the same box: tools/generate_pagodas.py, issue #214)
+        { kind: 'offering', group: 'temple', pattern: /^(temple|pagoda)-in-saisen/, footprint: true },
         { kind: 'drawers', group: 'temple', pattern: /^temple-in-omikuji/, footprint: true },
         { kind: 'pond', group: 'pond', pattern: /^pond-autotile/ },
         { kind: 'clock', group: 'clock', pattern: /^(office-clock|office-poster-menu)/ },
@@ -58,6 +59,12 @@ const Interactions = {
         { kind: 'bowl-bell', group: 'flavour', pattern: /^temple-in-keisu/, footprint: true, say: 'you flick the rim of the great bowl with a fingernail. it hums for a very long time' },
         { kind: 'votive-candles', group: 'flavour', pattern: /^temple-in-candles/, footprint: true, say: 'a rack of small candles, each one somebody\'s wish. the wax is still warm' },
         { kind: 'tied-fortunes', group: 'flavour', pattern: /^temple-in-musubi/, footprint: true, say: 'bad fortunes are tied here and left behind. there are a great many of them' },
+        // inside a pagoda (issue #214): the heart pillar, the Buddhas at its foot, the sutra chests, the thousand Buddhas, the window
+        { kind: 'heart-pillar', group: 'flavour', pattern: /^pagoda-in-pillar/, footprint: true, say: 'the heart pillar runs from the ground to the spire and touches no floor. it sways in quakes' },
+        { kind: 'four-buddhas', group: 'flavour', pattern: /^pagoda-in-shumidan/, footprint: true, say: 'four small Buddhas sit round the foot of the pillar, one facing each wind' },
+        { kind: 'sutra-chests', group: 'flavour', pattern: /^pagoda-in-kyozo/, footprint: true, say: 'chests of sutras tied with cord, labelled in a hand nobody writes any more' },
+        { kind: 'thousand-buddhas', group: 'flavour', pattern: /^pagoda-in-senbutsu/, footprint: true, say: 'a wall of tiny gilt Buddhas, a thousand of them. you count eleven and give up' },
+        { kind: 'pagoda-window', group: 'flavour', pattern: /^pagoda-in-window/, footprint: true, say: 'through the slats: tiled roofs, then more roofs. the wind is louder up here' },
         // the home city (issue #218)
         { kind: 'clocks', group: 'flavour', pattern: /^sfb-clocks-station/, footprint: true, say: 'everybody meets under the clocks. nobody has ever caught a train here' },
         { kind: 'sea-lions', group: 'flavour', pattern: /^sfb-sea-lions/, footprint: true, say: 'the sea lions bark at you. one of them is eating somebody\'s chips' },

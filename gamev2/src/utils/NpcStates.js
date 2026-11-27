@@ -214,8 +214,9 @@ function hudName(name) {
  * (a landscape phone, layoutHUD): its first part ("7-Eleven | Park 1" ->
  * "7-Eleven", which says where you are). A room named for its kind says
  * nothing by its first part ("House | Sapporo 3" -> "House", and the same of
- * a tower's lobby and a shrine's hall), so it keeps its town instead:
- * "Sapporo house" (issue #208), "Osaka lobby", "Park shrine" (issue #220).
+ * a tower's lobby, a shrine's hall and a pagoda), so it keeps its town instead:
+ * "Sapporo house" (issue #208), "Osaka lobby", "Park shrine" (issue #220),
+ * "Asakusa pagoda" (issue #214).
  * A town whose name makes that longer than HUD_BRIEF_MAX has no room for it
  * on the narrowest phone's one row, so there the kind keeps its number
  * instead of its town: "Lobby | Marunouchi 1" -> "Lobby 1", and the kind
@@ -230,7 +231,7 @@ function hudBrief(name) {
     return led.length <= HUD_BRIEF_MAX ? led : head + rest.slice(town.length);
 }
 /** First parts of a room's name that are a kind of room, not a place: hudBrief leads with the town. */
-const HUD_KINDS = ['House', 'Lobby', 'Shrine'];
+const HUD_KINDS = ['House', 'Lobby', 'Shrine', 'Pagoda'];
 /**
  * The longest town-led short form ("Asahikawa house", 15 characters): what
  * fits one row with the short date and its year and the starting wallet

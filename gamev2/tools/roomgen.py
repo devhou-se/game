@@ -79,6 +79,13 @@ CHIKAGAI_PREFIX = 'Chikagai'    # rooms.Chikagai<Town>
 # temple door unless it leads into a room carrying the `temple` marker.
 TEMPLE_DOORS = {'shrine-walls_2_2': [(0, 0)]}
 TEMPLE_PREFIX = 'Temple'        # rooms.Temple<Host><n>
+# A pagoda (issue #214, tools/generate_pagodas.py): the sprite its ground floor
+# is -> its door cells. `pagoda-floor` is the five-storey pagoda's foot and has
+# one door; `red-pagoda-small-base` is the whole foot of a small red pagoda and
+# its door is two cells wide. The palace's end towers are `pagoda-floor` too
+# (PALACE_DOORS): which of the two a door is, is said by the room it leads into.
+PAGODA_DOORS = {'pagoda-floor_0_0': [(1, 2)], 'red-pagoda-small-base_0_0': [(0, 2), (1, 2)]}
+PAGODA_PREFIX = 'Pagoda'        # rooms.Pagoda<Host><n>
 # The trips' own two houses (issue #69, tools/generate_devhouses.py): each is one
 # sprite -> its street door, on the sprite's bottom row. Only the ground floor's
 # room carries a `door` in its marker: the stairs between floors lead into rooms
@@ -96,6 +103,7 @@ OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()})
                PALACE_PREFIX: ('palace', PALACE_DOORS),
                CHIKAGAI_PREFIX: ('chikagai', CHIKAGAI_DOORS),
                TEMPLE_PREFIX: ('temple', TEMPLE_DOORS),
+               PAGODA_PREFIX: ('pagoda', PAGODA_DOORS),
                DEVHOUSE_PREFIX: ('devhouse', DEVHOUSE_DOORS)}
 DOOR_LAYERS = ('Collidables', 'Over Floor')   # where a door sprite is laid (a tower's foot is on Over Floor)
 _house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior

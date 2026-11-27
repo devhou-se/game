@@ -121,11 +121,11 @@ A new interior is a short script that puts shared blocks together and adds only 
    in the order `doorway` was called, draws the boundary round `walk` (`interiors.outline`) and fails if a
    floor cell cannot be reached from the exits (a cell closed on purpose goes in `pockets=`). The room is at
    least 20x15 and a small floor is centred in it; `ox`, `oy`, `w`, `h` place it by hand. `it.walk` (room
-   cells) is the generator's to add to: a genkan, the arcade's corridors. `back_wall(..., view=True)` puts
-   the wall inside the boundary too (`it.view`, solid cells nobody walks): a phone's camera holds a room no
-   taller than its view to the boundary, so round the floor alone it cuts a tall back wall off the top of
-   the screen (the 7-Elevens). Also there: `interiors.named(cfg, label, host, n)` for "Label · Town 2" and
-   `interiors.seed_of(text)`.
+   cells) is the generator's to add to: a genkan, the arcade's corridors, the storeys and stairs over a
+   pagoda's ground floor. `back_wall(..., view=True)` puts the wall inside the boundary too (`it.view`,
+   solid cells nobody walks): a phone's camera holds a room no taller than its view to the boundary, so
+   round the floor alone it cuts a tall back wall off the top of the screen (the 7-Elevens). Also there:
+   `interiors.named(cfg, label, host, n)` for "Label · Town 2" and `interiors.seed_of(text)`.
 
 The whole of a new interior but its art and its `OWNED_DOORS` row (`tools/tests/generator-blocks.test.js`
 builds exactly this block, without the save, so it cannot rot):

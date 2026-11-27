@@ -28,7 +28,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/systems/Occlusion.js` - Scenery fades while someone stands hidden behind it, and their name label
   with it (see "Walking behind things" in `occlusion.md`)
 - `src/utils/Interactions.js` - The one table of what a bump opens (shops, ponds, clocks, a home's flavour lines, the drinking
-  table, a shrine's offering box and fortune stand, the palace's dais and visitors' book, a temple's incense burner, offering box and fortune drawers, a tower lobby's reception desk and lifts). `Shop`, `Fishing`, `DrinkingGame`, `ShrineVisit`, `PalaceVisit`, `TempleVisit`, `Career`, `GameScene` and `tools/play.js` all read it; add a rule here
+  table, a shrine's offering box and fortune stand, the palace's dais and visitors' book, a temple's incense burner, offering box and fortune drawers, a pagoda's offering box and fittings, a tower lobby's reception desk and lifts). `Shop`, `Fishing`, `DrinkingGame`, `ShrineVisit`, `PalaceVisit`, `TempleVisit`, `Career`, `GameScene` and `tools/play.js` all read it; add a rule here
   rather than a tile-name check in a feature file
 - `src/ShrineVisit.js` - The offering box and the fortune stand inside a shrine's worship hall (see "Shrine worship halls"
   in `landmarks-and-towns.md`)

@@ -168,7 +168,7 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   energy, stamps: {place: 1}, hints: {low: 1} }`,
   plus `omikuji: {date, i}` once a fortune has been drawn at a shrine or in the temple's fortune drawers (one field for both: `ShrineVisit`, see "Shrine worship
   halls" in `landmarks-and-towns.md`; `Shop.omikujiOf` drops anything that is not one). The wallet also pays
-  the shrine's offering (¥5) and fortune (¥100): neither is a purchase, so neither feeds the energy meter
+  the shrine's offering (¥5; the temple's box and a pagoda's are the same offering) and fortune (¥100): neither is a purchase, so neither feeds the energy meter
   nor stamps the Stamp Card. And `guestbook: {date, n}` once the palace's visitors' book has been signed
   (`PalaceVisit`, see "The palace's audience hall" there; `Shop.guestbookOf`): the day it was last signed and
   how many times in all. And `career: {merged, shifts, earned}` once the reception desk of a tower lobby has

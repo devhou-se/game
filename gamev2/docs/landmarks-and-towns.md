@@ -479,7 +479,7 @@ A machiya's doorway is the one cell of its footprint you can step onto (`sendai.
   already leads somewhere (the station houses, the Izakaya in Market), and one with a shop sign at its
   front (`SHOP_SIGNS`: the ramen nobori - Asahikawa's ramen alley is three shops). 7-Elevens, the discount
   store, high-rises and apartment blocks, shrine halls, pagodas, temple halls, landmark buildings and
-  stations are never houses: each wants an interior of its own.
+  stations are never houses: each wants an interior of its own (a pagoda has one: see "Pagodas").
 - **A house is skipped, and stays sealed, rather than anything being moved**: when the cell in front of its
   door cannot be stood on or walked to, when an NPC's base or dated position (any content date) is on the
   door or on that cell, or when a blog landmark's stand cell (`blog_to_npc.find_spots`) is. The run prints
@@ -854,6 +854,87 @@ be redone. `tools/generate_temple.py` is written for one hall; a second one is a
   wanders (two cells either way) but cannot close the doors: a wanderer never steps onto a transporter or a
   cell beside one (`NPCManager.atDoorway`), so the step under each leaf stays free, and wherever else he
   stands both leaves are still walked into from the street, stitched or not (`temple.test.js`).
+
+### Pagodas (issue #214)
+
+**What a pagoda is on the map, and the count.** A pagoda is its base sprite on the `Collidables` layer:
+`pagoda-floor` (the foot of the five-roofed one) or `red-pagoda-small-base` (a small red one, the `pagoda-small`
+prefab). There are five, and three can be walked into:
+
+| Town | What stands there | Door cells -> where you come back out | Interior |
+|---|---|---|---|
+| `Market` (Asakusa) | the five-roofed pagoda west of Senso-ji (`pagoda-floor` at 10,10) | 11,12 -> 11,13 | `PagodaMarket1`, "Pagoda · Asakusa", five storeys |
+| `Park` | three small red pagodas in one column (34,7 / 34,11 / 34,15), drawn overlapping so they read as one tall tower | the two behind (doors 34,9+35,9 and 34,13+35,13) have the next one's roof across their doors: sealed, and they keep the numbers 1 and 2. The front one: 34,17 and 35,17 -> 34,18 | `PagodaPark3`, "Pagoda · Park", five storeys |
+| `Fukuoka` | the small red pagoda of old Hakata (57,29) | 57,31 and 58,31 -> 57,32 | `PagodaFukuoka1`, "Pagoda · Fukuoka", three storeys |
+
+The two `pagoda-floor` in `Tokyo` are not pagodas: they are the palace's end towers, laid flat on `Over Floor`,
+and their doors are the audience hall's (see above). Fukuoka's pagoda is due to be replaced when that town is
+rebuilt (#219): the door then goes with it (`keep_house_doors` keeps a door only on the sprite it was wired to)
+and a `generate_pagodas.py` run deletes the room; whoever rebuilds runs it again.
+
+- **One room per pagoda, holding every floor** (`W = 21`; `H = 7 + 8 * storeys`, so 21x47 or 21x31): the tower
+  cut open and seen from the front. The storeys stand one above the other up the screen, the ground floor at the
+  bottom, each narrower than the one below (`FLOORS`: 9, 9, 7, 7, 5 cells, or 9, 7, 5), the roofs' skirts
+  flaring into the dark outside every floor and the top roof with its spire over the last. There is no door
+  between storeys: you walk up each stair yourself and the camera climbs the tower with you. One room rather
+  than one a floor, which would cost a fade per floor, ten more maps, and floor numbers a phone's bar has no
+  room for.
+- **A storey** is eight rows, `top(k) = 6 + 8 * (storeys - 1 - k)` for storey `k` (0 is the ground floor): two
+  rows of back wall, five of boards, then the floor's cut edge (the stone base and the threshold on the ground
+  floor). On it:
+  - the heart pillar (`pillar`, 1x3, solid at its foot only: you walk behind it) in the middle of every floor;
+    on the ground floor it rises out of a dais with four small Buddhas round it (`shumidan`, 3x3, its bottom
+    row solid), the offering box (`saisen`) in front and a candle stand (`shokudai`) either side;
+  - a steep stair (`stair`, 1x3, flat) on the back wall, on alternate sides (`stair_x`: column 12 from an even
+    storey, 8 from an odd one), up through the floor above and out of a hatch in its boards (`hatch`), so on
+    every floor you walk round the pillar to the next one;
+  - on a middle storey, on the wall away from the stair, sutra chests (`kyozo`) or a wall of tiny gilt Buddhas
+    (`senbutsu`) - which, in which order, comes from the pagoda's seed, so two towers are not the same; on the
+    top storey a slatted window (`window`); one iron lantern (`toro-hang`, `Tops`) hung on every storey, never
+    over a stair or a hatch.
+- **Depth and movement.** The walls, the edges, the eaves, the roof and the stair are flat (`Floor` /
+  `Over Floor`) with no colliders, so nothing is drawn over you on a stair. What holds you in is the room's
+  `boundary`: the outline of the floors, the stairs and the mat. The room is built on the shared shell
+  (`interiors.Interior`, "Interior building blocks" in `generators-and-checks.md`): the shell's floor is the
+  ground floor's boards, the storeys above it and the stairs are added to its `walk`, and `Interior.room` draws
+  the boundary round all of it. The colliders are the pillars' feet, the dais, the box, the candles and the
+  fittings on the walls. Before anything is saved the shell fails on a floor, stair or hatch cell that cannot
+  be reached from the mat, and the generator on anything with a line that cannot be bumped.
+- **The roof and the look-up.** The top roof and the spire are ONE sprite (`pagoda-in-roof`, 9x6) and it is an
+  entry of `game.lookUp.sprites` (2: the two rows of back wall under it; registered by the art tool, see
+  "Looking up at landmarks" in `hud-input-touch.md`). The ordinary camera trails you by five rows, which on the
+  top storey would cut the spire off; with the entry the camera looks up from the top storey's floor, stops
+  against the room's top edge and shows the whole spire under the HUD bar, and is the ordinary camera again by
+  the storey below. One sprite as wide as the roof, so the view does not slide sideways as you cross the floor.
+  On a phone the view is too short to hold you and the spire at once: it shows as much of the roof as fits.
+- **`tools/generate_pagodas.py [Host ...] [--dry-run]`** owns the rooms and their doors, in the shrine
+  generator's pattern: `rooms.Pagoda<Host><n>` is rebuilt from scratch (`n` counts the town's pagodas by door,
+  sealed ones too), each open door cell of the host loses its collider and carries a hidden transporter,
+  replaced in place, and both doors of a pair arrive on the same cell inside; the mat puts you back in front of
+  the first door. Finding pagodas and the stay-sealed rules are the houses' (`generate_houses.find_houses` with
+  a kind of its own: front cell solid or unreachable, somebody standing there on any date, a blog stand cell).
+  With no host it rebuilds the pagodas of the towns that have a `pagoda` marker, which is what
+  `check_generators.py` runs; **to open a new town's pagodas name it** (`python3 tools/generate_pagodas.py
+  Sendai`, after `--dry-run`), then `config_to_tiled.py` and `play.js lint` for the rooms it prints. Storeys
+  come from the base sprite (`STOREYS`: 5 for `pagoda-floor`, 3 for the small red one); `TALLER` is the one
+  exception, the Park's front pagoda, which stands for a tower of three.
+- **Door keeping.** The room carries `pagoda: {host, door, doors, storeys}` and `'Pagoda'` is a row of
+  `roomgen.OWNED_DOORS` (`PAGODA_DOORS`), so a rebuild of the town keeps the door (`pagodas.test.js` rebuilds
+  Fukuoka on a scratch copy).
+- **Lantern light.** `interior` (never offered to the blog pipeline) and `lanternLight`: at night the room dims
+  and the lanterns and the candles glow, each a row of `Glows.SPRITES` (`pagoda-in-toro-hang`, `-shokudai`).
+- **Something to do**: rules of `Interactions.js` only, no file, key or save field of its own. The offering box
+  is the temple's rule (`/^(temple|pagoda)-in-saisen/`, `TempleVisit`): the shrine's ¥5 and blessings, palms
+  together. The pillar, the four Buddhas, the chests, the niches and the window say a line each (`flavour`,
+  96 characters or fewer).
+- **On the bar**: `Pagoda | Asakusa`; `'Pagoda'` is one of `HUD_KINDS`, so a phone abbreviates it to `Asakusa
+  pagoda`, as it does a shrine.
+- **Art**: `tools/generate_pagoda_art.py` (needs Pillow; `--preview out.png`) draws the 31 sprites
+  (`pagoda-in-<piece>`): dark timber, vermilion posts, old gold. Seeded, so a re-run changes nothing. It and
+  the generator are in `check_generators.py`.
+- **Doors and blog NPCs**: no dated position or district stand cell is on a door or the cell in front of it,
+  and the visitor of the spot `the pagoda` stands where they did before the doors opened (Market 9,4, Park
+  33,10, Fukuoka 56,27; `pagodas.test.js`).
 
 ### The Devhouses of Tokyo and Osaka (issue #69)
 

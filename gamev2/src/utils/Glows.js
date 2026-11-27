@@ -236,6 +236,15 @@ Glows.SPRITES = {
     'temple-in-kuden_0_0': [
         { x: 3.0, y: 1.8, r: 1.6, color: 0xffc060, a: 0.7 },
     ],
+    // inside a pagoda (issue #214, art: tools/generate_pagoda_art.py; `lanternLight` too).
+    // 1x2: the iron lantern hung on every storey
+    'pagoda-in-toro-hang_0_0': [
+        { x: 0.5, y: 1.0, r: 1.6, color: 0xffb860 },
+    ],
+    // 1x2: the ground floor's candles, one each side of the dais (they breathe)
+    'pagoda-in-shokudai_0_0': [
+        { x: 0.5, y: 0.25, r: 1.3, color: 0xffd890, pulse: { period: 2300, depth: 0.3 } },
+    ],
     // the Osaka Devhouse's roof garden (issue #69, art: tools/generate_devhouse_art.py; the one
     // floor that is `lanternLight`). 1x1: a stone lantern, its fire box lit
     'devhouse-lantern_0_0': [

@@ -366,9 +366,11 @@ def find_houses(cfg, host, kind='house'):
     family / origin, plus `excluded` (not one: 'in use', 'shop') or `skipped`
     (one that must stay sealed, and why). `doors` are the door cells to open -
     one for a house; for a tower with a pair of doors, each that passes the
-    rules - and `door` / `front` the first of them and the cell outside it."""
+    rules - and `door` / `front` the first of them and the cell outside it.
+    `kind` is a name in KINDS, or another generator's own row of the same
+    shape (generate_pagodas.py finds its pagodas by these rules)."""
     import blog_to_npc as bn
-    K = KINDS[kind]
+    K = KINDS[kind] if isinstance(kind, str) else kind
     room = cfg['rooms'][host]
     found = []
     signs, stores = set(), set()

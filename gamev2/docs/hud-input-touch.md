@@ -168,7 +168,8 @@ The game always renders 1280x960; everything below is about showing that on anyt
     and the roof of an eight-row shrine hall, or most of a tower, is off the top of the screen. In
     front of a landmark MARKED AS DATA — config `game.lookUp.sprites`, `{sprite family: rows}`: the
     shrine halls, pagodas, torii, Tokyo Tower and Station, Tsutenkaku, the Dotonbori arch and wheel,
-    Sapporo's two towers; never every tall sprite, so a high-rise, a tree or a house changes nothing —
+    Sapporo's two towers, and indoors the roof over a pagoda's top storey (#214); never every tall sprite,
+    so a high-rise, a tree or a house changes nothing —
     the world camera follows a point above the player (`cameras.main.followOffset.y`) with a
     narrower deadzone (`uiScale.setDeadzoneShare`), so the landmark's top comes to sit a quarter cell
     under the HUD bar. `rows` is how many cells of the building stand below the marked sprite (2 for
@@ -199,7 +200,7 @@ The game always renders 1280x960; everything below is about showing that on anyt
     landscape phone, where the whole canvas is across the view and two rows are a lot of the height —
     abbreviates (`Nov 11 2025`, `shortGameDate`; then the room's name to its short form, `hudBrief`: its first
     part, `7-Eleven | Park 1` -> `7-Eleven`, but a room named for its kind keeps its town, `House | Asahikawa 2` -> `Asahikawa house`,
-    `Lobby | Osaka 1` -> `Osaka lobby`, `Shrine | Park` -> `Park shrine` (issue #220; that form is tried before the whole name
+    `Lobby | Osaka 1` -> `Osaka lobby`, `Shrine | Park` -> `Park shrine`, `Pagoda | Asakusa` -> `Asakusa pagoda` (issue #220; that form is tried before the whole name
     for the countdown, so every shrine reads the same way), which can be as long as a station's name and so shows the date
     rather than the countdown at 667x375; a town too long to lead - the form would pass 15 characters, `HUD_BRIEF_MAX`,
     all that one row holds at 667x375 with the short date and its year - gives way to the kind's number,

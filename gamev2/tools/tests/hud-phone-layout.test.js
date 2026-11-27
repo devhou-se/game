@@ -173,7 +173,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         const stations = Object.keys(config.stations).map(k => config.rooms[k].name).sort();
         const abroad = Object.keys(config.airports).map(k => config.rooms[k].name).concat(config.rooms.SanFranbourne.name);
         assert.ok(abroad.length === 3 && abroad.every(n => n.length > 13 && game('hudBrief')(hudName(n)) === hudName(n)), abroad.join());
-        const notHouses = (set) => Array.from(set).filter(n => !/^(House|Lobby|Shrine) · /.test(n)).sort();
+        const notHouses = (set) => Array.from(set).filter(n => !/^(House|Lobby|Shrine|Pagoda) · /.test(n)).sort();
         const kinds = (set, kind) => Array.from(set).filter(n => n.startsWith(kind + ' · ')).sort();
         // Since #212 every town's shrine has its hall: "Kanazawa shrine" (15) is longer than "Asakusa shrine",
         // and Fukuoka's two halls go by their own names (14 and 16). "Asahikawa shrine" (16) is past hudBrief's
@@ -198,6 +198,9 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.strictEqual(bar(715, hudName('House · Marunouchi 3'), '¥5,000', '2027-02-10'), 'House 3 | devhouse 3 in 8d | ¥5,000');
         assert.strictEqual(bar(715, hudName('Shrine · Imperial Palace'), '¥5,000', '2027-02-10'), 'Shrine | devhouse 3 in 8 days | ¥5,000');
         assert.deepStrictEqual(kinds(bare[715], 'Shrine'), SHRINES);
+        // a pagoda (#214) reads as a shrine does: "Park pagoda" counts down on both phones, "Asakusa pagoda"
+        // and "Fukuoka pagoda" (14) are one character too long for either
+        for (const width of [744, 715]) assert.deepStrictEqual(kinds(bare[width], 'Pagoda'), ['Pagoda · Asakusa', 'Pagoda · Fukuoka']);
         // Sapporo's lobbies (#219) read "Sapporo lobby", 13 characters like "Sapporo house": the date at 667x375,
         // and so do those of every town whose name is longer than Osaka's and short enough to lead (#216)
         assert.deepStrictEqual(kinds(bare[715], 'Lobby'), ['Lobby · Asakusa', 'Lobby · Fukuoka 1', 'Lobby · Fukuoka 2', 'Lobby · Fukuoka 3',

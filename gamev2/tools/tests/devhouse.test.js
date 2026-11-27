@@ -439,7 +439,9 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, worldWith, requi
             fs.writeFileSync(path.join(tmp, 'config.json'), JSON.stringify(sealed, null, 2));
             const again = python(['tools/generate_devhouses.py'], tmp);
             assert.strictEqual(again.status, 0, again.stderr);
-            assert.deepStrictEqual(JSON.parse(read()), JSON.parse(before));
+            // (other interiors' doors may sit in the host too, so a host's transporters are compared as a set)
+            const sorted = (c) => { for (const r of Object.values(c.rooms)) (r.transporters || []).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))); return c; };
+            assert.deepStrictEqual(sorted(JSON.parse(read())), sorted(JSON.parse(before)));
             // --help says how to run it and runs nothing
             fs.writeFileSync(path.join(tmp, 'config.json'), before);
             const help = python(['tools/generate_devhouses.py', '--help'], tmp);

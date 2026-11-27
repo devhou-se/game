@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 9,
- "nextobjectid": 82,
+ "nextobjectid": 84,
  "properties": [
   {
    "name": "gv2room",
@@ -13623,8 +13623,8 @@
     0,
     0,
     0,
-    30,
-    30,
+    0,
+    0,
     0,
     0,
     0,
@@ -15435,6 +15435,80 @@
     },
     {
      "id": 81,
+     "name": "transporter",
+     "point": true,
+     "x": 2208.0,
+     "y": 1120.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "PagodaPark3"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 44
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 82,
+     "name": "transporter",
+     "point": true,
+     "x": 2272.0,
+     "y": 1120.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "PagodaPark3"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 44
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 83,
      "name": "boundary",
      "x": 0,
      "y": 0,

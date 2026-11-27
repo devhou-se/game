@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 13,
- "nextobjectid": 152,
+ "nextobjectid": 154,
  "properties": [
   {
    "name": "gv2room",
@@ -32569,8 +32569,8 @@
     60,
     60,
     60,
-    60,
-    60,
+    0,
+    0,
     0,
     60,
     60,
@@ -34946,6 +34946,80 @@
     },
     {
      "id": 151,
+     "name": "transporter",
+     "point": true,
+     "x": 3680.0,
+     "y": 2016.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "PagodaFukuoka1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 28
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 152,
+     "name": "transporter",
+     "point": true,
+     "x": 3744.0,
+     "y": 2016.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "PagodaFukuoka1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 28
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 153,
      "name": "boundary",
      "x": 0,
      "y": 0,
