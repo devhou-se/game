@@ -295,7 +295,8 @@ class Intro {
             caps.slice(1).forEach((c, i) => keycap(x + i * (k + s), top + k + s + 4, k, k, c.label, c.arrow));
             return x + 3 * k + 2 * s;
         };
-        // an on-screen touch button, drawn like TouchControls draws them
+        // an on-screen touch button, drawn like TouchControls draws them (and
+        // in its proportions: a big sprint pill, a big A, a small B)
         const touchButton = (cx, cy, w, h, label, color, size) => {
             g.fillStyle(0x0c0c12, 1); g.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, Math.min(w, h) / 2);
             g.lineStyle(2, color, 1); g.strokeRoundedRect(cx - w / 2, cy - h / 2, w, h, Math.min(w, h) / 2);
@@ -315,7 +316,7 @@ class Intro {
                 g.fillTriangle(c - o - r, cy, c - o + r - 2, cy - r, c - o + r - 2, cy + r);
                 g.fillTriangle(c + o + r, cy, c + o - r + 2, cy - r, c + o - r + 2, cy + r);
             }]);
-            rows.push(['SPRINT', 'hold while moving', (x, cy) => touchButton(x + 36, cy, 72, 44, '>>', 0xdddddd, '22px')]);
+            rows.push(['SPRINT', 'hold while moving', (x, cy) => touchButton(x + 42, cy, 84, 56, '>>', 0xdddddd, '24px')]);
         } else {
             rows.push(['MOVE', 'diagonals work too', (x, cy) => {
                 const right = cluster(x, cy, [{ label: 'W' }, { label: 'A' }, { label: 'S' }, { label: 'D' }]);
@@ -329,7 +330,7 @@ class Intro {
         rows.push(['INTERACT', 'walk into people and things:\nshops, trains, the izakaya', (x, cy) => this.drawBump(l, x, cy)]);
         if (l.touch) {
             rows.push(['TALK', 'next line of dialogue', (x, cy) => touchButton(x + 28, cy, 56, 56, 'A', 0xffd700)]);
-            rows.push(['MENU', 'opens the menu, closes anything', (x, cy) => touchButton(x + 28, cy, 56, 56, 'B', 0xff9c9c)]);
+            rows.push(['MENU', 'opens the menu, closes anything', (x, cy) => touchButton(x + 28, cy, 46, 46, 'B', 0xff9c9c, '20px')]);
         } else {
             rows.push(['TALK', 'next line of dialogue', (x, cy) => {
                 const right = keycap(x, cy - 20, 150, 36, 'SPACE');

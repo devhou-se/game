@@ -48,6 +48,36 @@ module.exports = ({ test, assert, fs, path, GV2, ctx, fired, load, game, require
         assert.deepStrictEqual([tall.scale, tall.left, tall.top, tall.mode], [1, 80, 120, 'none']);
     });
 
+    test('the touch buttons: sprint is the big one on the bottom row, B the small one above A (#225)', () => {
+        const K = game('TouchControls.CLUSTER'), C = game('Viewport.CONTROLS');
+        // measured from the cluster's bottom-right corner, where the thumb is
+        const box = (k) => ({ x0: k.right, y0: k.bottom, x1: k.right + k.w, y1: k.bottom + k.h });
+        const boxes = Object.entries(K).map(([name, k]) => [name, box(k)]);
+        assert.deepStrictEqual(boxes.map(([name]) => name).sort(), ['a', 'b', 'sprint']);
+        // the canvas is laid out around Viewport.CONTROLS: the buttons fill that box and none sticks out of it
+        for (const [name, b] of boxes) assert.ok(b.x0 >= 0 && b.y0 >= 0 && b.x1 <= C.clusterW && b.y1 <= C.clusterH, `${name} is outside the cluster`);
+        assert.strictEqual(Math.max(...boxes.map(([, b]) => b.x1)), C.clusterW, 'the cluster is as wide as the layout allows for');
+        assert.strictEqual(Math.max(...boxes.map(([, b]) => b.y1)), C.clusterH, 'and as tall');
+        // a thumb on one is not on the next: 10px between any two
+        for (const [n1, p] of boxes) for (const [n2, q] of boxes) {
+            if (n1 >= n2) continue;
+            const apart = Math.max(p.x0 - q.x1, q.x0 - p.x1, p.y0 - q.y1, q.y0 - p.y1);
+            assert.ok(apart >= 10, `${n1} and ${n2} are ${apart}px apart`);
+        }
+        // sprint is held while you walk: on the bottom edge, no further from the corner than A, and bigger than B
+        // both ways; B is tapped now and then: the smallest, and the furthest out
+        const reach = (k) => Math.hypot(k.right + k.w / 2, k.bottom + k.h / 2);
+        assert.strictEqual(K.sprint.bottom, 0);
+        assert.ok(reach(K.sprint) <= reach(K.a) && reach(K.a) < reach(K.b), 'sprint and A are nearest the thumb, B beyond them');
+        assert.ok(K.sprint.w > K.a.w && K.sprint.w > K.b.w && K.sprint.h > K.b.h, 'sprint is the widest, and taller than B');
+        assert.ok(K.b.w < K.a.w && K.b.h < K.a.h && K.b.w === K.b.h && K.a.w === K.a.h, 'A and B are circles, B the smaller');
+        assert.ok(K.b.w * 0.6 >= 30, 'B is still a target at the smallest the controls get (0.6x)');
+        assert.strictEqual(game('Viewport.MIN_CONTROL_SCALE_SMALL'), 0.6);
+        // the buttons are placed from the table, not from numbers in the stylesheet
+        const src = fs.readFileSync(path.join(GV2, 'src', 'systems', 'TouchControls.js'), 'utf8');
+        for (const name of Object.keys(K)) assert.ok(src.includes(`at(TouchControls.CLUSTER.${name})`), `${name} is not placed from the table`);
+    });
+
     test('overlays are fitted beside or above the touch controls, and shrink only when something is in the way', () => {
         const fit = game('UIScale.fit');
         const placed = (box, f) => [f.offsetX + box.x0 * f.zoom, f.offsetY + box.y0 * f.zoom, f.offsetX + box.x1 * f.zoom, f.offsetY + box.y1 * f.zoom];

@@ -163,7 +163,8 @@ Viewport.HEIGHT = 960;
  * The touch controls' footprint at scale 1, in CSS px (keep in step with the
  * stylesheet in TouchControls._build): the d-pad square and its left margin,
  * the A / B / sprint cluster and its right margin, the shared bottom margin,
- * and the gap kept between a control and the canvas.
+ * and the gap kept between a control and the canvas. The cluster's box is
+ * read from here, and TouchControls.CLUSTER places the three buttons in it.
  */
 Viewport.CONTROLS = { pad: 174, padLeft: 16, clusterW: 150, clusterH: 210, clusterRight: 20, bottom: 16, gap: 6 };
 Viewport.MIN_CONTROL_SCALE = 0.75;

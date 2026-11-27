@@ -1,10 +1,12 @@
 /**
  * TouchControls - a full on-screen gamepad for touch / mobile.
  *
- * Layout: d-pad bottom-left; A / B buttons bottom-right with a sprint pill
- * above them. Every button synthesizes REAL keyboard events (keydown on
- * press, keyup on release), so the entire game is playable without a
- * keyboard and without tapping the world:
+ * Layout: d-pad bottom-left; bottom-right a cluster of A, the sprint pill
+ * under it where the thumb rests (it is the one button that is HELD, and
+ * held most of the time you walk), and a small B above it (issue #225).
+ * Every button synthesizes REAL keyboard events (keydown on press, keyup
+ * on release), so the entire game is playable without a keyboard and
+ * without tapping the world:
  *
  *   d-pad  -> WASD         (walk, and navigate every menu/overlay)
  *   A      -> SPACE        (talk/advance, select, buy, strike a fish, board)
@@ -241,16 +243,17 @@ class TouchControls {
                 background:rgba(12,12,18,0.22);
                 transform:scale(var(--tc-scale,1)); transform-origin:left bottom;
                 -webkit-tap-highlight-color:transparent; }
-            #touch-controls .tc-cluster { position:absolute; width:150px; height:210px;
+            #touch-controls .tc-cluster { position:absolute;
+                width:${Viewport.CONTROLS.clusterW}px; height:${Viewport.CONTROLS.clusterH}px;
                 transform:scale(var(--tc-scale,1)); transform-origin:right bottom; }
-            #touch-controls .tc-a { width:76px; height:76px; border-radius:50%;
+            #touch-controls .tc-a { border-radius:50%;
                 font-size:30px; font-weight:bold;
                 border-color:rgba(255,215,0,0.55); color:#ffd700; }
-            #touch-controls .tc-b { width:62px; height:62px; border-radius:50%;
-                font-size:24px; font-weight:bold;
+            #touch-controls .tc-b { border-radius:50%;
+                font-size:20px; font-weight:bold;
                 border-color:rgba(255,120,120,0.5); color:#ff9c9c; }
-            #touch-controls .tc-sprint { width:64px; height:42px;
-                border-radius:21px; font-size:20px; }
+            #touch-controls .tc-sprint { border-radius:${TouchControls.CLUSTER.sprint.h / 2}px;
+                font-size:44px; line-height:1; padding:0 0 4px; }
             /* no energy, no sprint (Shop.updateEffectChip sets it on the root) */
             #touch-controls.tc-nosprint .tc-sprint { opacity:0.35; border-style:dashed; }
         `;
@@ -277,19 +280,21 @@ class TouchControls {
         Object.values(arrows).forEach(b => { b.style.pointerEvents = 'none'; pad.appendChild(b); });
         this._bindPad(pad, arrows);
 
-        // A / B cluster, bottom-right (A above-right, B below-left, GB-style),
-        // with the sprint pill above it (hold to run). One box, so the three
+        // A / sprint / B cluster, bottom-right: A above-right and the sprint
+        // pill below-left of it (hold to run), the two a thumb in the corner
+        // reaches without stretching; B small, above A. One box, so the three
         // scale together about the corner they sit in.
         const cluster = document.createElement('div');
         cluster.className = 'tc-cluster';
         cluster.style.cssText =
             'right:max(20px,env(safe-area-inset-right));' +
             'bottom:max(16px,env(safe-area-inset-bottom));';
-        const a = this._btn('A', 'tc-a', 'right:0;bottom:74px;');
-        const b = this._btn('B', 'tc-b', 'right:88px;bottom:0;');
+        const at = (k) => `width:${k.w}px;height:${k.h}px;right:${k.right}px;bottom:${k.bottom}px;`;
+        const a = this._btn('A', 'tc-a', at(TouchControls.CLUSTER.a));
+        const b = this._btn('B', 'tc-b', at(TouchControls.CLUSTER.b));
         this._bind(a, null, { key: ' ', code: 'Space', keyCode: 32 });
         this._bind(b, null, { key: 'Escape', code: 'Escape', keyCode: 27 });
-        const sprint = this._btn('»', 'tc-sprint', 'right:0;bottom:168px;');
+        const sprint = this._btn('»', 'tc-sprint', at(TouchControls.CLUSTER.sprint));
         this._bind(sprint, 'sprint', { key: 'Shift', code: 'ShiftLeft', keyCode: 16 });
         cluster.append(a, b, sprint);
 
@@ -298,6 +303,19 @@ class TouchControls {
         this.root = root;
     }
 }
+
+/**
+ * Where the three buttons sit in their cluster at scale 1: size, and distance
+ * from the cluster box's right and bottom edges, in CSS px. The box itself is
+ * Viewport.CONTROLS (clusterW x clusterH), which the canvas is laid out around.
+ * Sprint is held, so it is the big one on the bottom row; B is tapped now and
+ * then, so it is the small one furthest from the corner (issue #225).
+ */
+TouchControls.CLUSTER = {
+    a: { w: 76, h: 76, right: 0, bottom: 70 },
+    sprint: { w: 90, h: 60, right: 60, bottom: 0 },
+    b: { w: 52, h: 52, right: 12, bottom: 158 },
+};
 
 /** Trusted presses of these mean a keyboard is in use (KeyboardEvent.code). */
 TouchControls.GAME_KEYS = /^(Key[WASD]|Arrow(Up|Down|Left|Right)|Space|Enter|NumpadEnter|Escape|Shift(Left|Right))$/;

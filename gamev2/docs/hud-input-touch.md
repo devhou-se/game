@@ -131,7 +131,8 @@ The game always renders 1280x960; everything below is about showing that on anyt
   file header) — and reports two things in canvas px that UIScale makes the game fit:
   `crop` (how much of the canvas is off each side of the window, portrait only) and `insets` (how far
   the controls reach in over the canvas, `over` only). `Viewport.CONTROLS` holds the controls'
-  footprint — keep it in step with the stylesheet in `TouchControls._build`. `Viewport.current` is
+  footprint — keep it in step with the stylesheet in `TouchControls._build` (the button cluster's box is
+  read from it; the d-pad's size is written there too). `Viewport.current` is
   the layout in force.
 - **Three layers, three cameras — `src/systems/UIScale.js` (`scene.uiScale`).** Nothing is given a
   second layout; instead, whenever the canvas is shown below 1:1, is cropped, or has controls over
@@ -266,6 +267,15 @@ The game always renders 1280x960; everything below is about showing that on anyt
   `touchControls.enabled` is "on screen now"; `setEnabled()` re-lays the canvas, rewords every hint
   on screen (`Hints.refresh`), redraws the intro's controls page and emits the scene event
   `'inputmodechange'`. Never test for touch capability anywhere else.
+- **The button cluster (issue #225).** Bottom-right, one 150x210 box that scales about its corner
+  (`--tc-scale`): **A** (76px) above-right; the **sprint pill** (90x60) below-left of it on the bottom
+  row, level with the d-pad's foot — it is the one button that is held, most of the time you walk, so it
+  is the big one where the thumb rests; **B** (52px) small, above A — it is tapped now and then. The
+  three are placed from one table, `TouchControls.CLUSTER` (size, and distance from the box's right and
+  bottom edges, at scale 1), and must stay inside `Viewport.CONTROLS`' `clusterW` x `clusterH`, which
+  the canvas is laid out around: move a button there, not in the stylesheet (`touch-input.test.js`
+  checks the box, 10px between any two, and which button is big). The intro's How to Play page draws
+  the same three in the same proportions (`Intro.drawControls`).
 - **Hint wording — `src/utils/Hints.js`.** Write the hint for the keyboard and pass it through
   `Hints.text(scene, 'SPACE/ENTER: start · ESC: leave')`; with touch controls on it comes back as
   `A: start · B: leave` (SPACE/ENTER → A, ESC → B, ↑/↓ and arrows / WASD → d-pad, ←/→ → ◀ ▶, SHIFT → sprint, click → tap).

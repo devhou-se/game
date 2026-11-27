@@ -983,9 +983,11 @@ async function phones() {
                 const pad = document.querySelector('#touch-controls .tc-padzone'), pr = pad && pad.getBoundingClientRect();
                 const arrows = pad ? [...pad.querySelectorAll('.tc-pad')].map(b => { const q = b.getBoundingClientRect(); return { label: b.textContent, x: q.left + q.width / 2, y: q.top + q.height / 2 }; }) : [];
                 const a = document.querySelector('#touch-controls .tc-a'), ar = a && a.getBoundingClientRect();
+                const box = (sel) => { const el = document.querySelector('#touch-controls ' + sel), q = el && el.getBoundingClientRect(); return q && [q.left, q.top, q.right, q.bottom]; };
                 return { win: [window.innerWidth, window.innerHeight], doc: document.documentElement.scrollWidth,
                     canvas: [r.left, r.top, r.right, r.bottom].map(v => Math.round(v * 10) / 10),
                     controls: s.touchControls.enabled, pad: pr && [pr.left, pr.top, pr.right, pr.bottom], a: ar && [ar.left, ar.top, ar.right, ar.bottom], arrows,
+                    b: box('.tc-b'), sprint: box('.tc-sprint'),
                     hud: __t.hud(), bar: s.hudBarHeight, row: UI.HUD_HEIGHT, zoom: [s.cameras.main.zoom, s.uiScale.hudZoom], screen: __t.onScreen(), pos: __t.pos(),
                     menuRight: (s.menuButton.x) * s.uiScale.hudZoom, wallet: (s.hudMoneyText.x + s.hudMoneyText.width), menuLeft: s.menuButton.x - s.menuButton.width,
                     view: s.cameras.main.width };
@@ -995,6 +997,13 @@ async function phones() {
             need(st.controls && st.pad && st.a && st.arrows.length === 4, { noTouchControls: st });
             const inWin = (b) => b[0] >= 0 && b[1] >= 0 && b[2] <= st.win[0] && b[3] <= st.win[1];
             need(inWin(st.pad) && inWin(st.a), { controlsOffScreen: [st.pad, st.a], win: st.win });
+            // sprint is the button that is held: the big pill on the bottom row, level with the d-pad's foot, below
+            // and left of A; B is the small one above A (issue #225)
+            need(st.b && st.sprint && inWin(st.b) && inWin(st.sprint), { buttonsOffScreen: [st.b, st.sprint], win: st.win });
+            const wide = (q) => q[2] - q[0], high = (q) => q[3] - q[1];
+            need(Math.abs(st.sprint[3] - st.pad[3]) < 0.5 && st.sprint[1] > st.a[3] && st.sprint[0] < st.a[0], { sprintNotOnTheBottomRow: st.sprint, a: st.a, pad: st.pad });
+            need(st.b[3] < st.a[1] && st.b[0] > st.a[0] && st.b[2] < st.a[2], { bNotAboveA: st.b, a: st.a });
+            need(wide(st.sprint) > wide(st.a) && high(st.sprint) > high(st.b) && wide(st.b) < wide(st.a) && wide(st.b) >= 40, { sizes: { sprint: st.sprint, a: st.a, b: st.b } });
             need(st.hud.oneRow && st.bar === st.row && st.hud.shown, { hudNotOneRow: st.hud, bar: st.bar, row: st.row });
             need(st.wallet <= st.menuLeft, { walletUnderMenuButton: [st.wallet, st.menuLeft] });
             need(st.screen.visible && st.screen.inView && st.screen.inWindow, { playerOffScreen: st.screen });
@@ -1017,6 +1026,15 @@ async function phones() {
             need(going && held.pressed.join() === glyph, { dpadDidNotTakeTheTouch: held, glyph });
             need(steps >= 1 && steps <= 2 && (way.dx ? moved.pos.y === st.pos.y : moved.pos.x === st.pos.x), { dpadDidNotMoveThePlayer: moved.pos, from: st.pos, way });
             need(!Object.values(moved.state).some(Boolean) && moved.overlays.length === 0 && moved.controls, { afterTouch: moved });
+            // a held touch on the sprint pill is SHIFT held, and nothing else
+            const run = { x: Math.round((st.sprint[0] + st.sprint[2]) / 2), y: Math.round((st.sprint[1] + st.sprint[3]) / 2) };
+            await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [run] });
+            const shift = await until(page, '__t.s.inputHandler.shiftKey.isDown', 1500);
+            const running = await page.evaluate('({ state: Object.assign({}, __t.s.touchControls.state), pressed: [...document.querySelectorAll("#touch-controls .tc-pressed")].map(b => b.textContent), overlays: __t.overlays() })');
+            await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+            const let_go = await until(page, '!__t.s.inputHandler.shiftKey.isDown && !__t.s.touchControls.state.sprint', 1500);
+            need(shift && running.state.sprint && running.pressed.join() === '»' && running.overlays.length === 0, { sprintDidNotTakeTheTouch: running, shift });
+            need(let_go, 'the sprint pill stayed held after the touch ended');
             // the A / B buttons are real touches too: B opens the menu and closes it again
             const b = await page.evaluate('(r => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 }))(document.querySelector("#touch-controls .tc-b").getBoundingClientRect())');
             await page.touchscreen.tap(b.x, b.y);
