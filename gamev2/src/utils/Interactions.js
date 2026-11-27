@@ -25,6 +25,10 @@ const Interactions = {
         // inside the palace's audience hall (tools/generate_palace.py; src/PalaceVisit.js)
         { kind: 'audience', group: 'palace', pattern: /^palace-in-dais/, footprint: true },
         { kind: 'guestbook', group: 'palace', pattern: /^palace-in-guestbook/, footprint: true },
+        // inside a temple's main hall (tools/generate_temple.py; src/TempleVisit.js)
+        { kind: 'incense', group: 'temple', pattern: /^temple-in-jokoro/, footprint: true },
+        { kind: 'offering', group: 'temple', pattern: /^temple-in-saisen/, footprint: true },
+        { kind: 'drawers', group: 'temple', pattern: /^temple-in-omikuji/, footprint: true },
         { kind: 'pond', group: 'pond', pattern: /^pond-autotile/ },
         { kind: 'clock', group: 'clock', pattern: /^(office-clock|office-poster-menu)/ },
         // a home's furniture (issue #208, tools/generate_houses.py): a bump says one line
@@ -41,6 +45,13 @@ const Interactions = {
         { kind: 'armour', group: 'flavour', pattern: /^palace-in-armour/, footprint: true, say: 'the armour has not been worn in two hundred years. it still looks ready before you do' },
         { kind: 'swords', group: 'flavour', pattern: /^palace-in-swords/, footprint: true, say: 'three swords on a rack, peace-knotted. the sign you cannot read says do not touch' },
         { kind: 'guard-post', group: 'flavour', pattern: /^palace-in-guardpost/, footprint: true, say: 'the guard has stepped out. his man-catcher has not' },
+        // a temple's main hall (issue #213): the charm counter, the sanctum, the drum, the bowl bell, the candles, the tied fortunes
+        { kind: 'charms', group: 'flavour', pattern: /^temple-in-wall-charms/, footprint: true, say: 'charms for safe travel, for exams, for a good match. nobody is at the counter to sell you one' },
+        { kind: 'sanctum', group: 'flavour', pattern: /^temple-in-naijin/, footprint: true, say: 'the Kannon behind the curtain has been shown to nobody for thirteen hundred years. not to you either' },
+        { kind: 'temple-drum', group: 'flavour', pattern: /^temple-in-drum/, footprint: true, say: 'the drum is taller than you are. the sticks are right there. you leave them right there' },
+        { kind: 'bowl-bell', group: 'flavour', pattern: /^temple-in-keisu/, footprint: true, say: 'you flick the rim of the great bowl with a fingernail. it hums for a very long time' },
+        { kind: 'votive-candles', group: 'flavour', pattern: /^temple-in-candles/, footprint: true, say: 'a rack of small candles, each one somebody\'s wish. the wax is still warm' },
+        { kind: 'tied-fortunes', group: 'flavour', pattern: /^temple-in-musubi/, footprint: true, say: 'bad fortunes are tied here and left behind. there are a great many of them' },
         // the home city (issue #218)
         { kind: 'clocks', group: 'flavour', pattern: /^sfb-clocks-station/, footprint: true, say: 'everybody meets under the clocks. nobody has ever caught a train here' },
         { kind: 'sea-lions', group: 'flavour', pattern: /^sfb-sea-lions/, footprint: true, say: 'the sea lions bark at you. one of them is eating somebody\'s chips' },
