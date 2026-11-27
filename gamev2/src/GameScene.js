@@ -275,6 +275,7 @@ class GameScene extends Phaser.Scene {
             this.fishing = new Fishing(this);
             this.shrineVisit = new ShrineVisit(this);
             this.palaceVisit = new PalaceVisit(this);
+            this.templeVisit = new TempleVisit(this);
             this.drinkingGame = new DrinkingGame(this);
             this.characterSelect = new CharacterSelect(this);
             this.characterCreator = new CharacterCreator(this);
@@ -1100,6 +1101,10 @@ class GameScene extends Phaser.Scene {
         if (this.palaceVisit && !this.dialogueManager.isVisible() && !this.shop.isVisible()) {
             this.palaceVisit.check(targetGridX, targetGridY);
         }
+        // bumping a temple's incense burner, offering box or fortune drawers: smoke, a coin, a fortune
+        if (this.templeVisit && !this.dialogueManager.isVisible() && !this.shop.isVisible()) {
+            this.templeVisit.check(targetGridX, targetGridY);
+        }
         // bumping a wall clock or calendar opens the time-travel picker
         if (!this.dialogueManager.isVisible() && !this.shop.isVisible() &&
             this.datePicker && !this.datePicker.isVisible()) {
@@ -1181,6 +1186,7 @@ class GameScene extends Phaser.Scene {
         // a key still held against the offering box is the same bump, menu or no menu
         if (this.shrineVisit) this.shrineVisit.hold(this.inputHandler.heading());
         if (this.palaceVisit) this.palaceVisit.hold(this.inputHandler.heading());
+        if (this.templeVisit) this.templeVisit.hold(this.inputHandler.heading());
         // stop walk cycles on characters that didn't chain another step this
         // frame (player's own depth/anim are left to TrainTravel while riding)
         if (this.player && !(this.trainTravel && this.trainTravel.riding)) {

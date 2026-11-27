@@ -665,3 +665,70 @@ either door: the west mats put you on 19,23, the east mats on 41,23, so the hall
 - **Doors and blog NPCs**: no dated position, district stand cell or landmark stand cell is on a tower door
   or the cell in front of it (`palace.test.js` holds it for every date); `the Imperial Palace gate` (28,34)
   and `the palace moat` (20,33) are far from both.
+
+### The temple's main hall (issue #213)
+
+**What "the temple" is on the map.** At the head of the stall street in the Tokyo district `Market` (display
+name "Asakusa") stands one great red-roofed hall laid from tiles (`shrine-walls` under `red-shrine-top-parts`),
+twelve cells wide, its double door at the top of four `castle-stairs`: the hall the `Senso-ji temple` landmark
+hangs on. It is not the district's shrine: that is the smaller `shrine-red` prefab east of it (43,11), which
+keeps its own door and worship hall (`ShrineMarket1`, "Shrine · Asakusa", see "Shrine worship halls"). The
+temple hall was sealed; its two door leaves (`shrine-walls_2_2` at `Market` 27,15 and 28,15) each carry a
+hidden transporter into ONE interior, `TempleMarket1` (HUD: `Senso-ji`, the Map footer `Senso-ji (in Tokyo)`).
+You arrive inside the leaf you walked through and leave onto the step below it (27,16 / 28,16).
+
+**Senso-ji only, for now.** Zuihoden in Sendai (a mausoleum: black lacquer and gold) and any other temple get
+their interior when their city is rebuilt (#219): the rebuild moves those buildings, so a door wired today would
+be redone. `tools/generate_temple.py` is written for one hall; a second one is a second host and layout there.
+
+- **`tools/generate_temple.py`** owns the interior and the two door cells, in the palace generator's pattern:
+  the room is rebuilt from scratch (its NPCs kept); in the host, a ported map with no generator, it removes the
+  one collider on each leaf and puts the transporter on it, replaced in place, and touches nothing else. It
+  finds the door as the two `shrine-walls_2_2` tiles side by side with a step below each (the gate and the side
+  halls are laid from the same family and have no such pair). A re-run is a no-op, and from a sealed temple it
+  rebuilds the same world (`temple.test.js`). `.agent-queue/items/temple_apply.sh` is the whole thing for a
+  checkout whose palette has moved on (art, generator, `config_to_tiled`, lint, the doorway check, the gates).
+- **Door keeping.** The room carries `temple: {host, doors}` and `'Temple'` is a row of `roomgen.OWNED_DOORS`
+  (`TEMPLE_DOORS`: the `shrine-walls_2_2` leaf, the door cell itself). The same tile elsewhere is not a temple
+  door: a door counts only when it leads into a room with the marker.
+- **What is inside** (26x22; the floor is 24x15), a Buddhist main hall (hondo): dim, old gold and dark red
+  lacquer on worn stone - not the shrine's bright hall and not the palace's mats and boards:
+  - the back wall, three rows tall, one picture cut into five pieces, under the edge of a coffered painted
+    ceiling and a frieze (clouds; over the sanctum two dragons either side of a flaming pearl): the charm
+    counter (`wall-charms`) at the head of the west aisle; old gold panels with a heavenly maiden each, brocade
+    banners and hung lanterns (`wall-tennin-l` / `-r`); between them the cabinet (`kuden`) - the golden canopy
+    (tengai) hung with jewels, the seated Kannon half-hidden behind brocade curtains; the hundred-drawer
+    fortune cabinet with its shaker cylinder (`omikuji`) at the head of the east aisle;
+  - the inner sanctum (`naijin`, 16x4, solid): mats, the altar and its offerings, two banks of candles, gilt
+    lotus stands, the monk's seat, all behind a gilt lattice drawn as a mesh you see through, open in the
+    middle over a low rail under a brocade valance;
+  - down the middle, on the door's two columns: the offering box (`saisen`, 4x2), the great bronze incense
+    burner with its smoke (`jokoro`, 4x3), and inside the doors the great red paper lantern (`chochin`, 4x3,
+    `Tops`; its lettering is 観音, "Kannon": no sponsor's name);
+  - eight columns, the great drum and the bowl bell before the lattice, a rack of votive candles on the west
+    wall, the rail of tied-up bad fortunes on the east, candle stands, vases of gilt lotus and a bench either
+    side of the doors, hung gilt lanterns and a little incense haze (`haze`, `Tops`, nearly transparent).
+- **Depth** (see `occlusion.md`): columns are 1x3 with only the foot solid; the burner's top row (its smoke)
+  is walked behind; the great lantern and the hung lanterns are `Tops` under four rows tall with a
+  `depthBias`, so you walk under the great lantern and it fades over you.
+- **Lantern light.** `interior` (never offered to the blog pipeline) and `lanternLight`: at night only, the
+  hall dims and its lights come on, each a row of `Glows.SPRITES` with numeric colours (`temple-in-toro-hang`,
+  `-shokudai` and `-candles`, which breathe, `-chochin`, the embers of `-jokoro`, and on `-naijin` and `-kuden`
+  the sanctum's candles and gold).
+- **Something to do** (`src/TempleVisit.js`, three `temple` rules and six `flavour` rules in `Interactions.js`;
+  the orchestrator's proposal, not confirmed by the owner - the file's header says how to take it out). Bump
+  the burner and you waft the smoke over yourself: free, five lines in turn. Bump the offering box: the
+  shrine's ¥5 and blessings (`ShrineVisit.offer`), worded for a temple (palms together, no bell). Bump the
+  fortune drawers: you shake a numbered stick out of the cylinder - it is the shrines' omikuji, decided by
+  `ShrineVisit.fortune` with the same ¥100, odds and save field (`omikuji: {date, i}`), so there is ONE
+  fortune a game day across every shrine and the temple; only the wording is the temple's. The charm counter
+  sells nothing (the catalogue has no charm and none was invented): it, the sanctum, the drum, the bowl bell,
+  the candles and the tied fortunes say a line. No overlay, no key, nothing of its own in the save; one answer
+  per bump by the offering box's rule (`ShrineVisit.fresh` / `.carried`). A toast is one line, so every line is
+  96 characters or fewer.
+- **Art**: `tools/generate_temple_art.py` (needs Pillow; `--preview out.png`) draws all 29 sprites
+  (`temple-in-<piece>`) as shaded pixel art at the shrine kit's scale; every scatter is seeded, so a re-run is
+  byte-identical. It and the generator are in `check_generators.py`.
+- **Doors and blog NPCs**: no dated position or district stand cell is on a door leaf or the step in front of
+  it (`temple.test.js` holds it for every date). The `Senso-ji temple` LANDMARK stands its visitor one cell
+  below the WEST end of the steps (26,17: Bailey on 1 November 2025), beside the way up, not on it.

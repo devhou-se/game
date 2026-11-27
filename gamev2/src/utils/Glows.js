@@ -203,6 +203,39 @@ Glows.SPRITES = {
     'palace-in-guardpost_0_0': [
         { x: 2.55, y: 0.95, r: 1.2, color: 0xffc878, a: 0.9 },
     ],
+    // a temple's main hall (issue #213, art: tools/generate_temple_art.py; `lanternLight` too).
+    // 1x2: a gilt lantern hung from the ceiling
+    'temple-in-toro-hang_0_0': [
+        { x: 0.5, y: 1.0, r: 1.6, color: 0xffb860 },
+    ],
+    // 1x2: one fat candle on a tall stand (it breathes)
+    'temple-in-shokudai_0_0': [
+        { x: 0.5, y: 0.25, r: 1.3, color: 0xffd890, pulse: { period: 2300, depth: 0.3 } },
+    ],
+    // 2x2: a rack of votive candles
+    'temple-in-candles_0_0': [
+        { x: 1.0, y: 1.1, r: 1.5, ry: 1.1, color: 0xffc070, pulse: { period: 2900, depth: 0.25 } },
+    ],
+    // 4x3: the great red paper lantern, lit from inside
+    'temple-in-chochin_0_0': [
+        { x: 2.0, y: 1.45, r: 2.3, color: 0xff6040, a: 0.8 },
+    ],
+    // 4x3: the embers in the incense burner's ash
+    'temple-in-jokoro_0_0': [
+        { x: 2.0, y: 1.55, r: 1.2, ry: 0.7, color: 0xff7848, a: 0.7, pulse: { period: 3400, depth: 0.35 } },
+    ],
+    // 16x4: the sanctum behind the lattice - the two banks of candles, the altar's pair, the two standing lanterns
+    'temple-in-naijin_0_0': [
+        { x: 4.45, y: 0.6, r: 2.0, ry: 1.2, color: 0xffd890, pulse: { period: 2600, depth: 0.25 } },
+        { x: 11.55, y: 0.6, r: 2.0, ry: 1.2, color: 0xffd890, pulse: { period: 3100, depth: 0.25 } },
+        { x: 8.0, y: 0.3, r: 1.4, color: 0xffd890, a: 0.8 },
+        { x: 3.0, y: 0.6, r: 1.0, color: 0xffc878, a: 0.8 },
+        { x: 13.0, y: 0.6, r: 1.0, color: 0xffc878, a: 0.8 },
+    ],
+    // 6x3: the gold of the cabinet, lit from below
+    'temple-in-kuden_0_0': [
+        { x: 3.0, y: 1.8, r: 1.6, color: 0xffc060, a: 0.7 },
+    ],
 };
 
 if (typeof window !== 'undefined') window.Glows = Glows;

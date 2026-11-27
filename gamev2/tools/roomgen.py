@@ -68,6 +68,12 @@ SHOP_PREFIX = 'Shop'        # rooms.Shop<Town><n>
 # only a door that leads into a room carrying the `palace` marker counts.
 PALACE_DOORS = {'pagoda-floor_0_0': [(1, 2)]}
 PALACE_PREFIX = 'PalaceHall'    # rooms.PalaceHall<Host><n>
+# A temple's main hall (issue #213, tools/generate_temple.py): the leaf of the
+# double door in the front of a hall laid from `shrine-walls` tiles -> that cell
+# itself. Asakusa's Senso-ji is the first; the same tile elsewhere is not a
+# temple door unless it leads into a room carrying the `temple` marker.
+TEMPLE_DOORS = {'shrine-walls_2_2': [(0, 0)]}
+TEMPLE_PREFIX = 'Temple'        # rooms.Temple<Host><n>
 # Every kind of interior whose door a town generator neither builds nor knows
 # about, and save_config therefore keeps through a town rebuild (keep_house_doors):
 # room-key prefix -> (the key on the interior that says its generator owns it, its door sprites).
@@ -76,7 +82,8 @@ OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()})
                LOBBY_PREFIX: ('lobby', TOWER_DOORS),
                SHOP_PREFIX: ('shop', SHOP_DOORS),
                SHRINE_PREFIX: ('shrine', SHRINE_DOORS),
-               PALACE_PREFIX: ('palace', PALACE_DOORS)}
+               PALACE_PREFIX: ('palace', PALACE_DOORS),
+               TEMPLE_PREFIX: ('temple', TEMPLE_DOORS)}
 DOOR_LAYERS = ('Collidables', 'Over Floor')   # where a door sprite is laid (a tower's foot is on Over Floor)
 _house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior
 
