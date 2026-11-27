@@ -22,6 +22,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/utils/Assets.js` - Where the files the scene loads come from: the file itself, or its copy in the deploy build's packs (see Loading and the deploy build)
 - `src/utils/JapaneseFont.js` + `fonts/` - The pixel fonts, and the Japanese face added to each of them (see Fonts and Japanese Text)
 - `src/AirTravel.js` - The flights between the two airports (issue #218): who can fly where, the cabin cutscene and its skip rule (see Airports and flights in `trains-and-stations.md`)
+- `src/ViewRide.js` - A ride with a view (issue #242): the lift up Fukuoka Tower and a turn on Osaka's ferris wheel (bump the gondola at its foot), the view panning behind the window, the lift's counter, the hour's tint and the skip rule (see "Fukuoka Tower's deck" and "A turn on the Dotonbori wheel" in `landmarks-and-towns.md`)
 - `src/utils/Places.js` - The towns as real places in Japan for the Map overlay: config `places`, which town a room is in, who is where, label layout (see The Map overlay in `hud-input-touch.md`)
 - `src/utils/Trips.js` - The devhouse trips as data: which trip a date belongs to, and everything that follows (see Trips)
 - `src/GameScene.js` - Main game scene (room system, HUD, input handling, collision)

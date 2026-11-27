@@ -46,7 +46,8 @@ HOUSE_PREFIX = 'House'      # rooms.House<Town><n>, the interiors generate_house
 # to the sprite's top-left cell (the bottom row, as building() in
 # make_prefabs.py puts them; the glass tower's doors are a pair; the last row
 # is Sapporo's two office blocks, issue #219). A landmark tower (Tokyo Tower,
-# the TV tower, Fukuoka Tower, a castle) is not in here.
+# the TV tower, a castle) is not in here; Fukuoka Tower has a table of its own,
+# DECK_DOORS.
 TOWER_DOORS = {
     'highrise-yellow_0_0': [(1, 7)], 'highrise-blue_0_0': [(2, 10)], 'highrise-glass_0_0': [(1, 9), (2, 9)],
     'highrise-apartment_0_0': [(2, 7)], 'midrise-apartment_0_0': [(2, 5)],
@@ -91,6 +92,11 @@ DISTILLERY_PREFIX = 'Distillery'      # rooms.Distillery<Host><n>
 # one sprite -> the two leaves of the door under its arch.
 MALL_DOORS = {'canal-city_0_0': [(3, 5), (4, 5)]}
 MALL_PREFIX = 'Mall'                  # rooms.Mall<Host><n>
+# Fukuoka Tower's observation deck (issue #242, tools/generate_tower_deck.py): the
+# tower's one sprite -> the two leaves of the door in its foot. The lift between
+# them is the game's (RoomManager.liftFor): a door into a room carrying `deck`.
+DECK_DOORS = {'fukuoka-tower_0_0': [(1, 11), (2, 11)]}
+DECK_PREFIX = 'Deck'                  # rooms.Deck<Host><n>
 # A pagoda (issue #214, tools/generate_pagodas.py): the sprite its ground floor
 # is -> its door cells. `pagoda-floor` is the five-storey pagoda's foot and has
 # one door; `red-pagoda-small-base` is the whole foot of a small red pagoda and
@@ -119,7 +125,8 @@ OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()})
                DEVHOUSE_PREFIX: ('devhouse', DEVHOUSE_DOORS),
                PUB_PREFIX: ('pub', PUB_DOORS),
                DISTILLERY_PREFIX: ('distillery', DISTILLERY_DOORS),
-               MALL_PREFIX: ('mall', MALL_DOORS)}
+               MALL_PREFIX: ('mall', MALL_DOORS),
+               DECK_PREFIX: ('deck', DECK_DOORS)}
 DOOR_LAYERS = ('Collidables', 'Over Floor')   # where a door sprite is laid (a tower's foot is on Over Floor)
 _house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior
 _rooms_loaded = set()       # the room keys load_config read: save_config deletes the map of each it no longer saves

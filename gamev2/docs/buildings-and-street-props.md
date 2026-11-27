@@ -130,8 +130,9 @@ graded at night.
   and name board). `susukino-neon-lanterns` and `ramen-alley-lanterns` are lanterns by name and are lit by the
   lamp rule, so they are not in it. **Only the station front and the two stalls are placed so far** (stages 1-2 of
   the rebuild); the rest light nothing until a stage places them. Indoors the table also holds the temple hall's
-  lights and `devhouse-lantern_0_0`, the stone lantern in the Osaka Devhouse's roof garden (the one Devhouse floor
-  that is `lanternLight`, issue #69). A unit
+  lights, `devhouse-lantern_0_0`, the stone lantern in the Osaka Devhouse's roof garden (the one Devhouse floor
+  that is `lanternLight`, issue #69), and the pendant lamps and the town's lights in the panes of Fukuoka
+  Tower's deck (`deck-in-downlight`, `deck-in-window-1..6`; the room is `daylight`, graded as the street is, issue #242). A unit
   test (`tools/tests/glows-trams.test.js`) holds every glowing sprite, in the table or in `spriteMetadata`, to
   having art, spots on it and radii the cull allows; registering or placing one needs no change to it.
 - **Cost**: each spot is one Image of a single shared 96px halo texture (`glow-halo`, made the first time a room

@@ -77,6 +77,14 @@ const Interactions = {
         { kind: 'mall-okonomiyaki', group: 'flavour', pattern: /^mall-in-front-okonomiyaki/, footprint: true, say: 'okonomiyaki, made in front of you. the queue says it is good. opinions differ' },
         { kind: 'mall-cafe', group: 'flavour', pattern: /^mall-in-front-cafe/, footprint: true, say: 'the cafe has a queue for the queue' },
         { kind: 'mall-ramen', group: 'flavour', pattern: /^mall-in-front-ramen/, footprint: true, say: 'the ramen stadium is five floors up. the escalator is part of the wall' },
+        // Fukuoka Tower's observation deck (issue #242): the glass, the coin binoculars, the brass map, the padlocks, the sign by the lift
+        { kind: 'deck-window', group: 'flavour', pattern: /^deck-in-window/, footprint: true, say: 'the bay, 123 metres down. the glass is very clean and you are very careful not to lean on it' },
+        { kind: 'binoculars', group: 'flavour', pattern: /^deck-in-binoculars/, footprint: true, say: 'a hundred yen for two minutes. somebody else\'s two minutes are still running: a ferry, very large' },
+        { kind: 'compass', group: 'flavour', pattern: /^deck-in-compass/, footprint: true, say: 'a brass map of the bay with an arrow for north. you are the dot in the middle' },
+        { kind: 'padlocks', group: 'flavour', pattern: /^deck-in-locks/, footprint: true, say: 'padlocks in the shape of a heart, each with two names on it. nobody has come back for a key' },
+        { kind: 'lift-sign', group: 'flavour', pattern: /^deck-in-lift-sign/, footprint: true, say: 'you are 123 metres up a tower of 234. the other 111 are aerial' },
+        // the gondola at the foot of Osaka's ferris wheel (issue #242): one turn of the wheel and the view (src/ViewRide.js)
+        { kind: 'wheel', group: 'ride', pattern: /^wheel-boarding/, footprint: true },
         // inside a pagoda (issue #214): the heart pillar, the Buddhas at its foot, the sutra chests, the thousand Buddhas, the window
         { kind: 'heart-pillar', group: 'flavour', pattern: /^pagoda-in-pillar/, footprint: true, say: 'the heart pillar runs from the ground to the spire and touches no floor. it sways in quakes' },
         { kind: 'four-buddhas', group: 'flavour', pattern: /^pagoda-in-shumidan/, footprint: true, say: 'four small Buddhas sit round the foot of the pillar, one facing each wind' },

@@ -738,11 +738,31 @@ class RoomManager {
 
         for (let trans of room.transporters) {
             if (trans.gridX === playerPos.x && trans.gridY === playerPos.y) {
+                // a door into or out of an observation deck is a lift: the ride swaps the room itself
+                const dir = RoomManager.liftFor(this.scene.config.rooms, this.currentRoom, trans.targetRoom);
+                if (dir && this.scene.viewRide) {
+                    this.scene.viewRide.lift(dir, trans);
+                    return true;
+                }
                 this.switchRoom(trans.targetRoom, trans.targetX, trans.targetY);
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Is the way from room `from` to room `to` a lift, and which way does it go?
+     * 'up' into a room that is an observation deck (config `deck`, the marker
+     * tools/generate_tower_deck.py leaves on it), 'down' out of one, null for
+     * every other door. `configRooms` is config.rooms: the rooms this manager
+     * holds are rebuilt from the maps and carry no markers.
+     */
+    static liftFor(configRooms, from, to) {
+        const rooms = configRooms || {};
+        if (rooms[to] && rooms[to].deck) return 'up';
+        if (rooms[from] && rooms[from].deck) return 'down';
+        return null;
     }
 
     /**

@@ -268,6 +268,36 @@ Glows.SPRITES = {
     'pagoda-in-shokudai_0_0': [
         { x: 0.5, y: 0.25, r: 1.3, color: 0xffd890, pulse: { period: 2300, depth: 0.3 } },
     ],
+    // Fukuoka Tower's observation deck (issue #242, art: tools/generate_tower_deck_art.py; the room is
+    // `daylight`, graded as the street is). 1x2: a pendant lamp over the floor
+    'deck-in-downlight_0_0': [
+        { x: 0.5, y: 1.5, r: 1.5, color: 0xffd9a0, a: 0.8 },
+    ],
+    // 3x5 each: the six panes of the view, west to east - the town below lit where the lift's
+    // own view has its lights (view-fukuoka-lights): the west shore, Marizon on its pier, the
+    // dome and the hotel and the city behind them
+    'deck-in-window-1_0_0': [
+        { x: 0.7, y: 3.4, r: 0.9, ry: 0.6, color: Glows.WARM, a: 0.55 },
+        { x: 2.2, y: 3.9, r: 0.9, ry: 0.5, color: Glows.COOL, a: 0.5 },
+    ],
+    'deck-in-window-2_0_0': [
+        { x: 0.4, y: 4.1, r: 0.7, ry: 0.5, color: Glows.WARM, a: 0.5 },
+    ],
+    'deck-in-window-3_0_0': [
+        { x: 2.1, y: 3.0, r: 1.1, ry: 0.7, color: Glows.WARM, a: 0.7 },
+        { x: 2.1, y: 4.1, r: 0.6, color: Glows.COOL, a: 0.45 },
+    ],
+    'deck-in-window-4_0_0': [
+        { x: 0.3, y: 3.0, r: 0.6, color: Glows.WARM, a: 0.5 },
+    ],
+    'deck-in-window-5_0_0': [
+        { x: 2.4, y: 4.0, r: 1.0, ry: 0.6, color: Glows.COOL, a: 0.55 },
+    ],
+    'deck-in-window-6_0_0': [
+        { x: 1.75, y: 2.0, r: 0.5, ry: 1.0, color: Glows.COOL, a: 0.5 },
+        { x: 1.9, y: 3.2, r: 1.3, ry: 0.7, color: Glows.WARM, a: 0.55 },
+        { x: 0.6, y: 4.1, r: 0.8, ry: 0.5, color: Glows.COOL, a: 0.45 },
+    ],
     // the Osaka Devhouse's roof garden (issue #69, art: tools/generate_devhouse_art.py; the one
     // floor that is `lanternLight`). 1x1: a stone lantern, its fire box lit
     'devhouse-lantern_0_0': [

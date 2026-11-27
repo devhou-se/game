@@ -379,6 +379,7 @@ class GameScene extends Phaser.Scene {
             this.trainTravel = new TrainTravel(this);
             this.trainTravel.onRoomChange(this.roomManager.currentRoom);
             this.airTravel = new AirTravel(this);
+            this.viewRide = new ViewRide(this);
             this.ambientTrains = new AmbientTrains(this);
             this.ambientBoats = new AmbientBoats(this);
             this.ambientTrams = new AmbientTrams(this);   // a room's `tramways` (none declared: nothing runs)
@@ -1260,6 +1261,9 @@ class GameScene extends Phaser.Scene {
             this.stationPicker.show(this.roomManager.currentRoom, { flights: true });
             return;
         }
+        // bumping the gondola at the foot of the wheel is one turn of it, and the view (issue #242)
+        if (this.viewRide && !this.viewRide.riding && !this.dialogueManager.isVisible() &&
+            !(this.shop && this.shop.isVisible()) && this.viewRide.check(targetGridX, targetGridY)) return;
         // bumping a vending machine / konbini counter or shelf / izakaya bar opens its store
         if (this.shop && !this.dialogueManager.isVisible()) {
             this.shop.checkShopInteraction(targetGridX, targetGridY);
@@ -1375,6 +1379,7 @@ class GameScene extends Phaser.Scene {
         if (this.palaceVisit) this.palaceVisit.hold(this.inputHandler.heading());
         if (this.templeVisit) this.templeVisit.hold(this.inputHandler.heading());
         if (this.career) this.career.hold(this.inputHandler.heading());
+        if (this.viewRide) this.viewRide.hold(this.inputHandler.heading());
         // stop walk cycles on characters that didn't chain another step this
         // frame (player's own depth/anim are left to TrainTravel while riding)
         if (this.player && !(this.trainTravel && this.trainTravel.riding)) {

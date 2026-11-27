@@ -59,11 +59,12 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         // into its atrium (#217, mall.test.js); every other door is a house's own front
         // door (#208): hidden, on the doorway of a house that stands there, into a House room of this town -
         // or a tower's, into its lobby (#216): the glass tower's pair, the blue and the yellow one, the flats.
-        // Tochoji's pagoda has a pair of doors into its one interior (#214, pagodas.test.js)
+        // Tochoji's pagoda has a pair of doors into its one interior (#214, pagodas.test.js), and Fukuoka
+        // Tower the two leaves of its door, up to its observation deck (#242, views.test.js)
         const isHouse = (t) => ((cfg.rooms[t.targetRoom] || {}).house || {}).host === 'Fukuoka';
         const isLobby = (t) => ((cfg.rooms[t.targetRoom] || {}).lobby || {}).host === 'Fukuoka';
         assert.deepStrictEqual(room.transporters.filter((t) => !isHouse(t) && !isLobby(t)).map((t) => t.targetRoom).sort(),
-            ['FukuokaStation', 'KonbiniFukuoka1', 'MallFukuoka1', 'MallFukuoka1', 'PagodaFukuoka1', 'PagodaFukuoka1', 'ShrineFukuoka1', 'ShrineFukuoka2']);
+            ['DeckFukuoka1', 'DeckFukuoka1', 'FukuokaStation', 'KonbiniFukuoka1', 'MallFukuoka1', 'MallFukuoka1', 'PagodaFukuoka1', 'PagodaFukuoka1', 'ShrineFukuoka1', 'ShrineFukuoka2']);
         const towers = { 'highrise-glass_0_0': [[1, 9], [2, 9]], 'highrise-blue_0_0': [[2, 10]], 'highrise-yellow_0_0': [[1, 7]], 'midrise-apartment_0_0': [[2, 5]] };
         const lobbyDoors = room.transporters.filter(isLobby);
         assert.deepStrictEqual(lobbyDoors.map((t) => [t.gridX, t.gridY, t.targetRoom]).sort(),

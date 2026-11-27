@@ -219,7 +219,7 @@ class WorldModel {
         if (table) return table;
         const npc = this.room.npcs.find(n => n.gridX === x && n.gridY === y);
         if (npc) return { kind: 'npc', group: 'npc', npc };
-        return ['flights', 'shop', 'water', 'shrine', 'palace', 'temple', 'pond', 'clock', 'career', 'flavour'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
+        return ['flights', 'ride', 'shop', 'water', 'shrine', 'palace', 'temple', 'pond', 'clock', 'career', 'flavour'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
     }
 
     describe(i) {
@@ -256,6 +256,7 @@ class WorldModel {
         if (i.kind === 'clock') return 'opens the time-travel date picker';
         if (i.kind === 'desk') return 'the reception desk: signs you on for a job in the tower (free); afterwards reads your title back';
         if (i.kind === 'lift' && i.group === 'career') return 'the lift up to work: a shift of tickets for pay (needs the staff pass from the reception desk)';
+        if (i.kind === 'wheel') return 'rides the wheel: one turn, the view over Dotonbori, and back on this cell';
         if (i.group === 'flavour') return `says: "${i.say}"`;
         if (i.kind === 'drinking-game') return 'starts the izakaya drinking game (free, or pick a stake)';
     }
@@ -286,8 +287,10 @@ class WorldModel {
         p.gridX = tx; p.gridY = ty;
         const t = this.room.transporters.find(t => t.gridX === tx && t.gridY === ty);
         if (t) {
+            // a door into or out of an observation deck is a lift (the game plays the ride, ViewRide)
+            const lift = RoomManager.liftFor(this.config.rooms, from, t.targetRoom);
             this.enter(t.targetRoom, t.targetX, t.targetY);
-            return { moved: true, transported: { from, to: t.targetRoom } };
+            return { moved: true, transported: lift ? { from, to: t.targetRoom, lift } : { from, to: t.targetRoom } };
         }
         // walking from one district of a stitched city into the next: no teleport, just a new name
         const to = this.here().room;

@@ -20,6 +20,11 @@ Furniture you can sit on (`src/utils/Seats.js`) is `h` on `look` / `map`: blocke
 `check`, which never route over it, but `move` straight into it gets you on it as the game does
 (`w: got on the bed at 5,6`, with the line it says if it has one) and carries on with its count.
 `WorldModel.step()` reports it as `{ moved: true, seat, interaction }`; `inspect` names the seat on a cell.
+A door that is a lift (into or out of an observation deck, `RoomManager.liftFor`) is a teleport like any other
+here: `step()` reports `transported: { from, to, lift: 'up' | 'down' }` and `move` prints
+`transported Fukuoka -> ... (the lift goes up)`. The ride the game plays in between (`ViewRide`) is not modelled.
+Nor is the turn on Osaka's wheel: walking into the gondola at its foot is a bump that answers
+`rides the wheel: one turn, the view over Dotonbori, and back on this cell` (the `ride` group, `*` on the map).
 
 `node tools/test_game.js` runs the game's own decision code in Node, with no browser: which train a
 station parks, the departures board's order and scrolling, room display names, the dialogue hint wording,

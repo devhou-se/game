@@ -14,7 +14,8 @@ From the station you walk south down the main street:
           the Dotonbori entrance ARCH over the street (walk under it); to the
           west an office block, a townhouse and the DISCOUNT STORE (the "Don
           Quijote", issue #18 - its door leads into DonTakoteOsaka, issue #91);
-          the oval FERRIS WHEEL to the east
+          the oval FERRIS WHEEL to the east, a gondola at its foot to board
+          (issue #242: bump it for one turn and the view, src/ViewRide.js)
   middle  the Dotonbori CANAL (issue #61): three rows of water from one edge
           of the map to the other, under the street's bridge. It is declared
           as the room's one `waterways` entry, which is what gives it ambient
@@ -185,6 +186,11 @@ for x in (11, 16):                                # (none at 6: the office block
 # ---- east of the street: the oval ferris wheel on the canal bank --------------
 WHEEL = (33, 7)
 b.stamp('dotonbori-wheel', *WHEEL)
+# the gondola you board (issue #242): down at the ground under the three that hang on the wheel's
+# west side, outside the legs - the gap between them stays empty and open (#241). Bumping it is
+# one turn of the wheel (src/ViewRide.js); the art is tools/generate_wheel_art.py's
+BOARDING = (WHEEL[0], WHEEL[1] + 10)
+b.prop('wheel-boarding_0_0', *BOARDING, 2, 2)
 b.stamp('lamp-blue', 31, 18); b.stamp('lamp-blue', 46, 18)
 b.stamp('shrub-small', 46, 10); b.stamp('shrub-small', 46, 13)
 b.stamp('sakura-small', 30, 13); b.stamp('sakura-small', 2, 16)

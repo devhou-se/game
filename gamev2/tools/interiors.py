@@ -193,7 +193,7 @@ class Interior:
     def room(self, name, npcs=None, pockets=(), **flags):
         """The finished room: the exits as its transporters, its boundary the outline
         of `walk` and `view` (the void round it needs no colliders), `interior` set,
-        and `flags` on top - shopEnabled, lanternLight, shopMenu, the generator's own marker.
+        and `flags` on top - shopEnabled, lanternLight, daylight, shopMenu, the generator's own marker.
         None of those has a default: a room that is `interior` and nothing else is a
         store (Interactions.js), so say shopEnabled=False for anything that is not.
 
@@ -206,7 +206,7 @@ class Interior:
         open_view = self.view - self.walk - solid
         assert not open_view, f'{name}: in the boundary, not floor and not solid: {sorted(open_view)}'
         room['boundary'] = outline(self.walk | self.view)
-        room['interior'] = True          # never graded by day / night, never offered to the blog pipeline
+        room['interior'] = True          # never offered to the blog pipeline; never graded by day / night unless a flag says so (lanternLight, daylight)
         room.update(flags)
         free = self.walk - solid - {self.cell(*p) for p in pockets}
         self.reached = reachable(free, [(t['gridX'], t['gridY']) for t in self.exits])

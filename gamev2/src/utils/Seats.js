@@ -44,6 +44,8 @@ const Seats = {
         { kind: 'bench', pattern: /^odori-bench_/, pose: { face: 'down', dy: -16 } },
         { kind: 'bench', pattern: /^temple-in-bench_/, pose: { dy: -22 } },
         { kind: 'seats', pattern: /^airport-seats_/, pose: { face: 'down', dy: -12 } },
+        // the bench up Fukuoka Tower faces the glass (issue #242): you are seen from behind, and its front is drawn over your legs
+        { kind: 'bench', pattern: /^deck-in-bench_/, pose: { face: 'up', dy: -20, cover: [0, 30, 128, 34] } },
         // lying down: the pillow row carries the pose, and the blanket is the cover
         { kind: 'bed', pattern: /^home-bed_/, pose: [{ face: 'down', dy: 14, cover: [0, 56, 64, 72] }, {}] },
         { kind: 'futon', pattern: /^home-futon-/, pose: [{ face: 'down', dy: 12, cover: [0, 46, 64, 82] }, {}] },

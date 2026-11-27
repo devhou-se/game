@@ -60,7 +60,7 @@ GENERATORS = [
     'generate_konbinis', 'generate_discount_stores', 'generate_stations',
     'generate_izakaya', 'generate_houses', 'generate_shrines', 'generate_palace', 'generate_chikagai',
     'generate_temple', 'generate_pagodas', 'generate_devhouses',
-    'generate_pub', 'generate_distillery', 'generate_mall',
+    'generate_pub', 'generate_distillery', 'generate_mall', 'generate_tower_deck',
 ]
 GENERATORS += ['generate_kanazawa', 'generate_shirakawago', 'generate_toyama']     # Hokuriku (issue #68)
 # config `districts` from tools/districts.py: last, it reads where the landmarks of every room stand (issue #219)
@@ -89,6 +89,8 @@ ART_TOOLS += ['generate_pub_art']            # the Sendai pub's interior, and th
 ART_TOOLS += ['generate_distillery_art']     # the distillery's tasting bar in Sendai (issue #217)
 ART_TOOLS += ['generate_mall_art']           # Canal City's atrium in Fukuoka (issue #217)
 ART_TOOLS += ['generate_devhouse_art']       # the two Devhouses and what stands in them (issue #69)
+ART_TOOLS += ['generate_tower_deck_art']     # Fukuoka Tower's observation deck and the lift's view (issue #242)
+ART_TOOLS += ['generate_wheel_art']          # Osaka: the gondola you board and the view from the wheel (issue #242)
 # the art tools that also need a Japanese system font (generate_ads.find_font)
 FONT_TOOLS = ['generate_ads', 'extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS

@@ -199,7 +199,8 @@ What a new interior has to decide beyond that:
 - **`shopEnabled=False`, unless it is a store.** `interior: true` alone makes every counter a konbini's
   (`Interactions.js`, `Energy.isStore`). `room()` sets `interior` and nothing else.
 - `lanternLight` / `shopMenu` if it wants them, and a rule in `Shop.VENUES` / `Interactions.js` for anything a
-  bump should open.
+  bump should open. `daylight` for a room that is all window (Fukuoka Tower's deck): it is graded by the hour
+  as the street is (`DayNight.gradeFor`).
 - **Who draws the mat**: a `front_wall` threshold, or `doorway(mat=<Floor key>)` (or `mat=key_of`, as
   `floor` takes, where the cells differ). `doorway` draws nothing otherwise, and an exit cell left on the
   void is invisible.

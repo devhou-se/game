@@ -343,6 +343,131 @@ async function devhouseStair(page, house) {
     await idle(page);
 }
 
+// ------------------------------------------------------------------ the lift up a tower (issue #242)
+
+/**
+ * The first observation deck in config (a room with a `deck` marker) and the way into it: the player is put on the
+ * street cell in front of a leaf of its door. Everything a lift check expects comes from here: the door, where it
+ * leads, the sill that leads back down, the ride.
+ */
+async function liftFoot(page) {
+    return page.evaluate(() => {
+        const { s, rm } = __t, rooms = s.config.rooms;
+        for (const key of Object.keys(rooms)) {
+            const deck = rooms[key].deck;
+            if (!deck || !rm.rooms[key]) continue;
+            for (const [x, y] of deck.doors) {
+                const at = rm.resolve(deck.host, x, y), n = rm.resolve(deck.host, x, y + 1);
+                const t = rm.rooms[at.room].transporters.find(t => t.gridX === at.x && t.gridY === at.y && t.targetRoom === key);
+                if (!t) continue;
+                // the cell of the sill that leads back to the cell in front of this leaf
+                const sill = rm.rooms[key].transporters.find(d => rm.resolve(d.targetRoom, d.targetX, d.targetY).room === n.room && d.targetX === x && d.targetY === y + 1);
+                __t.place(n.room, n.x, n.y);
+                if (!__t.open(n.x, n.y) || !__t.quiet(n.x, n.y, 1)) continue;
+                return { key, host: n.room, n: { x: n.x, y: n.y }, dx: at.x - n.x, dy: at.y - n.y, to: { x: t.targetX, y: t.targetY },
+                    sill: sill && { x: sill.gridX, y: sill.gridY }, up: RoomManager.liftFor(rooms, n.room, key), down: RoomManager.liftFor(rooms, key, n.room),
+                    ride: ViewRide.RIDES.lift, skipAfter: ViewRide.SKIP_AFTER, name: __t.roomName(key), street: __t.roomName(n.room) };
+            }
+        }
+        return null;
+    });
+}
+
+/**
+ * Something to ride that is boarded by bumping it (the `ride` group of the bump table: the gondola at the foot of
+ * Osaka's wheel), and a cell to bump it from: the player is put there. { room, x, y, dx, dy, ride, ... } or null.
+ */
+async function rideSpot(page) {
+    return page.evaluate(() => {
+        const { s, rm } = __t, rooms = s.config.rooms;
+        for (const key of Object.keys(rooms)) {
+            if (!rm.rooms[key]) continue;
+            const rides = Interactions.all(rm.rooms[key], rooms[key], { sizeOf: (k) => rm.sizeOf(k), venues: Shop.VENUES }).filter(i => i.group === 'ride');
+            for (const i of rides) {
+                for (let x = i.x; x < i.x + i.w; x++) {
+                    for (let y = i.y; y < i.y + i.h; y++) {
+                        for (const [dx, dy] of __t.DIRS) {
+                            const fx = x - dx, fy = y - dy;         // from here a step (dx, dy) is into it
+                            if (fx >= i.x && fx < i.x + i.w && fy >= i.y && fy < i.y + i.h) continue;
+                            const at = rm.resolve(key, fx, fy);
+                            __t.place(at.room, at.x, at.y);
+                            if (!__t.open(at.x, at.y) || !__t.quiet(at.x, at.y, 1) || !rm.interactionAt(at.x + dx, at.y + dy, 'ride')) continue;
+                            return { room: at.room, x: at.x, y: at.y, dx, dy, kind: i.kind, ride: ViewRide.RIDES[i.kind], skipAfter: ViewRide.SKIP_AFTER, name: __t.roomName(at.room) };
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    });
+}
+
+/** What the ride has on screen right now, in CSS px of the browser window (null when no picture is up). */
+function liftPicture(page) {
+    return page.evaluate(() => {
+        const { s } = __t, v = s.viewRide, p = v.picture, ui = s.uiScale;
+        if (!p) return null;
+        const r = window.game.canvas.getBoundingClientRect(), css = r.width / window.game.canvas.width;
+        // an overlay object's box as drawn: through the overlay camera's zoom, into the slice of canvas in view, onto the page
+        const box = (o) => {
+            const b = o.getBounds();
+            return { x0: r.left + (ui.viewX + ui.offsetX + b.x * ui.zoom) * css, y0: r.top + (ui.offsetY + b.y * ui.zoom) * css,
+                x1: r.left + (ui.viewX + ui.offsetX + b.right * ui.zoom) * css, y1: r.top + (ui.offsetY + b.bottom * ui.zoom) * css };
+        };
+        // the size a Text's glyphs are shown at: its font, by however much its box is magnified
+        const font = (o) => parseFloat(o.style.fontSize) * (box(o).y1 - box(o).y0) / o.height;
+        const frame = box(p.frame), kx = (frame.x1 - frame.x0) / p.frame.width, ky = (frame.y1 - frame.y0) / p.frame.height, w = v._ride.window;
+        const controls = [...document.querySelectorAll('#touch-controls .tc-padzone, #touch-controls .tc-a, #touch-controls .tc-b, #touch-controls .tc-sprint')]
+            .map(el => el.getBoundingClientRect()).filter(q => q.width > 0).map(q => ({ x0: q.left, y0: q.top, x1: q.right, y1: q.bottom }));
+        return { frame, window: { x0: frame.x0 + w.x * kx, y0: frame.y0 + w.y * ky, x1: frame.x0 + (w.x + w.w) * kx, y1: frame.y0 + (w.y + w.h) * ky },
+            counter: box(p.counter), counterPx: font(p.counter), reading: p.counter.text, hint: box(p.hint), hintPx: font(p.hint), hintText: p.hint.text,
+            isHint: Hints.isHint(p.hint.text), k: p.k, elapsed: v._elapsed, win: [window.innerWidth, window.innerHeight], canvas: { x0: r.left, y0: r.top, x1: r.right, y1: r.bottom },
+            floor: [UIScale.MIN_HINT, UIScale.MIN_TEXT], controls, overlays: __t.overlays(), transitioning: __t.rm.isTransitioning };
+    });
+}
+
+/** What a ride leaves behind once it is over: nothing of the picture, and the player where it put them. */
+function liftAfter(page) {
+    return page.evaluate(() => {
+        const { s } = __t, v = s.viewRide, p = s.player, dn = s.dayNight, g = dn.grade;
+        const street = DayNight.GRADES[dn.period()] || null;
+        return { pos: __t.pos(), hud: __t.hud(), screen: __t.onScreen(), free: __t.free(p.gridX, p.gridY), overlays: __t.overlays(), riding: v.riding, skipped: v.skipped,
+            picture: !!v.picture, cutscene: (v._cutTweens || []).length + (v._cutExtras || []).length, elapsed: v._elapsed,
+            curtain: s.children.list.filter(o => o.depth >= 2999 && o.depth <= 3005 && o.visible).length,
+            // the deck's light is the sky's: graded as the street is at this hour
+            period: dn.period(), graded: g.visible, grade: g.visible ? { color: g.fillColor, alpha: g.fillAlpha } : null, street: street && { color: street.color, alpha: street.alpha },
+            glows: dn.glows.length, lights: !!(street && street.lights), way: __t.wayOut() };
+    });
+}
+
+/**
+ * The lift on a phone: in by the door with one real step, the picture measured as soon as it is all there, then a
+ * real tap on the picture to skip it, and out on the deck. Returns { lift, pic, st } for the caller to judge.
+ */
+async function liftOnPhone(page, shot) {
+    const lift = await liftFoot(page);
+    need(lift && lift.up === 'up', { noLiftToWalkInto: lift });
+    await idle(page);
+    await hold(page, keyFor(lift.dx, lift.dy), '__t.s.viewRide.riding', 1500);
+    need(await until(page, `__t.s.viewRide.picture && __t.s.viewRide.picture.hint.alpha === 1 && __t.s.viewRide._elapsed >= ${lift.skipAfter}`, 6000), { noPicture: await page.evaluate('({ riding: __t.s.viewRide.riding, pos: __t.pos() })'), lift });
+    const pic = await liftPicture(page);
+    need(pic && pic.transitioning && pic.overlays.length === 0, { duringTheRide: pic });
+    await page.screenshot({ path: path.join(SHOTS, shot) });
+    // a tap anywhere on the picture is a skip
+    const still = await page.evaluate('__t.s.viewRide.riding && !!__t.s.viewRide.picture && !__t.s.viewRide.skipped');
+    need(still, 'the ride was over before it could be tapped');
+    await page.touchscreen.tap(Math.round((pic.window.x0 + pic.window.x1) / 2), Math.round((pic.window.y0 + pic.window.y1) / 2));
+    need(await until(page, '__t.s.viewRide.skipped', 1500), 'a tap on the picture did not skip the ride');
+    need(await until(page, '!__t.s.viewRide.riding && !__t.rm.isTransitioning', 4000), 'the skipped ride never ended');
+    const st = await liftAfter(page);
+    need(st.pos.room === lift.key && st.pos.x === lift.to.x && st.pos.y === lift.to.y && st.free, { notOnTheDeck: st.pos, lift });
+    need(!st.picture && st.cutscene === 0 && st.curtain === 0 && st.overlays.length === 0, { rideLeftBehind: st });
+    need(st.screen.visible && st.screen.inView && st.screen.inWindow && st.hud.shown, { player: st.screen, hud: st.hud });
+    await page.evaluate('__t.home()');
+    await idle(page);
+    return { lift, pic, st };
+}
+
 // ------------------------------------------------------------------ the returning desktop player
 
 async function desktop(shared) {
@@ -1038,6 +1163,144 @@ async function desktop(shared) {
             need((await page.evaluate('__t.overlays()')).length === 0, { afterEsc: await page.evaluate('__t.overlays()') });
         });
 
+        // 8b --------------------------------------------------------------- the lift up the tower (issue #242)
+        await cleanly('tower-lift', async () => {
+            const lift = await liftFoot(page);
+            need(lift, 'no room in config is an observation deck (a `deck` marker) with a door that can be walked into');
+            need(lift.up === 'up' && lift.down === 'down' && lift.sill, { notALift: lift });
+            need((await page.evaluate('__t.hud()')).room.includes(lift.street), { hud: await page.evaluate('__t.hud()'), expected: lift.street });
+            await idle(page);
+            // in with the key held down, and kept down for the whole ride: it is one ride, and what the key does at
+            // the top is walk on across the deck, never back into the lift
+            const key = KEYS[`${lift.dx},${lift.dy}`][0], seen = [];
+            await page.keyboard.down(key);
+            try {
+                const read = '(v => ({ room: __t.rm.currentRoom, riding: v.riding, locked: __t.rm.isTransitioning, m: v.picture ? parseInt(v.picture.counter.text, 10) : null, overlays: __t.overlays().length }))(__t.s.viewRide)';
+                for (const t0 = Date.now(); Date.now() - t0 < 14000;) {
+                    const now = await page.evaluate(read);
+                    seen.push(now);
+                    if (seen.some(q => q.riding) && !now.riding && !now.locked) break;
+                    await page.waitForTimeout(100);
+                }
+            } finally { await page.keyboard.up(key); }
+            await idle(page);
+            const rooms = seen.map(q => q.room).filter((r, i, all) => r !== all[i - 1]);
+            const metres = seen.filter(q => q.m !== null).map(q => q.m);
+            need(seen.some(q => q.riding) && seen.filter(q => q.riding).every(q => q.locked && q.overlays === 0), { neverRode: seen.slice(0, 5), lift });
+            need(rooms.length === 2 && rooms[0] === lift.host && rooms[1] === lift.key, { notOneRideUp: rooms, lift });
+            // the counter climbs, and never past the top
+            need(metres.length >= 3 && metres.every((m, i) => m >= 0 && m <= lift.ride.top && (i === 0 || m >= metres[i - 1])) && metres[metres.length - 1] > metres[0], { counter: metres, top: lift.ride.top });
+            const st = await liftAfter(page);
+            // on the cell the lift lets you out on, or further on the way the key was held
+            const on = (st.pos.x - lift.to.x) * lift.dx + (st.pos.y - lift.to.y) * lift.dy;
+            need(st.pos.room === lift.key && on >= 0 && (lift.dx ? st.pos.y === lift.to.y : st.pos.x === lift.to.x) && st.free, { notOnTheDeck: st.pos, lift });
+            need(!st.riding && !st.skipped && !st.picture && st.cutscene === 0 && st.curtain === 0 && st.overlays.length === 0, { rideLeftBehind: st });
+            need(st.screen.visible && st.screen.inView && st.hud.shown && st.hud.room.includes(lift.name), { arrived: st, expected: lift.name });
+            need(st.graded === !!st.street && (!st.street || (st.grade.color === st.street.color && st.grade.alpha === st.street.alpha)) && (st.glows > 0) === st.lights, { deckNotLitAsTheStreetIs: st });
+            await page.screenshot({ path: path.join(SHOTS, 'regress_deck.png') });
+            shared.lift = lift;
+        });
+
+        await cleanly('tower-lift-skip', async () => {
+            const lift = shared.lift;
+            need(lift, 'needs tower-lift');
+            // down by the sill, from the cell the lift let you out on
+            const from = await page.evaluate((l) => {
+                const placed = __t.place(l.key, l.to.x, l.to.y);
+                const t = __t.room().transporters.find(t => t.gridX === l.sill.x && t.gridY === l.sill.y);
+                return { placed, open: __t.open(l.to.x, l.to.y), t: t && { room: t.targetRoom, x: t.targetX, y: t.targetY }, dx: l.sill.x - l.to.x, dy: l.sill.y - l.to.y };
+            }, lift);
+            need(from.open && from.t && Math.abs(from.dx) + Math.abs(from.dy) === 1, { noWayOntoTheSill: from, lift });
+            await idle(page);
+            await hold(page, keyFor(from.dx, from.dy), '__t.s.viewRide.riding', 1500);
+            need(await page.evaluate('__t.s.viewRide.riding && __t.rm.isTransitioning'), { steppingOnTheSillIsNotARide: await page.evaluate('__t.pos()'), from });
+            // SPACE pressed as the ride begins, and held: not a skip, however long it is held
+            await page.keyboard.down('Space');
+            const early = await page.evaluate('__t.s.viewRide._elapsed');
+            const later = await until(page, `__t.s.viewRide._elapsed >= ${lift.skipAfter} || !__t.s.viewRide.riding`, 6000);
+            const held = await page.evaluate('(v => ({ riding: v.riding, skipped: v.skipped, picture: !!v.picture, elapsed: v._elapsed, m: v.picture && parseInt(v.picture.counter.text, 10) }))(__t.s.viewRide)');
+            await page.keyboard.up('Space');
+            need(early < lift.skipAfter, { spaceWentDownTooLateToTell: early, skipAfter: lift.skipAfter });
+            need(later && held.riding && !held.skipped && held.picture, { anEarlySpaceSkippedTheRide: held, early });
+            // the way down starts at the top
+            need(held.m > lift.ride.top / 2 && held.m <= lift.ride.top, { counterOnTheWayDown: held.m, top: lift.ride.top });
+            await page.waitForTimeout(120);
+            // pressed now, it ends the ride: long before the ride would have ended itself
+            need(await press(page, 'Space', '__t.s.viewRide.skipped'), 'SPACE did not skip the ride');
+            need(await until(page, '!__t.s.viewRide.riding && !__t.rm.isTransitioning', 4000), 'the skipped ride never ended');
+            const st = await liftAfter(page);
+            need(st.elapsed < lift.ride.ms, { notSkipped: st.elapsed, ride: lift.ride.ms });
+            const out = await page.evaluate((t) => __t.rm.resolve(t.room, t.x, t.y), from.t);
+            need(st.pos.room === out.room && st.pos.x === out.x && st.pos.y === out.y && st.free, { notInFrontOfTheDoor: st.pos, out });
+            need(!st.picture && st.cutscene === 0 && st.curtain === 0 && st.overlays.length === 0, { rideLeftBehind: st });
+            need(st.screen.visible && st.screen.inView && st.hud.room.includes(lift.street), { arrived: st, expected: lift.street });
+            // input is unlocked: one real step
+            need(st.way, { nowhereToStepAt: st.pos });
+            await step(page, st.way.dx, st.way.dy);
+            const moved = await page.evaluate('__t.pos()');
+            need(moved.x === st.pos.x + st.way.dx && moved.y === st.pos.y + st.way.dy && moved.room === st.pos.room, { inputStillLocked: moved, from: st.pos, way: st.way });
+            await page.evaluate('__t.home()');
+        });
+
+        // 8c --------------------------------------------------------------- a turn on the wheel (issue #242)
+        await cleanly('wheel-ride', async () => {
+            const spot = await rideSpot(page);
+            need(spot, 'nothing in the world answers a bump with a ride (the `ride` group) from a cell that is open and quiet');
+            await idle(page);
+            const read = '(v => ({ riding: v.riding, locked: __t.rm.isTransitioning, room: __t.rm.currentRoom, at: __t.at(' + spot.x + ', ' + spot.y + '), overlays: __t.overlays().length }))(__t.s.viewRide)';
+            // the bump, with the key held down and kept down: through the ride, and after it
+            const key = KEYS[`${spot.dx},${spot.dy}`][0];
+            await page.keyboard.down(key);
+            let st;
+            try {
+                need(await until(page, '__t.s.viewRide.riding', 1500), { bumpingItIsNotARide: await page.evaluate('__t.pos()'), spot });
+                need(await until(page, `__t.s.viewRide.picture && __t.s.viewRide.picture.hint.alpha === 1 && __t.s.viewRide._elapsed >= ${spot.skipAfter}`, 6000), { noPicture: await page.evaluate(read), spot });
+                // the picture: the gondola's own, no counter (that is the lift's); the view under its window going down as you go up
+                const pic = () => page.evaluate(`(v => ({ ride: v._ride === ViewRide.RIDES.wheel, frame: v.picture.frame.texture.key, counter: v.picture.counter, layers: v.picture.layers.map(o => o.texture.key), y: v.picture.layers[1].y, elapsed: v._elapsed, h: ViewRide.height(v._ride, 'up', v._elapsed), room: __t.rm.currentRoom, locked: __t.rm.isTransitioning, overlays: __t.overlays().length }))(__t.s.viewRide)`);
+                const a = await pic();
+                need(a.ride && a.frame === spot.ride.frame && a.counter === null && a.layers[0] === `${spot.ride.view}-far` && a.layers[1] === `${spot.ride.view}-near`, { notTheGondola: a, spot });
+                need(a.room === spot.room && a.locked && a.overlays === 0, { duringTheRide: a });
+                need(await until(page, `!__t.s.viewRide.riding || __t.s.viewRide.picture.layers[1].y > ${a.y}`, 4000), { theViewDoesNotMove: a });
+                const b = await pic();
+                need(b.h > a.h && b.y > a.y && b.elapsed < spot.ride.ms / 2, { notClimbing: [a, b] });
+                await page.screenshot({ path: path.join(SHOTS, 'regress_wheel.png') });
+                // off early: SPACE, with the way you bumped it still held
+                need(await press(page, 'Space', '__t.s.viewRide.skipped'), 'SPACE did not skip the ride');
+                need(await until(page, '!__t.s.viewRide.riding && !__t.rm.isTransitioning', 4000), 'the skipped ride never ended');
+                // ...and that key, still down, is the bump that boarded: it does not board again
+                // (nor after a frame that takes 400 ms: the bump is kept by the key, not by the clock)
+                const seen = [];
+                for (const t0 = Date.now(); Date.now() - t0 < 1200;) {
+                    seen.push(await page.evaluate(read));
+                    if (seen.length === 2) await page.evaluate('(t => { while (performance.now() - t < 400); })(performance.now())');
+                    await page.waitForTimeout(100);
+                }
+                need(seen.length >= 3 && seen.every(q => !q.riding && !q.locked && q.at && q.room === spot.room && q.overlays === 0), { aHeldKeyRodeAgain: seen.filter(q => q.riding || !q.at).slice(0, 3), spot });
+                st = await liftAfter(page);
+            } finally { await page.keyboard.up(key); }
+            // back where you boarded, facing the gondola, nothing of the ride left up, the room never changed
+            need(st.pos.room === spot.room && st.pos.x === spot.x && st.pos.y === spot.y && st.free, { notWhereYouBoarded: st.pos, spot });
+            need(!st.riding && st.skipped && !st.picture && st.cutscene === 0 && st.curtain === 0 && st.overlays.length === 0 && st.elapsed < spot.ride.ms, { rideLeftBehind: st });
+            need(st.screen.visible && st.screen.inView && st.hud.shown && st.hud.room.includes(spot.name), { afterTheRide: st, expected: spot.name });
+            const facing = await page.evaluate('[__t.s.player.facingX, __t.s.player.facingY]');
+            need(facing[0] === spot.dx && facing[1] === spot.dy, { notFacingTheGondola: facing, spot });
+            // let go, and pressed again, it is another turn
+            need(await until(page, '!__t.s.viewRide.bump', 2000), 'the bump was not over once the key was let go');
+            await hold(page, keyFor(spot.dx, spot.dy), '__t.s.viewRide.riding', 1500);
+            need(await page.evaluate('__t.s.viewRide.riding && __t.rm.isTransitioning'), { aFreshPressDidNotRide: await page.evaluate(read), spot });
+            need(await until(page, `__t.s.viewRide.picture && __t.s.viewRide._elapsed >= ${spot.skipAfter}`, 6000), 'the second ride never came up');
+            need(await press(page, 'Enter', '__t.s.viewRide.skipped'), 'ENTER did not skip the ride');
+            need(await until(page, '!__t.s.viewRide.riding && !__t.rm.isTransitioning', 4000), 'the second ride never ended');
+            const again = await liftAfter(page);
+            need(again.pos.room === spot.room && again.pos.x === spot.x && again.pos.y === spot.y && !again.picture && again.cutscene === 0 && again.curtain === 0, { afterTheSecondRide: again, spot });
+            // input is unlocked: one real step away
+            need(again.way, { nowhereToStepAt: again.pos });
+            await step(page, again.way.dx, again.way.dy);
+            const moved = await page.evaluate('__t.pos()');
+            need(moved.x === again.pos.x + again.way.dx && moved.y === again.pos.y + again.way.dy && moved.room === again.pos.room, { inputStillLocked: moved, from: again.pos, way: again.way });
+            await page.evaluate('__t.home()');
+        });
+
         // 4b --------------------------------------------------------------- the same seam with ?stitch=0
         await cleanly('seam-unstitched', async () => {
             const seam = shared.seam;
@@ -1125,6 +1388,33 @@ async function desktop(shared) {
             await step(page, st.way.dx, st.way.dy);
             const moved = await page.evaluate('__t.pos()');
             need(moved.x === st.pos.x + st.way.dx && moved.y === st.pos.y + st.way.dy, { didNotStep: moved, from: st.pos });
+        });
+
+        // 11b -------------------------------------------------------------- night, up the tower (issue #242)
+        await cleanly('tower-deck-night', async () => {
+            const lift = shared.lift;
+            need(lift, 'needs tower-lift');
+            // the deck is an interior, and all window: at night it is as dark as the street and its lights are on
+            const deck = (l) => {
+                __t.place(l.key, l.to.x, l.to.y);
+                const { s } = __t, dn = s.dayNight, g = dn.grade, cfg = s.config.rooms[l.key];
+                return { period: dn.period(), interior: !!cfg.interior, graded: g.visible, color: g.fillColor, alpha: g.fillAlpha, glows: dn.glows.length,
+                    night: DayNight.GRADES.night, screen: __t.onScreen(), pos: __t.pos() };
+            };
+            const st = await page.evaluate(deck, lift);
+            need(st.period === 'night' && st.interior && st.graded && st.color === st.night.color && st.alpha === st.night.alpha, { deckNotDarkAtNight: st });
+            need(st.night.lights && st.glows > 0, { noLightsOnTheDeck: st.glows });
+            await until(page, '__t.s.cameras.main.worldView.contains(__t.s.player.sprite.x, __t.s.player.sprite.y)', 2000);
+            await page.screenshot({ path: path.join(SHOTS, 'regress_deck_night.png') });
+            // and by day neither (the hour pinned the way ?tod= pins it)
+            const day = await page.evaluate((l) => {
+                const dn = __t.s.dayNight;
+                dn.forced = 'day';
+                dn.apply();
+                return { period: dn.period(), graded: dn.grade.visible, glows: dn.glows.length };
+            }, lift);
+            need(day.period === 'day' && !day.graded && day.glows === 0, { deckGradedByDay: day });
+            await page.evaluate('__t.home()');
         });
     });
 }
@@ -1448,6 +1738,20 @@ async function phones() {
             need(await until(page, '!Object.values(__t.s.touchControls.state).some(Boolean)', 1500), 'the d-pad stayed held after the touch ended');
             need(errors.length === 0, { errors });
         });
+
+        // the lift up the tower on the phone (issue #242): the picture fits the screen, its hint and its counter can be read
+        await check('phone-landscape-lift', async () => {
+            const { pic } = await liftOnPhone(page, 'regress_phone_lift.png');
+            const within = (b, o) => b.x0 >= o.x0 - 0.5 && b.y0 >= o.y0 - 0.5 && b.x1 <= o.x1 + 0.5 && b.y1 <= o.y1 + 0.5;
+            const apart = (a, b) => a.x1 <= b.x0 || a.x0 >= b.x1 || a.y1 <= b.y0 || a.y0 >= b.y1;
+            const win = { x0: 0, y0: 0, x1: pic.win[0], y1: pic.win[1] };
+            need(within(pic.frame, win) && pic.k > 1, { frameNotInsideTheScreen: pic.frame, win: pic.win, k: pic.k });
+            need(within(pic.counter, pic.frame) && pic.counter.y1 <= pic.window.y0 + 0.5 && pic.counterPx >= pic.floor[1] && /^\d+ m$/.test(pic.reading), { counter: pic.counter, px: pic.counterPx, reading: pic.reading, window: pic.window });
+            // the hint: a touch hint, big enough, on the screen, under the picture and clear of the controls
+            need(pic.isHint && !/SPACE/.test(pic.hintText) && pic.hintPx >= pic.floor[0], { hint: pic.hintText, px: pic.hintPx, floor: pic.floor[0] });
+            need(within(pic.hint, win) && pic.hint.y0 >= pic.frame.y1 - 0.5 && pic.controls.length >= 2 && pic.controls.every(c => apart(pic.hint, c)), { hintBox: pic.hint, frame: pic.frame, controls: pic.controls });
+            need(errors.length === 0, { errors });
+        });
     });
 
     await profile('phone-portrait', { touch: true, mobile: true, width: 390, height: 844 }, async ({ page, url, errors }) => {
@@ -1470,6 +1774,15 @@ async function phones() {
             need(st.screen.cy < st.pad[1], { playerUnderTheControls: st.screen, pad: st.pad });
             need(st.hud.shown && st.free && st.overlays.length === 0 && st.tiles > 0, { world: st });
             await page.screenshot({ path: path.join(SHOTS, 'regress_portrait.png') });
+            need(errors.length === 0, { errors });
+        });
+
+        // the lift where the screen is narrower than the picture (issue #242): its window and its counter are still on it
+        await check('phone-portrait-lift', async () => {
+            const { pic } = await liftOnPhone(page, 'regress_portrait_lift.png');
+            const across = (b) => b.x0 >= -0.5 && b.x1 <= pic.win[0] + 0.5;
+            need(across(pic.window) && across(pic.counter) && pic.window.y0 >= pic.canvas.y0 - 0.5 && pic.window.y1 <= pic.canvas.y1 + 0.5, { cutOff: { window: pic.window, counter: pic.counter }, win: pic.win, canvas: pic.canvas });
+            need(pic.counterPx >= pic.floor[1] && pic.isHint && pic.hintPx >= pic.floor[0] && across(pic.hint) && pic.hint.y0 >= pic.frame.y1 - 0.5 && pic.hint.y1 <= pic.canvas.y1 + 0.5, { text: { counter: pic.counterPx, hint: pic.hintPx, box: pic.hint }, frame: pic.frame, canvas: pic.canvas });
             need(errors.length === 0, { errors });
         });
     });

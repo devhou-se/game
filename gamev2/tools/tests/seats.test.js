@@ -39,6 +39,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             ['station-bench-back_0_0', 'bench', 'up', false],
             ['odori-bench_0_0', 'bench', 'down', false],
             ['temple-in-bench_0_0', 'bench', undefined, false],
+            ['deck-in-bench_0_0', 'bench', 'up', true],
             ['airport-seats_0_0', 'seats', 'down', false],
         ];
         for (const [key, kind, face, cover] of families) {

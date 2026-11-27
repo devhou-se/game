@@ -13,7 +13,9 @@
  * cutscene (~3000). Glows sit just above the grade so they cut through the
  * darkness. Interior rooms ("interior": true in config) are never graded -
  * except one lit by lanterns ("lanternLight": true, a shrine's worship hall):
- * at night it dims a little and its lanterns glow; by day it is untouched.
+ * at night it dims a little and its lanterns glow; by day it is untouched -
+ * and one whose light is the sky's ("daylight": true, the observation deck up
+ * Fukuoka Tower, all window): it is graded by the hour exactly as the street is.
  *
  * ?tod=dawn|day|dusk|night pins the period for testing.
  */
@@ -170,10 +172,11 @@ class DayNight {
 /**
  * The grade for a room in a period, or null for none. An interior is lit from
  * inside and ignores the hour, unless its light is lanterns: then night (and
- * only night) dims it warm and turns the halos on.
+ * only night) dims it warm and turns the halos on. An interior whose light is
+ * the sky's ("daylight": a room that is all window) is graded as the street is.
  */
 DayNight.gradeFor = (roomCfg, period) => {
-    if (!(roomCfg && roomCfg.interior)) return DayNight.GRADES[period] || null;
+    if (!(roomCfg && roomCfg.interior) || roomCfg.daylight) return DayNight.GRADES[period] || null;
     return roomCfg.lanternLight && period === 'night' ? DayNight.LANTERN_NIGHT : null;
 };
 

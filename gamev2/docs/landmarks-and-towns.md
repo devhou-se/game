@@ -16,6 +16,7 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Tsutenkaku Tower | Osaka | `tsutenkaku_0_0` | line-art placeholder drawn by `tools/generate_tsutenkaku.py` |
 | Dotonbori entrance arch | Osaka | `dotonbori-arch_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
 | Dotonbori ferris wheel | Osaka | `dotonbori-wheel_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
+| The gondola you board at the wheel's foot | Osaka | `wheel-boarding_0_0` | one of the wheel's own gondolas, cut from its sprite with the door open, by `tools/generate_wheel_art.py` (see "A turn on the Dotonbori wheel") |
 | Sapporo Clock Tower | Sapporo | `sapporo-clock-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
 | Sapporo TV Tower | Sapporo | `sapporo-tv-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
 | Sapporo Station front (the star clock), the red-brick government hall (Akarenga) | Sapporo | `sapporo-station-front_0_0`, `sapporo-akarenga_0_0` | shaded pixel art drawn by `tools/generate_sapporo_art.py` |
@@ -24,7 +25,7 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | The pub (HUB) | Sendai | `sendai-pub_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py`; its door opens into `PubSendai1` (see "The Sendai pub") |
 | Nikka distillery kiln house | Sendai | `sendai-kiln_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py`; its door opens into `DistillerySendai1` (see "The Nikka distillery's tasting bar") |
 | Matsushima sightseeing boat, pier, islets | Sendai | `matsushima-*_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
-| Fukuoka Tower | Fukuoka | `fukuoka-tower_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
+| Fukuoka Tower | Fukuoka | `fukuoka-tower_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py`; the two door leaves in its foot are a lift up to `DeckFukuoka1` (see "Fukuoka Tower's deck") |
 | Yatai stalls (ramen, yakitori, oden) and their lantern posts | Fukuoka | `yatai-ramen_0_0`, `yatai-yakitori_0_0`, `yatai-oden_0_0`, `yatai-lanterns_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
 | Canal City and its fountain | Fukuoka | `canal-city_0_0`, `canal-fountain_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py`; the mall's two door leaves open into `MallFukuoka1` (see "Canal City's atrium") |
 | Kushida shrine's Yamakasa float | Fukuoka | `hakata-yamakasa_0_0` (beside a `shrine-red` hall) | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
@@ -37,7 +38,8 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 
 - **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reachable only by train:
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
-  plaza, with the ferris wheel on the north bank. The Dotonbori canal (rows 20-22) runs the whole width of
+  plaza, with the ferris wheel on the north bank (a gondola at its foot is boarded for one turn and the view:
+  see "A turn on the Dotonbori wheel", issue #242). The Dotonbori canal (rows 20-22) runs the whole width of
   the map under the bridge and carries the ambient boats (issue #61, see Ambient Traffic); the main street
   and the avenue are its asphalt roads (issues #106 / #151, see Street accessories) and the discount store by the arch opens into `DonTakoteOsaka` (issue #91, see Shop). The tower stands on the street's axis, so a shrub garden fills the ground behind
   it and the street forks round at the avenue (otherwise the player walks hidden behind the sprite for ten cells); the
@@ -369,7 +371,8 @@ after the existing stations in `tools/generate_stations.py`); it sits detached, 
   `pond-autotile_center`) with a waterline (`beach-shore-*`) and three columns of `sand-autotile` beach. A paved
   pedestrian **avenue** (columns 29-32) is the spine, north to south: the station house and its forecourt ->
   a signalled zebra crossing over the **downtown street** (rows 20-22, asphalt; high-rises and **Fukuoka Tower**
-  on its plaza by the beach to the west, the station plaza with the 7-Eleven `KonbiniFukuoka1` to the east)
+  on its plaza by the beach to the west - the door in its foot is a lift up to its observation deck,
+  `DeckFukuoka1`: see "Fukuoka Tower's deck" - the station plaza with the 7-Eleven `KonbiniFukuoka1` to the east)
   -> between **Canal City** with its fountain (west; the mall's doors open into its atrium, `MallFukuoka1`:
   see "Canal City's atrium") and **Kushida shrine** - a `shrine-red` hall with a
   Yamakasa float beside it - the machiya and a pagoda (east) -> **the ramen river street** -> the bridge ->
@@ -605,8 +608,9 @@ A town's only lobby has no number. The way out of each is the cell below its (fi
 - **What is a tower** (`roomgen.TOWER_DOORS`): the five generic building sprites `highrise-yellow`,
   `-blue`, `-glass`, `-apartment` and `midrise-apartment` and Sapporo's `sapporo-office-brick` and
   `sapporo-office-glass`, with the door cells of their prefabs. Landmark
-  towers (Tokyo Tower, the Sapporo TV Tower, Fukuoka Tower, Tsutenkaku, castles) are landmarks and stay
-  sealed; the discount store has its own shop floor.
+  towers (Tokyo Tower, the Sapporo TV Tower, Tsutenkaku, castles) are landmarks and stay
+  sealed - but Fukuoka Tower, whose door is a lift up to its observation deck (see "Fukuoka Tower's deck");
+  the discount store has its own shop floor.
 - **A pair of doors** (the glass tower's): each door that passes the skip rules opens into the same lobby
   and the way out is the cell in front of the first; one that does not stays shut, and the tower is skipped
   only when neither passes. The lobby records them (`lobby: {host, door, doors}`).
@@ -1017,6 +1021,126 @@ walked behind, as they always were; only the two door cells opened.)
   would need the blog pipeline to place into an `interior` room, which it never does.
 - **Build order**: `generate_mall_art.py`, `generate_mall.py`, `config_to_tiled.py MallFukuoka1 Fukuoka`,
   `play.js lint MallFukuoka1 Fukuoka`. Tests: `tools/tests/mall.test.js` (on `tools/tests/interiors.js`).
+### Fukuoka Tower's deck (issue #242)
+
+**What the tower is on the map.** One sprite, `fukuoka-tower_0_0` (4x12), on its plaza by the beach in
+`Fukuoka`: the `Fukuoka Tower` landmark. It was sealed. The two leaves of the door in its foot (the sprite's
+cell + (1,11) and + (2,11); `Fukuoka` 11,18 and 12,18 as the town stands) each carry a hidden transporter into
+`DeckFukuoka1` (HUD: `Tower Deck`), the observation deck 123 m up, and each cell of the lift's sill inside puts
+you back on the plaza in front of the leaf above it. The doors are found by sprite (`roomgen.DECK_DOORS`), as
+the mall's are; if the tower moves, run `generate_tower_deck.py` then `config_to_tiled.py DeckFukuoka1 Fukuoka`.
+
+- **The door is a lift.** A transporter into a room that carries the `deck` marker, or out of one, is a lift:
+  `RoomManager.liftFor(config.rooms, from, to)` answers `'up'`, `'down'` or `null`, and
+  `RoomManager.checkTransporter` hands such a door to `ViewRide.lift(dir, transporter)` instead of fading the
+  room. Nothing names the tower: another deck needs only the marker.
+- **The ride** (`src/ViewRide.js`, 4.5 s): the screen fades, the room is swapped under a black curtain, and the
+  picture plays - the inside of the glass lift (`view-lift`, 640x640, with a hole for its window), the player
+  seen from behind, and outside the town dropping away as the counter on the lift's panel climbs to `123 m`
+  (`ViewRide.height` eases away from the ground and into the top; `metres`). The way down is the same ride
+  backwards, the counter falling to 0. The view is two tall pictures behind the window, `view-fukuoka-far`
+  (the bay, the islands and the day sky; opaque) and `view-fukuoka-near` (the plaza, the beach, Marizon and the
+  town; transparent above its skyline), each bottom-aligned in the window on the ground and top-aligned at the
+  top (`ViewRide.pan`): `far` is the shorter, so it moves less. The tower's own beams pass the glass on the
+  way (`ViewRide.beams`: none in the window at either end).
+- **The hour is the game's.** Both pictures are tinted with what the street outside is multiplied by
+  (`ViewRide.tint(period)`, from `DayNight.GRADES`), and when that grade has lights `view-fukuoka-lights` (the
+  lit pixels of `near` and nothing else) is drawn over them untinted. So the ride by night is the same art.
+- **Skipping and input.** Input is locked for the ride like a flight (`InputHandler` hands every frame to
+  `ViewRide.handleInput` while `riding`; `roomManager.isTransitioning` holds the player). SPACE / ENTER / ESC
+  (A / B on touch) or a tap anywhere ends it from `ViewRide.SKIP_AFTER` (0.7 s) after the picture comes up
+  (`ViewRide.canSkip`): a key still held from the walk in is not a skip. The hint under the picture is worded by
+  `Hints.text` (`SPACE: skip the ride` / the tap wording). No new key, overlay or save field.
+- **On a phone** the picture is magnified as the world is, but never larger than the view less the room the
+  hint needs under it (`ViewRide.layout`, `hintRoom`: `UIScale` draws the hint as large on the screen as on a
+  desktop and keeps its margin, so on a phone it needs more canvas px). A portrait phone's view is narrower
+  than the frame: the window and the counter's panel keep to the frame's middle `ViewRide.SAFE_W` (560) columns,
+  which is `Viewport.MIN_VISIBLE`. The counter is part of the picture (it is sized with it and stays on its
+  panel); the picture is a cover the size of the view to `UIScale`, drawn 1:1 like the plane's cabin.
+- **`tools/generate_tower_deck.py`** owns the room and the two door cells, exactly as `generate_mall.py` does
+  the mall's (`interiors.Interior`, `roomgen.sprite_doors`, `roomgen.open_door`); `generate_fukuoka.py` is not
+  edited. A re-run is a no-op, and from a sealed tower it rebuilds the same world (`views.test.js`).
+- **Door keeping.** The room carries `deck: {host, doors}` and `'Deck'` is a row of `roomgen.OWNED_DOORS`
+  (`DECK_DOORS`), so a re-run of `generate_fukuoka.py` keeps both doors.
+- **What is inside** (20x15; the floor is 18x6), one long room in dark carpet and steel:
+  - the back wall, five rows tall, is glass from the floor up: six panes (`window-1..6`, 3x5) of one view north
+    over Hakata Bay - the same canvases the lift shows, as they stand at the top - inside the room's boundary
+    (`view=True`), so a phone's camera shows all of it;
+  - three coin binoculars (`binoculars`, 1x2) and the lovers' fence of padlocks (`locks`, 2x2) along the glass,
+    a brass map of the bay on a plinth (`compass`, 2x1), the sign by the lift (`lift-sign`, 1x2);
+  - two benches facing the glass (`bench`, 2x1). They are seats (`Seats.RULES`, see Sitting on furniture in
+    `architecture.md`): walk into one and you sit with your back to the room, its front drawn over your legs;
+  - four pendant lamps over the floor (`downlight`, 1x2 on `Tops`);
+  - the lift in the front wall: its sill (`lift-w`, `lift-e`) is the doorway, two cells wide, with the cabin's
+    light on the carpet in front of it (`doorlight`).
+- **Daylight.** `interior` (never offered to the blog pipeline) and `daylight`: the room's light is the sky's,
+  so `DayNight.gradeFor` grades it by the hour exactly as it does the street (a `lanternLight` room dims only
+  at night; every other interior is never graded). At dusk and at night the lamps glow and so do the lights of
+  the town in the panes (`Glows.SPRITES` rows for `deck-in-downlight` and `deck-in-window-1..6`, placed where
+  `view-fukuoka-lights` has its lights). What you rode up to is what you step out to.
+- **Something to do.** Bump a pane, the binoculars, the brass map, the padlocks or the sign for a line
+  (`flavour` rules `deck-window`, `binoculars`, `compass`, `padlocks`, `lift-sign` in `Interactions.js`); sit
+  on a bench and look out. Nothing is sold (`shopEnabled: false`); no venue, no stamp.
+- **Art**: `tools/generate_tower_deck_art.py` (needs Pillow; `--preview out.png`) draws the 20 sprites
+  (`deck-in-<piece>`, registered as tiles) and the four pictures of the ride (`view-lift`, `view-fukuoka-near`,
+  `-far`, `-lights`: whole images in `spriteMetadata`, no tile name). The view is drawn once, as three canvases
+  as wide as the deck's wall; the panes and the ride's pictures are cut from them. The frame is the pub art
+  tool's. It and the generator are in `check_generators.py`.
+- **Without a browser**: `WorldModel.step()` reports the door as `transported: { from, to, lift: 'up' | 'down' }`
+  and `play.js` prints `(the lift goes up)`; the ride itself is not modelled.
+- **Doors and blog NPCs**: the `Fukuoka Tower` LANDMARK stands its visitor on the plaza, not on a door or the
+  cell in front of one (`views.test.js` holds every dated position and stand cell off them), and nobody is
+  placed on the deck: the pipeline never places into an `interior` room.
+- **Build order**: `generate_tower_deck_art.py`, `generate_tower_deck.py`,
+  `config_to_tiled.py DeckFukuoka1 Fukuoka`, `play.js lint DeckFukuoka1 Fukuoka`. Tests:
+  `tools/tests/views.test.js` (on `tools/tests/interiors.js`); the browser regression rides it (`tower-lift`,
+  `tower-lift-skip`, `tower-deck-night`, `phone-landscape-lift`, `phone-portrait-lift`).
+
+### A turn on the Dotonbori wheel (issue #242)
+
+**What it is on the map.** The wheel is one sprite, `dotonbori-wheel_0_0` (12x12, `generate_osaka.py` `WHEEL`):
+two legs and a ring, nothing drawn or solid between the legs (issue #241), so you walk under it. One 2x2 prop,
+`wheel-boarding_0_0`, stands at its foot: a gondola down at the ground under the three that hang on the wheel's
+west side, outside the legs (`BOARDING = (WHEEL[0], WHEEL[1] + 10)`; `Osaka` 33..34, 17..18 as the town
+stands), its door swung open, on a step. It is placed from `WHEEL`, so it moves with the wheel. It is solid; the
+gap between the legs and the walk under the wheel are as they were, and so is the canal-bank cell under the
+wheel where the blog pipeline stands the wheel's visitors.
+
+- **Bumping it is the ride.** `Interactions.RULES` has one row for it, kind `wheel`, group `ride` (on the
+  gondola, not on the wheel, whose footprint is 12x12). `GameScene.checkNPCInteraction` asks
+  `ViewRide.check(x, y)` after the flights board; a fresh bump runs `ViewRide.wheel()`. One ride per bump: a key
+  held against the gondola boards once, and when you step off with it still down it is still that bump. Let go
+  and press again for another turn. The bump is kept by what is held, asked every frame
+  (`ViewRide.hold(heading)`, `ViewRide.held`), and not by the clock as the offering box's is
+  (`ShrineVisit.carried`, 250 ms): a long frame as the ride's pictures are cleared must not be a second
+  14 s turn. Free; no save field.
+- **The ride** (`ViewRide.RIDES.wheel`, 14 s) is the lift's sequence with no room behind the curtain: the
+  screen fades, the picture plays, the screen comes back and you are on the cell you boarded from, facing the
+  gondola. The picture is the inside of a gondola (`view-gondola`, 640x640, a wide window 512x320, a grab rail
+  across it, two seats) with the player seen from behind, and through the glass Dotonbori: the billboards and
+  the canal with its bridges and a boat at the foot, the rooftops as you climb, and at the top the sky over the
+  whole town with Tsutenkaku on the skyline. A ride with `turn` goes up, over and down again
+  (`ViewRide.height`: `(1 - cos 2πt) / 2`, 0 at both ends and 1 half-way, slow at the bottom and over the top
+  as a wheel is), and the view slides sideways as the wheel carries you across (`ViewRide.drift`: `drift` px
+  out on the way up, back through the middle at the top, out the other way coming down; `far` by a third,
+  `ViewRide.FAR_DRIFT`). The layers are `drift` px wider than the window on each side. A gondola has no
+  counter and no beams go by: those are the lift's (a ride with `top` and `panel`).
+- **The hour, the skip, the phone** are the lift's (see "Fukuoka Tower's deck"): the same tint and lights
+  layer (`view-dotonbori-far`, `-near`, `-lights`: the neon is the lights), SPACE / ENTER / ESC or a tap from
+  0.7 s, the picture sized by `ViewRide.layout` with the window inside the frame's middle `SAFE_W` columns.
+- **Art**: `tools/generate_wheel_art.py` (needs Pillow; `--preview out.png`; in `check_generators.py`) draws
+  the prop - cropped from `assets/sprites/dotonbori-wheel_0_0.png`, so it is the wheel's own gondola in the
+  wheel's own colours - and the four pictures, with the sky, water, buildings and lamps of
+  `generate_tower_deck_art.py`. Tsutenkaku is drawn in `near`, not `far`, so that its lights come on at night.
+- **Without a browser**: a step into the gondola is a bump whose `interaction` is `{ kind: 'wheel', group:
+  'ride' }`; `world.describe` and `play.js` say `rides the wheel: one turn, the view over Dotonbori, and back on
+  this cell`. On the map it is drawn `*`. The ride itself is not modelled.
+- **Build order**: `generate_wheel_art.py`, `generate_osaka.py`, `config_to_tiled.py Osaka`,
+  `make_worldmap.py`, `play.js lint Osaka`. Tests: `tools/tests/views.test.js` (the gondola's cells and the
+  cells it is bumped from, free and reachable on every surveyed date; the turn, the drift, one ride per bump;
+  the pictures) and `roads-waterways.test.js` (the wheel's solid cells: its legs and the gondola); the browser
+  regression rides it (`wheel-ride`).
+
 ### Pagodas (issue #214)
 
 **What a pagoda is on the map, and the count.** A pagoda is its base sprite on the `Collidables` layer:

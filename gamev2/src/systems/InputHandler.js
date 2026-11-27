@@ -121,6 +121,15 @@ class InputHandler {
             return;
         }
 
+        // Priority 0: and so does a ride with a view (the lift up Fukuoka Tower, a turn on Osaka's wheel)
+        if (this.scene.viewRide && this.scene.viewRide.riding) {
+            this.scene.viewRide.handleInput();
+            this.lastKeyState.esc = this.escKey.isDown;
+            this.lastKeyState.space = this.spaceKey.isDown || this.enterKey.isDown;
+            this.lastKeyState.enter = this.enterKey.isDown;
+            return;
+        }
+
         // Priority 0.5: the hidden debug menu owns input while open (sync ESC
         // so the press that closed it doesn't pop the main menu next frame)
         if (this.scene.debugManager && this.scene.debugManager.menuVisible) {

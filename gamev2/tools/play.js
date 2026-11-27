@@ -70,7 +70,7 @@ function newWorld(state, stitch = STITCH) {
 
 // one glyph for each group of src/utils/Interactions.js; a group with none of its own draws as OTHER
 const GLYPH = { shop: '$', pond: '~', clock: '?', 'drinking-game': 'D', career: 'J', flights: '^', water: '%',
-    shrine: '+', temple: '+', palace: '+', flavour: '*' };
+    shrine: '+', temple: '+', palace: '+', flavour: '*', ride: '*' };
 const OTHER = '*';
 
 // x0..y1 are cells of the room being played (city cells inside a stitched city); the rulers and
@@ -138,7 +138,7 @@ function where(world) {
 }
 
 function report(world, r, dir) {
-    if (r.transported) return `${dir}: transported ${r.transported.from} -> ${where(world)}`;
+    if (r.transported) return `${dir}: transported ${r.transported.from} -> ${where(world)}${r.transported.lift ? ` (the lift goes ${r.transported.lift})` : ''}`;
     if (!r.moved) {
         const h = world.here();
         return `${dir}: blocked at ${r.bumped[0] - h.ox},${r.bumped[1] - h.oy}: ${world.describe(r.interaction)}`;

@@ -67,7 +67,12 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         for (let dy = 0; dy < 12; dy++) for (let dx = 0; dx < 12; dx++) if (`${wx + dx},${wy + dy}` in colliders) solid.push(`${dx},${dy}`);
         const legs = [];
         for (let dy = 9; dy < 12; dy++) for (const dx of [2, 3, 8, 9]) legs.push(`${dx},${dy}`);
-        assert.deepStrictEqual(solid.sort(), legs.sort(), 'only the feet of the two legs are solid');
+        // ...and the gondola you board (#242), which stands outside the legs, under the three on the wheel's west side
+        const boarding = Object.keys(layer('Collidables')).filter((xy) => name(layer('Collidables')[xy]) === 'wheel-boarding_0_0');
+        assert.deepStrictEqual(boarding, [`${wx},${wy + 10}`], 'one gondola to board, at the foot of the west side');
+        const gondola = ['0,10', '0,11', '1,10', '1,11'];
+        assert.deepStrictEqual(solid.sort(), legs.concat(gondola).sort(), 'only the feet of the two legs and the boarding gondola are solid');
+        for (let dy = 0; dy < 12; dy++) for (let dx = 4; dx < 8; dx++) assert.ok(!solid.includes(`${dx},${dy}`), `cell ${dx},${dy} between the legs is solid`);
     });
 
     test('Osaka: the canal is a declared waterway, open water except under the bridge, and the streets have centre lines', () => {
