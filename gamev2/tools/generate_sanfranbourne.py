@@ -65,14 +65,8 @@ BOARDWALK_Y0, BOARDWALK_Y1 = 46, 48
 SHORE_Y = 49                             # the waterline; the bay is everything below
 
 
-def stand(layer, x, y, sprite, solid=()):
-    b.put(layer, x, y, f'{sprite}_0_0')
-    for dx, dy in solid:
-        b.solid(x + dx, y + dy)
-
-
-def block(w, h, y0=0):
-    return [(dx, dy) for dx in range(w) for dy in range(y0, h)]
+def place(layer, x, y, sprite, solid=()):
+    b.place(layer, x, y, f'{sprite}_0_0', solid)
 
 
 b.fill('grass-autotile')
@@ -98,33 +92,33 @@ for x in range(W):
 for x in range(AVE_X0, AVE_X1 + 1):
     b.put('Water', x, SHORE_Y, 'pond-autotile_center')
 PIER = (AVE_X0, BOARDWALK_Y1 + 1)        # 4x9: rows 49-57
-stand('Non-Collidables', *PIER, 'sfb-pier')
+place('Non-Collidables', *PIER, 'sfb-pier')
 for cx, cy in rect(PIER[0], SHORE_Y + 1, PIER[0] + 3, PIER[1] + 7):   # the deck is walked on (its last row is the edge)
     del b.L['Colliders'][f'{cx},{cy}']
 SEA_LIONS = (AVE_X0 - 3, 52)             # beside the pier: bump them from it
-stand('Collidables', *SEA_LIONS, 'sfb-sea-lions')
+place('Collidables', *SEA_LIONS, 'sfb-sea-lions')
 ROCK = (44, 54)
-stand('Collidables', *ROCK, 'sfb-rock')
+place('Collidables', *ROCK, 'sfb-rock')
 b.put('Tops', 36, 56, 'sfb-fog-b_0_0'); b.put('Tops', 6, 55, 'sfb-fog-a_0_0'); b.put('Tops', 50, 51, 'sfb-fog-a_0_0')
 
 # ---- the airport terminal, north-west: doors -> the airport hall ------------------
 TERMINAL = (5, 8)
-stand('Collidables', *TERMINAL, 'sfb-terminal', block(9, 5, 2))
+place('Collidables', *TERMINAL, 'sfb-terminal', rg.block(9, 5, 2))
 airport_doors = [(TERMINAL[0] + 4, TERMINAL[1] + 4), (TERMINAL[0] + 5, TERMINAL[1] + 4)]
 for cell in airport_doors:
     del b.L['Colliders'][f'{cell[0]},{cell[1]}']
-stand('Collidables', 2, 9, 'sfb-palm', [(1, 3)]); stand('Collidables', 15, 9, 'sfb-palm', [(1, 3)])
+place('Collidables', 2, 9, 'sfb-palm', [(1, 3)]); place('Collidables', 15, 9, 'sfb-palm', [(1, 3)])
 b.stamp('lamp-blue', 4, 13); b.stamp('lamp-blue', 15, 13)
 for x in (19, 22, 25):
     b.stamp('tree-green', x, 9)
 
 # ---- the sports ground, north-east: the oval (flat), posts, lights, fog -----------
 OVAL = (36, 4)
-stand('Non-Collidables', *OVAL, 'sfb-oval')
-stand('Collidables', OVAL[0], OVAL[1] + 2, 'sfb-goalposts', [(0, 2), (1, 2)])
-stand('Collidables', OVAL[0] + 10, OVAL[1] + 2, 'sfb-goalposts', [(0, 2), (1, 2)])
+place('Non-Collidables', *OVAL, 'sfb-oval')
+place('Collidables', OVAL[0], OVAL[1] + 2, 'sfb-goalposts', [(0, 2), (1, 2)])
+place('Collidables', OVAL[0] + 10, OVAL[1] + 2, 'sfb-goalposts', [(0, 2), (1, 2)])
 for x, y in ((34, 0), (49, 0), (34, 8), (49, 8)):
-    stand('Collidables', x, y, 'sfb-oval-lamp-post', [(0, 4)])
+    place('Collidables', x, y, 'sfb-oval-lamp-post', [(0, 4)])
 for (x, y), kind in (((37, 3), 'a'), ((43, 5), 'b'), ((39, 8), 'b'), ((51, 3), 'a'), ((30, 5), 'b')):
     b.put('Tops', x, y, f'sfb-fog-{kind}_0_0')
 b.stamp('tree-green', 52, 9); b.stamp('tree-green', 55, 6)
@@ -148,9 +142,9 @@ for x in range(AVE_X0, AVE_X1 + 1):
 b.stamp('traffic-light', AVE_X0 - 1, STREET_Y - 3)
 b.stamp('traffic-light', AVE_X1 + 1, STREET_Y + 1)
 CABLE_CAR = (10, STREET_Y)
-stand('Collidables', *CABLE_CAR, 'sfb-cable-car', block(3, 2))
+place('Collidables', *CABLE_CAR, 'sfb-cable-car', rg.block(3, 2))
 TRAM = (47, STREET_Y)
-stand('Collidables', *TRAM, 'sfb-tram', block(4, 2))
+place('Collidables', *TRAM, 'sfb-tram', rg.block(4, 2))
 for x in (7, 18, 24, 36, 44, 54):
     b.stamp('lamp-blue', x, STREET_Y + 3)
 b.stamp('bus-stop', 20, STREET_Y - 1)
@@ -158,13 +152,13 @@ b.stamp('bus-stop', 20, STREET_Y - 1)
 # ---- the hill: painted ladies on the wall of street art, the laneway below -------
 LADIES = [(6 + i * 3, 'abcdab'[i]) for i in range(6)]
 for x, kind in LADIES:
-    stand('Collidables', x, LADIES_Y, f'sfb-lady-{kind}', block(3, 5, 2))
+    place('Collidables', x, LADIES_Y, f'sfb-lady-{kind}', rg.block(3, 5, 2))
 WALL = ['mural-a', 'coffee', 'mural-b', 'mural-c', 'coffee', 'mural-a']
 for i, piece in enumerate(WALL):
-    stand('Collidables', 6 + i * 3, WALL_Y, f'sfb-{piece}', block(3, 2))
+    place('Collidables', 6 + i * 3, WALL_Y, f'sfb-{piece}', rg.block(3, 2))
 COFFEE = [(6 + i * 3, WALL_Y) for i, piece in enumerate(WALL) if piece == 'coffee']
 for x in (13, 22):
-    stand('Collidables', x, LANE_Y, 'sfb-crates', block(1, 1))
+    place('Collidables', x, LANE_Y, 'sfb-crates', rg.block(1, 1))
 for x in range(4, 28):                                    # the hedge that closes the lane's south side
     b.stamp('shrub-small', x, LANE_Y + 2)
 for y in range(LADIES_Y, WALL_Y + 2):                     # ...and the terrace's east end
@@ -174,9 +168,9 @@ b.stamp('lamp-blue', 26, LANE_Y - 1)
 
 # ---- the city: pyramid, spire, a glass tower, the konbini, on the plaza -----------
 PYRAMID = (35, 16)                                        # feet on rows 25-27
-stand('Collidables', *PYRAMID, 'sfb-pyramid', block(4, 12, 9))
+place('Collidables', *PYRAMID, 'sfb-pyramid', rg.block(4, 12, 9))
 SPIRE = (41, 17)
-stand('Collidables', *SPIRE, 'sfb-spire', block(4, 11, 9))
+place('Collidables', *SPIRE, 'sfb-spire', rg.block(4, 11, 9))
 b.stamp('highrise-glass', 46, 18)
 KONBINI = (52, 24)
 konbini_door = b.stamp('seven-eleven', *KONBINI, seal=False)[0]   # wired by generate_konbinis.py; kept below
@@ -196,7 +190,7 @@ b.stamp('bicycle-blue', 50, 28); b.stamp('scooter-red', 56, 28)
 #      laneway under the wall, and beside the 7-Eleven. ----------------------------
 LEANERS = [('a', 40, STREET_Y + 3), ('b', 16, LANE_Y), ('c', 45, STREET_Y - 1), ('d', KONBINI[0] - 1, KONBINI[1] + 3)]
 for kind, x, y in LEANERS:
-    stand('Collidables', x, y, f'sfb-lean-{kind}', block(1, 1))
+    place('Collidables', x, y, f'sfb-lean-{kind}', rg.block(1, 1))
 
 # ---- the brown river, edge to edge, and the red bridge over it --------------------
 for x in [x for x in range(W) if not AVE_X0 <= x <= AVE_X1]:
@@ -210,10 +204,10 @@ for y in range(RIVER_Y0, RIVER_Y1 + 1):
     b.put('Non-Collidables', AVE_X1 + 1, y, 'bridge-shade-e_0_0')
 TOWERS = [(AVE_X0 - 1, RIVER_Y0 - 7), (AVE_X0 - 1, RIVER_Y1 - 5)]     # feet on each bank: rows 32 and 38
 for x, y in TOWERS:
-    stand('Collidables', x, y, 'sfb-bridge-tower', [(0, 6), (5, 6)])
+    place('Collidables', x, y, 'sfb-bridge-tower', [(0, 6), (5, 6)])
 ROWERS = [(9, 35), (41, 34), (50, 36)]
 for x, y in ROWERS:
-    stand('Collidables', x, y, 'sfb-rowers')
+    place('Collidables', x, y, 'sfb-rowers')
 for x in (6, 14, 22, 36, 44, 52):
     b.stamp('lamp-blue', x, RIVER_Y0 - 2)
 for x in (4, 12, 20, 38, 46, 54):
@@ -221,10 +215,10 @@ for x in (4, 12, 20, 38, 46, 54):
 
 # ---- the south bank: the station with the clocks, townhouses, the palm garden ----
 STATION = (13, 39)
-stand('Collidables', *STATION, 'sfb-clocks-station', block(12, 7, 2))
+place('Collidables', *STATION, 'sfb-clocks-station', rg.block(12, 7, 2))
 b.stamp('house-red', 3, 40); b.stamp('house-black', 7, 40)
 for x, y in ((34, 41), (41, 40), (48, 41), (54, 40)):
-    stand('Collidables', x, y, 'sfb-palm', [(1, 3)])
+    place('Collidables', x, y, 'sfb-palm', [(1, 3)])
 b.stamp('tree-green', 38, 42); b.stamp('tree-green', 45, 42); b.stamp('tree-green', 51, 42)
 b.flowers(36, 42); b.flowers(43, 44); b.flowers(52, 44)
 for x in (3, 11, 26, 33, 40, 47, 55):

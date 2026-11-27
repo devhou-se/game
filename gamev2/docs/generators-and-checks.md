@@ -89,6 +89,82 @@ crossings, traffic lights, track) counts neither for nor against a city.
   states there), and `tools/seal_tracks.py` takes room names; a track cell with a road under it (Palace's level
   crossing) is left open.
 
+### Interior building blocks
+
+A new interior is a short script that puts shared blocks together and adds only its own art and layout
+(issue #224). Three layers, the lowest first:
+
+1. **Primitives on `roomgen.Builder`** (room coordinates; towns use them too): `solid(x, y, w, h)`, a collider
+   over a rect; `place(layer, x, y, key, solid)`, a sprite and a collider on each listed offset
+   (`rg.block(w, h, y0)` makes the offsets); `prop(key, x, y, w, h)`, a sprite on its top-left cell with a
+   `w`x`h` footprint, always given (`*rg.sprite_cells(key)` is the sprite's own size, rounded);
+   `stand(key, x, foot, w, h)`, a piece `h` rows tall of which only the `foot` row is solid, so it is walked
+   behind; `railing_row(y, taken)`, the tube railing in every gap of a row (stations, airports). Beside them
+   `rg.png_size`, `rg.register_metadata(cfg, keys)` and `rg.find_sprites(room, keys)` (every tile of a room
+   with one of those keys, in the `(y, x)` order stores and halls are numbered in). One meaning per name: a
+   generator defines no `solid`, `prop` or `stand` of its own, and the only local `place` is a town
+   generator's one line that adds `_0_0`.
+2. **The door in the host room**, in `roomgen.py` beside the kept-door rules: `rg.open_door(host_room, cell,
+   target, arrive)` takes the doorway's collider off and pins a hidden transporter onto it; `rg.pin(items,
+   item)` is the rule under it (replace the entry on that cell where it sits, delete later ones, append only
+   a new one, so a re-run moves nothing); `rg.shut_door(host_room, cell, prefix)` seals it again.
+3. **The shell, `tools/interiors.py`**: `Interior(fw, fh)` is a room of void with a `fw`x`fh` floor, and every
+   call on it is in **floor coordinates** (`(0, 0)` the floor's top-left cell, row `-1` the wall above it, row
+   `fh` the row below it). A generator calls, in this order: `floor(key_of)`; `back_wall(pieces, depth)`,
+   `side_walls(west, east, above)`, `front_wall(key, gap, thresholds)` if it has them (the two wall tops are
+   Floor tiles in place of the void, or with `layer='Over Floor'` art laid over it, as a 7-Eleven's); `prop` /
+   `stand` / `place` / `put` for its furniture (the Builder's calls, moved to the floor; `put` takes whole
+   palette keys, so a piece-name mapper stays in the generator); `doorway(fx, host, front)`, which adds the
+   exit cells and returns where you arrive from the street; and `room(name, **flags)`, which lists the exits
+   in the order `doorway` was called, draws the boundary round `walk` (`interiors.outline`) and fails if a
+   floor cell cannot be reached from the exits (a cell closed on purpose goes in `pockets=`). The room is at
+   least 20x15 and a small floor is centred in it; `ox`, `oy`, `w`, `h` place it by hand. `it.walk` (room
+   cells) is the generator's to add to: a genkan, the arcade's corridors. `back_wall(..., view=True)` puts
+   the wall inside the boundary too (`it.view`, solid cells nobody walks): a phone's camera holds a room no
+   taller than its view to the boundary, so round the floor alone it cuts a tall back wall off the top of
+   the screen (the 7-Elevens). Also there: `interiors.named(cfg, label, host, n)` for "Label · Town 2" and
+   `interiors.seed_of(text)`.
+
+The whole of a new interior but its art and its `OWNED_DOORS` row (`tools/tests/generator-blocks.test.js`
+builds exactly this block, without the save, so it cannot rot):
+
+```python
+import roomgen as rg
+from interiors import Interior
+
+cfg = rg.load_config()
+HOST, DOOR, KEY = 'Market', (7, 37), 'TeaRoomMarket1'          # an example, not a room to add
+it = Interior(10, 6)                                           # a 10x6 floor, centred in a 20x15 room
+it.floor(lambda fx, fy: 'office-warm-autotile_center')
+it.back_wall([(fx, 'office-wall-white_0_0', 1) for fx in range(10)], depth=1)
+it.prop('office-counter2_0_0', 6, 0, *rg.sprite_cells('office-counter2_0_0'))
+inside = it.doorway(4, HOST, (DOOR[0], DOOR[1] + 1), mat='office-warm-autotile_center')
+cfg['rooms'][KEY] = it.room('Tea Room', npcs=cfg['rooms'].get(KEY, {}).get('npcs', []),
+                            shopEnabled=False, tearoom={'host': HOST, 'door': list(DOOR)})
+rg.open_door(cfg['rooms'][HOST], DOOR, KEY, inside[0])
+rg.save_config(cfg)
+```
+
+What a new interior has to decide beyond that:
+
+- **Who keeps its door through a town rebuild**: a row in `roomgen.OWNED_DOORS` and a `{host, door}` marker on
+  the room (the `tearoom=` above), or `roomgen.kept_door` in the town's own generator.
+- **`shopEnabled=False`, unless it is a store.** `interior: true` alone makes every counter a konbini's
+  (`Interactions.js`, `Energy.isStore`). `room()` sets `interior` and nothing else.
+- `lanternLight` / `shopMenu` if it wants them, and a rule in `Shop.VENUES` / `Interactions.js` for anything a
+  bump should open.
+- **Who draws the mat**: a `front_wall` threshold, or `doorway(mat=<Floor key>)` (or `mat=key_of`, as
+  `floor` takes, where the cells differ). `doorway` draws nothing otherwise, and an exit cell left on the
+  void is invisible.
+- Its generator goes in `check_generators.GENERATORS`. Every file listed there is read by
+  `generator-blocks.test.js`, which fails on a hand-wired door, a PNG header read, or a local `outline`,
+  `stand` or void fill.
+
+Changing a block changes every generator on it: `check_generators.py` proves the committed rooms, not the
+rooms the next town will ask for (a konbini's plan is dealt from its door). Before changing `Interior` or a
+primitive, build rooms from made-up inputs with the old code (`build_interior` of the konbinis, discount
+stores, houses and shrines takes any door or seed), keep their digests, and compare after.
+
 ## The world map
 
 - **The world map shows the stitched city** (issue #146): after the rooms are drawn, `tools/make_worldmap.py`

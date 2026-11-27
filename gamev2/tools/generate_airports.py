@@ -75,12 +75,8 @@ def airport_interior():
     L = layout()
     b = rg.Builder(W, H)
 
-    def stand(layer, x, y, sprite, solid=()):
-        b.put(layer, x, y, f'{sprite}_0_0')
-        for dx, dy in solid:
-            b.solid(x + dx, y + dy)
-
-    block = lambda w, h: [(dx, dy) for dx in range(w) for dy in range(h)]
+    def place(layer, x, y, sprite, solid=()):
+        b.place(layer, x, y, f'{sprite}_0_0', solid)
 
     # ---- floors: carpet airside, the station's pale concourse landside
     for x in range(W):
@@ -89,24 +85,24 @@ def airport_interior():
 
     # ---- the back wall: the gate in the middle, the board beside it, windows
     taken = {}
-    stand('Collidables', L['gate'][0], 0, 'airport-gate', block(2, 2))
-    stand('Collidables', L['board'][0], 0, 'airport-board', block(2, 2))
+    place('Collidables', L['gate'][0], 0, 'airport-gate', rg.block(2, 2))
+    place('Collidables', L['board'][0], 0, 'airport-board', rg.block(2, 2))
     taken.update({L['gate'][0] + i: 1 for i in range(2)}); taken.update({L['board'][0] + i: 1 for i in range(2)})
     for x in (2, 5, 8, 11, 23, 26, 29, 32):
-        stand('Collidables', x, 0, 'airport-window', block(2, 2))
+        place('Collidables', x, 0, 'airport-window', rg.block(2, 2))
         taken.update({x: 1, x + 1: 1})
     for x in range(W):
         if x not in taken:
-            stand('Collidables', x, 0, 'airport-wall', block(1, 2))
+            place('Collidables', x, 0, 'airport-wall', rg.block(1, 2))
 
     # ---- the gate lounge: the pub on the west wall, seats facing the gate
-    stand('Collidables', *BAR, 'airport-bar', block(5, 3))
+    place('Collidables', *BAR, 'airport-bar', rg.block(5, 3))
     for x in (9, 12, 22, 25):
-        stand('Collidables', x, 5, 'airport-seats', block(3, 1))
+        place('Collidables', x, 5, 'airport-seats', rg.block(3, 1))
     for x in (10, 23):
-        stand('Collidables', x, 3, 'airport-seats', block(3, 1))
-    stand('Collidables', W - 4, 2, 'station-planter-a', [(0, 1), (1, 1)])
-    stand('Collidables', W - 3, 5, 'airport-trolley', block(1, 1))
+        place('Collidables', x, 3, 'airport-seats', rg.block(3, 1))
+    place('Collidables', W - 4, 2, 'station-planter-a', [(0, 1), (1, 1)])
+    place('Collidables', W - 3, 5, 'airport-trolley', rg.block(1, 1))
 
     # ---- the security line: arches in the middle (walk-through, like a ticket
     #      gate: on `Other`, no collider), x-ray belts either side, railing
@@ -115,43 +111,32 @@ def airport_interior():
         b.put('Other', x, SECURITY_ROW - 1, 'airport-security_0_0')
         closed[x] = 'arch'
     for x in (L['scanners'][0] - 3, L['scanners'][-1] + 1):
-        stand('Collidables', x, SECURITY_ROW - 1, 'airport-xray', block(3, 2))
+        place('Collidables', x, SECURITY_ROW - 1, 'airport-xray', rg.block(3, 2))
         closed.update({x + i: 'xray' for i in range(3)})
-    x = 0
-    while x < W:
-        if x in closed:
-            x += 1
-            continue
-        run = [x]
-        while run[-1] + 1 < W and run[-1] + 1 not in closed:
-            run.append(run[-1] + 1)
-        for i, rx in enumerate(run):
-            piece = 'end' if i == len(run) - 1 else 'post' if i % 2 == 0 else 'mid'
-            stand('Collidables', rx, SECURITY_ROW, f'station-railing-{piece}', [(0, 0)])
-        x = run[-1] + 1
+    b.railing_row(SECURITY_ROW, closed)
 
     # ---- the check-in hall
     for x in (3, 7, 11):
-        stand('Collidables', x, 10, 'airport-checkin', block(3, 2))
-    stand('Collidables', *KIOSK, 'station-kiosk', block(4, 3))
+        place('Collidables', x, 10, 'airport-checkin', rg.block(3, 2))
+    place('Collidables', *KIOSK, 'station-kiosk', rg.block(4, 3))
     last = H - 3
     for y in range(SECURITY_ROW + 1, last + 1):         # the tactile path from the arches to the way out
         b.put('Over Floor', CX, y, f"station-tactile-{'stop' if y in (SECURITY_ROW + 1, last) else 'v'}_0_0")
     b.put('Tops', CX, last, 'station-exit-sign_0_0')
     for x in (CX - 3, CX + 3):
-        stand('Collidables', x, last - 1, 'station-planter-a' if x < CX else 'station-planter-b', [(0, 1), (1, 1)])
+        place('Collidables', x, last - 1, 'station-planter-a' if x < CX else 'station-planter-b', [(0, 1), (1, 1)])
     for x in (5, W - 9):
-        stand('Collidables', x, 15, 'station-bench', [(0, 1), (1, 1)])
+        place('Collidables', x, 15, 'station-bench', [(0, 1), (1, 1)])
     for x in (10, W - 13):
-        stand('Collidables', x, 14, 'station-pillar', [(0, 1)])
+        place('Collidables', x, 14, 'station-pillar', [(0, 1)])
     for x in (1, 2, W - 2):
-        stand('Collidables', x, last, 'airport-trolley', block(1, 1))
-    stand('Collidables', W - 4, last - 2, 'station-board-map', [(0, 2), (1, 2)])
+        place('Collidables', x, last, 'airport-trolley', rg.block(1, 1))
+    place('Collidables', W - 4, last - 2, 'station-board-map', [(0, 2), (1, 2)])
 
     # ---- the front wall, the way out in the middle
     for x in range(W):
         if x not in (CX, CX + 1):
-            stand('Collidables', x, H - 2, 'station-wall-front', [(0, 0), (0, 1)])
+            place('Collidables', x, H - 2, 'station-wall-front', [(0, 0), (0, 1)])
     b.put('Over Floor', CX, H - 2, 'station-stairs_0_0')
     return b, L
 

@@ -24,7 +24,6 @@ Every seam cell carries a hidden transporter to the cell three in from the
 neighbour's edge, which is what `?stitch=0` (and `play.js --stitch=0`) plays;
 stitched, the transporters are dropped and you just walk.
 """
-import struct
 import roomgen as rg
 from roomgen import rect
 
@@ -62,8 +61,7 @@ class Kit:
         self.b = b
 
     def solid_rect(self, x0, y0, x1, y1):
-        for x, y in rect(x0, y0, x1, y1):
-            self.b.solid(x, y)
+        self.b.solid(x0, y0, x1 - x0 + 1, y1 - y0 + 1)
 
     def building(self, name, x, y, w, roof=2):
         """A street building, solid over its roof rows too: nobody walks in behind it."""
@@ -138,10 +136,8 @@ class Kit:
             for xy, idx in b.L[name].items():
                 key = rg._pal[idx]
                 if key not in sizes:
-                    with open(f'assets/sprites/{key}.png', 'rb') as f:
-                        f.read(16)
-                        w, h = struct.unpack('>II', f.read(8))
-                    sizes[key] = (max(1, w // 64), max(1, h // 64))
+                    w, h = rg.png_size(key)
+                    sizes[key] = (max(1, w // 64), max(1, h // 64))     # rounded down: not sprite_cells
                 x, y = map(int, xy.split(','))
                 w, h = sizes[key]
                 covered.update((x + i, y + j) for i in range(w) for j in range(-1, h))

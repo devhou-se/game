@@ -80,11 +80,12 @@ Then:   python3 tools/config_to_tiled.py <each House / Lobby room + the towns>
         node tools/play.js lint <each House / Lobby room + the towns>
 (.agent-queue/items/houses_apply.sh <Town> ... and lobbies_apply.sh <Town> ... do all of it.)
 """
-import hashlib
 import json
 import sys
 
+import interiors
 import roomgen as rg
+from interiors import Interior
 
 SHOP_SIGNS = ('ramen-banner_0_0',)      # a house with one of these at its front is a shop
 ROOM_W, ROOM_H = 20, 15                 # engine / camera minimum; the home floats inside
@@ -209,7 +210,7 @@ KINDS = {
 
 
 def seed_of(host, door):
-    return int(hashlib.md5(f'{host}:{door[0]},{door[1]}'.encode()).hexdigest()[:8], 16)
+    return interiors.seed_of(f'{host}:{door[0]},{door[1]}')
 
 
 def parse(layout, mirror):
@@ -247,172 +248,109 @@ def build_interior(name, host, front, layout, seed):
     mirror, tatami, plaster = bool(seed & 1), TATAMI[(seed >> 1) & 1], PLASTER[(seed >> 2) & 1]
     cloth, shoes = CLOTH[(seed >> 3) & 1], (seed >> 4) & 1
     walls, items, cushions, boards, g = parse(layout, mirror)
-    b = rg.Builder(ROOM_W, ROOM_H)
-    b.fill('office-void-autotile')
-
-    def solid(key, x, y, w=1, h=1, layer='Collidables'):
-        b.put(layer, x, y, key)
-        for dx in range(w):
-            for dy in range(h):
-                b.solid(x + dx, y + dy)
+    it = Interior(FW, FH, ox=FX, oy=FY, w=ROOM_W, h=ROOM_H)
 
     # the floor: tatami laid as two-cell mats, each row half a mat along from the last; boards
     # where the layout says; the step you come up over, above the genkan
-    for c in range(FW):
-        for r in range(FH):
-            if (c, r) in boards:
-                key = 'home-wood-floor_0_0'
-            else:
-                key = f"{tatami}_{'w' if (c + r) % 2 == 0 else 'e'}"
-            b.put('Floor', FX + c, FY + r, key)
+    it.floor(lambda c, r: 'home-wood-floor_0_0' if (c, r) in boards else f"{tatami}_{'w' if (c + r) % 2 == 0 else 'e'}")
     for c in (g - 1, g, g + 1):
-        b.put('Floor', FX + c, FY + FH - 1, 'home-agari_0_0')
+        it.put('Floor', c, FH - 1, 'home-agari_0_0')
 
-    # the back wall, two rows of it, and what stands against it
-    for ch, c, w in walls:
-        key = ('home-tokonoma_0_0' if ch == 'A' else f'home-wall-window-{plaster}_0_0' if ch == 'n'
-               else WALLS.get(ch, f'home-wall-{plaster}_0_0'))
-        solid(key, FX + c, FY - 2, w, 2)
+    # the back wall, two rows of it, and what stands against it (over the wall's lower half)
+    it.back_wall([(c, 'home-tokonoma_0_0' if ch == 'A' else f'home-wall-window-{plaster}_0_0' if ch == 'n'
+                   else WALLS.get(ch, f'home-wall-{plaster}_0_0'), w) for ch, c, w in walls], 2)
     for ch, c, r, w, h in items:
         if ch in AT_WALL:
-            b.put('Collidables', FX + c, FY - 1, AT_WALL[ch][0])
-            for dx in range(w):
-                b.solid(FX + c + dx, FY)
+            it.stand(AT_WALL[ch][0], c, 0, w)
         else:
             key = FURNITURE[ch][0]
-            solid(cloth.get(key, key), FX + c, FY + r, w, h)
+            it.prop(cloth.get(key, key), c, r, w, h)
     for i, (c, r) in enumerate(cushions):
-        b.put('Over Floor', FX + c, FY + r, cloth['cushions'][0 if i % 3 else 1 + (i // 3) % 2])
+        it.put('Over Floor', c, r, cloth['cushions'][0 if i % 3 else 1 + (i // 3) % 2])
 
     # the genkan: three cells of stone a step down from the floor - shoes left on one side,
     # the shoe cupboard on the other, the way in between them - and the mat you leave by
-    gy, my = FY + FH, FY + FH + 1
     for c in (g - 1, g, g + 1):
-        b.put('Floor', FX + c, gy, 'home-genkan_0_0')
-    b.put('Floor', FX + g, my, 'home-genkan_0_0')
-    b.put('Over Floor', FX + g, my, 'home-doormat_0_0')
+        it.put('Floor', c, FH, 'home-genkan_0_0')
+        it.walk.add(it.cell(c, FH))
     side = -1 if mirror else 1
-    solid(f"home-shoes-{'ab'[shoes]}_0_0", FX + g - side, gy)
-    solid('home-getabako_0_0', FX + g + side, gy)
+    it.prop(f"home-shoes-{'ab'[shoes]}_0_0", g - side, FH)
+    it.prop('home-getabako_0_0', g + side, FH)
+    # you arrive in the genkan, among the shoes; the mat is the cell below
+    (arrive,) = it.doorway(g, host, front, n=1, fy=FH + 1, mat='home-genkan_0_0')
+    it.put('Over Floor', g, FH + 1, 'home-doormat_0_0')
 
-    room = b.room(name, transporters=[rg.transporter(FX + g, my, host, front[0], front[1], hidden=True)])
     # movement is confined to the lit floor, the genkan and the mat: the void needs no colliders
-    x0, x1, y1 = FX, FX + FW, FY + FH
-    room['boundary'] = [[x0, FY], [x1, FY], [x1, y1], [FX + g + 2, y1], [FX + g + 2, gy + 1],
-                        [FX + g + 1, gy + 1], [FX + g + 1, my + 1], [FX + g, my + 1], [FX + g, gy + 1],
-                        [FX + g - 1, gy + 1], [FX + g - 1, y1], [x0, y1]]
-    room['interior'] = True          # never graded by day / night, never offered to the blog pipeline
-    room['shopEnabled'] = False      # a home: nothing in it sells
-    arrive = (FX + g, gy)            # in the genkan, among the shoes; the mat is the cell below
-    check_interior(name, room, arrive)
+    room = it.room(name, shopEnabled=False)          # a home: nothing in it sells
+    check_interior(name, it)
     return room, arrive
 
 
 def build_lobby(name, host, front):
     """(room, arrival cell) for a tower's lobby: the one design, LOBBY."""
-    b = rg.Builder(ROOM_W, ROOM_H)
-    b.fill('office-void-autotile')
-
-    def solid(key, x, y, w=1, h=1):
-        b.put('Collidables', x, y, key)
-        for dx in range(w):
-            for dy in range(h):
-                b.solid(x + dx, y + dy)
-
-    ex, ey = LX + LOBBY['door'], LY + LH             # the entrance: one cell below the floor, the mat on it
-    for c in range(LW):
-        for r in range(LH):
-            b.put('Floor', LX + c, LY + r, f"lobby-floor_{'ab'[(c + r) % 2]}")
-    b.put('Floor', ex, ey, 'lobby-floor_a')
-    b.put('Over Floor', ex, ey, 'lobby-mat_0_0')
+    it = Interior(LW, LH, ox=LX, oy=LY, w=ROOM_W, h=ROOM_H)
+    it.floor(lambda c, r: f"lobby-floor_{'ab'[(c + r) % 2]}")
     assert len(LOBBY['wall']) == LW and len(LOBBY['floor']) == LH, 'the lobby does not fit its floor'
-    for c, ch in enumerate(LOBBY['wall']):           # the back wall, two rows of it
-        if ch in LOBBY_WALL:
-            key, w = LOBBY_WALL[ch]
-            solid(key, LX + c, LY - 2, w, 2)
+    # the back wall, two rows of it
+    it.back_wall([(c, *LOBBY_WALL[ch]) for c, ch in enumerate(LOBBY['wall']) if ch in LOBBY_WALL], 2)
     for r, row in enumerate(LOBBY['floor']):
         assert len(row) == LW, row
         for c, ch in enumerate(row):
             if ch in LOBBY_FURNITURE:
                 key, w = LOBBY_FURNITURE[ch]
-                solid(key, LX + c, LY + r, w)
+                it.prop(key, c, r, w)
 
-    room = b.room(name, transporters=[rg.transporter(ex, ey, host, front[0], front[1], hidden=True)])
-    x1, y1 = LX + LW, LY + LH                        # movement is confined to the lit floor and the mat
-    room['boundary'] = [[LX, LY], [x1, LY], [x1, y1], [ex + 1, y1], [ex + 1, ey + 1], [ex, ey + 1], [ex, y1], [LX, y1]]
-    room['interior'] = True          # never graded by day / night, never offered to the blog pipeline
-    room['shopEnabled'] = False      # nothing in it sells
-    arrive = (ex, ey - 1)            # just inside the doors; the mat is the cell below
-    check_interior(name, room, arrive, floor=(LX, LY, LW, LH), flavour=LOBBY_FLAVOUR, wide=('lobby-lift',))
+    # the entrance: one cell below the floor, the mat on it; you arrive just inside the doors
+    (arrive,) = it.doorway(LOBBY['door'], host, front, n=1, mat='lobby-floor_a')
+    it.put('Over Floor', LOBBY['door'], LH, 'lobby-mat_0_0')
+    room = it.room(name, shopEnabled=False)          # nothing in it sells
+    check_interior(name, it, flavour=LOBBY_FLAVOUR, wide=('lobby-lift',))
     return room, arrive
 
 
 def build_shop(name, host, front, family):
     """(room, arrival cell) for the shop floor behind a shopfront of `family`: the one layout, SHOP."""
     _, menu, shelf = SHOP_TYPES[family]
-    b = rg.Builder(ROOM_W, ROOM_H)
-    b.fill('office-void-autotile')
-
-    def solid(key, x, y, w=1):
-        b.put('Collidables', x, y, key)
-        for dx in range(w):
-            b.solid(x + dx, y)
-
-    ex, ey = SX + SHOP['door'], SY + SH              # the way out: one cell below the floor, the mat on it
-    for c in range(SW):
-        for r in range(SH):
-            b.put('Floor', SX + c, SY + r, 'office-warm-autotile_center')
-    b.put('Floor', ex, ey, 'office-warm-autotile_center')
-    b.put('Over Floor', ex, ey, 'lobby-mat_0_0')
+    it = Interior(SW, SH, ox=SX, oy=SY, w=ROOM_W, h=ROOM_H)
+    it.floor(lambda c, r: 'office-warm-autotile_center')
     assert len(SHOP['wall']) == SW and len(SHOP['floor']) == SH, 'the shop does not fit its floor'
     posters = ['office-poster-menu_0_0', 'office-poster-photo_0_0']
-    for c, ch in enumerate(SHOP['wall']):            # the back wall, one row of it, as a konbini's
-        solid('office-wall-white_0_0', SX + c, SY - 1)
+    it.back_wall([(c, 'office-wall-white_0_0', 1) for c in range(SW)], 1)      # one row of it, as a konbini's
+    for c, ch in enumerate(SHOP['wall']):
         if ch == 'p':
-            b.put('Other', SX + c, SY - 1, posters.pop(0))
+            it.put('Other', c, -1, posters.pop(0))
     for r, row in enumerate(SHOP['floor']):
         assert len(row) == SW, row
         for c, ch in enumerate(row):
             if ch == 'S':
-                solid(shelf, SX + c, SY + r)
+                it.prop(shelf, c, r)
             elif ch == 'P':
-                solid('office-plant-a_0_0', SX + c, SY + r)
+                it.prop('office-plant-a_0_0', c, r)
             elif ch == 'C':
-                solid('office-counter2_0_0', SX + c, SY + r, 2)
-                b.put('Tops', SX + c + 1, SY + r, 'office-register_0_0')
+                it.prop('office-counter2_0_0', c, r, 2)
+                it.put('Tops', c + 1, r, 'office-register_0_0')
 
-    room = b.room(name, transporters=[rg.transporter(ex, ey, host, front[0], front[1], hidden=True)])
-    x1, y1 = SX + SW, SY + SH                        # movement is confined to the lit floor and the mat
-    room['boundary'] = [[SX, SY], [x1, SY], [x1, y1], [ex + 1, y1], [ex + 1, ey + 1], [ex, ey + 1], [ex, y1], [SX, y1]]
-    room['interior'] = True          # never graded by day / night, never offered to the blog pipeline
-    room['shopEnabled'] = False      # not a store: no stamp, and the shelves are only to look at...
-    room['shopMenu'] = menu          # ...but the counter sells this type's short list (Shop.VENUES)
-    arrive = (ex, ey - 1)
-    check_interior(name, room, arrive, floor=(SX, SY, SW, SH), flavour=SHOP_FLAVOUR, wide=())
+    # the way out: one cell below the floor, the mat on it
+    (arrive,) = it.doorway(SHOP['door'], host, front, n=1, mat='office-warm-autotile_center')
+    it.put('Over Floor', SHOP['door'], SH, 'lobby-mat_0_0')
+    room = it.room(name,
+                   shopEnabled=False,                # not a store: no stamp, and the shelves are only to look at...
+                   shopMenu=menu)                    # ...but the counter sells this type's short list (Shop.VENUES)
+    check_interior(name, it, flavour=SHOP_FLAVOUR, wide=())
     return room, arrive
 
 
-def check_interior(name, room, arrive, floor=(FX, FY, FW, FH), flavour=FLAVOUR, wide=('home-kotatsu', 'home-irori')):
-    """Every free cell of the home (or lobby) can be walked to from the way
-    in, and every flavour object can be bumped from the cell in front of it."""
-    FLAVOUR, (FX, FY, FW, FH) = flavour, floor
-    solid = {tuple(map(int, c.split(','))) for c in room['layers'][-1]['tiles']}
-    free = ({(FX + c, FY + r) for c in range(FW) for r in range(FH)} | {arrive, (arrive[0], arrive[1] + 1)}) - solid
-    seen, todo = {arrive}, [arrive]
-    while todo:
-        x, y = todo.pop()
-        for cell in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
-            if cell in free and cell not in seen:
-                seen.add(cell)
-                todo.append(cell)
-    assert seen == free, f'{name}: floor nobody can reach: {sorted(free - seen)}'
+def check_interior(name, it, flavour=FLAVOUR, wide=('home-kotatsu', 'home-irori')):
+    """Every flavour object of a finished home (lobby, shop) can be bumped from the
+    cell in front of it. (That every free cell can be walked to from the way in is
+    Interior.room's own check; `it.reached` is what it found.)"""
     bumps = 0
-    for xy, idx in room['layers'][4]['tiles'].items():
+    for xy, idx in it.b.L['Collidables'].items():
         key = rg._pal[idx]
-        if key.startswith(FLAVOUR):
+        if key.startswith(flavour):
             x, y = map(int, xy.split(','))
-            w, h = (2, 2) if key.startswith(wide) else (1, 2) if y < FY else (1, 1)
-            assert all((x + dx, y + h) in seen for dx in range(w)), f'{name}: {key} at {xy} has no cell in front'
+            w, h = (2, 2) if key.startswith(wide) else (1, 2) if y < it.oy else (1, 1)
+            assert all((x + dx, y + h) in it.reached for dx in range(w)), f'{name}: {key} at {xy} has no cell in front'
             bumps += 1
     assert bumps, f'{name}: nothing to bump'
 
@@ -490,7 +428,6 @@ def find_houses(cfg, host, kind='house'):
             else:
                 h['skipped'] = why[door]
         houses.append(h)
-    where = room.get('name', host)
     labels, ordinal = K.get('labels'), {}
     for h in houses:
         if 'key' not in h:
@@ -499,9 +436,9 @@ def find_houses(cfg, host, kind='house'):
             label = labels[h['family']]
             ordinal[label] = ordinal.get(label, 0) + 1
             several = sum(1 for o in houses if 'key' in o and labels[o['family']] == label) > 1
-            h['name'] = f"{label} · {where}" + (f' {ordinal[label]}' if several else '')
-        else:
-            h['name'] = f"{K['label']} · {where}" + (f" {h['key'][len(K['prefix'] + host):]}" if n > 1 else '')
+            h['name'] = interiors.named(cfg, label, host, ordinal[label] if several else None)
+        else:                       # by its kind, with the number in its key where the town has several
+            h['name'] = interiors.named(cfg, K['label'], host, h['key'][len(K['prefix'] + host):] if n > 1 else None)
     return houses
 
 
@@ -520,14 +457,6 @@ def pick_layouts(host, houses):
         h['layout'] = choice
         used[choice] += 1
         placed.append(h)
-
-
-def seal(host, cell, prefix=rg.HOUSE_PREFIX):
-    for layer in host['layers']:
-        if layer['name'] == 'Colliders':
-            layer['tiles'][f'{cell[0]},{cell[1]}'] = rg.pidx('gk_blank')
-    host['transporters'] = [t for t in host.get('transporters', [])
-                            if not ((t['gridX'], t['gridY']) == tuple(cell) and t['targetRoom'].startswith(prefix))]
 
 
 def apply(cfg, host, kind='house'):
@@ -549,12 +478,12 @@ def apply(cfg, host, kind='house'):
         if key not in {h['key'] for h in houses if 'skipped' not in h}:
             was = cfg['rooms'][key][marker]
             for cell in was.get('doors') or [was['door']]:
-                seal(room, cell, prefix)
+                rg.shut_door(room, cell, prefix)
             del cfg['rooms'][key]
     for h in houses:
         if 'skipped' in h:
             for cell in h['all_doors']:
-                seal(room, cell, prefix)
+                rg.shut_door(room, cell, prefix)
             lines.append(f"skipped  {h['key']} ({h['family']}, door {h['door']}) - {h['skipped']}")
             continue
         if kind == 'house':
@@ -572,22 +501,11 @@ def apply(cfg, host, kind='house'):
         cfg['rooms'][h['key']] = interior
         for cell in h['all_doors']:                          # a door of a pair that may not open stays shut
             if cell not in h['doors']:
-                seal(room, cell, prefix)
+                rg.shut_door(room, cell, prefix)
         for cell in h['doors']:
-            for layer in room['layers']:                     # unseal the doorway...
-                if layer['name'] == 'Colliders':
-                    layer['tiles'].pop(f'{cell[0]},{cell[1]}', None)
-            # ...and wire it in, replacing the door's transporter where it already sits (append
-            # only a new one): a re-run on an unchanged world leaves config.json byte-identical
-            door = rg.transporter(cell[0], cell[1], h['key'], arrive[0], arrive[1], hidden=True)
-            ts = room.setdefault('transporters', [])
-            at = [i for i, t in enumerate(ts) if (t['gridX'], t['gridY']) == cell]
-            if at:
-                ts[at[0]] = door
-                for i in reversed(at[1:]):
-                    del ts[i]
-            else:
-                ts.append(door)
+            # unseal the doorway and wire it in, replacing the door's transporter where it already sits
+            # (append only a new one): a re-run on an unchanged world leaves config.json byte-identical
+            rg.open_door(room, cell, h['key'], arrive)
         built.append(h['key'])
         lines.append(f"built    {h['key']} \"{h['name']}\" - {h['family']}, door {h['door']}, {said}")
     return built, lines

@@ -19,7 +19,7 @@ Typical script:
 Then: config_to_tiled.py MyRoom (and any room whose transporters you touched —
 the game reads the .tmj!), then play.js lint MyRoom.
 """
-import json, os, sys
+import json, os, struct, sys
 import chikagai as _chikagai
 import prefab as _prefab
 
@@ -205,6 +205,59 @@ def rect(x0, y0, x1, y1):
     return [(x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)]
 
 
+def block(w, h, y0=0):
+    """The (dx, dy) offsets of a `w` x `h` footprint, for Builder.place(solid=...);
+    `y0` leaves the rows above it open (a sprite walked behind)."""
+    return [(dx, dy) for dx in range(w) for dy in range(y0, h)]
+
+
+def png_size(key):
+    """(width, height) of assets/sprites/<key>.png in pixels, from its header."""
+    with open(f'assets/sprites/{key}.png', 'rb') as f:
+        f.read(16)
+        return struct.unpack('>II', f.read(8))
+
+
+_cells = {}
+
+
+def sprite_cells(key):
+    """(w, h) of a sprite in cells, rounded: b.prop(key, x, y, *rg.sprite_cells(key))
+    makes the whole sprite solid."""
+    if key not in _cells:
+        w, h = png_size(key)
+        _cells[key] = (max(1, round(w / 64)), max(1, round(h / 64)))
+    return _cells[key]
+
+
+def register_metadata(cfg, keys):
+    """Every tile key needs a spriteMetadata entry or its texture never loads: add one
+    for each of `keys` that has none. Anchor = half a cell over the sprite's own size
+    (top-left-cell alignment)."""
+    sm = cfg['spriteMetadata']
+    for k in keys:
+        if k in sm:
+            continue
+        w, h = png_size(k)
+        sm[k] = {'anchorX': round(32 / w, 4), 'anchorY': round(32 / h, 4), 'frameCount': 1}
+
+
+def find_sprites(room, keys, layers=None):
+    """[(x, y, key)] for every tile of `room` whose palette key is in `keys` (on the
+    layers named in `layers`; all of them by default), in (y, x, key) order - the order
+    the interior generators number a town's stores and halls in."""
+    keys = (keys,) if isinstance(keys, str) else keys
+    found = []
+    for layer in room['layers']:
+        if layers is not None and layer['name'] not in layers:
+            continue
+        for xy, idx in layer.get('tiles', {}).items():
+            if _pal[idx] in keys:
+                x, y = map(int, xy.split(','))
+                found.append((x, y, _pal[idx]))
+    return sorted(found, key=lambda f: (f[1], f[0], f[2]))
+
+
 PICKET_LEFT, PICKET_MID, PICKET_RIGHT = ('fence-garden-outside_2_5',
                                          'fence-garden-outside_3_5',
                                          'fence-garden-outside_4_5')
@@ -304,8 +357,46 @@ class Builder:
                              f'(move one of them, or pass replace=True)')
         self.L[layer][cell] = new
 
-    def solid(self, x, y):
-        self.put('Colliders', x, y, 'gk_blank')
+    def solid(self, x, y, w=1, h=1):
+        """A collider on (x, y), or on every cell of the `w` x `h` rect whose top-left it is."""
+        for dx in range(w):
+            for dy in range(h):
+                self.put('Colliders', x + dx, y + dy, 'gk_blank')
+
+    def place(self, layer, x, y, key, solid=()):
+        """A sprite on (x, y) of `layer`, and a collider on each (dx, dy) of `solid`
+        from it: for a footprint that is not the sprite's own box (block() makes the offsets)."""
+        self.put(layer, x, y, key)
+        for dx, dy in solid:
+            self.solid(x + dx, y + dy)
+
+    def prop(self, key, x, y, w=1, h=1, layer='Collidables'):
+        """A sprite on its top-left cell (x, y), its footprint `w` x `h` solid. The footprint is
+        always given: sprite_cells(key) is the sprite's own size, and art may be wider than what blocks."""
+        self.put(layer, x, y, key)
+        self.solid(x, y, w, h)
+
+    def stand(self, key, x, foot, w=1, h=2, layer='Collidables'):
+        """A piece `h` rows tall that is walked behind (a pillar, a rack, a lamp): drawn from
+        row `foot - h + 1`, only its `foot` row solid, over `w` cells."""
+        self.put(layer, x, foot - h + 1, key)
+        self.solid(x, foot, w, 1)
+
+    def railing_row(self, y, taken, fam='station-railing'):
+        """Tube railing in every gap of row `y`: each run of columns not in `taken`
+        gets post / mid pieces and an end, every one solid on its own cell."""
+        x = 0
+        while x < self.W:
+            if x in taken:
+                x += 1
+                continue
+            run = [x]
+            while run[-1] + 1 < self.W and run[-1] + 1 not in taken:
+                run.append(run[-1] + 1)
+            for i, rx in enumerate(run):
+                piece = 'end' if i == len(run) - 1 else 'post' if i % 2 == 0 else 'mid'
+                self.place('Collidables', rx, y, f'{fam}-{piece}_0_0', [(0, 0)])
+            x = run[-1] + 1
 
     def stamp(self, name, x, y, seal=True):
         """Place a prefab (tiled/prefabs/<name>.tmj) with its top-left at (x,y).
@@ -431,3 +522,42 @@ def make_npc(name, sprite_base, x, y, dialogue, states=None):
 def transporter(x, y, target_room, tx, ty, hidden=False):
     return {'gridX': x, 'gridY': y, 'targetRoom': target_room,
             'targetX': tx, 'targetY': ty, 'hidden': hidden}
+
+
+# ---- the door in the host room that leads into an interior ---------------------------
+def pin(items, item):
+    """Put `item` (a transporter, a signage spot: anything with gridX / gridY) into
+    `items` on its cell: it replaces the entry already on that cell where that entry
+    sits, any later entry on the cell is deleted, and it is appended only when the cell
+    had none. So a re-run on an unchanged world leaves the list, and config.json,
+    byte-identical (issue #107). Returns `item`."""
+    at = [i for i, t in enumerate(items) if (t['gridX'], t['gridY']) == (item['gridX'], item['gridY'])]
+    if at:
+        items[at[0]] = item
+        for i in reversed(at[1:]):
+            del items[i]
+    else:
+        items.append(item)
+    return item
+
+
+def open_door(host_room, cell, target, arrive):
+    """Open the door on `cell` of `host_room` into the room `target`: the doorway's
+    collider comes off and a hidden transporter to `arrive` is pinned onto it (pin).
+    Nothing else in the host is touched. Returns the transporter."""
+    for layer in host_room['layers']:
+        if layer['name'] == 'Colliders':
+            layer['tiles'].pop(f'{cell[0]},{cell[1]}', None)
+    return pin(host_room.setdefault('transporters', []),
+               transporter(cell[0], cell[1], target, arrive[0], arrive[1], hidden=True))
+
+
+def shut_door(host_room, cell, prefix):
+    """Seal the door on `cell` of `host_room` again: a collider on it, and its
+    transporter dropped if it leads into a room named `prefix`... (another kind's
+    door on the same cell is left alone)."""
+    for layer in host_room['layers']:
+        if layer['name'] == 'Colliders':
+            layer['tiles'][f'{cell[0]},{cell[1]}'] = pidx('gk_blank')
+    host_room['transporters'] = [t for t in host_room.get('transporters', [])
+                                 if not ((t['gridX'], t['gridY']) == tuple(cell) and t['targetRoom'].startswith(prefix))]

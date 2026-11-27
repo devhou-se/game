@@ -65,8 +65,8 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   it that the door leads to (the till, against the front wall, needs any reachable side), and with
   `shop-sealed-floor` when a store has bare floor the door does not lead to (issue #182: a corner
   water dispenser once stood a row below the back wall and boxed in the cell above it; nothing in a
-  7-Eleven stands off the wall like that now, and `generate_konbinis.py` `check_store()` refuses a plan
-  that leaves floor the door does not reach).
+  7-Eleven stands off the wall like that now, and `generate_konbinis.py` refuses a plan that leaves
+  floor the door does not reach: `Interior.room()` in `tools/interiors.py`, for every interior on it).
   `play.js check` reports every room's lint errors too (`WorldModel.lintProblems`, issue #178), so a
   store cut off from its door shows up there as `KonbiniMarket1: lint shop-no-front: ...`.
   `check` exits 1 when it lists any problem, like `lint` (issue #188), so a script or CI step can gate on it.

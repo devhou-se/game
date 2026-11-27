@@ -100,10 +100,8 @@ def station_interior(key, st):
     large = L['size'] == 'large'
     b = rg.Builder(w, h)
 
-    def stand(layer, x, y, sprite, solid=()):
-        b.put(layer, x, y, f'{sprite}_0_0')
-        for dx, dy in solid:
-            b.solid(x + dx, y + dy)
+    def place(layer, x, y, sprite, solid=()):
+        b.place(layer, x, y, f'{sprite}_0_0', solid)
 
     # ---- floors: ballast under the track, slate platform, pale concourse
     for x in range(w):
@@ -117,7 +115,7 @@ def station_interior(key, st):
     # parks over it), except the door cells, which you walk through to board
     line = 'green' if st['train'] == 'train-green' else 'orange'
     for x in range(w):
-        stand('Collidables', x, 0, f'station-wall-{line}', [(0, 0), (0, 1)])
+        place('Collidables', x, 0, f'station-wall-{line}', [(0, 0), (0, 1)])
         b.put('Over Floor', x, TRACK_ROWS[0], 'station-track-n_0_0')
         b.put('Over Floor', x, TRACK_ROWS[1], 'station-track-s_0_0')
         b.solid(x, TRACK_ROWS[0])
@@ -136,14 +134,14 @@ def station_interior(key, st):
     b.stamp('vending-red', w - 3, 6)
     lamps = [5, w - 6] + ([10, w - 11] if large else [])
     for x in lamps:
-        stand('Collidables', x, 5, 'station-lamp-post', [(0, 1)])
+        place('Collidables', x, 5, 'station-lamp-post', [(0, 1)])
     for x in ([6, w - 9] if not large else [7, w - 9]):         # benches facing the train
-        stand('Collidables', x, GATE_ROW - 2, 'station-bench-back', [(0, 1), (1, 1)])
-    stand('Collidables', w - 5, 6, 'station-board-times', [(0, 2), (1, 2)])
+        place('Collidables', x, GATE_ROW - 2, 'station-bench-back', [(0, 1), (1, 1)])
+    place('Collidables', w - 5, 6, 'station-board-times', [(0, 2), (1, 2)])
     b.put('Tops', cx, 6, 'station-platform-sign_0_0')
     b.put('Tops', cx + 2, 6, 'station-clock_0_0')
     if st.get('parent'):                                        # a village stop has a station cat
-        stand('Collidables', w - 7, GATE_ROW - 1, 'station-cat', [(0, 0), (1, 0)])
+        place('Collidables', w - 7, GATE_ROW - 1, 'station-cat', [(0, 0), (1, 0)])
 
     # ---- the gate line (row 9): gates in the middle, machines, kiosk, railing
     taken = {}
@@ -151,32 +149,18 @@ def station_interior(key, st):
         b.put('Other', x, GATE_ROW - 1, 'station-gate_0_0')     # walk-through: no collider
         taken[x] = 'gate'
     for x, side in ((L['gates'][0] - 1, 'w'), (L['gates'][-1] + 1, 'e')):
-        stand('Collidables', x, GATE_ROW - 1, f'station-gate-end-{side}', [(0, 1)])
+        place('Collidables', x, GATE_ROW - 1, f'station-gate-end-{side}', [(0, 1)])
         taken[x] = 'end'
     for x in ([3, 7] if large else [3]):                        # ticket machines, fare map above
-        stand('Collidables', x, GATE_ROW, 'station-ticket-machines',
-              [(dx, dy) for dx in range(3) for dy in range(2)])
+        place('Collidables', x, GATE_ROW, 'station-ticket-machines', rg.block(3, 2))
         taken.update({x + dx: 'machines' for dx in range(3)})
     kiosk_x = w - 9 if large else w - 7                         # the 7-Eleven kiosk (4x3)
-    stand('Collidables', kiosk_x, GATE_ROW, 'station-kiosk',
-          [(dx, dy) for dx in range(4) for dy in range(3)])
+    place('Collidables', kiosk_x, GATE_ROW, 'station-kiosk', rg.block(4, 3))
     taken.update({kiosk_x + dx: 'kiosk' for dx in range(4)})
     if large:
-        stand('Collidables', w - 4, GATE_ROW, 'station-lockers',
-              [(dx, dy) for dx in range(2) for dy in range(2)])
+        place('Collidables', w - 4, GATE_ROW, 'station-lockers', rg.block(2, 2))
         taken.update({w - 4: 'lockers', w - 3: 'lockers'})
-    x = 0
-    while x < w:                                                # railing in every gap
-        if x in taken:
-            x += 1
-            continue
-        run = [x]
-        while run[-1] + 1 < w and run[-1] + 1 not in taken:
-            run.append(run[-1] + 1)
-        for i, rx in enumerate(run):
-            piece = 'end' if i == len(run) - 1 else 'post' if i % 2 == 0 else 'mid'
-            stand('Collidables', rx, GATE_ROW, f'station-railing-{piece}', [(0, 0)])
-        x = run[-1] + 1
+    b.railing_row(GATE_ROW, taken)                              # railing in every gap
     b.put('Tops', L['gates'][0] - (4 - len(L['gates'])) // 2, GATE_ROW - 1, 'station-departures_0_0')
 
     # ---- the concourse: tactile path from the gates to the exit
@@ -189,23 +173,23 @@ def station_interior(key, st):
             b.put('Over Floor', x, branch, f"station-tactile-{'stop' if x in (4, kiosk_x - 1) else 'h'}_0_0")
     b.put('Tops', cx, last, 'station-exit-sign_0_0')
     for x in (cx - 2, cx + 2):                                  # planters either side of the exit
-        stand('Collidables', x, last - 1, 'station-planter-a' if x < cx else 'station-planter-b',
+        place('Collidables', x, last - 1, 'station-planter-a' if x < cx else 'station-planter-b',
               [(0, 1), (1, 1)])
-    stand('Collidables', 1, last - 2, 'station-postbox', [(0, 2), (1, 2)])
-    stand('Collidables', 5, last - 1, 'station-bench', [(0, 1), (1, 1)])
+    place('Collidables', 1, last - 2, 'station-postbox', [(0, 2), (1, 2)])
+    place('Collidables', 5, last - 1, 'station-bench', [(0, 1), (1, 1)])
     if large:
-        stand('Collidables', w - 7, last - 1, 'station-bench', [(0, 1), (1, 1)])
-        stand('Collidables', w - 3, last - 2, 'station-board-map', [(0, 2), (1, 2)])
+        place('Collidables', w - 7, last - 1, 'station-bench', [(0, 1), (1, 1)])
+        place('Collidables', w - 3, last - 2, 'station-board-map', [(0, 2), (1, 2)])
         for x in (6, 12, w - 13, w - 7):
-            stand('Collidables', x, 12, 'station-pillar', [(0, 1)])
+            place('Collidables', x, 12, 'station-pillar', [(0, 1)])
         for x in (9, w - 11):
-            stand('Collidables', x, 14, 'station-bench', [(0, 1), (1, 1)])
+            place('Collidables', x, 14, 'station-bench', [(0, 1), (1, 1)])
 
     # ---- front wall with the exit: stairs down to the town door
     for x in range(w):
         if x in (cx, cx + 1):
             continue
-        stand('Collidables', x, L['wall_row'], 'station-wall-front', [(0, 0), (0, 1)])
+        place('Collidables', x, L['wall_row'], 'station-wall-front', [(0, 0), (0, 1)])
     b.put('Over Floor', cx, L['wall_row'], 'station-stairs_0_0')
     return b, L
 
@@ -317,10 +301,8 @@ if not any(t.get('targetRoom') == 'TokyoStation' for t in palace['transporters']
          'hidden': True})
 
 # train sprites are dynamic (not tiles) but load via spriteMetadata
-import os, struct
 for spr in ('train-orange', 'train-green'):
-    with open(f'assets/sprites/{spr}.png', 'rb') as f:
-        f.read(16); w, h = struct.unpack('>II', f.read(8))
+    w, h = rg.png_size(spr)
     cfg['spriteMetadata'][spr] = {'frameCount': 1,
                                   'anchorX': round(32 / w, 4), 'anchorY': round(32 / h, 4)}
     cfg['tileNames'][spr] = spr

@@ -83,8 +83,7 @@ b.fill('grass-autotile')
 
 
 def solid_rect(x0, y0, x1, y1):
-    for x, y in rect(x0, y0, x1, y1):
-        b.solid(x, y)
+    b.solid(x0, y0, x1 - x0 + 1, y1 - y0 + 1)
 
 
 def building(name, x, y, w, roof=2):

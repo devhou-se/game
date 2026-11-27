@@ -6,8 +6,11 @@ description: Generate a new gamev2 room (outdoor area or interior) from a prompt
 # Generate a game room from a description
 
 You are generating a room for the Phaser game in `gamev2/`. Everything below
-runs from the `gamev2/` directory. The exemplar for ALL of this is
-`tools/generate_machi.py` (town + shop interior) — read it first, mimic it.
+runs from the `gamev2/` directory. Read an exemplar first and mimic it: for an
+interior, `tools/generate_temple.py`, built from the shared shell in
+`tools/interiors.py` (`docs/generators-and-checks.md`, "Interior building
+blocks", has a whole interior in a dozen lines); for an outdoor room, a town
+generator such as `tools/generate_asahikawa.py`.
 
 ## 1. Understand the request
 
@@ -64,7 +67,10 @@ substitute the closest available prefab rather than inventing sprites.
 
 ## 3. Write the generator script
 
-Create `tools/generate_<slug>.py` modeled on `generate_machi.py`:
+Create `tools/generate_<slug>.py`. An interior is a few calls on
+`interiors.Interior` (the void, the floor, the walls, the exits, the boundary
+and the door in its host are the shared blocks' - do not write them again);
+an outdoor room is a `Builder`:
 
 ```python
 import roomgen as rg

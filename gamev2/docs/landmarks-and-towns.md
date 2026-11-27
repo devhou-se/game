@@ -317,11 +317,14 @@ pipeline has placed someone there.
   cell above its left half. The plans are the text grids in `LAYOUTS` (`aisles` and `freezer` 12 cells
   wide, `small` 10): one character a cell, a capital where a piece starts. `plan_of(store)` deals a
   store its plan, whether it is mirrored (the till in the east corner) and what its shelf blocks stock
-  from its host and door cell, so a rebuild reproduces it; `check_store()` fails the run if a plan
-  leaves floor the door does not reach, a selling fixture with no free cell under one of its columns,
-  or anything else you can bump with no free side. To add a plan, add a grid to `LAYOUTS` (a new piece
+  from its host and door cell, so a rebuild reproduces it. The room is built on the shared shell
+  (`tools/interiors.py`, `generators-and-checks.md` "Interior building blocks"), whose `room()` fails
+  the run if a plan leaves floor the door does not reach; `check_store()` fails it for a selling
+  fixture with no free cell under one of its columns, or anything else you can bump with no free side.
+  To add a plan, add a grid to `LAYOUTS` (a new piece
   also needs its letter in `AT_WALL` or `FURNITURE`, and a rule in `Interactions.js` if a bump on it
-  does something). The room's `boundary` is the floor, the mat and the two wall rows: the wall is solid,
+  does something). The room's `boundary` is the floor, the mat and the two wall rows
+  (`back_wall(..., view=True)`): the wall is solid,
   and with it the outline is taller than a landscape phone's view, so the camera follows you instead of
   being held to the floor with the wall off the top of the screen. The art is the `konbini-*` kit,
   26 sprites drawn by `tools/generate_konbini_art.py [--preview out.png]` (procedural, needs Pillow, in

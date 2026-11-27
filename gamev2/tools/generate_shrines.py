@@ -42,7 +42,9 @@ first time. Then:  python3 tools/config_to_tiled.py <each new room + hosts>
 """
 import sys
 
+import interiors
 import roomgen as rg
+from interiors import Interior
 
 ARGS = rg.cli(__doc__, sys.argv[1:])   # --help: usage, nothing run
 cfg = rg.load_config()
@@ -82,22 +84,15 @@ def find_halls():
         room = cfg['rooms'][host]
         tops = {xy: rg._pal[i] for layer in room['layers'] if layer['name'] == 'Tops'
                 for xy, i in layer['tiles'].items()}
-        found = []
-        for layer in room['layers']:
-            for xy, idx in layer['tiles'].items():
-                key = rg._pal[idx]
-                if key in HALLS:
-                    x, y = map(int, xy.split(','))
-                    found.append((y, x, key))
-        for n, (y, x, key) in enumerate(sorted(found), start=1):
+        found = rg.find_sprites(room, HALLS)
+        for n, (x, y, key) in enumerate(found, start=1):
             (dx, dy), look = HALLS[key]
             look = look or ROOFS.get(tops.get(f'{x - 1},{y - 2}'))
             assert look, f'{host}: the hall at {x},{y} has no shrine roof over it'
-            where = room.get('name', host)
             halls.append({
                 'host': host, 'key': f'{PREFIX}{host}{n}', 'look': look,
                 'size': 'large' if (host, key) in LARGE else 'standard',
-                'name': NAMES.get((host, key), f'Shrine · {where}' + (f' {n}' if len(found) > 1 else '')),
+                'name': NAMES.get((host, key), interiors.named(cfg, 'Shrine', host, n if len(found) > 1 else None)),
                 'door': (x + dx, y + dy), 'front': (x + dx, y + dy + 1),
             })
     return halls
@@ -106,39 +101,20 @@ def find_halls():
 def build_interior(hall):
     look, large = hall['look'], hall['size'] == 'large'
     fw, fh = (24, 12) if large else (18, 10)      # the floor, in cells
-    W, H = fw + 2, fh + 6
-    OX, OY = 1, 3                                 # room cell of floor cell (0, 0)
     cx = fw // 2                                  # the hall's axis is the seam left of this column
-    b = rg.Builder(W, H)
+    it = Interior(fw, fh)                         # a wall each side, a 2-row back wall under one row of dark
     k = lambda piece: f'shrine-in-{piece}-{look}_0_0'       # a piece in this hall's look
     s = lambda piece: f'shrine-in-{piece}_0_0'              # a shared piece
-
-    def put(layer, fx, fy, key):
-        b.put(layer, OX + fx, OY + fy, key)
-
-    def solid(fx, fy, w=1, h=1):
-        for dx in range(w):
-            for dy in range(h):
-                b.solid(OX + fx + dx, OY + fy + dy)
 
     def side(west, off, w=1):
         """Column of a piece `w` wide standing `off` cells in from a side wall."""
         return off if west else fw - off - w
 
     # ---- floor, walls --------------------------------------------------------------
-    b.fill('office-void-autotile')
-    for fx in range(fw):
-        for fy in range(fh):
-            put('Floor', fx, fy, k('floor-a' if (fx + fy // 2) % 2 == 0 else 'floor-b'))
-    for fy in range(-2, fh):
-        b.put('Floor', 0, OY + fy, k('side-w'))
-        b.put('Floor', W - 1, OY + fy, k('side-e'))
-    for fx in range(fw):
-        if fx not in (cx - 1, cx):
-            put('Floor', fx, fh, k('wall-front'))
-    put('Floor', cx - 1, fh, k('threshold-w'))
-    put('Floor', cx, fh, k('threshold-e'))
-    put('Non-Collidables', cx - 1, fh - 3, s('doorlight'))
+    it.floor(lambda fx, fy: k('floor-a' if (fx + fy // 2) % 2 == 0 else 'floor-b'))
+    it.side_walls(k('side-w'), k('side-e'), 2)
+    it.front_wall(k('wall-front'), (cx - 1, cx), (k('threshold-w'), k('threshold-e')))
+    it.put('Non-Collidables', cx - 1, fh - 3, s('doorlight'))
 
     counter_west = look == 'blue'                 # the two looks are laid out as mirror images
     wing = cx - 4                                 # cells from a side wall to the nave's pillars
@@ -151,32 +127,25 @@ def build_interior(hall):
         if (west == counter_west) or i == 0:
             return 'wall' if i % 2 == 0 else 'wall-curtain'
         return 'wall-shoji'                       # the tatami room's paper screens
-    for fx in list(range(cx - 3)) + list(range(cx + 3, fw)):
-        put('Collidables', fx, -2, k(wall_piece(fx)))
-        solid(fx, -2, 1, 2)
+    it.back_wall([(fx, k(wall_piece(fx)), 1) for fx in list(range(cx - 3)) + list(range(cx + 3, fw))], 2)
 
     # ---- the inner sanctuary, its railing and rope -------------------------------------
-    put('Collidables', cx - 3, -2, k('honden'))
-    solid(cx - 3, -2, 6, 3)
+    it.prop(k('honden'), cx - 3, -2, 6, 3)
     for fx in (cx - 4, cx + 3):                    # evergreen offerings either side of it
-        put('Collidables', fx, -1, s('sakaki'))
-        solid(fx, 0)
+        it.stand(s('sakaki'), fx, 0)
     for fx in range(cx - 4, cx + 4):               # the railing: feet on row 1, seen through
-        put('Collidables', fx, 0, k('lattice'))
-        solid(fx, 1)
+        it.stand(k('lattice'), fx, 1)
     for fx in (cx - 5, cx + 4):                    # a standing lamp at each end of it
-        put('Collidables', fx, 0, s('lanterns-floor'))
-        solid(fx, 1)
-    put('Tops', cx - 3, -2, s('shimenawa'))
+        it.stand(s('lanterns-floor'), fx, 1)
+    it.put('Tops', cx - 3, -2, s('shimenawa'))
 
     # ---- the offering box, the bell over it ------------------------------------------------
     box_y = 4 if not large else 5
-    put('Collidables', cx - 1, box_y - 1, s('saisen'))
-    solid(cx - 1, box_y - 1, 2, 2)
-    put('Tops', cx - 1, box_y - 2, s('bell'))
+    it.prop(s('saisen'), cx - 1, box_y - 1, 2, 2)
+    it.put('Tops', cx - 1, box_y - 2, s('bell'))
     for fy in range(box_y + 1, fh):                # the runner from the door to the box
-        put('Over Floor', cx - 1, fy, k('runner-l'))
-        put('Over Floor', cx, fy, k('runner-r'))
+        it.put('Over Floor', cx - 1, fy, k('runner-l'))
+        it.put('Over Floor', cx, fy, k('runner-r'))
 
     # ---- pillars: only the foot is solid, the shaft is walked behind ---------------------------
     feet = [fh - 2]                                # the front pair, by the door
@@ -187,17 +156,16 @@ def build_interior(hall):
     for foot in feet:                              # in the nave's own columns its head would stand on
         out = 2 if large and foot == fh - 5 else 0     # the foot of the pair by the box
         for fx in (cx - 4 - out, cx + 3 + out):
-            put('Collidables', fx, foot - 2, k('pillar'))
-            solid(fx, foot)
+            it.stand(k('pillar'), fx, foot, h=3)
     # a garland of rope and paper between the front pair's heads
     for fx in (cx - 3, cx):
-        put('Tops', fx, fh - 4, s('rope'))
+        it.put('Tops', fx, fh - 4, s('rope'))
 
     # ---- the two wings -------------------------------------------------------------------------
     def tatami(fx0, fx1, rows):
         for fy in range(rows):
             for fx in range(fx0, fx1 + 1):
-                put('Floor', fx, fy, s('tatami-l' if (fx - fx0 + fy) % 2 == 0 else 'tatami-r'))
+                it.put('Floor', fx, fy, s('tatami-l' if (fx - fx0 + fy) % 2 == 0 else 'tatami-r'))
 
     mats = wing - 1 - (wing - 1) % 2               # an even number of half-mats, from the side wall
     low = fh - 4                                   # top row of the two-row pieces by the door
@@ -206,57 +174,43 @@ def build_interior(hall):
         if west == counter_west:
             # the miko's counter, on a strip of tatami, facing the hall
             tatami(x0, x0 + mats - 1, 3)
-            put('Collidables', side(west, 1, 3), 1, s('counter'))
-            solid(side(west, 1, 3), 1, 3, 2)
+            it.prop(s('counter'), side(west, 1, 3), 1, 3, 2)
             # by the door on this side: the fortune stand and its rail of tied fortunes
-            put('Collidables', side(west, 2, 2), low, s('omikuji'))
-            solid(side(west, 2, 2), low, 2, 2)
-            put('Collidables', side(west, 0, 2), low, s('omikuji-rail'))
-            solid(side(west, 0, 2), low + 1, 2, 1)
+            it.prop(s('omikuji'), side(west, 2, 2), low, 2, 2)
+            it.stand(s('omikuji-rail'), side(west, 0, 2), low + 1, w=2)
         else:
             # the tatami room: a drum in the corner, cushions set out in two rows
             tatami(x0, x0 + mats - 1, 4)
-            put('Collidables', side(west, 0, 2), 0, s('drum'))
-            solid(side(west, 0, 2), 0, 2, 2)
+            it.prop(s('drum'), side(west, 0, 2), 0, 2, 2)
             for off in range(mats):
-                put('Over Floor', side(west, off), 2 + off % 2, s('zabuton'))
+                it.put('Over Floor', side(west, off), 2 + off % 2, s('zabuton'))
             # by the door on this side: the rack of wishing plaques
-            put('Collidables', side(west, 1, 3), low, s('ema'))
-            solid(side(west, 1, 3), low + 1, 3, 1)
+            it.stand(s('ema'), side(west, 1, 3), low + 1, w=3)
         if large:                                  # a big hall has plaques on both sides, further in
-            put('Collidables', side(west, 4, 3), low, s('ema' if west == counter_west else 'omikuji-rail'))
-            solid(side(west, 4, 3), low + 1, 3 if west == counter_west else 2, 1)
+            if west == counter_west:
+                it.stand(s('ema'), side(west, 4, 3), low + 1, w=3)
+            else:
+                it.stand(s('omikuji-rail'), side(west, 4, 3), low + 1, w=2)
     if look == 'blue':                             # standing lamps either side of the offering box
         for fx in (cx - 3, cx + 2):
-            put('Collidables', fx, box_y - 1, s('lanterns-floor'))
-            solid(fx, box_y)
+            it.stand(s('lanterns-floor'), fx, box_y)
 
     # ---- lanterns --------------------------------------------------------------------------------
     hang = [(cx - 3, fh - 3), (cx + 2, fh - 3), (0, box_y), (fw - 1, box_y)]
     if large:
         hang += [(cx - 6, 2), (cx + 5, 2), (3, fh - 6), (fw - 4, fh - 6)]
     for fx, fy in hang:
-        put('Tops', fx, fy, k('lanterns'))
+        it.put('Tops', fx, fy, k('lanterns'))
 
-    # ---- the door ------------------------------------------------------------------------------------
-    fx, fy = hall['front']
-    room = b.room(hall['name'], npcs=cfg['rooms'].get(hall['key'], {}).get('npcs', []), transporters=[
-        rg.transporter(OX + cx - 1, OY + fh, hall['host'], fx, fy, hidden=True),
-        rg.transporter(OX + cx, OY + fh, hall['host'], fx, fy, hidden=True),
-    ])
-    # the floor plus the two doorway cells; the walls round it need no colliders
-    room['boundary'] = [
-        [OX, OY], [OX + fw, OY], [OX + fw, OY + fh],
-        [OX + cx + 1, OY + fh], [OX + cx + 1, OY + fh + 1],
-        [OX + cx - 1, OY + fh + 1], [OX + cx - 1, OY + fh],
-        [OX, OY + fh],
-    ]
-    # whose hall this is: the marker roomgen.owned_door reads, as a house's `house` is
-    room['shrine'] = {'host': hall['host'], 'door': list(hall['door']), 'look': look, 'size': hall['size']}
-    room['interior'] = True          # never offered to the blog pipeline; no day/night grade...
-    room['lanternLight'] = True      # ...but at night it dims and its lanterns glow (DayNight)
-    room['shopEnabled'] = False      # not a konbini
-    return room, (OX + cx - 1, OY + fh - 1)        # arrive just inside the door
+    # ---- the door: a threshold either side of the axis, both leading out in front of the hall ----------
+    inside = it.doorway(cx - 1, hall['host'], hall['front'])
+    room = it.room(
+        hall['name'], npcs=cfg['rooms'].get(hall['key'], {}).get('npcs', []),
+        # whose hall this is: the marker roomgen.owned_door reads, as a house's `house` is
+        shrine={'host': hall['host'], 'door': list(hall['door']), 'look': look, 'size': hall['size']},
+        lanternLight=True,           # at night it dims and its lanterns glow (DayNight)
+        shopEnabled=False)           # not a konbini
+    return room, inside[0]                         # arrive just inside the door
 
 
 halls = find_halls()
@@ -264,20 +218,7 @@ built = []
 for hall in halls:
     room, arrive = build_interior(hall)
     cfg['rooms'][hall['key']] = room
-    host = cfg['rooms'][hall['host']]
-    dx, dy = hall['door']
-    for layer in host['layers']:
-        if layer['name'] == 'Colliders':
-            layer['tiles'].pop(f'{dx},{dy}', None)          # unseal the doorway
-    door = rg.transporter(dx, dy, hall['key'], *arrive, hidden=True)
-    ts = host.setdefault('transporters', [])
-    at = [i for i, t in enumerate(ts) if (t['gridX'], t['gridY']) == (dx, dy)]
-    if at:                                                  # in place: a re-run changes nothing
-        ts[at[0]] = door
-        for i in reversed(at[1:]):
-            del ts[i]
-    else:
-        ts.append(door)
+    rg.open_door(cfg['rooms'][hall['host']], hall['door'], hall['key'], arrive)     # unsealed, wired in place
     built.append(hall['key'])
     print(f"built  {hall['key']} ({hall['look']}, {hall['size']}) - {hall['name']}: "
           f"{hall['host']} door {hall['door']}, front {hall['front']}, "

@@ -9,9 +9,9 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 Semi-transparent bar at top showing: `{game.title} | {room name} | {game.date}` with clickable menu button
 - The room segment is the room's display `name` from config, never its key (`GameScene.hudRoomName()`, the
   one place that decides it; falls back to the key for a room with no name). Generated interiors get a
-  human name from their generator: `7-Eleven · Sapporo` (`generate_konbinis.py` `store_name()`, numbered
+  human name from their generator: `7-Eleven · Sapporo` (`generate_konbinis.py`, through `interiors.named()`, numbered
   only where a host has several stores: `7-Eleven · Asakusa 3`, the host named by its display name), `Don Takote · Osaka`
-  (`generate_discount_stores.py` `store_name()`), `Sapporo Station` (`generate_stations.py`
+  (`generate_discount_stores.py`, the same way), `Sapporo Station` (`generate_stations.py`
   `station_name()`), `House · Asahikawa 2` (`generate_houses.py`). Nothing reads `room.name` as an identifier - room keys are the identifiers.
 - Every separator on the bar is ` | ` (issue #207): a name's own ` · ` is written as one (`hudName()` in
   `NpcStates.js`, called by `hudRoomName()`), so `7-Eleven · Park 1` reads `7-Eleven | Park 1` on the bar, and

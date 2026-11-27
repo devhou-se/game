@@ -69,10 +69,11 @@ edit in the Tiled app. A prefab carries:
   interior room this way); unwired doors are sealed solid automatically.
 
 `tools/prefab.py` loads and stamps prefabs; `tools/make_prefabs.py` re-seeds
-the initial library; `tools/generate_machi.py` shows the full pattern — it
-builds the whole Machi town and the Konbini shop interior from prefabs +
-autotiled floors. Same recipe works for interiors: make `shelf` / `counter`
-prefabs and let a generator lay out the room.
+the initial library; a town generator such as `tools/generate_asahikawa.py`
+shows the full pattern — it builds a whole town from prefabs + autotiled
+floors. An interior is built from the shared shell in `tools/interiors.py`
+(`tools/generate_temple.py` is the example; `docs/generators-and-checks.md`,
+"Interior building blocks").
 
 ### Stamping a prefab into an existing (ported) room
 

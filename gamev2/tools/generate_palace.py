@@ -49,6 +49,7 @@ Then:  python3 tools/config_to_tiled.py PalaceHallTokyo1 Tokyo
 import sys
 
 import roomgen as rg
+from interiors import Interior
 
 rg.cli(__doc__, sys.argv[1:])           # --help: usage, nothing run
 cfg = rg.load_config()
@@ -58,157 +59,107 @@ KEY = f'{rg.PALACE_PREFIX}{HOST}1'
 NAME = 'Palace Hall'      # 11 characters: a phone's one-row HUD bar still fits the countdown beside it
 FW, FH = 24, 15           # the floor, in cells
 OX, OY = 1, 4             # room cell of floor cell (0, 0): a 3-row back wall under one row of dark
-W, H = FW + 2, FH + 7
 HALL = 10                 # rows of the hall (fy 0..9); the screens stand on fy 10..11, the corridor is fy 12..14
 GAP = (10, 13)            # the way through the screens, in floor columns
 
 
 def towers():
     """The palace's two end towers, west first: (door cell, the cell in front of it)."""
-    host = cfg['rooms'][HOST]
-    found = []
-    for layer in host['layers']:
-        for xy, idx in layer['tiles'].items():
-            key = rg._pal[idx]
-            if key in rg.PALACE_DOORS:
-                x, y = map(int, xy.split(','))
-                for dx, dy in rg.PALACE_DOORS[key]:
-                    found.append(((x + dx, y + dy), (x + dx, y + dy + 1)))
+    found = [((x + dx, y + dy), (x + dx, y + dy + 1))
+             for x, y, key in rg.find_sprites(cfg['rooms'][HOST], rg.PALACE_DOORS)
+             for dx, dy in rg.PALACE_DOORS[key]]
     assert len(found) == 2, f'{HOST}: expected the two towers of the palace, found {len(found)}'
     return sorted(found)
 
 
 def build(doors):
-    b = rg.Builder(W, H)
+    it = Interior(FW, FH, OX, OY)
     s = lambda piece: f'palace-in-{piece}_0_0'
 
-    def put(layer, fx, fy, piece):
-        b.put(layer, OX + fx, OY + fy, s(piece))
-
-    def solid(fx, fy, w=1, h=1):
-        for dx in range(w):
-            for dy in range(h):
-                b.solid(OX + fx + dx, OY + fy + dy)
-
-    def stand(fx, foot, piece, w=1, h=2, layer='Collidables'):
-        """A piece `h` rows tall whose bottom row (`foot`) is solid: the rest is walked behind."""
-        put(layer, fx, foot - h + 1, piece)
-        solid(fx, foot, w)
-
     # ---- floors -------------------------------------------------------------------
-    b.fill('office-void-autotile')
     engawa = (0, 1, FW - 2, FW - 1)
-    for fx in range(FW):
-        for fy in range(FH):
-            ab = 'a' if (fx + fy // 2) % 2 == 0 else 'b'
-            if fx in engawa and fy < HALL + 2:
-                put('Floor', fx, fy, f'board-{ab}')                 # the side corridors run north
-            elif fy >= HALL:
-                put('Floor', fx, fy, f'board-h-{ab}')               # the long corridor runs across
-            else:
-                put('Floor', fx, fy, 'tatami-l' if (fx + fy) % 2 == 0 else 'tatami-r')
-    for fy in range(-3, FH):                                        # the side walls: paper screens
-        b.put('Floor', 0, OY + fy, s('side-w'))
-        b.put('Floor', W - 1, OY + fy, s('side-e'))
+
+    def boards(fx, fy):
+        ab = 'a' if (fx + fy // 2) % 2 == 0 else 'b'
+        if fx in engawa and fy < HALL + 2:
+            return s(f'board-{ab}')                                 # the side corridors run north
+        if fy >= HALL:
+            return s(f'board-h-{ab}')                               # the long corridor runs across
+        return s('tatami-l' if (fx + fy) % 2 == 0 else 'tatami-r')
+
+    it.floor(boards)
+    it.side_walls(s('side-w'), s('side-e'), 3)                      # the side walls: paper screens
     for fy in range(1, HALL + 2, 2):                                # daylight through them
-        put('Over Floor', 0, fy, 'sun-w')
-        put('Over Floor', FW - 2, fy, 'sun-e')
+        it.put('Over Floor', 0, fy, s('sun-w'))
+        it.put('Over Floor', FW - 2, fy, s('sun-e'))
 
     # ---- the front wall and its two doors --------------------------------------------
     door_x = (0, FW - 2)                                            # west door, east door
-    for fx in range(FW):
-        if not any(x <= fx <= x + 1 for x in door_x):
-            put('Floor', fx, FH, 'wall-front')
+    it.front_wall(s('wall-front'), [x + dx for x in door_x for dx in (0, 1)], [s('threshold-w'), s('threshold-e')] * 2)
     for x in door_x:
-        put('Floor', x, FH, 'threshold-w')
-        put('Floor', x + 1, FH, 'threshold-e')
-        put('Non-Collidables', x, FH - 3, 'doorlight')
+        it.put('Non-Collidables', x, FH - 3, s('doorlight'))
 
     # ---- the back wall -----------------------------------------------------------------
     back = [(0, 'wall-shoji', 1), (1, 'wall-shoji', 1), (2, 'wall-plain', 1), (3, 'alcove-shelves', 3),
             (6, 'mural', 12), (18, 'alcove-doors', 3), (21, 'wall-plain', 1), (22, 'wall-shoji', 1), (23, 'wall-shoji', 1)]
-    for fx, piece, w in back:
-        put('Collidables', fx, -3, piece)
-        solid(fx, -3, w, 3)
+    it.back_wall([(fx, s(piece), w) for fx, piece, w in back], 3)
 
     # ---- the dais, and what stands either side of it --------------------------------------
-    put('Collidables', 6, 0, 'dais')
-    solid(6, 0, 12, 3)
-    stand(3, 2, 'armour', w=2, h=3)
-    stand(5, 2, 'andon')
-    stand(18, 2, 'andon')
-    stand(19, 2, 'swords', w=2)
+    it.prop(s('dais'), 6, 0, 12, 3)
+    it.stand(s('armour'), 3, 2, w=2, h=3)
+    it.stand(s('andon'), 5, 2)
+    it.stand(s('andon'), 18, 2)
+    it.stand(s('swords'), 19, 2, w=2)
 
     # ---- pillars: between the hall and each side corridor, and at the ends of the screens ----
     for fx in (2, FW - 3):
         for foot in (2, 6):
-            stand(fx, foot, 'pillar', h=3)
+            it.stand(s('pillar'), fx, foot, h=3)
     for fx in (2, GAP[0] - 1, GAP[1] + 1, FW - 3):
-        stand(fx, HALL + 1, 'pillar', h=3)
+        it.stand(s('pillar'), fx, HALL + 1, h=3)
 
     # ---- the painted screens between the hall and the corridor ------------------------------
-    stand(3, HALL + 1, 'fusuma-tiger', w=6)
-    stand(GAP[1] + 2, HALL + 1, 'fusuma-waves', w=6)
+    it.stand(s('fusuma-tiger'), 3, HALL + 1, w=6)
+    it.stand(s('fusuma-waves'), GAP[1] + 2, HALL + 1, w=6)
 
     # ---- the hall: cushions in rows, lamps hung over it ---------------------------------------
     for fy in (5, 7):
         for fx in (5, 7, 9, 14, 16, 18):
-            put('Over Floor', fx, fy, 'zabuton')
+            it.put('Over Floor', fx, fy, s('zabuton'))
     for fx, fy in ((3, 3), (FW - 4, 3), (3, 7), (FW - 4, 7), (GAP[0], HALL - 2), (GAP[1], HALL - 2)):
-        put('Tops', fx, fy, 'lamp-hang')
+        it.put('Tops', fx, fy, s('lamp-hang'))
 
     # ---- the corridor: the book and the guard by the west door, the waiting room by the east ----
     low = FH - 1
-    stand(2, low, 'guestbook')
-    stand(4, low, 'guardpost', w=3)
-    stand(8, low - 1, 'andon')
-    stand(15, low - 1, 'andon')
-    stand(15, low, 'byobu', w=3)
-    put('Collidables', 19, low - 1, 'table')
-    solid(19, low - 1, 2)
+    it.stand(s('guestbook'), 2, low)
+    it.stand(s('guardpost'), 4, low, w=3)
+    it.stand(s('andon'), 8, low - 1)
+    it.stand(s('andon'), 15, low - 1)
+    it.stand(s('byobu'), 15, low, w=3)
+    it.prop(s('table'), 19, low - 1, 2)
     for fx in (19, 20):
-        put('Over Floor', fx, low - 2, 'zabuton')
-        put('Over Floor', fx, low, 'zabuton')
-    stand(21, low, 'andon')
+        it.put('Over Floor', fx, low - 2, s('zabuton'))
+        it.put('Over Floor', fx, low, s('zabuton'))
+    it.stand(s('andon'), 21, low)
 
-    # ---- the doors -------------------------------------------------------------------------------
-    exits = []
-    for x, (_, front) in zip(door_x, doors):
-        for dx in (0, 1):
-            exits.append(rg.transporter(OX + x + dx, OY + FH, HOST, front[0], front[1], hidden=True))
-    room = b.room(NAME, npcs=cfg['rooms'].get(KEY, {}).get('npcs', []), transporters=exits)
-    # the floor plus the four doorway cells; the walls round it need no colliders
-    room['boundary'] = [
-        [OX, OY], [OX + FW, OY], [OX + FW, OY + FH + 1], [OX + FW - 2, OY + FH + 1], [OX + FW - 2, OY + FH],
-        [OX + 2, OY + FH], [OX + 2, OY + FH + 1], [OX, OY + FH + 1],
-    ]
-    # whose hall this is: the marker roomgen.owned_door reads, as a house's `house` is
-    room['palace'] = {'host': HOST, 'doors': [list(door) for door, _ in doors]}
-    room['interior'] = True          # never offered to the blog pipeline; no day/night grade...
-    room['lanternLight'] = True      # ...but at night it dims and its lamps glow (DayNight, Glows)
-    room['shopEnabled'] = False      # not a konbini
+    # ---- the doors: both cells of each lead out in front of its tower -----------------------------
+    west, east = (it.doorway(x, HOST, front) for x, (_, front) in zip(door_x, doors))
+    room = it.room(
+        NAME, npcs=cfg['rooms'].get(KEY, {}).get('npcs', []),
+        # whose hall this is: the marker roomgen.owned_door reads, as a house's `house` is
+        palace={'host': HOST, 'doors': [list(door) for door, _ in doors]},
+        lanternLight=True,           # at night it dims and its lamps glow (DayNight, Glows)
+        shopEnabled=False)           # not a konbini
     # arrive just inside each door: the inner cell of the pair
-    return room, [(OX + door_x[0] + 1, OY + FH - 1), (OX + door_x[1], OY + FH - 1)]
+    return room, [west[1], east[0]]
 
 
 doors = towers()
 room, arrive = build(doors)
 cfg['rooms'][KEY] = room
-host = cfg['rooms'][HOST]
-ts = host.setdefault('transporters', [])
-for ((dx, dy), front), cell in zip(doors, arrive):
-    for layer in host['layers']:
-        if layer['name'] == 'Colliders':
-            layer['tiles'].pop(f'{dx},{dy}', None)          # unseal the doorway
-    door = rg.transporter(dx, dy, KEY, *cell, hidden=True)
-    at = [i for i, t in enumerate(ts) if (t['gridX'], t['gridY']) == (dx, dy)]
-    if at:                                                  # in place: a re-run changes nothing
-        ts[at[0]] = door
-        for i in reversed(at[1:]):
-            del ts[i]
-    else:
-        ts.append(door)
-    print(f'door   {HOST} {(dx, dy)} -> {KEY} {cell}, back out on {front}')
+for (door, front), cell in zip(doors, arrive):
+    rg.open_door(cfg['rooms'][HOST], door, KEY, cell)       # unsealed, wired in place: a re-run changes nothing
+    print(f'door   {HOST} {door} -> {KEY} {cell}, back out on {front}')
 
 rg.save_config(cfg)
 print(f"built  {KEY} - {NAME}: {room['worldWidth'] // 64}x{room['worldHeight'] // 64}. Now run config_to_tiled, then play.js lint, for:")

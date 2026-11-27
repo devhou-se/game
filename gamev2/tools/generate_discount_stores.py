@@ -32,12 +32,12 @@ Run from gamev2/:  python3 tools/generate_discount_art.py     # once: signage (P
 Then:              python3 tools/config_to_tiled.py <each store room + its host>
                    node tools/play.js lint <each store room + its host>
 """
-import hashlib
 import random
-import struct
 import sys
 
+import interiors
 import roomgen as rg
+from interiors import Interior
 
 ALL_HOSTS = ['Market', 'Osaka', 'Sapporo']
 FACADE = 'discount-store_0_0'
@@ -74,53 +74,24 @@ def door_transporter(host, door, ordinal=1, count=1):
     return rg.transporter(door[0], door[1], room_key(host, ordinal, count), *ARRIVE, hidden=True)
 
 
-def png_size(key):
-    with open(f'assets/sprites/{key}.png', 'rb') as f:
-        f.read(16)
-        return struct.unpack('>II', f.read(8))
-
-
-def register_metadata(cfg):
-    """Every tile key needs a spriteMetadata entry or its texture never loads."""
-    sm = cfg['spriteMetadata']
-    for k in KEYS:
-        if k in sm:
-            continue
-        assert not k.startswith('don-takote'), f'{k}: run tools/generate_discount_art.py first'
-        w, h = png_size(k)
-        sm[k] = {'anchorX': round(32 / w, 4), 'anchorY': round(32 / h, 4), 'frameCount': 1}
-
-
-def store_name(cfg, host, ordinal, count):
-    """The room's display name (the HUD shows it, never the room key):
-    'Don Takote · Osaka', numbered only where a host has several stores."""
-    where = cfg['rooms'][host].get('name', host)
-    return f'Don Takote · {where}' + (f' {ordinal}' if count > 1 else '')
-
-
 def find_stores(cfg, hosts):
     """Every discount-store door, per host, in stable (y, x) order."""
     stores = []
     for host in hosts:
         room = cfg['rooms'][host]
-        cells = sorted((int(xy.split(',')[1]), int(xy.split(',')[0]))
-                       for layer in room['layers'] for xy, idx in layer.get('tiles', {}).items()
-                       if rg._pal[idx] == FACADE)
-        for n, (y, x) in enumerate(cells, start=1):
+        found = rg.find_sprites(room, FACADE)
+        for n, (x, y, _) in enumerate(found, start=1):
             door = (x + DOOR_DX, y + DOOR_DY)
             stores.append({'host': host, 'door': door, 'front': (door[0], door[1] + 1),
-                           'key': room_key(host, n, len(cells)),
-                           'name': store_name(cfg, host, n, len(cells))})
+                           'key': room_key(host, n, len(found)),
+                           # the HUD shows this, never the room key; numbered only where a host has several
+                           'name': interiors.named(cfg, 'Don Takote', host, n if len(found) > 1 else None)})
     return stores
 
 
 def furnish(b, rng):
     def put_solid(key, x, y):
-        w, h = png_size(key)
-        b.put('Collidables', x, y, key)
-        for dx in range(max(1, round(w / 64))):
-            for dy in range(max(1, round(h / 64))):
-                b.solid(x + dx, y + dy)
+        b.prop(key, x, y, *rg.sprite_cells(key))
 
     flip = rng.random() < 0.5                    # mirror the whole shop left-right
     mx = (lambda x, w=1: LEFT + RIGHT - x - (w - 1)) if flip else (lambda x, w=1: x)
@@ -166,49 +137,39 @@ def furnish(b, rng):
 
 
 def build_interior(store):
-    seed = int(hashlib.md5(f"don:{store['host']}:{store['door']}".encode()).hexdigest()[:8], 16)
-    rng = random.Random(seed)
-    b = rg.Builder(ROOM_W, ROOM_H)
-
+    rng = random.Random(interiors.seed_of(f"don:{store['host']}:{store['door']}"))
     # a dark void with the lit shop floor floating in it (as the konbini are)
-    b.fill('office-void-autotile')
+    it = Interior(RIGHT - LEFT + 1, BOTTOM - TOP + 1, ox=LEFT, oy=TOP, w=ROOM_W, h=ROOM_H)
     floor = rng.choice(['office-warm-autotile', 'office-warm-autotile', 'office-floor-autotile'])
-    for x in range(LEFT, RIGHT + 1):
-        for y in range(TOP, BOTTOM + 1):
-            b.put('Floor', x, y, f'{floor}_center')
+    it.floor(lambda fx, fy: f'{floor}_center')
 
     # only the back wall is drawn, two panels tall so the sign fits; the sides
-    # and front are framed by the void and closed by the room boundary below
-    for x in range(LEFT, RIGHT + 1):
-        b.put('Collidables', x, Y0, 'don-takote-wall-top_0_0'); b.solid(x, Y0)
-        b.put('Collidables', x, Y0 + 1, 'don-takote-wall_0_0'); b.solid(x, Y0 + 1)
+    # and front are framed by the void and closed by the room boundary
+    for fx in range(it.fw):
+        it.prop('don-takote-wall-top_0_0', fx, -2)
+        it.prop('don-takote-wall_0_0', fx, -1)
 
-    furnish(b, rng)
+    furnish(it.b, rng)
 
     # the door mat: one row sticking out below the floor; the exits sit on it
+    inside = it.doorway(MAT[0] - LEFT, store['host'], store['front'], n=len(MAT), mat=f'{floor}_center')
     for i, x in enumerate(MAT):
-        b.put('Floor', x, MAT_Y, f'{floor}_center')
-        b.paver(x, MAT_Y, i)
+        it.b.paver(x, MAT_Y, i)
+    assert inside[1] == ARRIVE, 'the town generators wire their door to ARRIVE'
 
-    fx, fy = store['front']
-    room = b.room(store['name'], transporters=[
-        rg.transporter(x, MAT_Y, store['host'], fx, fy, hidden=True) for x in MAT])
-    # movement is confined to the lit floor plus the mat
-    room['boundary'] = [
-        [LEFT, TOP], [RIGHT + 1, TOP], [RIGHT + 1, BOTTOM + 1],
-        [MAT[-1] + 1, BOTTOM + 1], [MAT[-1] + 1, MAT_Y + 1],
-        [MAT[0], MAT_Y + 1], [MAT[0], BOTTOM + 1], [LEFT, BOTTOM + 1],
-    ]
-    room['interior'] = True          # a shop (Interactions.js), and no day/night grade inside
-    room['shopTitle'] = 'DON TAKOTE'  # the till's list is not titled KONBINI (Shop.titleFor, #136)
-    return room
+    # movement is confined to the lit floor plus the mat. `interior` and no shopEnabled: a shop
+    # (Interactions.js); the till's list is not titled KONBINI (Shop.titleFor, #136)
+    return it.room(store['name'], shopTitle='DON TAKOTE')
 
 
 def main(argv):
     hosts = rg.cli(__doc__, argv) or ALL_HOSTS   # --help: usage, nothing run
     assert all(h in ALL_HOSTS for h in hosts), f'unknown host; expected some of {ALL_HOSTS}'
     cfg = rg.load_config()
-    register_metadata(cfg)
+    for k in KEYS:                               # the signage is drawn, not sliced from a pack
+        if k not in cfg['spriteMetadata']:
+            assert not k.startswith('don-takote'), f'{k}: run tools/generate_discount_art.py first'
+    rg.register_metadata(cfg, KEYS)
     built = []
     for store in find_stores(cfg, hosts):
         host = cfg['rooms'][store['host']]
@@ -219,22 +180,9 @@ def main(argv):
         cfg['rooms'][store['key']] = build_interior(store)
 
         # open the facade's door and wire it in (a no-op where the town's own
-        # generator already did - Osaka, Sapporo)
-        dx, dy = store['door']
-        for layer in host['layers']:
-            if layer.get('collision'):
-                layer['tiles'].pop(f'{dx},{dy}', None)
-        # replace the door's transporter where it already sits (append only a
-        # new one): a re-run must leave config.json byte-identical (issue #107)
-        door = rg.transporter(dx, dy, store['key'], *ARRIVE, hidden=True)
-        ts = host.setdefault('transporters', [])
-        at = [i for i, t in enumerate(ts) if (t['gridX'], t['gridY']) == (dx, dy)]
-        if at:
-            ts[at[0]] = door
-            for i in reversed(at[1:]):
-                del ts[i]
-        else:
-            ts.append(door)
+        # generator already did - Osaka, Sapporo), replacing the door's transporter
+        # where it already sits: a re-run must leave config.json byte-identical (issue #107)
+        rg.open_door(host, store['door'], store['key'], ARRIVE)
         built.append(store['key'])
         print(f"built  {store['key']} ({store['name']}) - door {store['door']} in {store['host']}")
     rg.save_config(cfg)
