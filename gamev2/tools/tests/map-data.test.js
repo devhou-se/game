@@ -25,7 +25,7 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith, require 
             }
         }
         assert.deepStrictEqual(bad, []);
-        for (const town of ['Yukimura', 'Sapporo', 'Asahikawa']) {
+        for (const town of ['Sapporo', 'Asahikawa']) {
             assert.ok(snowTowns.includes(town), `${town} is no longer on snow ground`);
             const floor = cfg.rooms[town].layers.find((l) => l.name === 'Floor');
             assert.ok(Object.values(floor.tiles).some((t) => name(t).startsWith('gravel-snow-autotile_')), `${town} has no rail-corridor gravel`);

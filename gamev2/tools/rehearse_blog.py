@@ -123,9 +123,9 @@ POSTS = [
       ['Rehearsal: Xander, walking the bank of the frozen river.', 'No landmark in sight, just snow.']),
     P(9015, 'Khoi', '2027-02-27T03:00:00Z', 'Asahikawa · ramen alley', 'Rehearsal: more ramen',
       ['Rehearsal: Khoi, back in ramen alley.', 'Miso this time.']),
-    # a day trip from Asahikawa
-    P(9016, 'Sam', '2027-02-27T05:00:00Z', 'Yukimura · the frozen pond', 'Rehearsal: a day in the snow village',
-      ['Rehearsal: Sam, out at the snow village for the day.', 'The pond is a skating rink.']),
+    # a second district, the way 9020 is sent to one
+    P(9016, 'Sam', '2027-02-27T05:00:00Z', 'Asahikawa · Station front and Heiwa-dori (area)', 'Rehearsal: a day on Heiwa-dori',
+      ['Rehearsal: Sam, out on the shopping street for the day.', 'The ice sculptures are taller than me.']),
     P(9017, 'Xander', '2027-02-28T02:00:00Z', 'Asahikawa · the shrine', 'Rehearsal: last day',
       ['Rehearsal: Xander at the shrine on the last day.', 'Same again next year.']),
     # the evening after the last day (1 March in Japan): still devhouse 3's

@@ -12,8 +12,8 @@ Purely decorative movers that make a room feel alive. Both are built in `GameSce
 their route in the room's map data rather than in coordinates, have no collision, and send the first one
 3-10s after you enter a room and another every 15-40s after it finishes.
 
-- **`AmbientTrains`** - any room with `train-track*` tiles that is not a `stations` room (Palace, Inaka,
-  Yukimura, Osaka, Sendai, Sapporo, Asahikawa) gets a train running the topmost track row, off-screen edge to
+- **`AmbientTrains`** - any room with `train-track*` tiles that is not a `stations` room (Palace, Osaka,
+  Sendai, Sapporo, Asahikawa...) gets a train running the topmost track row, off-screen edge to
   off-screen edge, depth `min(48, (row + 1) * 10 + 4)` - 48 for a track on row 4 or lower, and always just
   under a player standing on the track row (feet depth `(row + 1) * 10 + 5`), so on a level crossing the
   player is drawn over the passing train in every room.
@@ -31,9 +31,10 @@ their route in the room's map data rather than in coordinates, have no collision
     road into the strip behind the station (rows 0-2) without going round by the east crossing, the
     strip's other entrance - do not put a cone or prop there. From the forecourt the camera cannot reach row 3 - the train is seen from
     the west road, the yards beside the station (rows 4-7) or the strip behind it.
-  - In the stitched city the Palace track runs on west through the woods and ends in them, short of Machi:
-    an end of track that is not at the room's edge is "closed", and the train fades in / out standing on
-    the rails there. The depth rule uses the district's own row and is then moved down by the district's
+  - In the stitched city the Palace track runs on west through the woods to the city's edge (it ended in
+    the wood, short of Machi, until that town was deleted - issue #68), so the train runs off-screen there
+    as it does to the east. An end of track that is not at the room's edge is still "closed", and a train
+    fades in / out standing on the rails there. The depth rule uses the district's own row and is then moved down by the district's
     offset (`span.lift`), so the Palace train sits at the same place in the draw order as it does unstitched.
 - **`AmbientBoats`** - a room gets boats from its waterways, which it finds in the map data in two ways:
   - **moat tiles** (the Tokyo moat): a "run" is a line of consecutive cells holding the same plain
@@ -65,8 +66,8 @@ their route in the room's map data rather than in coordinates, have no collision
     another horizontal one (issue #67: rows 40-42, `from` the first rimmed column east of the beach - a
     closed end at the river mouth - `to` the east edge, `under` columns 29-32, the same parapet and shade
     tiles as Osaka's bridge). **Toyama's sea** declares a horizontal one too (issue #68: rows 1-3, from
-    the river mouth to the east edge of the map, its open end). Frozen water (Asahikawa's river,
-    Yukimura's pond) declares none, so it gets no boats.
+    the river mouth to the east edge of the map, its open end). Frozen water (Asahikawa's river)
+    declares none, so it gets no boats.
   Runs too short for a boat to travel `MIN_TRAVEL` (128px, so a run is at least four cells for either
   hull - the three-cell pockets between the moat's rocks get none) are dropped. On a closed run a boat
   fades in at one end, drifts to the other at `SPEED` with a small bob and fades out. Runs with a boat's

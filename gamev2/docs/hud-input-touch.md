@@ -65,16 +65,16 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
   own dot even inside a stitched region (Kanazawa, Shirakawa-go and Toyama are three dots, though they are
   the one stitched `HokurikuCity`: three real places far apart, unlike Tokyo's districts). An entry whose
   key is not a room or city yet is skipped, so **a new town appears on the map by adding its
-  `places` entry** — no code. A town with no entry has no dot: the made-up ones (Inaka, Yukimura) are not
-  on the map of Japan; they are still a train ride from Tokyo Station, and the footer reads
-  "you are here: Inaka (not on this map)" there.
+  `places` entry** — no code. A town with no entry would have no dot, and the footer would
+  read "you are here: <name> (not on this map)" there (`Places.whereText`). No room needs that today: the
+  made-up towns that did (Inaka, Yukimura) are deleted (issue #68), and a unit test holds every room to a place.
   - **Three kinds of dot**: a small cream dot for a town; a larger red dot in a white ring with a halo that
     breathes (alpha only) where trip members are standing on the game date; a gold ring (and a gold
     label) round the town the player is in. Presence is `Places.present(config, gameDate(), { played })`
     — `Trips.membersByRoom`, the intro's "where the friends are", with each room mapped to its town by
     `Places.of` (an interior is in the town its door leads to, a station in the town it serves, a
     district in its city). No names, faces or counts: the player goes and finds out. Somebody in a town
-    that is not on the map (Inaka on 10 November 2025) shows nowhere.
+    that is not on the map would show nowhere.
   - **Labels** (`Places.layout`, pure, unit-tested at the desktop and phone sizes with every combination
     of where the player is and who is where): beside the dot
     (right, left, above, below, the diagonals), then the same further out in rings of
@@ -181,7 +181,7 @@ The game always renders 1280x960; everything below is about showing that on anyt
     `cameras.main.setDeadzone` to change the deadzone mid-game: it re-centres the camera on the
     player. `setDeadzoneShare` resizes the rectangle in place (`UIScale.sizeDeadzone`), the first time
     too: on a desktop window, which never zooms, the first look-up of a session used to take the
-    deadzone over through `setWorldZoom` and jumped by however far the camera trailed (issue #220). Camera bounds still win: against a room's top edge (Machi under `?stitch=0`) the view
+    deadzone over through `setWorldZoom` and jumped by however far the camera trailed (issue #220). Camera bounds still win: against a room's top edge the view
     stops there.
     The room-change fade (`RoomManager.switchRoom`) runs on the camera drawn last — the `'ui'`
     camera while the split is on — so it covers the HUD and overlays as the single camera's fade does.

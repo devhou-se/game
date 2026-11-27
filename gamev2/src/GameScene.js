@@ -716,7 +716,9 @@ class GameScene extends Phaser.Scene {
         const cam = this.cameras.main, W = cam.width, H = cam.height;
         const shop = this.shop, stamps = shop.stamps;
         const stores = Stamps.stores(this.config), count = Stamps.count(stamps);
-        const vending = Object.keys(stamps).filter(id => id.startsWith('vending:')).length;
+        // a stamp from a place that has left the world still counts; the card says how many (Stamps.closed)
+        const closed = Stamps.closed(this.config, stamps);
+        const vending = Object.keys(stamps).filter(id => id.startsWith('vending:') && !closed.includes(id)).length;
         const cols = 2, rows = Math.ceil(stores.length / cols);
         const rowH = Math.max(22, Math.min(30, Math.floor((H - 16 - 300) / Math.max(1, rows))));
         const pw = 640, ph = 300 + rows * rowH, px = (W - pw) / 2, py = (H - ph) / 2;
@@ -754,7 +756,8 @@ class GameScene extends Phaser.Scene {
             vending ? '#ffffff' : '#888888');
         y += 36;
         const nameOf = (id) => (shop.itemById(id) || { name: id }).name, fmt = (n) => shop.fmt(n);
-        text(cx, y, `${count} stamp${count === 1 ? '' : 's'}`, '24px', true, '#ffd700');
+        text(cx, y, `${count} stamp${count === 1 ? '' : 's'}` + (closed.length ? ` (${closed.length} from places since closed)` : ''),
+            '24px', true, '#ffd700');
         y += 32;
         const next = Stamps.next(count);
         text(cx, y, next ? `at ${next.at} stamps: ${Stamps.describe(next, nameOf, fmt)}` : 'every reward collected',

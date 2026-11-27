@@ -9,10 +9,8 @@ were already solid). The pass itself is roomgen.picket_fences; a generator
 that ends with b.finish() has already run it, so this is for a room whose
 generator does not (or that has none).
 
-Run from gamev2/ (defaults to the pre-existing generated rooms; pass room
-names to fix others, e.g. a freshly generated one):
-    python3 tools/fix_fences.py                # Inaka Machi
-    python3 tools/fix_fences.py Yukimura       # a specific room
+Run from gamev2/, naming the rooms to fix (e.g. a freshly generated one):
+    python3 tools/fix_fences.py Osaka
 Then config_to_tiled, then play.js lint, for the printed rooms.
 """
 import sys
@@ -20,10 +18,12 @@ import roomgen as rg
 
 cfg = rg.load_config()
 
-# Default to the rooms whose fences came from roomgen's broken fence() cycle.
-# Tokyo/Market/Park use fence-barriers as ported road barriers — intentional,
-# so they are NOT defaulted. CLI args override (any generated room can be fixed).
-ROOMS = sys.argv[1:] or ['Inaka', 'Machi']
+# Tokyo/Market/Park use fence-barriers as ported road barriers — intentional:
+# do not name them. (The rooms this pass was written for, the made-up towns,
+# are gone: issue #68.)
+ROOMS = sys.argv[1:]
+if not ROOMS:
+    sys.exit(__doc__)
 
 changed = []
 for room_key in ROOMS:

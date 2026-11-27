@@ -70,24 +70,25 @@ day the trip starts. Days before the FIRST trip are not a lead-in (they show its
   room; otherwise it resolves as if its base said `present: false`. Dated states are applied only from
   the window's first day (the start of the stay, else of the trip) — earlier ones are another trip's
   history — and a state inside the window still places anybody anywhere. So: devhouse 2's base cast
-  (Bailey, Damian, Dylan and Julia in one row in Tokyo, issue #68; Dylan stood in Machi before) carries `"trip": "devhouse2"`; devhouse 3 has a base
+  (Bailey, Damian, Dylan and Julia in one row in Tokyo, issue #68) carries `"trip": "devhouse2"`; devhouse 3 has a base
   NPC for all seven in Sapporo (`"stay": "Sapporo"`) and in Asahikawa (`"stay": "Asahikawa"`) with two
   neutral lines each, so on 18-24 Feb 2027 everyone stands in Sapporo and from the 25th in Asahikawa
   before anyone has posted; Khoi, Sam and Xander are nowhere on a 2025 date. A member's first post of a
   trip moves them as usual (`blog_to_npc.py` needs no trip knowledge: it writes a dated state where they
   are and `present: false` everywhere else, both inside the window), and when the group moves base
   everyone is at the new base until they post from it. NPCs with no `trip` (the izakaya opponents,
-  Yukimura's villager, the pipeline's hidden per-room defs) are unscoped apart from the state window.
+  the pipeline's hidden per-room defs) are unscoped apart from the state window.
   Resolution of every NPC on every devhouse 2 day was compared before and after the change: identical,
   apart from the three new members being absent.
 - **The default game date** — see Default game date in `maps-and-rooms.md`.
 - **Where the player starts** (`Trips.startFor(config, date, { played })` → `{ room, x, y }`,
-  the same terms a door target is written in — a DISTRICT cell (`Tokyo 29,38`, `Machi 22,10`), never a
+  the same terms a door target is written in — a DISTRICT cell (`Tokyo 29,38`, `Market 5,24`), never a
   stitched-city one: `GameScene.startPosition()` is the one caller and puts the player there through
   `roomManager.resolve`, so the start is the same cell with `?stitch=0`; "the room" below is the district.
   EVERY player — new (#96, #59) or returning, after a reload or a Time Travel hop (#166) — starts where
   there is someone to talk to: the room with the most members that day, never counting the
-  member they are playing as; a tie goes to the room fewest doors / train rides from home
+  member they are playing as; a tie goes to a room outdoors before a station interior (a `config.stations` room: a platform is
+  always one hop nearer than its town), then to the room fewest doors / train rides from home
   (`Trips.hopsFrom`), then config order. In the home room they stand on the home cell when somebody is
   within `Trips.NEAR` (6) cells; otherwise on the cell nearest the group, at least two cells from
   everyone, that can be walked to from the room's arrivals (`Trips.standNear`: Floor tile, no collider,
@@ -99,7 +100,7 @@ day the trip starts. Days before the FIRST trip are not a lead-in (they show its
   stay's cell (the first stay's on a lead-in day), else `home`, else `config.player.startRoom/X/Y` — and
   is where a player lands when nobody is anywhere (a lead-in day with no posts) or no cell can be found.
   Why not the trip home for returning players, as it was until #166: there is no saved position to
-  restore, the home has nobody near it on most devhouse 2 days (Tokyo 29,38 while the cast is in Machi),
+  restore, the home has nobody near it on most devhouse 2 days (Tokyo 29,38 while the cast is in Sendai or Fukuoka),
   and a Time Travel hop is made to see that day's people. Saving the last position was the alternative; it
   would put a returning player in a room the cast left weeks of game time ago after every date change.
   `CharacterSelect.become` calls `GameScene.resettleNewPlayer()`: a

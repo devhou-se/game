@@ -15,7 +15,7 @@ Usage (from gamev2/):
 Examples:
   python3 tools/npc_state.py Tokyo Bailey 2026-07-26 --dialogue "Back from holidays!"
   python3 tools/npc_state.py Tokyo Bailey 2026-07-28 --pos 26,34
-  python3 tools/npc_state.py Machi Dylan 2026-08-01 --absent
+  python3 tools/npc_state.py Tokyo Dylan 2026-08-01 --absent
 """
 import argparse, json, re, sys
 

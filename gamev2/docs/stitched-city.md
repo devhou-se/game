@@ -1,15 +1,15 @@
 # The stitched city (TokyoCity)
 
-How the five Tokyo districts are merged into one runtime room, and what every system and tool has to know about it.
+How the four Tokyo districts are merged into one runtime room, and what every system and tool has to know about it.
 
 A "see X" in the text names a section; if it is not in this file, the index in [`../CLAUDE.md`](../CLAUDE.md) says which file has it.
 
 ### Stitched cities: one continuous Tokyo (issues #40 / #41)
 
-Tokyo, Market, Palace, Park and Machi (room KEYS: the player reads their display names, "Imperial Palace",
-"Asakusa", "Marunouchi", "Park", issue #219 — see `name` in `maps-and-rooms.md`) are still five Tiled maps and five room keys in `config.json` — but at
+Tokyo, Market, Palace and Park (room KEYS: the player reads their display names, "Imperial Palace",
+"Asakusa", "Marunouchi", "Park", issue #219 — see `name` in `maps-and-rooms.md`) are still four Tiled maps and four room keys in `config.json` — but at
 load they are merged into ONE runtime room, `TokyoCity`, so you walk between them with no fade, no input
-block and no reload, and the next district is on screen before you reach it. Inaka, Yukimura, Osaka, Sapporo and
+block and no reload, and the next district is on screen before you reach it. (There were five until issue #68 deleted Machi, a made-up town west of Tokyo.) Osaka, Sapporo and
 Asahikawa were always single maps; interiors and trains keep their fade.
 
 - **Data** — config `cities`: `{"TokyoCity": {"name", "rooms": [{"room", "x", "y"}...], "drop", "patch", "backdrop"}}`.
@@ -23,12 +23,11 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   `patch` = `{district: {layer name: {"x,y": tile | null}}}` (district cells) touches up single tiles in
   the stitched room only, without editing the map: Park's top-left road corner becomes the straight road
   Palace's west road now carries through it. Anything that changes where you can STAND belongs in the
-  district's own map instead (the two grass cells beside Machi's east gate, which only the seam teleport
-  used to keep you off, have their collider in `machi.tmj`): `findWalkableNear`, `?stitch=0`,
+  district's own map instead: `findWalkableNear`, `?stitch=0`,
   `tools/play.js` and `tools/blog_to_npc.py` read the district data and never see a patch.
 - **Merge** — `src/systems/CityStitcher.js` (`build`): layers, objects, signage and door transporters are
-  translated into merged cells (the union's top-left is 0,0 — Machi is at 0,22, Tokyo at 48,1, Market at
-  106,0); the 22 hidden seam transporters (target = a sibling district) are dropped; `RoomManager.rooms`
+  translated into merged cells (the union's top-left is 0,0 — Tokyo is at 0,1, Market at
+  58,0); the 18 hidden seam transporters (target = a sibling district) are dropped; `RoomManager.rooms`
   gets the city next to its districts, which stay as data and are never entered. **`config.rooms` is not
   touched** — it still has exactly the authored rooms, so `tools/blog_to_npc.py`, the world map, the
   generators and the seam transporters themselves are unchanged.
@@ -45,7 +44,8 @@ Asahikawa were always single maps; interiors and trains keep their fade.
 - **The woods** — the union is L-shaped and the camera is clamped to its bounding box, so every cell no
   district covers is filled by `CityStitcher.buildBackdrop` from config `backdrop`: grass, unevenly spaced
   trees, shrubs, the missing kerb of the road down Palace's west side (`edges`), and the Palace railway
-  carried on west through a cutting (`extend`; it stops `extendStop` cells short of Machi so the wood
+  carried on west through a cutting (`extend`: it runs off the city's west edge now that no district
+  stands there; a line that would run into another district stops `extendStop` cells short of it, so the wood
   closes over its end). It is scenery: `RoomManager.checkBoundary` only admits
   district cells. Backdrop layers are named `Backdrop ...`, never `Floor`.
 - **Depth** — Y-sorted depth is 10 per row, and 109 rows would climb past the name labels (900) and the HUD
@@ -56,7 +56,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   instead of scanning every sprite). In EVERY room (stitched or not) a collision layer's `gk_blank` markers
   feed that set only: they are not records and never get a sprite (issue #148 — it was 2,440 records in the
   city, 858 sprites in the old Tokyo room, 37 in a konbini); the debug overlay and inspector read colliders
-  from the set. Anything else painted on a collision layer still blocks and is drawn. A city (~23k tiles
+  from the set. Anything else painted on a collision layer still blocks and is drawn. A city (~16k tiles
   with the woods) is **streamed**: records are bucketed in 4-cell chunks (`buildChunks` — every room is
   bucketed, `Occlusion` looks art up by place through `artNear`) and only those within 3 cells of the view
   — and of the point the camera follows, which is above the player while it looks up at a landmark
@@ -101,16 +101,16 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   colliders lost to an overlap, a `patch` gone wrong; `Backdrop ...` layers are scenery and are not linted
   as objects), `lint <District>` is unchanged, `render TokyoCity out.png` draws the city with its woods,
   and `reach` prints the walkable cells of every room as JSON. `--stitch=0` (play.js) / `?stitch=0`
-  (studio) give the five rooms joined by the 22 seam transporters, i.e. what the game's `?stitch=0` plays.
+  (studio) give the four rooms joined by the 18 seam transporters, i.e. what the game's `?stitch=0` plays.
   `tools/blog_to_npc.py` has no node at hand, so it carries a ten-line port of "who sits where, later room
   owns the overlap" (`city_districts` / `city_reachable`); `tools/test_blog_to_npc.py` pins it to
   `play.js reach` for every cell of every room.
-- **The west gate** (issue #147): where Machi's dirt path meets Tokyo (Tokyo cells `(0..1, 41..42)`, Machi
-  `(47, 20..21)`) the lane is a two-cell brick apron between the lantern pair, Machi's path runs out through
-  the gate instead of ending in a rounded cap, and Tokyo's road corner beside it is a square junction box
-  (kerb down column 2, `road-corner-sw` at `(2,43)`, `road-plain` inside). It is district data in both
-  maps, so `?stitch=0` shows the same gate. The lower lantern stands on `(1,44)`: a lantern is two cells
-  tall and one cell further north its head hung over the lane.
+- **The west gate is closed** (issues #147, #68): Machi's dirt path used to come in through a two-cell gate
+  in Tokyo's west fence (Tokyo cells `(0, 41..42)`, a brick apron between a lantern pair). Machi is deleted,
+  so those two cells are fenced like the rest of that edge (`fence-barriers_0_2` + collider, brick `edge-w`
+  under it) and their seam transporters are gone; the lantern pair still stands inside the fence and Tokyo's
+  road corner beside it is still the square junction box #147 laid (kerb down column 2, `road-corner-sw` at
+  `(2,43)`, `road-plain` inside). Tokyo's column 0 is now the west edge of the city: there is no wood west of it.
 - **Road junctions are plain boxes** (issue #179): the port drew every three-cell road straight through
   each junction, so a joining road's mouth was closed by the other road's kerb and its centre line ran
   on into the junction. **`python3 tools/square_junctions.py`** lays each of the twelve 3x3 boxes in
@@ -125,7 +125,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   is one more entry (then `config_to_tiled.py` for the districts and `make_worldmap.py`).
   `ARMS` in the same tool lays a stretch of an east-west road the port paved over as road (issue #194:
   two cells of brick across the avenue either side of the Tokyo/Market crossroads).
-- **`?stitch=0`** is the safety valve: no cities, the five districts are separate rooms joined by the fade
+- **`?stitch=0`** is the safety valve: no cities, the districts are separate rooms joined by the fade
   transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).
 - **The second city** (issue #68): `HokurikuCity` stitches Kanazawa, Shirakawa-go and Toyama (see
   "Hokuriku" in `landmarks-and-towns.md`). Nothing in the stitcher, `RoomManager`, the tools or the blog

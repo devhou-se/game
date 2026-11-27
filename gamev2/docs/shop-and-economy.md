@@ -34,8 +34,8 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   `(6..8, 37)`). The door is `(7,37)`, entered from the paving at `(7,38)`, and a red
   lantern stands either side of the house (feet at `(5,37)` and `(9,37)`) - the only
   house on the row with a pair. Both exit mats (`Izakaya (9,13)` / `(10,13)`) land on
-  `(7,38)`. It used to be behind Inaka's lakeside farmhouse, which is a sealed house
-  again. `tools/generate_izakaya.py` owns the interior, the door it opens in Market
+  `(7,38)`. It used to be behind the lakeside farmhouse of Inaka, a made-up town that is
+  deleted (issue #68). `tools/generate_izakaya.py` owns the interior, the door it opens in Market
   (collider off, hidden transporter, replaced in place) and the two lanterns, the way
   `generate_konbinis.py` owns a 7-Eleven's door; Market is otherwise a ported map.
   The house's two ad boards are its sign: their `signage` spots carry `"ad"` — `ad-wide-03`

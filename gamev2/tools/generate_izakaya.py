@@ -3,8 +3,8 @@
 table) and its street door in Tokyo.
 
 The Izakaya is in Market, the temple-town district of the stitched Tokyo
-(issue #68: it used to be behind Inaka's farmhouse, and Inaka is a made-up
-town that will go). It is the red townhouse in the south-west corner of the
+(issue #68: it used to be behind the farmhouse of Inaka, a made-up town that
+is deleted). It is the red townhouse in the south-west corner of the
 temple precinct, west of the big torii: the house front at Market (6..8, 37),
 door on (7,37), reached from the paving in front of it (7,38). A red lantern
 (akachochin) stands either side of the house so the door can be found, and

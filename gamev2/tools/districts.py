@@ -31,8 +31,8 @@ Shirakawa-go's ryokan, Ueno and Shibuya in Tokyo's Park) has NO district:
 add it with the map change that builds it. A room need not be covered edge
 to edge, and districts of one room never overlap.
 
-Not listed on purpose: Machi, Inaka and Yukimura (made-up towns that are being
-deleted), stations and interiors (indoors: the platform is their one spot).
+Not listed on purpose: stations and interiors (indoors: the platform is their
+one spot).
 
 Run from gamev2/:  python3 tools/districts.py            write config.json `districts`
                    python3 tools/districts.py --report   print each district's spots and where
@@ -49,8 +49,9 @@ import sys
 
 import blog_to_npc as b
 
-# Rooms that are towns but get no districts: being deleted (issue #219)
-UNLABELLED = ('Machi', 'Inaka', 'Yukimura')
+# Rooms that are towns but get no districts. None today: the made-up towns
+# this listed (Machi, Inaka, Yukimura) are deleted (issue #68).
+UNLABELLED = ()
 
 
 def d(key, name, description, bounds, stand=None):

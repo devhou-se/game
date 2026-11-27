@@ -12,7 +12,6 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         const [host, door] = doors[0];
         const districts = c.cities.TokyoCity.rooms.map((r) => r.room);
         assert.ok(districts.includes(host), `${host} is not a district of the stitched Tokyo`);
-        assert.notStrictEqual(host, 'Machi', 'Machi is to be deleted');
         assert.deepStrictEqual([host, door.gridX, door.gridY, door.targetX, door.targetY, door.hidden], ['Market', 7, 37, 9, 12, true]);
 
         const room = rooms[host], solid = tiles(room, 'Colliders'), front = `${door.gridX},${door.gridY + 1}`;
@@ -78,16 +77,11 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         assert.ok(tool.includes("((6, 36), 'wide', 'ad-wide-03')") && tool.includes("((8, 36), 'square', 'ad-square-01')"));
     });
 
-    test("Inaka's farmhouse is a sealed house again: no door, no way to the Izakaya from Inaka (#68)", () => {
-        const c = cfg(), inaka = c.rooms.Inaka, name = (t) => c.tilePalette[t];
-        assert.deepStrictEqual(inaka.transporters.map((t) => t.targetRoom), ['InakaStation']);
-        // the red farmhouse still stands beside the pond, and its doorway (13,16) is solid like its walls
-        assert.strictEqual(name(tiles(inaka, 'Collidables')['12,16']), 'building-entrance-3_0_0');
-        for (const x of [12, 13, 14]) assert.ok(`${x},16` in tiles(inaka, 'Colliders'), `farmhouse front ${x},16 is open`);
-        assert.ok(!JSON.stringify(c.rooms.Izakaya.transporters).includes('Inaka'));
-        // the generators agree: Inaka's no longer builds or names the Izakaya, the Izakaya has its own
+    test('the Izakaya has its own generator, and no made-up town leads to it (#68)', () => {
+        const c = cfg();
+        assert.ok(!/Inaka|Machi|Yukimura/.test(JSON.stringify(c.rooms.Izakaya.transporters)));
         const tool = (f) => fs.readFileSync(path.join(GV2, 'tools', f), 'utf8');
-        assert.ok(!/rooms'\]\['Izakaya'\]|targetRoom.*Izakaya|'Izakaya',/.test(tool('generate_inaka.py')));
+        assert.ok(!fs.existsSync(path.join(GV2, 'tools', 'generate_inaka.py')), 'the town it used to be in is deleted');
         assert.ok(/'generate_izakaya'/.test(tool('check_generators.py')), 'check_generators.py does not run generate_izakaya');
     });
 

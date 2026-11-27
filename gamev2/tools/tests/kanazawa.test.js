@@ -154,7 +154,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
     test('Kanazawa: the station is a city stop on the line from Tokyo; Shirakawa-go and Toyama have none (#68)', () => {
         const st = cfg.stations.KanazawaStation;
         assert.deepStrictEqual([st.label, st.town, st.train, st.parent], ['Kanazawa', 'Kanazawa', 'train-orange', undefined]);
-        assert.ok(st.order > cfg.stations.YukimuraStation.order && st.order < cfg.stations.OsakaStation.order, "after Tokyo and its day trips on the board, before Osaka");
+        assert.ok(st.order > cfg.stations.HanedaStation.order && st.order < cfg.stations.OsakaStation.order, "after Tokyo and Haneda on the board, before Osaka");
         // a main-line city stop takes the large station (#206), with its name board in Japanese
         assert.deepStrictEqual([st.size, st.ja], ['large', '金沢']);
         const boards = cfg.rooms.KanazawaStation.layers.flatMap((l) => Object.values(l.tiles || {})).filter((t) => name(t) === 'station-name-kanazawa_0_0');

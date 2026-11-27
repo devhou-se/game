@@ -33,10 +33,10 @@ no other file needs an edit, and a name already used anywhere is an error.
 overlays collision, unreachable cells, teleports (arrows to their targets), train links, interactions and
 where each person stands on a chosen day. Click a cell for its tiles, what a bump does, the NPC's lines
 and photo, and the `play.js` command that puts you there. Maps are still edited in Tiled.
-Tokyo is drawn as the one stitched city the game plays (woodland included, the five districts outlined and
+Tokyo is drawn as the one stitched city the game plays (woodland included, the four districts outlined and
 named inside it; the inspector gives the district's own cell and the city cell, the owning district where two
-overlap); the **Stitched** button, or `/studio/?stitch=0`, shows the five rooms joined by seam teleports instead.
-In that five-room view, where a city's districts overlap on the map (Palace / Park share four rows) the later
+overlap); the **Stitched** button, or `/studio/?stitch=0`, shows the four rooms joined by seam teleports instead.
+In that four-room view, where a city's districts overlap on the map (Palace / Park share four rows) the later
 district in the city's `rooms` list is drawn on top and takes the click, as in the stitched city
 (`WorldModel.stackOrder`). Click the selected cell again for the room underneath (`WorldModel.stackPick`):
 that is how the covered seam transporters (Palace 38..39,21, Market 54..56,47) are inspected - and, in the

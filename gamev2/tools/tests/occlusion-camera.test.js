@@ -243,7 +243,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         const run = (uiScale) => {
             const main = camera('main');
             const rm = { scene: { cameras: { main }, uiScale, time: { delayedCall: (ms, fn) => fn() } }, swapped: 0, applyRoomSwap() { this.swapped++; } };
-            RM.prototype.switchRoom.call(rm, 'Machi', 1, 1);
+            RM.prototype.switchRoom.call(rm, 'Osaka', 1, 1);
             const cam = uiScale && uiScale.active ? uiScale.camera : main;
             assert.strictEqual(rm.isTransitioning, true);
             cam.fn();                                   // fade-out complete: swap, hold, fade in
@@ -286,7 +286,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         ]);
         assert.deepStrictEqual(Array.from(LandmarkView.index([rec('shrine-top_0_0', 0, 0, 5, 6)], undefined, G)), []);
 
-        // the Machi hall, lifted clear of the room's top so the numbers are the camera's alone
+        // a shrine hall, lifted clear of the room's top so the numbers are the camera's alone
         const hall = { left: 22 * G, right: 27 * G, top: 20 * G, feet: 28 * G };
         const at = (cx, cy, more) => Object.assign({ x: cx * G + 32, y: cy * G + 32, landmarks: [hall], grid: G,
             cells: look.cells, fade: look.fade, side: look.side, viewH: 960, bar: 40, deadzone: 256, foot: 128 }, more);

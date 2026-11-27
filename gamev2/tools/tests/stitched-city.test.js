@@ -15,7 +15,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         assert.strictEqual(rm.currentRoom, 'TokyoCity');
         assert.deepStrictEqual([world.here().room, world.here().x, world.here().y, world.here().city], ['Tokyo', 29, 38, 'TokyoCity']);
         assert.deepStrictEqual(world.state().room, 'Tokyo', 'sessions are saved in district cells');
-        assert.strictEqual(world.runtimeRooms().filter(k => /^(Tokyo|Market|Palace|Park|Machi)(City)?$/.test(k)).join(), 'TokyoCity');
+        assert.strictEqual(world.runtimeRooms().filter(k => /^(Tokyo|Market|Palace|Park)(City)?$/.test(k)).join(), 'TokyoCity');
 
         // colliders block (the model once walked through them): the vending machine two cells west
         assert.ok(world.step('w').moved);
@@ -43,7 +43,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         const { problems, reach } = world.survey(null, { npcs: false });
         assert.strictEqual(problems.length, 0, JSON.stringify(problems));
         const byRoom = world.reachByRoom(reach);
-        for (const k of ['Tokyo', 'Market', 'Palace', 'Park', 'Machi']) {
+        for (const k of ['Tokyo', 'Market', 'Palace', 'Park']) {
             assert.ok(byRoom[k].length > 300, k);
             assert.strictEqual(JSON.stringify(world.lint(k).errors), '{}', k);
         }
@@ -65,7 +65,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         assert.strictEqual(JSON.stringify(city.warns), '{}');
         assert.ok(world.drawOrder('TokyoCity').some(t => /^tree-3-top/.test(t.key)), 'the woods are part of the render');
         assert.ok(world.npcsIn('TokyoCity').every(n => n.homeRoom && rm.checkBoundary(n.gridX, n.gridY, 'TokyoCity')));
-        assert.strictEqual(world.npcsIn('TokyoCity').length, ['Tokyo', 'Market', 'Palace', 'Park', 'Machi'].reduce((n, k) => n + world.npcsIn(k).length, 0));
+        assert.strictEqual(world.npcsIn('TokyoCity').length, ['Tokyo', 'Market', 'Palace', 'Park'].reduce((n, k) => n + world.npcsIn(k).length, 0));
 
         // --stitch=0: the five rooms, joined by seam teleports, as ?stitch=0 plays them
         const legacy = worldWith(false).world;
@@ -147,7 +147,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
 
         rm.enter('Market', 38, 24);
         assert.strictEqual(rm.currentRoom, 'TokyoCity');
-        assert.ok(rm.streamed && rm.indexed === layers && rm.tileRecords.length > 20000);
+        assert.ok(rm.streamed && rm.indexed === layers && rm.tileRecords.length > 15000);
         const records = rm.tileRecords, blocked = rm.blockedCells, chunks = rm.chunks, first = shape(rm);
         const live = rm.liveTiles.size;
         assert.ok(live > 300 && live < 3000, `${live} sprites in view`);

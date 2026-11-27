@@ -39,7 +39,7 @@ the HTML loader.
    plus a one-line keyboard reminder (the page is redrawn if the input in use changes while it is up).
 3. **Where to start** — there is no quest system, so it points at real things: the friends (`whereFriendsAre()`
    → `Trips.whereText`: the ones in the room — the district, in a stitched city — the player is standing in are named — "Today Bailey, Damian
-   and Julia are here in Machi, and Dylan is in Inaka.", "Today everyone is here in Sapporo." — and
+   and Julia are here in Asakusa, and Dylan is in Osaka.", "Today everyone is here in Sapporo." — and
    other rooms are listed by display name, three at most; whoever the player is playing as is not
    counted; on a lead-in day "They have not arrived yet: …", `Intro.meetCopy`), exploring, and Paint the Board (with the live progress bar from `achievementManager`).
 
@@ -57,7 +57,7 @@ travel is a debug feature) — keep them out when editing the copy.
   — is never shown it automatically, and a Time Travel reload does not replay it.
 - **`?nointro=1`** suppresses the automatic showing (and leaves the gate untouched) — combine with
   `?notitle=1` in tests that start from a fresh profile. Tests that pre-seed `gamev2_character` never see it.
-  NOTE: every profile, seeded or not, starts next to the cast of the game date (e.g. Machi 22,10 on
+  NOTE: every profile, seeded or not, starts next to the cast of the game date (e.g. Fukuoka on
   2025-11-11) since #166 — there is no fixed Tokyo 29,38 spawn any more. A test that needs a known cell
   must pin the date (`?date=`) and read `Trips.startFor`, or move the player itself
   (`roomManager.switchRoomInstant`).

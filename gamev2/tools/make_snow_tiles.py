@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """make_snow_tiles.py — recolour existing terrain/tree sprites into a winter
-"snow" set for the Yukimura room (a quiet snowy village reached only by train).
+"snow" set (first drawn for a snowy village that is gone; Hokkaido uses it).
 
 There is no snow art in the pack, so we derive it: each new sprite is a
 luminance-remap of an existing one (grass -> snow field, pond -> frozen ice,
@@ -10,7 +10,7 @@ idempotent: rewrites assets/sprites/{snow,ice,*-snow}.png and registers every
 new key in config.json spriteMetadata + tileNames (the game loads a tile only
 if it has a spriteMetadata entry).
 
-Run from gamev2/ BEFORE make_prefabs.py and generate_yukimura.py:
+Run from gamev2/ BEFORE make_prefabs.py and the town generators:
     python3 tools/make_snow_tiles.py
 """
 import glob, json, os, random, re

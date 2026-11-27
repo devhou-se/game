@@ -255,7 +255,7 @@ class RoomManager {
      * Every tile is first indexed as a RECORD (cell, sprite key, depth, pixel
      * bounds) and its collision noted in `blockedCells`; sprites are made from
      * records. An ordinary room makes them all at once, as it always did. A
-     * stitched city (~20k tiles) is STREAMED: records are bucketed into
+     * stitched city (~16k tiles) is STREAMED: records are bucketed into
      * CHUNK-cell squares and only those near the camera have a sprite
      * (updateStreaming, every frame). `?cull=0` turns streaming off.
      *

@@ -9,7 +9,7 @@ without moving buildings reproduces the exact same interiors.
 
 Interiors are furnished with the office/interior pack sliced into
 assets/sprites/office-*.png. The legacy hand-made 'Konbini' room, if one is
-still in the config, is dropped: Machi's store is KonbiniMachi1.
+still in the config, is dropped.
 
 Run from gamev2/:  python3 tools/generate_konbinis.py [Host ...]    (--help: this text, nothing run)
 Then:              python3 tools/config_to_tiled.py <each new room + hosts>
@@ -28,7 +28,7 @@ cfg = rg.load_config()
 # Rooms whose 7-Elevens get an interior. Name hosts on the command line to
 # (re)build only theirs - e.g. `generate_konbinis.py Sapporo` after regenerating
 # Sapporo - and leave every other store's room exactly as it is.
-ALL_HOSTS = ['Machi', 'Market', 'Park', 'Sapporo', 'Sendai']
+ALL_HOSTS = ['Market', 'Park', 'Sapporo', 'Sendai']
 ALL_HOSTS += ['Fukuoka']
 ALL_HOSTS += ['Kanazawa']         # issue #68
 ALL_HOSTS += ['SanFranbourne']     # the home city (issue #218)
@@ -80,7 +80,7 @@ def store_name(host, ordinal, count):
 
 def find_stores():
     """All 7-Eleven doors, per host, in stable (y, x) order. A store whose door
-    already has a transporter (the original Machi Konbini) is 'wired'."""
+    already has a transporter is 'wired'."""
     stores = []
     for host in HOSTS:
         room = cfg['rooms'][host]
@@ -237,7 +237,7 @@ def build_interior(store):
 
 register_metadata()
 stores = find_stores()
-# the original hand-made Machi interior is replaced by a generated one
+# the original hand-made interior is long gone; drop it from an old config
 cfg['rooms'].pop('Konbini', None)
 new_rooms = []
 for store in stores:

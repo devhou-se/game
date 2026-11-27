@@ -40,7 +40,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.strictEqual(st.town, 'Fukuoka');
         assert.strictEqual(st.train, 'train-orange');
         assert.ok(!('parent' in st), 'a city, not a day trip');
-        for (const k of ['TokyoStation', 'InakaStation', 'YukimuraStation', 'OsakaStation', 'SapporoStation', 'AsahikawaStation']) {
+        for (const k of ['TokyoStation', 'OsakaStation', 'SapporoStation', 'AsahikawaStation']) {
             assert.ok(st.order > cfg.stations[k].order, `Hakata is listed after ${k}`);
         }
         assert.strictEqual(cfg.rooms.FukuokaStation.name, 'Hakata Station');

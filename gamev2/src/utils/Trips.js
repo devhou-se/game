@@ -379,7 +379,9 @@ class Trips {
      * a Time Travel hop (issue #166: there is no saved position to restore,
      * and the trip's home has nobody near it on most days) — starts where
      * they can meet someone: the
-     * room with the most members on that date — a tie goes to the room
+     * room with the most members on that date — a tie goes to a room
+     * outdoors before a station interior (a platform is always one hop
+     * nearer than its town, and nobody wants to start on it), then the room
      * fewest doors and train rides from home (so the home room itself
      * first), then config order — and never counting `opts.played`, the
      * member they are playing as. In the home room they stand on the home
@@ -395,10 +397,12 @@ class Trips {
         if (!groups.length) return home;
         const hops = Trips.hopsFrom(config, home.room);
         const far = (g) => (g.room in hops ? hops[g.room] : Infinity);
+        const indoors = (g) => ((config.stations || {})[g.room] ? 1 : 0);
         let best = null;
         for (const g of groups) {
+            const tie = !!best && g.members.length === best.members.length;
             const better = !best || g.members.length > best.members.length ||
-                (g.members.length === best.members.length && far(g) < far(best));
+                (tie && (indoors(g) < indoors(best) || (indoors(g) === indoors(best) && far(g) < far(best))));
             if (better) best = g;
         }
         const gap = (m, x, y) => Math.max(Math.abs(m.x - x), Math.abs(m.y - y));

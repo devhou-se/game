@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """generate_osaka.py — "Osaka", the second city: Dotonbori and Shinsekai.
 
-A generated room (roomgen + prefabs, the generate_yukimura.py recipe), NOT a
+A generated room (roomgen + prefabs, the roomgen recipe), NOT a
 port: the legacy Godot scene Scenes/osaka/osaka_outside.tscn turned out to be
 an older copy of the Tokyo overworld (same garden / market / park, even the
 Tokyo Station placeholder) with no Osaka content, so there was nothing to port.
 
-Reachable ONLY by train, like Yukimura: the station house door on the north
+Reachable ONLY by train: the station house door on the north
 side leads into the OsakaStation interior (built by generate_stations.py).
 From the station you walk south down the main street:
 

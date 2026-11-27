@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """generate_asahikawa.py — "Asahikawa", a day trip up the line from Sapporo (issue #43).
 
-A small generated town (the generate_yukimura.py recipe), reachable ONLY by
+A small generated town (the roomgen recipe), reachable ONLY by
 train through the AsahikawaStation interior (built by generate_stations.py).
-Snowier and quieter than Sapporo, and not Yukimura again - it has a frozen
-RIVER rather than a pond, and it is a ramen town:
+Snowier and quieter than Sapporo - it has a frozen RIVER, and it is a ramen
+town:
 
   north   the rail line, the platform and the station house; west of the
           forecourt RAMEN ALLEY - three machiya shopfronts under red ラーメン

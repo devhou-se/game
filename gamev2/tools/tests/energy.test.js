@@ -196,6 +196,34 @@ module.exports = ({ test, assert, game, realConfig, shopWith }) => {
             desc: 'Buy something at every konbini and discount store', value: stores.length, total: stores.length, complete: true });
     });
 
+    test("stamp card: an old save's stamps from places that are gone load, still count, and are never paid twice (#68)", () => {
+        const St = S(), config = realConfig();
+        // a save from before the made-up towns were deleted: Machi's 7-Eleven, its machines and Inaka's
+        const old = { v: 4, money: 900, items: {}, energy: 50,
+            stamps: { KonbiniMachi1: 1, 'vending:Machi': 1, 'vending:Inaka': 1, KonbiniPark1: 1, 'vending:Market': 1 } };
+        for (const gone of ['Machi', 'Inaka', 'Yukimura', 'KonbiniMachi1', 'InakaStation', 'YukimuraStation']) assert.ok(!(gone in config.rooms), gone);
+        const s = shopWith(old);
+        assert.deepStrictEqual(Object.keys(s.shop.stamps).sort(), Object.keys(old.stamps).sort(), 'nothing earned is taken back');
+        assert.strictEqual(s.shop.money, 900);
+        assert.strictEqual(St.count(s.shop.stamps), 5);
+        assert.deepStrictEqual(Array.from(St.closed(config, s.shop.stamps)).sort(), ['KonbiniMachi1', 'vending:Inaka', 'vending:Machi']);
+        assert.deepStrictEqual(Array.from(St.closed(config, { KonbiniPark1: 1, 'vending:Market': 1, DonTakoteOsaka: 1 })), []);
+        assert.deepStrictEqual(Array.from(St.closed(config, { Izakaya: 1, Market: 1 })).sort(), ['Izakaya', 'Market'], 'not a store: not a place on the card');
+        assert.deepStrictEqual(Array.from(St.closed(config, undefined)), []);
+        // the count did not fall, so the milestones already paid (2 and 5) are not reached again by the next stamp
+        assert.deepStrictEqual(Array.from(St.rewards(5, 6)), []);
+        assert.strictEqual(St.next(St.count(s.shop.stamps)).at, 8);
+        // Konbini Pilgrim asks only for the stores that exist: the closed one neither counts nor is missing
+        const stores = Array.from(St.stores(config));
+        assert.ok(!stores.some(st => /Machi/.test(st.id + st.name)));
+        assert.strictEqual(St.progress(config, s.shop.stamps).value, 1);
+        assert.strictEqual(St.progress(config, s.shop.stamps).total, stores.length);
+        assert.strictEqual(St.progress(config, Object.fromEntries(stores.map(st => [st.id, 1]))).complete, true);
+        // and it survives the next save
+        s.shop.save();
+        assert.deepStrictEqual({ ...s.saved().stamps }, old.stamps);
+    });
+
     test('stamp card: buying in the shop stamps, pays the reward into the wallet and says so', () => {
         const config = realConfig();
         const at = (s, room, district) => {

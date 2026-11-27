@@ -1,4 +1,4 @@
-"""roomgen.py — the room-building toolkit behind generate_machi.py and the
+"""roomgen.py — the room-building toolkit behind the town generators and the
 /generate-room skill. Compose a room from autotiled floor terrains + prefabs
 (tiled/prefabs/*.tmj, authored in the Tiled app), with the engine's collision
 and depth conventions baked in.

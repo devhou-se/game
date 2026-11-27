@@ -3,7 +3,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, game }) => {
         const liveryFor = game('TrainTravel.liveryFor');
         const stations = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).stations;
         for (const st of Object.values(stations)) assert.strictEqual(liveryFor(st, null), st.train);
-        assert.strictEqual(liveryFor(stations.YukimuraStation, 'train-orange'), 'train-orange');
+        assert.strictEqual(liveryFor(stations.AsahikawaStation, 'train-orange'), 'train-orange');
     });
 
     test('the departures board is ordered from data, groups day trips, and starts somewhere sensible', () => {
@@ -14,26 +14,28 @@ module.exports = ({ test, assert, fs, path, vm, GV2, game }) => {
             // Array.from: rows come from the vm realm, deepStrictEqual compares prototypes
             return Array.from(b.rows, (r, i) => (i === b.selected ? '>' : '') + '  '.repeat(r.indent) + r.label + (r.here ? ' (here)' : ''));
         };
-        // the real registry: Tokyo first, day trips under their city, never alphabetical
+        // the real registry: in line order, day trips under their city, never alphabetical. Tokyo has no day
+        // trips since the made-up towns went (#68), so its own board has no "(here)" heading: Sapporo's still does
         assert.deepStrictEqual(show('TokyoStation'),
-            ['Tokyo Station (here)', '>  Inaka', '  Yukimura', 'Haneda Airport', 'Kanazawa', 'Osaka', 'Sendai', 'Sapporo', '  Asahikawa', 'Hakata']);
+            ['>Haneda Airport', 'Kanazawa', 'Osaka', 'Sendai', 'Sapporo', '  Asahikawa', 'Hakata']);
         assert.deepStrictEqual(show('OsakaStation'),
-            ['>Tokyo Station', '  Inaka', '  Yukimura', 'Haneda Airport', 'Kanazawa', 'Sendai', 'Sapporo', '  Asahikawa', 'Hakata']);
+            ['>Tokyo Station', 'Haneda Airport', 'Kanazawa', 'Sendai', 'Sapporo', '  Asahikawa', 'Hakata']);
         // a day-trip station starts on its city; the way you came wins over that
         assert.deepStrictEqual(show('AsahikawaStation'),
-            ['Tokyo Station', '  Inaka', '  Yukimura', 'Haneda Airport', 'Kanazawa', 'Osaka', 'Sendai', '>Sapporo', 'Hakata']);
+            ['Tokyo Station', 'Haneda Airport', 'Kanazawa', 'Osaka', 'Sendai', '>Sapporo', 'Hakata']);
         assert.deepStrictEqual(show('AsahikawaStation', 'OsakaStation'),
-            ['Tokyo Station', '  Inaka', '  Yukimura', 'Haneda Airport', 'Kanazawa', '>Osaka', 'Sendai', 'Sapporo', 'Hakata']);
+            ['Tokyo Station', 'Haneda Airport', 'Kanazawa', '>Osaka', 'Sendai', 'Sapporo', 'Hakata']);
         assert.deepStrictEqual(show('SapporoStation', 'TokyoStation'),
-            ['>Tokyo Station', '  Inaka', '  Yukimura', 'Haneda Airport', 'Kanazawa', 'Osaka', 'Sendai', 'Sapporo (here)', '  Asahikawa', 'Hakata']);
-        // Kanazawa (#68) stands between Tokyo's side of the line (its day trips, then Haneda Airport, #218) and Osaka; from it the board starts on Tokyo
+            ['>Tokyo Station', 'Haneda Airport', 'Kanazawa', 'Osaka', 'Sendai', 'Sapporo (here)', '  Asahikawa', 'Hakata']);
+        // Kanazawa (#68) stands between Tokyo's side of the line (Haneda Airport, #218) and Osaka; from it the board starts on Tokyo
         assert.deepStrictEqual(show('KanazawaStation'),
-            ['>Tokyo Station', '  Inaka', '  Yukimura', 'Haneda Airport', 'Osaka', 'Sendai', 'Sapporo', '  Asahikawa', 'Hakata']);
+            ['>Tokyo Station', 'Haneda Airport', 'Osaka', 'Sendai', 'Sapporo', '  Asahikawa', 'Hakata']);
         // where you came from is ignored when it is where you are, or not a station
-        assert.strictEqual(board(stations, 'TokyoStation', 'TokyoStation').selected, 1);
-        assert.strictEqual(board(stations, 'TokyoStation', 'Nowhere').selected, 1);
+        assert.strictEqual(board(stations, 'TokyoStation', 'TokyoStation').selected, 0);
+        assert.strictEqual(board(stations, 'TokyoStation', 'Nowhere').selected, 0);
 
         // every station is on every board exactly once, and the heading is never the selection
+        assert.ok(!Object.keys(stations).some(k => /Inaka|Yukimura/.test(k + stations[k].label + stations[k].town)), 'a made-up town is still a stop');
         for (const from of Object.keys(stations)) {
             const b = board(stations, from, null);
             const dests = Array.from(b.rows).filter(r => !r.here).map(r => r.key).sort();

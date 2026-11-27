@@ -81,7 +81,7 @@ changed by one agent per town at a time.
 - **Room generators are the source of truth for generated rooms.** Edit the generator and re-run it, or
   make a surgical edit and mirror it in the generator; never leave `check_generators.py` failing. Ported
   rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth.
-- **Everything authored stays district-local.** The five Tokyo districts are stitched into one runtime
+- **Everything authored stays district-local.** The four Tokyo districts are stitched into one runtime
   room; coordinates in config, tools and docs are the district's own.
 - **New JS files** go in the script list in `index.html` (there is no build step).
 - **Input**: the whole game runs on WASD/arrows + SPACE/ENTER + SHIFT, with ESC as the single system key
@@ -110,7 +110,7 @@ be found here.
 | `architecture.md` | File Structure (what each `src/` file is), Core Constants, Grid-Based Movement, Collision Detection, sprite positioning | your first change; adding a source file; touching movement or collision |
 | `maps-and-rooms.md` | Room System: room definition, NPC dated `states`, **Default game date**, transporters, room fade, Boundary System | editing room data, NPC states, `?date=` / default-date logic |
 | `../tiled/README.md` | Editing maps in Tiled, prefabs, `stamp_prefab.py`, layers | any map or world edit (with the `generate-room` / `adjust-game` skills) |
-| `stitched-city.md` | Stitched cities: `TokyoCity`, `CityStitcher`, district coordinates, woods, depth, chunk streaming / performance, seams, `?stitch=0`, adding a district | anything that reads the current room, cell coordinates, tiles on screen, or Tokyo / Market / Palace / Park / Machi |
+| `stitched-city.md` | Stitched cities: `TokyoCity`, `CityStitcher`, district coordinates, woods, depth, chunk streaming / performance, seams, `?stitch=0`, adding a district | anything that reads the current room, cell coordinates, tiles on screen, or Tokyo / Market / Palace / Park |
 | `occlusion.md` | Walking behind things: `Occlusion.js`, fading scenery and name labels | adding tall sprites, depth changes, "player is hidden behind X" bugs |
 | `hud-input-touch.md` | HUD System, Input Handling (all key bindings, debug menu), Small Viewports and Touch: `Viewport`, `UIScale`, the three cameras and world zoom, camera bounds, overlay rules, `TouchControls`, `Hints` | any HUD, overlay, camera, zoom, key-binding, phone or touch change |
 | `fonts-and-japanese.md` | Fonts and Japanese Text | drawing any text, especially Japanese |

@@ -100,9 +100,9 @@ scale = im.width / world_w
 # <City>` builds that room with the game's own stitcher, so the map cannot
 # drift from it; it is pasted over the city's bounding box, whichever
 # rasterizer drew the rooms underneath. The train-only towns stand CLEAR of
-# that box in the world file (issue #174: Inaka and Osaka used to sit in the
-# crook of Tokyo's L and Yukimura on its corner, so the map showed them as
-# clearings in Tokyo's woods, though nobody can walk to them). Should one be
+# that box in the world file (issue #174: Osaka used to sit in the crook of
+# Tokyo's L, so the map showed it as a clearing in Tokyo's woods, though
+# nobody can walk to it). Should one be
 # moved back inside it, it is still drawn again on top so nothing is hidden,
 # and the tool says so. The room rects below are unchanged.
 by_file = {os.path.basename(m['fileName'])[:-4]: m for m in world['maps']}

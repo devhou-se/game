@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 14,
- "nextobjectid": 357,
+ "nextobjectid": 355,
  "properties": [
   {
    "name": "gv2room",
@@ -3888,7 +3888,7 @@
     43,
     107,
     105,
-    40,
+    48,
     45,
     107,
     148,
@@ -3947,7 +3947,7 @@
     109,
     148,
     148,
-    40,
+    48,
     45,
     107,
     148,
@@ -13338,6 +13338,7 @@
     0,
     0,
     0,
+    36,
     0,
     0,
     0,
@@ -13396,8 +13397,7 @@
     0,
     0,
     0,
-    0,
-    0,
+    36,
     0,
     0,
     0,
@@ -23977,6 +23977,7 @@
     0,
     0,
     0,
+    51,
     0,
     0,
     0,
@@ -24035,8 +24036,7 @@
     0,
     0,
     0,
-    0,
-    0,
+    51,
     0,
     0,
     0,
@@ -24305,80 +24305,6 @@
      "id": 349,
      "name": "transporter",
      "point": true,
-     "x": 32.0,
-     "y": 2656.0,
-     "width": 0,
-     "height": 0,
-     "visible": true,
-     "properties": [
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "transporter"
-      },
-      {
-       "name": "targetRoom",
-       "type": "string",
-       "value": "Machi"
-      },
-      {
-       "name": "targetX",
-       "type": "int",
-       "value": 45
-      },
-      {
-       "name": "targetY",
-       "type": "int",
-       "value": 20
-      },
-      {
-       "name": "hidden",
-       "type": "bool",
-       "value": true
-      }
-     ]
-    },
-    {
-     "id": 350,
-     "name": "transporter",
-     "point": true,
-     "x": 32.0,
-     "y": 2720.0,
-     "width": 0,
-     "height": 0,
-     "visible": true,
-     "properties": [
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "transporter"
-      },
-      {
-       "name": "targetRoom",
-       "type": "string",
-       "value": "Machi"
-      },
-      {
-       "name": "targetX",
-       "type": "int",
-       "value": 45
-      },
-      {
-       "name": "targetY",
-       "type": "int",
-       "value": 21
-      },
-      {
-       "name": "hidden",
-       "type": "bool",
-       "value": true
-      }
-     ]
-    },
-    {
-     "id": 351,
-     "name": "transporter",
-     "point": true,
      "x": 3744.0,
      "y": 1440.0,
      "width": 0,
@@ -24413,7 +24339,7 @@
      ]
     },
     {
-     "id": 352,
+     "id": 350,
      "name": "transporter",
      "point": true,
      "x": 3744.0,
@@ -24450,7 +24376,7 @@
      ]
     },
     {
-     "id": 353,
+     "id": 351,
      "name": "transporter",
      "point": true,
      "x": 1952.0,
@@ -24487,7 +24413,7 @@
      ]
     },
     {
-     "id": 354,
+     "id": 352,
      "name": "transporter",
      "point": true,
      "x": 1248.0,
@@ -24524,7 +24450,7 @@
      ]
     },
     {
-     "id": 355,
+     "id": 353,
      "name": "transporter",
      "point": true,
      "x": 2656.0,
@@ -24561,7 +24487,7 @@
      ]
     },
     {
-     "id": 356,
+     "id": 354,
      "name": "boundary",
      "x": 0,
      "y": 0,

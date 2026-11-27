@@ -31,8 +31,6 @@ Run from gamev2/:  python3 tools/check_distinct.py            the table, and the
                                                               (after a rebuild made a city better,
                                                               or a new town landed: say why in the commit)
 
-The made-up towns that are being deleted (Machi, Inaka, Yukimura) are
-compared against, as the audit did, but not judged and not recorded.
 A new town's own landmark art counts as building sprites once its prefix is
 in LANDMARK_ART below.
 """
@@ -43,8 +41,6 @@ import sys
 
 TARGETS = {'buildings': 0.25, 'sprites': 0.40, 'own': 1 / 3}
 BASELINE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'distinct_baseline.json')
-# rooms measured as towns of their own but never judged: being deleted
-DOOMED = ('Machi', 'Inaka', 'Yukimura')
 # pieces shared on purpose: not counted for or against a city's own art
 KIT = re.compile(r'^(seven-eleven|7-11-sign|.*vending-machine|road-|crossing-|traffic-light|train-track|'
                  r'station-|train-|gk_blank)')
@@ -88,8 +84,7 @@ def is_building(fam):
 
 def towns(cfg):
     """{city name: [outdoor room keys]} — a stitched city's districts under
-    the city's name, any other outdoor room under its own key; a DOOMED room
-    is always a town of its own (Machi is stitched to Tokyo and is not Tokyo)."""
+    the city's name, any other outdoor room under its own key."""
     stations = set(cfg.get('stations') or {})
     city_of = {}
     for city in (cfg.get('cities') or {}).values():
@@ -99,7 +94,7 @@ def towns(cfg):
     for key, room in cfg['rooms'].items():
         if room.get('interior') or key in stations:
             continue
-        out.setdefault(key if key in DOOMED else city_of.get(key, key), []).append(key)
+        out.setdefault(city_of.get(key, key), []).append(key)
     return out
 
 
@@ -134,8 +129,6 @@ def measure(cfg):
     sets = {city: sprite_sets(cfg, rooms) for city, rooms in towns(cfg).items()}
     out = {}
     for city, (sprites, buildings, objects) in sets.items():
-        if city in DOOMED:
-            continue
         others = [c for c in sets if c != city]
         worst = max(others, key=lambda c: jaccard(buildings, sets[c][1]), default=None)
         elsewhere = set().union(*[sets[c][2] for c in others]) if others else set()

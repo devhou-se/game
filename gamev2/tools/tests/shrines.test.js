@@ -26,7 +26,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         const prefab = JSON.parse(fs.readFileSync(path.join(GV2, 'tiled', 'prefabs', 'shrine.tmj'), 'utf8'));
         const seal = prefab.layers.find((l) => l.name === 'Colliders').data;
         const found = halls(c);
-        assert.strictEqual(found.length, 7, 'Tokyo, Machi, Asahikawa, Kanazawa, Market, Park, Fukuoka');
+        assert.strictEqual(found.length, 6, 'Tokyo, Asahikawa, Kanazawa, Market, Park, Fukuoka');
         for (const h of found) {
             const solid = tiles(h.room, 'Colliders'), [dx, dy] = h.doorCell, ox = h.x - 1, oy = h.y - 2;
             // the prefab's own seal, cell for cell: only the door is left out of it

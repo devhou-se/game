@@ -35,7 +35,7 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Gassho farmhouses, the suspension bridge, the viewpoint, the peaks | Shirakawago | `shirakawa-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 | Glass Art Museum, tram and stop, black-ramen shop, port observation tower | Toyama | `toyama-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 
-- **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reachable only by train, like Yukimura:
+- **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reachable only by train:
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
   plaza, with the ferris wheel on the north bank. The Dotonbori canal (rows 20-22) runs the whole width of
   the map under the bridge and carries the ambient boats (issue #61, see Ambient Traffic); the main street
@@ -54,9 +54,9 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   that is one sprite; see "Looking up at landmarks" in `hud-input-touch.md`). A landmark entry may carry a third
   element `(dx, dy)`: the cell, relative to the sprite's top-left, where a visitor stands (tall sprites'
   own cell is their tip, not their foot), and an options dict:
-  - `{'rooms': ('Machi',)}` — the label names one place, so only those rooms offer it. Use it whenever a
-    label would be wrong in another town built from the same sprites (`the old-town lane` is Machi's;
-    Asahikawa's machiya row is `ramen alley` — issue #100).
+  - `{'rooms': ('Kanazawa',)}` — the label names one place, so only those rooms offer it. Use it whenever a
+    label would be wrong in another town built from the same sprites (`the Nagamachi samurai lane` is
+    Kanazawa's, though Sendai has the same gate — issue #100).
   - `{'indoors': True}` — offered inside station rooms, and only there (issue #73).
 
 ### Districts: the named areas of every town (issue #219)
@@ -84,8 +84,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
 - **Names are the redesign plan's, bounds are today's map.** A district the plan names that is not built yet
   has NO entry: Ueno and Shibuya (Park is one district, "Park", whose description says it stands in for both),
   Sapporo's Susukino, Asahikawa's zoo gate, Shirakawa-go's ryokan, Osaka's station front (a
-  threshold, not a district). Add it in the change that builds it. Machi, Inaka and Yukimura (being deleted)
-  have none; San Franbourne (#218) was not on master when this landed: give it districts when it is.
+  threshold, not a district). Add it in the change that builds it. San Franbourne (#218) was not on master when this landed: give it districts when it is.
 
 | Room (key) | Districts today |
 |---|---|
@@ -203,7 +202,7 @@ station: the owner's rule is that small places are walked to from their town, no
   the three maps in `../devhouse.world` (as `hokuriku.AT` places them), `config cities.HokurikuCity`,
   `sync_cities.py`, `config_to_tiled.py Kanazawa Shirakawago Toyama KanazawaStation KonbiniKanazawa1`,
   `play.js lint` for those and `HokurikuCity`, `make_worldmap.py`. In `devhouse.world` the region stands
-  north-west of Tokyo, north of Yukimura and west of Sapporo (its box is x -112..-2, y -100..-34 in world
+  north-west of Tokyo and west of Sapporo (its box is x -112..-2, y -100..-34 in world
   cells), east of Fukuoka's east edge - Fukuoka stays the westernmost map - and across Sendai's band of latitude.
 - Blog NPCs can be sent to `Kanazawa Castle's Ishikawa gate`, `Kenrokuen garden`, `the Higashi Chaya teahouse
   row`, `the whisky bar`, `the Nagamachi samurai lane` (Kanazawa), `the suspension bridge`, `the Shirakawa-go
@@ -280,8 +279,8 @@ pipeline has placed someone there.
   clock tower was rejected (16px art - pixels twice the size - and more saturated). `--preview out.png`
   writes a contact sheet. It also derives the `dirt-snow-autotile` family (9 roles) from
   `dirt-outside-autotile` by swapping the green grass fringe for a snow bank - use it for dirt paths on
-  snow ground (Asahikawa and Yukimura's shrine path do, #105) - and `gravel-snow-autotile` from
-  `gravel-autotile` the same way (`SNOW_FAMILIES`), which the rail corridors of Yukimura, Sapporo and
+  snow ground (Asahikawa does, #105) - and `gravel-snow-autotile` from
+  `gravel-autotile` the same way (`SNOW_FAMILIES`), which the rail corridors of Sapporo and
   Asahikawa use (#125). `test_game.js` fails a snow-ground room that lays either grass-fringed family.
 - **Sapporo's own art**: `tools/generate_sapporo_art.py` (needs Pillow, in `check_generators` `ART_TOOLS`)
   draws everything else that is Sapporo's - the station front, the government hall, the two office blocks,
@@ -315,8 +314,9 @@ pipeline has placed someone there.
   (the plaza beside the fountain), `the snow castle`, `the snow tanuki`, `the snow bear`, `the snow festival
   stalls` and `the Odori fountain` (all scoped to Sapporo), `the bridge over the frozen river` and `ramen
   alley` (`LANDMARKS` in `tools/blog_to_npc.py`), besides the generic shrine / torii / 7-Eleven / vending
-  spots. `the frozen pond` is still a row (an `ice-pond-autotile` pond): Sapporo's went with stage 2, so only
-  Yukimura has one today.
+  spots. `the frozen pond` is no longer a row: Sapporo's pond went with stage 2 of its rebuild and the only other
+  one was in Yukimura, a made-up town that is deleted (issue #68). A town that gets a frozen pond adds a row
+  scoped to it.
 - Asahikawa's three cottages were the first houses you could walk into (`HouseAsahikawa1..3`, see House
   interiors below); the three machiya of ramen alley are shops and stay sealed.
 - A room missing from `assets/map/world-map.json` is fine: `TrainTravel.dirTo` treats it as x=0. Re-run
@@ -435,7 +435,7 @@ the generator, `config_to_tiled` and lint for the rooms touched, then the five c
 | Sapporo | `HouseSapporo1..6` (the south lane; the north-east one went with the rebuild of the north, #219, and the rest moved up a number) | - |
 | Sendai | `HouseSendai2..5` (the machiya row, one townhouse on the south lane) | 1: the courtyard house behind its earthen wall; 6..10: the row behind the south wall - nobody can stand at their doors, so the numbers are kept and unused |
 
-Machi, Inaka and Yukimura have none on purpose (those towns are going away); Palace, Park and Tokyo have no
+Palace, Park and Tokyo have no
 houses. A door in a district of the stitched city is like a konbini's there: the transporter and the way
 back are in the district's own cells (`RoomManager.resolve`), with stitching on or `?stitch=0`.
 A machiya's doorway is the one cell of its footprint you can step onto (`sendai.test.js` allows exactly
@@ -555,7 +555,7 @@ tower) **and Sapporo** (its own two office blocks, `LobbySapporo1` the brick one
 A shrine hall is enterable: its top step (the `shrine` / `shrine-red` prefab's door cell, building cell
 `(1, 4)`) carries a hidden transporter into a worship hall of its own, `Shrine<Host><n>` (HUD: `Shrine | Asakusa`, the host's display name).
 Applied so far to **Tokyo, Market and Park**; Asahikawa, Kushida and Dazaifu Tenmangu (Fukuoka) come with
-the roll-out, Machi is being deleted.
+the roll-out.
 
 - **`tools/generate_shrines.py [Host ...]`** owns the interior and the door it opens in the host, like
   `generate_konbinis.py`: the room is rebuilt from scratch (its NPCs kept), the door cell is unsealed and its

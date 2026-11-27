@@ -56,7 +56,7 @@ const bootOn = (today, search) => {
     game('setTripDates(__cfg)');
     return game('gameDate()');
 };
-// The travelling cast on a date: "Room/Name" (the izakaya's opponents and Yukimura's villager are fixtures).
+// The travelling cast on a date: "Room/Name" (the izakaya's opponents are fixtures).
 const castOn = (config, date) => {
     const resolveNpc = game('resolveNpc'), trips = game('Trips.of')(config);
     const out = [];

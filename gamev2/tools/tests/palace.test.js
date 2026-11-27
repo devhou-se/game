@@ -47,7 +47,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         assert.deepStrictEqual(shrine.map((t) => [t.gridX, t.gridY]), [[30, 20]]);
         assert.strictEqual(c.rooms.ShrineTokyo1.name, 'Palace Shrine');
         // and the host's other ways out are the seams it always had
-        assert.deepStrictEqual(host.transporters.map((t) => t.targetRoom), ['Machi', 'Machi', 'Market', 'Market', 'ShrineTokyo1', KEY, KEY]);
+        assert.deepStrictEqual(host.transporters.map((t) => t.targetRoom), ['Market', 'Market', 'ShrineTokyo1', KEY, KEY]);
     });
 
     test('nobody stands on a palace door or the cell in front of it on any date, and no blog spot stands a visitor there (#215)', () => {

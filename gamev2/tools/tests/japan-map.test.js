@@ -89,22 +89,16 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         // the stitched city is ONE dot, named after the city
         const tokyo = list.find(p => p.key === 'TokyoCity');
         assert.deepStrictEqual(plain(tokyo.rooms), plain(config.cities.TokyoCity.rooms).map(m => m.room));
-        // every town a train goes to is on the map, but for the made-up ones (not in Japan: no dot,
-        // still a train ride from Tokyo Station)
-        const madeUp = ['Inaka', 'Yukimura'];
+        // every town a train goes to is on the map: the made-up ones, which had no dot, are deleted (#68)
         for (const [room, st] of Object.entries(config.stations)) {
             const key = P.of(config, st.town);
             assert.strictEqual(P.of(config, room), key, `${room} is in its town`);
-            if (madeUp.includes(st.town)) assert.strictEqual(key, null, `${st.town} has a dot`);
-            else assert.ok(key, `${st.town} has no geo in config.places`);
+            assert.ok(key, `${st.town} has no geo in config.places`);
         }
         // every other room is somewhere too: an interior is in the town its door leads to
-        for (const room of Object.keys(config.rooms)) {
-            if (!madeUp.some(m => room.startsWith(m))) assert.ok(P.of(config, room), `${room} is in no place`);
-        }
+        for (const room of Object.keys(config.rooms)) assert.ok(P.of(config, room), `${room} is in no place`);
         assert.strictEqual(P.of(config, 'KonbiniSapporo1'), 'Sapporo');
         assert.strictEqual(P.of(config, 'Izakaya'), 'TokyoCity');
-        assert.strictEqual(P.of(config, 'Machi'), 'TokyoCity');
         assert.strictEqual(P.of(config, 'FukuokaStation'), 'Fukuoka');
         // a district of Tokyo is named by its display name, and says its city (#219: the room keys are unchanged)
         assert.strictEqual(P.whereText(config, 'Market'), 'Asakusa (in Tokyo)');
@@ -114,7 +108,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.strictEqual(P.whereText(config, 'KonbiniMarket1'), '7-Eleven · Asakusa 1 (in Tokyo)');
         assert.strictEqual(tokyo.label, 'Tokyo', "the city's dot keeps the city's name");
         assert.strictEqual(P.whereText(config, 'TokyoStation'), 'Tokyo Station');
-        assert.strictEqual(P.whereText(config, 'Inaka'), 'Inaka (not on this map)');
+        // no room of the game needs it now, but a town with no geo still says so rather than naming a wrong place
+        assert.strictEqual(P.whereText({ rooms: { Nowhere: { name: 'Nowhere' } } }, 'Nowhere'), 'Nowhere (not on this map)');
 
         // the districts of a stitched region are dots of their own where they are real places far apart:
         // Hokuriku is one stitched city and three towns (Tokyo's districts are one), and it has no dot itself
@@ -147,7 +142,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         const config = realConfig();
         const on = (date, opts) => Array.from(P.present(config, date, opts)).sort();
         // devhouse 2: three in Sendai and one at Tokyo Station; then Fukuoka, with one still at Kanazawa's
-        // shrine (the Hokuriku posts stand in Hokuriku, #68; before that he was put in Machi, Tokyo)
+        // shrine (the Hokuriku posts stand in Hokuriku, #68)
         assert.deepStrictEqual(on('2025-10-27'), ['Sendai', 'TokyoCity']);
         assert.deepStrictEqual(on('2025-11-10'), ['Fukuoka', 'Kanazawa']);
         // Hokuriku: a member in Shirakawa-go or Toyama lights THAT town's dot, not Kanazawa's or one for the region
@@ -156,7 +151,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.deepStrictEqual(on('2025-11-03').filter(k => HOKURIKU.includes(k)), ['Shirakawago', 'Toyama']);
         assert.ok(rooms('2025-11-05').includes('KanazawaStation'), 'one is on the platform at Kanazawa Station');
         assert.deepStrictEqual(on('2025-11-05').filter(k => HOKURIKU.includes(k)), ['Kanazawa', 'Shirakawago']);
-        assert.deepStrictEqual(on('2025-11-06'), ['Kanazawa']);
+        // the Lake Biwa ride has no town of its own yet: it stands on Osaka's platform, the city it set out from (#68)
+        assert.deepStrictEqual(on('2025-11-06'), ['Kanazawa', 'Osaka']);
         // the gold ring is the district the player stands in (as a Tokyo district is Tokyo), an interior its town
         for (const k of HOKURIKU) assert.strictEqual(P.of(config, k), k);
         assert.strictEqual(P.of(config, 'Park'), 'TokyoCity');

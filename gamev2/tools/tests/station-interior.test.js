@@ -51,7 +51,7 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, realConfig }) => {
         });
         const { stations } = realConfig();
         for (const key of ['TokyoStation', 'OsakaStation', 'SendaiStation', 'SapporoStation', 'FukuokaStation']) assert.strictEqual(stations[key].size, 'large', key);
-        for (const key of ['InakaStation', 'YukimuraStation', 'AsahikawaStation']) assert.strictEqual(stations[key].size, 'small', key);
+        for (const key of ['AsahikawaStation']) assert.strictEqual(stations[key].size, 'small', key);
     });
 
     test('the train contract: door cells on the track, the platform under them, the only way there through the gates (#206)', () => {
@@ -173,7 +173,7 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, realConfig }) => {
 
     test('every station is signed: name boards drawn for it, the departures board, the exit, a clock, benches (#206)', () => {
         const art = (key) => fs.existsSync(path.join(GV2, 'assets', 'sprites', key + '.png'));
-        const ja = { TokyoStation: '東京', OsakaStation: '大阪', SapporoStation: '札幌', AsahikawaStation: '旭川', InakaStation: 'いなか', YukimuraStation: '雪村', SendaiStation: '仙台', FukuokaStation: '博多' };
+        const ja = { TokyoStation: '東京', OsakaStation: '大阪', SapporoStation: '札幌', AsahikawaStation: '旭川', SendaiStation: '仙台', FukuokaStation: '博多' };
         each((key, st, room, m, config) => {
             const board = `station-name-${key.replace(/Station$/, '').toLowerCase()}_0_0`;
             assert.ok(art(board), `${key}: no name board art (${board}) - run tools/generate_station_art.py`);

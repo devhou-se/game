@@ -192,9 +192,6 @@ LANDMARKS = [
     # middle, two rows down — stand on the ground in front of the trunk (#183)
     ('sakura-large-top', 'the sakura trees', (1, 3)),
     ('white-vending-machine-top', 'the vending machines'),
-    # Machi's lane. Asahikawa's ramen alley is built from the same machiya
-    # prefabs and has its own name below (issue #100)
-    ('machiya-', 'the old-town lane', (2, 5), {'rooms': ('Machi',)}),   # on the lane, at a shop door
     # Named landmarks. These are single sprites many cells tall, whose tile
     # cell is their top-left corner (the tip of a tower) — so each carries the
     # cell, relative to that corner, where someone visiting it would stand:
@@ -231,7 +228,6 @@ LANDMARKS = [
     ('tanukikoji-shop-souvenir_', 'the souvenir shop', (0, 4), {'rooms': ('Sapporo',)}),   # at the window, west of the door
     ('asahikawa-bridge_', 'the bridge over the frozen river', (1, -1)),   # the north bridgehead
     ('ramen-banner_', 'ramen alley', (-1, 2)),                     # on the lane, outside a shop
-    ('ice-pond-autotile_corner-nw', 'the frozen pond', (0, -1)),   # on the bank (the ice is solid)
     # Sendai (issue #66). Each stands its visitor in the open, in front
     ('sendai-masamune_', 'the Aoba Castle ruins', (3, 4), {'rooms': ('Sendai',)}),   # the terrace, beside the statue's plinth
     ('sendai-zuihoden_', 'Zuihoden', (2, 6), {'rooms': ('Sendai',)}),        # the landing at the head of the steps
@@ -468,7 +464,7 @@ def reachable_cells(cfg, room_key):
     on reachability at all (test_spots fails an overworld room like that).
 
     A room on its own is entered by its transporters. A district of a
-    stitched city (config `cities`: Tokyo, Market, Palace, Park, Machi) is
+    stitched city (config `cities`: Tokyo, Market, Palace, Park) is
     also walked into from its neighbours, with no transporter involved, so it
     is flooded as part of the whole city (city_reachable) — a district whose
     only door is a konbini is not judged from that door alone, and one with

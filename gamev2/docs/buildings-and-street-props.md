@@ -25,7 +25,7 @@ apartment blocks get a lobby from the same tool (`--lobbies`; Osaka's three and 
 | `midrise-apartment` (the same block, two floors lower) | 5x6 | Palace (40,10), feet on the forecourt edge |
 | `sapporo-office-brick` / `sapporo-office-glass` (Sapporo's own office blocks, `roof=1`: only the top row is walk-behind) | 4x7 / 5x6 | Sapporo (49,9) / (10,11) - each with a lobby |
 | `discount-store` (the "Don Quijote") | 5x8 | Market (46,22), Osaka (13,9) by the Dotonbori arch, Sapporo (16,11) - each with an interior |
-| `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Machi (4/9/14,17): the old-town lane |
+| `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Asahikawa's ramen alley, Sendai, Kanazawa, Toyama's old street, Fukuoka |
 
 - **Art** is assembled by `tools/extract_city.py` from the GuttyKreum RPG Maker tile kits in `../Assets/GuttyKreum`
   (Osaka `GK_Osaka_C_2`, Dotonbori `GK_DB_B`, Japanese City `GK_JC_C_2`) - a kit holds a roof cap, one window
@@ -38,14 +38,13 @@ apartment blocks get a lobby from the same tool (`--lobbies`; Osaka's three and 
   with `tools/generate_ads.py`'s text helpers - ドン・タコーテ ("Don Takote"), yellow board, blue band, a red
   octopus. It needs a Japanese font from `generate_ads.find_font()` (macOS system fonts).
 - **Placing one**: generated rooms `b.stamp('highrise-glass', x, y)` in their generator (Osaka does). Ported
-  rooms and Machi use **`tools/stamp_prefab.py <Room> --add <prefab> x y [--remove <prefab> x y] [--dry-run]`**,
+  rooms use **`tools/stamp_prefab.py <Room> --add <prefab> x y [--remove <prefab> x y] [--dry-run]`**,
   which refuses to write if the prefab overlaps another standing sprite, lands on a solid cell, covers a
   transporter or any dated NPC position (under its solid rows or its walk-behind roof rows), or cuts walkable
   cells off from the room's transporters (flood-fill). To change a building prefab's collision, `--remove` it
   from the ported rooms first, re-run `make_prefabs.py`, then `--add` it back. Then
   `config_to_tiled.py`, `play.js lint` (it reads the Tiled map), `make_worldmap.py`.
-- Blog NPCs can be sent to `the Don Takote discount store` and `the old-town lane` (`LANDMARKS` in
-  `tools/blog_to_npc.py`).
+- Blog NPCs can be sent to `the Don Takote discount store` (`LANDMARKS` in `tools/blog_to_npc.py`).
 
 ### Street accessories: traffic lights, zebra crossings, kerbside props, no bins (issue #19)
 
@@ -77,7 +76,7 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
   have a heavily worn second stripe that reads as a glitch in game. The Japanese City `GK_JC_A5_2` crossings are on a much darker asphalt - not those.
 - **Where**: signalled crossings in Tokyo (south road at the palace path, west road), Market (north road on the
   temple axis, east road, south road at the torii), Palace (east road), Park (south road, east road) and Osaka
-  (the main street, between the arch and the bridge); props scattered through those, and Machi.
+  (the main street, between the arch and the bridge); props scattered through those.
 - **Osaka's roads** (issues #106 / #151, `generate_osaka.py`): the **main street** is columns 23-26 from row
   11 to the avenue - `road-edge-left`, `road-lane-left`, `road-lane-right`, `road-edge-right` - with the dark
   brick either side as its pavement. It ends square a row below the station door (`road-corner-nw`, two
@@ -98,8 +97,8 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
   A signal on the north side of a road needs three free rows above the kerb - Market's north road and Tokyo's are
   too close to the map edge, so Market's crossing has both signals on its south kerb.
 - **Placing more**: `tools/stamp_prefab.py <Room> --add traffic-light x y` (x,y = the TOP cell; the base is two rows
-  down), `--add crossing-h x y` etc.; generated rooms `b.stamp()` them (the Osaka / Machi placements are mirrored in
-  their generators).
+  down), `--add crossing-h x y` etc.; generated rooms `b.stamp()` them (Osaka's placements are in its
+  generator).
 - **No rubbish bins, anywhere** ("definitely no rubbish bins!!" - Japanese streets have none). The `office-bin`
   sprite is retired (PNG and `spriteMetadata` deleted in #109; its `tilePalette` slot stays as a dead entry because
   the palette is positional - never place it): konbini corners get a water dispenser / plant (`generate_konbinis.py`) and the Izakaya

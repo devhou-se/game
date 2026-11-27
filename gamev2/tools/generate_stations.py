@@ -25,22 +25,18 @@ Art: tools/extract_station.py (GuttyKreum Train Station pack) and
 tools/generate_station_art.py (walls, gates, kiosk, signs, one name board per
 station) — run both first; a new station needs the second for its name board.
 
-Also carves the Palace facade door, removes the old direct platform portals
-(superseded by the train) and points every town door that leads into a station
+Also carves the Palace facade door and points every town door that leads into a station
 at that station's `entry` cell. Idempotent, and safe to re-run on the live
 config: a station room that already exists keeps its NPCs (the blog pipeline
 parks dated NPC states in station rooms, at the west end of the platform — the
 template keeps those cells and the white vending machine beside them where they
-have always been). Run from gamev2/ AFTER the town generators (generate_inaka.py /
-generate_yukimura.py / generate_osaka.py / generate_sendai.py / generate_sapporo.py /
+have always been). Run from gamev2/ AFTER the town generators (generate_osaka.py / generate_sendai.py / generate_sapporo.py /
 generate_asahikawa.py / generate_fukuoka.py).
 Then: config_to_tiled, then play.js lint, for every *Station room and every town
 (the town's door is a transporter in the town's map).
 
 Stations:
   TokyoStation    — behind the Tokyo Station facade in the Palace room
-  InakaStation    — inside Inaka's station house
-  YukimuraStation — inside Yukimura's station house
   OsakaStation    — inside Osaka's station house
   SendaiStation   — inside Sendai's station house
   KanazawaStation — inside Kanazawa's station house
@@ -221,12 +217,6 @@ def station_interior(key, st):
 # `size` (optional, SIZES): 'large' for a city terminus, else the small station.
 STATIONS = {
     'TokyoStation':    {'label': 'Tokyo Station', 'town': 'Palace',   'train': 'train-orange', 'size': 'large'},
-    # Tokyo's day trips, both up the branch line (green).
-    'InakaStation':    {'label': 'Inaka',         'town': 'Inaka',    'train': 'train-green',
-                        'parent': 'TokyoStation'},
-    # Yukimura — the snowy village, on the same branch line as Inaka.
-    'YukimuraStation': {'label': 'Yukimura',      'town': 'Yukimura', 'train': 'train-green',
-                        'parent': 'TokyoStation'},
     # Haneda Airport (issue #218): the airport line's one stop. Its `town` is the
     # airport hall itself (HanedaAirport, tools/generate_airports.py) - the stairs
     # lead straight into it. `blog: False`: the blog pipeline never offers it.
@@ -255,7 +245,7 @@ STATIONS = {
 # one board per row of STATIONS). A station without one gets a romaji-only board;
 # a row may also carry its own 'ja'.
 STATION_JA = {
-    'TokyoStation': '東京', 'InakaStation': 'いなか', 'YukimuraStation': '雪村',
+    'TokyoStation': '東京',
     'OsakaStation': '大阪', 'SapporoStation': '札幌', 'AsahikawaStation': '旭川',
     'SendaiStation': '仙台', 'FukuokaStation': '博多', 'KanazawaStation': '金沢',
     'HanedaStation': '羽田空港',
@@ -272,8 +262,6 @@ def station_name(st):
 
 TOWN_DOORS = {          # townRoom: (hidden door cell into the station, exit cell outside)
     'TokyoStation':    {'door': [27, 9], 'exit': [27, 10]},
-    'InakaStation':    {'door': [29, 9], 'exit': [29, 10]},
-    'YukimuraStation': {'door': [29, 9], 'exit': [29, 10]},
     'OsakaStation':    {'door': [24, 9], 'exit': [24, 10]},
     'KanazawaStation': {'door': [33, 9], 'exit': [33, 10]},
     'SendaiStation':   {'door': [35, 9], 'exit': [35, 10]},
@@ -317,13 +305,11 @@ for room in cfg['rooms'].values():
         if t.get('targetRoom') in layouts:
             t['targetX'], t['targetY'] = layouts[t['targetRoom']]['entry']
 
-# ---- Palace: carve the facade door, remove the old direct portals -------------
+# ---- Palace: carve the facade door --------------------------------------------
 palace = cfg['rooms']['Palace']
 for L in palace['layers']:
     if L.get('collision'):
         L['tiles'].pop('27,9', None)       # the station doorway
-palace['transporters'] = [t for t in palace['transporters']
-                          if t.get('targetRoom') not in ('Inaka',)]
 if not any(t.get('targetRoom') == 'TokyoStation' for t in palace['transporters']):
     palace['transporters'].append(
         {'gridX': 27, 'gridY': 9, 'targetRoom': 'TokyoStation',

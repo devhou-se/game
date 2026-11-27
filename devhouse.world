@@ -29,27 +29,6 @@
       "height": 2816
     },
     {
-      "fileName": "gamev2/tiled/machi.tmj",
-      "x": -3072,
-      "y": 1408,
-      "width": 3072,
-      "height": 2176
-    },
-    {
-      "fileName": "gamev2/tiled/inaka.tmj",
-      "x": -5888,
-      "y": 1920,
-      "width": 2560,
-      "height": 1664
-    },
-    {
-      "fileName": "gamev2/tiled/yukimura.tmj",
-      "x": -3072,
-      "y": -2048,
-      "width": 2688,
-      "height": 1792
-    },
-    {
       "fileName": "gamev2/tiled/osaka.tmj",
       "x": -6528,
       "y": 3904,

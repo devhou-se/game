@@ -369,8 +369,8 @@ def test_spots(cfg):
 
     # a landmark that names one town is offered there and nowhere else, even
     # where another town is built from the same sprites
-    assert 'the old-town lane' in by_room['Machi']
-    assert [r for r in by_room if 'the old-town lane' in by_room[r]] == ['Machi']
+    assert 'the Nagamachi samurai lane' in by_room['Kanazawa']
+    assert [r for r in by_room if 'the Nagamachi samurai lane' in by_room[r]] == ['Kanazawa']
     assert 'ramen alley' in by_room['Asahikawa']
     for prefix, label, _, options in map(b.landmark_fields, b.LANDMARKS):
         for room_key in options.get('rooms', ()):
@@ -379,11 +379,11 @@ def test_spots(cfg):
         if 'rooms' in options:
             offered = {r for r in by_room if label in by_room[r]}
             assert offered == set(options['rooms']), (label, offered)
-    # ... and that lane filter is doing something: the sprites are in both towns
+    # ... and that filter is doing something: the gate's sprite is in both towns
     def has_tile(room_key, prefix):
         return any(key.startswith(prefix) for layer in cfg['rooms'][room_key]['layers']
                    for key in b.decode_tiles(cfg, layer).values())
-    assert has_tile('Machi', 'machiya-') and has_tile('Asahikawa', 'machiya-')
+    assert has_tile('Kanazawa', 'sendai-gate_') and has_tile('Sendai', 'sendai-gate_')
 
     # every spot is somewhere an author can stand and the player can walk up
     # to: a free cell at the landmark's standing cell or within two of it
@@ -407,14 +407,15 @@ def test_spots(cfg):
             # ... or being stood under a canopy or roof, which hides them (issue #183)
             assert c not in b.overhead_cells(cfg, room_key), f'{spot_id}: {c} is under an overhead sprite'
             taken.add(c)
+    SAKURA = 'Osaka'
     # the sakura canopy is 3x2 from its tile cell, the trunk under its middle:
     # the spot is the ground in front of the trunk, not the canopy's corner
-    canopy = next((x, y) for layer in cfg['rooms']['Inaka']['layers'] if layer['name'] == 'Tops'
+    canopy = next((x, y) for layer in cfg['rooms'][SAKURA]['layers'] if layer['name'] == 'Tops'
                   for xy, key in b.decode_tiles(cfg, layer).items() if key.startswith('sakura-large-top')
                   for x, y in [map(int, xy.split(','))])
     under = {(canopy[0] + i, canopy[1] + j) for i in range(3) for j in range(2)}
-    assert under <= b.overhead_cells(cfg, 'Inaka'), sorted(under - b.overhead_cells(cfg, 'Inaka'))
-    assert by_room['Inaka']['the sakura trees'] == (canopy[0] + 1, canopy[1] + 3)
+    assert under <= b.overhead_cells(cfg, SAKURA), sorted(under - b.overhead_cells(cfg, SAKURA))
+    assert by_room[SAKURA]['the sakura trees'] == (canopy[0] + 1, canopy[1] + 3)
     # a landmark with a stand cell is anchored on a tile whose stand cell is in
     # the open, where the room has one — Market's first sakura has the 7-Eleven
     # in front of its trunk and its second the roof of a high-rise, which sent
@@ -438,11 +439,11 @@ def test_spots(cfg):
     assert not (store[0] - 1 <= market[0] <= store[0] + 3 and store[1] - 1 <= market[1] <= store[1] + 3), (market, store)
     assert {(store[0] + i, store[1] + j) for i in range(3) for j in range(4)} <= b.overhead_cells(cfg, 'Market', standing=True)
     assert b.overhead_cells(cfg, 'Market') < b.overhead_cells(cfg, 'Market', standing=True)
-    # ... and with nowhere in the open the first tile stays (Inaka, above)
+    # ... and with nowhere in the open the first tile stays (checked above)
     # the 7-Eleven's visitor stands on the pavement at its front, beside the
     # door — not behind the store, nor on the cell shoppers step out onto (#184)
     stores = [room_key for room_key in by_room if 'the 7-Eleven' in by_room[room_key]]
-    assert {'Machi', 'Market', 'Park', 'Sapporo'} <= set(stores), stores
+    assert {'Market', 'Park', 'Sapporo'} <= set(stores), stores
     for room_key in stores:
         door = next((t['gridX'], t['gridY']) for t in cfg['rooms'][room_key]['transporters']
                     if t['targetRoom'].startswith('Konbini')
@@ -457,17 +458,17 @@ def test_spots(cfg):
         assert cell not in b.overhead_cells(cfg, room_key, standing=True), f'{spot_id}: {cell} is inside a sprite'
     # a cell inside a standing sprite is taken before one under a roof, when nothing is open
     statues = copy.deepcopy(cfg)
-    w, h = b.room_cells(statues, 'Inaka')[:2]
-    statues['rooms']['Inaka']['layers'].append(
+    w, h = b.room_cells(statues, SAKURA)[:2]
+    statues['rooms'][SAKURA]['layers'].append(
         {'name': 'Statues', 'z': 5, 'tiles': {f'{x},{y}': 'shrub-small-circle_0_0' for x in range(w) for y in range(h)}})
-    cell = b.walkable_near(statues, 'Inaka', *canopy)
-    assert cell is not None and cell not in b.overhead_cells(statues, 'Inaka'), cell
+    cell = b.walkable_near(statues, SAKURA, *canopy)
+    assert cell is not None and cell not in b.overhead_cells(statues, SAKURA), cell
     # with nowhere open in range a covered cell still does (better hidden than unplaced)
     roofed = copy.deepcopy(cfg)
-    tops = next(layer for layer in roofed['rooms']['Inaka']['layers'] if layer['name'] == 'Tops')
-    w, h = b.room_cells(roofed, 'Inaka')[:2]
+    tops = next(layer for layer in roofed['rooms'][SAKURA]['layers'] if layer['name'] == 'Tops')
+    w, h = b.room_cells(roofed, SAKURA)[:2]
     tops['tiles'] = {f'{x},{y}': 'sakura-large-top_0_0' for x in range(w) for y in range(h)}
-    assert b.walkable_near(roofed, 'Inaka', *canopy) is not None
+    assert b.walkable_near(roofed, SAKURA, *canopy) is not None
 
     # a station's platform spot keeps clear of the train doors and where you arrive
     for room_key in stations:
@@ -492,13 +493,13 @@ def test_city_reach(cfg):
     import subprocess
     city = cfg['cities']['TokyoCity']
     names = [m['room'] for m in city['rooms']]
-    assert names == ['Tokyo', 'Market', 'Palace', 'Park', 'Machi'], names
+    assert names == ['Tokyo', 'Market', 'Palace', 'Park'], names
 
     # the layout: offsets from the union's top-left, sizes from the rooms
     districts = b.city_districts(cfg, 'Market')
     assert [d[0] for d in districts] == names
     assert min(d[1] for d in districts) == 0 and min(d[2] for d in districts) == 0
-    assert dict((d[0], d[1:3]) for d in districts)['Machi'] == (0, 22), districts
+    assert dict((d[0], d[1:3]) for d in districts)['Tokyo'] == (0, 1), districts
     assert b.city_districts(cfg, 'Osaka') is None and b.city_districts(cfg, 'KonbiniMarket1') is None
     for name in names:
         assert b.city_districts(cfg, name) == districts
@@ -544,7 +545,7 @@ def test_city_reach(cfg):
     alone = copy.deepcopy(cfg)
     del alone['cities']
     assert b.city_districts(alone, 'Market') is None
-    assert (0, 41) in b.reachable_cells(alone, 'Tokyo')      # seeded by its seam transporter again
+    assert (58, 22) in b.reachable_cells(alone, 'Tokyo')     # seeded by its seam transporter again
 
     # the pin: every cell of every room, python against the game's stitcher
     node = shutil.which('node')
@@ -568,11 +569,11 @@ def test_city_reach(cfg):
 
 def test_landmark_rules():
     """landmark_applies on a made-up world: outdoors, a station, an interior."""
-    cfg = {'rooms': {'Machi': {}, 'Other': {}, 'MachiStation': {}, 'Shop': {'interior': True}},
-           'stations': {'MachiStation': {}},
+    cfg = {'rooms': {'Sendai': {}, 'Other': {}, 'SendaiStation': {}, 'Shop': {'interior': True}},
+           'stations': {'SendaiStation': {}},
            # find_spots weighs a stand cell against the room's floor (#189)
            'game': {'gridSize': 64, 'worldWidth': 640, 'worldHeight': 640}}
-    plain, lane, platform = {}, {'rooms': ('Machi',)}, {'indoors': True}
+    plain, lane, platform = {}, {'rooms': ('Sendai',)}, {'indoors': True}
     assert [b.landmark_applies(cfg, r, plain) for r in cfg['rooms']] == [True, True, False, False]
     assert [b.landmark_applies(cfg, r, lane) for r in cfg['rooms']] == [True, False, False, False]
     assert [b.landmark_applies(cfg, r, platform) for r in cfg['rooms']] == [False, False, True, True]
@@ -584,14 +585,14 @@ def test_landmark_rules():
     # find_spots on it: the shop offers nothing even to an 'indoors' landmark
     # (the pipeline keeps no books in `interior` rooms), the station only that
     tiles = {'layers': [{'name': 'Other', 'tiles': {'3,4': 'white-vending-machine-top_0_0',
-                                                    '6,6': 'machiya-a_0_0'}}]}
+                                                    '6,6': 'sendai-pub_0_0'}}]}
     for room in cfg['rooms'].values():
         room.update(tiles)
     assert b.find_spots(cfg) == {
-        'Machi · the vending machines': ('Machi', 3, 4),
+        'Sendai · the vending machines': ('Sendai', 3, 4),
         'Other · the vending machines': ('Other', 3, 4),
-        'Machi · the old-town lane': ('Machi', 8, 11),
-        'MachiStation · the platform': ('MachiStation', 3, 4),
+        'Sendai · the HUB pub': ('Sendai', 9, 11),
+        'SendaiStation · the platform': ('SendaiStation', 3, 4),
     }
 
 
@@ -1102,7 +1103,7 @@ def test_tiled_maps_in_sync():
     cg = check_generators
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
     rooms = cg.tiled_rooms(root)
-    assert 'Tokyo' in rooms and 'Machi' in rooms and len(rooms) >= 30, rooms
+    assert 'Tokyo' in rooms and 'Market' in rooms and len(rooms) >= 30, rooms
     assert cg.TILED in cg.CHECKS and set(cg.GENERATORS) < set(cg.CHECKS)
     assert cg.check([cg.TILED], root) == {}, 'a tiled/*.tmj is out of step with config.json'
     # restore() names what a tool changed / added / removed and puts it back
@@ -1132,7 +1133,7 @@ def test_generator_check_skips():
     assert cg.skips(cg.CHECKS, True, True) == {}
     assert cg.skips(cg.CHECKS, True, False) == {n: 'needs a Japanese system font' for n in cg.FONT_TOOLS}
     assert sorted(cg.skips(cg.CHECKS, False, False)) == sorted(cg.ART_TOOLS)
-    assert cg.skips(['generate_machi', cg.TILED], False, False) == {}
+    assert cg.skips(['generate_osaka', cg.TILED], False, False) == {}
 
 
 def test_sync_cities_anywhere():
@@ -1170,6 +1171,7 @@ def test_districts(cfg):
     assert sorted(cfg['districts']) == sorted(k for k in outdoor if k not in districts.UNLABELLED), \
         sorted(set(outdoor) ^ set(cfg['districts']))
     assert set(districts.UNLABELLED) <= set(outdoor), 'a deleted town is still listed as unlabelled'
+    assert not {'Machi', 'Inaka', 'Yukimura'} & (set(cfg['rooms']) | set(cfg['districts'])), 'a made-up town is back (#68)'
     assert 'districts' in check_generators.GENERATORS
     spots, areas = b.find_spots(cfg), b.find_areas(cfg)
     assert len(areas) == sum(len(v) for v in cfg['districts'].values()) >= 30
@@ -1324,12 +1326,12 @@ def test_distinct():
                  'B': room(['house-blue_0_0', 'house-red_0_0', 'tree-1-base_0_0']),
                  'C': room(['sapporo-clock-tower_0_0', 'tree-9_0_0']),
                  'AStation': room(['house-red_0_0']), 'Shop': room(['house-red_0_0'], interior=True),
-                 'Machi': room(['tokyo-tower_0_0', 'tree-9_0_0'])}}
-    assert cd.towns(world) == {'Ab': ['A1', 'A2'], 'B': ['B'], 'C': ['C'], 'Machi': ['Machi']}
+                 'D': room(['tokyo-tower_0_0', 'tree-9_0_0'])}}
+    assert cd.towns(world) == {'Ab': ['A1', 'A2'], 'B': ['B'], 'C': ['C'], 'D': ['D']}
     got = cd.measure(world)
-    assert sorted(got) == ['Ab', 'B', 'C'], 'a town being deleted is compared against, not judged'
-    # Ab's buildings {house-blue, tokyo-tower}: B shares one of three, Machi one of two
-    assert got['Ab']['buildings'] == 0.5 and got['Ab']['like'] == 'Machi' and got['B']['buildings'] == 0.333
+    assert sorted(got) == ['Ab', 'B', 'C', 'D'], 'every town is judged (none is exempt now the made-up towns are deleted)'
+    # Ab's buildings {house-blue, tokyo-tower}: B shares one of three, D one of two
+    assert got['Ab']['buildings'] == 0.5 and got['Ab']['like'] == 'D' and got['B']['buildings'] == 0.333
     # its buildings and scenery {house-blue, tokyo-tower, tree-1}: none its own (the 7-Eleven is kit, grass is ground)
     assert got['Ab']['own'] == 0 and got['B']['own'] == 0.333 and got['C'] == {'buildings': 0.0, 'like': 'Ab', 'sprites': 0.5, 'own': 0.5}
     assert cd.passes({'buildings': 0.25, 'sprites': 0.4, 'own': 0.334}) and not cd.passes({'buildings': 0.26, 'sprites': 0.4, 'own': 0.5})
@@ -1337,7 +1339,7 @@ def test_distinct():
     # no worse than the baseline: equal is fine, better is fine, a higher overlap or a lower own share fails
     base = {c: {k: n[k] for k in ('buildings', 'sprites', 'own')} for c, n in got.items()}
     lines, failed = cd.check(world, base)
-    assert failed == [] and len(lines) == 5 and 'below target' in lines[2], lines
+    assert failed == [] and len(lines) == 6 and 'below target' in lines[2], lines
     assert cd.worse(got['B'], dict(base['B'], buildings=0.9, own=0.1)) == []
     assert cd.worse(got['B'], dict(base['B'], buildings=0.2)) == ['building overlap 0.33, was 0.20']
     assert cd.worse(got['B'], dict(base['B'], sprites=0.1, own=0.5)) == ['sprite overlap 0.50, was 0.10', 'own art 33%, was 50%']

@@ -12,8 +12,8 @@ Config `stations` is the rail registry, written by `tools/generate_stations.py` 
 - **`order`** - position on the departures board. It is the station's position in `STATIONS` (the
   registry itself is saved with sorted keys, so key order means nothing - that is how Asahikawa came to
   be pre-selected everywhere).
-- **`parent`** - the station key of the city this one is a day trip from (Inaka and Yukimura ->
-  `TokyoStation`, Asahikawa -> `SapporoStation`). One level only.
+- **`parent`** - the station key of the city this one is a day trip from (Asahikawa -> `SapporoStation`; Tokyo has none
+  since its two made-up day trips, Inaka and Yukimura, were deleted - issue #68). One level only.
 
 A station's `label` need not be its town's name: `FukuokaStation` is labelled `Hakata` (the board says Hakata,
 the room's HUD name is `Hakata Station`, the town room is `Fukuoka`).

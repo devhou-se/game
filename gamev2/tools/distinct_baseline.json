@@ -1,11 +1,11 @@
 {
   "Asahikawa": {
-    "buildings": 0.667,
+    "buildings": 0.265,
     "own": 0.1,
-    "sprites": 0.75
+    "sprites": 0.195
   },
   "Fukuoka": {
-    "buildings": 0.286,
+    "buildings": 0.25,
     "own": 0.262,
     "sprites": 0.451
   },
@@ -20,14 +20,14 @@
     "sprites": 0.451
   },
   "SanFranbourne": {
-    "buildings": 0.5,
+    "buildings": 0.2,
     "own": 0.688,
     "sprites": 0.321
   },
   "Sapporo": {
     "buildings": 0.067,
     "own": 0.774,
-    "sprites": 0.203
+    "sprites": 0.188
   },
   "Sendai": {
     "buildings": 0.231,
@@ -35,8 +35,8 @@
     "sprites": 0.544
   },
   "Tokyo": {
-    "buildings": 0.217,
-    "own": 0.522,
+    "buildings": 0.158,
+    "own": 0.551,
     "sprites": 0.324
   }
 }

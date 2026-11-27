@@ -265,8 +265,8 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
                         { name: 'Walls', collision: true, tiles: { '6,9': 'w', '6,8': 'w', '6,7': 'w', '6,6': 'w', '7,6': 'w', '8,6': 'w', '9,6': 'w' } }] },
             } };
         assert.deepStrictEqual({ ...startFor(tiny, '2030-01-02', { newPlayer: true }) }, { room: 'A', x: 1, y: 1 }, 'home wins a tie');
-        assert.deepStrictEqual({ ...game('Trips.hopsFrom')(realConfig(), 'Tokyo') }.Machi, 1);
-        assert.ok(game('Trips.hopsFrom')(realConfig(), 'Tokyo').Inaka > game('Trips.hopsFrom')(realConfig(), 'Tokyo').Palace, 'a train ride is further than next door');
+        assert.deepStrictEqual({ ...game('Trips.hopsFrom')(realConfig(), 'Tokyo') }.Market, 1);
+        assert.ok(game('Trips.hopsFrom')(realConfig(), 'Tokyo').Osaka > game('Trips.hopsFrom')(realConfig(), 'Tokyo').Palace, 'a train ride is further than next door');
         assert.deepStrictEqual({ ...startFor(tiny, '2030-01-02', { newPlayer: true, played: 'ann' }) }, { room: 'B', x: 5, y: 5 },
             'Bob is walled in: the nearest cell that can be walked to');
         assert.deepStrictEqual({ ...startFor(tiny, '2030-01-02', { played: 'ann' }) }, { room: 'B', x: 5, y: 5 }, 'returning or new');
@@ -342,7 +342,7 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
     test('devhouse 2 starts with all four in Tokyo, and the Osaka posts are in Osaka (#68 stage 0)', () => {
         const config = realConfig(), byRoom = game('Trips.membersByRoom');
         const where = (date) => Object.fromEntries(byRoom(config, date, {}).flatMap(g => g.members.map(m => [m.name, `${g.room} ${m.x},${m.y}`])));
-        // the base cast: one row by the road, Dylan beside the other three (he stood alone in Machi)
+        // the base cast: one row by the road, Dylan beside the other three (he once stood alone in a made-up town)
         const base = config.rooms.Tokyo.npcs.filter(n => n.trip === 'devhouse2');
         assert.strictEqual(base.map(n => `${n.name} ${n.gridX},${n.gridY}`).sort().join(' | '), 'Bailey 20,42 | Damian 24,42 | Dylan 16,42 | Julia 28,42');
         for (const [key, room] of Object.entries(config.rooms)) {

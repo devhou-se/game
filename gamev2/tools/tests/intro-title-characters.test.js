@@ -212,11 +212,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig, require, __di
         assert.strictEqual(where('2027-02-26', 'Tokyo'), 'Today they are in Asahikawa.');
         const g = (room, name, ...people) => ({ room, name, members: people.map(n => ({ name: n })) });
         assert.strictEqual(T.whereText([], 'Tokyo'), 'They are out and about.');
-        assert.strictEqual(T.whereText([g('Machi', 'Machi', 'Damian', 'Bailey')], 'Machi'), 'Today Bailey and Damian are here in Machi.');
-        assert.strictEqual(T.whereText([g('Machi', 'Machi', 'Bailey'), g('Inaka', 'Inaka', 'Dylan')], 'Machi'),
-            'Today Bailey is here in Machi, and Dylan is in Inaka.');
-        assert.strictEqual(T.whereText([g('Machi', 'Machi', 'Bailey'), g('Inaka', 'Inaka', 'Dylan'), g('TokyoStation', 'Tokyo Station', 'Julia')], 'Machi'),
-            'Today Bailey is here in Machi, and the others are in Inaka and Tokyo Station.');
+        assert.strictEqual(T.whereText([g('Market', 'Asakusa', 'Damian', 'Bailey')], 'Market'), 'Today Bailey and Damian are here in Asakusa.');
+        assert.strictEqual(T.whereText([g('Market', 'Asakusa', 'Bailey'), g('Osaka', 'Osaka', 'Dylan')], 'Market'),
+            'Today Bailey is here in Asakusa, and Dylan is in Osaka.');
+        assert.strictEqual(T.whereText([g('Market', 'Asakusa', 'Bailey'), g('Osaka', 'Osaka', 'Dylan'), g('TokyoStation', 'Tokyo Station', 'Julia')], 'Market'),
+            'Today Bailey is here in Asakusa, and the others are in Osaka and Tokyo Station.');
         assert.strictEqual(T.whereText([g('A', 'A', 'x'), g('B', 'B', 'y'), g('C', 'C', 'z'), g('D', 'D', 'w')], 'Tokyo'), 'Today they are in A, B and C.');
         const copy = game('Intro.tripCopy');
         assert.ok(/on devhouse 3 right now, in Hokkaido/.test(copy(trips[1], true, false)[0]));

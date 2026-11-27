@@ -10,9 +10,9 @@
  * A key is a `cities` key (the whole stitched city is ONE dot: Tokyo's
  * districts are "Tokyo") or a room key; `geo` is [longitude, latitude].
  * An entry whose key is neither is skipped, so a town's geo can be written
- * before its room lands. A town with no entry has no dot: the made-up ones
- * (Inaka, Yukimura) are not on the map of Japan, and are reached as ever by
- * train from Tokyo Station.
+ * before its room lands. A town with no entry would have no dot (and
+ * `whereText` says "not on this map"); every town in the game has one since
+ * the made-up towns were deleted (issue #68).
  *
  * A place that is not in Japan is `"overseas": true` (issue #218: the home
  * city, reached by air). It is still one marker with a label, a presence dot

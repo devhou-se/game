@@ -2,8 +2,7 @@
 """stamp_prefab.py — surgically add (or lift) prefabs in an EXISTING room.
 
 Generated rooms get their buildings from `b.stamp()` in their generator. The
-ported rooms (Tokyo, Market, Park, Palace) and Machi (whose generator must not
-be re-run — see tiled/README.md) have no such step: their map lives in
+ported rooms (Tokyo, Market, Park, Palace) have no such step: their map lives in
 config.json. This is the same stamp for those rooms, with the checks the
 adjust-game skill asks for done up front, so a placement cannot silently eat a
 door, bury an NPC or wall off part of the map:
@@ -22,7 +21,7 @@ door, bury an NPC or wall off part of the map:
 Nothing is written unless every check passes (or with --dry-run, ever).
 
     python3 tools/stamp_prefab.py Market --add discount-store 46 22
-    python3 tools/stamp_prefab.py Machi --remove sakura-small 5 20 --add machiya-black 4 17
+    python3 tools/stamp_prefab.py Park --remove sakura-small 5 20 --add machiya-black 4 17
     python3 tools/stamp_prefab.py Palace --add highrise-yellow 48 6 --dry-run
 
 `--remove <prefab> x y` is the inverse of a stamp at that cell (the prefab's

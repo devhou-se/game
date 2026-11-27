@@ -42,12 +42,13 @@ crossings, traffic lights, track) counts neither for nor against a city.
   rebuilt (issue #219). It exits 1 only when a city is **worse than the baseline**, `tools/distinct_baseline.json`:
   a higher overlap or a lower own share than recorded. A city that is not in the baseline (a new town) is
   printed against the targets and does not fail.
-- **The baseline** (26 Nov 2026, buildings / sprites / own): Tokyo 0.22 / 0.32 / 52%, Hokuriku 0.27 / 0.54 / 40%,
-  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.29 / 0.45 / 26%, Sapporo 0.07 / 0.20 / 77% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%, and 0.30 / 0.29 / 63% after stage 2), Osaka 0.50 / 0.45 / 11%,
-  Asahikawa 0.67 / 0.75 / 10%. `--update` records today's numbers: do it when a rebuild made a city better or
+- **The baseline** (27 Nov 2026, buildings / sprites / own): Tokyo 0.16 / 0.32 / 55%, Hokuriku 0.27 / 0.54 / 40%,
+  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.25 / 0.45 / 26%, Sapporo 0.07 / 0.19 / 77% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Osaka 0.20 / 0.45 / 11%,
+  Asahikawa 0.27 / 0.20 / 10%, San Franbourne 0.20 / 0.32 / 69%. `--update` records today's numbers: do it when a rebuild made a city better or
   a new town landed, and say so in the commit. Never to hide a city getting worse.
-- Machi, Inaka and Yukimura (being deleted) are compared against, as the audit did, and not judged: several
-  cities' worst pair today is Machi, so deleting it improves them.
+- Every town is judged: the made-up towns (Machi, Inaka, Yukimura), which were compared against and not judged,
+  are deleted (issue #68). Several cities' worst pair was one of them, which is why the building overlaps of
+  Asahikawa, Osaka, Sapporo, Fukuoka and Tokyo fell in the 27 Nov baseline with no map of theirs changing.
 - A new town's own landmark art counts as building sprites once its sprite prefix is in `LANDMARK_ART`.
 - It is not one of the five gates: run it after a town's map or generator changes. Unit test: `test_distinct`
   in `tools/test_blog_to_npc.py`.
@@ -56,7 +57,7 @@ crossings, traffic lights, track) counts neither for nor against a city.
 
 - **Generated rooms stay regenerable** (issue #107): a room generator re-run on an unchanged world leaves
   `config.json` byte-identical, and `python3 tools/check_generators.py` fails when one would not. That
-  holds for `generate_machi`, `_inaka`, `_yukimura`, `_osaka`, `_sapporo`, `_asahikawa`, `_sendai`, `_fukuoka`,
+  holds for `generate_osaka`, `_sapporo`, `_asahikawa`, `_sendai`, `_fukuoka`,
   `_kanazawa`, `_shirakawago`, `_toyama`, `_airports`, `_sanfranbourne`, `_konbinis`,
   `_discount_stores`, `_stations`, `_izakaya` (the Izakaya interior plus its street door,
   lantern pair and two pinned ad boards in Market, see Shop, Food and Drink), `_houses` (every house
@@ -70,7 +71,7 @@ crossings, traffic lights, track) counts neither for nor against a city.
     solid-track passes itself — `fix_fences.py` / `seal_tracks.py` are the same code
     (`roomgen.picket_fences` / `roomgen.seal_tracks`) for a room named on the command line, and are no
     longer a step to remember after a town generator;
-  - it keeps what it does not own from the room as it stands: NPCs (the blog pipeline's states), Machi's
+  - it keeps what it does not own from the room as it stands: NPCs (the blog pipeline's states), a room's
     ad `signage`, and a 7-Eleven door wired by `generate_konbinis.py` (`roomgen.kept_door`; with none to
     keep, on a first build, the door is sealed until `generate_konbinis.py <Host>` runs). Doors are listed in
     the order the room already has them (`roomgen.kept_order`; the shop generators replace their door in
@@ -81,7 +82,7 @@ crossings, traffic lights, track) counts neither for nor against a city.
   So a generated room may be changed either way — edit the generator and re-run it, or make a surgical
   edit (`/adjust-game`, `stamp_prefab.py`) **and mirror it in the generator** — and the check tells you if
   the two have come apart. Never leave it failing: a generator that has drifted silently drops the hand
-  edit the next time someone runs it. (That is what had happened to `generate_machi.py`: it wiped the blog
+  edit the next time someone runs it. (That is what had happened to the generator of Machi, a town since deleted: it wiped the blog
   NPCs, the signage and the stitched city's gate colliders, and resurrected the legacy `Konbini` room.)
   Ported rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth.
 - `tools/generate_stations.py` keeps an existing station room's NPCs (the blog pipeline parks dated NPC
@@ -93,8 +94,7 @@ crossings, traffic lights, track) counts neither for nor against a city.
 - **The world map shows the stitched city** (issue #146): after the rooms are drawn, `tools/make_worldmap.py`
   renders each config `cities` entry with `node tools/play.js render <City>` — the room the game plays,
   woodland and seam patches included — and pastes it over the city's bounding box. **The train-only towns
-  stand clear of that box in `devhouse.world`** (issue #174: Yukimura above Machi, Inaka and Osaka in a
-  column west of it; they used to sit inside the box and showed as clearings in Tokyo's woods). The tool
+  stand clear of that box in `devhouse.world`** (issue #174: Osaka used to sit inside the box and showed as a clearing in Tokyo's woods). The tool
   warns if a town is ever placed back inside (it is still redrawn on top), and `tools/test_game.js` fails.
   **The world file is laid out like Japan** (issue #68, north up; compass order, not true distance): Asahikawa
   north-east of Sapporo, both north of the Tokyo city, Osaka west-south-west of Tokyo, and no two detached

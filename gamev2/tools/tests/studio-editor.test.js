@@ -2,8 +2,8 @@ module.exports = ({ test, assert, fs, path, GV2, game }) => {
     test('studio stacks overlapping districts the way the stitched city does: the later one on top', () => {
         const stackOrder = game('WorldModel.stackOrder');
         const cities = { C: { rooms: [{ room: 'Tokyo' }, { room: 'Market' }, { room: 'Gone' }, { room: 'Palace' }, { room: 'Park' }] } };
-        const keys = ['Inaka', 'Market', 'Osaka', 'Palace', 'Park', 'Tokyo', 'Yukimura'];
-        assert.strictEqual(stackOrder({ cities }, keys).join(), 'Inaka,Tokyo,Osaka,Market,Palace,Park,Yukimura', 'districts take the city order, other rooms stay put');
+        const keys = ['Fukuoka', 'Market', 'Osaka', 'Palace', 'Park', 'Tokyo', 'Toyama'];
+        assert.strictEqual(stackOrder({ cities }, keys).join(), 'Fukuoka,Tokyo,Osaka,Market,Palace,Park,Toyama', 'districts take the city order, other rooms stay put');
         assert.strictEqual(keys[1], 'Market', 'the list passed in is left alone');
         assert.strictEqual(stackOrder({}, keys).join(), keys.join());
         // the real world: wherever two rooms of the map overlap, the one stacked on top is the city's owner

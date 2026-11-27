@@ -15,6 +15,13 @@
  * a discount store, by room key) or the vending machines of an area
  * (`vending:<room>`). Stamps only add up, so a milestone's reward is paid
  * the moment the count reaches it and needs no "claimed" record.
+ *
+ * A stamp is never taken back, even when its place leaves the world (issue
+ * #68 deleted Machi's 7-Eleven and the made-up towns' machines): it was
+ * bought and its reward was paid, and dropping it would pay the same
+ * milestone twice on the way back up. Such a stamp still counts on the card,
+ * which says how many are from places that have closed (`Stamps.closed`);
+ * Konbini Pilgrim only ever asks for the stores that exist.
  */
 const Energy = {
     MAX: 100,
@@ -152,6 +159,16 @@ const Stamps = {
     },
 
     count(stamps) { return Object.keys(stamps || {}).length; },
+
+    /**
+     * The stamps whose place is no longer in the world: a store that is not a
+     * store room of this config, the machines of a room that is gone.
+     */
+    closed(config, stamps) {
+        const rooms = (config && config.rooms) || {};
+        return Object.keys(stamps || {}).filter(id =>
+            (id.startsWith('vending:') ? !rooms[id.slice(8)] : !Stamps.isStore(rooms[id])));
+    },
 
     /** The milestones reached by going from `before` stamps to `after`. */
     rewards(before, after) { return Stamps.MILESTONES.filter(m => m.at > before && m.at <= after); },

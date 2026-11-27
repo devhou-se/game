@@ -42,7 +42,7 @@ import tempfile
 # its own: a town generator runs its own fence / track passes (Builder.finish)
 # and keeps what it does not own (NPCs, signage, another generator's door).
 GENERATORS = [
-    'generate_machi', 'generate_inaka', 'generate_yukimura', 'generate_osaka',
+    'generate_osaka',
     'generate_sapporo', 'generate_asahikawa', 'generate_sendai',
     'generate_fukuoka',
     'generate_airports', 'generate_sanfranbourne',

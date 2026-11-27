@@ -16,7 +16,7 @@ palette, so they sit flush against the originals):
                         a kerb on two sides, mitred on the diagonal: the end of
                         a road (Osaka's street stops square below the station)
                         and the outer corner of a junction box (Tokyo's west
-                        junction, where the lane from Machi comes in).
+                        junction).
 
 Deterministic and idempotent: rewrites the six PNGs and registers each key in
 config.json spriteMetadata + tileNames (the game only loads a tile that has a

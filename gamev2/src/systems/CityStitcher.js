@@ -2,8 +2,8 @@
  * CityStitcher - merges a city's districts into ONE continuous room at load
  * (issues #40 / #41).
  *
- * The five Tokyo districts (Tokyo, Market, Palace, Park, Machi) stay five
- * Tiled maps and five room keys in config.json — the blog pipeline, the world
+ * The four Tokyo districts (Tokyo, Market, Palace, Park) stay four
+ * Tiled maps and four room keys in config.json — the blog pipeline, the world
  * map, saved achievement progress and the room generators all key off them.
  * config `cities` lists which rooms belong together and where each one sits in
  * world cells (copied from devhouse.world by tools/sync_cities.py):
