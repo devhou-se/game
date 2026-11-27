@@ -175,14 +175,33 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.ok(abroad.length === 3 && abroad.every(n => n.length > 13 && game('hudBrief')(hudName(n)) === hudName(n)), abroad.join());
         const notHouses = (set) => Array.from(set).filter(n => !/^(House|Lobby|Shrine) · /.test(n)).sort();
         const kinds = (set, kind) => Array.from(set).filter(n => n.startsWith(kind + ' · ')).sort();
-        // Since #212 every town's shrine has its hall: "Kanazawa shrine" (15) and "Asahikawa shrine" (16) are
-        // longer than "Asakusa shrine", and Fukuoka's two halls go by their own names (14 and 16)
-        const SHRINES = ['Shrine · Asahikawa', 'Shrine · Asakusa', 'Shrine · Kanazawa'], NAMED = ['Kushida Shrine', 'Dazaifu Tenmangu'];
+        // Since #212 every town's shrine has its hall: "Kanazawa shrine" (15) is longer than "Asakusa shrine",
+        // and Fukuoka's two halls go by their own names (14 and 16). "Asahikawa shrine" (16) is past hudBrief's
+        // limit (#216): it reads "Shrine" and counts down on both phones, where it used to drop the date's year
+        const SHRINES = ['Shrine · Asakusa', 'Shrine · Kanazawa'], NAMED = ['Kushida Shrine', 'Dazaifu Tenmangu'];
         assert.deepStrictEqual(kinds(bare[744], 'Shrine'), SHRINES, 'one character or more too long: the date');
-        assert.deepStrictEqual(kinds(bare[744], 'Lobby'), [], 'every lobby counts down at 844x390');
+        assert.strictEqual(bar(744, hudName('Shrine · Asahikawa'), '¥5,000', '2027-02-10'), 'Shrine | devhouse 3 in 8 days | ¥5,000');
+        assert.strictEqual(bar(715, hudName('Shrine · Asahikawa'), '¥5,000', '2027-02-10'), 'Shrine | devhouse 3 in 8 days | ¥5,000');
+        // every lobby counts down at 844x390 but Kanazawa's two (#216): "Kanazawa lobby" is 14, as "Asakusa shrine"
+        assert.deepStrictEqual(kinds(bare[744], 'Lobby'), ['Lobby · Kanazawa 1', 'Lobby · Kanazawa 2'], 'one character too long: the date');
+        // Marunouchi's two are among those that do: "Marunouchi lobby" (16) is past hudBrief's limit, so they
+        // read "Lobby 1" and "Lobby 2" and count down on both phones, in the longest form each has room for
+        assert.deepStrictEqual(['LobbyPalace1', 'LobbyPalace2'].map((k) => config.rooms[k].name), ['Lobby · Marunouchi 1', 'Lobby · Marunouchi 2']);
+        assert.strictEqual(bar(744, hudName('Lobby · Marunouchi 1'), '¥5,000', '2027-02-10'), 'Lobby 1 | devhouse 3 in 8 days | ¥5,000');
+        assert.strictEqual(bar(715, hudName('Lobby · Marunouchi 2'), '¥5,000', '2027-02-10'), 'Lobby 2 | devhouse 3 in 8d | ¥5,000');
+        assert.strictEqual(bar(715, hudName('Lobby · Marunouchi 2'), '¥999,999', '2027-01-19'), 'Lobby 2 | devhouse 3 in 30d | ¥999,999');
+        // San Franbourne's one lobby has no number to keep: the kind alone ("San Franbourne lobby" is 20)
+        assert.strictEqual(config.rooms.LobbySanFranbourne1.name, 'Lobby · San Franbourne');
+        assert.strictEqual(bar(744, hudName('Lobby · San Franbourne'), '¥5,000', '2027-02-10'), 'Lobby | devhouse 3 in 8 days | ¥5,000');
+        assert.strictEqual(bar(715, hudName('Lobby · San Franbourne'), '¥5,000', '2027-02-10'), 'Lobby | devhouse 3 in 8 days | ¥5,000');
+        // and so would a house or a shrine of a long-named town (none stands yet): never the date for want of room
+        assert.strictEqual(bar(715, hudName('House · Marunouchi 3'), '¥5,000', '2027-02-10'), 'House 3 | devhouse 3 in 8d | ¥5,000');
+        assert.strictEqual(bar(715, hudName('Shrine · Imperial Palace'), '¥5,000', '2027-02-10'), 'Shrine | devhouse 3 in 8 days | ¥5,000');
         assert.deepStrictEqual(kinds(bare[715], 'Shrine'), SHRINES);
-        // Sapporo's lobbies (#219) read "Sapporo lobby", 13 characters like "Sapporo house": the date at 667x375
-        assert.deepStrictEqual(kinds(bare[715], 'Lobby'), ['Lobby · Sapporo 1', 'Lobby · Sapporo 2']);
+        // Sapporo's lobbies (#219) read "Sapporo lobby", 13 characters like "Sapporo house": the date at 667x375,
+        // and so do those of every town whose name is longer than Osaka's and short enough to lead (#216)
+        assert.deepStrictEqual(kinds(bare[715], 'Lobby'), ['Lobby · Asakusa', 'Lobby · Fukuoka 1', 'Lobby · Fukuoka 2', 'Lobby · Fukuoka 3',
+            'Lobby · Fukuoka 4', 'Lobby · Kanazawa 1', 'Lobby · Kanazawa 2', 'Lobby · Sapporo 1', 'Lobby · Sapporo 2', 'Lobby · Sendai']);
         assert.deepStrictEqual(notHouses(bare[744]), stations.filter(n => n.length > 13).concat('Imperial Palace', NAMED, abroad).sort());
         assert.ok(bare[744].has('Kanazawa Station') && !bare[744].has('Tokyo Station'));
         assert.deepStrictEqual(notHouses(bare[715]), stations.concat('Shirakawa-go', 'Imperial Palace', 'Palace Shrine', NAMED, abroad).sort());
@@ -262,12 +281,35 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.strictEqual(hudBrief('Lobby'), 'Lobby');
         assert.strictEqual(hudBrief('Kushida Shrine'), 'Kushida Shrine', 'a hall with a name of its own keeps it');
         assert.strictEqual(hudBrief('Izakaya | Asakusa'), 'Izakaya', 'only the kinds: any other name is cut at its first part');
-        // every lobby and shrine in the world: the town leads, no bare kind, and the short date fits both phones
-        // - but for "Asahikawa shrine" (#212), the longest of them, which is 3px over at 667x375 and drops the
-        // date's year there, as "Asahikawa Station" does (layoutHUD's last form, checked for every room below)
+        // a town too long to lead (#216): the kind keeps its number instead, or stands alone where it has none.
+        // The limit is what one row has room for with the short date, its year and the starting wallet on the
+        // narrowest landscape phone bar (667x375 lays it out 715 wide; 844x390's 744 has two characters more)
+        const MAX = game('HUD_BRIEF_MAX'), oneRow = (lead, width) => 10 + 16 * `${lead} | Feb 10 2027 | ¥5,000`.length + 10 + 64 + 10 <= width;
+        assert.strictEqual(MAX, 15);
+        assert.ok(oneRow('x'.repeat(MAX), 715) && !oneRow('x'.repeat(MAX + 1), 715), 'the limit is the 667x375 row, to the character');
+        assert.strictEqual(hudBrief('Lobby | Marunouchi 1'), 'Lobby 1');
+        assert.strictEqual(hudBrief('Lobby | Marunouchi 2'), 'Lobby 2');
+        assert.strictEqual(hudBrief('Lobby | Marunouchi 12'), 'Lobby 12');
+        assert.strictEqual(hudBrief('House | Marunouchi 3'), 'House 3', '"Marunouchi house" is 16 too');
+        assert.strictEqual(hudBrief('Shrine | Marunouchi'), 'Shrine', 'no number to keep: the kind alone');
+        assert.strictEqual(hudBrief('Shrine | Imperial Palace'), 'Shrine');
+        assert.strictEqual(hudBrief('House | Imperial Palace 2'), 'House 2');
+        assert.strictEqual(hudBrief('House | Asahikawa 12'), 'Asahikawa house', 'exactly 15: the town still leads, whatever its number');
+        assert.strictEqual(hudBrief('Lobby | Asahikawa 1'), 'Asahikawa lobby');
+        assert.strictEqual(hudBrief('Shrine | Asahikawa'), 'Shrine', '"Asahikawa shrine" is 16: it was 3px over at 667x375 and dropped the date\'s year there (#212)');
+        assert.strictEqual(hudBrief('Lobby | Kanazawa 1'), 'Kanazawa lobby');
+        for (const kind of ['House', 'Lobby', 'Shrine']) {
+            for (const town of Object.values(config.rooms).map((r) => r.name).filter((n) => n && !n.includes('·'))) {      // every place there is
+                for (const n of ['', ' 1', ' 10']) {
+                    const brief = hudBrief(`${kind} | ${town}${n}`), led = `${town} ${kind.toLowerCase()}`;
+                    assert.strictEqual(brief, led.length <= MAX ? led : kind + n, `${kind} of ${town}`);
+                    for (const width of [744, 715]) assert.ok(oneRow(brief, width), `${brief} at ${width}`);
+                }
+            }
+        }
+        // every lobby and shrine in the world: the town leads where it fits, and the short date fits both phones
         const kindRooms = Object.values(config.rooms).filter((r) => /^(Lobby|Shrine) · /.test(r.name || ''));
-        assert.ok(kindRooms.length >= 7, "the three Osaka lobbies, and Asakusa's, the Park's, Asahikawa's and Kanazawa's shrines (the palace's hall and Fukuoka's two have their own names)");
-        const noYear = [];
+        assert.ok(kindRooms.length >= 20, "the sixteen lobbies of the eight towns with towers, and Asakusa's, the Park's, Asahikawa's and Kanazawa's shrines (the palace's hall and Fukuoka's two have their own names)");
         // no room's bar wraps on a phone: the whole name or its short form fits one row with the short
         // date (its year dropped if need be, layoutHUD's last form) and the starting wallet (#219: the
         // Tokyo districts' real names are longer than the keys they replaced)
@@ -275,13 +317,18 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
             const whole = hudName(def.name), shortest = [whole, hudBrief(whole)].sort((a, b) => a.length - b.length)[0];
             for (const width of [744, 715]) assert.ok(10 + 16 * `${shortest} | Feb 10 | ¥5,000`.length + 10 + 64 + 10 <= width, `${def.name} at ${width}`);
         }
+        const tooLong = [];
         for (const def of kindRooms) {
             const brief = hudBrief(hudName(def.name)), [kind, town] = def.name.split(' · ');
-            assert.strictEqual(brief, `${town.replace(/ \d+$/, '')} ${kind.toLowerCase()}`, def.name);
-            for (const width of [744, 715]) if (10 + 16 * `${brief} | Feb 10 2027 | ¥5,000`.length + 10 + 64 + 10 > width) noYear.push(`${brief} at ${width}`);
+            const led = `${town.replace(/ \d+$/, '')} ${kind.toLowerCase()}`, n = (town.match(/ \d+$/) || [''])[0];
+            // the town leads, except where it is too long to (#216): the kind and its number, if it has one
+            assert.strictEqual(brief, led.length <= MAX ? led : kind + n, def.name);
+            assert.ok(brief.length <= MAX, def.name);
+            if (brief !== led) tooLong.push(`${def.name} -> ${brief}`);
+            for (const width of [744, 715]) assert.ok(10 + 16 * `${brief} | Feb 10 2027 | ¥5,000`.length + 10 + 64 + 10 <= width, `${brief} at ${width}`);
         }
-        assert.deepStrictEqual(noYear, ['Asahikawa shrine at 715']);
-        assert.strictEqual(config.rooms.AsahikawaStation.name.length, 'Asahikawa shrine'.length + 1, 'its station is a character longer still');
+        // the rooms it is too long for today: Marunouchi's lobbies, San Franbourne's, and Asahikawa's shrine hall
+        assert.deepStrictEqual(tooLong.sort(), ['Lobby · Marunouchi 1 -> Lobby 1', 'Lobby · Marunouchi 2 -> Lobby 2', 'Lobby · San Franbourne -> Lobby', 'Shrine · Asahikawa -> Shrine']);
         for (const def of Object.values(config.rooms).filter((r) => r.house)) {
             const brief = hudBrief(hudName(def.name)), town = config.rooms[def.house.host].name || def.house.host;
             assert.strictEqual(brief, `${town} house`, def.name);

@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 143,
+ "nextobjectid": 145,
  "properties": [
   {
    "name": "gv2room",
@@ -26391,8 +26391,8 @@
     42,
     0,
     42,
-    42,
-    42,
+    0,
+    0,
     42,
     0,
     42,
@@ -28466,6 +28466,80 @@
     },
     {
      "id": 142,
+     "name": "transporter",
+     "point": true,
+     "x": 3040.0,
+     "y": 1760.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbySanFranbourne1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 143,
+     "name": "transporter",
+     "point": true,
+     "x": 3104.0,
+     "y": 1760.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbySanFranbourne1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 144,
      "name": "boundary",
      "x": 0,
      "y": 0,

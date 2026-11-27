@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 317,
+ "nextobjectid": 319,
  "properties": [
   {
    "name": "gv2room",
@@ -25161,7 +25161,7 @@
     45,
     45,
     45,
-    45,
+    0,
     45,
     45,
     45,
@@ -25174,7 +25174,7 @@
     45,
     45,
     45,
-    45,
+    0,
     45,
     45,
     0,
@@ -26987,6 +26987,80 @@
     },
     {
      "id": 316,
+     "name": "transporter",
+     "point": true,
+     "x": 992.0,
+     "y": 1824.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbyKanazawa1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 317,
+     "name": "transporter",
+     "point": true,
+     "x": 1824.0,
+     "y": 1824.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbyKanazawa2"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 318,
      "name": "boundary",
      "x": 0,
      "y": 0,

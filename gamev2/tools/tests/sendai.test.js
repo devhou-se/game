@@ -84,16 +84,25 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         const doorway = (key, x, y, w, h, cx, cy) => /^machiya/.test(key) && cx === x + (w - 1) / 2 && cy === y + h - 1 &&
             seen.has(`${cx},${cy + 1}`) && room.transporters.some((t) => t.hidden && t.gridX === cx && t.gridY === cy &&
                 ((cfg.rooms[t.targetRoom] || {}).house || {}).host === 'Sendai');
+        // ...and the door of a tower that has a lobby (#216): on its ground-floor row, a hidden door into a Lobby
+        // room of this town, with the street in front of it - the yellow high-rise's (23,20). The flats over the
+        // 7-Eleven have none: the store is their ground floor
+        const lobbyDoor = (key, y, h, cx, cy) => /^highrise/.test(key) && cy === y + h - 1 &&
+            seen.has(`${cx},${cy + 1}`) && room.transporters.some((t) => t.hidden && t.gridX === cx && t.gridY === cy &&
+                ((cfg.rooms[t.targetRoom] || {}).lobby || {}).host === 'Sendai');
         const size = (key) => { const m = cfg.spriteMetadata[key]; return [Math.round(0.5 / m.anchorX), Math.round(0.5 / m.anchorY)]; };
+        const opened = [];
         for (const key of Object.keys(sprites).filter((k) => /^(highrise|machiya|sendai-pub|sendai-kiln|sendai-zuihoden)/.test(k))) {
             const [w, h] = size(key);
             for (const [x, y] of sprites[key]) {
                 for (let cx = x; cx < x + w; cx++) for (let cy = y; cy < y + h; cy++) {
                     if (doorway(key, x, y, w, h, cx, cy)) continue;
+                    if (lobbyDoor(key, y, h, cx, cy)) { opened.push(`${key} ${cx},${cy}`); continue; }
                     assert.ok(!seen.has(`${cx},${cy}`), `${key}: (${cx},${cy}) can be walked onto, behind the building`);
                 }
             }
         }
+        assert.deepStrictEqual(opened, ['highrise-yellow_0_0 23,20'], 'the one tower door that opens');
     });
 
     test('Sendai: Matsushima bay is the east edge - a shore, a pier you walk on, a boat lane clear of the islets (#66)', () => {

@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 297,
+ "nextobjectid": 298,
  "properties": [
   {
    "name": "gv2room",
@@ -26451,7 +26451,7 @@
     47,
     47,
     47,
-    47,
+    0,
     47,
     47,
     47,
@@ -28641,6 +28641,43 @@
     },
     {
      "id": 296,
+     "name": "transporter",
+     "point": true,
+     "x": 1504.0,
+     "y": 1312.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbySendai1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 297,
      "name": "boundary",
      "x": 0,
      "y": 0,

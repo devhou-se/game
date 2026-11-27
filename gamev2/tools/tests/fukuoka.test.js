@@ -56,9 +56,23 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             'you arrive on a free cell that is not a door');
         // the only ways out of town are the station and the konbini, and the two shrine halls open into their
         // worship halls (Kushida, Dazaifu Tenmangu: #212, shrines.test.js); every other door is a house's own front
-        // door (#208): hidden, on the doorway of a house that stands there, into a House room of this town
+        // door (#208): hidden, on the doorway of a house that stands there, into a House room of this town -
+        // or a tower's, into its lobby (#216): the glass tower's pair, the blue and the yellow one, the flats
         const isHouse = (t) => ((cfg.rooms[t.targetRoom] || {}).house || {}).host === 'Fukuoka';
-        assert.deepStrictEqual(room.transporters.filter((t) => !isHouse(t)).map((t) => t.targetRoom).sort(), ['FukuokaStation', 'KonbiniFukuoka1', 'ShrineFukuoka1', 'ShrineFukuoka2']);
+        const isLobby = (t) => ((cfg.rooms[t.targetRoom] || {}).lobby || {}).host === 'Fukuoka';
+        assert.deepStrictEqual(room.transporters.filter((t) => !isHouse(t) && !isLobby(t)).map((t) => t.targetRoom).sort(), ['FukuokaStation', 'KonbiniFukuoka1', 'ShrineFukuoka1', 'ShrineFukuoka2']);
+        const towers = { 'highrise-glass_0_0': [[1, 9], [2, 9]], 'highrise-blue_0_0': [[2, 10]], 'highrise-yellow_0_0': [[1, 7]], 'midrise-apartment_0_0': [[2, 5]] };
+        const lobbyDoors = room.transporters.filter(isLobby);
+        assert.deepStrictEqual(lobbyDoors.map((t) => [t.gridX, t.gridY, t.targetRoom]).sort(),
+            [[17, 18, 'LobbyFukuoka1'], [18, 18, 'LobbyFukuoka1'], [22, 18, 'LobbyFukuoka2'], [26, 18, 'LobbyFukuoka3'], [38, 18, 'LobbyFukuoka4']]);
+        for (const t of lobbyDoors) {
+            assert.ok(t.hidden, `${t.targetRoom}: a hidden door`);
+            assert.ok(Object.entries(towers).some(([key, doors]) => where(new RegExp(`^${key}$`)).some(([x, y]) =>
+                doors.some(([dx, dy]) => x + dx === t.gridX && y + dy === t.gridY))), `${t.targetRoom}: on a tower's door`);
+            assert.ok(!solid(t.gridX, t.gridY) && reachable(t.gridX, t.gridY + 1), `${t.targetRoom}: the cell in front of its door can be walked to`);
+        }
+        // no lamp stands in front of a tower's door: the two that did stand a cell aside (19,19 and 37,19)
+        assert.deepStrictEqual(where(/^blue-lamp-post_/).filter(([, y]) => y === 19).map(([x]) => x).sort((a, b) => a - b), [19, 23, 37, 42, 47, 54, 58]);
         const homes = room.transporters.filter(isHouse);
         assert.deepStrictEqual(homes.map((t) => t.targetRoom).sort(), ['HouseFukuoka1', 'HouseFukuoka2', 'HouseFukuoka3', 'HouseFukuoka4']);
         for (const t of homes) {

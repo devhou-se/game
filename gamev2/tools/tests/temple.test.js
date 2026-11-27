@@ -347,7 +347,13 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
             fs.writeFileSync(path.join(tmp, 'config.json'), JSON.stringify(sealed, null, 2));
             const again = spawnSync('python3', ['tools/generate_temple.py'], { cwd: tmp, encoding: 'utf8', maxBuffer: 1 << 26 });
             assert.strictEqual(again.status, 0, again.stderr);
-            assert.deepStrictEqual(JSON.parse(fs.readFileSync(path.join(tmp, 'config.json'), 'utf8')), JSON.parse(before));
+            // the same world, but for where the hall's two doors stand in the district's list of doors: a
+            // rebuilt door goes to the end of it, past the door of a room opened since (the tower's lobby, #216)
+            const doorsInOrder = (world) => {
+                world.rooms[HOST].transporters.sort((a, b) => a.gridY - b.gridY || a.gridX - b.gridX || (a.targetRoom < b.targetRoom ? -1 : 1));
+                return world;
+            };
+            assert.deepStrictEqual(doorsInOrder(JSON.parse(fs.readFileSync(path.join(tmp, 'config.json'), 'utf8'))), doorsInOrder(JSON.parse(before)));
         } finally {
             fs.rmSync(tmp, { recursive: true, force: true });
         }

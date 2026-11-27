@@ -153,8 +153,10 @@ b.stamp('lamp-blue', 9, 18); b.stamp('lamp-blue', 15, 18)
 for i, (px, py) in enumerate([(9, 21), (12, 22), (14, 20), (11, 20)]):
     b.paver(px, py, i)
 
-# ---- the business district, shoulder to shoulder, feet on row 18. Doors
-#      sealed - no interiors. The ground behind them is planted, not walked ------
+# ---- the business district, shoulder to shoulder, feet on row 18. Their doors
+#      (and the flats' east of the avenue) open into a lobby each, wired by
+#      generate_houses.py --lobbies and kept through a rebuild; on a first build
+#      they are sealed. The ground behind them is planted, not walked ------------
 b.stamp('highrise-glass', 16, 9)
 b.stamp('highrise-blue', 20, 8)
 b.stamp('highrise-yellow', 25, 11)
@@ -176,7 +178,7 @@ b.stamp('tree-green', 46, 10); b.stamp('tree-green', 52, 11)
 b.stamp('tree-green', 49, 7); b.stamp('tree-green', 56, 8)
 b.stamp('shrub-small', 58, 12); b.stamp('shrub-small', 41, 16)
 b.stamp('bicycle-blue', 47, 18); b.stamp('scooter-grey', 53, 18)
-for x in (18, 23, 38, 42, 47, 54, 58):                    # lamps along the pavements
+for x in (19, 23, 37, 42, 47, 54, 58):                    # lamps along the pavements, clear of the towers' doors
     b.stamp('lamp-blue', x, STREET_Y - 1)
 for x in (18, 24, 38, 44, 50, 56):
     b.stamp('lamp-blue', x, STREET_Y + 3)

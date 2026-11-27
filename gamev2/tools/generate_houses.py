@@ -46,7 +46,10 @@ gets a door into a `Lobby<Town><n>` room, found, numbered, skipped, sealed
 and re-run by the same code as a house (KINDS). A tower with a pair of doors
 (the glass tower) opens each door that passes the rules, and is skipped only
 when none does. Landmark towers (Tokyo Tower, the TV tower, Fukuoka Tower,
-castles) are not towers here and stay sealed. THE LOBBY is one design,
+castles) are not towers here and stay sealed, and neither is a block whose
+ground floor is a store (STOREFRONTS: Sendai's flats, with the town's
+7-Eleven standing across their door) - it is in use, entered through the
+store. THE LOBBY is one design,
 identical everywhere for now (LOBBY): a stone-panelled back wall with two
 lifts and the building directory, eleven by six cells of polished floor, the
 reception desk, a sofa either side of a glass table, a palm in each corner,
@@ -88,6 +91,7 @@ import roomgen as rg
 from interiors import Interior
 
 SHOP_SIGNS = ('ramen-banner_0_0',)      # a house with one of these at its front is a shop
+STOREFRONTS = ('seven-eleven_0_0',)     # a tower with one of these standing across its door is that store's block
 ROOM_W, ROOM_H = 20, 15                 # engine / camera minimum; the home floats inside
 FW, FH = 9, 6                           # the floor, in cells
 FX, FY = (ROOM_W - FW) // 2, 4          # its top-left cell; the wall is the two rows above
@@ -367,13 +371,15 @@ def find_houses(cfg, host, kind='house'):
     K = KINDS[kind]
     room = cfg['rooms'][host]
     found = []
-    signs = set()
+    signs, stores = set(), set()
     for layer in room['layers']:
         for xy, idx in layer['tiles'].items():
             key = rg._pal[idx]
             x, y = map(int, xy.split(','))
             if kind == 'house' and key in SHOP_SIGNS:
                 signs.add((x, y))
+            elif kind == 'lobby' and key in STOREFRONTS:
+                stores.add((x, y))
             elif layer['name'] == 'Collidables' and key in K['doors']:
                 cells = [(x + dx, y + dy) for dx, dy in K['doors'][key]]
                 dx, dy = K['doors'][key][0]
@@ -417,6 +423,8 @@ def find_houses(cfg, host, kind='house'):
             h['excluded'] = f'in use: its door leads to {target}'
         elif any(h['span'][0] <= x <= h['span'][1] and abs(y - door[1]) <= 1 for x, y in signs):
             h['excluded'] = 'a shop: it has a shop sign at its front'
+        elif any(y == door[1] + 1 and h['span'][0] < x < h['span'][1] for x, y in stores):
+            h['excluded'] = 'in use: the 7-Eleven standing across its door is its ground floor'
         else:
             n += 1
             h['key'] = f"{K['prefix']}{host}{n}"

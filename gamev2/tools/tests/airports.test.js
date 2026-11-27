@@ -89,10 +89,10 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.deepStrictEqual(plain(config.rooms.HanedaStation.transporters.map((t) => [t.targetRoom, t.targetX, t.targetY])),
             [[HANEDA, ...config.airports[HANEDA].entry], [HANEDA, ...config.airports[HANEDA].entry]]);
         assert.ok(config.rooms[HANEDA].transporters.every((t) => t.targetRoom === 'HanedaStation'), 'Haneda leads nowhere but its station');
-        // the only doors into the city are its own airport's and its own konbini's
+        // the only doors into the city are its own airport's, its own konbini's and its glass tower's lobby's (#216)
         for (const [key, room] of Object.entries(config.rooms)) {
             for (const t of room.transporters || []) {
-                if (t.targetRoom === CITY) assert.ok(key === HOME || key === 'KonbiniSanFranbourne1', `${key} has a door into the home city`);
+                if (t.targetRoom === CITY) assert.ok(key === HOME || key === 'KonbiniSanFranbourne1' || key === 'LobbySanFranbourne1', `${key} has a door into the home city`);
                 if (t.targetRoom === HOME) assert.strictEqual(key, CITY, `${key} has a door into the home airport`);
             }
         }
@@ -369,9 +369,14 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         const lit = where(room, /lamp-post|-lanterns/);
         assert.ok(lit.length >= 30 && lit.some(([, , k]) => /^sfb-oval-lamp-post/.test(k)), `${lit.length} lamps`);
         assert.ok(!room.interior, 'the city has a day and a night');
-        // houses stay sealed, no bins, and the konbini is the usual interior
+        // houses stay sealed, no bins, and the konbini is the usual interior; the glass tower's pair of doors
+        // open into its lobby (#216), the only other way off the street
         assert.ok(!Object.keys(config.rooms).some((k) => k.startsWith('House' + CITY)), 'no house interiors yet');
-        assert.ok(room.transporters.every((t) => t.targetRoom === HOME || t.targetRoom === 'KonbiniSanFranbourne1'));
+        assert.ok(room.transporters.every((t) => t.targetRoom === HOME || t.targetRoom === 'KonbiniSanFranbourne1' || t.targetRoom === 'LobbySanFranbourne1'));
+        const [glass] = where(room, /^highrise-glass_/);
+        assert.deepStrictEqual(plain(room.transporters.filter((t) => t.targetRoom === 'LobbySanFranbourne1').map((t) => [t.gridX, t.gridY, t.hidden])),
+            [[glass[0] + 1, glass[1] + 9, true], [glass[0] + 2, glass[1] + 9, true]]);
+        assert.deepStrictEqual(plain(config.rooms.LobbySanFranbourne1.transporters.map((t) => [t.targetRoom, t.targetX, t.targetY])), [[CITY, glass[0] + 1, glass[1] + 10]]);
         assert.ok(!where(room, /bin/).length);
         assert.ok(config.rooms.KonbiniSanFranbourne1.interior && game('Stamps').isStore(config.rooms.KonbiniSanFranbourne1));
     });

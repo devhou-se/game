@@ -83,6 +83,86 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         // every tower sprite standing in a town with lobbies either has one or was skipped on purpose: none in Osaka
         const standing = Object.values(tiles(osaka, 'Collidables')).filter((t) => c.tilePalette[t] in TOWERS).length;
         assert.strictEqual(standing, 3);
+        // every town's towers (#216): the room, its name (a town's only lobby has no number), the tower and its
+        // door cells - a glass tower's pair lead into the one lobby
+        const table = {
+            Market: [['LobbyMarket1', 'Lobby · Asakusa', 'highrise-yellow_0_0', [[16, 29]]]],
+            Palace: [['LobbyPalace1', 'Lobby · Marunouchi 1', 'highrise-yellow_0_0', [[49, 13]]],
+                ['LobbyPalace2', 'Lobby · Marunouchi 2', 'midrise-apartment_0_0', [[42, 15]]]],
+            Fukuoka: [['LobbyFukuoka1', 'Lobby · Fukuoka 1', 'highrise-glass_0_0', [[17, 18], [18, 18]]],
+                ['LobbyFukuoka2', 'Lobby · Fukuoka 2', 'highrise-blue_0_0', [[22, 18]]],
+                ['LobbyFukuoka3', 'Lobby · Fukuoka 3', 'highrise-yellow_0_0', [[26, 18]]],
+                ['LobbyFukuoka4', 'Lobby · Fukuoka 4', 'midrise-apartment_0_0', [[38, 18]]]],
+            Sendai: [['LobbySendai1', 'Lobby · Sendai', 'highrise-yellow_0_0', [[23, 20]]]],
+            Kanazawa: [['LobbyKanazawa1', 'Lobby · Kanazawa 1', 'highrise-yellow_0_0', [[15, 28]]],
+                ['LobbyKanazawa2', 'Lobby · Kanazawa 2', 'midrise-apartment_0_0', [[28, 28]]]],
+            SanFranbourne: [['LobbySanFranbourne1', 'Lobby · San Franbourne', 'highrise-glass_0_0', [[47, 27], [48, 27]]]],
+        };
+        // Sendai's block of flats is the 7-Eleven's: the store stands across its door, so it has no lobby of its own
+        const inUse = { Sendai: 1 };
+        const days = [...game('contentChangeDates')(c)].sort().concat('2026-11-27', '2027-02-10', '2027-02-20');
+        for (const [town, rows] of Object.entries(table)) {
+            const host = c.rooms[town], mine = lobbies(c).filter(([, r]) => r.lobby.host === town);
+            assert.deepStrictEqual(mine.map(([k, r]) => [k, r.name, towerAt(c, host, ...r.lobby.door), r.lobby.doors]), rows, town);
+            assert.deepStrictEqual(host.transporters.filter((t) => /^Lobby/.test(t.targetRoom)).map((t) => [t.gridX, t.gridY, t.targetRoom, t.hidden]).sort(),
+                rows.flatMap(([key, , , doors]) => doors.map(([x, y]) => [x, y, key, true])).sort(), town);
+            // no tower is skipped: every one standing has its lobby, but for a store's block
+            const standing = Object.values(tiles(host, 'Collidables')).filter((t) => c.tilePalette[t] in TOWERS).length;
+            assert.strictEqual(standing, rows.length + (inUse[town] || 0), `a tower of ${town} is still sealed`);
+            // nobody is at a door or the cell in front of it on any day the world changes, nor is the game's start
+            for (const [key, room] of mine) {
+                for (const [dx, dy] of room.lobby.doors) {
+                    const at = (x, y) => x === dx && (y === dy || y === dy + 1);
+                    assert.ok(!(c.player.startRoom === town && at(c.player.startX, c.player.startY)), `${key}: the game starts at its door`);
+                    for (const iso of days) {
+                        for (const npc of host.npcs) {
+                            const s = game('resolveNpc')(npc, iso, game('Trips').of(c));
+                            assert.ok(!(s && s.present !== false && at(s.gridX, s.gridY)), `${key}: ${npc.name} is at the door on ${iso}`);
+                        }
+                    }
+                }
+            }
+        }
+        // every town with a tower, and every lobby there is
+        assert.deepStrictEqual([...new Set(lobbies(c).map(([, r]) => r.lobby.host))].sort(),
+            ['Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo', 'Sendai']);
+        assert.strictEqual(lobbies(c).length, 16);
+        const towered = Object.keys(c.rooms).filter((k) => !c.rooms[k].interior && Object.values(tiles(c.rooms[k], 'Collidables')).some((t) => c.tilePalette[t] in TOWERS));
+        assert.deepStrictEqual(towered.sort(), ['Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo', 'Sendai'], 'a town has a tower and no lobby');
+    });
+
+    test('a block of flats with a 7-Eleven across its door is the store\'s, not a tower: Sendai\'s has no lobby and stays shut (#216)', () => {
+        const c = cfg(), sendai = c.rooms.Sendai, name = (t) => c.tilePalette[t];
+        // the flats at (38,9), door (40,16), and the store standing on the row in front of it, across the door's column
+        assert.strictEqual(name(tiles(sendai, 'Collidables')['38,9']), 'highrise-apartment_0_0');
+        assert.strictEqual(towerAt(c, sendai, 40, 16), 'highrise-apartment_0_0');
+        assert.strictEqual(name(tiles(sendai, 'Collidables')['38,17']), 'seven-eleven_0_0');
+        assert.ok('40,16' in tiles(sendai, 'Colliders'), 'the flats\' door is open');
+        assert.ok(!sendai.transporters.some((t) => t.gridX === 40 && t.gridY === 16), 'the flats\' door leads somewhere');
+        assert.deepStrictEqual(lobbies(c).filter(([, r]) => r.lobby.host === 'Sendai').map(([k]) => k), ['LobbySendai1']);
+        // the generator says so, as "not a tower" rather than "skipped", and the other tower is the town's only lobby
+        const dry = python(['tools/generate_houses.py', '--dry-run', '--lobbies', 'Sendai']);
+        assert.strictEqual(dry.status, 0, dry.stderr);
+        assert.ok(/not a tower {2}Sendai highrise-apartment at \(38, 9\) - in use: the 7-Eleven standing across its door is its ground floor/.test(dry.stdout), dry.stdout);
+        assert.ok(/built {4}LobbySendai1 "Lobby · Sendai" - highrise-yellow, door \(23, 20\)/.test(dry.stdout), dry.stdout);
+        assert.ok(!/skipped/.test(dry.stdout), dry.stdout);
+        // no other town's roll-out skips or excludes a tower
+        const rest = python(['tools/generate_houses.py', '--dry-run', '--lobbies', 'Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo']);
+        assert.strictEqual(rest.status, 0, rest.stderr);
+        assert.ok(!/skipped|not a tower/.test(rest.stdout) && /dry run: 15 interior\(s\)/.test(rest.stdout), rest.stdout);
+        // a 7-Eleven beside a tower, not across its door, does not make it the store's: take Sendai's away from the
+        // door's row and the flats are a tower again (skipped there: the store's own ground is in front of the door)
+        scratch((tmp, read) => {
+            const moved = JSON.parse(read()), layer = moved.rooms.Sendai.layers.find((l) => l.name === 'Collidables');
+            const store = layer.tiles['38,17'];
+            delete layer.tiles['38,17'];
+            layer.tiles['38,30'] = store;
+            fs.writeFileSync(path.join(tmp, 'config.json'), JSON.stringify(moved, null, 2));
+            const run = python(['tools/generate_houses.py', '--dry-run', '--lobbies', 'Sendai'], tmp);
+            assert.strictEqual(run.status, 0, run.stderr);
+            assert.ok(!/not a tower/.test(run.stdout) && /skipped {2}LobbySendai1 \(highrise-apartment, door \(40, 16\)\)/.test(run.stdout), run.stdout);
+            assert.ok(/built {4}LobbySendai2 "Lobby · Sendai 2" - highrise-yellow/.test(run.stdout), run.stdout);
+        });
     });
 
     test('a lobby is one design: a desk, two lifts, plants, seating and a directory, nobody in it, nothing sold (#216)', () => {

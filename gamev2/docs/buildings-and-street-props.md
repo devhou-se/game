@@ -8,13 +8,14 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 
 Street buildings beyond the ported houses / konbini / shrines. Each is ONE sprite on `Collidables` wrapped in
 a prefab (`building()` in `tools/make_prefabs.py`): solid from the ground up, with only the top two rows (the
-roof line) walk-behind, as behind a house roof - so the player is never lost behind a tower. Doors are
-sealed and lead nowhere, except the discount store's, which opens into its Don Takote shop floor (issue #91,
-see Shop, Food and Drink). Of the ported houses, one opens: the red house at Market `(6,33)` is the Izakaya
+roof line) walk-behind, as behind a house roof - so the player is never lost behind a tower. A building is
+stamped with its door sealed; the discount store's opens into its Don Takote shop floor (issue #91,
+see Shop, Food and Drink) and every high-rise's and apartment block's into a lobby (issue #216, see Tower
+lobbies in `landmarks-and-towns.md`). Of the ported houses, one opens: the red house at Market `(6,33)` is the Izakaya
 (issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`). Houses (the
 `house-*` townhouses, and a machiya with no shop sign) get a generic home interior from
 `tools/generate_houses.py` - in Asahikawa, Fukuoka, Market, Osaka and Sendai (issue #208, see House interiors; Sapporo's last townhouses went when Tanukikoji was built, #219). The high-rises and
-apartment blocks get a lobby from the same tool (`--lobbies`; Osaka's three and Sapporo's two office blocks so far, issues #216 and #219, see Tower lobbies), and a shopfront in `roomgen.SHOP_DOORS` a small shop floor (`--shops`; Tanukikoji's three, see Shop floors).
+apartment blocks get a lobby from the same tool (`--lobbies`; sixteen in the eight towns that have a tower, all but Sendai's flats over its 7-Eleven, issues #216 and #219, see Tower lobbies), and a shopfront in `roomgen.SHOP_DOORS` a small shop floor (`--shops`; Tanukikoji's three, see Shop floors).
 
 | Prefab | Cells | Placed in |
 |---|---|---|

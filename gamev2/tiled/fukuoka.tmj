@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 13,
- "nextobjectid": 147,
+ "nextobjectid": 152,
  "properties": [
   {
    "name": "gv2room",
@@ -18746,8 +18746,8 @@
     0,
     0,
     0,
-    7,
     0,
+    7,
     0,
     0,
     0,
@@ -18765,8 +18765,8 @@
     0,
     0,
     0,
-    0,
     7,
+    0,
     0,
     0,
     0,
@@ -31723,10 +31723,49 @@
     0,
     60,
     60,
+    0,
+    0,
+    60,
+    60,
+    60,
+    0,
+    60,
+    60,
+    60,
+    0,
+    60,
+    60,
+    0,
+    0,
+    0,
+    0,
+    0,
     60,
     60,
     60,
     60,
+    0,
+    60,
+    60,
+    0,
+    0,
+    60,
+    0,
+    60,
+    0,
+    60,
+    0,
+    60,
+    0,
+    60,
+    60,
+    60,
+    0,
+    60,
+    0,
+    60,
+    0,
+    0,
     60,
     60,
     60,
@@ -31739,64 +31778,6 @@
     0,
     0,
     0,
-    0,
-    60,
-    60,
-    60,
-    60,
-    60,
-    60,
-    60,
-    0,
-    0,
-    60,
-    0,
-    60,
-    0,
-    60,
-    0,
-    60,
-    0,
-    60,
-    60,
-    60,
-    0,
-    60,
-    0,
-    60,
-    0,
-    0,
-    60,
-    60,
-    60,
-    60,
-    60,
-    60,
-    60,
-    60,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    60,
-    0,
-    0,
-    0,
-    0,
-    60,
-    0,
-    0,
-    0,
-    60,
-    60,
     0,
     0,
     0,
@@ -31807,6 +31788,25 @@
     0,
     0,
     60,
+    0,
+    0,
+    0,
+    60,
+    0,
+    0,
+    0,
+    60,
+    60,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    60,
+    0,
     0,
     0,
     0,
@@ -34761,6 +34761,191 @@
     },
     {
      "id": 146,
+     "name": "transporter",
+     "point": true,
+     "x": 1120.0,
+     "y": 1184.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbyFukuoka1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 147,
+     "name": "transporter",
+     "point": true,
+     "x": 1184.0,
+     "y": 1184.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbyFukuoka1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 148,
+     "name": "transporter",
+     "point": true,
+     "x": 1440.0,
+     "y": 1184.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbyFukuoka2"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 149,
+     "name": "transporter",
+     "point": true,
+     "x": 1696.0,
+     "y": 1184.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbyFukuoka3"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 150,
+     "name": "transporter",
+     "point": true,
+     "x": 2464.0,
+     "y": 1184.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "LobbyFukuoka4"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 151,
      "name": "boundary",
      "x": 0,
      "y": 0,

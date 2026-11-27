@@ -32,7 +32,9 @@ The display name is NAME below and nowhere else: it is written to
 rooms.SanFranbourne.name, and the Map label, the flights board and the footer
 all read it from there (config `places` / `airports` carry no copy).
 
-Houses stay sealed (tools/generate_houses.py is not run for this town here).
+Houses stay sealed (tools/generate_houses.py is not run for this town here);
+its glass tower's lobby comes from `generate_houses.py --lobbies SanFranbourne`,
+which opens the tower's pair of doors, kept through a rebuild of the town.
 Nobody is placed here by a trip, and `blog: false` keeps the blog pipeline out
 (tools/blog_to_npc.py overworld_rooms). Deterministic and idempotent; keeps any
 NPCs and the konbini door generate_konbinis.py wired (sealed until that runs).

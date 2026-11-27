@@ -197,7 +197,9 @@ The game always renders 1280x960; everything below is about showing that on anyt
     part, `7-Eleven | Park 1` -> `7-Eleven`, but a room named for its kind keeps its town, `House | Asahikawa 2` -> `Asahikawa house`,
     `Lobby | Osaka 1` -> `Osaka lobby`, `Shrine | Park` -> `Park shrine` (issue #220; that form is tried before the whole name
     for the countdown, so every shrine reads the same way), which can be as long as a station's name and so shows the date
-    rather than the countdown at 667x375; then the date's year), and only then wraps date and wallet onto a second row. On a
+    rather than the countdown at 667x375; a town too long to lead - the form would pass 15 characters, `HUD_BRIEF_MAX`,
+    all that one row holds at 667x375 with the short date and its year - gives way to the kind's number,
+    `Lobby | Marunouchi 1` -> `Lobby 1`, or the kind alone, issue #216; then the date's year), and only then wraps date and wallet onto a second row. On a
     lead-in day that one row has no room for the countdown and the date, so there the countdown stands in
     place of the date — `Sapporo | devhouse 3 in 8 days | ¥5,000` at 844x390, `in 8d` at 667x375, the room
     abbreviated if that is what it takes (`Trips.countdown`, tried before the bare date); the segment is

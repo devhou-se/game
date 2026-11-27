@@ -383,9 +383,10 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         ]);
         assert.deepStrictEqual(mine.map(([, r]) => { const [x, y] = r.house.door; return name(sprites[`${x - 2},${y - 4}`]) || name(sprites[`${x - 1},${y}`]); }),
             ['machiya-red_0_0', 'machiya-blue_0_0', 'machiya-black_0_0', 'building-entrance-2_0_0']);
-        // the doors that were there are still there, and the houses' are the only new ones
+        // the doors that were there are still there, and the houses' are the only new ones (the two towers'
+        // doors into their lobbies came with #216: lobbies.test.js)
         const others = town.transporters.filter((t) => !/^House/.test(t.targetRoom)).map((t) => t.targetRoom);
-        assert.deepStrictEqual([...new Set(others)].sort(), ['KanazawaStation', 'KonbiniKanazawa1', 'Shirakawago', 'ShrineKanazawa1']);
+        assert.deepStrictEqual([...new Set(others)].sort(), ['KanazawaStation', 'KonbiniKanazawa1', 'LobbyKanazawa1', 'LobbyKanazawa2', 'Shirakawago', 'ShrineKanazawa1']);
         assert.strictEqual(town.transporters.length, others.length + 4);
         const station = town.transporters.find((t) => t.targetRoom === 'KanazawaStation');
         for (const stitch of [true, false]) {

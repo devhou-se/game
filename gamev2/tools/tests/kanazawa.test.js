@@ -228,17 +228,25 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         const doorway = (room, key, x, y, w, h, cx, cy) => /^machiya/.test(key) && cx === x + (w - 1) / 2 && cy === y + h - 1 &&
             walkable(room, cx, cy + 1) && cfg.rooms[room].transporters.some((t) => t.hidden && t.gridX === cx && t.gridY === cy &&
                 ((cfg.rooms[t.targetRoom] || {}).house || {}).host === room);
+        // or a tower's door (#216): on its ground-floor row, a hidden door into a Lobby room of this town,
+        // with the street in front of it - Kanazawa's yellow high-rise (15,28) and its midrise flats (28,28)
+        const lobbyDoor = (room, key, y, h, cx, cy) => /^(highrise|midrise)/.test(key) && cy === y + h - 1 &&
+            walkable(room, cx, cy + 1) && cfg.rooms[room].transporters.some((t) => t.hidden && t.gridX === cx && t.gridY === cy &&
+                ((cfg.rooms[t.targetRoom] || {}).lobby || {}).host === room);
+        const opened = [];
         for (const room of DISTRICTS) {
             for (const key of Object.keys(sprites[room]).filter((k) => /^(highrise|midrise|machiya|kanazawa-chaya|kanazawa-whisky|shirakawa-gassho|toyama-glass|toyama-ramen)/.test(k))) {
                 const [w, h] = cells(key);
                 for (const [x, y] of sprites[room][key]) {
                     for (let cx = x; cx < x + w; cx++) for (let cy = y; cy < y + h; cy++) {
                         if (doorway(room, key, x, y, w, h, cx, cy)) continue;
+                        if (lobbyDoor(room, key, y, h, cx, cy)) { opened.push(`${room} ${key} ${cx},${cy}`); continue; }
                         assert.ok(!walkable(room, cx, cy), `${room} ${key}: (${cx},${cy}) can be walked onto, behind the building`);
                     }
                 }
             }
         }
+        assert.deepStrictEqual(opened.sort(), ['Kanazawa highrise-yellow_0_0 15,28', 'Kanazawa midrise-apartment_0_0 28,28'], 'the tower doors that open');
         // Kanazawa is what the posts saw: a row of teahouses, a castle gate you walk THROUGH to grounds with no keep,
         // a garden pond with the Kotoji lantern on its bank, a samurai lane between earthen walls along a canal
         const K = sprites.Kanazawa;

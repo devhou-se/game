@@ -430,7 +430,9 @@ and the blog pipeline never offers it (`"blog": false` on the room, see `blog-pi
   (`Non-Collidables` with a `depthBias`, the `asahikawa-bridge` recipe); the river is `pond-autotile`
   recoloured (`sfb-river_*`, so it is not a fishing spot); the light towers are named `...lamp-post` so
   `DayNight` lights them.
-- **Houses are sealed** (`generate_houses.py` has not been run for this town), and there are no rubbish bins.
+- **Houses are sealed** (`generate_houses.py` has not been run for this town's houses), and there are no
+  rubbish bins. The glass tower's pair of doors (47,27) and (48,27) open into `LobbySanFranbourne1` (see Tower
+  lobbies; `generate_houses.py --lobbies SanFranbourne`, kept through a rebuild of the town).
 - **Built by** `generate_sanfranbourne_art.py` -> `generate_airports.py` -> `generate_sanfranbourne.py` ->
   `generate_konbinis.py SanFranbourne` -> `generate_stations.py` (the Haneda stop) -> `config_to_tiled.py` ->
   `make_worldmap.py`. `devhouse.world` has it far to the south-east of every Japan map.
@@ -551,9 +553,43 @@ The same generator opens a second kind of building: `tools/generate_houses.py --
 gives every high-rise, office tower and block of flats a `Lobby<Town><n>` room (`Lobby · Osaka 2`). It is
 the house code with another row in its `KINDS` table, so everything above holds - found in the town's map
 data, numbered in door order, skipped and sealed by the same rules, a no-op on a re-run, kept through a
-town rebuild by `roomgen.save_config`. **Applied to Osaka** (the office block, the flats, the glass
-tower) **and Sapporo** (its own two office blocks, `LobbySapporo1` the brick one in the Clock Tower block,
-`LobbySapporo2` the glass one west of the station plaza, #219); the rollout is `.agent-queue/items/lobbies_apply.sh <Town> ...`.
+town rebuild by `roomgen.save_config`. **Applied to every town that has a tower**: sixteen lobbies in eight
+towns, no tower skipped. Asahikawa, Tokyo, Park, Shirakawa-go and Toyama have no towers.
+
+| Town (display name) | Rooms | Tower and its door cell(s) in the town |
+|---|---|---|
+| Osaka | `LobbyOsaka1..3` "Lobby · Osaka 1..3" | the blue office block (5,17); the flats (5,37); the glass tower (43,38)+(44,38) |
+| Sapporo | `LobbySapporo1..2` "Lobby · Sapporo 1..2" | its own office blocks (#219): the brick one in the Clock Tower block (51,15); the glass one west of the station plaza (12,16) |
+| Market (Asakusa) | `LobbyMarket1` "Lobby · Asakusa" | highrise-yellow (16,29) |
+| Palace (Marunouchi) | `LobbyPalace1..2` "Lobby · Marunouchi 1..2" | highrise-yellow (49,13); midrise-apartment (42,15) |
+| Fukuoka | `LobbyFukuoka1..4` "Lobby · Fukuoka 1..4" | highrise-glass (17,18)+(18,18); -blue (22,18); -yellow (26,18); midrise-apartment (38,18) |
+| Sendai | `LobbySendai1` "Lobby · Sendai" | highrise-yellow (23,20) |
+| Kanazawa | `LobbyKanazawa1..2` "Lobby · Kanazawa 1..2" | highrise-yellow (15,28); midrise-apartment (28,28) |
+| SanFranbourne | `LobbySanFranbourne1` "Lobby · San Franbourne" | highrise-glass (47,27)+(48,27) |
+
+A town's only lobby has no number. The way out of each is the cell below its (first) door.
+
+- **The roll-out for a town** (from `gamev2/`; check first with `--dry-run`, which must list nothing as skipped):
+  `python3 tools/generate_houses.py --lobbies <Town> ...`, then `python3 tools/config_to_tiled.py <Town> ... <each
+  Lobby room>`, then `node tools/play.js lint` for each of those rooms and the checks. Market and Palace are
+  ported maps with no generator: their tower doors live only in `config.json` and their `.tmj`.
+- **No sealed towers** (owner rule): where a prop stood in front of a tower's door, the prop moved rather than
+  the tower staying shut. Fukuoka's two pavement lamps at (18,19) and (38,19) - in front of the glass tower's
+  right door and the flats' - stand one cell aside, at (19,19) and (37,19) (`generate_fukuoka.py`).
+- **A store's block is not a tower** (`STOREFRONTS` in `generate_houses.py`): Sendai's flats
+  (`highrise-apartment` at (38,9), door (40,16)) have the town's 7-Eleven standing directly across their door on
+  purpose ("the 7-Eleven under an apartment block", `generate_sendai.py`), so the building is entered through
+  the store. A tower with a `seven-eleven` on the row in front of its door, across the door's column, is
+  reported as "not a tower ... in use" - not as skipped - gets no lobby and no number, and its door stays shut.
+- **On a phone's HUD bar** a lobby's short form is its town's, "Osaka lobby", as a house's and a shrine's
+  (`hudBrief`, `src/utils/NpcStates.js`). A town whose name makes that longer than 15 characters
+  (`HUD_BRIEF_MAX`: what one row holds with the short date, its year and the starting wallet at 667x375) keeps
+  the kind and its number instead: Marunouchi's read "Lobby 1" and "Lobby 2" ("Marunouchi lobby" is 16) and
+  San Franbourne's only one "Lobby", and so count down on a lead-in day on both phones. The rule is the same
+  for a house or a shrine of a long-named town ("House 3", "Shrine"): Asahikawa's worship hall (#212) reads
+  "Shrine", because "Asahikawa shrine" is 16 and cost the bar its year at 667x375. The whole name still shows
+  wherever the bar has room for it. A town-led form can still be too long for the countdown, as a house's can: "Kanazawa
+  lobby" (14) shows the date at 844x390, and every town-led lobby but Osaka's does at 667x375.
 
 - **What is a tower** (`roomgen.TOWER_DOORS`): the five generic building sprites `highrise-yellow`,
   `-blue`, `-glass`, `-apartment` and `midrise-apartment` and Sapporo's `sapporo-office-brick` and
@@ -576,9 +612,9 @@ tower) **and Sapporo** (its own two office blocks, `LobbySapporo1` the brick one
 - **Art**: the eleven `lobby-*` sprites are drawn by `tools/generate_house_art.py`, in the same style.
 - **Lint**: a lobby is held to a home's two rules under the same names (`house-sealed-floor`,
   `flavour-no-front`). Tests: `tools/tests/lobbies.test.js`.
-- **Dry run of the other towns** (26 Nov, before Sapporo's north was rebuilt): Sapporo 2 of 3 and Fukuoka 3 of 4 (a lamp post stands in front
-  of the flats' door in each), Sendai 1 of 2 (the flats' door opens onto a sealed verge), Market 1,
-  Palace 2; Asahikawa, Tokyo and Park have no towers.
+- **A town redesign** that keeps a tower keeps its lobby door (`roomgen.save_config`); one that removes a
+  tower leaves a `Lobby` room behind until `generate_houses.py --lobbies <Town>` is run again, which drops it
+  and renumbers the rest.
 
 ### Shrine worship halls (issue #212)
 
