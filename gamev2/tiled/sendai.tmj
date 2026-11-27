@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 298,
+ "nextobjectid": 300,
  "properties": [
   {
    "name": "gv2room",
@@ -26456,7 +26456,7 @@
     47,
     47,
     47,
-    47,
+    0,
     47,
     47,
     0,
@@ -27343,7 +27343,7 @@
     47,
     47,
     47,
-    47,
+    0,
     47,
     47,
     47,
@@ -28678,6 +28678,80 @@
     },
     {
      "id": 297,
+     "name": "transporter",
+     "point": true,
+     "x": 1824.0,
+     "y": 1312.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "PubSendai1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 13
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 298,
+     "name": "transporter",
+     "point": true,
+     "x": 352.0,
+     "y": 2144.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "DistillerySendai1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 11
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 299,
      "name": "boundary",
      "x": 0,
      "y": 0,

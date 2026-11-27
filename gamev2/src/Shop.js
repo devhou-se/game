@@ -912,6 +912,10 @@ Shop.VENUES = {
     standbar: { title: 'STAND BAR', sells: i => ['highball', 'nama-beer', 'edamame', 'karaage'].includes(i.id) },
     // the airport pub (issue #218): the izakaya's drinks and food, over the bar; it buys no fish
     pub:     { title: 'AIRPORT PUB',     sells: i => i.where === 'izakaya' },
+    // the pub in Sendai and the distillery's tasting bar (issue #217): over the bar; no stamp, no fish bought.
+    // (`pub` above is the airport's bar; this one is `taproom` so each keeps its own title.)
+    taproom: { title: 'THE PUB',         sells: i => i.where === 'izakaya' },
+    tasting: { title: 'TASTING BAR',     sells: i => i.id === 'highball' },
 };
 
 /**

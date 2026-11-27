@@ -15,6 +15,10 @@ const Interactions = {
         { kind: 'bakery', group: 'shop', pattern: /^chika-shop-bakery/, footprint: true },
         { kind: 'kissa', group: 'shop', pattern: /^chika-shop-kissa/, footprint: true },
         { kind: 'standbar', group: 'shop', pattern: /^chika-shop-bar/, footprint: true },
+        // the pub in Sendai (tools/generate_pub.py, issue #217): the bar is the till
+        { kind: 'taproom', group: 'shop', pattern: /^pub-in-bar/, footprint: true },
+        // the distillery's tasting bar in Sendai (tools/generate_distillery.py, issue #217): the counter is the till
+        { kind: 'tasting', group: 'shop', pattern: /^distillery-in-counter/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^(office-(shelf-drinks|shelf-glass|fridge|freezer)|konbini-coffee)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^(office-shelf-snacks|konbini-(chiller|gondola-(snacks|noodles|bread)))/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },
@@ -59,6 +63,20 @@ const Interactions = {
         { kind: 'bowl-bell', group: 'flavour', pattern: /^temple-in-keisu/, footprint: true, say: 'you flick the rim of the great bowl with a fingernail. it hums for a very long time' },
         { kind: 'votive-candles', group: 'flavour', pattern: /^temple-in-candles/, footprint: true, say: 'a rack of small candles, each one somebody\'s wish. the wax is still warm' },
         { kind: 'tied-fortunes', group: 'flavour', pattern: /^temple-in-musubi/, footprint: true, say: 'bad fortunes are tied here and left behind. there are a great many of them' },
+        // the pub in Sendai (issue #217): the baseball on the big screen (post 505's own words), the darts, the specials
+        { kind: 'baseball', group: 'flavour', pattern: /^pub-in-wall-tv/, footprint: true, say: 'the baseball is on. a man in a gold chain claps for the Eagles and the bar claps with him' },
+        { kind: 'darts', group: 'flavour', pattern: /^pub-in-wall-darts/, footprint: true, say: 'three darts in the wall, none in the board. nobody is owning up' },
+        { kind: 'specials', group: 'flavour', pattern: /^pub-in-chalkboard/, footprint: true, say: 'today\'s special is fish and chips. it has been today\'s special for some years' },
+        // the distillery in Sendai (issue #217): the one pot still, and the casks on the wall and on the floor
+        { kind: 'pot-still', group: 'flavour', pattern: /^distillery-in-still/, footprint: true, say: 'a copper pot still, warm to the hand. whatever is in it will be ready in about twelve years' },
+        { kind: 'casks', group: 'flavour', pattern: /^distillery-in-(wall-casks|cask)/, footprint: true, say: 'the casks are asleep. the chalk on the nearest one says not before 2037' },
+        // Canal City's atrium in Fukuoka (issue #217): the fountain in the canal, and the five shopfronts. Nothing is sold
+        { kind: 'mall-fountain', group: 'flavour', pattern: /^mall-in-fountain/, footprint: true, say: 'the jets rest between shows. the next water performance starts just after you leave' },
+        { kind: 'mall-fashion', group: 'flavour', pattern: /^mall-in-front-fashion/, footprint: true, say: 'winter coats in the window, in sizes for somebody smaller' },
+        { kind: 'mall-toys', group: 'flavour', pattern: /^mall-in-front-toys/, footprint: true, say: 'a wall of capsule toys and plushies. the big one is not for sale' },
+        { kind: 'mall-okonomiyaki', group: 'flavour', pattern: /^mall-in-front-okonomiyaki/, footprint: true, say: 'okonomiyaki, made in front of you. the queue says it is good. opinions differ' },
+        { kind: 'mall-cafe', group: 'flavour', pattern: /^mall-in-front-cafe/, footprint: true, say: 'the cafe has a queue for the queue' },
+        { kind: 'mall-ramen', group: 'flavour', pattern: /^mall-in-front-ramen/, footprint: true, say: 'the ramen stadium is five floors up. the escalator is part of the wall' },
         // inside a pagoda (issue #214): the heart pillar, the Buddhas at its foot, the sutra chests, the thousand Buddhas, the window
         { kind: 'heart-pillar', group: 'flavour', pattern: /^pagoda-in-pillar/, footprint: true, say: 'the heart pillar runs from the ground to the spire and touches no floor. it sways in quakes' },
         { kind: 'four-buddhas', group: 'flavour', pattern: /^pagoda-in-shumidan/, footprint: true, say: 'four small Buddhas sit round the foot of the pillar, one facing each wind' },

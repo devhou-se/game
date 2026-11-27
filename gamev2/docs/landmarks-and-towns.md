@@ -21,12 +21,12 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Sapporo Station front (the star clock), the red-brick government hall (Akarenga) | Sapporo | `sapporo-station-front_0_0`, `sapporo-akarenga_0_0` | shaded pixel art drawn by `tools/generate_sapporo_art.py` |
 | Date Masamune statue (Aoba Castle ruins) | Sendai | `sendai-masamune_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
 | Zuihoden | Sendai | `sendai-zuihoden_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
-| The pub (HUB) | Sendai | `sendai-pub_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
-| Nikka distillery kiln house | Sendai | `sendai-kiln_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
+| The pub (HUB) | Sendai | `sendai-pub_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py`; its door opens into `PubSendai1` (see "The Sendai pub") |
+| Nikka distillery kiln house | Sendai | `sendai-kiln_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py`; its door opens into `DistillerySendai1` (see "The Nikka distillery's tasting bar") |
 | Matsushima sightseeing boat, pier, islets | Sendai | `matsushima-*_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
 | Fukuoka Tower | Fukuoka | `fukuoka-tower_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
 | Yatai stalls (ramen, yakitori, oden) and their lantern posts | Fukuoka | `yatai-ramen_0_0`, `yatai-yakitori_0_0`, `yatai-oden_0_0`, `yatai-lanterns_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
-| Canal City and its fountain | Fukuoka | `canal-city_0_0`, `canal-fountain_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
+| Canal City and its fountain | Fukuoka | `canal-city_0_0`, `canal-fountain_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py`; the mall's two door leaves open into `MallFukuoka1` (see "Canal City's atrium") |
 | Kushida shrine's Yamakasa float | Fukuoka | `hakata-yamakasa_0_0` (beside a `shrine-red` hall) | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
 | Dazaifu Tenmangu: hall, arched bridge, plum trees | Fukuoka | `dazaifu-hall_0_0`, `dazaifu-bridge_0_0`, `plum-tree_0_0` | shaded pixel art drawn by `tools/generate_fukuoka_art.py` |
 | Kanazawa Castle's Ishikawa gate | Kanazawa | `kanazawa-ishikawa-gate_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
@@ -114,11 +114,13 @@ the board) and sits detached, north-north-east of Tokyo, in `devhouse.world`.
 - **Layout**: rail, platform and station house across the north; the main street runs south from the
   forecourt and crosses **Aoba-dori** (rows 22-24). North-west, the **Aoba Castle ruins**: a gravel terrace on
   a two-tier stone wall, up a seven-row flight of steps, with **Date Masamune** on his plinth on the steps'
-  axis and the great hall's foundations laid out in paving. North, downtown: an office tower, the **pub**, a
+  axis and the great hall's foundations laid out in paving. North, downtown: an office tower, the **pub** (its
+  door opens: "The Sendai pub"), a
   7-Eleven (`KonbiniSendai1`, `generate_konbinis.py Sendai`) under an apartment block, vending machines.
   North-east, **Zuihoden** on a two-row landing at the head of six steps, in a solid cedar grove behind an
   earthen wall. South-west, the **Nikka distillery** kiln house with casks and autumn maples - one landmark
-  for the Sakunami / Yamadera day trip, not a room. South, the **samurai quarter**: an earth lane (rows
+  for the Sakunami / Yamadera day trip; its door opens into the tasting bar ("The Nikka distillery's tasting
+  bar"), the only room of the distillery. South, the **samurai quarter**: an earth lane (rows
   34-35) between earthen walls, machiya, a walled residence garden with a gate on the lane and an open side
   on Aoba-dori (a way through), and a gated courtyard house on the south side. The whole east edge is
   **Matsushima bay**.
@@ -364,7 +366,8 @@ after the existing stations in `tools/generate_stations.py`); it sits detached, 
   pedestrian **avenue** (columns 29-32) is the spine, north to south: the station house and its forecourt ->
   a signalled zebra crossing over the **downtown street** (rows 20-22, asphalt; high-rises and **Fukuoka Tower**
   on its plaza by the beach to the west, the station plaza with the 7-Eleven `KonbiniFukuoka1` to the east)
-  -> between **Canal City** with its fountain (west) and **Kushida shrine** - a `shrine-red` hall with a
+  -> between **Canal City** with its fountain (west; the mall's doors open into its atrium, `MallFukuoka1`:
+  see "Canal City's atrium") and **Kushida shrine** - a `shrine-red` hall with a
   Yamakasa float beside it - the machiya and a pagoda (east) -> **the ramen river street** -> the bridge ->
   Ohori Park's pond (south-west) and **Dazaifu Tenmangu** (south-east) -> the south lane.
 - **The ramen river street**: ten **yatai** (rows 34-36: `yatai-ramen|yakitori|oden`, 3x3, solid all over)
@@ -855,6 +858,153 @@ be redone. `tools/generate_temple.py` is written for one hall; a second one is a
   cell beside one (`NPCManager.atDoorway`), so the step under each leaf stays free, and wherever else he
   stands both leaves are still walked into from the street, stitched or not (`temple.test.js`).
 
+### The Sendai pub (issue #217)
+
+**What "the pub" is on the map.** One sprite, `sendai-pub_0_0` (5x5), downtown in `Sendai`: the building the
+trip watched the baseball in (post 505), and the `the HUB pub` landmark. It was sealed. The door drawn in the
+middle of its front row (the sprite's cell + (2,4); `Sendai` 28,20 as the town stands) carries a hidden
+transporter into `PubSendai1` (HUD: `The Pub`, the Map footer `The Pub (in Sendai)`). You arrive just inside
+the doorway and the mat behind you (two cells wide) puts you back on the pavement in front of the door.
+
+**Why it did not wait for the town's rebuild**, though "Senso-ji only, for now" above says temples do. The
+temple's door is a pair of tiles at fixed cells; this door, the distillery's and Canal City's are **found by
+sprite** (`roomgen.sprite_doors`: the building's cell plus an offset from `roomgen.PUB_DOORS`), so nothing
+about them is written down as a coordinate, in the generator or in its tests. What the #219 rebuild owes them:
+if it moves the building, the town generator leaves it sealed (`roomgen.owned_door` keeps a door only where
+the building still stands), and `generate_pub.py` then `config_to_tiled.py PubSendai1 Sendai` must be run
+again: it finds the building where it now is and wires the door anew. Nothing else needs an edit.
+
+- **`tools/generate_pub.py`** owns the interior and the door cell. The room is rebuilt from scratch (its NPCs
+  kept) on the shared shell, `tools/interiors.py` (`Interior`: the void, the floor, the walls, the mat and its
+  exits, the boundary, and the check that every open floor cell is reached from the door); in the host it
+  removes the one collider on the door and puts the transporter on it, replaced in place (`roomgen.open_door`),
+  and touches nothing else. `generate_sendai.py` is not edited. A re-run is a no-op, and from a sealed
+  building it rebuilds the same world (`pub.test.js`).
+- **Door keeping.** The room carries `pub: {host, doors}` and `'Pub'` is a row of `roomgen.OWNED_DOORS`
+  (`PUB_DOORS`), so a re-run of `generate_sendai.py` keeps the door (`check_generators.py` proves it).
+- **What is inside** (20x17; the floor is 18x10), a proper pub in dark wood, green and brass:
+  - the back wall, three rows tall: the back bar (`wall-backbar`, 7 wide: mirrors, shelves of bottles,
+    cupboards), green wallpaper over panelling with framed prints (`wall-panel`, `wall-print`), the big screen
+    with the baseball on (`wall-tv`, 4 wide: the diamond, the fielders, the score 3-2) and the dartboard in
+    its cabinet (`wall-darts`);
+  - the bar (`bar`, 7x2, solid) under the back bar and flush to the west wall, so nobody gets onto the
+    staff's side: three sets of taps, the till, glasses; stools along its front with a gap between each to
+    order through;
+  - four tables with a chair either side (`table`, `chair-w` / `-e`), two booths back to back on the east
+    wall (`booth`, 2x3, solid throughout), the specials on a chalkboard by the west wall (`chalkboard`, 1x2:
+    its head is walked behind), green glass lamps (`lamp-hang`, `Tops`) over the bar and every table.
+- **Lantern light.** `interior` (never offered to the blog pipeline) and `lanternLight`: at night only, the
+  room dims and its lamps, the back bar and the screen glow (`Glows.SPRITES`: `pub-in-lamp-hang`,
+  `-wall-backbar`, and `-wall-tv`, which swells slowly).
+- **Something to do.** Bump the bar and it sells the izakaya's list as `Shop.VENUES.taproom`, titled THE PUB
+  (see `shop-and-economy.md`): no stamp, no fish bought. The screen, the dartboard and the chalkboard say a
+  line each (`flavour` rules in `Interactions.js`; the screen's is post 505's own words). No new overlay, key
+  or save field.
+- **Art**: `tools/generate_pub_art.py` (needs Pillow; `--preview out.png`) draws the 21 sprites
+  (`pub-in-<piece>`) at the palace kit's scale. Its frame (`wall_side`, `wall_front`, `threshold`,
+  `doorlight`, each taking a palette), its helpers and `register()` are imported by the distillery's and
+  Canal City's art tools. It and the generator are in `check_generators.py`.
+- **Doors and blog NPCs**: no dated position or district stand cell is on the door or the cell in front of
+  it, and a wanderer never steps there (`NPCManager.atDoorway`). The `the HUB pub` LANDMARK stands its
+  visitor on the pavement beside the door (the sprite's cell + (3,5): Julia on 29 October 2025).
+- **Build order**: `generate_pub_art.py`, `generate_pub.py`, `config_to_tiled.py PubSendai1 Sendai`,
+  `play.js lint PubSendai1 Sendai`. Tests: `tools/tests/pub.test.js` (the checks the three interiors share
+  are `tools/tests/interiors.js`).
+
+### The Nikka distillery's tasting bar (issue #217)
+
+**What "the distillery" is on the map.** One sprite, `sendai-kiln_0_0` (5x6), in the south-west of `Sendai`:
+the red brick kiln house, the `the Nikka distillery` landmark of the Sakunami day out. It was sealed. The door
+under its WHISKY sign (the sprite's cell + (2,5); `Sendai` 5,33 as the town stands) carries a hidden
+transporter into `DistillerySendai1` (HUD: `Distillery`, the Map footer `Distillery (in Sendai)`). You arrive
+just inside the doorway and the mat behind you (two cells wide) puts you back in the lane in front of the door.
+Like the pub's, the door is found by sprite (`roomgen.DISTILLERY_DOORS`) and did not wait for the #219
+rebuild; what the rebuild owes it is the same (see "The Sendai pub"): if the kiln moves, run
+`generate_distillery.py` then `config_to_tiled.py DistillerySendai1 Sendai`. If the tasting bar should later
+sit behind another building of the distillery, that is one row in `DISTILLERY_DOORS`.
+
+- **`tools/generate_distillery.py`** owns the interior and the door cell, exactly as `generate_pub.py` does
+  the pub's (`interiors.Interior`, `roomgen.sprite_doors`, `roomgen.open_door`); `generate_sendai.py` is not
+  edited. A re-run is a no-op, and from a sealed kiln it rebuilds the same world (`distillery.test.js`).
+- **Door keeping.** The room carries `distillery: {host, doors}` and `'Distillery'` is a row of
+  `roomgen.OWNED_DOORS` (`DISTILLERY_DOORS`), so a re-run of `generate_sendai.py` keeps the door.
+- **What is inside** (20x15; the floor is 18x8), a small tasting bar in brick, oak, copper and stone flags:
+  - the back wall, three rows tall: casks racked three high (`wall-casks`, 4 wide), brick under a beam
+    (`wall-brick`), the kiln's two arched windows (`wall-window`), and the bottles behind the counter under
+    the sign (`wall-shelf`, 5 wide);
+  - **one copper pot still** (`still`, 3x4) against the back wall: the pot on its brick hearth, the swan
+    neck with the rope Nikka ties round it, the lyne arm down to the condenser. Its two lower rows are solid;
+    the neck and the arm are walked behind;
+  - the tasting counter (`counter`, 5x2, solid) under the bottles and flush to the east wall, so nobody gets
+    onto the staff's side: three flights of drams poured on it; two stools along its front with a place to
+    stand either side of each;
+  - casks stood on end by the side walls (`cask`), copper lamps (`lamp-hang`, `Tops`) over the counter,
+    either side of the still and in the middle of the floor.
+- **Lantern light.** `interior` and `lanternLight`: at night only, the room dims and its lamps glow, and the
+  windows faintly (`Glows.SPRITES`: `distillery-in-lamp-hang`, `-wall-window`).
+- **Something to do.** Bump the counter and it pours a Highball as `Shop.VENUES.tasting`, titled TASTING BAR
+  (see `shop-and-economy.md`): no stamp, no fish bought. The still says a line, and so do the casks, racked or
+  on the floor (`flavour` rules `pot-still` and `casks` in `Interactions.js`). No new overlay, key or save
+  field.
+- **Art**: `tools/generate_distillery_art.py` (needs Pillow; `--preview out.png`) draws the 17 sprites
+  (`distillery-in-<piece>`); the frame is the pub art tool's, in the kiln's own brick. It and the generator
+  are in `check_generators.py`.
+- **Doors and blog NPCs**: no dated position or district stand cell is on the door or the cell in front of
+  it, and a wanderer never steps there. The `the Nikka distillery` LANDMARK stands its visitor in the lane
+  beside the door (the sprite's cell + (3,6): Damian on 29 October 2025, Julia on the 30th).
+- **Build order**: `generate_distillery_art.py`, `generate_distillery.py`,
+  `config_to_tiled.py DistillerySendai1 Sendai`, `play.js lint DistillerySendai1 Sendai`. Tests:
+  `tools/tests/distillery.test.js` (on `tools/tests/interiors.js`).
+
+### Canal City's atrium (issue #217)
+
+**What "Canal City" is on the map.** One sprite, `canal-city_0_0` (8x6), west of the avenue in `Fukuoka`: the
+`Canal City` landmark of post 727. It was sealed. The two leaves of the door under its arch (the sprite's cell
++ (3,5) and + (4,5); `Fukuoka` 15,29 and 16,29 as the town stands) each carry a hidden transporter into
+`MallFukuoka1` (HUD: `Canal City`, the Map footer `Canal City (in Fukuoka)`). The west leaf puts you on the
+west half of the doorway and the east on the east, and the mat behind you puts you back on the plaza in front
+of the leaf above it. Like the pub's, the doors are found by sprite (`roomgen.MALL_DOORS`) and did not wait
+for the #219 rebuild; what the rebuild owes them is the same (see "The Sendai pub"): if the mall moves, run
+`generate_mall.py` then `config_to_tiled.py MallFukuoka1 Fukuoka`. (The mall's top two rows are roof and are
+walked behind, as they always were; only the two door cells opened.)
+
+- **`tools/generate_mall.py`** owns the interior and the two door cells, exactly as `generate_pub.py` does
+  the pub's (`interiors.Interior`, `roomgen.sprite_doors`, `roomgen.open_door`); `generate_fukuoka.py` is not
+  edited. A re-run is a no-op, and from a sealed building it rebuilds the same world (`mall.test.js`).
+- **Door keeping.** The room carries `mall: {host, doors}` and `'Mall'` is a row of `roomgen.OWNED_DOORS`
+  (`MALL_DOORS`), so a re-run of `generate_fukuoka.py` keeps both doors.
+- **What is inside** (28x23; the floor is 26x14), a bright atrium in cream stone and terracotta. It is not a
+  mall to shop in: nothing is sold.
+  - the back wall, **five** rows tall (the pub's and the distillery's are three): six piers (`wall-pier`,
+    1x5) and between them five shopfronts (`front-fashion`, `-toys`, `-okonomiyaki`, `-cafe`, `-ramen`, 4x5:
+    one function, the `FRONTS` table). The top two rows of every piece are two gallery levels: small lit
+    fronts, a glass rail, a terracotta balcony that bows out over each shop;
+  - **the canal** through the middle of the floor, three rows from wall to wall (`canal-n-a/-b`, `canal-a/-b`,
+    `canal-s-a/-b`): the same teal water, cream coping with a terracotta band and brick quay as the street
+    canal `generate_fukuoka_town_art.py` draws for #219 (whose `fukuoka-canal*` sprites are not registered or
+    placed here). It is drawn art on the `Water` layer over the paving, **not** `pond-autotile`: there is no
+    `pond` rule on it and nobody fishes indoors. Solid, except under the bridges;
+  - **two footbridges** (`bridge`, 2x3, `Non-Collidables`, `depthBias: -200`: the `dazaifu-bridge` recipe,
+    written by the art tool), the only ways across, either side of **the fountain** (`fountain`, 4x3, solid,
+    standing in the canal; it carries its own water and quays, so no canal piece lies under it);
+  - benches facing the water on both banks (the station's `station-bench` on the north bank with a promenade
+    between it and the quay, `station-bench-back` along the south), `station-planter-a/-b` at the ends of the
+    south row and either side of the door, palms in tubs (`palm`, 1x2). Each bench and planter is 2x2 with only
+    its lower row in the way; none stands in a bridge's columns.
+- **No lantern light.** `interior` but not `lanternLight`, and no `Glows` rows: an atrium is as bright at
+  night as by day.
+- **Something to do.** Bump the fountain or a shopfront for a line (`flavour` rules `mall-fountain`,
+  `mall-fashion`, `mall-toys`, `mall-okonomiyaki`, `mall-cafe`, `mall-ramen` in `Interactions.js`); cross the
+  bridges. The water itself says nothing. No venue, no stamp, no new overlay, key or save field.
+- **Art**: `tools/generate_mall_art.py` (needs Pillow; `--preview out.png`) draws the 23 sprites
+  (`mall-in-<piece>`); the frame is the pub art tool's, in cream and terracotta. It and the generator are in
+  `check_generators.py`.
+- **Doors and blog NPCs**: no dated position or district stand cell is on a door or the cell in front of one,
+  and a wanderer never steps there. The `Canal City` LANDMARK stands its visitor on the plaza beside the doors
+  (the sprite's cell + (2,6): Julia on 10 November 2025). Post 727 stays outside: moving it into the atrium
+  would need the blog pipeline to place into an `interior` room, which it never does.
+- **Build order**: `generate_mall_art.py`, `generate_mall.py`, `config_to_tiled.py MallFukuoka1 Fukuoka`,
+  `play.js lint MallFukuoka1 Fukuoka`. Tests: `tools/tests/mall.test.js` (on `tools/tests/interiors.js`).
 ### Pagodas (issue #214)
 
 **What a pagoda is on the map, and the count.** A pagoda is its base sprite on the `Collidables` layer:

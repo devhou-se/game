@@ -81,9 +81,15 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         // nobody stands under a roof: every building's roof rows are solid. The one cell of a building you
         // can step onto is the doorway of a machiya that is a house (#208): the middle of its front row,
         // a hidden door into a House room of this town, with the street in front of it
-        const doorway = (key, x, y, w, h, cx, cy) => /^machiya/.test(key) && cx === x + (w - 1) / 2 && cy === y + h - 1 &&
-            seen.has(`${cx},${cy + 1}`) && room.transporters.some((t) => t.hidden && t.gridX === cx && t.gridY === cy &&
-                ((cfg.rooms[t.targetRoom] || {}).house || {}).host === 'Sendai');
+        // ...and the door of the pub and of the distillery's kiln (#217): a hidden door into a room whose
+        // `pub` / `distillery` marker names this town and lists that very cell
+        const interior = (cx, cy) => room.transporters.some((t) => t.hidden && t.gridX === cx && t.gridY === cy &&
+            ['pub', 'distillery'].some((mark) => { const m = (cfg.rooms[t.targetRoom] || {})[mark];
+                return m && m.host === 'Sendai' && m.doors.some(([dx, dy]) => dx === cx && dy === cy); }));
+        const doorway = (key, x, y, w, h, cx, cy) => seen.has(`${cx},${cy + 1}`) && (/^sendai-(pub|kiln)/.test(key) ? interior(cx, cy) :
+            /^machiya/.test(key) && cx === x + (w - 1) / 2 && cy === y + h - 1 &&
+            room.transporters.some((t) => t.hidden && t.gridX === cx && t.gridY === cy &&
+                ((cfg.rooms[t.targetRoom] || {}).house || {}).host === 'Sendai'));
         // ...and the door of a tower that has a lobby (#216): on its ground-floor row, a hidden door into a Lobby
         // room of this town, with the street in front of it - the yellow high-rise's (23,20). The flats over the
         // 7-Eleven have none: the store is their ground floor

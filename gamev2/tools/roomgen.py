@@ -79,6 +79,18 @@ CHIKAGAI_PREFIX = 'Chikagai'    # rooms.Chikagai<Town>
 # temple door unless it leads into a room carrying the `temple` marker.
 TEMPLE_DOORS = {'shrine-walls_2_2': [(0, 0)]}
 TEMPLE_PREFIX = 'Temple'        # rooms.Temple<Host><n>
+# The pub in Sendai (issue #217, tools/generate_pub.py): the one sprite the
+# building is -> its door cell, in the middle of its front row.
+PUB_DOORS = {'sendai-pub_0_0': [(2, 4)]}
+PUB_PREFIX = 'Pub'                    # rooms.Pub<Host><n>
+# The Nikka distillery's tasting bar in Sendai (issue #217, tools/generate_distillery.py):
+# the kiln, the one building of the distillery on the map -> the door in its front.
+DISTILLERY_DOORS = {'sendai-kiln_0_0': [(2, 5)]}
+DISTILLERY_PREFIX = 'Distillery'      # rooms.Distillery<Host><n>
+# Canal City's atrium in Fukuoka (issue #217, tools/generate_mall.py): the mall's
+# one sprite -> the two leaves of the door under its arch.
+MALL_DOORS = {'canal-city_0_0': [(3, 5), (4, 5)]}
+MALL_PREFIX = 'Mall'                  # rooms.Mall<Host><n>
 # A pagoda (issue #214, tools/generate_pagodas.py): the sprite its ground floor
 # is -> its door cells. `pagoda-floor` is the five-storey pagoda's foot and has
 # one door; `red-pagoda-small-base` is the whole foot of a small red pagoda and
@@ -104,7 +116,10 @@ OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()})
                CHIKAGAI_PREFIX: ('chikagai', CHIKAGAI_DOORS),
                TEMPLE_PREFIX: ('temple', TEMPLE_DOORS),
                PAGODA_PREFIX: ('pagoda', PAGODA_DOORS),
-               DEVHOUSE_PREFIX: ('devhouse', DEVHOUSE_DOORS)}
+               DEVHOUSE_PREFIX: ('devhouse', DEVHOUSE_DOORS),
+               PUB_PREFIX: ('pub', PUB_DOORS),
+               DISTILLERY_PREFIX: ('distillery', DISTILLERY_DOORS),
+               MALL_PREFIX: ('mall', MALL_DOORS)}
 DOOR_LAYERS = ('Collidables', 'Over Floor')   # where a door sprite is laid (a tower's foot is on Over Floor)
 _house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior
 
@@ -554,6 +569,15 @@ def pin(items, item):
     else:
         items.append(item)
     return item
+
+
+def sprite_doors(cfg, host, table):
+    """The doors of every building of `table` (sprite -> its door cells, as
+    PUB_DOORS) that stands in room `host`: sorted [(door cell, the cell in
+    front of it)]. For the interiors whose building is one sprite (issue #217)."""
+    return sorted(((x + dx, y + dy), (x + dx, y + dy + 1))
+                  for x, y, key in find_sprites(cfg['rooms'][host], tuple(table), DOOR_LAYERS)
+                  for dx, dy in table[key])
 
 
 def open_door(host_room, cell, target, arrive):

@@ -236,6 +236,29 @@ Glows.SPRITES = {
     'temple-in-kuden_0_0': [
         { x: 3.0, y: 1.8, r: 1.6, color: 0xffc060, a: 0.7 },
     ],
+    // the pub in Sendai (issue #217, art: tools/generate_pub_art.py; `lanternLight` too).
+    // 1x2: a green glass lamp hung over the bar or a table
+    'pub-in-lamp-hang_0_0': [
+        { x: 0.5, y: 1.0, r: 1.7, color: 0xffb860 },
+    ],
+    // 7x3: the back bar - the lit shelves of bottles in front of the mirrors, wide and low
+    'pub-in-wall-backbar_0_0': [
+        { x: 1.9, y: 1.5, r: 2.2, ry: 1.1, color: Glows.WARM, a: 0.6 },
+        { x: 5.1, y: 1.5, r: 2.2, ry: 1.1, color: Glows.WARM, a: 0.6 },
+    ],
+    // 4x3: the big screen with the baseball on (it flickers)
+    'pub-in-wall-tv_0_0': [
+        { x: 2.0, y: 1.3, r: 2.3, ry: 1.4, color: Glows.COOL, a: 0.8, pulse: { period: 2600, depth: 0.25 } },
+    ],
+    // the distillery's tasting bar in Sendai (issue #217, art: tools/generate_distillery_art.py; `lanternLight` too).
+    // 1x2: a copper lamp hung over the counter, by the still
+    'distillery-in-lamp-hang_0_0': [
+        { x: 0.5, y: 1.0, r: 1.7, color: 0xffb860 },
+    ],
+    // 2x3: the kiln's two arched windows from inside - the night sky through them, faint
+    'distillery-in-wall-window_0_0': [
+        { x: 1.0, y: 1.3, r: 1.5, ry: 1.3, color: Glows.COOL, a: 0.45 },
+    ],
     // inside a pagoda (issue #214, art: tools/generate_pagoda_art.py; `lanternLight` too).
     // 1x2: the iron lantern hung on every storey
     'pagoda-in-toro-hang_0_0': [
