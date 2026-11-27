@@ -53,3 +53,23 @@ says when the limits are stretched, so a log shows it.
 effect; a fixed short tap can be dropped when the frame rate dips. The one place a key is held for a fixed time is
 `devhouseStair`: a room change does not let go of a held key, and `hold()` lets go the moment its condition is true,
 which is the one moment a stair that bounces you between two floors cannot show.
+
+### The menu's cursor
+
+`menu.js` moves the ESC menu's cursor (#252). The game reads its keys once a frame and moves the cursor when a key
+goes down, so a key let go and pressed again between two frames was never up as far as the game saw, and the second
+press moves nothing. On a slow machine a frame is longer than the 120 ms `hold()` leaves after a key: the menu checks
+failed with `could not move the menu cursor to 9` or `{"couldNotReach":"Career","selected":4}`, the cursor one row
+short.
+
+- `menu.step(page, key)` is one press: down until the cursor has left its row, up until the game has run two frames
+  with it up, and it returns the row the cursor is on then. `menu-entries` asserts on that row, one row a press.
+- `menu.moveTo(page, row)` walks to a row the short way round, choosing the way again from where the cursor is
+  after every press. It returns `{ at, rows }`; a check that could not get there fails with `rows`, every row the
+  cursor was on, which shows a press that moved nothing (a row twice) or one that moved two.
+- `menu.frames(page)` is the wait by itself, for the same key twice in a row through `press()` (ESC to open the
+  menu, ESC to close it).
+
+Do not hold a key until the cursor is on a row you worked out from the presses sent. `menu.js` takes the page as an
+argument and needs no playwright, so `tools/tests/browser-regress.test.js` runs it against a page whose game is the
+real `InputHandler` at frame times from 16 ms to 2.4 s.

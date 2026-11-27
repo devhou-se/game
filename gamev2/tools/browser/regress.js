@@ -16,6 +16,7 @@
 //  - a check that cannot find what it needs FAILS with what it looked for; it never passes empty.
 const path = require('path');
 const { limits } = require('./limits');
+const menu = require('./menu');
 
 // a stalled browser must not hang the queue: the whole run and each check have a limit (REGRESS_TIME_SCALE stretches both)
 let LIMITS;
@@ -898,16 +899,18 @@ async function desktop(shared) {
             const labels = await page.evaluate('__t.s.menuManager.options.map(o => o.textObject.text)');
             need(labels.length >= 5 && await page.evaluate('__t.s.menuManager.selectedIndex === 0'), { labels });
             const lit = 'ix => { const m = __t.s.menuManager, c = m.options.map(o => o.textObject.style.color); return m.selectedIndex === ix && c.filter(x => x === c[ix]).length === 1 && m.options.every(o => o.textObject.visible); }';
+            // one press, one row: the key is let go until the game has seen it up, then the cursor is read (menu.js, #252)
+            const stepTo = async (key, ix) => { await menu.step(page, key); return page.evaluate(`(${lit})(${ix})`); };
             for (let i = 1; i < labels.length; i++) {
-                const ok = await press(page, i % 2 ? 'ArrowDown' : 's', `(${lit})(${i})`);
+                const ok = await stepTo(i % 2 ? 'ArrowDown' : 's', i);
                 need(ok, { couldNotReach: labels[i], selected: await page.evaluate('__t.s.menuManager.selectedIndex') });
             }
-            need(await press(page, 'ArrowDown', `(${lit})(0)`), 'down from the last entry did not wrap to the first');
-            need(await press(page, 'w', `(${lit})(${labels.length - 1})`), 'up from the first entry did not wrap to the last');
+            need(await stepTo('ArrowDown', 0), 'down from the last entry did not wrap to the first');
+            need(await stepTo('w', labels.length - 1), 'up from the first entry did not wrap to the last');
             // the Career row opens its card (issue #226), which says who is hiring to somebody with no job; ESC closes it
             const career = labels.indexOf('Career');
             need(career > 0, { noCareerRow: labels });
-            for (let i = labels.length - 2; i >= career; i--) need(await press(page, 'ArrowUp', `(${lit})(${i})`), { couldNotReach: labels[i] });
+            for (let i = labels.length - 2; i >= career; i--) need(await stepTo('ArrowUp', i), { couldNotReach: labels[i], selected: await page.evaluate('__t.s.menuManager.selectedIndex') });
             need(await press(page, 'Enter', '__t.s.achievementsVisible'), 'ENTER on Career did not open the card');
             const card = await page.evaluate(() => {
                 const { s } = __t, texts = s.children.list.filter(o => o.depth >= 2000 && o.visible && o.type === 'Text');
@@ -923,22 +926,20 @@ async function desktop(shared) {
             need(after.overlays.length === 0 && after.pos.x === before.x && after.pos.y === before.y, { movedOrLeftOpen: after, before });
             // ...and ESC still opens and closes the menu
             need(await press(page, 'Escape', '__t.s.menuManager.isVisible()'), 'ESC did not open the menu again');
+            await menu.frames(page);   // the same key again: it is a new press once the game has seen it up
             need(await press(page, 'Escape', '!__t.s.menuManager.isVisible()'), 'ESC did not close the menu');
             need((await page.evaluate('__t.overlays()')).length === 0, 'the menu was left open');
         });
 
-        /** Open the menu and activate the entry called `label`, with real keys. */
+        /** Open the menu and put the cursor on the entry called `label`, with real keys. */
         const menuTo = async (label) => {
+            await menu.frames(page);   // the ESC that closed something just before is up, as the game sees it
             need(await press(page, 'Escape', '__t.s.menuManager.isVisible()'), 'ESC did not open the menu');
             const ix = await page.evaluate(l => __t.s.menuManager.options.findIndex(o => o.textObject.text === l), label);
             need(ix >= 0, `the menu has no "${label}" entry`);
-            const n = await page.evaluate('__t.s.menuManager.options.length');
-            // the short way round
-            const down = ix <= n - ix;
-            for (let i = 0; i < (down ? ix : n - ix); i++) {
-                const want = down ? i + 1 : n - 1 - i;
-                need(await press(page, down ? 's' : 'ArrowUp', `__t.s.menuManager.selectedIndex === ${want}`), `could not move the menu cursor to ${want}`);
-            }
+            // the short way round, a press at a time; that one press moves one row is menu-entries' to say
+            const went = await menu.moveTo(page, ix);
+            need(went.at === ix, { couldNotMoveTheMenuCursorTo: ix, label, rows: went.rows });
         };
 
         await cleanly('menu-map', async () => {
