@@ -16049,16 +16049,6 @@
     },
     {
      "id": 200,
-     "gid": 106,
-     "name": "sendai-cedar_0_0",
-     "x": 2816,
-     "y": 2560,
-     "width": 128,
-     "height": 256,
-     "visible": true
-    },
-    {
-     "id": 201,
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 2816,
@@ -16068,7 +16058,7 @@
      "visible": true
     },
     {
-     "id": 202,
+     "id": 201,
      "gid": 110,
      "name": "sendai-pine_0_0",
      "x": 2944,
@@ -16078,7 +16068,7 @@
      "visible": true
     },
     {
-     "id": 203,
+     "id": 202,
      "gid": 111,
      "name": "sendai-stone-lantern_0_0",
      "x": 2944,
@@ -16088,11 +16078,21 @@
      "visible": true
     },
     {
-     "id": 204,
+     "id": 203,
      "gid": 110,
      "name": "sendai-pine_0_0",
      "x": 2944,
      "y": 1088,
+     "width": 128,
+     "height": 192,
+     "visible": true
+    },
+    {
+     "id": 204,
+     "gid": 109,
+     "name": "sendai-maple_0_0",
+     "x": 2944,
+     "y": 1600,
      "width": 128,
      "height": 192,
      "visible": true
@@ -16102,23 +16102,13 @@
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 2944,
-     "y": 1600,
-     "width": 128,
-     "height": 192,
-     "visible": true
-    },
-    {
-     "id": 206,
-     "gid": 109,
-     "name": "sendai-maple_0_0",
-     "x": 2944,
      "y": 2112,
      "width": 128,
      "height": 192,
      "visible": true
     },
     {
-     "id": 207,
+     "id": 206,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 2944,
@@ -16128,7 +16118,7 @@
      "visible": true
     },
     {
-     "id": 208,
+     "id": 207,
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 2944,
@@ -16138,7 +16128,7 @@
      "visible": true
     },
     {
-     "id": 209,
+     "id": 208,
      "gid": 44,
      "name": "fox-statue-base-1_0_0",
      "x": 3008,
@@ -16148,7 +16138,7 @@
      "visible": true
     },
     {
-     "id": 210,
+     "id": 209,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3072,
@@ -16158,7 +16148,7 @@
      "visible": true
     },
     {
-     "id": 211,
+     "id": 210,
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 3072,
@@ -16168,11 +16158,21 @@
      "visible": true
     },
     {
-     "id": 212,
+     "id": 211,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3072,
      "y": 2304,
+     "width": 128,
+     "height": 256,
+     "visible": true
+    },
+    {
+     "id": 212,
+     "gid": 106,
+     "name": "sendai-cedar_0_0",
+     "x": 3072,
+     "y": 256,
      "width": 128,
      "height": 256,
      "visible": true
@@ -16182,7 +16182,7 @@
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3072,
-     "y": 256,
+     "y": 2560,
      "width": 128,
      "height": 256,
      "visible": true
@@ -16192,23 +16192,13 @@
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3072,
-     "y": 2560,
-     "width": 128,
-     "height": 256,
-     "visible": true
-    },
-    {
-     "id": 215,
-     "gid": 106,
-     "name": "sendai-cedar_0_0",
-     "x": 3072,
      "y": 3008,
      "width": 128,
      "height": 256,
      "visible": true
     },
     {
-     "id": 216,
+     "id": 215,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3136,
@@ -16218,7 +16208,7 @@
      "visible": true
     },
     {
-     "id": 217,
+     "id": 216,
      "gid": 65,
      "name": "kanazawa-kotoji_0_0",
      "x": 3136,
@@ -16228,7 +16218,7 @@
      "visible": true
     },
     {
-     "id": 218,
+     "id": 217,
      "gid": 60,
      "name": "hokuriku-ginkgo_0_0",
      "x": 3136,
@@ -16238,11 +16228,21 @@
      "visible": true
     },
     {
-     "id": 219,
+     "id": 218,
      "gid": 111,
      "name": "sendai-stone-lantern_0_0",
      "x": 3136,
      "y": 2816,
+     "width": 64,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 219,
+     "gid": 107,
+     "name": "sendai-earthen-wall_0_0",
+     "x": 320,
+     "y": 1344,
      "width": 64,
      "height": 128,
      "visible": true
@@ -16252,7 +16252,7 @@
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 320,
-     "y": 1344,
+     "y": 2304,
      "width": 64,
      "height": 128,
      "visible": true
@@ -16262,23 +16262,13 @@
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 320,
-     "y": 2304,
-     "width": 64,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 222,
-     "gid": 107,
-     "name": "sendai-earthen-wall_0_0",
-     "x": 320,
      "y": 2688,
      "width": 64,
      "height": 128,
      "visible": true
     },
     {
-     "id": 223,
+     "id": 222,
      "gid": 110,
      "name": "sendai-pine_0_0",
      "x": 3200,
@@ -16288,7 +16278,7 @@
      "visible": true
     },
     {
-     "id": 224,
+     "id": 223,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3200,
@@ -16298,7 +16288,7 @@
      "visible": true
     },
     {
-     "id": 225,
+     "id": 224,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3200,
@@ -16308,7 +16298,7 @@
      "visible": true
     },
     {
-     "id": 226,
+     "id": 225,
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 3200,
@@ -16318,7 +16308,7 @@
      "visible": true
     },
     {
-     "id": 227,
+     "id": 226,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3264,
@@ -16328,7 +16318,7 @@
      "visible": true
     },
     {
-     "id": 228,
+     "id": 227,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3328,
@@ -16338,11 +16328,21 @@
      "visible": true
     },
     {
-     "id": 229,
+     "id": 228,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3328,
      "y": 2240,
+     "width": 128,
+     "height": 256,
+     "visible": true
+    },
+    {
+     "id": 229,
+     "gid": 106,
+     "name": "sendai-cedar_0_0",
+     "x": 3328,
+     "y": 256,
      "width": 128,
      "height": 256,
      "visible": true
@@ -16352,23 +16352,13 @@
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3328,
-     "y": 256,
-     "width": 128,
-     "height": 256,
-     "visible": true
-    },
-    {
-     "id": 231,
-     "gid": 106,
-     "name": "sendai-cedar_0_0",
-     "x": 3328,
      "y": 2752,
      "width": 128,
      "height": 256,
      "visible": true
     },
     {
-     "id": 232,
+     "id": 231,
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 3328,
@@ -16378,7 +16368,7 @@
      "visible": true
     },
     {
-     "id": 233,
+     "id": 232,
      "gid": 110,
      "name": "sendai-pine_0_0",
      "x": 3392,
@@ -16388,7 +16378,7 @@
      "visible": true
     },
     {
-     "id": 234,
+     "id": 233,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3392,
@@ -16398,7 +16388,7 @@
      "visible": true
     },
     {
-     "id": 235,
+     "id": 234,
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 3392,
@@ -16408,7 +16398,7 @@
      "visible": true
     },
     {
-     "id": 236,
+     "id": 235,
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 3392,
@@ -16418,7 +16408,7 @@
      "visible": true
     },
     {
-     "id": 237,
+     "id": 236,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3392,
@@ -16428,7 +16418,7 @@
      "visible": true
     },
     {
-     "id": 238,
+     "id": 237,
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 3392,
@@ -16438,7 +16428,7 @@
      "visible": true
     },
     {
-     "id": 239,
+     "id": 238,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3392,
@@ -16448,7 +16438,7 @@
      "visible": true
     },
     {
-     "id": 240,
+     "id": 239,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3456,
@@ -16458,11 +16448,21 @@
      "visible": true
     },
     {
-     "id": 241,
+     "id": 240,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3456,
      "y": 2240,
+     "width": 128,
+     "height": 256,
+     "visible": true
+    },
+    {
+     "id": 241,
+     "gid": 106,
+     "name": "sendai-cedar_0_0",
+     "x": 3456,
+     "y": 2496,
      "width": 128,
      "height": 256,
      "visible": true
@@ -16472,7 +16472,7 @@
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3456,
-     "y": 2496,
+     "y": 256,
      "width": 128,
      "height": 256,
      "visible": true
@@ -16482,7 +16482,7 @@
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3456,
-     "y": 256,
+     "y": 2752,
      "width": 128,
      "height": 256,
      "visible": true
@@ -16492,23 +16492,13 @@
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3456,
-     "y": 2752,
-     "width": 128,
-     "height": 256,
-     "visible": true
-    },
-    {
-     "id": 245,
-     "gid": 106,
-     "name": "sendai-cedar_0_0",
-     "x": 3456,
      "y": 3008,
      "width": 128,
      "height": 256,
      "visible": true
     },
     {
-     "id": 246,
+     "id": 245,
      "gid": 110,
      "name": "sendai-pine_0_0",
      "x": 3520,
@@ -16518,7 +16508,7 @@
      "visible": true
     },
     {
-     "id": 247,
+     "id": 246,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3520,
@@ -16528,7 +16518,7 @@
      "visible": true
     },
     {
-     "id": 248,
+     "id": 247,
      "gid": 110,
      "name": "sendai-pine_0_0",
      "x": 3520,
@@ -16538,7 +16528,7 @@
      "visible": true
     },
     {
-     "id": 249,
+     "id": 248,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3584,
@@ -16548,7 +16538,7 @@
      "visible": true
     },
     {
-     "id": 250,
+     "id": 249,
      "gid": 60,
      "name": "hokuriku-ginkgo_0_0",
      "x": 3584,
@@ -16558,7 +16548,7 @@
      "visible": true
     },
     {
-     "id": 251,
+     "id": 250,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3584,
@@ -16568,7 +16558,7 @@
      "visible": true
     },
     {
-     "id": 252,
+     "id": 251,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3584,
@@ -16578,7 +16568,7 @@
      "visible": true
     },
     {
-     "id": 253,
+     "id": 252,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3584,
@@ -16588,7 +16578,7 @@
      "visible": true
     },
     {
-     "id": 254,
+     "id": 253,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3584,
@@ -16598,7 +16588,7 @@
      "visible": true
     },
     {
-     "id": 255,
+     "id": 254,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3584,
@@ -16608,7 +16598,7 @@
      "visible": true
     },
     {
-     "id": 256,
+     "id": 255,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3584,
@@ -16618,7 +16608,7 @@
      "visible": true
     },
     {
-     "id": 257,
+     "id": 256,
      "gid": 109,
      "name": "sendai-maple_0_0",
      "x": 3584,
@@ -16628,7 +16618,7 @@
      "visible": true
     },
     {
-     "id": 258,
+     "id": 257,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 3584,
@@ -16638,7 +16628,7 @@
      "visible": true
     },
     {
-     "id": 259,
+     "id": 258,
      "gid": 16,
      "name": "castle-wall-siding_0_0",
      "x": 3648,
@@ -16648,7 +16638,7 @@
      "visible": true
     },
     {
-     "id": 260,
+     "id": 259,
      "gid": 111,
      "name": "sendai-stone-lantern_0_0",
      "x": 3648,
@@ -16658,7 +16648,7 @@
      "visible": true
     },
     {
-     "id": 261,
+     "id": 260,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16668,7 +16658,7 @@
      "visible": true
     },
     {
-     "id": 262,
+     "id": 261,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16678,7 +16668,7 @@
      "visible": true
     },
     {
-     "id": 263,
+     "id": 262,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16688,7 +16678,7 @@
      "visible": true
     },
     {
-     "id": 264,
+     "id": 263,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16698,7 +16688,7 @@
      "visible": true
     },
     {
-     "id": 265,
+     "id": 264,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16708,7 +16698,7 @@
      "visible": true
     },
     {
-     "id": 266,
+     "id": 265,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16718,7 +16708,7 @@
      "visible": true
     },
     {
-     "id": 267,
+     "id": 266,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16728,7 +16718,7 @@
      "visible": true
     },
     {
-     "id": 268,
+     "id": 267,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16738,7 +16728,7 @@
      "visible": true
     },
     {
-     "id": 269,
+     "id": 268,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16748,7 +16738,7 @@
      "visible": true
     },
     {
-     "id": 270,
+     "id": 269,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16758,7 +16748,7 @@
      "visible": true
     },
     {
-     "id": 271,
+     "id": 270,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16768,7 +16758,7 @@
      "visible": true
     },
     {
-     "id": 272,
+     "id": 271,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16778,7 +16768,7 @@
      "visible": true
     },
     {
-     "id": 273,
+     "id": 272,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -16788,11 +16778,21 @@
      "visible": true
     },
     {
-     "id": 274,
+     "id": 273,
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
      "y": 2688,
+     "width": 128,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 274,
+     "gid": 115,
+     "name": "shrub-large-circle_0_0",
+     "x": 3712,
+     "y": 2816,
      "width": 128,
      "height": 128,
      "visible": true
@@ -16802,7 +16802,7 @@
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
-     "y": 2816,
+     "y": 2944,
      "width": 128,
      "height": 128,
      "visible": true
@@ -16812,7 +16812,7 @@
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
-     "y": 2944,
+     "y": 3072,
      "width": 128,
      "height": 128,
      "visible": true
@@ -16822,7 +16822,7 @@
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
-     "y": 3072,
+     "y": 3200,
      "width": 128,
      "height": 128,
      "visible": true
@@ -16832,7 +16832,7 @@
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
-     "y": 3200,
+     "y": 448,
      "width": 128,
      "height": 128,
      "visible": true
@@ -16842,23 +16842,13 @@
      "gid": 115,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
-     "y": 448,
-     "width": 128,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 280,
-     "gid": 115,
-     "name": "shrub-large-circle_0_0",
-     "x": 3712,
      "y": 576,
      "width": 128,
      "height": 128,
      "visible": true
     },
     {
-     "id": 281,
+     "id": 280,
      "gid": 110,
      "name": "sendai-pine_0_0",
      "x": 384,
@@ -16868,11 +16858,21 @@
      "visible": true
     },
     {
-     "id": 282,
+     "id": 281,
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 384,
      "y": 1344,
+     "width": 64,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 282,
+     "gid": 107,
+     "name": "sendai-earthen-wall_0_0",
+     "x": 384,
+     "y": 2304,
      "width": 64,
      "height": 128,
      "visible": true
@@ -16882,23 +16882,13 @@
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 384,
-     "y": 2304,
-     "width": 64,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 284,
-     "gid": 107,
-     "name": "sendai-earthen-wall_0_0",
-     "x": 384,
      "y": 2688,
      "width": 64,
      "height": 128,
      "visible": true
     },
     {
-     "id": 285,
+     "id": 284,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 384,
@@ -16908,11 +16898,21 @@
      "visible": true
     },
     {
-     "id": 286,
+     "id": 285,
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 448,
      "y": 1344,
+     "width": 64,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 286,
+     "gid": 107,
+     "name": "sendai-earthen-wall_0_0",
+     "x": 448,
+     "y": 2304,
      "width": 64,
      "height": 128,
      "visible": true
@@ -16922,23 +16922,13 @@
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 448,
-     "y": 2304,
-     "width": 64,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 288,
-     "gid": 107,
-     "name": "sendai-earthen-wall_0_0",
-     "x": 448,
      "y": 2688,
      "width": 64,
      "height": 128,
      "visible": true
     },
     {
-     "id": 289,
+     "id": 288,
      "gid": 110,
      "name": "sendai-pine_0_0",
      "x": 512,
@@ -16948,7 +16938,7 @@
      "visible": true
     },
     {
-     "id": 290,
+     "id": 289,
      "gid": 63,
      "name": "kanazawa-chaya-b_0_0",
      "x": 512,
@@ -16958,11 +16948,21 @@
      "visible": true
     },
     {
-     "id": 291,
+     "id": 290,
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 512,
      "y": 1344,
+     "width": 64,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 291,
+     "gid": 107,
+     "name": "sendai-earthen-wall_0_0",
+     "x": 512,
+     "y": 2304,
      "width": 64,
      "height": 128,
      "visible": true
@@ -16972,23 +16972,13 @@
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 512,
-     "y": 2304,
-     "width": 64,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 293,
-     "gid": 107,
-     "name": "sendai-earthen-wall_0_0",
-     "x": 512,
      "y": 2688,
      "width": 64,
      "height": 128,
      "visible": true
     },
     {
-     "id": 294,
+     "id": 293,
      "gid": 110,
      "name": "sendai-pine_0_0",
      "x": 512,
@@ -16998,7 +16988,7 @@
      "visible": true
     },
     {
-     "id": 295,
+     "id": 294,
      "gid": 106,
      "name": "sendai-cedar_0_0",
      "x": 512,
@@ -17008,7 +16998,7 @@
      "visible": true
     },
     {
-     "id": 296,
+     "id": 295,
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 576,
@@ -17018,7 +17008,7 @@
      "visible": true
     },
     {
-     "id": 297,
+     "id": 296,
      "gid": 66,
      "name": "kanazawa-whisky-bar_0_0",
      "x": 576,
@@ -17028,7 +17018,7 @@
      "visible": true
     },
     {
-     "id": 298,
+     "id": 297,
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 576,
@@ -17038,7 +17028,7 @@
      "visible": true
     },
     {
-     "id": 299,
+     "id": 298,
      "gid": 107,
      "name": "sendai-earthen-wall_0_0",
      "x": 576,
@@ -23377,7 +23367,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 300,
+     "id": 299,
      "gid": 9,
      "name": "building-roof-black_0_0",
      "x": 640,
@@ -23387,7 +23377,7 @@
      "visible": true
     },
     {
-     "id": 301,
+     "id": 300,
      "gid": 1,
      "name": "7-11-sign-left_0_0",
      "x": 1408,
@@ -23397,7 +23387,7 @@
      "visible": true
     },
     {
-     "id": 302,
+     "id": 301,
      "gid": 9,
      "name": "building-roof-black_0_0",
      "x": 1536,
@@ -23407,7 +23397,7 @@
      "visible": true
     },
     {
-     "id": 303,
+     "id": 302,
      "gid": 11,
      "name": "building-roof-red_0_0",
      "x": 1920,
@@ -23417,7 +23407,7 @@
      "visible": true
     },
     {
-     "id": 304,
+     "id": 303,
      "gid": 9,
      "name": "building-roof-black_0_0",
      "x": 2048,
@@ -23427,7 +23417,7 @@
      "visible": true
     },
     {
-     "id": 305,
+     "id": 304,
      "gid": 10,
      "name": "building-roof-blue_0_0",
      "x": 256,
@@ -23437,7 +23427,7 @@
      "visible": true
     },
     {
-     "id": 306,
+     "id": 305,
      "gid": 114,
      "name": "shrine-top_0_0",
      "x": 2752,
@@ -26041,7 +26031,7 @@
     45,
     45,
     45,
-    45,
+    0,
     45,
     45,
     45,
@@ -26100,9 +26090,9 @@
     45,
     45,
     45,
-    45,
-    45,
-    45,
+    0,
+    0,
+    0,
     45,
     45,
     45,
@@ -26626,7 +26616,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 307,
+     "id": 306,
      "name": "transporter",
      "point": true,
      "x": 2144.0,
@@ -26663,7 +26653,7 @@
      ]
     },
     {
-     "id": 308,
+     "id": 307,
      "name": "transporter",
      "point": true,
      "x": 3808.0,
@@ -26700,7 +26690,7 @@
      ]
     },
     {
-     "id": 309,
+     "id": 308,
      "name": "transporter",
      "point": true,
      "x": 3808.0,
@@ -26737,7 +26727,7 @@
      ]
     },
     {
-     "id": 310,
+     "id": 309,
      "name": "transporter",
      "point": true,
      "x": 3808.0,
@@ -26774,7 +26764,7 @@
      ]
     },
     {
-     "id": 311,
+     "id": 310,
      "name": "transporter",
      "point": true,
      "x": 1312.0,
@@ -26811,7 +26801,7 @@
      ]
     },
     {
-     "id": 312,
+     "id": 311,
      "name": "transporter",
      "point": true,
      "x": 1504.0,
@@ -26848,7 +26838,7 @@
      ]
     },
     {
-     "id": 313,
+     "id": 312,
      "name": "transporter",
      "point": true,
      "x": 1824.0,
@@ -26885,7 +26875,7 @@
      ]
     },
     {
-     "id": 314,
+     "id": 313,
      "name": "transporter",
      "point": true,
      "x": 352.0,
@@ -26922,7 +26912,7 @@
      ]
     },
     {
-     "id": 315,
+     "id": 314,
      "name": "transporter",
      "point": true,
      "x": 1632.0,
@@ -26950,6 +26940,43 @@
        "name": "targetY",
        "type": "int",
        "value": 10
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 315,
+     "name": "transporter",
+     "point": true,
+     "x": 2912.0,
+     "y": 2720.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ShrineKanazawa1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 12
       },
       {
        "name": "hidden",

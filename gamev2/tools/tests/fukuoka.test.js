@@ -54,10 +54,11 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         }
         assert.ok(!solid(door.gridX, door.gridY + 1) && !room.transporters.some((t) => t.gridX === door.gridX && t.gridY === door.gridY + 1),
             'you arrive on a free cell that is not a door');
-        // the only ways out of town are the station and the konbini; every other door is a house's own front
+        // the only ways out of town are the station and the konbini, and the two shrine halls open into their
+        // worship halls (Kushida, Dazaifu Tenmangu: #212, shrines.test.js); every other door is a house's own front
         // door (#208): hidden, on the doorway of a house that stands there, into a House room of this town
         const isHouse = (t) => ((cfg.rooms[t.targetRoom] || {}).house || {}).host === 'Fukuoka';
-        assert.deepStrictEqual(room.transporters.filter((t) => !isHouse(t)).map((t) => t.targetRoom).sort(), ['FukuokaStation', 'KonbiniFukuoka1']);
+        assert.deepStrictEqual(room.transporters.filter((t) => !isHouse(t)).map((t) => t.targetRoom).sort(), ['FukuokaStation', 'KonbiniFukuoka1', 'ShrineFukuoka1', 'ShrineFukuoka2']);
         const homes = room.transporters.filter(isHouse);
         assert.deepStrictEqual(homes.map((t) => t.targetRoom).sort(), ['HouseFukuoka1', 'HouseFukuoka2', 'HouseFukuoka3', 'HouseFukuoka4']);
         for (const t of homes) {

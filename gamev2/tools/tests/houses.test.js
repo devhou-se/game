@@ -308,7 +308,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             const after = JSON.parse(read()), town = after.rooms.Asahikawa;
             assert.ok(!('HouseAsahikawa2' in after.rooms), 'the skipped house kept its room');
             assert.ok(`${dx},${dy}` in tiles(town, 'Colliders'), 'the skipped house is not sealed');
-            assert.deepStrictEqual(town.transporters.map((t) => t.targetRoom), ['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa3']);
+            // (the shrine's door is its own generator's, #212: the houses generator leaves it where it is)
+            assert.deepStrictEqual(town.transporters.map((t) => t.targetRoom), ['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa3', 'ShrineAsahikawa1']);
             // the other two keep their numbers and their rooms, and nobody was moved to make way
             assert.deepStrictEqual(after.rooms.HouseAsahikawa1, orig.rooms.HouseAsahikawa1);
             assert.deepStrictEqual(after.rooms.HouseAsahikawa3, orig.rooms.HouseAsahikawa3);
@@ -320,7 +321,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             const again = JSON.parse(read());
             assert.deepStrictEqual(again.rooms.HouseAsahikawa2, orig.rooms.HouseAsahikawa2);
             assert.deepStrictEqual(new Set(again.rooms.Asahikawa.transporters.map((t) => t.targetRoom)),
-                new Set(['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3']));
+                new Set(['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3', 'ShrineAsahikawa1']));
             assert.ok(!(`${dx},${dy}` in tiles(again.rooms.Asahikawa, 'Colliders')), 'the door did not open again');
         });
     });
@@ -384,7 +385,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             ['machiya-red_0_0', 'machiya-blue_0_0', 'machiya-black_0_0', 'building-entrance-2_0_0']);
         // the doors that were there are still there, and the houses' are the only new ones
         const others = town.transporters.filter((t) => !/^House/.test(t.targetRoom)).map((t) => t.targetRoom);
-        assert.deepStrictEqual([...new Set(others)].sort(), ['KanazawaStation', 'KonbiniKanazawa1', 'Shirakawago']);
+        assert.deepStrictEqual([...new Set(others)].sort(), ['KanazawaStation', 'KonbiniKanazawa1', 'Shirakawago', 'ShrineKanazawa1']);
         assert.strictEqual(town.transporters.length, others.length + 4);
         const station = town.transporters.find((t) => t.targetRoom === 'KanazawaStation');
         for (const stitch of [true, false]) {
@@ -413,7 +414,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         }
     });
 
-    test('what is not a house stays sealed: ramen alley, the shrine, the station house keeps its own door (#208)', () => {
+    test('what is not a house is not opened as one: ramen alley stays sealed, the shrine and the station house keep their own doors (#208, #212)', () => {
         const c = cfg(), name = (t) => c.tilePalette[t], town = c.rooms.Asahikawa;
         const sprites = tiles(town, 'Collidables'), solid = tiles(town, 'Colliders');
         const at = (x, y) => town.transporters.filter((t) => t.gridX === x && t.gridY === y).map((t) => t.targetRoom);
@@ -427,9 +428,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             alley++;
         }
         assert.strictEqual(alley, 3);
-        // the shrine hall's doorway (the building's 1,4) is solid
+        // the shrine hall's doorway (the building's 1,4) was solid until its own generator opened it (#212):
+        // it leads into the worship hall, never into a House room
         const shrine = Object.keys(sprites).find((cell) => name(sprites[cell]) === 'shrine-building_0_0').split(',').map(Number);
-        assert.ok(`${shrine[0] + 1},${shrine[1] + 4}` in solid && at(shrine[0] + 1, shrine[1] + 4).length === 0, 'the shrine is open');
+        assert.deepStrictEqual(at(shrine[0] + 1, shrine[1] + 4), ['ShrineAsahikawa1']);
+        assert.ok(!(`${shrine[0] + 1},${shrine[1] + 4}` in solid) && !c.rooms.ShrineAsahikawa1.house, 'the shrine is a house');
         // every townhouse front is a house or the station - and the station's still leads to the station
         const fronts = Object.entries(sprites).filter(([, t]) => name(t) in FRONTS).map(([cell]) => cell.split(',').map(Number));
         const targets = fronts.map(([x, y]) => at(x + 1, y)).flat().sort();

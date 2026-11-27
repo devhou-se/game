@@ -560,8 +560,12 @@ tower) **and Sapporo** (its own two office blocks, `LobbySapporo1` the brick one
 
 A shrine hall is enterable: its top step (the `shrine` / `shrine-red` prefab's door cell, building cell
 `(1, 4)`) carries a hidden transporter into a worship hall of its own, `Shrine<Host><n>` (HUD: `Shrine | Asakusa`, the host's display name).
-Applied so far to **Tokyo, Market and Park**; Asahikawa, Kushida and Dazaifu Tenmangu (Fukuoka) come with
-the roll-out.
+Every hall in the world has one: **Tokyo** (`ShrineTokyo1`, Palace Shrine), **Market** and **Park**
+(`ShrineMarket1`, `ShrinePark1`), **Asahikawa** and **Kanazawa** (`ShrineAsahikawa1`, `ShrineKanazawa1`, blue,
+standard) and **Fukuoka**'s two, both red and large: Kushida Shrine (`ShrineFukuoka1`) and Dazaifu Tenmangu
+(`ShrineFukuoka2`). Dazaifu's hall is its own sprite (`dazaifu-hall`, stamped sealed right across): its door is
+building cell `(3, 4)`, the right half of its two-wide steps, in line with the bridge
+(`roomgen.SHRINE_DOORS` has a row per hall tile).
 
 - **`tools/generate_shrines.py [Host ...]`** owns the interior and the door it opens in the host, like
   `generate_konbinis.py`: the room is rebuilt from scratch (its NPCs kept), the door cell is unsealed and its
@@ -575,8 +579,14 @@ the roll-out.
   `roomgen.OWNED_DOORS` (room-key prefix -> that marker and the door sprites, `SHRINE_DOORS`), so a door
   the room had on load is restored where the hall still stands (cell unsealed, transporter back in its
   place in the list) and dropped where the hall moved or its room is gone. No town generator needs an edit
-  for its shrine to stay open; `shrines.test.js` proves it on a scratch Asahikawa, and
-  `check_generators.py` for every wired town. Another kind of interior is one more row in `OWNED_DOORS`.
+  for its shrine to stay open; `shrines.test.js` proves it on a scratch copy (Asahikawa, Fukuoka and Kanazawa
+  rebuilt, then Asahikawa's hall sealed and rolled out again), and `check_generators.py` for every wired
+  town. Another kind of interior is one more row in `OWNED_DOORS`.
+- **The steps stay open.** The prefab seals the hall and leaves its door and the three cells of its bottom
+  step open; a town must not plant on them. Kanazawa's wood did (a cedar's trunk across the door, the step's
+  east end solid), so `hokuriku.Kit.woods` takes `clear=`: cells that stay out of the wood, planted and
+  cleared again rather than skipped so the rest of the seeded scatter does not move. `generate_kanazawa.py`
+  passes the hall's bottom step; `shrines.test.js` holds the step open in every town.
 - **What is inside** (20x16; the floor is 18x10): the inner sanctuary (`honden`, 6x3) on a raised floor
   at the back, its doors open on the mirror, offerings and paper wands in front of it; a see-through railing
   one row in front (drawn over the sanctuary: its feet are a row lower) with a standing lamp at each end; the
@@ -591,7 +601,9 @@ the roll-out.
   plaster and indigo on a cool dark floor, the counter on the west side and standing lamps either side of
   the box; under `red-shrine-top` it is vermilion and gilt on a warm dark floor, the mirror image, with a
   second pair of pillars level with the box. `LARGE` in the generator (Kushida, Dazaifu Tenmangu) builds a
-  26x18 hall with a third pair of pillars, plaques on both sides and more lanterns. `HALLS` maps a hall's
+  26x18 hall with a third pair of pillars (two cells outside the nave's two, between them: in the nave's own
+  columns its head would stand on the foot of the pair by the box), plaques and tied fortunes on both sides
+  and twice the hanging lanterns. `HALLS` maps a hall's
   tile to its door cell, `NAMES` gives a hall its own name: Kushida, Dazaifu Tenmangu, and the hall inside the
   palace moat, "Palace Shrine" (`ShrineTokyo1`) - "Shrine · Imperial Palace" would not fit a phone's one-row
   HUD bar at 667x375 (issue #219). A name of its own does not make a hall large: `LARGE` lists those.
@@ -614,7 +626,8 @@ the roll-out.
 - **Doors and blog NPCs**: the door-front cell stays clear (`NPCManager.atDoorway`; `shrines.test.js` holds
   it for every dated position). `the shrine` LANDMARK stands its visitor at building cell `(1, 6)`, the foot
   of the two steps: two cells below the door, not in front of it, and walked round by the side of the
-  bottom step.
+  bottom step. A base NPC is config data and is moved by hand when a door opens where it stood: Xander's
+  Asahikawa cell was the one in front of the hall's door (31,27) and is (33,28) now, by the east fox.
 
 ### Underground arcades (chikagai)
 

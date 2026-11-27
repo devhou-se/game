@@ -95,11 +95,17 @@ class Kit:
     def taken(self, x, y):
         return any(f'{x},{y}' in self.b.L[n] for n in ('Collidables', 'Colliders', 'Other', 'Water', 'Tops', 'Non-Collidables'))
 
-    def woods(self, x0, y0, x1, y1, kinds, rng, over=1):
+    def woods(self, x0, y0, x1, y1, kinds, rng, over=1, clear=()):
         """A wood nobody enters: trees of `kinds` planted in staggered bands over
         the rectangle wherever their trunk cells are free, shrubs in the gaps,
-        and every cell solid. A canopy may hang `over` rows above the rectangle."""
+        and every cell solid. A canopy may hang `over` rows above the rectangle.
+        The free cells in `clear` stay out of it (the steps of a hall that reach
+        into the wood): open, no shrub, no tree with its trunk on one. They are
+        planted and cleared again, not skipped, so that opening a cell does not
+        reshuffle the rest of the seeded scatter."""
         b = self.b
+        clear = {c for c in clear if not self.taken(*c)}
+        felled = []
         for band, y in enumerate(range(y1, y0 - 1, -2)):
             for x in range(x0 + band % 2, x1, 2 + (band + x0) % 2):
                 name = kinds[rng.randrange(len(kinds))]
@@ -109,10 +115,17 @@ class Kit:
                 if self.taken(x, y) or self.taken(x + 1, y) or f'{x},{top}' in b.L['Collidables']:
                     continue
                 b.stamp(name, x, top)
+                if (x, y) in clear or (x + 1, y) in clear:
+                    felled.append((x, top))
         for x, y in rect(x0, y0, x1, y1):
-            if not self.taken(x, y) and rng.random() < 0.3:
+            if not self.taken(x, y) and rng.random() < 0.3 and (x, y) not in clear:
                 b.put('Collidables', x, y, 'shrub-small-circle_0_0')
-            b.solid(x, y)
+            if (x, y) not in clear:
+                b.solid(x, y)
+        for x, top in felled:
+            del b.L['Collidables'][f'{x},{top}']
+        for x, y in clear:
+            b.L['Colliders'].pop(f'{x},{y}', None)        # a felled trunk
 
     def dress(self):
         """Give every bare collider a walker can touch a shrub to be (the last pass

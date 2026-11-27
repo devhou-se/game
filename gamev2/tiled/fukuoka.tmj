@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 13,
- "nextobjectid": 145,
+ "nextobjectid": 147,
  "properties": [
   {
    "name": "gv2room",
@@ -32488,7 +32488,7 @@
     0,
     0,
     60,
-    60,
+    0,
     60,
     0,
     0,
@@ -33613,7 +33613,7 @@
     60,
     60,
     60,
-    60,
+    0,
     60,
     60,
     60,
@@ -34687,6 +34687,80 @@
     },
     {
      "id": 144,
+     "name": "transporter",
+     "point": true,
+     "x": 2464.0,
+     "y": 1952.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ShrineFukuoka1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 12
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 14
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 145,
+     "name": "transporter",
+     "point": true,
+     "x": 3040.0,
+     "y": 3104.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ShrineFukuoka2"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 12
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 14
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 146,
      "name": "boundary",
      "x": 0,
      "y": 0,

@@ -9,49 +9,72 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         if (!game('typeof ShrineVisit !== "undefined"')) vm.runInContext(src('ShrineVisit.js'), ctx, { filename: 'ShrineVisit.js' });
         return game('ShrineVisit');
     };
+    // the two kinds of hall: its tile -> the door cell from the tile (roomgen.SHRINE_DOORS), the prefab that
+    // stamps it and where the tile sits in that prefab. Dazaifu's own hall has no separate roof: it is red
+    const KINDS = {
+        'shrine-building_0_0': { door: [1, 4], prefab: 'shrine', tile: [1, 2] },
+        'dazaifu-hall_0_0': { door: [3, 4], prefab: 'dazaifu-hall', tile: [0, 0], look: 'red' },
+    };
     // every shrine hall in the world: its host, the cell of its building tile, its roof, its door
     const halls = (c) => Object.entries(c.rooms).flatMap(([host, room]) =>
-        Object.entries(tiles(room, 'Collidables')).filter(([, id]) => c.tilePalette[id] === 'shrine-building_0_0').map(([cell]) => {
-            const [x, y] = cell.split(',').map(Number);
+        Object.entries(tiles(room, 'Collidables')).filter(([, id]) => c.tilePalette[id] in KINDS).map(([cell, id]) => {
+            const [x, y] = cell.split(',').map(Number), kind = KINDS[c.tilePalette[id]];
             const roof = c.tilePalette[tiles(room, 'Tops')[`${x - 1},${y - 2}`]];
-            const door = (room.transporters || []).find((t) => t.gridX === x + 1 && t.gridY === y + 4);
-            return { host, room, x, y, look: roof === 'shrine-top_0_0' ? 'blue' : 'red', door, doorCell: [x + 1, y + 4] };
+            const doorCell = [x + kind.door[0], y + kind.door[1]];
+            const door = (room.transporters || []).find((t) => t.gridX === doorCell[0] && t.gridY === doorCell[1]);
+            return { host, room, x, y, kind, look: kind.look || (roof === 'shrine-top_0_0' ? 'blue' : 'red'), door, doorCell,
+                key: door && door.targetRoom };
         }));
-    const WIRED = { Tokyo: 'ShrineTokyo1', Market: 'ShrineMarket1', Park: 'ShrinePark1' };
+    // every hall has its worship hall since the roll-out: room key -> host, look, size, a name of its own
+    const WIRED = {
+        ShrineTokyo1: { host: 'Tokyo', look: 'blue', size: 'standard', name: 'Palace Shrine' },
+        ShrineMarket1: { host: 'Market', look: 'red', size: 'standard' },
+        ShrinePark1: { host: 'Park', look: 'red', size: 'standard' },
+        ShrineAsahikawa1: { host: 'Asahikawa', look: 'blue', size: 'standard' },
+        ShrineKanazawa1: { host: 'Kanazawa', look: 'blue', size: 'standard' },
+        ShrineFukuoka1: { host: 'Fukuoka', look: 'red', size: 'large', name: 'Kushida Shrine' },
+        ShrineFukuoka2: { host: 'Fukuoka', look: 'red', size: 'large', name: 'Dazaifu Tenmangu' },
+    };
     const at = (room, c, piece) => Object.entries(room.layers.flatMap((l) => Object.entries(l.tiles)))
         .map(([, [cell, id]]) => [cell, c.tilePalette[id]]).filter(([, key]) => key === piece).map(([cell]) => cell.split(',').map(Number));
 
     test('a shrine hall is sealed everywhere except its one door cell, which leads into its worship hall (#212)', () => {
         const c = cfg();
-        const prefab = JSON.parse(fs.readFileSync(path.join(GV2, 'tiled', 'prefabs', 'shrine.tmj'), 'utf8'));
-        const seal = prefab.layers.find((l) => l.name === 'Colliders').data;
         const found = halls(c);
-        assert.strictEqual(found.length, 6, 'Tokyo, Asahikawa, Kanazawa, Market, Park, Fukuoka');
+        assert.strictEqual(found.length, 7, 'Tokyo, Asahikawa, Kanazawa, Market, Park, Kushida and Dazaifu Tenmangu in Fukuoka');
         for (const h of found) {
-            const solid = tiles(h.room, 'Colliders'), [dx, dy] = h.doorCell, ox = h.x - 1, oy = h.y - 2;
-            // the prefab's own seal, cell for cell: only the door is left out of it
+            const prefab = JSON.parse(fs.readFileSync(path.join(GV2, 'tiled', 'prefabs', `${h.kind.prefab}.tmj`), 'utf8'));
+            const seal = prefab.layers.find((l) => l.name === 'Colliders').data;
+            const solid = tiles(h.room, 'Colliders'), [dx, dy] = h.doorCell, ox = h.x - h.kind.tile[0], oy = h.y - h.kind.tile[1];
+            // the prefab's own seal, cell for cell: only the door is out of it
             const open = [];
             seal.forEach((gid, i) => {
                 const cell = `${ox + i % prefab.width},${oy + Math.floor(i / prefab.width)}`;
                 if (gid && !(cell in solid)) open.push(cell);
             });
-            assert.deepStrictEqual(open, [], `${h.host}: the hall is open somewhere other than its door`);
-            assert.strictEqual(seal[(dy - oy) * prefab.width + (dx - ox)], 0, 'the door cell is the one the prefab leaves out');
+            const cut = seal[(dy - oy) * prefab.width + (dx - ox)] !== 0;
+            if (h.kind.prefab === 'shrine') {
+                assert.ok(!cut, 'the door cell is the one the prefab leaves out');
+                // the bottom step under the door is open from end to end: nothing of the town stands on it
+                // (Kanazawa's wood had a cedar there, hokuriku.Kit.woods `clear`)
+                for (const x of [h.x, h.x + 1, h.x + 2]) assert.ok(!(`${x},${dy + 1}` in solid), `${h.host}: the step at ${x},${dy + 1} is solid`);
+            } else {
+                // Dazaifu's hall is stamped sealed right across: its door is cut into the right half of its steps
+                assert.ok(cut && h.host === 'Fukuoka', `${h.host}: ${h.kind.prefab}`);
+            }
+            assert.deepStrictEqual(open, cut ? [`${dx},${dy}`] : [], `${h.host}: the hall is open somewhere other than its door`);
             // no way in through any other cell under the roof or the hall
             const others = (h.room.transporters || []).filter((t) => t !== h.door &&
-                t.gridX >= ox && t.gridX < ox + 5 && t.gridY >= oy && t.gridY < oy + 8);
+                t.gridX >= ox && t.gridX < ox + prefab.width && t.gridY >= oy && t.gridY < oy + prefab.height);
             assert.deepStrictEqual(others, [], `${h.host}: a second transporter in the hall`);
-            if (h.host in WIRED) {
-                assert.ok(h.door, `${h.host}: the hall has no door`);
-                assert.deepStrictEqual([h.door.targetRoom, h.door.hidden], [WIRED[h.host], true]);
-                assert.ok(!(`${dx},${dy}` in solid), `${h.host}: the door cell is solid`);
-                assert.ok(!(`${dx},${dy + 1}` in solid), `${h.host}: the cell in front of the door is solid`);
-            } else if (h.door) {
-                // rolled out later: a wired door is always an open one into a Shrine room
-                assert.ok(/^Shrine/.test(h.door.targetRoom) && h.door.hidden && !(`${dx},${dy}` in solid), `${h.host}: a half-wired door`);
-            }
+            assert.ok(h.door, `${h.host}: the hall has no door`);
+            assert.deepStrictEqual([h.key in WIRED && WIRED[h.key].host, h.door.hidden], [h.host, true], `${h.host}: ${h.key}`);
+            assert.ok(!(`${dx},${dy}` in solid), `${h.host}: the door cell is solid`);
+            assert.ok(!(`${dx},${dy + 1}` in solid), `${h.host}: the cell in front of the door is solid`);
         }
-        assert.deepStrictEqual(found.filter((h) => h.door).map((h) => h.host).filter((k) => k in WIRED).sort(), ['Market', 'Park', 'Tokyo']);
+        assert.deepStrictEqual(found.map((h) => h.key).sort(), Object.keys(WIRED).sort());
+        // and no room is a hall's without a hall that leads to it
+        assert.deepStrictEqual(Object.keys(c.rooms).filter((k) => c.rooms[k].shrine).sort(), Object.keys(WIRED).sort());
     });
 
     test('nobody stands on a shrine door or the cell in front of it, on any date (#212)', () => {
@@ -67,17 +90,19 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
 
     test('each worship hall is the hall of its roof: blue is cypress and indigo, red is vermilion, mirror images of each other (#212)', () => {
         const c = cfg();
-        const want = { Tokyo: 'blue', Market: 'red', Park: 'red' };
-        const sides = {};
-        for (const h of halls(c).filter((x) => x.host in WIRED)) {
-            assert.strictEqual(h.look, want[h.host], `${h.host}: roof`);
-            const room = c.rooms[WIRED[h.host]], look = h.look, other = look === 'red' ? 'blue' : 'red';
+        const sides = {}, sizes = {};
+        for (const h of halls(c)) {
+            const want = WIRED[h.key];
+            assert.strictEqual(h.look, want.look, `${h.host}: roof`);
+            const room = c.rooms[h.key], look = h.look, other = look === 'red' ? 'blue' : 'red', large = want.size === 'large';
             assert.deepStrictEqual([room.interior, room.lanternLight, room.shopEnabled, room.name],
-                [true, true, false, { Tokyo: 'Palace Shrine' }[h.host] || `Shrine · ${h.room.name || h.host}`]);
+                [true, true, false, want.name || `Shrine · ${h.room.name || h.host}`]);
             // a hall is named for its town by the town's DISPLAY name ("Shrine · Asakusa", room key Market);
             // the palace's hall has a name of its own, because "Imperial Palace shrine" is too long for a
-            // phone's one-row HUD bar - and stays a standard hall: only Kushida and Dazaifu are large (#219)
-            assert.strictEqual(room.worldWidth / 64, 20, `${h.host}: a standard hall`);
+            // phone's one-row HUD bar - and stays a standard hall: only Kushida and Dazaifu, which go by
+            // their own names too, are large (#219)
+            assert.deepStrictEqual([room.worldWidth / 64, room.worldHeight / 64], large ? [26, 18] : [20, 16], `${h.key}: a ${want.size} hall`);
+            sizes[h.key] = want.size;
             const keys = new Set(room.layers.flatMap((l) => Object.values(l.tiles)).map((id) => c.tilePalette[id]));
             for (const piece of ['honden', 'lattice', 'pillar', 'lanterns', 'wall', 'wall-curtain', 'wall-shoji', 'floor-a', 'floor-b', 'runner-l']) {
                 assert.ok(keys.has(`shrine-in-${piece}-${look}_0_0`), `${h.host}: no ${piece} in ${look}`);
@@ -88,10 +113,16 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
                 assert.ok(keys.has(`shrine-in-${piece}_0_0`), `${h.host}: no ${piece}`);
             }
             const mid = room.worldWidth / 64 / 2;
-            sides[look] = at(room, c, 'shrine-in-counter_0_0')[0][0] < mid ? 'west' : 'east';
+            const side = at(room, c, 'shrine-in-counter_0_0')[0][0] < mid ? 'west' : 'east';
+            assert.strictEqual(sides[look] || side, side, `${h.key}: the counter is on the other side from the other ${look} halls`);
+            sides[look] = side;
             // the red hall has a second pair of pillars by the offering box; the blue one stands lamps there
-            assert.strictEqual(at(room, c, `shrine-in-pillar-${look}_0_0`).length, look === 'red' ? 4 : 2);
+            assert.strictEqual(at(room, c, `shrine-in-pillar-${look}_0_0`).length, large ? 6 : look === 'red' ? 4 : 2);
             assert.strictEqual(at(room, c, 'shrine-in-lanterns-floor_0_0').length, look === 'red' ? 2 : 4);
+            // a large hall has a third pair of pillars, plaques and tied fortunes on both sides, twice the lanterns
+            assert.deepStrictEqual(['ema', 'omikuji-rail'].map((piece) => at(room, c, `shrine-in-${piece}_0_0`).length), large ? [2, 2] : [1, 1]);
+            assert.strictEqual(at(room, c, `shrine-in-lanterns-${look}_0_0`).length, large ? 8 : 4);
+            assert.deepStrictEqual([at(room, c, 'shrine-in-saisen_0_0').length, at(room, c, 'shrine-in-omikuji_0_0').length], [1, 1]);
             // depth: a pillar is solid at its foot only, so its shaft is walked behind
             const solid = tiles(room, 'Colliders');
             for (const [x, y] of at(room, c, `shrine-in-pillar-${look}_0_0`)) {
@@ -109,11 +140,12 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
             assert.ok([...keys].filter((k) => /lanterns/.test(k)).every((k) => /lamp-post|-lanterns/.test(k)));
         }
         assert.deepStrictEqual(sides, { blue: 'west', red: 'east' });
+        assert.deepStrictEqual(Object.keys(sizes).filter((k) => sizes[k] === 'large').sort(), ['ShrineFukuoka1', 'ShrineFukuoka2']);
     });
 
     test('you walk in by the door, up to the offering box, the fortune stand and the counter, and out to the cell in front (#212)', () => {
         const { world, config } = worldWith(false);
-        for (const [host, key] of Object.entries(WIRED)) {
+        for (const [key, { host }] of Object.entries(WIRED)) {
             const door = config.rooms[host].transporters.find((t) => t.targetRoom === key);
             world.enter(host, door.gridX, door.gridY + 1);
             const inn = world.step('n');
@@ -151,14 +183,20 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
 
     test('the shrine doors are doorways of the stitched city, so wanderers keep off the cells in front (#212)', () => {
         const { world } = worldWith(true);
-        const rm = world.roomManager;
-        for (const [host, key] of Object.entries(WIRED)) {
-            const t = rm.rooms.TokyoCity.transporters.filter((x) => x.targetRoom === key);
-            assert.strictEqual(t.length, 1, `${host}: one door in the city`);
+        const rm = world.roomManager, cities = world.config.cities;
+        const stitched = {};
+        for (const [key, { host }] of Object.entries(WIRED)) {
+            // the room the host is played as: its city where it is a district (Tokyo's three, Kanazawa in Hokuriku)
+            const city = Object.keys(cities).find((k) => cities[k].rooms.some((r) => r.room === host)) || host;
+            const t = rm.rooms[city].transporters.filter((x) => x.targetRoom === key);
+            assert.strictEqual(t.length, 1, `${host}: one door in ${city}`);
             const local = world.config.rooms[host].transporters.find((x) => x.targetRoom === key);
             const cell = rm.resolve(host, local.gridX, local.gridY);
-            assert.deepStrictEqual([t[0].gridX, t[0].gridY], [cell.x, cell.y]);
+            assert.deepStrictEqual([cell.room, t[0].gridX, t[0].gridY], [city, cell.x, cell.y]);
+            stitched[host] = city;
         }
+        assert.deepStrictEqual(stitched, { Tokyo: 'TokyoCity', Market: 'TokyoCity', Park: 'TokyoCity', Kanazawa: 'HokurikuCity',
+            Asahikawa: 'Asahikawa', Fukuoka: 'Fukuoka' });
     });
 
     test('an offering costs five yen, rings the bell and says a blessing; an empty wallet only bows (#212)', () => {
@@ -340,13 +378,13 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
 
     test('a worship hall says whose it is, and a town rebuild keeps its door beside the house doors (#212, #208)', () => {
         const c = cfg();
-        for (const [host, key] of Object.entries(WIRED)) {
-            const mark = c.rooms[key].shrine, door = c.rooms[host].transporters.find((t) => t.targetRoom === key);
-            assert.deepStrictEqual([mark.host, mark.door], [host, [door.gridX, door.gridY]], key);
-            assert.ok(['red', 'blue'].includes(mark.look) && mark.size === 'standard', key);
+        for (const [key, want] of Object.entries(WIRED)) {
+            const mark = c.rooms[key].shrine, door = c.rooms[want.host].transporters.find((t) => t.targetRoom === key);
+            assert.deepStrictEqual(mark, { host: want.host, door: [door.gridX, door.gridY], look: want.look, size: want.size }, key);
         }
-        // Asahikawa is a generated town with a sealed hall and three houses: wire its hall in a scratch
-        // copy, then rebuild the town - its generator stamps the hall and the houses sealed again
+        // the generated towns with a hall (Asahikawa has three houses beside it, Fukuoka four and two halls,
+        // Kanazawa a wood round it) in a scratch copy: each town's generator stamps its hall and its houses
+        // sealed again, and the doors are put back
         const { spawnSync } = require('child_process');
         const tmp = fs.mkdtempSync(path.join(require('os').tmpdir(), 'gamev2-shrines-'));
         try {
@@ -354,30 +392,61 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
             fs.copyFileSync(path.join(GV2, 'config.json'), path.join(tmp, 'config.json'));
             const read = () => fs.readFileSync(path.join(tmp, 'config.json'), 'utf8');
             const python = (...args) => {
-                const run = spawnSync('python3', args, { cwd: tmp, encoding: 'utf8', maxBuffer: 1 << 26 });
+                const run = spawnSync('python3', args, { cwd: tmp, encoding: 'utf8', maxBuffer: 1 << 26,
+                    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
                 assert.strictEqual(run.status, 0, `${args.join(' ')}: ${run.stderr}`);
             };
             const doors = (text) => JSON.parse(text).rooms.Asahikawa.transporters.map((t) => t.targetRoom);
-            assert.ok(!doors(read()).some((r) => /^Shrine/.test(r)), 'Asahikawa is wired: pick another town for this test');
-            python('tools/generate_shrines.py', 'Asahikawa');
-            const wired = read(), w = JSON.parse(wired), hall = w.rooms.ShrineAsahikawa1.shrine;
+            const wired = read(), hall = JSON.parse(wired).rooms.ShrineAsahikawa1.shrine;
             assert.deepStrictEqual(doors(wired), ['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3', 'ShrineAsahikawa1']);
-            assert.ok(!(hall.door.join(',') in tiles(w.rooms.Asahikawa, 'Colliders')), 'the door was not opened');
-            for (const args of [['tools/generate_asahikawa.py'], ['tools/generate_shrines.py'], ['tools/generate_houses.py']]) {
+            for (const args of [['tools/generate_asahikawa.py'], ['tools/generate_fukuoka.py'], ['tools/generate_kanazawa.py'],
+                ['tools/generate_shrines.py'], ['tools/generate_houses.py']]) {
                 python(...args);
-                assert.ok(read() === wired, `${args[0]} changed config.json: the shrine door or a house door was not kept`);
+                assert.ok(read() === wired, `${args[0]} changed config.json: a shrine door or a house door was not kept`);
             }
-            // the hall's room gone (or no longer a hall's): the town rebuild leaves the hall sealed, the houses open
+            // the hall's room no longer a hall's: the town rebuild leaves the hall sealed, the houses open
             const gone = JSON.parse(wired);
             delete gone.rooms.ShrineAsahikawa1.shrine;
             fs.writeFileSync(path.join(tmp, 'config.json'), JSON.stringify(gone, null, 2));
             python('tools/generate_asahikawa.py');
-            const after = JSON.parse(read());
+            const sealed = JSON.parse(read());
             assert.deepStrictEqual(doors(read()), ['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3']);
-            assert.ok(hall.door.join(',') in tiles(after.rooms.Asahikawa, 'Colliders'), 'an unowned door stayed open');
+            assert.ok(hall.door.join(',') in tiles(sealed.rooms.Asahikawa, 'Colliders'), 'an unowned door stayed open');
+            // and a sealed hall is given its interior by naming its host: the roll-out, back to what is committed
+            delete sealed.rooms.ShrineAsahikawa1;
+            fs.writeFileSync(path.join(tmp, 'config.json'), JSON.stringify(sealed, null, 2));
+            python('tools/generate_shrines.py', 'Asahikawa');
+            assert.ok(read() === wired, 'the roll-out of a sealed hall is not what is committed');
         } finally {
             fs.rmSync(tmp, { recursive: true, force: true });
         }
+    });
+
+    test("Kanazawa's wood stands back from the hall's steps: the three cells of the bottom step are open ground (#212)", () => {
+        const c = cfg(), town = c.rooms.Kanazawa, solid = tiles(town, 'Colliders');
+        const h = halls(c).find((x) => x.host === 'Kanazawa'), [dx, dy] = h.doorCell;
+        const steps = [dx - 1, dx, dx + 1].map((x) => `${x},${dy + 1}`);
+        // nothing of the wood on them: no collider, no shrub, and no tree whose trunk (the bottom row of a
+        // 2-wide sprite) stands on one - a cedar did, across the door
+        const png = require(path.join(GV2, 'tools', 'png'));
+        const size = (key) => {
+            const { width, height } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png')));
+            return [width / 64, height / 64];
+        };
+        for (const [cell, id] of Object.entries(tiles(town, 'Collidables'))) {
+            const key = c.tilePalette[id];
+            if (!/^(sendai-(cedar|maple|pine)|shrub-)/.test(key)) continue;
+            const [x, y] = cell.split(',').map(Number), [w, hgt] = size(key);
+            for (let i = 0; i < w; i++) assert.ok(!steps.includes(`${x + i},${y + hgt - 1}`), `${key} at ${cell} stands on the hall's steps`);
+        }
+        for (const cell of steps) assert.ok(!(cell in solid), `${cell} is solid`);
+        // the wood is still a wood nobody enters: the cells either side of the steps and below them, but for
+        // the path that comes up to the middle one, are solid
+        assert.ok(`${dx - 2},${dy + 1}` in solid && `${dx + 2},${dy + 1}` in solid, 'the wood is open beside the steps');
+        // the generator asks for it, and only for cells that are free (the shared helper skips a taken one)
+        const tool = (f) => fs.readFileSync(path.join(GV2, 'tools', f), 'utf8');
+        assert.ok(tool('generate_kanazawa.py').includes('clear=[(SHRINE[0] + dx, SHRINE[1] + 7) for dx in (1, 2, 3)]'));
+        assert.ok(tool('hokuriku.py').includes('clear = {c for c in clear if not self.taken(*c)}'));
     });
 
     test('the shrine generator and both art tools are checked, and a town rebuild keeps a shrine door (#212)', () => {

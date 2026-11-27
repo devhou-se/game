@@ -30,8 +30,8 @@ Three variants:
         'red' under a red roof (red-shrine-top): vermilion and gilt, the
         counter on the east side, a second pair of pillars by the sanctuary.
   size  'large' for the halls named in LARGE (Kushida, Dazaifu Tenmangu): a
-        wider, deeper hall with a third pair of pillars, a rack of plaques on
-        both sides and more lanterns.
+        wider, deeper hall with a third pair of pillars (outside the nave's
+        two), a rack of plaques on both sides and more lanterns.
 
 Run from gamev2/:  python3 tools/generate_shrines.py [Host ...]     (--help: this text, nothing run)
 With no host it rebuilds the shrines that are already wired (what
@@ -183,9 +183,10 @@ def build_interior(hall):
     if look == 'red' or large:
         feet.append(box_y)                         # a pair level with the offering box
     if large:
-        feet.append(fh - 5)
-    for foot in feet:
-        for fx in (cx - 4, cx + 3):
+        feet.append(fh - 5)                        # a third pair between them, two cells further out:
+    for foot in feet:                              # in the nave's own columns its head would stand on
+        out = 2 if large and foot == fh - 5 else 0     # the foot of the pair by the box
+        for fx in (cx - 4 - out, cx + 3 + out):
             put('Collidables', fx, foot - 2, k('pillar'))
             solid(fx, foot)
     # a garland of rope and paper between the front pair's heads

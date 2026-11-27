@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 66,
+ "nextobjectid": 67,
  "properties": [
   {
    "name": "gv2room",
@@ -11030,7 +11030,7 @@
     0,
     0,
     28,
-    28,
+    0,
     28,
     0,
     0,
@@ -11430,6 +11430,43 @@
     },
     {
      "id": 65,
+     "name": "transporter",
+     "point": true,
+     "x": 2016.0,
+     "y": 1696.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "ShrineAsahikawa1"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 12
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 66,
      "name": "boundary",
      "x": 0,
      "y": 0,
