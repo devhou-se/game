@@ -216,13 +216,29 @@ function hudName(name) {
  * nothing by its first part ("House | Sapporo 3" -> "House", and the same of
  * a tower's lobby and a shrine's hall), so it keeps its town instead:
  * "Sapporo house" (issue #208), "Osaka lobby", "Park shrine" (issue #220).
+ * A town whose name makes that longer than HUD_BRIEF_MAX has no room for it
+ * on the narrowest phone's one row, so there the kind keeps its number
+ * instead of its town: "Lobby | Marunouchi 1" -> "Lobby 1", and the kind
+ * alone where there is no number ("Shrine | Imperial Palace" -> "Shrine";
+ * issue #216). That is as short as a konbini's "7-Eleven", so such a room
+ * counts down on a lead-in day like any short-named one.
  */
 function hudBrief(name) {
     const [head, rest] = String(name).split(' | ');
-    return HUD_KINDS.includes(head) && rest ? `${rest.replace(/ \d+$/, '')} ${head.toLowerCase()}` : head;
+    if (!HUD_KINDS.includes(head) || !rest) return head;
+    const town = rest.replace(/ \d+$/, ''), led = `${town} ${head.toLowerCase()}`;
+    return led.length <= HUD_BRIEF_MAX ? led : head + rest.slice(town.length);
 }
 /** First parts of a room's name that are a kind of room, not a place: hudBrief leads with the town. */
 const HUD_KINDS = ['House', 'Lobby', 'Shrine'];
+/**
+ * The longest town-led short form ("Asahikawa house", 15 characters): what
+ * fits one row with the short date and its year and the starting wallet
+ * ("Asahikawa house | Feb 10 2027 | ¥5,000") on the narrowest landscape
+ * phone bar the game lays out, 667x375's 715px: 16px a character, a padding
+ * either side and "menu" a padding clear (hud-phone-layout.test.js derives it).
+ */
+const HUD_BRIEF_MAX = 15;
 
 /**
  * Navigate to the given game date. The date a clean URL already gives

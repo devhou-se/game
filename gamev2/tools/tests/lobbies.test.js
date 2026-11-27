@@ -83,6 +83,29 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         // every tower sprite standing in a town with lobbies either has one or was skipped on purpose: none in Osaka
         const standing = Object.values(tiles(osaka, 'Collidables')).filter((t) => c.tilePalette[t] in TOWERS).length;
         assert.strictEqual(standing, 3);
+        // Marunouchi (room Palace): its two towers, the yellow high-rise and the midrise flats, and no other
+        const palace = c.rooms.Palace, mine = lobbies(c).filter(([, r]) => r.lobby.host === 'Palace');
+        assert.deepStrictEqual(mine.map(([k, r]) => [k, r.name, r.lobby.doors, towerAt(c, palace, ...r.lobby.door)]), [
+            ['LobbyPalace1', 'Lobby · Marunouchi 1', [[49, 13]], 'highrise-yellow_0_0'],
+            ['LobbyPalace2', 'Lobby · Marunouchi 2', [[42, 15]], 'midrise-apartment_0_0']]);
+        assert.strictEqual(Object.values(tiles(palace, 'Collidables')).filter((t) => c.tilePalette[t] in TOWERS).length, 2, 'a tower of Marunouchi is still sealed');
+        assert.deepStrictEqual(palace.transporters.filter((t) => /^Lobby/.test(t.targetRoom)).map((t) => [t.gridX, t.gridY, t.targetRoom, t.hidden]),
+            [[49, 13, 'LobbyPalace1', true], [42, 15, 'LobbyPalace2', true]]);
+        // nobody is at either door or the cell in front of it on any day the world changes, nor is the game's start
+        const days = [...game('contentChangeDates')(c)].sort().concat('2026-11-27', '2027-02-10', '2027-02-20');
+        for (const [key, room] of mine) {
+            const [dx, dy] = room.lobby.door, at = (x, y) => x === dx && (y === dy || y === dy + 1);
+            assert.ok(!(c.player.startRoom === 'Palace' && at(c.player.startX, c.player.startY)), `${key}: the game starts at its door`);
+            for (const iso of days) {
+                for (const npc of palace.npcs) {
+                    const s = game('resolveNpc')(npc, iso, game('Trips').of(c));
+                    assert.ok(!(s && s.present !== false && at(s.gridX, s.gridY)), `${key}: ${npc.name} is at the door on ${iso}`);
+                }
+            }
+        }
+        // every town with a lobby, to date: the redesigned ones and Marunouchi; the rest wait for their rebuild
+        assert.deepStrictEqual([...new Set(lobbies(c).map(([, r]) => r.lobby.host))].sort(), ['Osaka', 'Palace', 'Sapporo']);
+        assert.strictEqual(lobbies(c).length, 7);
     });
 
     test('a lobby is one design: a desk, two lifts, plants, seating and a directory, nobody in it, nothing sold (#216)', () => {

@@ -523,7 +523,18 @@ the house code with another row in its `KINDS` table, so everything above holds 
 data, numbered in door order, skipped and sealed by the same rules, a no-op on a re-run, kept through a
 town rebuild by `roomgen.save_config`. **Applied to Osaka** (the office block, the flats, the glass
 tower) **and Sapporo** (its own two office blocks, `LobbySapporo1` the brick one in the Clock Tower block,
-`LobbySapporo2` the glass one west of the station plaza, #219); the rollout is `.agent-queue/items/lobbies_apply.sh <Town> ...`.
+`LobbySapporo2` the glass one west of the station plaza, #219) **and Marunouchi** (room `Palace`: `LobbyPalace1`
+"Lobby · Marunouchi 1", the yellow high-rise, door (49,13), and `LobbyPalace2` "Lobby · Marunouchi 2", the midrise
+flats, door (42,15); both of its towers, neither skipped); the rollout is `.agent-queue/items/lobbies_apply.sh <Town> ...`.
+The towers of Sendai, Fukuoka, Kanazawa and Asahikawa and the rest of Osaka's wait for their town's redesign
+rebuild (#219), which redoes them.
+
+- **On a phone's HUD bar** a lobby's short form is its town's, "Osaka lobby", as a house's and a shrine's
+  (`hudBrief`, `src/utils/NpcStates.js`). A town whose name makes that longer than 15 characters
+  (`HUD_BRIEF_MAX`: what one row holds with the short date, its year and the starting wallet at 667x375) keeps
+  the kind and its number instead: Marunouchi's read "Lobby 1" and "Lobby 2" ("Marunouchi lobby" is 16), and
+  so count down on a lead-in day on both phones. The rule is the same for a house or a shrine of a long-named
+  town ("House 3", "Shrine"); the whole name still shows wherever the bar has room for it.
 
 - **What is a tower** (`roomgen.TOWER_DOORS`): the five generic building sprites `highrise-yellow`,
   `-blue`, `-glass`, `-apartment` and `midrise-apartment` and Sapporo's `sapporo-office-brick` and
