@@ -72,6 +72,7 @@ ART_TOOLS = [
 ART_TOOLS += ['generate_hokuriku_art']
 ART_TOOLS += ['generate_sapporo_art']        # Sapporo's own art (issue #219)
 ART_TOOLS += ['generate_chikagai_art']       # the underground arcades and their street entrances
+ART_TOOLS += ['generate_konbini_art']        # the 7-Eleven interiors' kit (issue #221)
 # the art tools that also need a Japanese system font (generate_ads.find_font)
 FONT_TOOLS = ['generate_ads', 'extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS

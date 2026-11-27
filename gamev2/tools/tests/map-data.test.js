@@ -94,32 +94,33 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith, require 
         const stores = Object.keys(world.config.rooms).filter((k) => /^(Konbini|DonTakote|Izakaya)/.test(k));
         assert.ok(stores.length >= 14, stores.join());
         for (const k of stores) assert.strictEqual(JSON.stringify(world.lint(k).errors), '{}', k);
-        // the corner filler stands on the back row, never one row below it with the corner cell boxed in
+        // every 7-Eleven has its one water dispenser standing against the back wall (over the wall's
+        // lower row, solid on the floor's first), and the cell under it can be walked to from the door (#221)
         const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
-        let dispensers = 0;
-        for (const k of stores.filter((k) => k.startsWith('Konbini'))) {
-            const room = cfg.rooms[k], top = Math.min(...room.boundary.map((p) => p[1]));
+        const konbinis = stores.filter((k) => k.startsWith('Konbini'));
+        assert.ok(konbinis.length >= 13, konbinis.join());
+        for (const k of konbinis) {
+            // the outline takes in the back wall: the floor starts two rows under its top
+            const room = cfg.rooms[k], top = Math.min(...room.boundary.map((p) => p[1])) + 2;
             const layer = room.layers.find((l) => l.name === 'Collidables').tiles;
-            for (const [xy, t] of Object.entries(layer)) {
-                if (cfg.tilePalette[t] !== 'office-watercooler_0_0') continue;
-                dispensers++;
-                const y = Number(xy.split(',')[1]), bottom = Math.max(...room.boundary.map((p) => p[1])) - 2;
-                assert.ok(y === top || y === bottom, `${k}: water dispenser at ${xy} is on neither the back row (${top}) nor the counter row (${bottom})`);
+            const solid = room.layers.find((l) => l.name === 'Colliders').tiles;
+            const at = Object.keys(layer).filter((xy) => cfg.tilePalette[layer[xy]] === 'konbini-water_0_0');
+            assert.strictEqual(at.length, 1, `${k}: ${at.length} water dispensers`);
+            const [x, y] = at[0].split(',').map(Number);
+            assert.strictEqual(y, top - 1, `${k}: the water dispenser at ${at[0]} does not stand against the back wall`);
+            assert.ok(`${x},${top}` in solid && !(`${x},${top + 1}` in solid), `${k}: the dispenser's foot is solid, the cell under it free`);
+            // the floor is the boundary's box above the mat row; the mat is the two exit cells
+            const xs = room.boundary.map((p) => p[0]), x0 = Math.min(...xs), x1 = Math.max(...xs), mat = room.transporters[0].gridY;
+            const seen = new Set(room.transporters.map((t) => `${t.gridX},${t.gridY}`)), todo = room.transporters.map((t) => [t.gridX, t.gridY]);
+            while (todo.length) {
+                const [cx, cy] = todo.pop();
+                for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) {
+                    const c = `${nx},${ny}`;
+                    if (seen.has(c) || c in solid || nx < x0 || nx >= x1 || ny < top || ny >= mat) continue;
+                    seen.add(c); todo.push([nx, ny]);
+                }
             }
-        }
-        assert.ok(dispensers >= 5, `saw ${dispensers} water dispensers`);
-        // ...and the dispenser leaves no one-cell nook beside it on the back row either (between it
-        // and the coolers, or between it and the side wall)
-        for (const k of stores.filter((k) => k.startsWith('Konbini'))) {
-            const room = cfg.rooms[k], xs = room.boundary.map((p) => p[0]);
-            const top = Math.min(...room.boundary.map((p) => p[1])), x0 = Math.min(...xs), x1 = Math.max(...xs) - 1;
-            const layer = room.layers.find((l) => l.name === 'Collidables').tiles;
-            const free = (x) => x >= x0 && x <= x1 && !(`${x},${top}` in layer);
-            const dispenser = (x) => cfg.tilePalette[layer[`${x},${top}`]] === 'office-watercooler_0_0';
-            for (let x = x0; x <= x1; x++) {
-                if (!free(x) || !(dispenser(x - 1) || dispenser(x + 1))) continue;
-                assert.ok(free(x - 1) || free(x + 1), `${k}: back-row cell ${x},${top} is a one-cell nook beside the dispenser`);
-            }
+            assert.ok(seen.has(`${x},${top + 1}`), `${k}: nobody can walk up to the water dispenser at ${at[0]}`);
         }
     });
 

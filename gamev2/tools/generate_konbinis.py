@@ -1,23 +1,31 @@
 #!/usr/bin/env python3
-"""generate_konbinis.py — procedurally generated konbini interiors (issue #23).
+"""generate_konbinis.py — the inside of every 7-Eleven (issues #23, #221).
 
-Every 7-Eleven building in the world gets its own interior: a seeded-unique
-store room (aisle count, coolers, corner fillers, floor style, counter side all
-derive from the store's identity), wired to its door both ways. Store ids are
-deterministic — seeded by host room + building position — so regenerating
-without moving buildings reproduces the exact same interiors.
+Every 7-Eleven building in the world gets its own interior, wired to its door
+both ways. A store is laid out like a Pokémon Mart and dressed like a real
+7-Eleven: the clerk in a counter nook in one back corner under the tobacco
+rack, a back wall of drink coolers, an open chiller, the coffee machine, the
+water and the cash machine, shelf blocks you walk around, magazines and
+baskets by the door, the mat at the bottom centre.
 
-Interiors are furnished with the office/interior pack sliced into
-assets/sprites/office-*.png. The legacy hand-made 'Konbini' room, if one is
-still in the config, is dropped.
+The floor plans are the text grids in LAYOUTS; a store's plan, whether it is
+mirrored, and what its shelf blocks stock are dealt from its identity (host
+room + door cell), so regenerating without moving buildings reproduces the
+same interiors. check_store() holds every built room to the rules a plan must
+obey: all of the floor reachable from the door, a free cell under every
+fixture that sells, a free side on everything else you can bump.
 
-Run from gamev2/:  python3 tools/generate_konbinis.py [Host ...]    (--help: this text, nothing run)
+The art is the konbini-* kit (tools/generate_konbini_art.py) and the drinks
+cooler office-fridge_0_0 (tools/generate_cooler_art.py). The legacy hand-made
+'Konbini' room, if one is still in the config, is dropped.
+
+Run from gamev2/:  python3 tools/generate_konbini_art.py            (needs Pillow; only when the kit changes)
+                   python3 tools/generate_konbinis.py [Host ...]    (--help: this text, nothing run)
 Then:              python3 tools/config_to_tiled.py <each new room + hosts>
                    node tools/play.js lint <each new room + hosts>
 """
 import hashlib
 import random
-import struct
 import sys
 
 import roomgen as rg
@@ -36,40 +44,6 @@ HOSTS = ARGS or ALL_HOSTS
 assert all(h in ALL_HOSTS for h in HOSTS), f'unknown host; expected some of {ALL_HOSTS}'
 SEVEN = 'seven-eleven_0_0'
 DOOR_DX, DOOR_DY = 1, 3      # door cell relative to the building's top-left
-
-OFFICE_KEYS = [
-    'office-shelf-snacks_0_0', 'office-shelf-drinks_0_0', 'office-shelf-glass_0_0',
-    'office-freezer_0_0', 'office-cabinet_0_0', 'office-watercooler_0_0',
-    'office-clock_0_0', 'office-fridge_0_0', 'office-counter2_0_0',
-    'office-register_0_0', 'office-poster-chart_0_0', 'office-poster-menu_0_0',
-    'office-poster-photo_0_0', 'office-plant-a_0_0', 'office-plant-b_0_0',
-    'office-boxes-large_0_0', 'office-boxes-small_0_0', 'office-wall-white_0_0',
-    'office-floor-autotile_center', 'office-warm-autotile_center',
-    'office-void-autotile_center',
-]
-
-SHELVES = ['office-shelf-snacks_0_0', 'office-shelf-drinks_0_0', 'office-shelf-glass_0_0']
-COOLERS = ['office-fridge_0_0', 'office-freezer_0_0', 'office-cabinet_0_0']
-POSTERS = ['office-poster-chart_0_0', 'office-poster-menu_0_0', 'office-poster-photo_0_0']
-PLANTS = ['office-plant-a_0_0', 'office-plant-b_0_0']
-
-
-def png_size(key):
-    with open(f'assets/sprites/{key}.png', 'rb') as f:
-        f.read(16)
-        return struct.unpack('>II', f.read(8))
-
-
-def register_metadata():
-    """Every tile key needs a spriteMetadata entry or its texture never loads.
-    Anchor = half a cell over the sprite's own size (top-left-cell alignment)."""
-    sm = cfg['spriteMetadata']
-    for k in OFFICE_KEYS:
-        if k in sm:
-            continue
-        w, h = png_size(k)
-        sm[k] = {'anchorX': round(32 / w, 4), 'anchorY': round(32 / h, 4), 'frameCount': 1}
-
 
 def store_name(host, ordinal, count):
     """The room's display name (the HUD shows it, never the room key):
@@ -101,141 +75,199 @@ def find_stores():
     return stores
 
 
-ROOM_W, ROOM_H = 20, 15   # engine/camera minimum; the store box floats inside
+ROOM_W, ROOM_H = 20, 15   # engine/camera minimum; the store floats inside
+FH, FY = 6, 4             # the floor is FH rows from row FY; the wall is the two rows above it
+
+# One character per cell, the counter in the west corner (a store is mirrored or not by its seed).
+# `wall` is the back wall by column, `floor` is FH rows:
+#   wall   w plain, k with the clock, Tt the tobacco rack (behind the till)
+#   row 0  against the wall: D drinks cooler, O open chiller, K coffee, W water, X copier, A cash machine
+#   floor  Cc the counter and its nook (2x3), Gg a shelf block (2x2), Ff ice-cream chest (2x1),
+#          Mm magazine rack (2x1), B baskets, . free
+# A lower-case letter is the rest of the piece that starts at its capital.
+LAYOUTS = {
+    'aisles': dict(wall='Ttkwwwwwwwww',
+                   floor=['Cc.DDDDOOOWA',
+                          'cc..........',
+                          'cc.Gg.Gg.Gg.',
+                          '...gg.gg.gg.',
+                          '............',
+                          'B.........Mm']),
+    'freezer': dict(wall='Ttkwwwwwwwww',
+                    floor=['Cc.DDDOOKWXA',
+                           'cc..........',
+                           'cc.Gg.Gg.Ff.',
+                           '...gg.gg....',
+                           '............',
+                           'B.........Mm']),
+    'small': dict(wall='Ttkwwwwwww',
+                  floor=['Cc.DDDOOWA',
+                         'cc........',
+                         'cc.Gg.Gg..',
+                         '...gg.gg..',
+                         '..........',
+                         'B.......Mm']),
+}
+LAYOUT_NAMES = list(LAYOUTS)
+
+WALLS = {'w': ('konbini-wall_0_0', 1), 'k': ('konbini-wall-clock_0_0', 1), 'T': ('konbini-wall-tobacco_0_0', 2)}
+# 1x2 sprites standing over the wall's lower row, solid on floor row 0
+AT_WALL = {'D': 'office-fridge_0_0', 'O': 'konbini-chiller', 'K': 'konbini-coffee_0_0',
+           'W': 'konbini-water_0_0', 'X': 'konbini-copier_0_0', 'A': 'konbini-atm_0_0'}
+FURNITURE = {'C': ('konbini-counter', 2, 3), 'G': ('konbini-gondola', 2, 2), 'F': ('konbini-freezer_0_0', 2, 1),
+             'M': ('konbini-magazines_0_0', 2, 1), 'B': ('konbini-baskets_0_0', 1, 1)}
+GONDOLAS = ['snacks', 'noodles', 'bread', 'daily']     # what a shelf block may stock
+# what check_store() asks of each piece: a free cell under every column (it sells, or is the
+# clock: play.js lint shop-no-front), or a free cell on any side (the till, and what says a line)
+FRONT = ('office-fridge', 'konbini-chiller', 'konbini-coffee', 'konbini-water', 'konbini-gondola', 'konbini-wall-clock')
+ANY_SIDE = ('konbini-counter', 'konbini-atm', 'konbini-copier', 'konbini-freezer', 'konbini-magazines')
 
 
-def furnish(b, rng, x0, y0, bw, bh):
-    """Seeded store furniture inside the box at (x0, y0), size (bw, bh).
-    Box rows: y0..y0+1 wall band, walkable y0+2 .. y0+bh-3, bottom wall
-    y0+bh-2, threshold y0+bh-1. Konbini-sized: everything within a couple
-    of steps of the door."""
-    def put_solid(key, x, y):
-        w, h = png_size(key)
-        b.put('Collidables', x, y, key)
-        for dx in range(max(1, round(w / 64))):
-            for dy in range(max(1, round(h / 64))):
-                b.solid(x + dx, y + dy)
+def parse(layout, mirror):
+    """A layout's pieces in floor coordinates: its width, the walls
+    [(char, col, w)] and the furniture [(char, col, row, w, h)] in reading
+    order - flipped left to right when `mirror` (a piece keeps its own left
+    and right; only where it stands changes)."""
+    spec = LAYOUTS[layout]
+    fw = len(spec['wall'])
+    assert len(spec['floor']) == FH and all(len(row) == fw for row in spec['floor']), f'{layout} does not fit its floor'
+    flip = (lambda c, w=1: fw - c - w) if mirror else (lambda c, w=1: c)
+    walls, c = [], 0
+    while c < fw:
+        ch = spec['wall'][c]
+        w = WALLS[ch][1]
+        walls.append((ch, flip(c, w), w))
+        c += w
+    items = []
+    for r, row in enumerate(spec['floor']):
+        for c, ch in enumerate(row):
+            if ch in AT_WALL:
+                assert r == 0, f'{layout}: {ch} must stand against the wall'
+                items.append((ch, flip(c), r, 1, 1))
+            elif ch in FURNITURE:
+                _, w, h = FURNITURE[ch]
+                items.append((ch, flip(c, w), r, w, h))
+    return fw, walls, items
 
-    left, right = x0 + 1, x0 + bw - 2       # walkable column range
-    top, bottom = y0 + 2, y0 + bh - 3       # walkable row range
 
-    # wall dressing on the band
-    for x in rng.sample(range(left + 1, right), k=rng.randint(1, 3)):
-        b.put('Other', x, y0 + 1, rng.choice(POSTERS))
-    b.put('Other', rng.choice([left, right]), y0 + 1, 'office-clock_0_0')
-
-    # one cooler run against the back wall (office-fridge, the glass-door drinks
-    # cooler drawn by tools/generate_cooler_art.py, is 2 tall)
-    run = rng.randint(2, 3)
-    cx0 = rng.randint(left + 1, right - run)
-    kind = rng.choice(COOLERS)
-    # THE FRONT-CELL RULE (issue #152): a cooler or shelf is used by bumping it from
-    # the cell below it, so the row under every fixture stays a walkway -
-    #   coolers | walkway | aisle | walkway | (aisle | walkway) | counter row.
-    # A two-cell cooler therefore pushes the aisles down a row, and the last aisle
-    # stops two rows short of the counter row: one on the row above it had the
-    # counter and the corner plant under its ends, which closed the ring and
-    # left the back of the store sealed off from the door. The smallest store
-    # (five floor rows) has no room for a two-cell cooler AND an aisle, so it
-    # gets the one-cell freezer. `play.js lint` enforces it (shop-no-front).
-    if png_size(kind)[1] > 64 and bottom - top < 5:
-        kind = 'office-freezer_0_0'
-    deep = max(1, round(png_size(kind)[1] / 64))
-    for dx in range(run):
-        put_solid(kind, cx0 + dx, top)
-
-    # 1-2 short aisles, side columns always left as the walkway ring
-    aisle_rows = [y for y in (top + deep + 1, top + deep + 3) if y <= bottom - 2]
-    for y in aisle_rows[:rng.randint(1, 2)]:
-        theme = rng.choice(SHELVES)
-        for x in range(left + 1, right):
-            put_solid(theme if rng.random() > 0.25 else rng.choice(SHELVES), x, y)
-
-    # exactly one counter (2 wide, fills its tiles exactly) on the front row,
-    # register on the inner tile
-    side = rng.choice(['left', 'right'])
-    cy = bottom
-    cx = left if side == 'left' else right - 1
-    put_solid('office-counter2_0_0', cx, cy)
-    b.put('Tops', cx + 1 if side == 'left' else cx, cy, 'office-register_0_0')
-
-    # 0-2 corner fillers (a water dispenser, then a plant), a plant opposite the
-    # counter. NO rubbish bins - issue #19; `play.js lint` fails a room that has one.
-    # The back one stands in the back corner, against the wall (issue #182): a row
-    # lower it left the corner cell above it a one-cell dead end beside the
-    # cooler run. Where the corner would leave a single cell between it and the
-    # coolers, the run grows one unit to meet it - a one-cell nook is a dead
-    # end whichever side of the dispenser it falls on. The coolers still keep
-    # off the side columns and are used from the row below, so no fixture's
-    # front cell is taken.
-    if side == 'left':
-        back, gap = right, (right - 1 if right - (cx0 + run) == 1 else None)
-    else:
-        back, gap = left, (left + 1 if cx0 - 1 - left == 1 else None)
-    spots = [(back, top),
-             (cx + 2, cy) if side == 'left' else (cx - 1, cy)]
-    picked = sorted(rng.sample(spots, k=rng.randint(0, 2)))
-    for (x, y), key in zip(picked, ('office-watercooler_0_0', 'office-plant-b_0_0')):
-        put_solid(key, x, y)
-    if gap is not None and (back, top) in picked:
-        put_solid(kind, gap, top)
-    put_solid(rng.choice(PLANTS), right if side == 'left' else left, cy)
+def plan_of(store):
+    """(layout, mirrored, the shelf blocks' stock in reading order) for a store,
+    from its identity (Asakusa's six stores come out on all three layouts;
+    konbini.test.js holds a town with several to more than one plan)."""
+    seed = int(hashlib.md5(f"{store['host']}:{store['door']}".encode()).hexdigest()[:8], 16)
+    rng = random.Random(seed)
+    layout = rng.choice(LAYOUT_NAMES)
+    mirror = rng.random() < 0.5
+    stock = GONDOLAS[:]
+    rng.shuffle(stock)
+    return layout, mirror, stock
 
 
 def build_interior(store):
-    seed = int(hashlib.md5(f"{store['host']}:{store['door']}".encode()).hexdigest()[:8], 16)
-    rng = random.Random(seed)
-    bw = rng.randint(10, 13)   # box incl. side walls  -> 8-11 cells walkable
-    bh = rng.randint(9, 11)    # box incl. band + wall + threshold -> 5-7 walkable
-    x0 = (ROOM_W - bw) // 2
-    y0 = (ROOM_H - bh) // 2
+    """(room, arrival cell) for one store."""
+    layout, mirror, stock = plan_of(store)
+    fw, walls, items = parse(layout, mirror)
+    fx = (ROOM_W - fw) // 2
     b = rg.Builder(ROOM_W, ROOM_H)
-
-    # the room is a dark void with one small lit store floating in it
     b.fill('office-void-autotile')
-    floor = rng.choice(['office-floor-autotile', 'office-floor-autotile', 'office-warm-autotile'])
-    for x in range(x0 + 1, x0 + bw - 1):
-        for y in range(y0 + 2, y0 + bh - 2):
-            b.put('Floor', x, y, f'{floor}_center')
 
-    # walls: only the back wall is drawn — a single 1-tile-tall row directly
-    # above the floor, aligned to the floor width. The sides and front have no
-    # wall at all; the lit floor is framed by the surrounding void, and the room
-    # boundary (set below) keeps the player on the floor, so no invisible
-    # side/front colliders are needed. Door is a 2-cell gap in the front.
-    midx = x0 + bw // 2
-    gapx = (midx - 1, midx)
-    for x in range(x0 + 1, x0 + bw - 1):
-        b.put('Collidables', x, y0 + 1, 'office-wall-white_0_0'); b.solid(x, y0 + 1)
+    def put(layer, x, y, key):
+        assert key in cfg['spriteMetadata'], f'{key} is not registered: run tools/generate_konbini_art.py'
+        b.put(layer, x, y, key)
 
-    furnish(b, rng, x0, y0, bw, bh)
+    def solid(key, x, y, w=1, h=1):
+        put('Collidables', x, y, key)
+        for dx in range(w):
+            for dy in range(h):
+                b.solid(x + dx, y + dy)
 
-    # lit doorway: a single mat row (1 deep) sticking out below the floor; the
-    # exit transporters sit on the mat, the player arrives one cell inside it.
-    for i, x in enumerate(gapx):
-        b.put('Floor', x, y0 + bh - 2, f'{floor}_center')
-        b.paver(x, y0 + bh - 2, i)
+    # the floor, a chequer of two near tones, and the mat: the two middle columns, one row below it
+    mx, my = fx + fw // 2 - 1, FY + FH
+    for c in range(fw):
+        for r in range(FH):
+            put('Floor', fx + c, FY + r, f"konbini-floor-{'ab'[(c + r) % 2]}_0_0")
+    for i, x in enumerate((mx, mx + 1)):
+        put('Floor', x, my, f"konbini-floor-{'ab'[(x - fx + FH + 1) % 2]}_0_0")
+    put('Over Floor', mx, my, 'konbini-mat_0_0')
 
-    fx, fy = store['front']
+    # the tops of the walls you look over, on the void around the floor: the sides, the glazed
+    # shopfront either side of the doors, the corners where they meet
+    for y in range(FY - 2, my):
+        put('Over Floor', fx - 1, y, 'konbini-side-w_0_0')
+        put('Over Floor', fx + fw, y, 'konbini-side-e_0_0')
+    for x in range(fx, fx + fw):
+        if x not in (mx, mx + 1):
+            put('Over Floor', x, my, 'konbini-front_0_0')
+    put('Over Floor', fx - 1, my, 'konbini-front-w_0_0')
+    put('Over Floor', fx + fw, my, 'konbini-front-e_0_0')
+
+    # the back wall, two rows of it, and what stands against it and on the floor
+    for ch, c, w in walls:
+        solid(WALLS[ch][0], fx + c, FY - 2, w, 2)
+    chillers = gondolas = 0
+    for ch, c, r, w, h in items:
+        if ch in AT_WALL:
+            key = AT_WALL[ch]
+            if ch == 'O':                                   # the chiller's two halves, turn about
+                key, chillers = f"{key}-{'ab'[chillers % 2]}_0_0", chillers + 1
+            put('Collidables', fx + c, FY - 1, key)
+            b.solid(fx + c, FY)
+        else:
+            key = FURNITURE[ch][0]
+            if ch == 'C':                                   # the nook is in the corner the counter stands in
+                key = f"{key}-{'e' if mirror else 'w'}_0_0"
+            elif ch == 'G':
+                key, gondolas = f'{key}-{stock[gondolas % len(stock)]}_0_0', gondolas + 1
+            solid(key, fx + c, FY + r, w, h)
+
+    front = store['front']
     room = b.room(store['name'], transporters=[
-        rg.transporter(gapx[0], y0 + bh - 2, store['host'], fx, fy, hidden=True),
-        rg.transporter(gapx[1], y0 + bh - 2, store['host'], fx, fy, hidden=True),
+        rg.transporter(mx, my, store['host'], front[0], front[1], hidden=True),
+        rg.transporter(mx + 1, my, store['host'], front[0], front[1], hidden=True),
     ])
-    # confine movement to the lit floor plus the 1-deep door mat — the
-    # surrounding void isn't walkable, so the missing side/front walls need no
-    # colliders.
-    room['boundary'] = [
-        [x0 + 1, y0 + 2], [x0 + bw - 1, y0 + 2],
-        [x0 + bw - 1, y0 + bh - 2],
-        [gapx[1] + 1, y0 + bh - 2], [gapx[1] + 1, y0 + bh - 1],
-        [gapx[0], y0 + bh - 1], [gapx[0], y0 + bh - 2],
-        [x0 + 1, y0 + bh - 2],
-    ]
+    # movement is confined to the lit floor and the mat: the void and the wall tops need no colliders.
+    # The outline also takes in the back wall (solid, so nobody walks it): a phone's camera holds a
+    # room no taller than its view to its outline (GameScene.applyRoomBounds), which would leave the
+    # wall, and the top half of everything standing against it, off the top of the screen
+    x1, y0, y1 = fx + fw, FY - 2, FY + FH
+    room['boundary'] = [[fx, y0], [x1, y0], [x1, y1], [mx + 2, y1], [mx + 2, y1 + 1], [mx, y1 + 1], [mx, y1], [fx, y1]]
     room['interior'] = True          # day/night grading never applies inside
-    return room, (gapx[0], y0 + bh - 3)   # arrival: just inside the door mat
+    arrive = (mx, my - 1)            # just inside the doors; the mat is the cell below
+    check_store(store['key'], room, arrive, (fx, fw))
+    return room, arrive
 
 
-register_metadata()
+def check_store(name, room, arrive, floor):
+    """The rules every plan obeys: all of the free floor can be walked to from
+    the way in; every cooler, chiller, machine and shelf block, and the clock,
+    has a free cell under each of its columns; the till and everything that
+    only says a line has a free cell on some side."""
+    fx, fw = floor
+    solid = {tuple(map(int, c.split(','))) for c in room['layers'][-1]['tiles']}
+    mat = {(t['gridX'], t['gridY']) for t in room['transporters']}
+    free = ({(fx + c, FY + r) for c in range(fw) for r in range(FH)} | mat) - solid
+    assert arrive in free and len(mat) == 2 and mat <= free, f'{name}: the way in is blocked'
+    seen, todo = {arrive}, [arrive]
+    while todo:
+        x, y = todo.pop()
+        for cell in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if cell in free and cell not in seen:
+                seen.add(cell)
+                todo.append(cell)
+    assert seen == free, f'{name}: floor nobody can reach: {sorted(free - seen)}'
+    sizes = {WALLS[ch][0]: (WALLS[ch][1], 2) for ch in WALLS}
+    for xy, idx in room['layers'][4]['tiles'].items():
+        key = rg._pal[idx]
+        x, y = map(int, xy.split(','))
+        w, h = sizes.get(key) or next(((w, h) for k, w, h in FURNITURE.values() if key.startswith(k)), (1, 2))
+        if key.startswith(FRONT):
+            assert all((x + dx, y + h) in seen for dx in range(w)), f'{name}: {key} at {xy} has no cell in front'
+        elif key.startswith(ANY_SIDE):
+            around = ([(x + dx, y - 1) for dx in range(w)] + [(x + dx, y + h) for dx in range(w)]
+                      + [(x - 1, y + dy) for dy in range(h)] + [(x + w, y + dy) for dy in range(h)])
+            assert any(cell in seen for cell in around), f'{name}: {key} at {xy} cannot be reached'
+
+
 stores = find_stores()
 # the original hand-made interior is long gone; drop it from an old config
 cfg['rooms'].pop('Konbini', None)

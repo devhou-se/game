@@ -11,7 +11,7 @@ committed world: it runs each one in a scratch copy and fails, naming the rooms 
 would change (issue #107, see "Generated rooms stay regenerable"). It also re-seeds every room with
 `config_to_tiled.py` and fails if a committed `tiled/*.tmj` would change (a config edit whose map was not
 re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_fukuoka_art`, `_hokuriku_art`, `_sapporo_art`, `_sanfranbourne_art`, `_tsutenkaku`,
-`_discount_art`, `_cooler_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
+`_discount_art`, `_cooler_art`, `_konbini_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
 `extract_*.py` scripts, `extract_station` among them) and fails if `assets/sprites`, `assets/ads`, `assets/map`, `tiled/prefabs` or `config.json` would
 change (issues #186, #193). Run it after any edit to a
 generated room, a map or a generator. The room and map checks take a few seconds and need no Pillow; the
@@ -134,4 +134,14 @@ Run with: `python3 tools/generate_<type>.py`
 glass-door drinks cooler (issue #140): 1x2 cells, fully procedural (no source image or font, so a re-run is
 byte-identical), in the steel greys and glass blues of the `office-shelf-*` / `office-freezer` furniture
 and, like them, drawn at half size and pixel-doubled. Size (64x128) and anchor (0.5, 0.25) are fixed by the
-maps that already place it - change the art, not the footprint. Needs Pillow.
+maps that already place it - change the art, not the footprint. Needs Pillow. In a 7-Eleven it stands
+against the back wall, its upper cell over the wall's lower row (issue #221).
+
+`tools/generate_konbini_art.py [--preview out.png]` draws the rest of a 7-Eleven's interior, the 26
+`konbini-*` sprites (issue #221): the checkered floor, the wall-top edges, the two-row back wall (plain,
+with the clock, with the tobacco rack), the counter nook with its clerk (`-w`, and `-e` its mirror), the
+open chillers, the coffee machine, the water dispenser, the cash machine, the copier, the four shelf
+blocks, the ice-cream chest, the magazine rack, the baskets and the mat. Fully procedural, so a re-run is
+byte-identical; it writes each sprite's `spriteMetadata` and `tileNames` and `generate_konbinis.py`
+appends the keys to the palette as it places them. Sizes are whole cells and are what the plans in
+`generate_konbinis.py` assume - change the art, not the footprint. Needs Pillow.

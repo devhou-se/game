@@ -13,15 +13,16 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 | Bump | Opens (`Shop.VENUES`) |
 |------|-----------------------|
 | any `vending-machine*` tile, any room (bump the machine's foot from the cell in front) | `vending` — items with `where: 'vending'` |
-| `office-counter*` in a konbini | `counter` — every vending + counter item |
+| the till in a konbini: a 7-Eleven's `konbini-counter*` (any cell of the counter nook, the clerk drawn into it), Don Takote's `office-counter*` | `counter` — every vending + counter item |
 | the 7-Eleven kiosk inside a station (`station-kiosk*`, any cell of the booth; see "The station interior") | `counter` — the same list |
 | the 7-Eleven kiosk in an airport hall (the same booth and rule) | `counter` — the same list; no stamp |
 | the pub's bar in an airport lounge (`airport-bar*`, issue #218) | `pub` — the izakaya's drinks and food, titled AIRPORT PUB; buys no fish, no stamp |
 | the hot-drinks tent in Sapporo's Odori Park (`snowfest-stall-drinks*`, any cell of the tent, issue #219) | `stall` — Canned Coffee and Green Tea, titled HOT DRINKS; no stamp |
 | the counter (`office-counter2*`) of a Tanukikoji shop floor (`Shop<Town><n>`, `"shopMenu": "souvenirs"` / `"crab"` / `"drugstore"`, issue #219) | that list — OMIYAGE: Green Tea, Ramune, Melon Pan; CRAB SHOP: Onigiri, Nikuman; DRUGSTORE: Zone Energy, Green Tea, Canned Coffee; no stamp, buys no fish |
 | three shopfronts of an underground arcade (`chika-shop-bakery*` / `-kissa*` / `-bar*`, any cell of the front, `tools/generate_chikagai.py`) | `bakery` — BAKERY: Melon Pan, Nikuman, Canned Coffee; `kissa` — KISSATEN: Canned Coffee, Green Tea, Melon Pan; `standbar` — STAND BAR: Highball, Nama Beer, Edamame, Karaage; no stamp, buys no fish |
-| `office-shelf-drinks` / `-shelf-glass` / `office-fridge` / `office-freezer` in a konbini | `drinks` — the drinks only |
-| `office-shelf-snacks` in a konbini | `snacks` — the food only |
+| a 7-Eleven's drinks coolers (`office-fridge`) and coffee machine (`konbini-coffee`); `office-shelf-drinks` / `-shelf-glass` / `office-freezer` in Don Takote | `drinks` — the drinks only |
+| a 7-Eleven's open chillers (`konbini-chiller-a` / `-b`) and its snack, noodle and bread shelf blocks (`konbini-gondola-snacks` / `-noodles` / `-bread`); `office-shelf-snacks` in Don Takote | `snacks` — the food only |
+| the rest of a 7-Eleven (issue #221) | the dispenser on the back wall (`konbini-water`) pours a cup of water; the wall clock (`konbini-wall-clock`, bumped from the floor under it) opens Time Travel; the cash machine, the copier, the magazine rack, the ice-cream chest and the sundries shelf block (`konbini-gondola-daily`) say a line; the baskets and the plain wall do nothing |
 | `office-counter2*` (the bar) in a room with `"shopMenu": "izakaya"` | `izakaya` — items with `where: 'izakaya'` |
 
 - A "konbini" is any room with `interior: true` and `shopEnabled !== false` — the
@@ -62,11 +63,10 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   INSIDE a store (issue #152): a shelf or cooler is bumped from the cell below it, so lint fails with
   `shop-no-front` when any column of a konbini / Don Takote shelf or cooler has no walkable cell under
   it that the door leads to (the till, against the front wall, needs any reachable side), and with
-  `shop-sealed-floor` when a store has bare floor the door does not lead to (issue #182: the corner
-  water dispenser stood one row below the back wall and boxed in the corner cell above it, beside the
-  cooler run - `generate_konbinis.py` now stands it in the back corner, and where that would leave a
-  single cell between it and the coolers the run grows one unit to meet it, so the back row has no
-  one-cell nook on either side of it).
+  `shop-sealed-floor` when a store has bare floor the door does not lead to (issue #182: a corner
+  water dispenser once stood a row below the back wall and boxed in the cell above it; nothing in a
+  7-Eleven stands off the wall like that now, and `generate_konbinis.py` `check_store()` refuses a plan
+  that leaves floor the door does not reach).
   `play.js check` reports every room's lint errors too (`WorldModel.lintProblems`, issue #178), so a
   store cut off from its door shows up there as `KonbiniMarket1: lint shop-no-front: ...`.
   `check` exits 1 when it lists any problem, like `lint` (issue #188), so a script or CI step can gate on it.
@@ -74,11 +74,10 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   shrine hall, the floor under Market's wing roofs and the odd cell boxed in by bushes or lanterns carry
   a `gk_blank` collider, so nothing can place anyone there (unit-tested on the stitched city). Lint's
   `stray-collision` skips a bare collider that no walkable cell touches, which is what those are.
-  `generate_konbinis.py` lays a store out as coolers | walkway | aisle | walkway | (aisle | walkway) |
-  counter row: a two-cell `office-fridge` pushes the aisles down a row, the last aisle stops two rows
-  short of the counter row (one on the row above it closed the ring and sealed the back of the store
-  off from the door - `KonbiniMarket1` and `KonbiniMarket3` were like that), and a five-row store gets
-  the one-cell freezer instead of the fridge. Keep NPC spots and
+  `generate_konbinis.py` lays a 7-Eleven out like a Pokémon Mart (issue #221): everything that sells
+  from its front stands against the back wall or is a shelf block with an aisle below it, the till is
+  a nook in a back corner, and the bottom row is open but for the baskets and the magazines by the
+  door - see "Konbini interiors" in `landmarks-and-towns.md`. Keep NPC spots and
   door arrivals off the cell in front of a machine's cabinet.
 - **Don Takote** (issue #91): every `discount-store` facade has a shop floor -
   `DonTakoteMarket`, `DonTakoteOsaka`, `DonTakoteSapporo` (HUD: `Don Takote | Osaka`, name `Don Takote · Osaka`; the room's
@@ -243,8 +242,8 @@ draws the meter and pays the rewards; tests are `tools/tests/energy.test.js`.
   into `shop.notices` and are toasted by the same 250 ms timer as "X wore off", never over another
   toast or an open list. Eating or a cup of water drops a queued peckish line.
 - **The safety net** (a player cannot be left unable to eat): an empty meter costs only the sprint;
-  a konbini's **water cooler** (`office-watercooler`, the `water` rule in `Interactions.js`; eight of
-  the eleven 7-Elevens have one in a back corner) gives a free cup on a bump, `+Energy.WATER` (20)
+  a 7-Eleven's **water dispenser** (`konbini-water`, the `water` rule in `Interactions.js`; every
+  7-Eleven has one on its back wall, issue #221) gives a free cup on a bump, `+Energy.WATER` (20)
   up to `Energy.WATER_CAP` (40) - enough to sprint again, never enough to be well fed; the
   cheapest thing sold is a ¥160 Green Tea; and money comes back from the stamp card, a friendly
   nomikai round (¥100, no stake) and selling fish.

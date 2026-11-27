@@ -1,7 +1,7 @@
 const Interactions = {
     RULES: [
         { kind: 'vending', group: 'shop', pattern: /vending-machine/, footprint: true },
-        { kind: 'counter', group: 'shop', pattern: /^(blue-shrine-platform-base|office-counter)/, footprint: true, room: 'konbini' },
+        { kind: 'counter', group: 'shop', pattern: /^(blue-shrine-platform-base|office-counter|konbini-counter)/, footprint: true, room: 'konbini' },
         // the 7-Eleven kiosk inside a station (tools/generate_stations.py): the whole
         // booth is the till, in any room - a station is not an `interior`
         { kind: 'counter', group: 'shop', pattern: /^station-kiosk/, footprint: true },
@@ -15,10 +15,10 @@ const Interactions = {
         { kind: 'bakery', group: 'shop', pattern: /^chika-shop-bakery/, footprint: true },
         { kind: 'kissa', group: 'shop', pattern: /^chika-shop-kissa/, footprint: true },
         { kind: 'standbar', group: 'shop', pattern: /^chika-shop-bar/, footprint: true },
-        { kind: 'drinks', group: 'shop', pattern: /^office-(shelf-drinks|shelf-glass|fridge|freezer)/, footprint: true, room: 'konbini' },
-        { kind: 'snacks', group: 'shop', pattern: /^office-shelf-snacks/, footprint: true, room: 'konbini' },
+        { kind: 'drinks', group: 'shop', pattern: /^(office-(shelf-drinks|shelf-glass|fridge|freezer)|konbini-coffee)/, footprint: true, room: 'konbini' },
+        { kind: 'snacks', group: 'shop', pattern: /^(office-shelf-snacks|konbini-(chiller|gondola-(snacks|noodles|bread)))/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },
-        { kind: 'water', group: 'water', pattern: /^office-watercooler/, footprint: true, room: 'konbini' },
+        { kind: 'water', group: 'water', pattern: /^(office-watercooler|konbini-water)/, footprint: true, room: 'konbini' },
         // inside a shrine's worship hall (tools/generate_shrines.py; src/ShrineVisit.js)
         { kind: 'offering', group: 'shrine', pattern: /^shrine-in-saisen/, footprint: true },
         { kind: 'omikuji', group: 'shrine', pattern: /^shrine-in-omikuji_/, footprint: true },
@@ -31,6 +31,9 @@ const Interactions = {
         { kind: 'drawers', group: 'temple', pattern: /^temple-in-omikuji/, footprint: true },
         { kind: 'pond', group: 'pond', pattern: /^pond-autotile/ },
         { kind: 'clock', group: 'clock', pattern: /^(office-clock|office-poster-menu)/ },
+        // a 7-Eleven's clock is part of its back wall (tools/generate_konbinis.py, issue #221): the
+        // sprite sits on the wall's upper cell and the bump lands on the lower one
+        { kind: 'clock', group: 'clock', pattern: /^konbini-wall-clock/, footprint: true },
         // a home's furniture (issue #208, tools/generate_houses.py): a bump says one line
         // (`say`, shown as a toast by GameScene) and nothing else happens
         { kind: 'kotatsu', group: 'flavour', pattern: /^home-kotatsu/, footprint: true, say: 'the kotatsu is warm. you could stay under it all winter' },
@@ -72,6 +75,12 @@ const Interactions = {
         { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-b/, footprint: true, say: 'still standing. technically' },
         { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-c/, footprint: true, say: 'three trams have come and gone. he was not waiting for one' },
         { kind: 'leaner', group: 'flavour', pattern: /^sfb-lean-d/, footprint: true, say: 'his slurpee melted hours ago. he has not spilled a drop' },
+        // a 7-Eleven's fixtures that sell nothing (issue #221)
+        { kind: 'atm', group: 'flavour', pattern: /^konbini-atm/, footprint: true, say: 'the cash machine speaks four languages. your card speaks none of them' },
+        { kind: 'copier', group: 'flavour', pattern: /^konbini-copier/, footprint: true, say: 'the copier also sells concert tickets. none for tonight' },
+        { kind: 'magazines', group: 'flavour', pattern: /^konbini-magazines/, footprint: true, say: 'this week\'s manga, thick as a brick and taped shut' },
+        { kind: 'ice-cream', group: 'flavour', pattern: /^konbini-freezer/, footprint: true, say: 'ice cream, whatever the season. the lid is cold enough to stick to' },
+        { kind: 'sundries', group: 'flavour', pattern: /^konbini-gondola-daily/, footprint: true, say: 'umbrellas, socks, phone chargers. everything you forgot to pack' },
     ],
 
     match(key, roomConfig, venues) {

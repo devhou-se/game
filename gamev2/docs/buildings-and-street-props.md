@@ -101,7 +101,7 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
   generator).
 - **No rubbish bins, anywhere** ("definitely no rubbish bins!!" - Japanese streets have none). The `office-bin`
   sprite is retired (PNG and `spriteMetadata` deleted in #109; its `tilePalette` slot stays as a dead entry because
-  the palette is positional - never place it): konbini corners get a water dispenser / plant (`generate_konbinis.py`) and the Izakaya
+  the palette is positional - never place it): a 7-Eleven's bottom corners get shopping baskets and a magazine rack (`generate_konbinis.py`) and the Izakaya
   seats are `izakaya-stool_0_0` (drawn by `extract_street.py`; the stools are furniture - the drinking game's
   `triggerCells` are the table cells and the bar still sells). `node tools/play.js lint` (tools/world-model.js) enforces it per room, and `play.js check` across ALL
   rooms and reports an ERROR `rubbish-bin` for any placed tile whose key or tile name is a bin / dumpster / trash

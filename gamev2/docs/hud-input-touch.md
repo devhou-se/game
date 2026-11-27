@@ -148,7 +148,7 @@ The game always renders 1280x960; everything below is about showing that on anyt
     lamp-halo cull (`DayNight.cullGlows`) already measure the zoomed, cropped view (centre
     `scrollX + width / 2`, half-size `width / 2 / zoom`); tiles streamed in mid-walk get their camera
     the same frame, because the split below is re-applied to the whole display list on `prerender`.
-    A room whose `boundary` is narrower than that view (a konbini on a phone) is held centred in it:
+    A room whose `boundary` is narrower than that view (a house on a phone) is held centred in it:
     `GameScene.applyRoomBounds` narrows the camera bounds to the view around
     `roomManager.contentColumns()`, and runs again on scene event `'worldviewchange'` (zoom or view
     width changed). With the whole canvas in view the bounds are the room's, as always.
@@ -156,6 +156,9 @@ The game always renders 1280x960; everything below is about showing that on anyt
     (`roomManager.contentRows()`) is held in the part of it under the HUD bar (`GameScene.hudCover()`,
     world px) — centred there if it fits, else scrolling only from its back wall under the bar to its
     door (`RoomManager.heldRows`); `layoutHUD` re-applies the bounds when the bar's height changes.
+    A room taller than the view is not held and the camera follows the player through it; a 7-Eleven's
+    outline takes in its two back-wall rows for that reason (issue #221: held to its floor, the wall and
+    the top half of every cooler against it were off the top of a landscape phone).
     **Looking up at landmarks (issues #176 / #90) — `src/systems/LandmarkView.js` (`scene.landmarkView`).**
     The camera trails the player by the deadzone, so walking north leaves about five rows above them
     and the roof of an eight-row shrine hall, or most of a tower, is off the top of the screen. In

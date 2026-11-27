@@ -260,9 +260,9 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   need no declaration. Frozen water gets no entry.
 - **A shop fixture needs the cell under it** (issue #152): shelves and coolers are bumped from
   the cell below, the till from any side. `play.js lint` fails a store with `shop-no-front`
-  otherwise; `generate_konbinis.py` keeps a walkway row under every fixture row (and two free
-  rows above the counter row, or the back of the store is sealed off). A filler never boxes in bare
-  floor either (`shop-sealed-floor`, issue #182): the corner water dispenser stands on the back row.
+  otherwise; `generate_konbinis.py` stands what sells against the back wall or in shelf blocks with an
+  aisle below them, and its `check_store()` fails a plan with a fixture nobody can reach. Nothing boxes
+  in bare floor either (`shop-sealed-floor`, issue #182).
 - **GuttyKreum sheets are 2x, not 4x**: one 32px RPG Maker tile is one 64px cell (the ported houses are
   pixel-identical 2x crops). Only the Dotonbori arch / ferris wheel were extracted at 4x, as oversized
   landmarks. A building extracted at 4x gets a two-cell-wide door and pixels twice the size of its neighbours.
@@ -303,7 +303,7 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   under it, by creation order).
 - **No rubbish bins** (issue #19): `node tools/play.js lint` fails with `rubbish-bin` if ANY room places a bin / dumpster /
   trash-can sprite (it scans the whole config and every `tiled/*.tmj` on every run, whatever `--room` says). The interior pack's `office-bin` is retired (no PNG, no `spriteMetadata`; only its positional `tilePalette` slot remains) -
-  use `izakaya-stool_0_0` for a seat and a plant / `office-watercooler` for a corner filler.
+  use `izakaya-stool_0_0` for a seat and a plant, `office-watercooler` or a 7-Eleven's `konbini-baskets_0_0` for a corner filler.
 - **Traffic lights are one 1x3 sprite whose map key is the green frame** (`traffic-light_0_0`);
   `src/TrafficLights.js` swaps the texture at runtime, so never place the `-amber` / `-stop` / `-stop-blink`
   keys in a map. A signal needs its two upper cells inside the room: on a road hugging the top map edge put both

@@ -306,6 +306,27 @@ pipeline has placed someone there.
   `generate_sapporo.py` re-seals the konbini door, so run it after every Sapporo regeneration. (The
   discount store's door is wired by `generate_sapporo.py` itself and survives a regeneration; its
   interior is `generate_discount_stores.py Sapporo`.)
+- **Konbini interiors** (issue #221): a store is a Pokémon Mart's plan dressed as a 7-Eleven, a lit
+  floor in the void of a 20x15 room like a house's. The back wall is two rows (`konbini-wall`, with the
+  clock and the tobacco rack over the till) and the floor six: the clerk's counter nook in one back
+  corner (`konbini-counter-w` / `-e`, 2x3, the clerk drawn into the sprite - there is no NPC), then
+  along the wall the drinks coolers (`office-fridge`), the open chillers, the coffee machine, the water
+  dispenser, the copier and the cash machine; shelf blocks (`konbini-gondola-*`, 2x2) with an aisle on
+  every side; the ice-cream chest; the baskets and the magazine rack in the bottom corners; the mat
+  (`konbini-mat`, two cells, both of them the way out) at the bottom centre, the door landing you on the
+  cell above its left half. The plans are the text grids in `LAYOUTS` (`aisles` and `freezer` 12 cells
+  wide, `small` 10): one character a cell, a capital where a piece starts. `plan_of(store)` deals a
+  store its plan, whether it is mirrored (the till in the east corner) and what its shelf blocks stock
+  from its host and door cell, so a rebuild reproduces it; `check_store()` fails the run if a plan
+  leaves floor the door does not reach, a selling fixture with no free cell under one of its columns,
+  or anything else you can bump with no free side. To add a plan, add a grid to `LAYOUTS` (a new piece
+  also needs its letter in `AT_WALL` or `FURNITURE`, and a rule in `Interactions.js` if a bump on it
+  does something). The room's `boundary` is the floor, the mat and the two wall rows: the wall is solid,
+  and with it the outline is taller than a landscape phone's view, so the camera follows you instead of
+  being held to the floor with the wall off the top of the screen. The art is the `konbini-*` kit,
+  26 sprites drawn by `tools/generate_konbini_art.py [--preview out.png]` (procedural, needs Pillow, in
+  `check_generators.py`): run it before `generate_konbinis.py` when the kit changes. The Tanukikoji
+  shop floors and Don Takote keep the `office-*` furniture. Tests: `tools/tests/konbini.test.js`.
 - **Build order**: `generate_hokkaido.py`, `generate_sapporo_art.py`, `make_prefabs.py`, `generate_sapporo.py`,
   `generate_asahikawa.py`, `generate_konbinis.py Sapporo`, `generate_discount_stores.py Sapporo`,
   `generate_stations.py` (the towns fence and seal themselves - `b.finish()`; the station's way out is
