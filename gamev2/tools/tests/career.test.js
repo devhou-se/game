@@ -600,7 +600,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, realConfig, shop
         assert.deepStrictEqual(toasts.splice(0), ['the lift wants a pass. the reception desk hands them out']);
         assert.deepStrictEqual([g.state, rendered, shop.career, shop.saves], ['idle', 0, null, 0]);
         // the key still held against it is the same bump: no second toast
-        scene.time.now += 100; g.hold({ x: 0, y: -1 });
+        scene.time.now += 5000; g.hold({ x: 0, y: -1 });
         assert.strictEqual(g.check(5, 3), true);
         assert.deepStrictEqual(toasts, []);
         // the desk hires, and saves
@@ -631,13 +631,21 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, realConfig, shop
             scene.roomManager.isTransitioning = false; scene.dialogueManager.isVisible = () => false; shop.isVisible = () => false;
         }
         assert.deepStrictEqual(toasts, []);
-        // leaving with the direction still held against the lift does not open it again
+        // leaving with the direction still held against the lift does not open it again: the arrows pressed
+        // in the overlay were the shift's, and the bump that opened it waited, however long the shift took (#251)
+        const lift = { cell: '5,3', dx: 0, dy: -1 };
         g.state = 'ready'; g.clockEvent = null; g.finishEvent = null;
-        g.bump = { cell: '5,3', at: scene.time.now - 5000, dx: 0, dy: -1 };
+        g.bump = lift;
+        for (const arrow of [{ x: -1, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 1 }]) { scene.time.now += 5000; g.hold(arrow); }
+        assert.strictEqual(g.bump, lift);
         g.leave();
-        assert.strictEqual(g.bump.at, scene.time.now);
         g.hold({ x: 0, y: -1 });
         assert.strictEqual(g.check(5, 3), true);
         assert.deepStrictEqual([g.state, rendered], ['idle', 1]);
+        // let go once it is closed, the bump is over: the next one opens the lift again
+        g.hold({ x: 0, y: 0 });
+        assert.strictEqual(g.bump, null);
+        assert.strictEqual(g.check(5, 3), true);
+        assert.deepStrictEqual([g.state, rendered], ['ready', 2]);
     });
 };

@@ -31,7 +31,7 @@
  *
  * The desk and the lift are rules in the Interactions table (group 'career').
  * One answer per bump: a key held against the desk is the same bump until it
- * is let go, by the rule the offering box uses (ShrineVisit.fresh / .carried).
+ * is let go, by the rule the offering box uses (ShrineVisit.fresh / .held).
  *
  * To take it out: delete this file and its line in index.html, the two 'career'
  * rules in Interactions.js (give the lift its `flavour` line back), the lines in
@@ -45,7 +45,7 @@ class Career {
         this.scene = scene;
         this.state = 'idle';        // idle | ready | playing | result
         this.objs = [];
-        this.bump = null;           // the last bump { cell, at, dx, dy }: a held key bumps every frame
+        this.bump = null;           // the last bump { cell, dx, dy }, while its key is still down: a held key bumps every frame
         this.clockEvent = null;
         this.finishEvent = null;
         this.level = Career.LEVELS[0];
@@ -81,9 +81,14 @@ class Career {
         return this.scene.shop.money - before;
     }
 
-    /** Every frame, with the direction held right now: a bump whose key is still down is still that bump. */
+    /**
+     * Every frame, with the direction held right now: a bump whose key is still
+     * down is still that bump. While the overlay is up the arrows are the
+     * shift's, so the bump that opened it waits: closed with the lift's
+     * direction down it is still that bump, not a new one.
+     */
     hold(heading) {
-        if (this.bump) this.bump = ShrineVisit.carried(this.bump, this.scene.time.now, heading);
+        if (!this.isActive()) this.bump = ShrineVisit.held(this.bump, heading);
     }
 
     /** The player bumped a cell: sign on at the desk / take the lift up to a shift. True when there was something. */
@@ -93,9 +98,9 @@ class Career {
         if (scene.dialogueManager.isVisible() || (shop && shop.isVisible())) return false;
         const hit = scene.roomManager.interactionAt(gridX, gridY, 'career');
         if (!hit || !shop) return false;
-        const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell, scene.time.now);
+        const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell);
         const from = scene.player || {};
-        this.bump = { cell, at: scene.time.now, dx: Math.sign(gridX - from.gridX), dy: Math.sign(gridY - from.gridY) };
+        this.bump = { cell, dx: Math.sign(gridX - from.gridX), dy: Math.sign(gridY - from.gridY) };
         if (!fresh) return true;
         if (hit.kind === 'desk') {
             const out = Career.signOn(shop.career);
@@ -190,8 +195,6 @@ class Career {
         this.objs = [];
         this.row = null;
         this.read();    // the key that closed it is not a press in the world
-        // a direction still held against the lift is the bump that opened this, not a new one
-        if (this.bump) this.bump.at = this.scene.time.now;
     }
 
     handleInput() { this.act(this.read()); }

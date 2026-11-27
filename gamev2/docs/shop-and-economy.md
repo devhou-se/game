@@ -224,7 +224,8 @@ there, in every lobby, and a lobby built later has the job without an edit. One 
   desk. The building directory says who is hiring. All three are rules in `Interactions.RULES` (the
   desk and the lift in group `career`, kinds `desk` and `lift`; the directory is still `flavour`).
   One answer per bump: a key held against the desk is the same bump until it is let go
-  (`ShrineVisit.fresh` / `.carried`, the offering box's rule).
+  (`ShrineVisit.fresh` / `.held`, the offering box's rule). The lift's bump waits while the overlay is
+  open (`Career.hold`): left with the lift's direction still down, it is not opened again.
 - **A shift** is `Career.TICKETS` (5) tickets against a clock. A ticket is a commit line
   (`Career.TICKET_NAMES`, five different ones a shift) and a row of arrows (`Career.sequence`: never
   three the same running); press them in order with the arrows, WASD or the d-pad. A wrong press

@@ -13,7 +13,7 @@
  * `flavour` rules and need nothing from here.
  *
  * One answer per bump: a key held against the dais is the same bump until it is
- * let go, by the rule the offering box uses (ShrineVisit.fresh / .carried).
+ * let go, by the rule the offering box uses (ShrineVisit.fresh / .held).
  *
  * To take it out: delete this file and its line in index.html, the two 'palace'
  * rules in Interactions.js, the three lines in GameScene (constructor,
@@ -23,13 +23,13 @@
 class PalaceVisit {
     constructor(scene) {
         this.scene = scene;
-        this.bump = null;           // the last bump { cell, at, dx, dy }: a held key bumps every frame
+        this.bump = null;           // the last bump { cell, dx, dy }, while its key is still down: a held key bumps every frame
         this.asked = 0;             // audiences requested this session: the answers come round in turn
     }
 
     /** Every frame, with the direction held right now: a bump whose key is still down is still that bump. */
     hold(heading) {
-        if (this.bump) this.bump = ShrineVisit.carried(this.bump, this.scene.time.now, heading);
+        this.bump = ShrineVisit.held(this.bump, heading);
     }
 
     /** The player bumped a cell: ask for an audience / sign the book there. True when there was something. */
@@ -37,9 +37,9 @@ class PalaceVisit {
         const scene = this.scene, shop = scene.shop;
         const hit = scene.roomManager.interactionAt(gridX, gridY, 'palace');
         if (!hit || !shop) return false;
-        const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell, scene.time.now);
+        const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell);
         const from = scene.player || {};
-        this.bump = { cell, at: scene.time.now, dx: Math.sign(gridX - from.gridX), dy: Math.sign(gridY - from.gridY) };
+        this.bump = { cell, dx: Math.sign(gridX - from.gridX), dy: Math.sign(gridY - from.gridY) };
         if (!fresh) return true;
         if (hit.kind === 'audience') {
             shop.toast(PalaceVisit.audience(this.asked++));

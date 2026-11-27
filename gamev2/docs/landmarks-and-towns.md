@@ -699,9 +699,10 @@ building cell `(3, 4)`, the right half of its two-wide steps, in line with the b
   ¥100 draws the day's omikuji, great blessing to great curse. One a game day, kept in the shop's save blob,
   read back free until the date changes. No overlay, no key: a bump, so touch works as it stands. One visit
   per bump (`ShrineVisit.fresh`): a key held against the box or the stand pays once, until it is let go - also
-  across the menu or any overlay opened and closed with the key still down (`ShrineVisit.carried`, fed
-  `InputHandler.heading()` every frame: while the direction that bumped is held the bump's time moves with the
-  clock; let go for `HELD_MS` it is over, so a key pressed again inside the menu is a new bump).
+  across the menu or any overlay opened and closed with the key still down (`ShrineVisit.held`, fed
+  `InputHandler.heading()` every frame: while the direction that bumped is held it is still that bump; let go
+  or turned about it is over, so a key pressed again inside the menu is a new bump). The rule asks what is
+  held and never the clock: a frame of any length with the key down is the same bump (#251).
 - **Art**: `tools/generate_shrine_art.py` (needs Pillow; `--preview out.png`) draws every piece as shaded
   pixel art in the two looks (`shrine-in-<piece>-red|blue`, shared pieces `shrine-in-<piece>`); the temple
   packs are exteriors only, and `tools/extract_shrine.py` cuts the one interior piece they have, the garland.
@@ -796,7 +797,7 @@ either door: the west mats put you on 19,23, the east mats on 41,23, so the hall
   the swords or the guard's post for a line. Bump the visitors' book and you sign it: free, once a game day,
   kept as `guestbook: {date, n}` in the shop's save blob (see `shop-and-economy.md`); a second bump that day
   reads it back. No overlay, no key; one answer per bump by the offering box's rule (`ShrineVisit.fresh` /
-  `.carried`).
+  `.held`).
 - **Art**: `tools/generate_palace_art.py` (needs Pillow; `--preview out.png`) draws all 32 sprites
   (`palace-in-<piece>`) as shaded pixel art at the shrine kit's scale; every scatter is seeded, so a re-run
   is byte-identical. It and the generator are in `check_generators.py`.
@@ -862,7 +863,7 @@ be redone. `tools/generate_temple.py` is written for one hall; a second one is a
   fortune a game day across every shrine and the temple; only the wording is the temple's. The charm counter
   sells nothing (the catalogue has no charm and none was invented): it, the sanctum, the drum, the bowl bell,
   the candles and the tied fortunes say a line. No overlay, no key, nothing of its own in the save; one answer
-  per bump by the offering box's rule (`ShrineVisit.fresh` / `.carried`). A toast is one line, so every line is
+  per bump by the offering box's rule (`ShrineVisit.fresh` / `.held`). A toast is one line, so every line is
   96 characters or fewer.
 - **Art**: `tools/generate_temple_art.py` (needs Pillow; `--preview out.png`) draws all 29 sprites
   (`temple-in-<piece>`) as shaded pixel art at the shrine kit's scale; every scatter is seeded, so a re-run is

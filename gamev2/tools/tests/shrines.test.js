@@ -290,67 +290,68 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
     });
 
     test('one offering per bump: a key held against the box pays once, until it is let go (#220)', () => {
-        const S = visit(), fresh = S.fresh;
-        // the first bump, a bump of another cell, and a bump after the key was let go are new ones
-        assert.strictEqual(fresh(null, '10,7', 5000), true);
-        assert.strictEqual(fresh({ cell: '10,7', at: 5000 }, '11,7', 5016), true, 'the next cell of the box is another bump');
-        assert.strictEqual(fresh({ cell: '10,7', at: 5000 }, '10,7', 5000 + S.HELD_MS + 1), true, 'released and bumped again');
-        // a held key bumps every frame: never new, at 60 or at 10 frames a second
-        assert.strictEqual(fresh({ cell: '10,7', at: 5000 }, '10,7', 5016), false);
-        assert.strictEqual(fresh({ cell: '10,7', at: 5000 }, '10,7', 5100), false);
-        assert.ok(S.HELD_MS >= 150 && S.HELD_MS <= 400, 'longer than a slow frame, shorter than letting go and pressing again');
-        // the visit itself, as check() runs it: ten seconds of a held key at 60 fps is one offering, not seven
-        const spend = (frames, gapAt) => {
-            let bump = null, money = 100, now = 0;
+        const S = visit(), fresh = S.fresh, held = S.held;
+        const UP = { x: 0, y: -1 }, NONE = { x: 0, y: 0 };
+        // the first bump and a bump of another cell are new ones; a bump of the cell still held is not
+        assert.strictEqual(fresh(null, '10,7'), true);
+        assert.strictEqual(fresh({ cell: '10,7' }, '11,7'), true, 'the next cell of the box is another bump');
+        assert.strictEqual(fresh({ cell: '10,7' }, '10,7'), false);
+        // the visit itself, as check() and hold() run it: a bump on every frame the key is down (`down(i)`),
+        // then the bump kept or dropped by what is held. Ten seconds of a held key is one offering, not seven
+        const spend = (frames, down) => {
+            let bump = null, money = 100;
             for (let i = 0; i < frames; i++) {
-                now += gapAt && gapAt.includes(i) ? 400 : 1000 / 60;
-                const isNew = fresh(bump, '10,7', now);
-                bump = { cell: '10,7', at: now };
-                if (isNew) money = S.offer(money, 0).money;
+                if (down(i)) {
+                    const isNew = fresh(bump, '10,7');
+                    bump = { cell: '10,7', dx: 0, dy: -1 };
+                    if (isNew) money = S.offer(money, 0).money;
+                }
+                bump = held(bump, down(i) ? UP : NONE);
             }
             return 100 - money;
         };
-        assert.strictEqual(spend(600), S.OFFERING, 'held for ten seconds');
-        assert.strictEqual(spend(600, [200, 400]), 3 * S.OFFERING, 'let go and bumped again twice');
+        assert.strictEqual(spend(600, () => true), S.OFFERING, 'held for ten seconds');
+        assert.strictEqual(spend(600, (i) => i !== 200 && i !== 400), 3 * S.OFFERING, 'let go for a frame and bumped again, twice');
         // check() keeps the last bump whether or not it paid, and has no timer left to pay by
         const code = src('ShrineVisit.js');
-        assert.ok(code.includes("const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell, scene.time.now);"));
-        assert.ok(code.includes('this.bump = { cell, at: scene.time.now, dx: Math.sign(gridX - from.gridX), dy: Math.sign(gridY - from.gridY) };\n        if (!fresh) return true;'));
+        assert.ok(code.includes("const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell);"));
+        assert.ok(code.includes('this.bump = { cell, dx: Math.sign(gridX - from.gridX), dy: Math.sign(gridY - from.gridY) };\n        if (!fresh) return true;'));
         assert.ok(!/COOLDOWN/.test(code), 'the 1.5 s cooldown that paid a held key again is gone');
     });
 
     test('a menu opened and closed with the key still held is the same bump: no second offering (#220)', () => {
-        const S = visit(), fresh = S.fresh, carried = S.carried;
-        const UP = { x: 0, y: -1 }, NONE = { x: 0, y: 0 }, LEFT = { x: -1, y: 0 };
-        const bump = { cell: '10,7', at: 5000, dx: 0, dy: -1 };
-        // while the direction that bumped is down the bump's time moves with the clock; let go, or turned, it ages
-        assert.deepStrictEqual(plain(carried(bump, 5016, UP)), { cell: '10,7', at: 5016, dx: 0, dy: -1 });
-        assert.strictEqual(carried(bump, 5016, NONE), bump);
-        assert.strictEqual(carried(bump, 5016, LEFT), bump);
-        assert.strictEqual(carried(bump, 5016, { x: -1, y: -1 }), bump, 'up and left together is another way to be heading');
-        assert.strictEqual(carried(null, 5016, UP), null);
-        assert.strictEqual(carried(bump, 5016, null), bump);
-        assert.strictEqual(carried({ cell: '10,7', at: 5000, dx: 0, dy: 0 }, 5016, NONE).at, 5000, 'a bump with no direction is never carried');
-        assert.strictEqual(carried(bump, 5000 + S.HELD_MS + 1, UP), bump, 'a bump let go for that long is over: the key coming down again does not revive it');
+        const S = visit(), fresh = S.fresh, held = S.held;
+        const UP = { x: 0, y: -1 }, NONE = { x: 0, y: 0 }, LEFT = { x: -1, y: 0 }, DOWN = { x: 0, y: 1 };
+        const bump = { cell: '10,7', dx: 0, dy: -1 };
+        // while the direction that bumped is down it is that bump; let go, or turned about, it is over
+        assert.strictEqual(held(bump, UP), bump);
+        assert.strictEqual(held(bump, { x: -1, y: -1 }), bump, 'Left pressed as well: Up was never let go');
+        assert.strictEqual(held(bump, NONE), null);
+        assert.strictEqual(held(bump, LEFT), null);
+        assert.strictEqual(held(bump, DOWN), null);
+        assert.strictEqual(held(null, UP), null);
+        assert.strictEqual(held(bump, null), null);
+        assert.strictEqual(held({ cell: '10,7', dx: 0, dy: 0 }, NONE), null, 'a bump with no direction is held by nothing');
+        assert.strictEqual(held({ cell: '10,7', dx: NaN, dy: NaN }, UP), null);
+        const diagonal = { cell: '9,7', dx: -1, dy: -1 };
+        assert.deepStrictEqual([held(diagonal, { x: -1, y: -1 }), held(diagonal, UP), held(diagonal, LEFT)], [diagonal, null, null]);
         // the game's frames: bumps while the player has the input, none while the menu has it (frames
-        // `menu[0]`..`menu[1]`), and the key down for the frames of `held`
-        const spend = (frames, menu, held, useHold = true) => {
-            let last = null, money = 100, now = 0;
+        // `menu[0]`..`menu[1]`), and the key down for the frames of `down`
+        const spend = (frames, menu, down) => {
+            let last = null, money = 100;
             for (let i = 0; i < frames; i++) {
-                now += 1000 / 60;
-                const down = held(i), inMenu = i >= menu[0] && i < menu[1];
-                if (down && !inMenu) {
-                    const isNew = fresh(last, '10,7', now);
-                    last = { cell: '10,7', at: now, dx: 0, dy: -1 };
+                const inMenu = i >= menu[0] && i < menu[1];
+                if (down(i) && !inMenu) {
+                    const isNew = fresh(last, '10,7');
+                    last = { cell: '10,7', dx: 0, dy: -1 };
                     if (isNew) money = S.offer(money, 0).money;
                 }
-                if (useHold) last = carried(last, now, down ? UP : NONE);
+                last = held(last, down(i) ? UP : NONE);
             }
             return 100 - money;
         };
         const always = () => true;
         assert.strictEqual(spend(600, [120, 300], always), S.OFFERING, 'the menu open for three seconds, Up held throughout: one offering');
-        assert.strictEqual(spend(600, [120, 300], always, false), 2 * S.OFFERING, 'the bug: without the carry the box is paid again as the menu closes');
         assert.strictEqual(spend(600, [120, 300], (i) => i < 200 || i >= 280), 2 * S.OFFERING, 'let go inside the menu and pressed again: a new bump');
         assert.strictEqual(spend(600, [0, 0], (i) => i < 200 || i >= 230), 2 * S.OFFERING, 'let go and bumped again with no menu: as before');
         assert.strictEqual(spend(600, [0, 0], always), S.OFFERING);
@@ -362,7 +363,44 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         const scene = src('GameScene.js'), input = src('systems/InputHandler.js');
         assert.ok(scene.includes('this.inputHandler.handleInput();\n        // a key still held against the offering box is the same bump, menu or no menu\n        if (this.shrineVisit) this.shrineVisit.hold(this.inputHandler.heading());'));
         assert.ok(/heading\(\) \{[\s\S]{0,400}touchControls\.state/.test(input), 'the touch pad counts as a held key');
-        assert.ok(src('ShrineVisit.js').includes('if (this.bump) this.bump = ShrineVisit.carried(this.bump, this.scene.time.now, heading);'));
+        assert.ok(src('ShrineVisit.js').includes('this.bump = ShrineVisit.held(this.bump, heading);'));
+    });
+
+    test('a frame of any length with the key still held is the same bump: the clock is not asked (#251)', () => {
+        const S = visit();
+        const UP = { x: 0, y: -1 }, NONE = { x: 0, y: 0 };
+        // ShrineVisit as the game runs it: a scene whose clock jumps by whatever each frame took, the box at
+        // 10,7 above the player. One frame is GameScene.update: the bump (check) and then hold()
+        const run = (frames) => {
+            const toasts = [];
+            const shop = { money: 100, omikuji: null, save() {}, toast: (line) => toasts.push(line) };
+            const scene = { shop, time: { now: 1000 }, player: { gridX: 10, gridY: 8 }, updateHUD() {},
+                roomManager: { interactionAt: (x, y, group) => (group === 'shrine' && x === 10 && y === 7 ? { kind: 'offering', group } : null) } };
+            ctx.__scene = scene;
+            const v = game('new ShrineVisit(__scene)');
+            for (const [ms, down, bumps = down] of frames) {
+                scene.time.now += ms;
+                if (bumps) assert.strictEqual(v.check(10, 7), true);
+                v.hold(down ? UP : NONE);
+            }
+            return { spent: 100 - shop.money, toasts: toasts.length };
+        };
+        const frame = (ms, n, down = true) => Array.from({ length: n }, () => [ms, down]);
+        assert.deepStrictEqual(run(frame(16, 600)), { spent: S.OFFERING, toasts: 1 });
+        // the bug: one stalled frame (400 ms, then 5 s) in a run of ordinary ones paid the box again
+        assert.deepStrictEqual(run([...frame(16, 60), [400, true], ...frame(16, 60), [5000, true], ...frame(16, 60)]), { spent: S.OFFERING, toasts: 1 });
+        assert.deepStrictEqual(run(frame(1000, 30)), { spent: S.OFFERING, toasts: 1 }, 'one frame a second');
+        // an overlay that has the input for a while (no bumps), entered and left on long frames, the key down throughout
+        assert.deepStrictEqual(run([...frame(16, 10), [900, true, false], [16, true, false], [900, true, false], ...frame(16, 10)]), { spent: S.OFFERING, toasts: 1 });
+        // letting go is still letting go, however short: one frame with the key up and the next bump pays
+        assert.deepStrictEqual(run([...frame(16, 10), [16, false], ...frame(16, 10)]), { spent: 2 * S.OFFERING, toasts: 2 });
+        assert.deepStrictEqual(run([...frame(16, 10), [400, false], ...frame(16, 10), [16, false], [400, true]]), { spent: 3 * S.OFFERING, toasts: 3 });
+        // none of the four rules that share it reads the clock for a bump, and the 250 ms is gone
+        assert.strictEqual(S.HELD_MS, undefined);
+        assert.strictEqual(S.carried, undefined);
+        for (const f of ['ShrineVisit.js', 'PalaceVisit.js', 'TempleVisit.js']) assert.ok(!/time\.now|HELD_MS|\bat:/.test(src(f)), f);
+        const job = src('Career.js');
+        assert.ok(!/HELD_MS|bump\.at|\bat: scene\.time/.test(job) && job.includes('if (!this.isActive()) this.bump = ShrineVisit.held(this.bump, heading);'));
     });
 
     test('a lantern-lit interior dims at night and lights its lanterns; every other interior ignores the hour (#212)', () => {

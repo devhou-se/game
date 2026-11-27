@@ -17,7 +17,7 @@
  * line: they are `flavour` rules and need nothing from here.
  *
  * One answer per bump: a key held against the burner is the same bump until it
- * is let go, by the rule the offering box uses (ShrineVisit.fresh / .carried).
+ * is let go, by the rule the offering box uses (ShrineVisit.fresh / .held).
  *
  * To take it out: delete this file and its line in index.html, the three
  * 'temple' rules in Interactions.js and the three lines in GameScene
@@ -26,13 +26,13 @@
 class TempleVisit {
     constructor(scene) {
         this.scene = scene;
-        this.bump = null;           // the last bump { cell, at, dx, dy }: a held key bumps every frame
+        this.bump = null;           // the last bump { cell, dx, dy }, while its key is still down: a held key bumps every frame
         this.wafted = 0;            // times the smoke was wafted this session: the lines come round in turn
     }
 
     /** Every frame, with the direction held right now: a bump whose key is still down is still that bump. */
     hold(heading) {
-        if (this.bump) this.bump = ShrineVisit.carried(this.bump, this.scene.time.now, heading);
+        this.bump = ShrineVisit.held(this.bump, heading);
     }
 
     /** The player bumped a cell: waft the smoke / make the offering / draw the fortune there. True when there was something. */
@@ -40,9 +40,9 @@ class TempleVisit {
         const scene = this.scene, shop = scene.shop;
         const hit = scene.roomManager.interactionAt(gridX, gridY, 'temple');
         if (!hit || !shop) return false;
-        const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell, scene.time.now);
+        const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell);
         const from = scene.player || {};
-        this.bump = { cell, at: scene.time.now, dx: Math.sign(gridX - from.gridX), dy: Math.sign(gridY - from.gridY) };
+        this.bump = { cell, dx: Math.sign(gridX - from.gridX), dy: Math.sign(gridY - from.gridY) };
         if (!fresh) return true;
         if (hit.kind === 'incense') {
             shop.toast(TempleVisit.waft(this.wafted++));

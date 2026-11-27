@@ -192,8 +192,8 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         for (const key of ['palace-in-mural_0_0', 'palace-in-pillar_0_0', 'palace-in-byobu_0_0', 'palace-in-table_0_0', 'palace-in-andon_0_0']) assert.strictEqual(hit(key), null, key);
         // one answer per bump, by the offering box's rule, and nothing new to press
         const code = src('PalaceVisit.js'), scene = src('GameScene.js');
-        assert.ok(code.includes("const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell, scene.time.now);"));
-        assert.ok(code.includes('if (!fresh) return true;') && code.includes('ShrineVisit.carried(this.bump, this.scene.time.now, heading)'));
+        assert.ok(code.includes("const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell);"));
+        assert.ok(code.includes('if (!fresh) return true;') && code.includes('this.bump = ShrineVisit.held(this.bump, heading);'));
         assert.ok(!/addKey|KeyCodes|pointerdown|input\.on/.test(code), 'no key or pointer of its own');
         assert.ok(scene.includes('this.palaceVisit = new PalaceVisit(this);') && scene.includes('this.palaceVisit.check(targetGridX, targetGridY);') &&
             scene.includes('if (this.palaceVisit) this.palaceVisit.hold(this.inputHandler.heading());'));

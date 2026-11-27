@@ -228,8 +228,8 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         for (const key of ['temple-in-kuden_0_0', 'temple-in-pillar_0_0', 'temple-in-chochin_0_0', 'temple-in-toro-hang_0_0', 'temple-in-bench_0_0', 'temple-in-haze_0_0']) assert.strictEqual(hit(key), null, key);
         // one answer per bump, by the offering box's rule, and nothing new to press
         const code = src('TempleVisit.js'), scene = src('GameScene.js');
-        assert.ok(code.includes("const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell, scene.time.now);"));
-        assert.ok(code.includes('if (!fresh) return true;') && code.includes('ShrineVisit.carried(this.bump, this.scene.time.now, heading)'));
+        assert.ok(code.includes("const cell = `${gridX},${gridY}`, fresh = ShrineVisit.fresh(this.bump, cell);"));
+        assert.ok(code.includes('if (!fresh) return true;') && code.includes('this.bump = ShrineVisit.held(this.bump, heading);'));
         assert.ok(!/addKey|KeyCodes|pointerdown|input\.on/.test(code), 'no key or pointer of its own');
         assert.ok(!/localStorage|shop\.(guestbook|stamps)/.test(code), 'nothing of its own is saved');
         assert.ok(scene.includes('this.templeVisit = new TempleVisit(this);') && scene.includes('this.templeVisit.check(targetGridX, targetGridY);') &&
