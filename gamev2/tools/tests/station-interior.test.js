@@ -198,4 +198,18 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, realConfig }) => {
             same(old, [], `${key}: old platform tiles`);
         });
     });
+
+    test('stepping back from the departures board takes you off the train, and the day trips are not indented', () => {
+        const stepBack = game('StationPicker.stepBack'), plain = (v) => (v ? Array.from(v) : v);
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        for (const [key, st] of Object.entries(cfg.stations)) {
+            for (const [x, y] of st.board) assert.deepStrictEqual(plain(stepBack(st.board, { x, y }, [0, -1])), [0, 1], key);
+            const [bx, by] = st.board[0];
+            assert.strictEqual(stepBack(st.board, { x: bx, y: by + 1 }, [0, -1]), null, `${key}: not on the train`);
+            assert.strictEqual(stepBack(st.board, { x: bx, y: by }, [0, 0]), null);
+        }
+        assert.strictEqual(stepBack(undefined, { x: 1, y: 1 }, [0, -1]), null);
+        const src = fs.readFileSync(path.join(GV2, 'src', 'StationPicker.js'), 'utf8');
+        assert.ok(/JD\(k\.esc\)\) return this\.cancel\(\)/.test(src) && !/INDENT/.test(src));
+    });
 };

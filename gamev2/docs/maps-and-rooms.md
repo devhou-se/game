@@ -50,7 +50,7 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
     explicit `?date=` like any other. `tools/play.js` and the studio open on the same day
     (`WorldModel.defaultDate()` calls `defaultGameDate`).
 - `objects`: Array of static obstacles with position (absolute or offset from center) that block movement
-- `transporters`: Array of teleport points with position, targetRoom, and target position
+- `transporters`: Array of teleport points with position, targetRoom, and target position. You arrive with your back to the door that leads back where you came from, when one is beside the arrival cell (`RoomManager.faceAway`): up the stairs from an underground arcade you face the street
 
 Position system supports both absolute grid coordinates (`gridX`/`gridY`) or center-relative offsets (`gridOffsetX`/`gridOffsetY`).
 

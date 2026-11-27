@@ -21,9 +21,9 @@ A town's station can serve places with none: `KanazawaStation` is the only stop 
 city (issue #68) - Shirakawa-go and Toyama are walked to from Kanazawa and are not on the board.
 
 `src/StationPicker.js` builds the board with the static `StationPicker.board(stations, fromKey, cameFrom)`:
-cities in `order`, each followed by its day trips indented and tagged `day trip`. The station you are at
+cities in `order`, each followed by its day trips, tagged `day trip` (not indented). The station you are at
 is not a destination; it is left out unless it has day trips, in which case it stays as their grey,
-unselectable `you are here` heading. A station with no `order` sorts last by label, and a `parent` that is
+unselectable `you are here` heading. ESC (or a tap outside the panel) closes the board and walks you back off the train (`StationPicker.cancel` / `.stepBack`). A station with no `order` sorts last by label, and a `parent` that is
 unknown, itself or itself a day trip is ignored, so bad data never hides a station. **Starting row**: the
 station you last arrived from by train (`TrainTravel.cameFrom(roomKey)`, in memory for the session - the
 way back is one press), else a day-trip station's parent city, else the first destination.

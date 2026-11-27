@@ -807,6 +807,7 @@ class RoomManager {
         ({ room: newRoom, x: targetX, y: targetY } = this.resolve(newRoom, targetX, targetY));
 
         // Hide current room NPCs and their labels
+        const cameFrom = this.currentRoom;
         const oldRoom = this.rooms[this.currentRoom];
         oldRoom.npcs.forEach(npc => {
             npc.sprite.setVisible(false);
@@ -822,6 +823,13 @@ class RoomManager {
         // Move player to target position
         this.scene.player.gridX = targetX;
         this.scene.player.gridY = targetY;
+        // come out of a door with your back to it: up the stairs from an
+        // underground arcade you face the street, not the stairwell
+        const away = RoomManager.faceAway(this.rooms[newRoom].transporters, cameFrom, targetX, targetY);
+        if (away) {
+            [this.scene.player.facingX, this.scene.player.facingY] = away;
+            this.scene.player.updateDirectionSprite(away[0], away[1]);
+        }
         const pixelX = targetX * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
         const pixelY = targetY * this.scene.GRID_SIZE + this.scene.GRID_SIZE / 2;
         this.scene.player.sprite.setPosition(pixelX, pixelY);
@@ -861,6 +869,17 @@ class RoomManager {
 
         // Re-grade day/night for the new room (interiors are never graded)
         if (this.scene.dayNight) this.scene.dayNight.onRoomChange();
+    }
+
+    /**
+     * The way to face on arriving at (x, y) from `fromRoom`: away from the door
+     * beside that cell that leads back there. null when no such door is beside it.
+     */
+    static faceAway(transporters, fromRoom, x, y) {
+        for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+            if ((transporters || []).some(t => t.targetRoom === fromRoom && t.gridX === x + dx && t.gridY === y + dy)) return [0 - dx, 0 - dy];
+        }
+        return null;
     }
 
     /** Swap rooms immediately, no camera fade (used under the train-ride curtain). */

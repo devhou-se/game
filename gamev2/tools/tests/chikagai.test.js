@@ -125,4 +125,22 @@ module.exports = ({ test, assert, fs, path, GV2, game }) => {
             }
         }
     });
+
+    test('you come out of a door with your back to it: up from an arcade you face the street', () => {
+        const faceAway = game('RoomManager.faceAway');
+        const plain = (v) => (v ? Array.from(v) : v);
+        for (const [key, room] of arcades) {
+            const host = cfg.rooms[room.chikagai.host];
+            // up to the street: the entrance is behind you (north), so you face south
+            for (const t of room.transporters) assert.deepStrictEqual(plain(faceAway(host.transporters, key, t.targetX, t.targetY)), [0, 1]);
+            // down into the arcade: away from the stairs you came down, whichever wall they are in
+            for (const t of host.transporters.filter((d) => d.targetRoom === key)) {
+                const south = room.transporters.some((u) => u.gridX === t.targetX && u.gridY === t.targetY + 1);
+                assert.deepStrictEqual(plain(faceAway(room.transporters, room.chikagai.host, t.targetX, t.targetY)), south ? [0, -1] : [0, 1]);
+            }
+        }
+        // no door back beside you: nothing to turn from
+        assert.strictEqual(faceAway(cfg.rooms.Sapporo.transporters, 'ChikagaiSapporo', 10, 20), null);
+        assert.strictEqual(faceAway(cfg.rooms.Sapporo.transporters, 'SapporoStation', 28, 16), null);
+    });
 };

@@ -6,7 +6,7 @@
  *
  * The board is laid out from data, not from the registry's key order (which
  * is alphabetical): `stations.<key>.order` places a station on the board and
- * `stations.<key>.parent` makes it a day trip, listed indented under its
+ * `stations.<key>.parent` makes it a day trip, listed under its
  * parent city (both written by tools/generate_stations.py). `StationPicker
  * .board()` turns the registry into rows and picks the row to start on.
  *
@@ -87,7 +87,7 @@ class StationPicker {
     /**
      * The first row to show so that row `selected` is on screen, moving the
      * window as little as possible from `top`. A day trip that would be the
-     * first row shown brings its city along (the row it is indented under,
+     * first row shown brings its city along (the row it is listed under,
      * however many sibling trips sit between), when both fit.
      */
     static scrollTop(top, selected, count, visible, rows) {
@@ -169,6 +169,15 @@ class StationPicker {
         this.hover = null;
     }
 
+    /** Close without travelling: the player steps back off the train they walked onto. */
+    cancel() {
+        this.hide();
+        const scene = this.scene, p = scene.player;
+        const st = (scene.config.stations || {})[scene.roomManager.currentRoom];
+        const back = !this.flights && StationPicker.stepBack(st && st.board, p.getGridPosition(), [p.facingX, p.facingY]);
+        if (back) p.startMovement(back[0], back[1]);
+    }
+
     confirm() {
         const row = this.rows[this.selected];
         if (!row || row.here) return;
@@ -178,7 +187,7 @@ class StationPicker {
 
     handleInput() {
         const JD = Phaser.Input.Keyboard.JustDown, k = this.keys;
-        if (JD(k.esc)) return this.hide();
+        if (JD(k.esc)) return this.cancel();
         if (JD(k.enter) || JD(k.space)) return this.confirm();
         if (JD(k.up) || JD(k.w)) this.select(StationPicker.step(this.rows, this.selected, -1));
         if (JD(k.down) || JD(k.s)) this.select(StationPicker.step(this.rows, this.selected, 1));
@@ -249,7 +258,6 @@ class StationPicker {
             const index = this.top + i, row = this.rows[index];
             const sel = index === this.selected;
             slot.label.setText(row.label);
-            slot.label.setX(this.listX + row.indent * StationPicker.INDENT);
             slot.label.setFill(row.here ? '#888888' : sel ? '#ffff00' : '#ffffff');
             slot.tag.setText(row.here ? 'you are here' : row.indent ? 'day trip' : this.flights ? 'flight' : '');
             slot.hit.setFillStyle(0xffffff, sel ? 0.08 : 0);
@@ -278,7 +286,7 @@ class StationPicker {
         const overlay = keep(scene.add.graphics(), 2000);
         overlay.fillStyle(0x000000, 0.75); overlay.fillRect(0, 0, W, H);
         overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, W, H), Phaser.Geom.Rectangle.Contains);
-        overlay.on('pointerdown', () => this.hide());
+        overlay.on('pointerdown', () => this.cancel());
 
         const panel = keep(scene.add.graphics(), 2001);
         panel.fillStyle(0x1a1a1a, 1); panel.fillRect(px, py, pw, ph);
@@ -355,11 +363,19 @@ class StationPicker {
     }
 }
 
+/**
+ * The step that takes a player off the train: back the way they faced when they
+ * walked onto one of the station's `board` cells. null when they are not on one.
+ */
+StationPicker.stepBack = (board, pos, facing) => {
+    const on = (board || []).some(([x, y]) => x === pos.x && y === pos.y);
+    const [fx, fy] = facing || [];
+    return on && (fx || fy) ? [0 - (fx || 0), 0 - (fy || 0)] : null;
+};
+
 /** Rows on screen at once; a longer board scrolls. */
 StationPicker.MAX_VISIBLE = 7;
 StationPicker.ROW_H = 46;
-/** How far a day trip is indented under its city. */
-StationPicker.INDENT = 36;
 /** Height of the "more above / below" arrow strips of a scrolling list. */
 StationPicker.MORE_H = 22;
 /** Overlay px a press may wander and still count as a tap. */
