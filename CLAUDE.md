@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) and to any other agent working with code in this
+repository. `AGENTS.md` carries the same rules for agents that read that file.
 
 ## Project Overview
 
@@ -33,17 +34,43 @@ python3 -m http.server 8000        # then open http://localhost:8000
 node tools/test_game.js            # unit tests, no browser
 python3 tools/test_blog_to_npc.py  # blog pipeline tests
 node tools/play.js check           # is the world still playable?
-python3 tools/check_generators.py  # do the generators still reproduce the committed world?
+python3 tools/check_generators.py  # do the generators still reproduce the committed world? (needs Pillow)
+python3 tools/sync_cities.py --check   # config cities and devhouse.world agree
 ```
+
+Anything a player can see also needs the browser regression, `gamev2/tools/browser/regress.js`
+(`gamev2/tools/browser/README.md`).
+
+## Working on issues (read this before starting)
+
+**`gamev2/docs/working-on-issues.md` is the full guide** to claiming an issue, not colliding with other agents,
+running, checking, verifying as a player, landing and fixing. The short version:
+
+- **Several agents push to `master` at once.** Work in your own git worktree
+  (`git worktree add --detach ../game-<you> origin/master`), and fetch and rebase immediately before every push.
+- **Claim an issue before you start**: add the `in-progress` label and comment who you are and which rooms or
+  files you will touch. Do not take issues labelled `needs-decision`, `needs-art`, `blocked-external` or
+  `parked`. When you finish or stop, comment what was done, how it was checked and what is left, and remove
+  `in-progress`. Do not file follow-up issues unless the owner asks.
+- **Map data is serial.** `gamev2/config.json` rooms and palette, `gamev2/tiled/`, town generators and
+  `devhouse.world` conflict when two changes touch them. Only one agent rebuilds a given town at a time; check
+  the other `in-progress` claims. Code-only and art-only work can run and land at any time.
+- **All checks pass before a push** (below, plus the browser regression for anything a player can see), and the
+  change is **verified by playing it** in a browser with real keys and touches, on desktop and a phone size,
+  with screenshots looked at.
+- **Watch the deploy** after each push and say so if it fails. Fix forward.
 
 ## Git Workflow
 
 When making commits:
 - Commit directly to master branch
-- Use force push when needed
+- Use force push when needed, but never over commits that are not yours: fetch first, and if master has moved, rebase
 - Do NOT include Claude attribution in commit messages
 - Do NOT create pull requests
-- Do NOT create feature branches
+- Do NOT create feature branches (a pushed `wip/<issue>-<slug>` branch is allowed only to park unfinished work
+  when you stop, and the issue must say so)
+- One change per commit; the message is `gamev2: <what changed, in plain words> (#N)`
+- Fetch and rebase onto `origin/master` immediately before pushing
 
 ## CI/CD Pipeline
 
