@@ -127,6 +127,9 @@ Tests passing is not the bar; the change working for a player is.
   that plays the change and reads the diff. Small fixes and art-only commits land on green checks.
 - Every push that touches `gamev2/**` deploys to game.devhou.se (workflow "Deploy GameV2 Canvas"). **Watch the
   run** (`gh run list -R devhou-se/game --workflow "Deploy GameV2 Canvas" -L 3`) and say so if it fails.
+- The "Checks" workflow (`.github/workflows/checks.yml`) runs the five checks of section 4 on every push to
+  master and every pull request that touches the game. It has no Pillow, so it lists the art tools as `skip`,
+  and it does not gate the deploy: it is a second signal, not a replacement for running the checks yourself.
 
 ## 8. When something is broken
 

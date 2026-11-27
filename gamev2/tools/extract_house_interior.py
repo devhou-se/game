@@ -2,7 +2,7 @@
 """extract_house_interior.py — the two pieces of a home that the asset packs
 do have (issue #208).
 
-../Assets holds no home-interior pack: the GuttyKreum packs are exteriors
+None of the GuttyKreum packs is a home interior: they are exteriors
 (Japanese City, Osaka, Dotonbori, Temples & Shrines, Train Station, Overgrown
 Backstreets, Urban Accessories) plus the Train Interiors car, and there is no
 LimeZu Modern_Interiors (Modern_Exteriors is 16px art in another style - see
@@ -25,7 +25,7 @@ import json
 import sys
 from PIL import Image
 
-GK = '../Assets/GuttyKreum/'
+GK = '../art-source/GuttyKreum/'
 # key: (sheet, crop box in native px, tileNames label, stand on the cell's bottom edge?)
 SPRITES = {
     'home-wood-floor_0_0': (GK + 'TrainInteriors_v1/RPGMakerVXAce/GK_TI_A5.png', (0, 448, 32, 480), 'home-wood-floor', False),

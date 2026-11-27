@@ -118,7 +118,7 @@ be found here.
 | `cast-and-characters.md` | Playing as the Cast (Character menu, name Easter egg), The Cast, interim sprites (`generate_cast.py`), blog authors (`AUTHOR_NPCS`) | adding or changing a person, their sprites, or author logins |
 | `title-intro-dialogue.md` | Title Screen, New-Player Intro / How to Play, boot flow, Dialogue portrait, Post caption, portrait art drop-in | the boot sequence, intro pages, the dialogue panel |
 | `voice.md` | Voiced Dialogue: `Voice.js`, mute, `post_voice.py` | audio, the mute setting, voice clips in the pipeline |
-| `blog-pipeline.md` | Where blog NPCs may be put, The blog rehearsal, Re-homing a placement | any `blog_to_npc.py` change or pipeline bug (also `trips-and-dates.md`, and the caption / author / voice parts in the three files above) |
+| `blog-pipeline.md` | How a post becomes an NPC, Where blog NPCs may be put, The blog rehearsal, Re-homing a placement | any `blog_to_npc.py` change or pipeline bug (also `trips-and-dates.md`, and the caption / author / voice parts in the three files above) |
 | `shop-and-economy.md` | Shop, Food and Drink: wallet, konbini counters, vending machines, Don Takote, items, icons, effects, fishing catches, selling, save blob, nomikai stake, Career (the job in the tower lobbies) | shops, items, money, fishing, the drinking game, the job |
 | `trains-and-stations.md` | Stations and the departures board, adding a station | rideable trains, `config.stations`, `generate_stations.py` |
 | `ambient-traffic.md` | Ambient Traffic: passing trains, boats, `waterways`, Streetcars (`tramways`) | decorative movers, canals / moats, track tiles, tram lines |

@@ -123,27 +123,23 @@ one), `crossing-h` / `crossing-v` (zebra crossing on `Over Floor`, origin on the
    layers can be empty — the `.tmj` supplies the map).
 3. Point a transporter at it from another room's `Meta` layer.
 
-## Porting more Godot .tscn maps
+## Seeding a room's map from config
 
-The pipeline that produced all four rooms is committed in `tools/`:
+A room that a generator (or a hand edit) wrote into `config.json` gets its map this way:
 
-1. `tools/render_rect.py RX0 RX1 RY0 RY1 out.png` — render a candidate rect
-   of the Godot overworld (`Scenes/tokyo/tokyo_outside.tscn`, or the scene
-   named by `PORT_SCENE`) to pick a district's bounds.
-2. `PORT_ROOM=<Name> PORT_RECT="RX0,RX1,RY0,RY1" python3 tools/doport.py` —
-   port that rect `.tscn → config.json` room (slices atlas tiles into
-   `assets/sprites/`, builds layers/collision/Y-sort data, merges into the
-   existing config preserving other rooms and hand-added transporters).
-3. `python3 tools/config_to_tiled.py <Name> [<Other> ...]` — seed `tiled/<name>.tmj`. It takes any
+1. `python3 tools/config_to_tiled.py <Name> [<Other> ...]` — seed `tiled/<name>.tmj`. It takes any
    number of rooms (name every room the generator or its post-passes touched) and exits 2, writing
    nothing, if a name is not a room in `config.json` (room keys are case-sensitive).
    Re-running it on an existing map keeps every sprite's tile id (new sprites are numbered after the
    highest one), so a map change shows up in the `.tmj` diff as just the cells that changed.
-4. `node tools/play.js lint <Name>` — QA gate (it reads the Tiled map); fix any ERRORs before shipping.
+2. `node tools/play.js lint <Name>` — QA gate (it reads the Tiled map); fix any ERRORs before shipping.
 
 Once seeded, Tiled is the editor — don't hand-edit the generated `.tmj` back
-into config. (The repo-root `tools/parse_godot_scene.py` scripts are an older
-stale v1 pipeline; prefer `doport.py`.)
+into config.
+
+The four Tokyo districts (Tokyo, Market, Palace, Park) were ported once from the old Godot project's
+overworld, with tools that were removed together with that project (#229, in git history). They have no
+generator: their maps are the source of truth.
 
 ## Rendering a map without the Tiled app
 
@@ -216,10 +212,6 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
 - **Track rows in ported rooms are sealed cell-by-cell** (`gk_blank` under
   the `train-track` Over Floor sprite). A road crossing the tracks needs its
   two cells unsealed — that's a level crossing, precedent exists.
-- **`Scenes/osaka/osaka_outside.tscn` is not Osaka** — it is an older copy of
-  the Tokyo overworld (garden, market, Tokyo Station placeholder). The Osaka
-  room is generated (`tools/generate_osaka.py`). `doport.py` / `render_rect.py`
-  accept `PORT_SCENE=<repo-relative .tscn>` should a real second scene appear.
 - **Pass `seal_tracks.py` the rooms you mean**: `seal_tracks.py Osaka`. (It leaves a track cell with a
   road under it open, which is what keeps Palace's level crossing - cells 0,3 and 1,3 - walkable.)
 - **Palace's track is row 3, not row 5** (issue #63): behind Tokyo Station's roof line, where the
@@ -296,7 +288,7 @@ installed. `tools/make_worldmap.py` falls back to it automatically.
   only its upturned tip there, a sliver above a head, so lint's `under-overhead` skips them
   (`OPEN_EAVES` in `tools/world-model.js`, #157) and still checks the three columns between.
   `tools/extract_shrine.py` re-cuts the blue roof from the atlas using the
-  rect in `Assets/Tilemap/GuttyKreum.tres` (tile `shrine-top`, 160x192 like the
+  rect it carries (`SPRITES` in the tool: `shrine-top`, 160x192 like the
   red one — it used to be 160x160, which cut the eaves flat) and refuses a
   section whose art touches its edge. `shrine-top_0_0` carries `depthBias: 1`
   so it wins the depth tie with the `temple-hallway` roofs either side of the

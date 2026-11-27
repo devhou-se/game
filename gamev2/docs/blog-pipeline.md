@@ -1,8 +1,47 @@
 # The blog-to-NPC pipeline
 
-Where `tools/blog_to_npc.py` may place an NPC, the end-to-end rehearsal, and re-homing a placement. Related: post captions (`title-intro-dialogue.md`), author logins (`cast-and-characters.md`), voice clips (`voice.md`), trip scoping and `utcOffset` (`trips-and-dates.md`).
+How a devhou.se blog post becomes an NPC, where `tools/blog_to_npc.py` may place one, the end-to-end rehearsal, and re-homing a placement. Related: post captions (`title-intro-dialogue.md`), author logins (`cast-and-characters.md`), voice clips (`voice.md`), trip scoping and `utcOffset` (`trips-and-dates.md`).
 
 A "see X" in the text names a section; if it is not in this file, the index in [`../CLAUDE.md`](../CLAUDE.md) says which file has it.
+
+## How a post becomes an NPC
+
+A new devhou.se blog post moves its author's NPC and gives them new dialogue:
+
+1. The `game-npc-pipeline` workflow in the **www-jp** repository (`devhou-se/www-jp`, not this one) checks
+   out this repository and runs, from `gamev2/`, `python3 tools/blog_to_npc.py --payload post.json` with the
+   post as `{"post_id", "title", "author", "date", "content"}` (`author` is the GitHub login), then commits
+   the result (`gamev2/config.json`, `gamev2/assets/photos`, `gamev2/assets/voice`). Pushing to master
+   deploys via `.github/workflows/firebase-hosting-gamev2.yml`. That workflow depends on these `gamev2/`
+   paths; it cannot be changed from here.
+2. **Text**: one Claude call (`MODEL` in the tool, structured JSON output) reads the post and returns the
+   spot the author should stand at (one of the landmarks found in the overworld rooms, or a district - see
+   the next section), 3-4 first-person dialogue lines, and whether the post reads as drunk. Lines are trimmed
+   to 160 characters on a sentence/word boundary, never mid-word.
+3. **Photo** (optional, best-effort): the post's first image becomes a 160x144 pixel-art print in
+   `assets/photos/<post_id>.png` (`tools/post_photos.py`).
+4. **Voice** (optional, best-effort): with `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_<NPC>` set, each
+   line is spoken by ElevenLabs into `assets/voice/<voice id>/<line>.mp3` (`tools/post_voice.py`, `voice.md`).
+   Unconfigured, the placement lands silent.
+5. **Placement**: the result is written to `config.json` as a dated NPC state (`present`, `gridX`/`gridY`,
+   `dialogue`, `photo`, `voice`, `posts`) in the chosen room, and `present: false` on that date in every
+   other room. Two posts by one author on the same day share the state: the later post's spot wins and its
+   lines follow the earlier post's (8 lines a day at most); `posts` records which lines came from which
+   post, so re-running a post replaces only its own lines.
+6. **Runtime**: `src/utils/NpcStates.js` resolves each NPC to the game date (today, or `?date=YYYY-MM-DD` /
+   the in-game date picker), so the author stands at the spot and says the lines from the post's date on.
+   The dialogue box (`src/DialogueManager.js`) shows the lines - Japanese included - with the photo framed
+   beside the speaker and the clip for each line played if there is one.
+
+Secrets (held by the www-jp workflow): `ANTHROPIC_API_KEY`; optionally `ELEVENLABS_API_KEY` and the
+`ELEVENLABS_VOICE_*` voice ids. Authors map to NPCs in `AUTHOR_NPCS` in the tool (`cast-and-characters.md`).
+
+Test without keys or network, from `gamev2/`:
+
+```bash
+python3 tools/blog_to_npc.py --payload post.json --mock --dry-run   # canned LLM reply, nothing written
+python3 tools/test_blog_to_npc.py                                   # unit checks
+```
 
 ## Placement, the rehearsal and re-homing
 

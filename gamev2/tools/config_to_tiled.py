@@ -101,7 +101,7 @@ def convert(cfg, room_name):
 
     # Terrain painting: the autotile pieces carry their role in the key
     # (gravel-autotile_edge-n, ..._center, ..._corner-nw — from the Godot
-    # bitmasks via doport). Invert the roles into one Tiled wang set per
+    # bitmasks, via the port). Invert the roles into one Tiled wang set per
     # family so the Terrain Brush places edges/corners automatically.
     ROLE_RE = re.compile(r'^(.+)_((?:center|single|edge|corner|inner|end)(?:-[a-z0-9]+)*)$')
     fams = {}

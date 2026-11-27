@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """extract_station.py — the station interior's floors, tracks and platform
 furniture, cut from the GuttyKreum Train Station pack
-(Assets/GuttyKreum/Train_Stationv8, the pack the trains come from — see
+(art-source/GuttyKreum/Train_Stationv8, the pack the trains come from — see
 extract_train.py) into gamev2 sprites (issue #206).
 
 The pack is 16px-native and a gamev2 cell is 64px, so everything is upscaled
@@ -33,7 +33,7 @@ import sys
 
 from PIL import Image
 
-SHEET = '../Assets/GuttyKreum/Train_Stationv8/Tilemaps/Non-RPGMaker/Maintilemap.png'
+SHEET = '../art-source/GuttyKreum/Train_Stationv8/Tilemaps/Non-RPGMaker/Maintilemap.png'
 K = 4       # 16px pack tile -> 64px cell
 
 # key: (crop box on the sheet, canvas size in cells or None for the crop as it is)

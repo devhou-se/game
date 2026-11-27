@@ -1,6 +1,6 @@
 /**
  * Config.js — load / model / save the game config (the multi-room, layered format
- * produced by doport.py). Save = download a config.json the game loads verbatim.
+ * produced by the Godot port). Save = download a config.json the game loads verbatim.
  */
 class Config {
     constructor() {

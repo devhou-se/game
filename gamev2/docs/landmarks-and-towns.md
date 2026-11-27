@@ -44,8 +44,6 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
   platform-edge fence and the continuous border hedges keep the player off the ballast and out from behind
   the fences. `OsakaStation` is registered in `tools/generate_stations.py`
   (`STATIONS` / `TOWN_DOORS`) and so in config `stations`; Osaka sits detached in `devhouse.world`.
-  The legacy `Scenes/osaka/osaka_outside.tscn` is an old copy of the Tokyo overworld, not Osaka — do not
-  port it (`tools/doport.py` / `render_rect.py` do take `PORT_SCENE=<path>` for a genuinely different scene).
 - **Adding a landmark**: put a cell-aligned PNG in `assets/sprites/` (register `spriteMetadata` with
   `anchorX = 32/width`, `anchorY = 32/height`, plus `tileNames`), add a prefab spec to
   `tools/make_prefabs.py` (colliders = the base cells only), stamp it from the room generator, and add it to
@@ -515,7 +513,7 @@ A machiya's doorway is the one cell of its footprint you can step onto (`sendai.
   in the order they were in. The same function keeps every kind of interior listed in `roomgen.OWNED_DOORS`
   (a tower's lobby and a shrine's worship hall are the other two). A house the generator moved or removed stays sealed until `generate_houses.py`
   is run for the town, which also deletes the rooms no house claims any more.
-- **Art**: no pack in `../Assets` has a home interior (the GuttyKreum packs are exteriors and a train car;
+- **Art**: none of the GuttyKreum packs has a home interior (they are exteriors and a train car;
   there is no `Modern_Interiors`). `tools/extract_house_interior.py` takes what fits - floorboards from the
   Train Interiors car floor (`home-wood-floor`), a potted plant from the Japanese City pack (`home-plant`) -
   and `tools/generate_house_art.py` draws the other 34 `home-*` sprites in the `generate_hokkaido.py` style

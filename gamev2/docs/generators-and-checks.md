@@ -19,6 +19,11 @@ art tools are listed as `skip` without it, so use `/Library/Developer/CommandLin
 tools/check_generators.py` to cover them (ten seconds; `generate_ads` and `extract_city` also need a Japanese system font,
 see `generate_ads.find_font`, and are listed as `skip`, not checked, where none is readable — a sandboxed shell).
 
+The `extract_*.py` tools cut their sprites from the source sheets in `../art-source/GuttyKreum` (the
+repository's `art-source/`, beside `gamev2/`; its `README.md` lists the sheets and how to bring back another
+one from history). `check_generators.py` links that folder beside its scratch copy, so the tools find it there
+too. A sheet a tool reads is added to `art-source/` and to `SHEETS` in `tools/tests/repo-layout.test.js`.
+
 `tools/districts.py` is one of the generators checked: it writes config `districts` (the named areas of every
 town, `landmarks-and-towns.md` "Districts") from its own `DISTRICTS` list and each landmark's standing cell,
 so a map change that moves a landmark across a district's edge shows as `DRIFT districts.py`: re-run it.

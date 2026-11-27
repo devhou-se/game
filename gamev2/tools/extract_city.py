@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """extract_city.py — assemble the generic city buildings (issue #18) out of the
-GuttyKreum tile sheets in ../Assets/GuttyKreum into gamev2 sprites.
+GuttyKreum tile sheets in ../art-source/GuttyKreum into gamev2 sprites.
 
   highrise-yellow_0_0     4x8   ochre office block      (Osaka pack, GK_Osaka_C_2)
   highrise-blue_0_0       5x11  blue-grey office block  (Osaka pack, GK_Osaka_C_2)
@@ -42,7 +42,7 @@ import json, sys
 from PIL import Image, ImageDraw
 import generate_ads as ads
 
-GK = '../Assets/GuttyKreum/'
+GK = '../art-source/GuttyKreum/'
 SHEETS = {
     'osaka': GK + 'Osaka_V5/RPGMakerVXAce/GK_Osaka_C_2.png',
     'city':  GK + 'JapaneseCity_Complete_v7_1/RPGMakerVXAce/GK_JC_C_2.png',

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """extract_dotonbori.py — slice the Osaka landmarks out of the GuttyKreum
-Dotonbori City pack (Assets/GuttyKreum/DotonboriCity_v3) into gamev2 sprites.
+Dotonbori City pack (art-source/GuttyKreum/DotonboriCity_v3) into gamev2 sprites.
 
   dotonbori-arch_0_0   the Dotonbori street entrance arch (道頓堀 sign on two
                        posts) — 8x6 cells, you walk under it
@@ -23,7 +23,7 @@ Run from gamev2/ BEFORE make_prefabs.py / generate_osaka.py:
 import json
 from PIL import Image
 
-SHEET = '../Assets/GuttyKreum/DotonboriCity_v3/RPGMakerVXAce/GK_DB_F.png'
+SHEET = '../art-source/GuttyKreum/DotonboriCity_v3/RPGMakerVXAce/GK_DB_F.png'
 # key -> (tile name, crop rect on the sheet in native px; w and h multiples of 16)
 CROPS = {
     'dotonbori-arch_0_0':  ('dotonbori-arch',  (0, 384, 128, 480)),

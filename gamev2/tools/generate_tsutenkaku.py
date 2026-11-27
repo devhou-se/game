@@ -106,7 +106,7 @@ big = im.resize((W * 2, H * 2), Image.NEAREST)
 big.save(f'assets/sprites/{KEY}.png')
 
 # register so the game loads it: multi-cell sprites anchor on the centre of
-# their top-left cell (same rule as doport / the train sprites)
+# their top-left cell (same rule as the Godot port / the train sprites)
 cfg = json.load(open('config.json'))
 cfg['spriteMetadata'][KEY] = {'frameCount': 1,
                               'anchorX': round(32 / big.width, 4),

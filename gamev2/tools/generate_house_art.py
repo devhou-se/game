@@ -2,7 +2,7 @@
 """generate_house_art.py — draw the furniture of a Japanese home (issue #208)
 and of a tower's lobby (issue #216, the `lobby-*` sprites at the end).
 
-No asset pack in ../Assets has a home interior (the GuttyKreum packs are all
+None of the GuttyKreum packs has a home interior (they are all
 exteriors plus a train car; there is no Modern_Interiors), so everything the
 house interiors of tools/generate_houses.py stand on, apart from the two
 sprites tools/extract_house_interior.py does find, is drawn here the way

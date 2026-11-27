@@ -1,0 +1,60 @@
+name: Checks
+
+# The game's no-browser checks (gamev2/CLAUDE.md, "Checks to run before finishing"). A signal only: it does
+# not gate the deploy, which goes out from firebase-hosting-gamev2.yml on the same push.
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'gamev2/**'
+      - 'art-source/**'
+      - 'devhouse.world'
+      - '.github/workflows/checks.yml'
+  pull_request:
+    paths:
+      - 'gamev2/**'
+      - 'art-source/**'
+      - 'devhouse.world'
+      - '.github/workflows/checks.yml'
+  workflow_dispatch:
+
+jobs:
+  checks:
+    name: Game checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gamev2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Pillow is deliberately NOT installed. check_generators.py compares the art tools' PNGs byte for
+      # byte, and the bytes differ between Pillow versions, so a runner's Pillow would report drift that is
+      # not there. Without it the art tools are listed as `skip` (exit 0) and the room generators and the
+      # Tiled maps are still checked. Run the art check locally with the Pillow the sprites were built with.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Unit tests
+        run: node tools/test_game.js
+
+      - name: Blog pipeline tests
+        run: python3 tools/test_blog_to_npc.py
+
+      - name: The world is playable
+        run: node tools/play.js check
+
+      - name: Generators rebuild the committed world
+        run: python3 tools/check_generators.py
+
+      - name: Cities and devhouse.world agree
+        run: python3 tools/sync_cities.py --check

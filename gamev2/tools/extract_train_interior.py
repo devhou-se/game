@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """extract_train_interior.py — pull the car interiors out of the GuttyKreum
-Train Interiors pack (Assets/GuttyKreum/TrainInteriors_v1) into gamev2 sprites.
+Train Interiors pack (art-source/GuttyKreum/TrainInteriors_v1) into gamev2 sprites.
 
 The pack ships three ready-assembled car interiors as its preview images
 (transparent background). We tight-crop each into a sprite the ride cutscene
@@ -16,7 +16,7 @@ Run from gamev2/:  python3 tools/extract_train_interior.py
 """
 from PIL import Image
 
-PACK = '../Assets/GuttyKreum/TrainInteriors_v1'
+PACK = '../art-source/GuttyKreum/TrainInteriors_v1'
 CARS = {
     'train-interior-metro':   'preview1.png',
     'train-interior-wood':    'preview2.png',

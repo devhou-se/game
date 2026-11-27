@@ -57,7 +57,7 @@ GENERATORS += ['districts']
 # config_to_tiled.py, run over every room that has a committed tiled/*.tmj
 TILED = 'config_to_tiled'
 # Tools that draw sprites / prefabs (and register them in config.json). They
-# need Pillow; the extract_* ones read the Godot project's ../Assets, and
+# need Pillow; the extract_* ones read the source sheets in ../art-source, and
 # generate_cast the character creator's tables (src/CharacterCreator.js).
 ART_TOOLS = [
     'make_prefabs', 'generate_hokkaido', 'generate_sendai_art', 'generate_tsutenkaku',
@@ -194,12 +194,12 @@ def check(names, root='.'):
     committed = open(os.path.join(root, 'config.json')).read()
     failures = {}
     with tempfile.TemporaryDirectory(prefix='check_generators_') as top:
-        # the scratch project sits one level down so that ../Assets (the Godot
-        # art the extract_* tools cut sprites from) resolves beside it
+        # the scratch project sits one level down so that ../art-source (the
+        # sheets the extract_* tools cut sprites from) resolves beside it
         work = os.path.join(top, 'gamev2')
-        godot_art = os.path.abspath(os.path.join(root, '..', 'Assets'))
-        if os.path.isdir(godot_art):
-            os.symlink(godot_art, os.path.join(top, 'Assets'))
+        source_art = os.path.abspath(os.path.join(root, '..', 'art-source'))
+        if os.path.isdir(source_art):
+            os.symlink(source_art, os.path.join(top, 'art-source'))
         for rel in INPUTS:
             src, dst = os.path.join(root, rel), os.path.join(work, rel)
             if os.path.isdir(src):

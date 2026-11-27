@@ -2,7 +2,7 @@
 """generate_osaka.py — "Osaka", the second city: Dotonbori and Shinsekai.
 
 A generated room (roomgen + prefabs, the roomgen recipe), NOT a
-port: the legacy Godot scene Scenes/osaka/osaka_outside.tscn turned out to be
+port: the Osaka scene of the legacy Godot project turned out to be
 an older copy of the Tokyo overworld (same garden / market / park, even the
 Tokyo Station placeholder) with no Osaka content, so there was nothing to port.
 

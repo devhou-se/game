@@ -29,13 +29,14 @@ apartment blocks get a lobby from the same tool (`--lobbies`; sixteen in the eig
 | `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Asahikawa's ramen alley, Sendai, Kanazawa, Toyama's old street, Fukuoka |
 | `devhouse-tokyo` (the trips' house in Minato, six storeys; `door=3`) / `devhouse-osaka` (the one on Dotonbori, four; `door=1`) | 5x8 / 3x7 | Park (10,9) under Tokyo Tower / Osaka (9,10) beside Don Takote - each opens onto its floors (issue #69, see "The Devhouses of Tokyo and Osaka"; art `tools/generate_devhouse_art.py`) |
 
-- **Art** is assembled by `tools/extract_city.py` from the GuttyKreum RPG Maker tile kits in `../Assets/GuttyKreum`
+- **Art** is assembled by `tools/extract_city.py` from the GuttyKreum RPG Maker tile kits in `../art-source/GuttyKreum`
   (Osaka `GK_Osaka_C_2`, Dotonbori `GK_DB_B`, Japanese City `GK_JC_C_2`) - a kit holds a roof cap, one window
   floor, a ground floor, roof edges..., so the script repeats floors / middle columns to get the size wanted
   (change the arguments in `BUILDINGS` for a taller or wider block; `--preview out.png` writes a contact sheet).
   **Scale is 2x**: one 32px RPG Maker tile = one 64px cell, the scale of every ported building (doors are one
   cell wide). The Dotonbori arch / ferris wheel are deliberately 4x landmarks - do not copy that for buildings.
-  Do not mix in the LimeZu `Modern_Exteriors` pack (different, more saturated style).
+  Do not mix in the LimeZu `Modern_Exteriors` pack (different, more saturated style; it left the tree with the
+  Godot project and is in git history, see `art-source/README.md`).
 - **The discount store** carries no real branding, like the ad pool: its sign is drawn by `extract_city.py`
   with `tools/generate_ads.py`'s text helpers - ドン・タコーテ ("Don Takote"), yellow board, blue band, a red
   octopus. It needs a Japanese font from `generate_ads.find_font()` (macOS system fonts).
@@ -61,7 +62,7 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
 | `bus-stop`, `bicycle-blue`, `bicycle-orange`, `scooter-grey`, `scooter-red`, `traffic-cone` | 1x1 | solid |
 
 - **Traffic-light art is drawn, not extracted** (`traffic_light()` in `extract_street.py`): no GuttyKreum sheet has a
-  signal, and the only one in the repo (LimeZu `Modern_Exteriors`, `Tileset_2_MV`) is a western vertical head in 16px
+  signal, and the only one the project had (LimeZu `Modern_Exteriors`, `Tileset_2_MV`, now in git history) is a western vertical head in 16px
   art - at game scale its pixels are twice the size of everything around it. The drawn one uses the GuttyKreum prop
   palette on the same 2x grid. Four frames, four sprite keys: `traffic-light_0_0` (vehicles green / red man - the one
   maps place), `-amber`, `-stop` (vehicles red / green man), `-stop-blink` (green man dark).

@@ -44,7 +44,7 @@ Run from gamev2/ BEFORE make_prefabs.py:
 import json, sys
 from PIL import Image, ImageDraw
 
-GK = '../Assets/GuttyKreum/'
+GK = '../art-source/GuttyKreum/'
 SHEETS = {
     'road':  GK + 'TemplesandShrinesv2/RPGMakerVXAce/GK_TS_A5.png',
     'urban': GK + 'UrbanAccessoriesv2/Tilemap.png',

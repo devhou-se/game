@@ -1,6 +1,8 @@
-"""Godot-3 autotile bitmask helpers, shared by doport.py (semantic subtile
+"""Godot-3 autotile bitmask helpers, shared by the Godot port (semantic subtile
 names like gravel-autotile_edge-n) and config_to_tiled.py (Tiled wang/terrain
-sets so the Terrain Brush paints floors with automatic edges).
+sets so the Terrain Brush paints floors with automatic edges). The port and
+the Godot project are gone (#229): parse_bitmasks / role / subtile_roles are
+how the pieces got their names, role_to_wangid is what is still called.
 
 Bitmask bits (3x3): TL=1 T=2 TR=4 L=8 C=16 R=32 BL=64 B=128 BR=256.
 A set bit means "connects to same terrain on that side"; the role names the

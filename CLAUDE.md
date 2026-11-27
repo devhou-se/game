@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) and to any other agent working with code in this
-repository. `AGENTS.md` carries the same rules for agents that read that file.
+repository. `AGENTS.md` sends agents that read that file here.
 
 ## Project Overview
 
@@ -12,17 +12,19 @@ you can walk up to and talk to.
 **Read `gamev2/CLAUDE.md` before working on the game.** It is the real guide: architecture, the map and
 world tooling, the blog-to-NPC pipeline, fonts, phones, trips, and the checks to run.
 
-The repository root also holds the original **Godot 3.6** project (`project.godot`, `Scenes/`, `Scripts/`,
-`Assets/`, `game.sln`). It is legacy: it is no longer built or deployed, and nothing in `gamev2/` runs it.
-`gamev2/` still reads art from `Assets/` through its asset tools, so do not delete or reorganise that folder.
-Leave the rest of the Godot project alone unless you are asked to work on it.
+The original Godot 3.6 project that used to fill the repository root was removed in #229; it is in git
+history (`README.md` names a commit that has it).
 
 ## Where things are
 
 - `gamev2/` — the game: `index.html`, `src/` (JavaScript), `config.json` (rooms, NPCs, trips), `tiled/`
   (Tiled maps generated from the config), `assets/`, `tools/` (generators, checks, the blog pipeline),
   `studio/` and `editor/` (in-browser tools).
-- `devhouse.world` — the Tiled world file that places the rooms; `tools/sync_cities.py` keeps it in step.
+- `art-source/` — source art, not deployed: the GuttyKreum tile sheets that `gamev2/tools/extract_*.py` cut
+  sprites from (purchased packs: do not copy them into `gamev2/`, which is published) and the team's Pixaki
+  drawings. `art-source/README.md` says how to bring another sheet back from history.
+- `devhouse.world` — the Tiled world file that places the rooms; `gamev2/tools/sync_cities.py` keeps it in
+  step. `devhouse.tiled-project` opens `gamev2/tiled/` in Tiled.
 - `.claude/skills/` — project skills for playing the game from a terminal and for generating or adjusting rooms.
 - Blog posts come from the separate `devhou-se/www-jp` repository, whose workflows call the NPC pipeline here.
 
@@ -76,6 +78,7 @@ When making commits:
 
 - **Deploy GameV2 Canvas** (`.github/workflows/firebase-hosting-gamev2.yml`) deploys `gamev2/` to Firebase
   Hosting (project `devhouse-80936`, target `devhouse-game-canvas`) on every push to master that touches
-  `gamev2/**`, and can be run by hand. The run is green only if the live site serves the commit.
-- **Deploy Godot Game (retired)** (`firebase-hosting-merge.yml`) is manual-dispatch only and is kept in case
-  the old Godot build is ever needed.
+  `gamev2/**` (or `firebase.json`, or the workflow itself), and can be run by hand. The run is green only if the live site serves the commit.
+- **Checks** (`.github/workflows/checks.yml`) runs the five no-browser checks above on every push to master
+  and every pull request that touches the game, the source art or `devhouse.world`. It has no Pillow, so the
+  art tools are listed as `skip` there, and it does not gate the deploy.
