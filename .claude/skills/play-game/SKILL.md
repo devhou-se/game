@@ -73,6 +73,10 @@ $ 18,13 vending
 | `$` | anything that opens a shop (vending machine, konbini counter or shelf, izakaya bar) |
 | `~` | pond (fishing) |
 | `?` | wall clock or calendar (time travel) |
+| `^` | an airport's gate or departures board (flights) |
+| `%` | water cooler or water shelf (free water) |
+| `+` | what you use inside a shrine, temple or palace hall (offering box, fortunes, incense, the audience, the guestbook) |
+| `*` | anything else a bump answers: furniture that says a line (a bunk, a bath, a locked door, a goldfish bowl) |
 | `D` | izakaya drinking-game table |
 | `J` | the job: a tower lobby's reception desk and lifts |
 | letter | an NPC, by initial |

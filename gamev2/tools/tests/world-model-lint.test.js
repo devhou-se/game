@@ -110,4 +110,52 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith, require }) => 
             fs.rmSync(tmp, { recursive: true, force: true });
         }
     });
+
+    test('play.js map draws every interaction as one glyph, so the columns stay under the ruler (#236)', () => {
+        const { spawnSync } = require('child_process');
+        const os = require('os');
+        // a room for each group that had no glyph: flavour, flights, water, shrine, temple, palace
+        const ROOMS = {
+            DevhouseOsaka4F: ['* 9,5 goldfish'], DevhouseTokyo4F: ['* 6,4 bunk', '* 6,5 bunk'], HanedaAirport: [/^\^ \d+,\d+ flights$/],
+            KonbiniMarket1: [/^% \d+,\d+ water$/, /^\$ \d+,\d+ counter$/], ShrineTokyo1: [/^\+ \d+,\d+ offering$/, /^\+ \d+,\d+ omikuji$/],
+            TempleMarket1: [/^\+ \d+,\d+ incense$/], PalaceHallTokyo1: [/^\+ \d+,\d+ audience$/],
+        };
+        // the session is kept in the temp directory: a scratch one, so the player's own is left alone
+        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gamev2-map-'));
+        let run;
+        try {
+            run = spawnSync(process.execPath, [path.join(GV2, 'tools', 'play.js')], { encoding: 'utf8', maxBuffer: 1 << 26,
+                input: Object.keys(ROOMS).map((r) => `warp ${r}\nmap\nlook 3\n`).join(''), env: { ...process.env, TMPDIR: tmp, TMP: tmp, TEMP: tmp } });
+        } finally {
+            fs.rmSync(tmp, { recursive: true, force: true });
+        }
+        assert.strictEqual(run.status, 0, run.stdout + run.stderr);
+        assert.ok(!run.stdout.includes('undefined'), run.stdout);
+        const maps = run.stdout.split(/^> warp /m).slice(1);
+        assert.deepStrictEqual(maps.map((m) => m.split('\n')[0]), Object.keys(ROOMS));
+        for (const text of maps) {
+            const lines = text.split('\n'), room = lines[0];
+            // the two rulers and every row of both maps: one character a cell
+            for (const drawn of text.split(/^> (?:map|look 3)$/m).slice(1)) {
+                const rows = drawn.split('\n').filter((l) => /^[ \d]{3} /.test(l));
+                assert.ok(rows.length > 4, `${room}: ${drawn}`);
+                for (const row of rows) assert.strictEqual(row.length, rows[0].length, `${room}: "${row}"`);
+            }
+            for (const note of ROOMS[room]) {
+                assert.ok(lines.some((l) => (note instanceof RegExp ? note.test(l) : l === note)), `${room} has no note ${note}:\n${text}`);
+            }
+        }
+        // a group with no glyph of its own still draws as one character, and the legend names every glyph
+        const play = fs.readFileSync(path.join(GV2, 'tools', 'play.js'), 'utf8');
+        const glyphs = new Function('return ' + /const GLYPH = (\{[^}]*\});/.exec(play)[1])();
+        const other = /const OTHER = '(.)';/.exec(play)[1];
+        assert.ok(play.includes('GLYPH[i.group] || OTHER'));
+        const legend = /'Legend: [^\n]*'/.exec(play)[0];
+        for (const g of new Set(Object.values(glyphs).concat(other))) {
+            assert.strictEqual(g.length, 1);
+            assert.ok(legend.includes(`  ${g} `), `the legend does not name ${g}`);
+        }
+        const groups = new Set(game('Interactions.RULES').map((r) => r.group).concat('drinking-game'));
+        for (const g of groups) assert.ok(glyphs[g], `no glyph for the ${g} group`);
+    });
 };
