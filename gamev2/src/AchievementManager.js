@@ -158,9 +158,27 @@ class AchievementManager {
         return [Stamps.progress(this.scene.config, shop ? shop.stamps : {})];
     }
 
+    /**
+     * Career achievements (issue #226), from the shop's `career` (null until hired):
+     *   First Paycheck     — merge a ticket on a shift
+     *   Principal Engineer — climb every step of Career.LEVELS
+     */
+    careerProgress() {
+        const shop = this.scene.shop;
+        if (!shop || typeof Career === 'undefined') return [];
+        const merged = shop.career ? shop.career.merged : 0;
+        const step = Career.LEVELS.indexOf(Career.levelOf(merged)), top = Career.LEVELS.length - 1;
+        return [
+            { name: 'First Paycheck', desc: 'Merge a ticket at work',
+              value: Math.min(merged, 1), total: 1, complete: merged >= 1 },
+            { name: 'Principal Engineer', desc: 'Reach the top of the ladder',
+              value: step, total: top, complete: step >= top },
+        ];
+    }
+
     /** Every achievement the shop's save feeds, in the order the overlay lists them. */
     itemProgress() {
-        return this.consumptionProgress().concat(this.fishingProgress(), this.stampProgress());
+        return this.consumptionProgress().concat(this.fishingProgress(), this.stampProgress(), this.careerProgress());
     }
 
     /** Record a tile the player has stepped on. */

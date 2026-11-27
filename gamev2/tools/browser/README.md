@@ -2,7 +2,7 @@
 
 `regress.js` drives the real game in a headless Chrome: boot as a returning and a first-time player, walking and
 walls, a district seam (stitched and `?stitch=0`), a konbini in and out with its shop, NPC dialogue, the menu, Map
-and Time Travel, a train ride, a trip day and a lead-in day, a landscape and a portrait phone, night, and scenery
+and Time Travel, a shift at the job in a tower lobby, a train ride, a trip day and a lead-in day, a landscape and a portrait phone, night, and scenery
 fading over the player. It prints `ok` / `FAIL <name> <evidence>` per check and ends `N/N checks passed`
 (exit 1 on any failure; any console or page error is a failure). About 25 seconds.
 

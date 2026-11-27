@@ -93,7 +93,7 @@ module.exports = ({ test, assert, fs, path, GV2, ctx, game, shopWith, showdownWi
         assert.deepStrictEqual(Array.from(shop.addCatch(CATCHES.find(c => c.id === 'unagi'))), ['Big Catch']);
         assert.deepStrictEqual(Array.from(shop.addCatch(CATCHES.find(c => c.id === 'golden-koi'))), [], 'only the first time');
         const progress = Array.from(shop.scene.achievementManager.itemProgress(), a => a.name);
-        assert.deepStrictEqual(progress, ['Taste Tester', 'Regular Customer', 'Big Catch', 'Konbini Pilgrim']);
+        assert.deepStrictEqual(progress, ['Taste Tester', 'Regular Customer', 'Big Catch', 'Konbini Pilgrim', 'First Paycheck', 'Principal Engineer']);
 
         shop.use('unagi');                               // from the Items screen: raw
         assert.strictEqual(shop.items.unagi, 1);

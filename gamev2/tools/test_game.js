@@ -23,7 +23,7 @@ const ctx = vm.createContext({
 });
 const load = (f) => vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 ['utils/ConfigCodec.js', 'systems/TiledAdapter.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Hints.js', 'TrainTravel.js', 'StationPicker.js', 'DatePicker.js', 'DialogueManager.js', 'systems/Viewport.js', 'systems/UIScale.js', 'systems/TouchControls.js',
-    'utils/JapaneseFont.js', 'ItemIcons.js', 'Energy.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js',
+    'utils/JapaneseFont.js', 'ItemIcons.js', 'Energy.js', 'Shop.js', 'Fishing.js', 'DrinkingGame.js', 'Career.js', 'AchievementManager.js', 'CharacterCreator.js', 'CharacterSelect.js', 'Intro.js', 'systems/NPCManager.js',
     'systems/RoomManager.js', 'systems/CollisionSystem.js', '../tools/world-model.js'].forEach(load);
 const game = (expr) => vm.runInContext(expr, ctx);
 

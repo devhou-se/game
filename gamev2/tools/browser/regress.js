@@ -80,6 +80,7 @@ function install() {
             if (s.achievementsVisible) o.push('achievements');
             if (s.fishing.isActive()) o.push('fishing');
             if (s.drinkingGame.isActive()) o.push('drinkingGame');
+            if (s.career.isActive()) o.push('career');
             return o;
         },
         // test hygiene between checks, not a thing under test: take down whatever a failed check left up
@@ -92,6 +93,8 @@ function install() {
             if (s.characterCreator.isVisible()) s.characterCreator.hide();
             if (s.intro.isVisible()) s.intro.hide();
             if (s.mapCloseCallback) s.mapCloseCallback();
+            if (s.achievementsCloseCallback) s.achievementsCloseCallback();
+            if (s.career.isActive()) s.career.leave();
         },
         // is the player drawn inside the browser window (canvas px -> CSS px)?
         onScreen: () => {
@@ -464,6 +467,105 @@ async function desktop(shared) {
             need(st.hud.room.includes(await page.evaluate(d => __t.roomName(d), st.pos.district)), { hud: st.hud.room, district: st.pos.district });
         });
 
+        // 5c --------------------------------------------------------------- a job in a tower: the desk, the lift, a shift
+        await cleanly('career-shift', async () => {
+            // the job is saved: start unhired whatever ran before, and leave the save as it was found
+            const kept = await page.evaluate(() => {
+                const { s } = __t, kept = { career: s.shop.career, money: s.shop.money };
+                s.shop.career = null; s.shop.save();
+                return kept;
+            });
+            try {
+                // the first tower that is hiring, and a free cell to bump its desk and a lift from
+                const job = await page.evaluate(() => {
+                    const { s, rm } = __t, lobby = Career.where(s.config)[0];
+                    if (!lobby) return null;
+                    const mat = s.config.rooms[lobby.room].transporters[0];
+                    __t.place(lobby.room, mat.gridX, mat.gridY - 1);
+                    const { w, h } = __t.size(), spot = {};
+                    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+                        if (!__t.open(x, y) || !__t.quiet(x, y, 0)) continue;
+                        for (const [dx, dy] of __t.DIRS) {
+                            const hit = rm.interactionAt(x + dx, y + dy, 'career');
+                            if (hit && !__t.free(x + dx, y + dy) && !spot[hit.kind]) spot[hit.kind] = { x, y, dx, dy };
+                        }
+                    }
+                    const level = Career.LEVELS[0];
+                    return { room: lobby.room, pos: __t.pos(), desk: spot.desk, lift: spot.lift, tickets: Career.TICKETS,
+                        clean: Career.TICKETS * level.pay + level.bonus, hired: Career.signOn(null).line, len: level.len };
+                });
+                need(job && job.pos.room === job.room && job.desk && job.lift, { noDeskOrLiftToBump: job });
+                const bump = async (at, expr) => {
+                    await page.evaluate(c => __t.place(__t.rm.currentRoom, c.x, c.y), at);
+                    await idle(page);
+                    const ok = await press(page, keyFor(at.dx, at.dy), expr);
+                    return { ok, ...(await page.evaluate('({ pos: __t.pos(), overlays: __t.overlays(), toast: __t.s.shop.toastText(), career: __t.s.shop.career, state: __t.s.career.state })')) };
+                };
+                // the lift before the desk: it wants the pass, and nothing opens
+                const shut = await bump(job.lift, '/pass/.test(__t.s.shop.toastText() || "")');
+                need(shut.ok && /desk/.test(shut.toast) && shut.overlays.length === 0 && shut.career === null, { liftWithoutThePass: shut });
+                // the desk hires
+                const hired = await bump(job.desk, `__t.s.shop.toastText() === ${JSON.stringify(job.hired)}`);
+                need(hired.ok && hired.overlays.length === 0 && hired.career && hired.career.merged === 0, { deskDidNotHire: hired, want: job.hired });
+                need(hired.pos.x === job.desk.x && hired.pos.y === job.desk.y, { walkedIntoTheDesk: hired.pos, desk: job.desk });
+                need(await page.evaluate('JSON.parse(localStorage.getItem("gamev2_shop")).career.merged === 0'), 'the pass was not saved');
+                // the lift with the pass: the ready screen, and the key still held is not a press in it
+                const up = await bump(job.lift, '__t.s.career.state === "ready"');
+                need(up.ok && up.overlays.join() === 'career' && up.pos.x === job.lift.x && up.pos.y === job.lift.y, { liftDidNotOpenTheShift: up });
+                const shown = () => page.evaluate(() => {
+                    const c = __t.s.career;
+                    return { state: c.state, at: c.at, merged: c.merged, seq: c.seq.slice(), status: c.statusText.text, hint: c.hintText.text,
+                        texts: c.objs.filter(o => o.type === 'Text' && o.visible).map(o => o.text), money: __t.s.shop.money,
+                        inPanel: c.objs.filter(o => o.type === 'Text' && o.visible).every(o => { const b = o.getBounds(), cam = __t.s.cameras.main; return b.x >= (cam.width - 760) / 2 && b.right <= (cam.width + 760) / 2; }) };
+                });
+                const ready = await shown();
+                need(ready.inPanel && ready.texts.includes('ENGINEERING') && /SPACE to start/.test(ready.hint), { readyScreen: ready });
+                await page.screenshot({ path: path.join(SHOTS, 'regress_career_ready.png') });
+                need(await press(page, ' ', '__t.s.career.state === "playing"'), 'SPACE did not start the shift');
+                const first = await shown();
+                need(first.at === 0 && first.merged === 0 && first.seq.length === job.len && first.status === '' && first.inPanel, { shiftStarted: first });
+                // type what the row asks for with real keys, arrows and WASD in turn; one wrong key in the middle
+                const VEC = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }, BACK = { up: 'down', down: 'up', left: 'right', right: 'left' };
+                const type = async (dir, expr) => press(page, keyFor(...VEC[dir]), expr);
+                let missed = false;
+                for (let n = 0; n < job.tickets; n++) {
+                    const row = (await shown()).seq;
+                    for (let i = 0; i < row.length; i++) {
+                        if (n === 2 && i === 1 && !missed) {
+                            missed = true;
+                            need(await type(BACK[row[i]], '__t.s.career.at === 0 && __t.s.career.statusText.text === "BUILD FAILED"'), { wrongKeyDidNotFailTheBuild: await shown() });
+                            const failed = await shown();
+                            need(failed.merged === n && failed.seq.join() === row.join() && failed.money === first.money, { afterAMiss: failed, row });
+                            await page.screenshot({ path: path.join(SHOTS, 'regress_career_miss.png') });
+                            i = -1;
+                            continue;
+                        }
+                        const last = i === row.length - 1;
+                        const done = last ? `__t.s.career.merged === ${n + 1} || __t.s.career.state === "result"` : `__t.s.career.at === ${i + 1}`;
+                        need(await type(row[i], done), { arrowNotTaken: row[i], at: i, ticket: n, now: await shown() });
+                    }
+                }
+                const end = await shown();
+                need(end.state === 'result' && end.inPanel && end.texts.includes('SHIFT COMPLETE') && end.texts.includes(`${job.tickets}/${job.tickets} merged`), { result: end });
+                need(end.money === first.money + job.clean, { paid: end.money - first.money, want: job.clean });
+                const saved = await page.evaluate('JSON.parse(localStorage.getItem("gamev2_shop"))');
+                need(saved.career && saved.career.merged === job.tickets && saved.career.shifts === 1 && saved.career.earned === job.clean && saved.money === end.money, { saved: saved.career, money: saved.money });
+                await page.screenshot({ path: path.join(SHOTS, 'regress_career_result.png') });
+                // ESC leaves: nobody moved, nothing is left up, and that ESC does not open the menu
+                need(await press(page, 'Escape', '!__t.s.career.isActive()'), 'ESC did not leave the result');
+                await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
+                const after = await page.evaluate('({ pos: __t.pos(), overlays: __t.overlays(), left: __t.s.career.objs.length })');
+                need(missed && after.overlays.length === 0 && after.left === 0 && after.pos.x === job.lift.x && after.pos.y === job.lift.y && after.pos.room === job.room, { afterLeaving: after, lift: job.lift });
+            } finally {
+                await page.evaluate((k) => {
+                    const { s } = __t;
+                    if (s.career.isActive()) s.career.leave();
+                    s.shop.career = k.career; s.shop.money = k.money; s.shop.save(); s.updateHUD();
+                    __t.home();
+                }, kept).catch(() => {});
+            }
+        });
+
         // 12 --------------------------------------------------------------- scenery that hides the player fades
         await cleanly('occlusion-fade', async () => {
             const spot = await page.evaluate(() => {
@@ -538,9 +640,27 @@ async function desktop(shared) {
             }
             need(await press(page, 'ArrowDown', `(${lit})(0)`), 'down from the last entry did not wrap to the first');
             need(await press(page, 'w', `(${lit})(${labels.length - 1})`), 'up from the first entry did not wrap to the last');
-            need(await press(page, 'Escape', '!__t.s.menuManager.isVisible()'), 'ESC did not close the menu');
+            // the Career row opens its card (issue #226), which says who is hiring to somebody with no job; ESC closes it
+            const career = labels.indexOf('Career');
+            need(career > 0, { noCareerRow: labels });
+            for (let i = labels.length - 2; i >= career; i--) need(await press(page, 'ArrowUp', `(${lit})(${i})`), { couldNotReach: labels[i] });
+            need(await press(page, 'Enter', '__t.s.achievementsVisible'), 'ENTER on Career did not open the card');
+            const card = await page.evaluate(() => {
+                const { s } = __t, texts = s.children.list.filter(o => o.depth >= 2000 && o.visible && o.type === 'Text');
+                const hiring = Array.from(new Set(Career.where(s.config).map(w => w.name)));
+                return { menu: s.menuManager.isVisible(), overlays: __t.overlays(), texts: texts.map(o => o.text), hiring, hired: !!s.shop.career,
+                    inWindow: texts.every(o => { const b = o.getBounds(); return b.x >= 0 && b.right <= s.cameras.main.width && b.y >= 0 && b.bottom <= s.cameras.main.height; }) };
+            });
+            need(!card.menu && card.overlays.join() === 'achievements' && card.texts.includes('CAREER') && card.inWindow, { careerCard: card });
+            need(!card.hired && card.hiring.length > 0 && card.hiring.every(n => card.texts.includes(n)), { cardDoesNotSayWhoIsHiring: card });
+            need(await press(page, 'Escape', '!__t.s.achievementsVisible'), 'ESC did not close the Career card');
+            await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
             const after = await page.evaluate('({ pos: __t.pos(), overlays: __t.overlays() })');
             need(after.overlays.length === 0 && after.pos.x === before.x && after.pos.y === before.y, { movedOrLeftOpen: after, before });
+            // ...and ESC still opens and closes the menu
+            need(await press(page, 'Escape', '__t.s.menuManager.isVisible()'), 'ESC did not open the menu again');
+            need(await press(page, 'Escape', '!__t.s.menuManager.isVisible()'), 'ESC did not close the menu');
+            need((await page.evaluate('__t.overlays()')).length === 0, 'the menu was left open');
         });
 
         /** Open the menu and activate the entry called `label`, with real keys. */
@@ -1042,6 +1162,74 @@ async function phones() {
             await page.waitForTimeout(150);   // B's key-up is sent 90ms after a quick tap
             await page.touchscreen.tap(b.x, b.y);
             need(await until(page, '!__t.s.menuManager.isVisible()', 1500), 'a second tap on B did not close the menu');
+
+            // a shift at work on the touch pad (issue #226): the d-pad bumps the lift and types, A starts, B clocks off and leaves
+            const job = await page.evaluate(() => {
+                const { s, rm } = __t, lobby = Career.where(s.config)[0];
+                if (!lobby) return null;
+                const mat = s.config.rooms[lobby.room].transporters[0];
+                __t.place(lobby.room, mat.gridX, mat.gridY - 1);
+                s.shop.career = Career.signOn(null).career;    // the staff pass
+                const { w, h } = __t.size();
+                for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+                    if (!__t.open(x, y) || !__t.quiet(x, y, 0)) continue;
+                    for (const [dx, dy] of __t.DIRS) {
+                        const hit = rm.interactionAt(x + dx, y + dy, 'career');
+                        if (hit && hit.kind === 'lift' && !__t.free(x + dx, y + dy)) return __t.place(lobby.room, x, y) && { x, y, dx, dy, money: s.shop.money, pay: Career.LEVELS[0].pay };
+                    }
+                }
+                return null;
+            });
+            need(job, 'no lift with a free cell in front of it in the first tower lobby');
+            await idle(page);
+            const NAME = { '1,0': 'right', '-1,0': 'left', '0,1': 'down', '0,-1': 'up' }, GLYPH = { right: '▶', left: '◀', down: '▼', up: '▲' };
+            const VEC = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+            const at = (dir) => { const a = st.arrows.find(q => q.label === GLYPH[dir]); return { x: Math.round(a.x), y: Math.round(a.y) }; };
+            const lifted = () => until(page, '!Object.values(__t.s.touchControls.state).some(Boolean)', 1500);
+            const work = () => page.evaluate('(c => ({ state: c.state, at: c.at, merged: c.merged, seq: c.seq.slice(), status: c.statusText ? c.statusText.text : null, hint: c.hintText ? c.hintText.text : null }))(__t.s.career)');
+            await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [at(NAME[`${job.dx},${job.dy}`])] });
+            const opened = await until(page, '__t.s.career.state === "ready"', 2000);
+            await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+            need(opened && await lifted(), { dpadBumpDidNotOpenTheShift: await work(), overlays: await page.evaluate('__t.overlays()') });
+            need(/^A to start {4}B to leave$/.test((await work()).hint), { readyHint: await work() });
+            const tapA = { x: Math.round((st.a[0] + st.a[2]) / 2), y: Math.round((st.a[1] + st.a[3]) / 2) };
+            await page.touchscreen.tap(tapA.x, tapA.y);
+            need(await until(page, '__t.s.career.state === "playing"', 1500), 'a tap on A did not start the shift');
+            const row = await work();
+            need(row.at === 0 && row.hint === 'd-pad to type    B to clock off', { playingHint: row });
+            // every arrow of the first ticket is a touch on the d-pad. The first one rolls off its arrow into the
+            // diagonal beside it before it lifts (away from the arrow wanted next): that is not a press, and no miss
+            const centre = { x: (st.pad[0] + st.pad[2]) / 2, y: (st.pad[1] + st.pad[3]) / 2 };
+            for (let i = 0; i < row.seq.length; i++) {
+                const dir = row.seq[i], last = i === row.seq.length - 1;
+                await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [at(dir)] });
+                const took = await until(page, last ? '__t.s.career.merged === 1' : `__t.s.career.at === ${i + 1}`, 1500);
+                need(took, { dpadArrowNotTyped: dir, at: i, now: await work() });
+                if (i === 0) {
+                    const side = ['up', 'down', 'left', 'right'].find(d => VEC[d][0] * VEC[dir][0] + VEC[d][1] * VEC[dir][1] === 0 && d !== row.seq[1]);
+                    const reach = Math.hypot(at(dir).x - centre.x, at(dir).y - centre.y) * Math.SQRT1_2;
+                    const corner = { x: Math.round(centre.x + (VEC[dir][0] + VEC[side][0]) * reach), y: Math.round(centre.y + (VEC[dir][1] + VEC[side][1]) * reach) };
+                    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [corner] });
+                    const both = await until(page, `__t.s.touchControls.state.${dir} && __t.s.touchControls.state.${side}`, 1500);
+                    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
+                    const rolled = await work();
+                    need(both && rolled.at === 1 && rolled.merged === 0 && rolled.status !== 'BUILD FAILED', { rollingOffTheArrowWasAPress: rolled, dir, side, both });
+                }
+                await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+                need(await lifted(), 'the d-pad stayed held after the touch ended');
+            }
+            await page.screenshot({ path: path.join(SHOTS, 'regress_phone_career.png') });
+            // B clocks off with the one ticket paid, and B again leaves; the menu does not open on it
+            await page.touchscreen.tap(b.x, b.y);
+            need(await until(page, '__t.s.career.state === "result"', 1500), 'a tap on B did not clock off');
+            const off = await page.evaluate('({ money: __t.s.shop.money, hint: __t.s.career.hintText.text, texts: __t.s.career.objs.filter(o => o.type === "Text" && o.visible).map(o => o.text) })');
+            need(off.money === job.money + job.pay && off.texts.includes('CLOCKED OFF') && off.hint === 'A for another shift    B to leave', { clockedOff: off, job });
+            await page.waitForTimeout(150);   // B's key-up is sent 90ms after a quick tap
+            await page.touchscreen.tap(b.x, b.y);
+            need(await until(page, '!__t.s.career.isActive()', 1500), 'a second tap on B did not leave the shift');
+            await page.waitForTimeout(150);
+            const out = await page.evaluate('({ pos: __t.pos(), overlays: __t.overlays(), controls: __t.s.touchControls.enabled })');
+            need(out.overlays.length === 0 && out.pos.x === job.x && out.pos.y === job.y && out.controls, { afterTheShift: out, job });
             need(errors.length === 0, { errors });
         });
     });

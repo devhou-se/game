@@ -34,6 +34,10 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
   SPACE/ENTER travels, ESC closes
 - **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
 - **Dialogue**: SPACE/ENTER advances, ESC closes
+- **A shift at the job** (`Career`, see "Career" in `shop-and-economy.md`): SPACE/ENTER starts a shift and, on the
+  result, offers another; arrows / WASD (the d-pad) type the row; ESC clocks off mid-shift and leaves from the
+  ready and result screens. Presses are judged as directions, so ↑ and W are the same press, and a d-pad
+  diagonal (two keys at once) counts when one of the two is the arrow wanted
 - **Keys held as an overlay opens do nothing in it** (issue #220): an overlay's `show()` calls
   `InputHandler.swallow(this.keys)` (or reads each of its keys with `JustDown`) before it becomes visible.
   Phaser keeps a key's `JustDown` raised until someone reads it and nobody reads a direction key while it

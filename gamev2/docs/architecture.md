@@ -28,7 +28,7 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `src/systems/Occlusion.js` - Scenery fades while someone stands hidden behind it, and their name label
   with it (see "Walking behind things" in `occlusion.md`)
 - `src/utils/Interactions.js` - The one table of what a bump opens (shops, ponds, clocks, a home's flavour lines, the drinking
-  table, a shrine's offering box and fortune stand, the palace's dais and visitors' book, a temple's incense burner, offering box and fortune drawers). `Shop`, `Fishing`, `DrinkingGame`, `ShrineVisit`, `PalaceVisit`, `TempleVisit`, `GameScene` and `tools/play.js` all read it; add a rule here
+  table, a shrine's offering box and fortune stand, the palace's dais and visitors' book, a temple's incense burner, offering box and fortune drawers, a tower lobby's reception desk and lifts). `Shop`, `Fishing`, `DrinkingGame`, `ShrineVisit`, `PalaceVisit`, `TempleVisit`, `Career`, `GameScene` and `tools/play.js` all read it; add a rule here
   rather than a tile-name check in a feature file
 - `src/ShrineVisit.js` - The offering box and the fortune stand inside a shrine's worship hall (see "Shrine worship halls"
   in `landmarks-and-towns.md`)
@@ -36,6 +36,8 @@ A "see X" in the text names a section; if it is not in this file, the index in [
   (see "The palace's audience hall" in `landmarks-and-towns.md`)
 - `src/TempleVisit.js` - Wafting the incense, the offering box and the fortune drawers inside a temple's main hall; the
   fortune is the shrines' omikuji, decided by `ShrineVisit` (see "The temple's main hall" in `landmarks-and-towns.md`)
+- `src/Career.js` - The job in the office towers: signing on at a tower lobby's reception desk, a shift of arrow-row
+  tickets up the lifts, the ladder of titles and what it pays (see "Career" in `shop-and-economy.md`)
 - `src/MenuManager.js` - In-game menu system (ESC key toggle)
 - `src/Energy.js` - The rules of the energy meter and the konbini stamp card (`Energy`, `Stamps`: pure functions, no Phaser);
   `Shop` holds the state and draws the meter (see "Energy and the stamp card" in `shop-and-economy.md`)

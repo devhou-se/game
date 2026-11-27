@@ -184,6 +184,8 @@ class Shop {
         this.omikuji = Shop.omikujiOf(raw.omikuji);
         // the palace's visitors' book, {date, n}, once it has been signed (PalaceVisit; absent in older blobs)
         this.guestbook = Shop.guestbookOf(raw.guestbook);
+        // the job in the towers, {merged, shifts, earned}, once signed on at a reception desk (Career; absent in older blobs)
+        this.career = Shop.careerOf(raw.career);
 
         // effects are saved as {id, until}; the numbers come back from the
         // catalogue, and an expiry can never be further off than the item lasts
@@ -206,6 +208,7 @@ class Shop {
                 energy: Math.round(this.energy * 100) / 100, stamps: this.stamps, hints: this.hints };
             if (this.omikuji) blob.omikuji = this.omikuji;   // only once a fortune has been drawn
             if (this.guestbook) blob.guestbook = this.guestbook;   // only once the palace's book has been signed
+            if (this.career) blob.career = this.career;   // only once hired: having one is the staff pass
             localStorage.setItem(this.STORE_KEY, JSON.stringify(blob));
         } catch (e) { /* private mode etc — play on without persistence */ }
     }
@@ -841,6 +844,17 @@ Shop.guestbookOf = (raw) => {
     return n >= 1 ? { date: raw.date, n } : null;
 };
 
+/**
+ * The saved career as {merged, shifts, earned} (lifetime tickets, shifts worked, yen paid), or null for
+ * anything without a usable `merged`. `merged` is the title: a damaged counter beside it reads as 0 and
+ * does not cost the player the ladder.
+ */
+Shop.careerOf = (raw) => {
+    const count = (v) => (typeof v === 'number' && isFinite(v) && v >= 0 ? Math.floor(v) : null);
+    if (!raw || typeof raw !== 'object' || count(raw.merged) == null) return null;
+    return { merged: count(raw.merged), shifts: count(raw.shifts) || 0, earned: count(raw.earned) || 0 };
+};
+
 /** How long a toast stays up before it fades — longer lines get longer. */
 Shop.toastMs = (msg) => Math.max(1800, String(msg).length * 45);
 
@@ -915,6 +929,7 @@ Shop.titleFor = (kind, roomConfig) =>
  *   speed, scramble, steady  -> InputHandler (via movementModifier)
  *   fishBite, fishWindow, fishLuck -> Fishing
  *   headStart, prizeBonus    -> DrinkingGame
+ *   focus                    -> Career (seconds on a shift's clock)
  */
 Shop.EFFECT_KINDS = {
     speed:      { describe: v => `speed +${Math.round((v - 1) * 100)}%` },
@@ -925,6 +940,7 @@ Shop.EFFECT_KINDS = {
     fishLuck:   { describe: v => `no old boots, rare fish ×${v}` },
     headStart:  { describe: v => `${v} gulps head start in the nomikai showdown`, additive: true },
     prizeBonus: { describe: v => `nomikai showdown winnings +${Math.round((v - 1) * 100)}%` },
+    focus:      { describe: v => `work clock +${v}s`, additive: true },
 };
 
 /**
@@ -948,7 +964,7 @@ Shop.DEFAULT_ITEMS = [
       desc: 'calm. speed +20% for 60s, and it settles a wobbly drink.', effect: { speed: 1.2, secs: 60 } },
     { id: 'canned-coffee', name: 'Canned Coffee', price: 220, where: 'vending', category: 'drink', energy: 20,
       icon: { shape: 'can-short', colors: { a: '#8a5630', b: '#5c371d', c: '#f1dfb0', d: '#8a5630' } },
-      desc: 'the long haul: speed +30% for 90s.', effect: { speed: 1.3, secs: 90 } },
+      desc: 'the long haul: speed +30% and 5s more on the work clock, for 90s.', effect: { speed: 1.3, secs: 90, focus: 5 } },
     { id: 'ramune',        name: 'Ramune',        price: 240, where: 'counter', category: 'drink', energy: 20,
       icon: { shape: 'ramune', colors: { a: '#9fe3f2', b: '#5fb5cc', c: '#2a7fd0', d: '#ffffff' } },
       desc: 'steady hands: fishing strike window +80% for 2 min.', effect: { fishWindow: 1.8, secs: 120 } },

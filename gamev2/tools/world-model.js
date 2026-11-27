@@ -204,7 +204,7 @@ class WorldModel {
         if (table) return table;
         const npc = this.room.npcs.find(n => n.gridX === x && n.gridY === y);
         if (npc) return { kind: 'npc', group: 'npc', npc };
-        return ['flights', 'shop', 'water', 'shrine', 'palace', 'temple', 'pond', 'clock', 'flavour'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
+        return ['flights', 'shop', 'water', 'shrine', 'palace', 'temple', 'pond', 'clock', 'career', 'flavour'].map(g => all.find(i => i.group === g && covers(i))).find(Boolean) || null;
     }
 
     describe(i) {
@@ -239,6 +239,8 @@ class WorldModel {
         if (i.kind === 'guestbook') return 'signs the visitors\' book (free, once a game day; kept in the save)';
         if (i.kind === 'pond') return 'casts a fishing line (needs the fishing rod); a catch goes into the bag to sell';
         if (i.kind === 'clock') return 'opens the time-travel date picker';
+        if (i.kind === 'desk') return 'the reception desk: signs you on for a job in the tower (free); afterwards reads your title back';
+        if (i.kind === 'lift' && i.group === 'career') return 'the lift up to work: a shift of tickets for pay (needs the staff pass from the reception desk)';
         if (i.group === 'flavour') return `says: "${i.say}"`;
         if (i.kind === 'drinking-game') return 'starts the izakaya drinking game (free, or pick a stake)';
     }
@@ -517,9 +519,10 @@ class WorldModel {
         // A home's furniture that says a line when bumped (issue #208) is held to the till's
         // rule - some side of it can be walked to - and a home (config `house`) to the store's:
         // no floor its furniture has sealed off. A tower's lobby (config `lobby`, issue #216)
-        // is held to both, under the same two names.
-        const flavour = !roomConfig.interior ? [] :
-            Interactions.all(room, roomConfig, { sizeOf: (key) => this.cells(key), venues: Shop.VENUES, group: 'flavour' });
+        // is held to both, under the same two names; its reception desk and lifts (group
+        // `career`, issue #226) are furniture you bump as well, and are held to the first.
+        const flavour = !roomConfig.interior ? [] : ['flavour', 'career'].flatMap(group =>
+            Interactions.all(room, roomConfig, { sizeOf: (key) => this.cells(key), venues: Shop.VENUES, group }));
         const homely = roomConfig.house || roomConfig.lobby;
         const fromDoor = new Set();
         if (fixtures.length || flavour.length || homely) {

@@ -74,6 +74,7 @@ $ 18,13 vending
 | `~` | pond (fishing) |
 | `?` | wall clock or calendar (time travel) |
 | `D` | izakaya drinking-game table |
+| `J` | the job: a tower lobby's reception desk and lifts |
 | letter | an NPC, by initial |
 
 Everything marked is also listed under the map with its exact cell.
@@ -171,8 +172,8 @@ A class file loads in Node as long as it only touches `Phaser` inside methods.
 - **No live screen.** `render` gives a still picture of a room's map; nothing
   shows NPCs, the HUD, overlays or animation. The studio (`/studio/`) shows
   the whole world with people on it, in a browser.
-- **No mini-games or shop.** Fishing, the drinking game, buying items and the
-  wallet are reported as "would open", not simulated.
+- **No mini-games or shop.** Fishing, the drinking game, a shift at the job,
+  buying items and the wallet are reported as "would open", not simulated.
 - **NPCs do not wander.** They stand on their placed cell; in the game they
   drift up to two cells from it.
 - **No diagonal steps**, and no overlays, menus, title screen or intro.

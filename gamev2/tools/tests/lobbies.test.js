@@ -1,6 +1,6 @@
 // Tower lobbies (issue #216): the second kind of building tools/generate_houses.py opens (`--lobbies`),
-// the door keeping in tools/roomgen.py, the directory / lift lines in src/utils/Interactions.js and the
-// lint that holds a lobby to a home's rules.
+// the door keeping in tools/roomgen.py, the directory's line and the job's desk and lifts (#226) in
+// src/utils/Interactions.js and the lint that holds a lobby to a home's rules.
 module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
     const { spawnSync } = require('child_process');
     const os = require('os');
@@ -192,7 +192,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         assert.strictEqual(new Set(names).size, names.length, names.join(', '));
     });
 
-    test('you can walk into every lobby by each of its doors, bump the directory and a lift, and leave (#216)', () => {
+    test('you can walk into every lobby by each of its doors, bump the directory, the desk and a lift, and leave (#216, #226)', () => {
         const { world, config } = worldWith(false);
         for (const [key, room] of Object.entries(config.rooms).filter(([, r]) => r.lobby)) {
             const host = room.lobby.host, mat = room.transporters[0], [fx, fy] = room.lobby.doors[0];
@@ -207,7 +207,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             }
             const lint = world.lint(key);
             assert.strictEqual(JSON.stringify([lint.errors, lint.warns]), '[{},{}]', key);
-            // every free cell can be walked to, and what can be bumped from them says the two lines
+            // every free cell can be walked to, and what can be bumped from them is the directory (a line) and the job (the desk, a lift)
             world.enter(key, mat.gridX, mat.gridY - 1);
             const floor = tiles(room, 'Floor'), solid = tiles(room, 'Colliders');
             const free = new Set(Object.keys(floor).filter((cell) => floor[cell] !== 'office-void-autotile_center' && !(cell in solid)));
@@ -219,37 +219,41 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
                     const cell = `${tx},${ty}`;
                     if (free.has(cell) && !seen.has(cell)) { seen.add(cell); todo.push([tx, ty]); }
                     const hit = world.interactionAt(tx, ty);
-                    if (hit) { assert.strictEqual(hit.group, 'flavour', `${key}: ${hit.kind}`); said[hit.kind] = hit.say; }
+                    if (hit) { assert.strictEqual(hit.group, hit.kind === 'directory' ? 'flavour' : 'career', `${key}: ${hit.kind}`); said[hit.kind] = hit.say; }
                 }
             }
             assert.strictEqual(seen.size, free.size, `${key}: floor nobody can reach`);
             assert.ok(free.size >= 50, `${key}: only ${free.size} cells to walk on`);
-            assert.deepStrictEqual(Object.keys(said).sort(), ['directory', 'lift'], key);
+            assert.deepStrictEqual(Object.keys(said).sort(), ['desk', 'directory', 'lift'], key);
+            assert.deepStrictEqual([typeof said.directory, said.desk, said.lift], ['string', undefined, undefined], key);
         }
     });
 
-    test('the directory and the lifts say one line each, and the lint holds a lobby to a home\'s rules (#216)', () => {
+    test('the directory says one line, the desk and the lifts are the job, and the lint holds a lobby to a home\'s rules (#216, #226)', () => {
         const { run } = worldWith(false);
         const Interactions = run('Interactions'), venues = run('Shop.VENUES');
         const lobby = { interior: true, shopEnabled: false, lobby: { host: 'Osaka' } };
-        const lines = ['lobby-directory_0_0', 'lobby-lift_0_0'].map((key) => {
+        const board = Interactions.match('lobby-directory_0_0', lobby, venues);
+        assert.ok(board && board.kind === 'directory' && board.group === 'flavour' && board.footprint);
+        assert.ok(typeof board.say === 'string' && board.say.length > 10 && board.say.length <= 60, `"${board.say}"`);
+        for (const [key, kind] of [['lobby-lift_0_0', 'lift'], ['lobby-desk_0_0', 'desk']]) {
             const hit = Interactions.match(key, lobby, venues);
-            assert.ok(hit && hit.group === 'flavour' && hit.footprint, key);
-            assert.ok(typeof hit.say === 'string' && hit.say.length > 10 && hit.say.length <= 60, `${key}: "${hit.say}"`);
-            return hit.say;
-        });
-        assert.notStrictEqual(lines[0], lines[1]);
-        for (const key of ['lobby-desk_0_0', 'lobby-sofa_0_0', 'lobby-sofa-back_0_0', 'lobby-table_0_0', 'lobby-plant_0_0', 'lobby-wall_0_0']) {
+            assert.ok(hit && hit.kind === kind && hit.group === 'career' && hit.footprint, key);
+            assert.ok(!('say' in hit), `${key}: the job answers for it, not a line`);
+        }
+        for (const key of ['lobby-sofa_0_0', 'lobby-sofa-back_0_0', 'lobby-table_0_0', 'lobby-plant_0_0', 'lobby-wall_0_0']) {
             assert.strictEqual(Interactions.match(key, lobby, venues), null, key);
         }
         const key = 'LobbyOsaka1';
         const walled = worldWith(false, (config) => {
             const room = config.rooms[key], mat = room.transporters[0];
-            // a wall across the lobby two rows above the mat: the directory and the lifts are behind it
+            // a wall across the lobby two rows above the mat: the directory, the lifts and the desk are behind it
             for (let x = 0; x < 20; x++) room.layers.find((l) => l.collision).tiles[`${x},${mat.gridY - 2}`] = 'gk_blank';
         }).world.lint(key);
         assert.ok((walled.errors['house-sealed-floor'] || []).length > 10, JSON.stringify(walled.errors));
-        assert.ok((walled.errors['flavour-no-front'] || []).some((e) => /^lobby-directory/.test(e)), JSON.stringify(walled.errors));
+        for (const sprite of [/^lobby-directory/, /^lobby-lift/, /^lobby-desk/]) {
+            assert.ok((walled.errors['flavour-no-front'] || []).some((e) => sprite.test(e)), `${sprite}: ${JSON.stringify(walled.errors)}`);
+        }
         assert.ok(!('shop-no-front' in walled.errors) && !('shop-sealed-floor' in walled.errors));
     });
 

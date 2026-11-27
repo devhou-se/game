@@ -33,6 +33,7 @@ class MenuManager {
             { text: 'Create Character', action: () => this.scene.characterCreator.show() },
             { text: 'Achievements', action: () => this.scene.showAchievements() },
             { text: 'Stamp Card', action: () => this.scene.showStampCard() },
+            { text: 'Career', action: () => this.scene.showCareer() },
             { text: 'Time Travel', action: () => this.scene.datePicker.show() },
             { text: 'Map', action: () => this.scene.showMap() },
             { text: 'How to Play', action: () => this.scene.intro.show() },

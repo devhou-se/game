@@ -607,11 +607,15 @@ A town's only lobby has no number. The way out of each is the cell below its (fi
   20x15, `interior: true`, `shopEnabled: false`): a stone-panelled back wall with two lifts and the
   building directory, eleven by six cells of chequered polished floor, the reception desk, a sofa either
   side of a glass table, a palm in each corner, and the entrance mat one cell below the middle of the
-  floor. You arrive just above the mat. Nobody works there yet. A bump on the directory or on a lift says
-  one line (two more `flavour` rules in `Interactions.js`); the lifts go nowhere.
+  floor. You arrive just above the mat. **The lobby is where the job is** (issue #226, `src/Career.js`,
+  see "Career" in `shop-and-economy.md`): a bump on the reception desk signs you on and afterwards reads
+  your title back, and a bump on a lift, once you hold the pass, opens a shift (without it, a line pointing
+  at the desk). Both are rules in `Interactions.js`, group `career`; the directory is still a `flavour`
+  line and says engineering is hiring. Every lobby has the job, and one built later has it without an edit.
 - **Art**: the eleven `lobby-*` sprites are drawn by `tools/generate_house_art.py`, in the same style.
 - **Lint**: a lobby is held to a home's two rules under the same names (`house-sealed-floor`,
-  `flavour-no-front`). Tests: `tools/tests/lobbies.test.js`.
+  `flavour-no-front`; the desk and the lifts are furniture you bump as well, and are held to the second).
+  Tests: `tools/tests/lobbies.test.js`, and `tools/tests/career.test.js` for the job.
 - **A town redesign** that keeps a tower keeps its lobby door (`roomgen.save_config`); one that removes a
   tower leaves a `Lobby` room behind until `generate_houses.py --lobbies <Town>` is run again, which drops it
   and renumbers the rest.

@@ -68,7 +68,7 @@ function newWorld(state, stitch = STITCH) {
     return new WorldModel(config, env, state, { stitch });
 }
 
-const GLYPH = { shop: '$', pond: '~', clock: '?', 'drinking-game': 'D' };
+const GLYPH = { shop: '$', pond: '~', clock: '?', 'drinking-game': 'D', career: 'J' };
 
 // x0..y1 are cells of the room being played (city cells inside a stitched city); the rulers and
 // notes are printed in the coordinates of `origin` ({ox, oy}: the district underfoot by default),
@@ -157,7 +157,7 @@ const COMMANDS = {
             'reach [room]...            JSON: the cells of each room that can be walked to, in its own coordinates',
             'reset                      back to the start (the trip home), on the day the game opens on',
             '',
-            'Legend: @ you  # blocked  . walkable  > transporter  T train  $ shop  ~ pond  ? clock  D drinking game  letters are NPCs',
+            'Legend: @ you  # blocked  . walkable  > transporter  T train  $ shop  ~ pond  ? clock  D drinking game  J job  letters are NPCs',
             'Coordinates are always a room\'s own (a district\'s inside the stitched Tokyo city; cells of a neighbour are just past its edge).',
             'State persists between runs. With no arguments, commands are read from stdin, one per line.',
             '--stitch=0 (anywhere on the command line) models what ?stitch=0 plays: the districts as separate rooms joined by seam teleports.',

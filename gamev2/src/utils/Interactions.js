@@ -41,9 +41,12 @@ const Interactions = {
         { kind: 'stove', group: 'flavour', pattern: /^home-stove/, footprint: true, say: 'the stove ticks. the kettle on it is nearly boiling' },
         { kind: 'television', group: 'flavour', pattern: /^home-tv/, footprint: true, say: 'the weather: snow in the north, and more tomorrow' },
         { kind: 'bookshelf', group: 'flavour', pattern: /^home-bookshelf/, footprint: true, say: 'paperbacks, a road atlas, and manga read to pieces' },
-        // a tower's lobby (issue #216, the same generator): the directory board and the lifts
-        { kind: 'directory', group: 'flavour', pattern: /^lobby-directory/, footprint: true, say: 'every floor has a name on it. none of them is expecting you' },
-        { kind: 'lift', group: 'flavour', pattern: /^lobby-lift/, footprint: true, say: 'the lift wants a pass. the lobby is as far as you go' },
+        // a tower's lobby (issue #216, the same generator): the directory board says a line...
+        { kind: 'directory', group: 'flavour', pattern: /^lobby-directory/, footprint: true, say: 'engineering is hiring, the directory says. ask at the desk' },
+        // ...and the reception desk and the lifts are the job (issue #226; src/Career.js): the desk
+        // signs you on, a lift takes you up to a shift
+        { kind: 'desk', group: 'career', pattern: /^lobby-desk/, footprint: true },
+        { kind: 'lift', group: 'career', pattern: /^lobby-lift/, footprint: true },
         // the palace's audience hall (issue #215): the armour, the swords, the guard's post
         { kind: 'armour', group: 'flavour', pattern: /^palace-in-armour/, footprint: true, say: 'the armour has not been worn in two hundred years. it still looks ready before you do' },
         { kind: 'swords', group: 'flavour', pattern: /^palace-in-swords/, footprint: true, say: 'three swords on a rack, peace-knotted. the sign you cannot read says do not touch' },

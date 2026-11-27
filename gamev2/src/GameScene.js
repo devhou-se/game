@@ -276,6 +276,7 @@ class GameScene extends Phaser.Scene {
             this.shrineVisit = new ShrineVisit(this);
             this.palaceVisit = new PalaceVisit(this);
             this.templeVisit = new TempleVisit(this);
+            this.career = new Career(this);
             this.drinkingGame = new DrinkingGame(this);
             this.characterSelect = new CharacterSelect(this);
             this.characterCreator = new CharacterCreator(this);
@@ -777,6 +778,70 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
+     * The job (issue #226; menu -> Career): the title, the tickets merged, the
+     * shifts worked and the money earned, what is left to the next promotion
+     * and the whole ladder (Career.LEVELS) with your step picked out. Before
+     * you are hired it says which towns have a tower that is hiring
+     * (Career.where, from config). The achievements overlay's kind of panel,
+     * closed the same way (ESC, a click or tap), through the same input branch.
+     */
+    showCareer() {
+        if (this.achievementsVisible) return;
+        const cam = this.cameras.main, W = cam.width, H = cam.height;
+        const shop = this.shop, career = shop.career;
+        const towns = Array.from(new Set(Career.where(this.config).map(w => w.name)));
+        const pw = 640, ph = career ? 250 + Career.LEVELS.length * 30 : 250 + towns.length * 32;
+        const px = (W - pw) / 2, py = (H - ph) / 2;
+        const objs = [];
+        const overlay = this.add.graphics();
+        overlay.fillStyle(0x000000, 0.85); overlay.fillRect(0, 0, W, H);
+        overlay.setScrollFactor(0); overlay.setDepth(2000);
+        overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, W, H), Phaser.Geom.Rectangle.Contains);
+        objs.push(overlay);
+        const g = this.add.graphics();
+        g.fillStyle(0x1a1a1a, 1); g.fillRect(px, py, pw, ph);
+        g.lineStyle(2, 0x666666, 1); g.strokeRect(px, py, pw, ph);
+        g.setScrollFactor(0); g.setDepth(2001); objs.push(g);
+        const text = (x, y, t, size, bold, color, origin) => {
+            const o = this.add.text(x, y, t, { fontSize: size, fill: color || '#ffffff',
+                fontFamily: bold ? 'PixelOperatorMonoBold' : 'PixelOperatorMono' });
+            o.setOrigin(origin != null ? origin : 0.5, 0.5); o.setResolution(1);
+            o.setScrollFactor(0); o.setDepth(2002); objs.push(o); return o;
+        };
+        const cx = W / 2;
+        text(cx, py + 34, 'CAREER', '32px', true);
+        if (career) {
+            const level = Career.levelOf(career.merged), next = Career.next(career.merged);
+            text(cx, py + 80, level.title, '28px', true, '#ffd700');
+            text(cx, py + 118, `${Career.count(career.merged)} · ${career.shifts} shift${career.shifts === 1 ? '' : 's'} · earned ${shop.fmt(career.earned)}`,
+                '20px', false, '#bbbbbb');
+            text(cx, py + 150, next ? `${next.left} more to ${next.title}` : 'nowhere left to go but meetings', '20px', false, '#66ff88');
+            // the ladder: the steps behind you white, yours gold, the ones ahead grey
+            Career.LEVELS.forEach((row, i) => {
+                const y = py + 198 + i * 30, mine = row === level;
+                const color = mine ? '#ffd700' : (row.at < level.at ? '#ffffff' : '#888888');
+                text(px + 70, y, row.title, '20px', mine, color, 0);
+                text(px + 320, y, `${row.len} arrows`, '20px', mine, color, 0);
+                text(px + 440, y, `${shop.fmt(row.pay)} a ticket`, '20px', mine, color, 0);
+            });
+        } else {
+            text(cx, py + 80, 'no job yet', '28px', true, '#888888');
+            text(cx, py + 124, 'the office towers are hiring:', '20px', false, '#bbbbbb');
+            towns.forEach((name, i) => JapaneseFont.fit(text(cx, py + 164 + i * 32, name, '24px', true)));
+            text(cx, py + 172 + towns.length * 32, 'ask at the reception desk', '20px', false, '#66ff88');
+        }
+        text(cx, py + ph - 26, Hints.text(this, '(click or ESC to close)'), '16px', false, '#888888');
+        const close = () => {
+            this.achievementsVisible = false;
+            this.achievementsCloseCallback = null;
+            objs.forEach(o => o.destroy());
+        };
+        this.achievementsVisible = true;
+        this.achievementsCloseCallback = close;
+        overlay.on('pointerdown', close);
+    }
+
+    /**
      * Nearest walkable cell to (gx, gy) in a room (spiral search): must have
      * floor, no collider, inside bounds, and not sit on a transporter (that
      * would immediately teleport the arriving player).
@@ -1101,6 +1166,10 @@ class GameScene extends Phaser.Scene {
         if (this.palaceVisit && !this.dialogueManager.isVisible() && !this.shop.isVisible()) {
             this.palaceVisit.check(targetGridX, targetGridY);
         }
+        // bumping a tower lobby's reception desk or a lift: signed on for the job, up to a shift (issue #226)
+        if (this.career && !this.dialogueManager.isVisible() && !this.shop.isVisible()) {
+            this.career.check(targetGridX, targetGridY);
+        }
         // bumping a temple's incense burner, offering box or fortune drawers: smoke, a coin, a fortune
         if (this.templeVisit && !this.dialogueManager.isVisible() && !this.shop.isVisible()) {
             this.templeVisit.check(targetGridX, targetGridY);
@@ -1187,6 +1256,7 @@ class GameScene extends Phaser.Scene {
         if (this.shrineVisit) this.shrineVisit.hold(this.inputHandler.heading());
         if (this.palaceVisit) this.palaceVisit.hold(this.inputHandler.heading());
         if (this.templeVisit) this.templeVisit.hold(this.inputHandler.heading());
+        if (this.career) this.career.hold(this.inputHandler.heading());
         // stop walk cycles on characters that didn't chain another step this
         // frame (player's own depth/anim are left to TrainTravel while riding)
         if (this.player && !(this.trainTravel && this.trainTravel.riding)) {

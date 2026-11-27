@@ -123,7 +123,9 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   `speed`, `scramble`, `steady` (read by `InputHandler` via `movementModifier()`),
   `fishBite`, `fishWindow`, `fishLuck` (read by `Fishing` via `shop.buff(key)`),
   `headStart`, `prizeBonus` (read by `DrinkingGame`, locked in when a round
-  starts; Bailey mirrors the head start, so his +10 gimmick survives), plus `secs`.
+  starts; Bailey mirrors the head start, so his +10 gimmick survives),
+  `focus` (seconds on the work clock, read by `Career`, locked in when a shift
+  starts; Canned Coffee carries 5), plus `secs`.
   To add a new kind: add it to `EFFECT_KINDS` with a `describe`, then read it with
   `shop.buff('key')` where it applies.
 - **Slots**: one `drink` effect and one `food` effect at a time (`Shop.SLOTS`, slot
@@ -169,7 +171,10 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   the shrine's offering (¥5) and fortune (¥100): neither is a purchase, so neither feeds the energy meter
   nor stamps the Stamp Card. And `guestbook: {date, n}` once the palace's visitors' book has been signed
   (`PalaceVisit`, see "The palace's audience hall" there; `Shop.guestbookOf`): the day it was last signed and
-  how many times in all. Both fields are absent until used, and a blob without them loads and saves unchanged.
+  how many times in all. And `career: {merged, shifts, earned}` once the reception desk of a tower lobby has
+  signed you on (`Career`, see "Career" below; `Shop.careerOf` keeps a whole one and drops anything else, so a
+  dented field is no job, never a crash): lifetime tickets merged, shifts worked and yen earned at the job.
+  All three fields are absent until used, and a blob without them loads and saves unchanged.
   `until` is an absolute epoch-ms expiry, so buffs survive reloads and room changes
   and lapse on time; on load it is clamped to the item's own duration and effects
   for unknown items are dropped. Older blobs load as-is and are rewritten as v4 on
@@ -203,6 +208,102 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 - `node tools/test_game.js` covers the pure parts of all of this without a browser:
   icons, sell values, catches into the bag, save migration, stake / pool maths and a
   whole stubbed round at every stake (win, lose, draw, walk-out, vs Bailey).
+
+### Career: a job in the office towers (issue #226)
+
+A way to earn that is not fishing: a software job in the tower lobbies (`src/Career.js`; the lobbies
+are in "Tower lobbies" in `landmarks-and-towns.md`). Code only: the desk and the lifts were already
+there, in every lobby, and a lobby built later has the job without an edit. One go at it is a
+**shift**, in the code, the copy and here - never a sprint, because SHIFT sprints.
+
+- **The loop**: bump the **reception desk** and you are signed on (a toast; the saved `career` is the
+  staff pass, and from then on the desk reads your title back: `Career.signOn`, `Career.status`). Bump
+  a **lift** with the pass and the overlay opens on its ready screen; without it a toast points at the
+  desk. The building directory says who is hiring. All three are rules in `Interactions.RULES` (the
+  desk and the lift in group `career`, kinds `desk` and `lift`; the directory is still `flavour`).
+  One answer per bump: a key held against the desk is the same bump until it is let go
+  (`ShrineVisit.fresh` / `.carried`, the offering box's rule).
+- **A shift** is `Career.TICKETS` (5) tickets against a clock. A ticket is a commit line
+  (`Career.TICKET_NAMES`, five different ones a shift) and a row of arrows (`Career.sequence`: never
+  three the same running); press them in order with the arrows, WASD or the d-pad. A wrong press
+  flashes BUILD FAILED and the row starts again, which costs time and nothing else. Every ticket
+  merged pays the level's `pay`; all five before the clock runs out is a **clean shift**, which ends
+  there and pays the level's `bonus` on top. ESC clocks off and keeps what was merged; so does the
+  clock running out. The money reaches the wallet once, when the shift ends (`Career.settle`, one
+  `shop.save()`), and nothing is saved while it runs. It costs nothing to start and nothing to fail:
+  no energy, no stake.
+- **The ladder** (`Career.LEVELS`; `Career.levelOf(merged)` is the row, `Career.next` the promotion
+  ahead). Lifetime tickets merged decide the title; the title is locked in as a shift starts, so a
+  promotion earned mid-shift shows on the result (`PROMOTED: ...`) and pays from the next one.
+
+  | Title | from tickets | row | clock | a ticket | clean bonus | a clean shift |
+  |---|---|---|---|---|---|---|
+  | Intern | 0 | 3 | 20 s | ¥10 | ¥30 | ¥80 |
+  | Junior Engineer | 10 | 4 | 20 s | ¥20 | ¥50 | ¥150 |
+  | Engineer | 25 | 5 | 25 s | ¥35 | ¥75 | ¥250 |
+  | Senior Engineer | 50 | 6 | 30 s | ¥55 | ¥100 | ¥375 |
+  | Staff Engineer | 90 | 7 | 35 s | ¥80 | ¥125 | ¥525 |
+  | Principal Engineer | 150 | 8 | 40 s | ¥110 | ¥200 | ¥750 |
+
+- **The clock** is one second an arrow, never under twenty: `Career.clockMs(len, focus)` =
+  max(`MIN_CLOCK_MS`, `TICKETS` x `len` x `ARROW_MS`) + `focus` seconds. Every level asks the same
+  pace; what gets harder is how much a miss throws away. **Canned Coffee** adds 5 s (the `focus`
+  effect kind, beside its speed; locked in as the shift starts, and the ready screen says so).
+- **Judging** is on directions, not keys, and is one pure function, `Career.press(seq, at, dirs,
+  held)`, where `dirs` went down this frame and `held` were down already:
+  1. no direction: nothing;
+  2. more than two, or two opposite ones: a miss (slapping every key is not an answer; a
+     perpendicular pair is what the d-pad sends for a touch on a diagonal);
+  3. the one wanted is among them: a step, and the last step of a row merges the ticket;
+  4. the arrow just typed is still held and every direction is across it: nothing (a thumb rolling
+     off the arrow it pressed into the next diagonal - the d-pad sends a keydown for it and it was
+     never a press);
+  5. anything else: a miss.
+
+  All the overlay's keys are read in one place, every frame it is up (`Career.read`, the only
+  `JustDown` in the file), so no press outlives its screen (#220): an arrow tapped on the ready
+  screen is not the first press of the shift, and the SPACE that starts one is not read again.
+- **Balance**, by the model the ladder was priced from: a clean shift is `5 x len` presses, at 3 a
+  second on a keyboard or 1.5 a second with a thumb on the d-pad, plus 2 s for the result and ready
+  screens.
+
+  | Title | a clean shift | keyboard | thumb | per minute, keyboard | per minute, thumb |
+  |---|---|---|---|---|---|
+  | Intern | ¥80 | 7 s | 12 s | about ¥700 | about ¥400 |
+  | Junior Engineer | ¥150 | 9 s | 15 s | about ¥1,050 | about ¥600 |
+  | Engineer | ¥250 | 10 s | 19 s | about ¥1,450 | about ¥800 |
+  | Senior Engineer | ¥375 | 12 s | 22 s | about ¥1,900 | about ¥1,000 |
+  | Staff Engineer | ¥525 | 14 s | 25 s | about ¥2,300 | about ¥1,250 |
+  | Principal Engineer | ¥750 | 15 s | 29 s | about ¥2,900 | about ¥1,550 |
+
+  The whole ladder is 150 tickets: 30 clean shifts, about 6 minutes on a keyboard and 11 with a
+  thumb, and ¥11,160 earned on the way up. For scale: a FRIENDLY nomikai round is about ¥300 a
+  minute, fishing about ¥2,500 a minute once you are at a pond with bait, and a BIG TAB win ¥2,000
+  for a 15 s round with ¥2,000 at risk. So an Intern earns more than the free round and less than
+  half of fishing, and only a Principal on a keyboard passes it. Pay per key press rises with
+  every step, with and without the bonus, so a promotion is never a pay cut; `career.test.js` holds
+  the table to that and pins its two ends and the ¥11,160.
+- **Where it shows**: the menu's **Career** row (`GameScene.showCareer`, the achievements
+  overlay's panel, as the Stamp Card is) - before you are hired, the towns with a tower that is
+  hiring (`Career.where(config)`: every room with a `lobby`, named by its town); after, the title,
+  tickets merged, shifts worked, yen earned, what is left to the next title and the whole ladder
+  with your step picked out. Two achievements (`AchievementManager.careerProgress()`, listed in the
+  Achievements overlay): **First Paycheck** (merge a ticket) and **Principal Engineer** (reach the
+  top of the ladder), toasted once from the shift that earns them.
+- **Phones**: the row is at most 8 arrows of `Career.CELL` (56) canvas px, 448 of the panel's 760;
+  every hint goes through `Hints.text` (`A to start    B to leave`, `d-pad to type    B to clock
+  off`).
+- **To add a job** (design, say): it is a second ladder and a second set of ticket names, not a
+  second game. Give `LEVELS` and `TICKET_NAMES` a key per job, keep the job's key in the saved
+  `career`, and let the desk's rule (or a second desk kind in `Interactions.RULES`) say which one
+  it signs you on for; `press`, `clockMs`, `settle` and the overlay do not care what the tickets
+  are called. To take the job out again, the list is at the top of `src/Career.js`.
+- Tests: `tools/tests/career.test.js` (the ladder and the balance model, the clock, the five
+  judging rules, the key reader, whole stubbed shifts - clean, a miss, clocked off, time up,
+  promoted - the save blob, the coffee, the card, the achievements, every lobby's desk and lifts in
+  the world model); the browser regression's `career-shift` (a whole shift with real keys in a
+  real lobby), `menu-entries` (the Career card) and `phone-landscape-touch` (a ticket typed on the
+  d-pad, a thumb rolled into a diagonal, B clocks off).
 
 ### Energy and the stamp card (issue #209)
 

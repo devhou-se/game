@@ -169,6 +169,7 @@ class InputHandler {
             this.scene.characterCreator && this.scene.characterCreator.isVisible() && this.scene.characterCreator,
             this.scene.fishing && this.scene.fishing.isActive() && this.scene.fishing,
             this.scene.drinkingGame && this.scene.drinkingGame.isActive() && this.scene.drinkingGame,
+            this.scene.career && this.scene.career.isActive() && this.scene.career,
             this.scene.datePicker && this.scene.datePicker.isVisible() && this.scene.datePicker,
         ];
         const overlay = overlays.find(Boolean);
