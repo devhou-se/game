@@ -35,14 +35,18 @@ jobs:
         with:
           node-version: 24
 
-      # Pillow is deliberately NOT installed. check_generators.py compares the art tools' PNGs byte for
-      # byte, and the bytes differ between Pillow versions, so a runner's Pillow would report drift that is
-      # not there. Without it the art tools are listed as `skip` (exit 0) and the room generators and the
-      # Tiled maps are still checked. Run the art check locally with the Pillow the sprites were built with.
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+
+      # Pillow is for check_generators.py's art tools: without it they are listed as `skip`. The check
+      # compares a PNG by its decoded pixels, so the runner's zlib does not matter, but what a tool draws
+      # can depend on the Pillow release: the file pins one that draws the committed sprites. The two tools
+      # that set Japanese text (generate_ads, extract_city) are still `skip` here: the runner has no
+      # Japanese system font.
+      - name: Install Pillow
+        run: pip install -r tools/requirements-art.txt
 
       - name: Unit tests
         run: node tools/test_game.js

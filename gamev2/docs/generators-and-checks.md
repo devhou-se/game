@@ -30,6 +30,8 @@ is a different file from one machine to the next, and a byte comparison passed o
 the art. `config.json`, the `.tmj` maps and the prefabs are still compared byte for byte. So any `python3`
 with a Pillow that draws the same pixels will do, not only the macOS one:
 
+- The Checks workflow installs the release pinned in `tools/requirements-art.txt` (`pip install -r tools/requirements-art.txt`);
+  move the pin only together with the art it changes.
 - **Pillow 11.2 to 13.0 rebuild the committed art** (11.2.1, 11.3.0, 12.0.0, 12.1.1, 12.3.0 and 13.0.0 were
   run on Linux on 27 Nov 2026, every art tool but the two that need a Japanese font).
 - **Pillow 11.1 and older do not**: they draw some curves and slanted lines a pixel off, and the check reports

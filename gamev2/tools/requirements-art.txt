@@ -1,0 +1,9 @@
+# The Pillow that tools/check_generators.py checks the art tools with (the
+# Checks workflow installs this file).
+# Pillow draws some shapes differently from one release to the next, so the pin
+# is a release that draws every committed sprite as it is: 11.3.0 to 12.1.1 do;
+# 11.0.0 moves 4 pixels of sfb-mural-a, and 12.2.0 and later fill the middle
+# column of every window of plane-interior (rounded_rectangle left it out of a
+# 13 px wide shape until then). Move the pin only together with the art it
+# changes.
+Pillow==11.3.0

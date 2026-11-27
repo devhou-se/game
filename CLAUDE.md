@@ -36,7 +36,7 @@ python3 -m http.server 8000        # then open http://localhost:8000
 node tools/test_game.js            # unit tests, no browser
 python3 tools/test_blog_to_npc.py  # blog pipeline tests
 node tools/play.js check           # is the world still playable?
-python3 tools/check_generators.py  # do the generators still reproduce the committed world? (needs Pillow)
+python3 tools/check_generators.py  # do the generators still reproduce the committed world? (art tools: Pillow, tools/requirements-art.txt)
 python3 tools/sync_cities.py --check   # config cities and devhouse.world agree
 ```
 
@@ -98,6 +98,7 @@ Under Workshop (your instructions say so, and the checkout is on a `workshop/<n>
   Hosting (project `devhouse-80936`, target `devhouse-game-canvas`) on every push to master that touches
   `gamev2/**` (or `firebase.json`, or the workflow itself), and can be run by hand. The run is green only if the live site serves the commit.
 - **Checks** (`.github/workflows/checks.yml`) runs the five no-browser checks above on every push to master
-  and every pull request that touches the game, the source art or `devhouse.world`. It has no Pillow, so the
-  art tools are listed as `skip` there, and it does not gate the deploy.
+  and every pull request that touches the game, the source art or `devhouse.world`. It installs the
+  Pillow pinned in `gamev2/tools/requirements-art.txt`, so the art tools are checked there too (the two that
+  need a Japanese system font are listed as `skip`), and it does not gate the deploy.
 - **Label New Issues** (`.github/workflows/label-new-issues.yml`) adds the `workshop/nominated` label to every newly opened issue.

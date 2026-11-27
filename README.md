@@ -25,7 +25,7 @@ From `gamev2/`, with Node and Python 3 (nothing to install):
 node tools/test_game.js                 # unit tests, no browser
 python3 tools/test_blog_to_npc.py       # the blog pipeline
 node tools/play.js check                # the world is still playable
-python3 tools/check_generators.py       # the generators still rebuild the committed world (art tools need Pillow)
+python3 tools/check_generators.py       # the generators still rebuild the committed world (art tools need Pillow: tools/requirements-art.txt)
 python3 tools/sync_cities.py --check    # config cities and devhouse.world agree
 ```
 

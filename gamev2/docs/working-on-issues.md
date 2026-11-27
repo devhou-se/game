@@ -112,8 +112,9 @@ python3 tools/sync_cities.py --check    # config cities and devhouse.world agree
 ```
 
 - Plain `python3` may have no Pillow; without it `check_generators.py` skips the art tools. Use an interpreter
-  that has it and make sure the run reports `0 skipped`. Off the Mac, a venv with Pillow 11.2 or newer rebuilds
-  the committed art (PNGs are compared by pixels; `generators-and-checks.md` lists the versions).
+  that has it and make sure the run reports `0 skipped`. Where there is none: a venv with
+  `pip install -r tools/requirements-art.txt` (PNGs are compared by their pixels, so the art check runs on any
+  machine; `generators-and-checks.md`).
 - After a map edit: `node tools/play.js lint <Room>` (0 errors) and look at
   `node tools/play.js render <Room> out.png`.
 - After touching the blog pipeline, a town's landmarks, the trips or the cast: `python3 tools/rehearse_blog.py`.
@@ -180,7 +181,8 @@ attribution lines.
 - Every push that touches `gamev2/**` deploys to game.devhou.se (workflow "Deploy GameV2 Canvas"). **Watch the
   run** (`gh run list -R devhou-se/game --workflow "Deploy GameV2 Canvas" -L 3`) and say so if it fails.
 - The "Checks" workflow (`.github/workflows/checks.yml`) runs the five checks of section 4 on every push to
-  master and every pull request that touches the game. It has no Pillow, so it lists the art tools as `skip`,
+  master and every pull request that touches the game. It installs the Pillow pinned in `tools/requirements-art.txt`, so it checks
+  the art tools too (all but the two that need a Japanese system font, which it lists as `skip`),
   and it does not gate the deploy: it is a second signal, not a replacement for running the checks yourself.
 
 ## 8. When something is broken
