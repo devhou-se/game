@@ -121,7 +121,8 @@ python3 tools/sync_cities.py --check    # config cities and devhouse.world agree
 - After changing what stands in a town: `python3 tools/check_distinct.py` must not report a city as worse;
   then `--update` the baseline in the same commit.
 - Anything a player can see: run the browser regression, `tools/browser/regress.js` (how:
-  `tools/browser/README.md`). It must print `20/20 checks passed` (the count grows; all must pass).
+  `tools/browser/README.md`). It must print `20/20 checks passed` (the count grows; all must pass). On a slow
+  machine that runs out of its 80 seconds, `REGRESS_TIME_SCALE=2` stretches the time limits and no assertion.
 - If Node cannot start in a sandbox, set `OPENSSL_CONF=/dev/null`.
 
 ## 5. Verifying as a player

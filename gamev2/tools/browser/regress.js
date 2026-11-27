@@ -3,7 +3,9 @@
 // The browser regression suite the merge queue runs before every landing. Exit 0 only when every
 // check passes; one `FAIL <name> <evidence>` line per failure; the last line is `N/N checks passed`.
 // Any console error or page error, on any page, is a failure (the `no-errors` check).
-// A run that has not finished after 80s (a stalled browser) fails what was in flight and exits 1.
+// A run that has not finished after 80s (a stalled browser) fails what was in flight and exits 1, and so
+// does a check that takes more than 25s. On a slow machine REGRESS_TIME_SCALE=<n> multiplies those two
+// limits (limits.js); it changes no assertion and no wait inside a check.
 //
 // Rules this file keeps (keep them when you add a check):
 //  - expectations come from the game's own data in the page (config, Trips, roomManager, Occlusion),
@@ -13,6 +15,18 @@
 //  - no fixed long waits: wait on game state;
 //  - a check that cannot find what it needs FAILS with what it looked for; it never passes empty.
 const path = require('path');
+const { limits } = require('./limits');
+
+// a stalled browser must not hang the queue: the whole run and each check have a limit (REGRESS_TIME_SCALE stretches both)
+let LIMITS;
+try { LIMITS = limits(process.env); } catch (e) {
+    console.log(`FAIL harness ${e.message}`);
+    console.log('0/1 checks passed');
+    process.exit(1);
+}
+const { scale: SCALE, deadlineMs: DEADLINE_MS, checkMs: CHECK_MS } = LIMITS;
+const secs = (ms) => `${+(ms / 1000).toFixed(1)}s`;
+
 const { open, ready, hold } = require('./browser');
 
 const SHOTS = process.env.SHOTS || path.join(require('os').tmpdir(), 'gamev2-regress-shots');
@@ -20,7 +34,6 @@ const QUIET = '?notitle=1&nointro=1';
 const results = [];          // { name, ok, evidence }
 const allErrors = [];        // [where, message]
 const T0 = Date.now();
-const DEADLINE_MS = 80000;   // a normal run is ~25s (~30s with the browser busy); a stalled browser must not hang the queue
 const running = new Set();   // names of the checks in flight
 
 // ------------------------------------------------------------------ in-page helpers (window.__t)
@@ -185,7 +198,7 @@ async function check(name, fn) {
     try {
         await Promise.race([
             fn(),
-            new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('timed out after 25s')), 25000); }),
+            new Promise((_, rej) => { timer = setTimeout(() => rej(new Error(`timed out after ${secs(CHECK_MS)}`)), CHECK_MS); }),
         ]);
         results.push({ name, ok: true });
         console.log(`ok   ${name} (${Date.now() - t}ms)`);
@@ -1370,13 +1383,14 @@ setTimeout(() => {
     const stuck = [...running], done = results.length;
     for (const name of stuck.length ? stuck : ['deadline']) {
         results.push({ name, ok: false });
-        console.log(`FAIL ${name} the suite did not finish within ${DEADLINE_MS / 1000}s (still running: ${stuck.join(', ') || 'nothing'}; ${done} checks had finished)`);
+        console.log(`FAIL ${name} the suite did not finish within ${secs(DEADLINE_MS)} (still running: ${stuck.join(', ') || 'nothing'}; ${done} checks had finished)`);
     }
     summary();
     process.exit(1);
 }, DEADLINE_MS).unref();
 
 (async () => {
+    if (SCALE !== 1) console.log(`REGRESS_TIME_SCALE=${SCALE}: the run may take ${secs(DEADLINE_MS)} and a check ${secs(CHECK_MS)}; the assertions are unchanged`);
     const shared = {};
     // the long desktop walk-through runs beside the short profiles: two pages at a time, never more
     const side = (async () => { await firstTime(); await phones(); })();
