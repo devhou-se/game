@@ -2,13 +2,24 @@
 """generate_chikagai_art.py — the art of an underground arcade (a chikagai) and
 of its entrance on the street.
 
-Shaded pixel art with a 1px ink outline, drawn at half size (32px a cell) and
-pixel-doubled, in the station interior's palette and with its helpers
-(tools/generate_station_art.py); the text is set in the game's own fonts, so a
-re-run is byte-identical on any machine. The arcade also uses the station's
-bench, planters, pillar, lockers and tactile paving as they are.
+Drawn in the house look, the manner of the GuttyKreum packs the rest of the
+world is cut from: every colour is one the pack's own sheets use
+(art-source/GuttyKreum), the outline is the pack's navy, glass is the pack's
+dark window with a slanted glare, and nothing is lit (an exit sign, a step's
+nosing or a lamp is the pack's dim gold). Light falls from the upper left;
+whatever stands proud of a wall casts a pixel of shade below and to its right.
+Drawn at half size (32px a cell) and pixel-doubled, with rectangles and points
+only (no Pillow ellipse, polygon, arc or slanted line, which move by a pixel
+between Pillow versions); the text is set in the game's own fonts, so a re-run
+is byte-identical on any machine.
 
-  chika-floor-a / -b            the floor: cream tile, and the tan apron in front of the shops
+This tool owns its palette. From tools/generate_station_art.py it takes only
+the canvas and the text helpers, and from tools/generate_sendai_art.py the
+pack's window (pane), its leafy clumps (foliage) and its scatter (speck). The
+arcade also uses the station's bench, planters, pillar, lockers and tactile
+paving as they are.
+
+  chika-floor-a / -b            the floor: cool white tile, and the stone apron in front of the shops
   chika-wall, -wall-poster-a/-b the back wall, 1x2 (a teal band), plain or with a framed advert
   chika-side-w / -e, -front, -front-w / -e
                                 the tops of the walls you look over: beside the floor, in
@@ -17,14 +28,14 @@ bench, planters, pillar, lockers and tactile paving as they are.
                                 bar sell over the counter, books, flowers and shutter say a
                                 line (src/utils/Interactions.js)
   chika-exit-<slug>             4x2, the stairs up to the street in the back wall under a
-                                yellow exit sign, one per exit of every town in tools/chikagai.py
+                                gold exit sign, one per exit of every town in tools/chikagai.py
   chika-sign-<slug>             4x1, the same sign hung from the ceiling (Tops), for an
                                 exit in a south wall
   chika-exit-south-w / -e       the foot of the stairs in a south wall, in two cells
   chika-gacha                   2x2 capsule-toy machines
   chika-map                     1x2 floor map on a stand
-  chikagai-entrance-snow        2x3, the entrance on the street: a glass canopy under snow,
-                                the blue sign, the steps going down
+  chikagai-entrance-snow        2x3, the entrance on the street: a glass roof seen from
+                                above under the snow, the blue sign, the steps going down
 
 Run from gamev2/:  python3 tools/generate_chikagai_art.py [--preview out.png]
 Needs Pillow. Registers the sprites in config.json spriteMetadata + tileNames.
@@ -36,77 +47,187 @@ import sys
 from PIL import Image
 
 import chikagai
-from generate_station_art import (C, INK, STEEL_LIGHT, STEEL, STEEL_DARK, WHITE, OFFWHITE, VOID, SLATE,
-                                  RED, RED_DARK, YELLOW, YELLOW_DARK, BLUE, BLUE_DARK, CYAN, GREEN, GREEN_DARK,
-                                  ORANGE, ORANGE_DARK, CREAM, new, box, text, text_size, centred, kana, latin)
+from generate_station_art import C, new, text, text_size, kana, latin
+from generate_sendai_art import pane, foliage, speck
 
-TEAL, TEAL_DARK = (64, 160, 160), (44, 118, 126)
-TILE, TILE_JOINT, TILE_LIGHT = (228, 222, 206), (204, 196, 178), (240, 236, 224)
-TAN, TAN_JOINT = (208, 190, 158), (184, 164, 132)
-WOOD, WOOD_DARK, WOOD_LIGHT = (176, 120, 72), (124, 82, 56), (212, 160, 104)
-BROWN, BROWN_DARK = (104, 68, 50), (72, 46, 40)
-WARM, WARM_DARK = (244, 224, 180), (214, 184, 132)
-BREAD, BREAD_DARK = (214, 150, 78), (160, 100, 52)
-PINK, PURPLE, LEAF = (236, 130, 160), (150, 110, 190), (70, 130, 76)
-SNOW, SNOW_SHADE = (248, 250, 255), (206, 220, 238)
-GLASS, GLASS_DARK = (156, 204, 226), (104, 150, 186)
-DARK = (30, 34, 52)
+
+def rgb(h, a=255):
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), a)
+
+
+# ---- the palette: every colour is one the GuttyKreum sheets use ----------------------
+
+INK, EDGE = rgb('080d16'), rgb('172459')                    # the void; the outline
+W0, W1, W2, W3, W4, W5 = (rgb(c) for c in ('fafcfd', 'dae2e4', 'bcc7cc', 'a4b0b5', '848295', '646e86'))
+ST0, ST1, ST2, ST3 = (rgb(c) for c in ('e4cecc', 'd7b6ab', 'be9e8c', '8e7366'))     # stone
+SL0, SL1, SL2 = rgb('78768a'), rgb('5f6177'), rgb('47485d')                          # slate
+STEEL_HI, STEEL, STEEL_LO = rgb('d1e2eb'), rgb('94a2a8'), rgb('575c6d')
+TEAL0, TEAL1, TEAL2, TEAL3, TEAL4 = (rgb(c) for c in ('93c297', '508582', '4a6262', '395050', '2e4040'))
+GOLD_HI, GOLD, GOLD_LO, GOLD_DK = rgb('f3d890'), rgb('c6a663'), rgb('a7843b'), rgb('86624f')
+RED_HI, RED, RED_LO = rgb('d16b56'), rgb('aa4d31'), rgb('8a3a22')
+ORANGE_HI, ORANGE, ORANGE_DK = rgb('f6a583'), rgb('ce6a42'), rgb('904a37')
+BLUE_HI, BLUE, BLUE_LO, BLUE_DK = rgb('7db9fa'), rgb('588cc6'), rgb('425faa'), rgb('314b8e')
+WOOD_HI, WOOD, WOOD_LO, WOOD_DK, WOOD_DEEP = ST2, rgb('a68777'), rgb('7c5d56'), rgb('594b45'), rgb('5a3827')
+KISSA = rgb('7f513b')
+BREAD_HI, BREAD, BREAD_LO = rgb('e3c587'), rgb('bb8971'), GOLD_DK
+NIGHT_HI, NIGHT = rgb('3c3a4c'), rgb('1b1e2a')
+PINK_HI, PINK, PINK_LO = rgb('d78bc1'), rgb('bb6479'), rgb('83374f')
+PURPLE_HI, PURPLE, PURPLE_LO = rgb('bfabd7'), rgb('8f72b6'), rgb('444679')
+SAGE_HI, SAGE, SAGE_LO = TEAL0, rgb('6c8e7f'), rgb('506b6b')
+GREEN = rgb('83af6f')
+GLASS, GLASS_LO, GLARE = rgb('2c2d51'), rgb('2a3151'), rgb('4b6396')
+SNOW_HI, SNOW, SNOW_LO = W0, rgb('ecfaff'), rgb('b7c3e3')
+LEAF = [rgb(c) for c in ('b1dfdc', '93c297', '83af6f', '508582', '425faa', '3c396d')]
+SHADE = rgb('2a3151', 90)                                   # on the floor, under what stands on it
+
+# the next colour down each ramp: what a thing standing proud of it casts on it
+DOWN = {}
+for ramp in ((W0, W1, W2, W3, W4, W5), (ST0, ST1, ST2, ST3), (TEAL0, TEAL1, TEAL2, TEAL3, TEAL4),
+             (GOLD_HI, GOLD, GOLD_LO, GOLD_DK), (SL0, SL1, SL2), (STEEL_HI, STEEL, STEEL_LO)):
+    for a, b in zip(ramp, ramp[1:]):
+        DOWN.setdefault(a, b)
+
+
+# ---- helpers (half-size pixels, inclusive coordinates) ---------------------------------
+
+def R(d, x0, y0, x1, y1, fill):
+    if x1 >= x0 and y1 >= y0:
+        d.rectangle([x0, y0, x1, y1], fill=fill)
+
+
+def box(d, x0, y0, x1, y1, base, hi, lo, edge=EDGE):
+    """An outlined block, lit along its top and left, shaded along its bottom and right."""
+    R(d, x0, y0, x1, y1, edge)
+    R(d, x0 + 1, y0 + 1, x1 - 1, y1 - 1, base)
+    R(d, x0 + 1, y0 + 1, x1 - 1, y0 + 1, hi)
+    R(d, x0 + 1, y0 + 1, x0 + 1, y1 - 1, hi)
+    R(d, x0 + 1, y1 - 1, x1 - 1, y1 - 1, lo)
+    R(d, x1 - 1, y0 + 1, x1 - 1, y1 - 1, lo)
+
+
+def cast(im, x0, y0, x1, y1):
+    """The shade of something standing proud: each pixel one down its ramp. Call
+    before drawing the thing that casts it."""
+    px = im.load()
+    for y in range(max(0, y0), min(im.height - 1, y1) + 1):
+        for x in range(max(0, x0), min(im.width - 1, x1) + 1):
+            c = px[x, y]
+            if c[3] == 0:
+                px[x, y] = SHADE
+            elif c in DOWN:
+                px[x, y] = DOWN[c]
+
+
+def label(d, x, y, s, f, fill, shadow=None):
+    if shadow:
+        text(d, x + 1, y + 1, s, f, shadow)
+    text(d, x, y, s, f, fill)
+
+
+def centred(d, cx, y, s, f, fill, shadow=None):
+    label(d, cx - text_size(d, s, f)[0] // 2, y, s, f, fill, shadow)
+
+
+def ring(im):
+    """Close the shape: every clear pixel beside an opaque one becomes outline."""
+    px = im.load()
+    hits = [(x, y) for y in range(im.height) for x in range(im.width) if px[x, y][3] == 0 and any(
+        0 <= x + dx < im.width and 0 <= y + dy < im.height and px[x + dx, y + dy][3] == 255
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+    for p in hits:
+        px[p] = EDGE
+
+
+def spans(d, rows, fill):
+    """A shape a row at a time: rows is [(y, x0, x1), ...]."""
+    for y, x0, x1 in rows:
+        R(d, x0, y, x1, y, fill)
 
 
 # ---- floor and walls -------------------------------------------------------------
 
-def floor(fill, joint, light):
+def floor(base, hi, joint, seed):
     def draw():
         im, d = new(C, C)
-        d.rectangle([0, 0, 31, 31], fill=fill)
-        d.line([0, 0, 31, 0], fill=light)
-        d.line([0, 0, 0, 31], fill=light)
-        d.line([0, 31, 31, 31], fill=joint)
-        d.line([31, 0, 31, 31], fill=joint)
+        R(d, 0, 0, 31, 31, base)
+        for y in range(32):
+            for x in range(32):
+                if x % 16 == 15 or y % 16 == 15:
+                    d.point((x, y), fill=joint)
+                elif y % 16 == 0:
+                    d.point((x, y), fill=hi)
+        rnd, n = random.Random(seed), 0
+        while n < 7:
+            x, y = rnd.randint(0, 31), rnd.randint(0, 31)
+            if x % 16 != 15 and y % 16 not in (0, 15):
+                d.point((x, y), fill=joint)
+                n += 1
         return im
     return draw
 
 
 def paint_wall(d, x0, x1):
     """The back wall's face over columns x0..x1 of a 64px-tall canvas."""
-    d.rectangle([x0, 0, x1, 3], fill=STEEL_DARK)
-    d.line([x0, 0, x1, 0], fill=INK)
-    d.rectangle([x0, 4, x1, 39], fill=OFFWHITE)
-    d.line([x0, 4, x1, 4], fill=WHITE)
-    for y in (15, 27):
-        d.line([x0, y, x1, y], fill=STEEL_LIGHT)
+    for y, c in enumerate((EDGE, SL0, SL1, SL2)):           # the ceiling's edge
+        R(d, x0, y, x1, y, c)
+    R(d, x0, 4, x1, 39, W0)                                 # white tile
+    R(d, x0, 4, x1, 5, W2)
+    R(d, x0, 6, x1, 6, W1)
+    for y in (16, 28):
+        R(d, x0, y, x1, y, W1)
     for x in range(x0, x1 + 1):
         if x % 16 == 15:
-            d.line([x, 5, x, 39], fill=STEEL_LIGHT)
-    d.rectangle([x0, 40, x1, 45], fill=TEAL)
-    d.line([x0, 40, x1, 40], fill=INK)
-    d.line([x0, 45, x1, 45], fill=INK)
-    d.line([x0, 44, x1, 44], fill=TEAL_DARK)
-    d.rectangle([x0, 46, x1, 57], fill=TILE)
+            R(d, x, 7, x, 15, W1)
+            R(d, x, 29, x, 39, W1)
+        if x % 16 == 7:
+            R(d, x, 17, x, 27, W1)
+    for y, c in zip(range(40, 46), (EDGE, TEAL0, TEAL1, TEAL1, TEAL2, EDGE)):   # the band
+        R(d, x0, y, x1, y, c)
+    R(d, x0, 46, x1, 57, ST0)                               # the dado
+    R(d, x0, 46, x1, 46, ST2)
+    R(d, x0, 57, x1, 57, ST1)
     for x in range(x0, x1 + 1):
         if x % 8 == 7:
-            d.line([x, 46, x, 57], fill=TILE_JOINT)
-    d.rectangle([x0, 58, x1, 63], fill=STEEL_DARK)
-    d.line([x0, 58, x1, 58], fill=INK)
-    d.line([x0, 63, x1, 63], fill=INK)
+            R(d, x, 47, x, 56, ST1)
+    for y, c in zip(range(58, 64), (EDGE, SL0, SL1, SL1, SL2, EDGE)):          # the skirting
+        R(d, x0, y, x1, y, c)
 
 
 def wall(poster=None):
     def draw():
         im, d = new(C, 2 * C)
         paint_wall(d, 0, 31)
+        if poster:
+            cast(im, 6, 9, 27, 37)
+            box(d, 5, 8, 26, 36, STEEL, STEEL_HI, STEEL_LO)
+            R(d, 7, 10, 24, 34, EDGE)
         if poster == 'a':                                   # ski season: a white peak on a blue sky
-            box(d, 5, 8, 26, 36, (120, 176, 226))
-            d.polygon([(8, 34), (16, 16), (24, 34)], fill=WHITE)
-            d.polygon([(13, 34), (20, 24), (25, 34)], fill=SNOW_SHADE)
-            d.rectangle([6, 30, 25, 35], fill=RED)
-            d.line([8, 32, 23, 32], fill=WHITE)
-            d.rectangle([20, 10, 23, 13], fill=YELLOW)
-        elif poster == 'b':                                 # a sale: a red sun on yellow
-            box(d, 5, 8, 26, 36, YELLOW)
-            d.ellipse([9, 12, 22, 25], fill=RED, outline=RED_DARK)
-            d.rectangle([8, 28, 23, 30], fill=INK)
-            d.rectangle([8, 32, 18, 33], fill=RED_DARK)
+            R(d, 8, 11, 23, 33, BLUE)
+            R(d, 8, 11, 23, 15, BLUE_HI)
+            R(d, 19, 12, 21, 14, GOLD)
+            d.point((19, 12), fill=GOLD_HI)
+            for y in range(14, 28):
+                hw = (y - 14) * 7 // 13
+                R(d, max(8, 15 - hw), y, min(23, 15 + hw), y, SNOW)
+                R(d, 16, y, min(23, 15 + hw), y, SNOW_LO)
+            R(d, 15, 14, 15, 14, SNOW_HI)
+            R(d, 8, 28, 23, 33, RED)
+            R(d, 8, 28, 23, 28, RED_HI)
+            R(d, 9, 30, 22, 30, W0)
+            R(d, 8, 33, 23, 33, RED_LO)
+        elif poster == 'b':                                 # a sale: a red sun on gold
+            R(d, 8, 11, 23, 33, GOLD)
+            R(d, 8, 11, 23, 11, GOLD_HI)
+            for i, hw in enumerate((3, 5, 6, 6, 7, 7, 7, 7, 6, 6, 5, 3)):
+                y = 13 + i
+                R(d, 16 - hw, y, 15 + hw, y, RED)
+                if i >= 6:
+                    d.point((15 + hw, y), fill=RED_LO)
+            R(d, 13, 24, 18, 24, RED_LO)
+            R(d, 12, 15, 13, 16, RED_HI)
+            d.point((14, 14), fill=RED_HI)
+            R(d, 9, 27, 22, 28, EDGE)
+            R(d, 9, 30, 18, 31, GOLD_DK)
         return im
     return draw
 
@@ -115,174 +236,269 @@ def edge(top=False, left=False, right=False):
     """The top of a wall seen from above: a strip along the named sides of a dark cell."""
     def draw():
         im, d = new(C, C)
-        d.rectangle([0, 0, 31, 31], fill=VOID)
+        R(d, 0, 0, 31, 31, INK)
         if top:
-            d.rectangle([0, 0, 31, 5], fill=STEEL_LIGHT)
-            d.line([0, 5, 31, 5], fill=INK)
-            d.line([0, 0, 31, 0], fill=STEEL)
+            for y, c in enumerate((W1, W2, W2, W2, W4, EDGE)):
+                R(d, 0, y, 31, y, c)
+        y0 = 5 if top else 0
         if left:
-            d.rectangle([0, 0, 5, 31], fill=STEEL_LIGHT)
-            d.line([5, 6 if top else 0, 5, 31], fill=INK)
-            d.line([0, 0, 0, 31], fill=STEEL)
+            for x, c in enumerate((W1, W2, W2, W2, W4, EDGE)):
+                R(d, x, y0, x, 31, c)
         if right:
-            d.rectangle([26, 0, 31, 31], fill=STEEL_LIGHT)
-            d.line([26, 6 if top else 0, 26, 31], fill=INK)
-            d.line([31, 0, 31, 31], fill=STEEL)
+            for x, c in zip(range(26, 32), (EDGE, W1, W2, W2, W2, W4)):
+                R(d, x, y0, x, 31, c)
         return im
     return draw
 
 
 # ---- shopfronts --------------------------------------------------------------------
 
-def shop_frame(fascia, label, ink=WHITE, back=WARM):
+def shop_frame(fascia, name, ink=W0, shadow=None, back=W1, back_lo=W2):
     """A 3x2 shopfront: ceiling, the fascia with its name, the opening and a counter."""
     im, d = new(3 * C, 2 * C)
-    d.rectangle([0, 0, 95, 3], fill=STEEL_DARK)
-    d.line([0, 0, 95, 0], fill=INK)
-    box(d, 0, 4, 95, 21, fascia)
-    ja, en = label
+    for y, c in enumerate((EDGE, SL0, SL1, SL2)):
+        R(d, 0, y, 95, y, c)
+    base, hi, lo = fascia
+    box(d, 0, 4, 95, 21, base, hi, lo)
+    R(d, 1, 19, 94, 20, lo)
+    ja, en = name
     w = (text_size(d, ja, kana())[0] if ja else 0) + (text_size(d, en, latin())[0] if en else 0) + (6 if ja and en else 0)
     x = 48 - w // 2
     if ja:
-        text(d, x, 7, ja, kana(), ink)
+        label(d, x, 7, ja, kana(), ink, shadow)
         x += text_size(d, ja, kana())[0] + 6
     if en:
-        text(d, x, 9, en, latin(), ink)
-    d.rectangle([0, 22, 95, 63], fill=back)
+        label(d, x, 9, en, latin(), ink, shadow)
+    R(d, 0, 22, 95, 63, back)
+    R(d, 4, 22, 91, 24, back_lo)                            # the fascia's shade
     for x0 in (0, 92):                                      # the pilasters either side
-        box(d, x0, 21, x0 + 3, 63, OFFWHITE)
-    d.line([0, 63, 95, 63], fill=INK)
+        R(d, x0, 21, x0 + 3, 63, EDGE)
+        R(d, x0 + 1, 22, x0 + 1, 62, W0)
+        R(d, x0 + 2, 22, x0 + 2, 62, W2)
+    R(d, 0, 63, 95, 63, EDGE)
     return im, d
 
 
-def counter(d, y, fill, dark, light):
-    d.rectangle([4, y, 91, 62], fill=fill)
-    d.line([4, y, 91, y], fill=INK)
-    d.line([4, y + 1, 91, y + 1], fill=light)
-    d.rectangle([4, 59, 91, 62], fill=dark)
+def counter(d, y, base, hi, lo):
+    R(d, 4, y, 91, 62, base)
+    R(d, 4, y, 91, y, EDGE)
+    R(d, 4, y + 1, 91, y + 1, hi)
+    R(d, 4, y + 2, 91, y + 2, lo)
+    for x in range(15, 91, 12):
+        R(d, x, y + 3, x, 58, lo)
+    R(d, 4, 59, 91, 62, lo)
+
+
+def loaf(d, x, y, tin):
+    """An 8x5 loaf from (x, y): crust, a lit top, a dark foot and right side."""
+    R(d, x, y, x + 7, y + 4, BREAD)
+    R(d, x, y, x + 7, y, BREAD_HI)
+    R(d, x + 7, y, x + 7, y + 4, BREAD_LO)
+    R(d, x, y + 4, x + 7, y + 4, BREAD_LO)
+    if not tin:                                             # a cob: its top corners rounded off
+        d.point((x, y), fill=ST1)
+        d.point((x + 7, y), fill=ST1)
+        d.point((x + 1, y), fill=BREAD_HI)
 
 
 def shop_bakery():
-    im, d = shop_frame(ORANGE, ('ベーカリー', ''))
-    for i, x in enumerate(range(4, 92, 8)):                 # the awning's stripes
-        d.rectangle([x, 22, x + 7, 27], fill=ORANGE if i % 2 == 0 else WHITE)
-    d.line([4, 28, 91, 28], fill=INK)
-    for y in (36, 44):                                      # two shelves of loaves
-        d.line([6, y, 89, y], fill=WOOD_DARK)
+    im, d = shop_frame((ORANGE, ORANGE_HI, RED), ('ベーカリー', ''), shadow=ORANGE_DK, back=ST1, back_lo=ST2)
+    for i, x in enumerate(range(4, 92, 8)):                 # the awning: stripes, a scalloped foot
+        c, lo = (ORANGE, RED) if i % 2 == 0 else (W0, W2)
+        R(d, x, 22, x + 7, 26, c)
+        R(d, x, 22, x + 7, 22, ORANGE_HI if i % 2 == 0 else W0)
+        R(d, x, 27, x + 7, 27, lo)
+        R(d, x + 1, 28, x + 6, 28, lo)
+        d.point((x, 28), fill=EDGE)
+        d.point((x + 7, 28), fill=EDGE)
+        R(d, x + 2, 29, x + 5, 29, EDGE)
+    for y in (37, 45):                                      # two shelves of loaves
+        R(d, 6, y, 89, y, WOOD_LO)
         for i, x in enumerate(range(8, 86, 10)):
-            if (i + y) % 3:
-                d.ellipse([x, y - 6, x + 7, y - 1], fill=BREAD, outline=BREAD_DARK)
-            else:
-                d.rectangle([x, y - 5, x + 7, y - 1], fill=BREAD, outline=BREAD_DARK)
-            d.point([(x + 2, y - 4), (x + 4, y - 4)], fill=WARM)
-    counter(d, 46, WOOD, WOOD_DARK, WOOD_LIGHT)
-    box(d, 8, 48, 60, 58, GLASS)                            # the glass case
-    for x in range(11, 56, 9):
-        d.ellipse([x, 51, x + 6, 56], fill=BREAD, outline=BREAD_DARK)
-    d.line([9, 49, 59, 49], fill=WHITE)
-    box(d, 68, 49, 84, 57, STEEL_LIGHT)                     # the till
-    d.rectangle([70, 51, 78, 53], fill=DARK)
+            loaf(d, x, y - 5, (i + y) % 3 == 0)
+    counter(d, 46, WOOD, WOOD_HI, WOOD_LO)
+    R(d, 8, 48, 60, 58, EDGE)                               # the glass case
+    pane(d, 9, 49, 59, 57, 11)
+    for x in range(12, 57, 10):                             # buns, seen through it
+        R(d, x, 53, x + 6, 56, BREAD)
+        R(d, x + 1, 53, x + 5, 53, BREAD_HI)
+        R(d, x, 53, x, 53, GLASS)
+        R(d, x + 6, 53, x + 6, 53, GLASS)
+        R(d, x + 1, 56, x + 6, 56, BREAD_LO)
+    R(d, 10, 59, 58, 59, STEEL)
+    box(d, 68, 49, 84, 57, STEEL, STEEL_HI, STEEL_LO)       # the till
+    R(d, 70, 51, 78, 53, GLASS)
+    d.point((71, 51), fill=GLARE)
+    R(d, 80, 53, 81, 54, GOLD)
     return im
 
 
 def shop_kissa():
-    im, d = shop_frame(BROWN, ('喫茶', 'COFFEE'), ink=YELLOW, back=(132, 90, 62))
-    d.rectangle([4, 22, 91, 24], fill=BROWN_DARK)
-    for x in (24, 48, 72):                                  # hanging lamps
-        d.line([x, 22, x, 27], fill=INK)
-        d.polygon([(x - 4, 31), (x, 27), (x + 4, 31)], fill=YELLOW, outline=INK)
-        d.rectangle([x - 2, 32, x + 2, 33], fill=(255, 236, 170))
-    d.line([6, 43, 89, 43], fill=BROWN_DARK)                # the back shelf: cups, a row of jars
+    im, d = shop_frame((KISSA, WOOD, WOOD_DK), ('喫茶', 'COFFEE'), ink=GOLD, shadow=WOOD_DEEP,
+                       back=WOOD_LO, back_lo=WOOD_DK)
+    for x in range(15, 91, 16):                             # the panelled back wall
+        R(d, x, 25, x, 45, WOOD_DK)
+    for x in (24, 48, 72):                                  # hanging lamps, not lit
+        R(d, x, 22, x, 26, EDGE)
+        for i in range(4):
+            y, hw = 27 + i, i + 1
+            R(d, x - hw, y, x + hw, y, GOLD_DK if i == 3 else GOLD)
+            if i < 3:
+                d.point((x - hw, y), fill=GOLD_HI)
+                d.point((x + hw, y), fill=GOLD_LO)
+        R(d, x - 1, 31, x + 1, 32, GOLD_HI)
+    R(d, 6, 43, 89, 43, WOOD_DK)                            # the back shelf: cups, a row of jars
     for x in range(8, 40, 6):
-        d.rectangle([x, 39, x + 3, 42], fill=WHITE, outline=INK)
+        R(d, x, 39, x + 3, 42, EDGE)
+        R(d, x + 1, 40, x + 2, 41, W0)
+        d.point((x + 2, 41), fill=W2)
     for i, x in enumerate(range(54, 88, 7)):
-        d.rectangle([x, 36, x + 4, 42], fill=(BREAD_DARK, BROWN_DARK, WOOD)[i % 3], outline=INK)
-        d.line([x + 1, 37, x + 3, 37], fill=WARM)
-    counter(d, 46, BROWN, BROWN_DARK, WOOD)
-    d.rectangle([14, 38, 17, 45], fill=STEEL_LIGHT, outline=INK)     # the siphon
-    d.ellipse([12, 33, 19, 39], fill=GLASS, outline=INK)
-    for x in (30, 40):
-        d.rectangle([x, 42, x + 4, 45], fill=WHITE, outline=INK)     # two cups set out
-        d.point((x + 6, 43), fill=INK)
-    box(d, 58, 49, 86, 57, (38, 60, 44))                    # the chalk board
+        R(d, x, 36, x + 4, 42, EDGE)
+        R(d, x + 1, 37, x + 3, 41, (BREAD, GOLD_LO, WOOD)[i % 3])
+        R(d, x + 1, 37, x + 3, 37, BREAD_HI)
+        R(d, x + 3, 38, x + 3, 41, (BREAD_LO, GOLD_DK, WOOD_LO)[i % 3])
+    counter(d, 46, KISSA, WOOD, WOOD_DK)
+    R(d, 14, 39, 17, 45, EDGE)                              # the siphon: its stand
+    R(d, 15, 40, 16, 44, STEEL)
+    d.point((15, 40), fill=STEEL_HI)
+    spans(d, [(32, 14, 17), (33, 13, 18), (34, 12, 19), (35, 12, 19), (36, 12, 19), (37, 13, 18), (38, 14, 17)], EDGE)
+    spans(d, [(33, 14, 17), (34, 13, 18), (35, 13, 18), (36, 13, 18), (37, 14, 17)], GLASS)
+    spans(d, [(36, 13, 18), (37, 14, 17)], WOOD_DEEP)
+    d.point((14, 34), fill=GLARE)
+    d.point((15, 33), fill=GLARE)
+    for x in (30, 40):                                      # two cups set out
+        R(d, x, 42, x + 4, 45, EDGE)
+        R(d, x + 1, 43, x + 3, 44, W0)
+        R(d, x + 3, 43, x + 3, 44, W2)
+        d.point((x + 5, 43), fill=EDGE)
+    R(d, 58, 49, 86, 57, EDGE)                              # the chalk board
+    R(d, 59, 50, 85, 56, TEAL4)
     for y in (51, 53, 55):
-        d.line([61, y, 61 + (y * 7) % 19 + 4, y], fill=OFFWHITE)
+        R(d, 61, y, 61 + (y * 7) % 19 + 4, y, W3)
     return im
 
 
 def shop_bar():
-    im, d = shop_frame(INK, ('立呑み', ''), ink=WHITE, back=(226, 170, 96))
+    im, d = shop_frame((NIGHT, NIGHT_HI, INK), ('立呑み', ''), back=BREAD, back_lo=BREAD_LO)
     for x in (6, 84):                                       # a red lantern at each end of the name
-        d.ellipse([x, 6, x + 6, 18], fill=RED, outline=RED_DARK)
-        d.line([x + 1, 9, x + 5, 9], fill=RED_DARK)
-        d.line([x + 1, 14, x + 5, 14], fill=RED_DARK)
-    d.line([6, 40, 89, 40], fill=WOOD_DARK)                 # the bottles behind
+        R(d, x + 1, 6, x + 5, 6, WOOD_DK)
+        R(d, x + 1, 18, x + 5, 18, WOOD_DK)
+        R(d, x + 1, 7, x + 5, 17, RED)
+        R(d, x, 8, x + 6, 16, RED)
+        R(d, x, 8, x, 16, RED_HI)
+        R(d, x + 1, 7, x + 1, 7, RED_HI)
+        R(d, x + 6, 8, x + 6, 16, RED_LO)
+        R(d, x + 5, 17, x + 5, 17, RED_LO)
+        for y in (10, 14):
+            R(d, x + 1, y, x + 5, y, RED_LO)
+    R(d, 6, 40, 89, 40, WOOD_DK)                            # the bottles behind
     rnd = random.Random(7)
     for x in range(8, 88, 5):
-        colour = rnd.choice([(70, 120, 80), (120, 72, 44), (214, 220, 226), (190, 150, 60)])
-        d.rectangle([x, 33, x + 2, 39], fill=colour, outline=INK)
-        d.point((x + 1, 31), fill=INK)
+        colour = rnd.choice([SAGE_LO, KISSA, W1, GOLD_LO])
+        R(d, x, 33, x + 2, 39, EDGE)
+        R(d, x + 1, 34, x + 1, 38, colour)
+        d.point((x + 1, 31), fill=EDGE)
         d.point((x + 1, 32), fill=colour)
-    for i, x in enumerate(range(4, 92, 18)):                # the short curtain, in five panels
-        d.rectangle([x, 22, min(x + 16, 91), 30], fill=RED)
-        d.line([x, 30, min(x + 16, 91), 30], fill=RED_DARK)
-        d.line([x, 22, x, 30], fill=RED_DARK)
-        d.ellipse([x + 6, 24, x + 10, 28], outline=WHITE)
-    d.line([4, 22, 91, 22], fill=INK)
-    counter(d, 46, WOOD_LIGHT, WOOD_DARK, WARM)
-    for x in (16, 44, 70):                                  # glasses on the counter
-        d.rectangle([x, 41, x + 4, 45], fill=(244, 200, 90), outline=INK)
-        d.line([x + 1, 41, x + 3, 41], fill=WHITE)
-    d.rectangle([28, 43, 34, 45], fill=GREEN, outline=INK)  # a dish of edamame
+    R(d, 4, 22, 91, 22, EDGE)                               # the short curtain, in five panels
+    for x in range(4, 92, 18):
+        x1 = min(x + 16, 91)
+        R(d, x, 23, x1, 30, RED)
+        R(d, x, 23, x1, 23, RED_HI)
+        R(d, x, 30, x1, 30, RED_LO)
+        R(d, x1, 23, x1, 30, RED_LO)
+        R(d, x + 7, 25, x + 9, 25, W0)
+        R(d, x + 7, 29, x + 9, 29, W0)
+        R(d, x + 6, 26, x + 6, 28, W0)
+        R(d, x + 10, 26, x + 10, 28, W0)
+    counter(d, 46, ST2, ST0, ST3)
+    for x in (16, 44, 70):                                  # glasses of beer on the counter
+        R(d, x, 41, x + 4, 45, EDGE)
+        R(d, x + 1, 42, x + 3, 44, GOLD)
+        R(d, x + 1, 42, x + 3, 42, W0)
+        R(d, x + 3, 43, x + 3, 44, GOLD_LO)
+    R(d, 28, 43, 34, 45, EDGE)                              # a dish of edamame
+    R(d, 29, 44, 33, 44, GREEN)
+    d.point((30, 44), fill=TEAL0)
     return im
 
 
+SPINES = [(RED, RED_LO), (GOLD, GOLD_LO), (TEAL1, TEAL2), (BLUE, BLUE_LO), (ST0, ST1), (ORANGE, RED),
+          (PURPLE, PURPLE_LO), (TEAL0, SAGE), (WOOD, WOOD_LO), (PINK_HI, PINK)]
+
+
 def shop_books():
-    im, d = shop_frame(BLUE, ('本', 'BOOKS'), back=(98, 84, 76))
+    im, d = shop_frame((BLUE_LO, BLUE, BLUE_DK), ('本', 'BOOKS'), shadow=EDGE, back=WOOD_DK, back_lo=WOOD_DEEP)
     rnd = random.Random(3)
-    spines = [RED, YELLOW, GREEN, CYAN, OFFWHITE, ORANGE, PURPLE, TEAL, WOOD_LIGHT, PINK]
     for y0 in (24, 35):                                     # two shelves of spines
         x = 6
         while x < 88:
             w = rnd.choice([2, 2, 3])
-            d.rectangle([x, y0 + rnd.choice([0, 0, 1, 2]), x + w - 1, y0 + 8], fill=rnd.choice(spines))
+            base, lo = rnd.choice(SPINES)
+            top = y0 + rnd.choice([0, 0, 1, 2])
+            R(d, x, top, x + w - 1, y0 + 8, base)
+            R(d, x + w - 1, top, x + w - 1, y0 + 8, lo)
+            R(d, x, y0 + 5, x + w - 1, y0 + 5, lo)
             x += w + (1 if rnd.random() < 0.2 else 0)
-        d.line([4, y0 + 9, 91, y0 + 9], fill=INK)
-    counter(d, 46, WOOD, WOOD_DARK, WOOD_LIGHT)
+        R(d, 4, y0 + 9, 91, y0 + 9, WOOD)
+        R(d, 4, y0 + 10, 91, y0 + 10, WOOD_DEEP)
+    counter(d, 46, WOOD, WOOD_HI, WOOD_LO)
     for i, x in enumerate(range(8, 86, 12)):                # magazines laid out face up
-        cover = spines[(i * 3) % len(spines)]
-        d.rectangle([x, 49, x + 8, 58], fill=cover, outline=INK)
-        d.rectangle([x + 2, 51, x + 6, 53], fill=WHITE)
+        base, lo = SPINES[(i * 3) % len(SPINES)]
+        R(d, x, 49, x + 8, 58, EDGE)
+        R(d, x + 1, 50, x + 7, 57, base)
+        R(d, x + 2, 51, x + 6, 53, W0)
+        R(d, x + 2, 55, x + 6, 55, lo)
+        R(d, x + 7, 50, x + 7, 57, lo)
     return im
 
 
+BLOOMS = [(RED_HI, RED), (PINK_HI, PINK), (GOLD_HI, GOLD), (W0, W1), (PURPLE_HI, PURPLE), (ORANGE_HI, ORANGE)]
+
+
 def shop_flowers():
-    im, d = shop_frame(GREEN_DARK, ('花', 'FLOWERS'), back=(222, 232, 216))
+    im, d = shop_frame((TEAL1, TEAL0, TEAL3), ('花', 'FLOWERS'), shadow=TEAL4, back=W1, back_lo=W3)
     rnd = random.Random(11)
-    blooms = [RED, PINK, YELLOW, WHITE, PURPLE, ORANGE]
-    d.rectangle([4, 22, 91, 24], fill=GREEN)
+    R(d, 4, 22, 91, 24, SAGE)                               # the pelmet
+    R(d, 4, 22, 91, 22, SAGE_HI)
+    R(d, 4, 24, 91, 24, SAGE_LO)
+    n = 0
     for row, (y, xs) in enumerate(((40, range(8, 86, 13)), (54, range(6, 88, 12)))):   # buckets on two steps
         for i, x in enumerate(xs):
-            colour = blooms[(i + row * 2) % len(blooms)]
-            d.ellipse([x - 1, y - 12, x + 9, y - 3], fill=LEAF)
-            for _ in range(7):
-                px, py = x + rnd.randint(0, 8), y - rnd.randint(4, 12)
-                d.rectangle([px, py, px + 1, py + 1], fill=colour)
-            d.polygon([(x, y - 3), (x + 8, y - 3), (x + 7, y + 5), (x + 1, y + 5)], fill=STEEL_LIGHT, outline=INK)
-        d.line([4, y + 6, 91, y + 6], fill=INK)
-        d.rectangle([4, y + 7, 91, y + 8], fill=WOOD)
+            hi, base = BLOOMS[(i + row * 2) % len(BLOOMS)]
+            foliage(im, [(x + 4, y - 8, 6, 5)], LEAF, seed=n)
+            n += 1
+            for _ in range(6):
+                px, py = x + rnd.randint(0, 7), y - rnd.randint(5, 12)
+                R(d, px, py, px + 1, py + 1, base)
+                d.point((px, py), fill=hi)
+            R(d, x, y - 3, x + 8, y + 1, EDGE)              # the bucket, galvanised
+            R(d, x + 1, y + 2, x + 7, y + 5, EDGE)
+            R(d, x + 1, y - 2, x + 7, y + 1, W3)
+            R(d, x + 2, y + 2, x + 6, y + 4, W3)
+            R(d, x + 1, y - 2, x + 7, y - 2, W1)
+            R(d, x + 1, y - 1, x + 1, y + 1, W1)
+            R(d, x + 2, y + 2, x + 2, y + 4, W1)
+            R(d, x + 7, y - 1, x + 7, y + 1, W4)
+            R(d, x + 6, y + 2, x + 6, y + 4, W4)
+        R(d, 4, y + 6, 91, y + 6, EDGE)
+        R(d, 4, y + 7, 91, y + 8, WOOD)
+        R(d, 4, y + 8, 91, y + 8, WOOD_LO)
     return im
 
 
 def shop_shutter():
-    im, d = shop_frame(STEEL, ('', ''), back=STEEL_LIGHT)
-    for y in range(24, 62, 3):                              # the roller shutter's slats
-        d.line([4, y, 91, y], fill=STEEL)
-    d.line([4, 22, 91, 22], fill=INK)
-    d.rectangle([4, 59, 91, 62], fill=STEEL_DARK)
-    d.rectangle([44, 58, 51, 60], fill=INK)                 # its handle
-    box(d, 21, 32, 74, 47, WHITE)                           # the notice: tenant wanted
-    centred(d, 48, 34, 'テナント', kana(), BLUE_DARK)
+    im, d = shop_frame((STEEL, STEEL_HI, STEEL_LO), ('', ''))
+    R(d, 4, 22, 91, 22, EDGE)
+    for y in range(23, 59):                                 # the roller shutter's slats
+        R(d, 4, y, 91, y, (W1, W2, W4)[(y - 23) % 3])
+    cast(im, 4, 23, 91, 25)                                 # in the fascia's shade
+    R(d, 4, 59, 91, 62, W5)                                 # its bottom bar and handle
+    R(d, 44, 58, 51, 60, EDGE)
+    R(d, 45, 59, 50, 59, STEEL)
+    cast(im, 22, 33, 75, 48)                                # the notice: tenant wanted
+    R(d, 21, 32, 74, 47, EDGE)
+    R(d, 22, 33, 73, 46, W0)
+    centred(d, 48, 34, 'テナント', kana(), BLUE_DK)
     return im
 
 
@@ -292,36 +508,39 @@ SHOPS = {'bakery': shop_bakery, 'kissa': shop_kissa, 'bar': shop_bar, 'books': s
 
 # ---- exits ---------------------------------------------------------------------------
 
-def paint_sign(d, x0, y0, ja, en):
-    """The yellow exit sign, 112x26 from (x0, y0): 出口, the place's name, and its name in English."""
-    box(d, x0, y0, x0 + 111, y0 + 25, YELLOW)
-    d.line([x0 + 1, y0 + 24, x0 + 110, y0 + 24], fill=YELLOW_DARK)
+def paint_sign(im, d, x0, y0, ja, en, on_wall=True):
+    """The gold exit sign, 112x26 from (x0, y0): 出口, the place's name, and its name in English."""
+    if on_wall:
+        cast(im, x0 + 1, y0 + 1, x0 + 112, y0 + 26)
+    box(d, x0, y0, x0 + 111, y0 + 25, GOLD, GOLD_HI, GOLD_LO)
     wj = text_size(d, ja, kana())[0]
     x = x0 + 56 - (28 + 4 + wj) // 2
-    d.rectangle([x, y0 + 2, x + 27, y0 + 14], fill=INK)
-    text(d, x + 2, y0 + 3, '出口', kana(), YELLOW)
-    text(d, x + 32, y0 + 3, ja, kana(), INK)
-    centred(d, x0 + 56, y0 + 16, en, latin(), INK)
+    R(d, x, y0 + 2, x + 27, y0 + 14, EDGE)
+    text(d, x + 2, y0 + 3, '出口', kana(), GOLD_HI)
+    text(d, x + 32, y0 + 3, ja, kana(), EDGE)
+    centred(d, x0 + 56, y0 + 16, en, latin(), EDGE)
 
 
 def exit_north(ja, en):
     def draw():
         im, d = new(4 * C, 2 * C)
         paint_wall(d, 0, 127)
-        box(d, 30, 29, 97, 63, DARK)                        # the stairwell's opening
-        steps = [(244, 247, 252), (226, 231, 240), STEEL_LIGHT, (176, 182, 198), STEEL, (128, 136, 158)]
-        d.rectangle([34, 30, 93, 32], fill=WHITE)           # daylight at the top
-        for i, colour in enumerate(steps):                  # six steps up to it
+        R(d, 30, 29, 97, 63, EDGE)                          # the stairwell's opening
+        R(d, 31, 30, 96, 62, INK)
+        R(d, 34, 30, 93, 32, W0)                            # daylight at the top
+        steps = [SNOW, W1, W2, W3, W4, W5]
+        for i, c in enumerate(steps):                       # six steps up to it
             y = 33 + i * 5
-            d.rectangle([34, y, 93, y + 4], fill=colour)
-            d.line([34, y + 4, 93, y + 4], fill=STEEL_DARK)
-            d.line([34, y, 93, y], fill=YELLOW)
-        for x in (31, 94):                                  # the side walls of the well
-            d.rectangle([x, 30, x + 2, 62], fill=OFFWHITE)
-        d.rectangle([63, 33, 64, 62], fill=STEEL_DARK)      # the handrail down the middle
-        d.line([62, 33, 62, 62], fill=INK)
-        d.line([65, 33, 65, 62], fill=INK)
-        paint_sign(d, 8, 2, ja, en)
+            R(d, 34, y, 93, y, GOLD_HI if i == 0 else GOLD)
+            R(d, 34, y + 1, 93, y + 2, c)
+            R(d, 34, y + 3, 93, y + 4, DOWN.get(c, W1) if c != W5 else SL1)
+        for x, out in ((31, 31), (94, 96)):                 # the side walls of the well
+            R(d, x, 30, x + 2, 62, W2)
+            R(d, out, 30, out, 62, W1)
+        R(d, 62, 33, 65, 62, EDGE)                          # the handrail down the middle
+        R(d, 63, 33, 63, 62, STEEL_HI)
+        R(d, 64, 33, 64, 62, STEEL)
+        paint_sign(im, d, 8, 2, ja, en)
         return im
     return draw
 
@@ -330,25 +549,26 @@ def exit_sign(ja, en):
     def draw():
         im, d = new(4 * C, C)
         for x in (22, 104):
-            d.rectangle([x, 0, x + 1, 5], fill=STEEL_DARK)
-        paint_sign(d, 8, 5, ja, en)
+            R(d, x, 0, x + 1, 5, STEEL_LO)
+        paint_sign(im, d, 8, 5, ja, en, on_wall=False)
         return im
     return draw
 
 
 def exit_south():
     im, d = new(2 * C, C)
-    d.rectangle([0, 0, 63, 31], fill=VOID)
-    steps = [STEEL, (176, 182, 198), STEEL_LIGHT, (214, 220, 232)]
-    for i, colour in enumerate(steps):                      # four steps, lighter towards the street
+    R(d, 0, 0, 63, 31, INK)
+    for i, c in enumerate((W4, W3, W2, W1)):                # four steps, lighter towards the street
         y = i * 8
-        d.rectangle([3, y, 60, y + 7], fill=colour)
-        d.line([3, y, 60, y], fill=YELLOW)
-        d.line([3, y + 7, 60, y + 7], fill=STEEL_DARK)
-    for x in (0, 61):
-        d.rectangle([x, 0, x + 2, 31], fill=STEEL_LIGHT)
-        d.line([2 if x == 0 else 61, 0, 2 if x == 0 else 61, 31], fill=INK)
-    d.rectangle([31, 0, 32, 31], fill=STEEL_DARK)
+        R(d, 3, y, 60, y + 7, c)
+        R(d, 3, y, 60, y, GOLD)
+        R(d, 3, y + 6, 60, y + 7, DOWN[c])
+    for x, inner in ((0, 2), (61, 61)):
+        R(d, x, 0, x + 2, 31, W2)
+        R(d, inner, 0, inner, 31, EDGE)
+    R(d, 30, 0, 33, 31, EDGE)                               # the handrail
+    R(d, 31, 0, 31, 31, STEEL_HI)
+    R(d, 32, 0, 32, 31, STEEL)
     return im
 
 
@@ -358,41 +578,58 @@ def half(draw, i):
 
 # ---- things standing in the arcade ----------------------------------------------------
 
+FRONTS = [(RED_HI, RED, RED_LO), (BLUE_HI, BLUE, BLUE_LO), (GOLD_HI, GOLD, GOLD_LO), (TEAL0, TEAL1, TEAL2),
+          (ORANGE_HI, ORANGE, RED), (PURPLE_HI, PURPLE, PURPLE_LO), (SAGE_HI, SAGE, SAGE_LO), (PINK_HI, PINK, PINK_LO)]
+
+
 def gacha():
     im, d = new(2 * C, 2 * C)
     rnd = random.Random(5)
-    fronts = [RED, BLUE, YELLOW, GREEN, ORANGE, PURPLE, TEAL, PINK]
     for row in range(2):
         for col in range(4):
             x, y = 1 + col * 16, 3 + row * 30
-            colour = fronts[(row * 4 + col) % len(fronts)]
-            box(d, x, y, x + 13, y + 28, WHITE)
-            box(d, x + 2, y + 2, x + 11, y + 13, GLASS)     # the globe of capsules
-            for _ in range(9):
-                px, py = x + rnd.randint(3, 9), y + rnd.randint(6, 11)
-                d.rectangle([px, py, px + 1, py + 1], fill=rnd.choice(fronts))
-            d.rectangle([x + 1, y + 15, x + 12, y + 27], fill=colour)
-            d.ellipse([x + 4, y + 17, x + 9, y + 22], fill=STEEL_LIGHT, outline=INK)    # the crank
-            d.rectangle([x + 4, y + 24, x + 9, y + 26], fill=DARK)
-    d.line([1, 62, 62, 62], fill=INK)
+            hi, base, lo = FRONTS[row * 4 + col]
+            R(d, x, y, x + 13, y + 28, EDGE)                # the cabinet
+            R(d, x + 1, y + 1, x + 12, y + 27, W0)
+            R(d, x + 12, y + 1, x + 12, y + 27, W2)
+            R(d, x + 2, y + 2, x + 11, y + 13, EDGE)        # the globe of capsules
+            pane(d, x + 3, y + 3, x + 10, y + 12, 7)
+            for _ in range(7):
+                px, py = x + rnd.randint(3, 9), y + rnd.randint(8, 11)
+                R(d, px, py, px + 1, py + 1, FRONTS[rnd.randrange(len(FRONTS))][1])
+                d.point((px, py), fill=FRONTS[rnd.randrange(len(FRONTS))][0])
+            R(d, x + 1, y + 15, x + 12, y + 27, base)       # the front, in the machine's colour
+            R(d, x + 1, y + 15, x + 12, y + 15, hi)
+            R(d, x + 12, y + 15, x + 12, y + 27, lo)
+            R(d, x + 1, y + 27, x + 12, y + 27, lo)
+            spans(d, [(y + 17, x + 5, x + 8), (y + 18, x + 4, x + 9), (y + 19, x + 4, x + 9),
+                      (y + 20, x + 4, x + 9), (y + 21, x + 4, x + 9), (y + 22, x + 5, x + 8)], STEEL)   # the crank
+            spans(d, [(y + 17, x + 5, x + 7), (y + 18, x + 4, x + 4), (y + 19, x + 4, x + 4)], STEEL_HI)
+            spans(d, [(y + 22, x + 6, x + 8), (y + 21, x + 9, x + 9), (y + 20, x + 9, x + 9)], STEEL_LO)
+            R(d, x + 6, y + 19, x + 7, y + 20, EDGE)
+            R(d, x + 4, y + 24, x + 9, y + 26, NIGHT)       # the chute
+    R(d, 1, 62, 62, 62, EDGE)
+    R(d, 1, 63, 62, 63, SHADE)
     return im
 
 
 def floor_map():
     im, d = new(C, 2 * C)
     for x in (7, 23):
-        d.rectangle([x, 40, x + 1, 61], fill=STEEL_DARK)
-        d.rectangle([x - 2, 61, x + 3, 62], fill=INK)
-    box(d, 2, 10, 29, 44, STEEL_LIGHT)
-    d.rectangle([4, 12, 27, 17], fill=TEAL)
-    d.rectangle([6, 14, 16, 15], fill=WHITE)
-    d.rectangle([4, 19, 27, 42], fill=CREAM)
-    d.rectangle([6, 29, 25, 32], fill=TEAL)                 # the arcade, as the map shows it
-    d.rectangle([8, 21, 10, 29], fill=TEAL)
-    d.rectangle([18, 32, 20, 39], fill=TEAL)
+        R(d, x, 44, x + 1, 60, STEEL_LO)
+        R(d, x - 2, 61, x + 3, 61, EDGE)
+        R(d, x - 2, 62, x + 4, 63, SHADE)
+    box(d, 2, 10, 29, 44, STEEL, STEEL_HI, STEEL_LO)
+    R(d, 4, 12, 27, 17, TEAL1)
+    R(d, 4, 12, 27, 12, TEAL0)
+    R(d, 6, 14, 16, 15, W0)
+    R(d, 4, 19, 27, 42, ST0)
+    R(d, 6, 29, 25, 32, TEAL1)                              # the arcade, as the map shows it
+    R(d, 8, 21, 10, 29, TEAL1)
+    R(d, 18, 32, 20, 39, TEAL1)
     for x, y in ((8, 21), (14, 27), (24, 27), (18, 39)):
-        d.rectangle([x, y, x + 2, y + 1], fill=YELLOW)
-    d.rectangle([9, 24, 10, 25], fill=RED)                  # you are here
+        R(d, x, y, x + 2, y + 1, GOLD)
+    R(d, 9, 24, 10, 25, RED)                                # you are here
     return im
 
 
@@ -400,50 +637,69 @@ def floor_map():
 
 def entrance_snow():
     im, d = new(2 * C, 3 * C)
-    # the mouth: dark beyond the first steps
-    d.rectangle([8, 44, 55, 66], fill=DARK)
-    steps = [(70, 78, 104), (92, 102, 128), (116, 126, 150), STEEL, (176, 182, 198), STEEL_LIGHT]
-    for i, colour in enumerate(steps):                      # six steps going down, away from you
+    px = im.load()
+    R(d, 8, 44, 55, 66, INK)                                # the mouth: dark beyond the first steps
+    steps = [SL2, SL1, SL0, W4, W3, W2]
+    lower = [NIGHT_HI, SL2, SL1, W5, W4, W3]
+    for i, c in enumerate(steps):                           # six steps going down, away from you
         y = 60 + i * 6
-        d.rectangle([12, y, 51, y + 5], fill=colour)
-        d.line([12, y + 5, 51, y + 5], fill=YELLOW_DARK if i >= 3 else INK)
-    d.rectangle([31, 50, 32, 95], fill=STEEL_DARK)          # the handrail
-    d.line([30, 50, 30, 95], fill=INK)
-    d.line([33, 50, 33, 95], fill=INK)
+        R(d, 12, y, 51, y + 5, c)
+        R(d, 12, y, 51, y, steps[i + 1] if i < 3 else GOLD)
+        R(d, 12, y + 5, 51, y + 5, lower[i])
+    R(d, 30, 50, 33, 95, EDGE)                              # the handrail
+    R(d, 31, 50, 31, 95, STEEL_HI)
+    R(d, 32, 50, 32, 95, STEEL)
     for x0 in (2, 52):                                      # the parapets either side, snow along their tops
-        box(d, x0, 58, x0 + 9, 95, OFFWHITE)
-        d.line([x0 + 1, 76, x0 + 8, 76], fill=STEEL_LIGHT)
-        d.line([x0 + 5, 60, x0 + 5, 94], fill=STEEL_LIGHT)
-        d.rectangle([x0 + 1, 59, x0 + 8, 62], fill=TEAL)
-        d.rectangle([x0 - 1, 54, x0 + 10, 58], fill=SNOW, outline=None)
-        d.line([x0, 58, x0 + 9, 58], fill=SNOW_SHADE)
+        box(d, x0, 58, x0 + 9, 95, W1, W0, W2)
+        R(d, x0 + 1, 59, x0 + 8, 62, TEAL1)
+        R(d, x0 + 1, 59, x0 + 8, 59, TEAL0)
+        R(d, x0 + 1, 62, x0 + 8, 62, TEAL2)
+        R(d, x0 + 2, 76, x0 + 7, 76, W2)
+        R(d, x0, 53, x0 + 9, 58, SNOW)
+        R(d, x0 + 1, 53, x0 + 8, 53, SNOW_HI)
+        R(d, x0, 54, x0 + 9, 54, SNOW_HI)
+        R(d, x0, 58, x0 + 9, 58, SNOW_LO)
+        R(d, x0 + 9, 54, x0 + 9, 58, SNOW_LO)
+        d.point((x0, 53), fill=(0, 0, 0, 0))
     for x0 in (4, 56):                                      # the canopy's posts
-        d.rectangle([x0, 42, x0 + 3, 57], fill=STEEL_DARK, outline=INK)
-    # the glass canopy
-    d.rounded_rectangle([1, 12, 62, 31], radius=6, fill=GLASS, outline=INK)
-    for x in range(11, 60, 10):
-        d.line([x, 13, x, 30], fill=STEEL)
-    d.line([3, 22, 60, 22], fill=GLASS_DARK)
-    d.line([4, 15, 20, 15], fill=WHITE)
-    # the snow lying on it
-    d.rounded_rectangle([0, 5, 63, 16], radius=5, fill=SNOW)
-    d.line([4, 5, 59, 5], fill=SNOW_SHADE)
-    d.arc([0, 5, 10, 16], 90, 270, fill=SNOW_SHADE)
-    d.arc([53, 5, 63, 16], 270, 90, fill=SNOW_SHADE)
-    for x, w in ((6, 9), (24, 12), (46, 8)):                # where it sags over the edge
-        d.rectangle([x, 16, x + w, 17], fill=SNOW)
-        d.line([x, 18, x + w, 18], fill=SNOW_SHADE)
+        R(d, x0, 42, x0 + 3, 57, EDGE)
+        R(d, x0 + 1, 42, x0 + 1, 57, STEEL)
+        R(d, x0 + 2, 42, x0 + 2, 57, STEEL_LO)
+    # the canopy, seen from above: a steel frame round a glass roof
+    R(d, 1, 6, 62, 29, EDGE)
+    R(d, 2, 7, 61, 28, STEEL)
+    R(d, 2, 7, 61, 7, STEEL_HI)
+    R(d, 2, 7, 2, 28, STEEL_HI)
+    R(d, 2, 27, 61, 28, STEEL_LO)
+    pane(d, 4, 9, 59, 25, 13)
+    for x in range(13, 59, 10):
+        R(d, x, 9, x, 25, STEEL)
+        R(d, x + 1, 9, x + 1, 25, GLASS_LO)
+    # the snow lying on it, but for its front edge
+    glass = (GLASS, GLASS_LO, GLARE)
+    for x in range(1, 63):
+        top, foot = (5 if x in (1, 62) else 4), 19 + speck(x // 3, 1, 316) % 4
+        R(d, x, top, x, foot, SNOW)
+        R(d, x, top, x, top + 1, SNOW_HI)
+        R(d, x, foot - 1, x, foot, SNOW_LO)
+        if x >= 56:
+            R(d, x, top + 2, x, foot, SNOW_LO)
+        under = px[x, foot + 1]
+        d.point((x, foot + 1), fill=GLASS_LO if under in glass else STEEL_LO)
+        for y in range(top + 2, foot - 1):
+            if speck(x, y, 317) < 3:
+                d.point((x, y), fill=SNOW_LO)
     # the sign
-    box(d, 3, 30, 60, 44, BLUE)
-    d.line([4, 43, 59, 43], fill=BLUE_DARK)
-    centred(d, 32, 32, '地下街', kana(), WHITE)
+    box(d, 3, 30, 60, 44, BLUE_LO, BLUE, BLUE_DK)
+    centred(d, 32, 32, '地下街', kana(), W0, EDGE)
+    ring(im)
     return im
 
 
 def sprites():
     out = {
-        'chika-floor-a': floor(TILE, TILE_JOINT, TILE_LIGHT),
-        'chika-floor-b': floor(TAN, TAN_JOINT, TILE),
+        'chika-floor-a': floor(W1, W0, W2, 316),
+        'chika-floor-b': floor(ST0, W0, ST1, 317),
         'chika-wall': wall(),
         'chika-wall-poster-a': wall('a'),
         'chika-wall-poster-b': wall('b'),
@@ -490,7 +746,7 @@ def main():
             rows.append((im, x, y))
             x += im.width + 16
             rowh = max(rowh, im.height)
-        sheet = Image.new('RGBA', (width, y + rowh + 16), SLATE + (255,))
+        sheet = Image.new('RGBA', (width, y + rowh + 16), rgb('5f6177'))
         for im, x, y in rows:
             sheet.alpha_composite(im, (x, y))
         sheet.save(out)

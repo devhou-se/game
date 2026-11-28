@@ -1252,6 +1252,8 @@ gets one from three files: `tools/chikagai.py` (data only: the arcade's shape, i
 where each exit's entrance stands on the street), `tools/generate_chikagai.py [Host ...]` (the room
 `Chikagai<Host>` and the doors into it) and `tools/generate_chikagai_art.py` (the `chika-*` sprites and the
 street entrance, `chikagai-entrance-snow`, 2x3: solid but for the foot of its steps, a pair of door cells).
+The art is drawn in the house look, in the pack's colours only, and owns its palette: it takes only the canvas
+and text helpers from `generate_station_art.py`, and `pane`, `foliage` from `generate_sendai_art.py` (#316).
 
 - **The town's own generator stamps the entrances** where the table says (`chikagai.TOWNS[town]['exits'][slug]
   ['street']`), sealed; `generate_chikagai.py` opens them and wires both door cells of each, and
@@ -1259,7 +1261,7 @@ street entrance, `chikagai-entrance-snow`, 2x3: solid but for the foot of its st
   as a house's or a lobby's). Walking onto the steps takes you down to the foot of the matching stairs; each
   exit brings you back up onto the cell in front of its entrance.
 - **The room** is a cross of corridors: an east-west hall with 3x2 shopfronts set into its north wall behind a
-  tan apron, and a stem north and south. Exits in a north wall are stairs under a yellow exit sign with the
+  stone apron, and a stem north and south. Exits in a north wall are stairs under a gold exit sign with the
   place's name (`chika-exit-<slug>`, drawn from the table); one in a south wall is steps in the front wall under
   a hanging sign (`chika-sign-<slug>`). Tactile paving runs from every exit to a line down the hall; pillars,
   benches and planters stand south of it (the station interior's sprites); coin lockers and a floor map at the
