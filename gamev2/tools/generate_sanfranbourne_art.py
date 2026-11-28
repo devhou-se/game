@@ -72,6 +72,7 @@ Run from gamev2/ BEFORE generate_airports.py / generate_sanfranbourne.py:
 """
 import json
 import math
+import os
 import sys
 from PIL import Image, ImageDraw, ImageFont
 
@@ -1760,6 +1761,21 @@ LOOK_UP = {'sfb-pyramid': 0, 'sfb-spire': 0}
 PICTURES = {'plane-interior': plane_interior, 'plane-sky': plane_sky}
 
 
+SPR = 'assets/sprites'
+CONFIG = 'config.json'
+
+
+def save_png(im, path):
+    """Write im unless the file already holds these pixels, so a rerun leaves the
+    committed PNGs byte for byte as they are whatever Pillow's encoder does (#390)."""
+    if os.path.exists(path):
+        with Image.open(path) as old:
+            if old.size == im.size and old.convert('RGBA').tobytes() == im.convert('RGBA').tobytes():
+                return False
+    im.save(path)
+    return True
+
+
 def main():
     built = {}
     for key, (fn, _) in SPRITES.items():
@@ -1768,16 +1784,16 @@ def main():
     for key, im in river_tiles().items():        # recoloured from sprites that are already 2x
         built[key] = im
     for key, im in built.items():
-        im.save(f'assets/sprites/{key}.png')
+        save_png(im, f'{SPR}/{key}.png')
         print(f'{key}: {im.width}x{im.height}px ({im.width // 64}x{im.height // 64} cells)')
     pictures = {}
     for key, fn in PICTURES.items():
         im = fn()
         pictures[key] = im.resize((im.width * 2, im.height * 2), Image.NEAREST)
-        pictures[key].save(f'assets/sprites/{key}.png')
+        save_png(pictures[key], f'{SPR}/{key}.png')
         print(f'{key}: {pictures[key].width}x{pictures[key].height}px')
 
-    cfg = json.load(open('config.json'))
+    cfg = json.load(open(CONFIG))
     for key, im in built.items():
         cfg['spriteMetadata'][key] = {'frameCount': 1, 'anchorX': 32 / im.width, 'anchorY': 32 / im.height}
         if key in FLAT:
@@ -1786,7 +1802,7 @@ def main():
     for key in pictures:
         cfg['spriteMetadata'][key] = {'frameCount': 1, 'anchorX': 0.5, 'anchorY': 0.5}
     cfg['game']['lookUp']['sprites'].update(LOOK_UP)
-    json.dump(cfg, open('config.json', 'w'), indent=2, sort_keys=True)
+    json.dump(cfg, open(CONFIG, 'w'), indent=2, sort_keys=True)
 
     if '--preview' in sys.argv:
         out = sys.argv[sys.argv.index('--preview') + 1]
