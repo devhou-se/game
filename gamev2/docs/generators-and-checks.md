@@ -11,7 +11,7 @@ committed world: it runs each one in a scratch copy and fails, naming the rooms 
 would change (issue #107, see "Generated rooms stay regenerable"). It also re-seeds every room with
 `config_to_tiled.py` and fails if a committed `tiled/*.tmj` would change (a config edit whose map was not
 re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_fukuoka_art`, `_hokuriku_art`, `_sapporo_art`, `_sanfranbourne_art`, `_tsutenkaku`,
-`_discount_art`, `_cooler_art`, `_konbini_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
+`_discount_art`, `_cooler_art`, `_konbini_art`, `_seven_eleven_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
 `extract_*.py` scripts, `extract_station` among them) and fails if `assets/sprites`, `assets/ads`, `assets/map`, `tiled/prefabs` or `config.json` would
 change (issues #186, #193). Run it after any edit to a
 generated room, a map or a generator. The room and map checks take a few seconds and need no Pillow; the
@@ -269,6 +269,20 @@ blocks, the ice-cream chest, the magazine rack, the baskets and the mat. Fully p
 byte-identical; it writes each sprite's `spriteMetadata` and `tileNames` and `generate_konbinis.py`
 appends the keys to the palette as it places them. Sizes are whole cells and are what the plans in
 `generate_konbinis.py` assume - change the art, not the footprint. Needs Pillow.
+
+`tools/generate_seven_eleven_art.py [--preview out.png]` draws `seven-eleven_0_0`, the 7-Eleven on the
+street (issue #89): 3x4 cells, a two-storey store front on - a flat roof, an upstairs flat, the white fascia
+with the orange / green / red stripes and the 7 of the back wall inside, a lit glass shopfront and the
+sliding doors on the middle cell of the bottom row, the cell the `seven-eleven` prefab leaves open. **It is a
+placeholder**: it took the place of the white line drawing ported from the Godot game, and the store is
+still waiting for hand-made art (the issue stays open, `needs-art`). A PNG drawn by hand replaces
+`assets/sprites/seven-eleven_0_0.png` at the same 192x256; take the tool out of `check_generators.ART_TOOLS`
+(and delete it) in the same commit, or the check reports the hand-made picture as drift, and keep only the
+size, anchor and door of its case in `tools/tests/konbini.test.js`, which also counts this picture's colours.
+Fully procedural,
+in the konbini kit's palette, and drawn with rectangles and points only, so a re-run draws the same pixels on
+any Pillow. Size and anchor are fixed by the maps of every town that places it - change the art, not the
+footprint - and the tool does not touch `config.json`. Needs Pillow.
 
 `tools/generate_devhouse_art.py [--preview out.png]` draws the 37 `devhouse-*` sprites (issue #69): the two
 buildings (`devhouse-tokyo_0_0` 5x8, `devhouse-osaka_0_0` 3x7; their prefabs are in `make_prefabs.py`), the

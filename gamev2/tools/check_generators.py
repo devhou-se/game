@@ -85,6 +85,7 @@ ART_TOOLS += ['generate_hokuriku_art']
 ART_TOOLS += ['generate_sapporo_art']        # Sapporo's own art (issue #219)
 ART_TOOLS += ['generate_chikagai_art']       # the underground arcades and their street entrances
 ART_TOOLS += ['generate_konbini_art']        # the 7-Eleven interiors' kit (issue #221)
+ART_TOOLS += ['generate_seven_eleven_art']   # the 7-Eleven on the street, a placeholder (issue #89)
 ART_TOOLS += ['generate_pub_art']            # the Sendai pub's interior, and the frame its neighbours share (issue #217)
 ART_TOOLS += ['generate_distillery_art']     # the distillery's tasting bar in Sendai (issue #217)
 ART_TOOLS += ['generate_mall_art']           # Canal City's atrium in Fukuoka (issue #217)

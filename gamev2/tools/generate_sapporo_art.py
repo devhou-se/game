@@ -21,8 +21,8 @@ Station front
   sapporo-office-brick_0_0     4x7  filler: a red-brick office block
   sapporo-office-glass_0_0     5x6  filler: a brick-framed glass block with a
                                     rooftop board (KITA, the red star)
-  sapporo-konbini_0_0          4x3  a konbini front in this style (the town's
-                                    7-Eleven tile is bare line art)
+  sapporo-konbini_0_0          4x3  a konbini front in this style (drawn when the
+                                    town's 7-Eleven tile was bare line art)
 Tanukikoji (the covered arcade)
   tanukikoji-gate_0_0          4x4  the arcade's arch: a tanuki medallion over
                                     a red board, bulbs under the arch; you walk
@@ -1440,9 +1440,9 @@ ORANGE = rgb('f08a3c')
 
 
 def konbini():
-    """A corner-shop front in the house style (the town's 7-Eleven tile is bare
-    line art): a white fascia with an orange and a teal stripe, a lit glass
-    front, automatic doors."""
+    """A corner-shop front in the house style (drawn when the town's 7-Eleven
+    tile was bare line art): a white fascia with an orange and a teal stripe,
+    a lit glass front, automatic doors."""
     im, d = canvas(4, 3)                 # 128 x 96
     d.rectangle([4, 24, 123, 91], fill=WHITE)
     d.rectangle([2, 20, 125, 24], fill=STONE_LO); d.line([(2, 20), (125, 20)], fill=STONE)
@@ -1992,7 +1992,7 @@ PIECES = [
      'star on a white roundel, glass lobby with sliding doors.'),
     ('sapporo-konbini_0_0', konbini, (4, 3), 'any (drawn for the Clock Tower block)', dict(
         door=[[1, 2]], solid=rows(4, 1, 2)),
-     'A konbini front in the house style, to stand where the line-art seven-eleven_0_0 tile cannot: white '
+     'A konbini front in the house style, to stand where the seven-eleven_0_0 tile cannot: white '
      'fascia with an orange and a teal stripe and konbini in kana (an invented mark, no brand), lit glass '
      'front with shelves, automatic doors, a nobori. Note it is 4x3; seven-eleven_0_0 is 3x4.'),
     ('tanukikoji-gate_0_0', tanuki_gate, (4, 4), 'Tanukikoji', dict(

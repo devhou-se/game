@@ -213,4 +213,35 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, require }) => {
             }
         }
     });
+
+    test('the 7-Eleven on the street is a shaded store in the interior\'s colours, not a white line drawing, at the size, anchor and door the maps place it by (#89)', () => {
+        const png = require('./png');
+        const { width, height, data } = png.decode(fs.readFileSync(sprite('seven-eleven_0_0')));
+        assert.deepStrictEqual([width, height], [192, 256], 'still 3x4 cells: every map places it by that footprint');
+        const meta = cfg.spriteMetadata['seven-eleven_0_0'];
+        assert.deepStrictEqual([meta.frameCount, meta.anchorX, meta.anchorY], [1, 0.1667, 0.125]);
+        // the cell the prefab leaves open for the store's door: the middle of the bottom row
+        const prefab = JSON.parse(fs.readFileSync(path.join(GV2, 'tiled', 'prefabs', 'seven-eleven.tmj'), 'utf8'));
+        const doors = prefab.layers.find((l) => l.name === 'Meta').objects.filter((o) => o.name === 'door')
+            .map((o) => [Math.floor(o.x / 64), Math.floor(o.y / 64)]);
+        assert.deepStrictEqual([prefab.width, prefab.height, doors], [3, 4, [[1, 3]]]);
+        const [dx, dy] = doors[0];
+        const count = { bare: 0, glassInDoor: 0, litInDoor: 0, litBeside: 0 };
+        const stripes = { 'd96a3c': 0, '709654': 0, 'ce3e3a': 0 };      // orange, green, red: the back wall's three inside
+        for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+            const p = (y * width + x) * 4;
+            assert.strictEqual(data[p + 3], 255, `a hole in the store at ${x},${y}`);
+            const hex = data.toString('hex', p, p + 3);
+            if (hex === 'ffffff' || hex === '000000') count.bare++;
+            if (hex in stripes) stripes[hex]++;
+            const door = Math.floor(x / 64) === dx && Math.floor(y / 64) === dy;
+            if ((hex === '9ccce2' || hex === '6896ba') && door) count.glassInDoor++;     // the sliding doors' glass, lit and in shade
+            if (hex === 'ffe8aa') count[door ? 'litInDoor' : 'litBeside']++;    // the lit store through a window
+        }
+        assert.ok(count.bare < width * height / 20, `${count.bare} pure white or black pixels: the line drawing is back`);
+        for (const [hex, n] of Object.entries(stripes)) assert.ok(n > 500, `the fascia has no #${hex} stripe`);
+        assert.ok(count.glassInDoor > 1000 && count.litInDoor === 0, 'the doors are not on the cell the prefab opens');
+        assert.ok(count.litBeside > 3000, 'no lit shop window either side of the doors');
+        assert.ok(/ART_TOOLS \+= \['generate_seven_eleven_art'\]/.test(fs.readFileSync(path.join(GV2, 'tools', 'check_generators.py'), 'utf8')));
+    });
 };
