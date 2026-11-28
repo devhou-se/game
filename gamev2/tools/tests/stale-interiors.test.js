@@ -12,6 +12,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
     // DOOR_DX / DOOR_DY of generate_konbinis.py and generate_discount_stores.py)
     const HOUSES = { 'machiya-black_0_0': [[2, 4]], 'machiya-red_0_0': [[2, 4]], 'machiya-blue_0_0': [[2, 4]] };
     for (const n of [1, 2, 3]) HOUSES[`building-entrance-${n}_0_0`] = [[1, 0]];
+    for (const look of ['red', 'blue']) HOUSES[`hokkaido-house-${look}_0_0`] = [[1, 3]];   // Asahikawa's riverside row (#219)
     const TOWERS = { 'highrise-yellow_0_0': [[1, 7]], 'highrise-blue_0_0': [[2, 10]], 'highrise-glass_0_0': [[1, 9], [2, 9]],
         'highrise-apartment_0_0': [[2, 7]], 'midrise-apartment_0_0': [[2, 5]], 'sapporo-office-brick_0_0': [[2, 6]], 'sapporo-office-glass_0_0': [[2, 5]] };
     const HALLS = { 'shrine-building_0_0': [[1, 4]], 'dazaifu-hall_0_0': [[3, 4]] };

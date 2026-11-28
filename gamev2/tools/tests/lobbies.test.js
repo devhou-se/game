@@ -12,6 +12,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         'highrise-yellow_0_0': [[1, 7]], 'highrise-blue_0_0': [[2, 10]], 'highrise-glass_0_0': [[1, 9], [2, 9]],
         'highrise-apartment_0_0': [[2, 7]], 'midrise-apartment_0_0': [[2, 5]],
         'sapporo-office-brick_0_0': [[2, 6]], 'sapporo-office-glass_0_0': [[2, 5]],     // Sapporo's own (#219)
+        'susukino-neon-corner_0_0': [[2, 6]],       // Susukino's tenant building (#219, stage 4)
     };
     const python = (args, cwd) => spawnSync('python3', args, { cwd: cwd || GV2, encoding: 'utf8', maxBuffer: 1 << 26 });
     const scratch = (fn) => {
@@ -126,7 +127,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         // every town with a tower, and every lobby there is
         assert.deepStrictEqual([...new Set(lobbies(c).map(([, r]) => r.lobby.host))].sort(),
             ['Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo', 'Sendai']);
-        assert.strictEqual(lobbies(c).length, 16);
+        assert.strictEqual(lobbies(c).length, 17);
         const towered = Object.keys(c.rooms).filter((k) => !c.rooms[k].interior && Object.values(tiles(c.rooms[k], 'Collidables')).some((t) => c.tilePalette[t] in TOWERS));
         assert.deepStrictEqual(towered.sort(), ['Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo', 'Sendai'], 'a town has a tower and no lobby');
     });
@@ -149,7 +150,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         // no other town's roll-out skips or excludes a tower
         const rest = python(['tools/generate_houses.py', '--dry-run', '--lobbies', 'Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo']);
         assert.strictEqual(rest.status, 0, rest.stderr);
-        assert.ok(!/skipped|not a tower/.test(rest.stdout) && /dry run: 15 interior\(s\)/.test(rest.stdout), rest.stdout);
+        assert.ok(!/skipped|not a tower/.test(rest.stdout) && /dry run: 16 interior\(s\)/.test(rest.stdout), rest.stdout);
         // a 7-Eleven beside a tower, not across its door, does not make it the store's: take Sendai's away from the
         // door's row and the flats are a tower again (skipped there: the store's own ground is in front of the door)
         scratch((tmp, read) => {

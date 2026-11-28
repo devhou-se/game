@@ -30,7 +30,6 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         ShrineTokyo1: { host: 'Tokyo', look: 'blue', size: 'standard', name: 'Palace Shrine' },
         ShrineMarket1: { host: 'Market', look: 'red', size: 'standard' },
         ShrinePark1: { host: 'Park', look: 'red', size: 'standard' },
-        ShrineAsahikawa1: { host: 'Asahikawa', look: 'blue', size: 'standard' },
         ShrineKanazawa1: { host: 'Kanazawa', look: 'blue', size: 'standard' },
         ShrineFukuoka1: { host: 'Fukuoka', look: 'red', size: 'large', name: 'Kushida Shrine' },
         ShrineFukuoka2: { host: 'Fukuoka', look: 'red', size: 'large', name: 'Dazaifu Tenmangu' },
@@ -41,7 +40,8 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
     test('a shrine hall is sealed everywhere except its one door cell, which leads into its worship hall (#212)', () => {
         const c = cfg();
         const found = halls(c);
-        assert.strictEqual(found.length, 7, 'Tokyo, Asahikawa, Kanazawa, Market, Park, Kushida and Dazaifu Tenmangu in Fukuoka');
+        // (Asahikawa's went when the zoo gate was built where it stood: issue #219, stage B)
+        assert.strictEqual(found.length, 6, 'Tokyo, Kanazawa, Market, Park, Kushida and Dazaifu Tenmangu in Fukuoka');
         for (const h of found) {
             const prefab = JSON.parse(fs.readFileSync(path.join(GV2, 'tiled', 'prefabs', `${h.kind.prefab}.tmj`), 'utf8'));
             const seal = prefab.layers.find((l) => l.name === 'Colliders').data;
@@ -196,7 +196,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
             stitched[host] = city;
         }
         assert.deepStrictEqual(stitched, { Tokyo: 'TokyoCity', Market: 'TokyoCity', Park: 'TokyoCity', Kanazawa: 'HokurikuCity',
-            Asahikawa: 'Asahikawa', Fukuoka: 'Fukuoka' });
+            Fukuoka: 'Fukuoka' });
     });
 
     test('an offering costs five yen, rings the bell and says a blessing; an empty wallet only bows (#212)', () => {
@@ -420,8 +420,8 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
             const mark = c.rooms[key].shrine, door = c.rooms[want.host].transporters.find((t) => t.targetRoom === key);
             assert.deepStrictEqual(mark, { host: want.host, door: [door.gridX, door.gridY], look: want.look, size: want.size }, key);
         }
-        // the generated towns with a hall (Asahikawa has three houses beside it, Fukuoka four and two halls,
-        // Kanazawa a wood round it) in a scratch copy: each town's generator stamps its hall and its houses
+        // the generated towns with a hall (Fukuoka has four houses and two halls, Kanazawa four houses and a
+        // wood round its hall) in a scratch copy: each town's generator stamps its hall and its houses
         // sealed again, and the doors are put back
         const { spawnSync } = require('child_process');
         const tmp = fs.mkdtempSync(path.join(require('os').tmpdir(), 'gamev2-shrines-'));
@@ -434,27 +434,33 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
                     env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
                 assert.strictEqual(run.status, 0, `${args.join(' ')}: ${run.stderr}`);
             };
-            const doors = (text) => JSON.parse(text).rooms.Asahikawa.transporters.map((t) => t.targetRoom);
-            const wired = read(), hall = JSON.parse(wired).rooms.ShrineAsahikawa1.shrine;
-            assert.deepStrictEqual(doors(wired), ['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3', 'ShrineAsahikawa1']);
-            for (const args of [['tools/generate_asahikawa.py'], ['tools/generate_fukuoka.py'], ['tools/generate_kanazawa.py'],
+            const doors = (text) => JSON.parse(text).rooms.Kanazawa.transporters.map((t) => t.targetRoom);
+            const wired = read(), hall = JSON.parse(wired).rooms.ShrineKanazawa1.shrine;
+            assert.ok(doors(wired).includes('ShrineKanazawa1') && doors(wired).includes('HouseKanazawa1'));
+            for (const args of [['tools/generate_fukuoka.py'], ['tools/generate_kanazawa.py'],
                 ['tools/generate_shrines.py'], ['tools/generate_houses.py']]) {
                 python(...args);
                 assert.ok(read() === wired, `${args[0]} changed config.json: a shrine door or a house door was not kept`);
             }
             // the hall's room no longer a hall's: the town rebuild leaves the hall sealed, the houses open
             const gone = JSON.parse(wired);
-            delete gone.rooms.ShrineAsahikawa1.shrine;
+            delete gone.rooms.ShrineKanazawa1.shrine;
             fs.writeFileSync(path.join(tmp, 'config.json'), JSON.stringify(gone, null, 2));
-            python('tools/generate_asahikawa.py');
+            python('tools/generate_kanazawa.py');
             const sealed = JSON.parse(read());
-            assert.deepStrictEqual(doors(read()), ['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3']);
-            assert.ok(hall.door.join(',') in tiles(sealed.rooms.Asahikawa, 'Colliders'), 'an unowned door stayed open');
+            assert.deepStrictEqual(doors(read()), doors(wired).filter((room) => room !== 'ShrineKanazawa1'));
+            assert.ok(hall.door.join(',') in tiles(sealed.rooms.Kanazawa, 'Colliders'), 'an unowned door stayed open');
             // and a sealed hall is given its interior by naming its host: the roll-out, back to what is committed
-            delete sealed.rooms.ShrineAsahikawa1;
+            delete sealed.rooms.ShrineKanazawa1;
             fs.writeFileSync(path.join(tmp, 'config.json'), JSON.stringify(sealed, null, 2));
-            python('tools/generate_shrines.py', 'Asahikawa');
-            assert.ok(read() === wired, 'the roll-out of a sealed hall is not what is committed');
+            python('tools/generate_shrines.py', 'Kanazawa');
+            // (the door is wired last: the same doors, in another order than the committed list's)
+            const sorted = (text) => {
+                const config = JSON.parse(text);
+                config.rooms.Kanazawa.transporters.sort((a, b) => a.targetRoom.localeCompare(b.targetRoom));
+                return JSON.stringify(config);
+            };
+            assert.ok(sorted(read()) === sorted(wired), 'the roll-out of a sealed hall is not what is committed');
         } finally {
             fs.rmSync(tmp, { recursive: true, force: true });
         }

@@ -98,7 +98,7 @@ The city buildings (`highrise-*`, `discount-store`, `machiya-*`) come from `tool
 
 The Hokkaido prefabs (`sapporo-clock-tower`, `sapporo-tv-tower`, `asahikawa-bridge`, `ramen-banner`) are
 drawn by `tools/generate_hokkaido.py` - see "Hokkaido: Sapporo and Asahikawa" in `gamev2/docs/landmarks-and-towns.md`.
-`asahikawa-bridge` is the pattern for a flat multi-cell sprite laid over water: a `Non-Collidables` object
+`asahikawa-bridge` (no town places it since Asahikawa got `asahibashi-deck`, laid the same way, #219) is the pattern for a flat multi-cell sprite laid over water: a `Non-Collidables` object
 whose sprite carries a negative `depthBias` in `config.json` `spriteMetadata` (an `Over Floor` object would
 be drawn under the `Water` tiles).
 

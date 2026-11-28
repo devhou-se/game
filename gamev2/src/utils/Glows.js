@@ -154,6 +154,9 @@ Glows.SPRITES = {
         { x: 1.5, y: 0.75, r: 1.5, ry: 0.7, color: Glows.YELLOW },
         { x: 1.5, y: 1.4, r: 1.2, ry: 0.5, color: 0xff8a5a },
     ],
+    // 3x3 each: the lamp behind the noren of a ramen counter (issue #219, stage 4)
+    'susukino-ramen-stall-a_0_0': [{ x: 1.5, y: 1.7, r: 1.4, ry: 0.8, color: Glows.WARM, a: 0.75 }],
+    'susukino-ramen-stall-b_0_0': [{ x: 1.5, y: 1.7, r: 1.4, ry: 0.8, color: Glows.WARM, a: 0.75 }],
     // 4x4: the bulbs along the arch, and the tanuki's roundel
     'tanukikoji-gate_0_0': [
         { x: 2.0, y: 1.9, r: 1.9, ry: 0.8, color: Glows.YELLOW, a: 0.8, pulse: { period: 2400, depth: 0.25 } },

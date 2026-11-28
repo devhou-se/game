@@ -49,7 +49,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, require }) => {
     const kit = Object.keys(cfg.spriteMetadata).filter((k) => k.startsWith('konbini-')).sort();
 
     test('every 7-Eleven is a 20x15 interior: its mat leads out to the cell below its door, its door in to the cell above the mat (#221)', () => {
-        assert.strictEqual(stores.length, 13, stores.map(([k]) => k).join());
+        assert.strictEqual(stores.length, 14, stores.map(([k]) => k).join());
         for (const [key, room] of stores) {
             assert.deepStrictEqual([room.worldWidth, room.worldHeight], [20 * 64, 15 * 64], key);
             assert.strictEqual(room.interior, true, key);

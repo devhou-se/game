@@ -109,9 +109,9 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, realConfig }) => {
                 same(into.map((t) => t.gridX).sort(), [hall.entry[0], hall.entry[0] + 1], `${key}: the hall's mats are below its entry cell`);
                 return;
             }
-            // one door cell, or a pair side by side (Sapporo's station front, #219): the first is the west one
+            // one door cell, or a pair side by side (Sapporo's and Asahikawa's station fronts, #219): the first is the west one
             into.sort((a, b) => a.gridX - b.gridX);
-            assert.ok(into.length === 1 || (into.length === 2 && key === 'SapporoStation'), `${key}: ${into.length} doors in ${st.town}`);
+            assert.ok(into.length === 1 || (into.length === 2 && ['SapporoStation', 'AsahikawaStation'].includes(key)), `${key}: ${into.length} doors in ${st.town}`);
             if (into.length === 2) same([into[1].gridX, into[1].gridY], [into[0].gridX + 1, into[0].gridY], `${key}: the pair of doors is not side by side`);
             for (const t of into) same([t.targetX, t.targetY], st.entry, `${key}: the town door misses the entry cell`);
             // the exit: two mats under the front wall, straight below the entry cell, out to the cell in front of the door

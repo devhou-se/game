@@ -26,8 +26,7 @@ step 1: labels only, no map changes). The game itself does not read
 
 The names are the redesign plan's going-forward ones wherever that area is on
 today's map; the bounds are today's map. An area the plan names that is not
-built yet (Sapporo's Susukino, Asahikawa's zoo gate,
-Shirakawa-go's ryokan, Ueno and Shibuya in Tokyo's Park) has NO district:
+built yet (Shirakawa-go's ryokan, Ueno and Shibuya in Tokyo's Park) has NO district:
 add it with the map change that builds it. A room need not be covered edge
 to edge, and districts of one room never overlap.
 
@@ -101,17 +100,23 @@ DISTRICTS = {
           'the covered shopping arcade on red brick under a glass roof: souvenirs, the crab shop, a drugstore, '
           'the 7-Eleven, in through the tanuki gate',
           (17, 34, 43, 42), stand=(24, 39)),
+        d('susukino', 'Susukino',
+          'the neon crossing at night: the fox board on the corner building, a karaoke bar, the ramen alley behind '
+          'its gate, the streetcar and its stop on a dark tram street',
+          (2, 43, 53, 49), stand=(37, 47)),
     ],
     'Asahikawa': [
         d('station-front', 'Station front and Heiwa-dori',
-          'Asahikawa Station, the pedestrian shopping street out of it, ice sculptures, the open snow north of the river',
-          (17, 6, 39, 14), stand=(28, 11)),
+          "Asahikawa Station's glass hall and the pedestrian shopping street out of it: a 7-Eleven, a bookshop, "
+          'a sake shop, a bakery, a woodcraft shop, ice sculptures',
+          (11, 5, 39, 12), stand=(28, 11)),
         d('ramen-alley', 'Ramen alley',
-          'shoyu ramen counters, red banners, steam, late-night bowls',
-          (2, 9, 16, 16), stand=(8, 15)),
+          'shoyu ramen counters behind a lantern gate, steam, late-night bowls',
+          (2, 13, 16, 15), stand=(8, 15)),
         d('riverbank', 'Asahibashi and the riverbank',
-          'the bridge over the frozen river and the snowy banks either side of it',
-          (17, 15, 39, 21), stand=(23, 15)),
+          'the green arch bridge over the frozen river, ice fishing, the snowy banks, three Hokkaido houses and '
+          'the Asahiyama Zoo gate on the south side',
+          (2, 16, 39, 27), stand=(23, 21)),
     ],
     # --- Kansai -----------------------------------------------------------
     'Osaka': [

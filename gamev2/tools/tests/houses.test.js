@@ -9,6 +9,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
     // the door sprites a house may be opened by, and where the door is on each (roomgen.HOUSE_DOORS)
     const FRONTS = { 'building-entrance-1_0_0': 1, 'building-entrance-2_0_0': 1, 'building-entrance-3_0_0': 1 };
     const MACHIYA = ['machiya-black_0_0', 'machiya-red_0_0', 'machiya-blue_0_0'];
+    // Asahikawa's riverside row (issue #219, stage B): 3x4, the door at (1, 3)
+    const HOKKAIDO = ['hokkaido-house-red_0_0', 'hokkaido-house-blue_0_0'];
     const VOID = 'office-void-autotile_center';
     const python = (args, cwd) => spawnSync('python3', args, { cwd: cwd || GV2, encoding: 'utf8', maxBuffer: 1 << 26 });
 
@@ -61,9 +63,10 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             assert.strictEqual(doors.length, 1, `${key}: exactly one way in`);
             const door = doors[0];
             assert.deepStrictEqual([door.gridX, door.gridY, door.hidden], [dx, dy, true], key);
-            // the door is the middle of a townhouse front (or of a machiya's), nothing else
+            // the door is the middle of a townhouse front (or of a machiya's, or of a Hokkaido house's), nothing else
             const sprites = tiles(host, 'Collidables');
-            const front = name(sprites[`${dx - 1},${dy}`]) in FRONTS || MACHIYA.includes(name(sprites[`${dx - 2},${dy - 4}`]));
+            const front = name(sprites[`${dx - 1},${dy}`]) in FRONTS || MACHIYA.includes(name(sprites[`${dx - 2},${dy - 4}`]))
+                || HOKKAIDO.includes(name(sprites[`${dx - 1},${dy - 3}`]));
             assert.ok(front, `${key}: the door at ${dx},${dy} is not in a house front`);
             const solid = tiles(host, 'Colliders'), out = `${dx},${dy + 1}`;
             assert.ok(!(`${dx},${dy}` in solid), `${key}: the doorway is sealed`);
@@ -196,7 +199,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
     });
 
     test('the lint knows a home: furniture that seals off floor, or a kotatsu nobody can reach, is an error (#208)', () => {
-        const key = 'HouseAsahikawa1';
+        const key = houses(cfg()).find(([, room]) => room.house.layout === 'kotatsu')[0];
         const walled = worldWith(false, (config) => {
             const room = config.rooms[key], mat = room.transporters[0];
             // a wall across the row above the step: the genkan still works, the room behind it is cut off
@@ -308,8 +311,9 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             const after = JSON.parse(read()), town = after.rooms.Asahikawa;
             assert.ok(!('HouseAsahikawa2' in after.rooms), 'the skipped house kept its room');
             assert.ok(`${dx},${dy}` in tiles(town, 'Colliders'), 'the skipped house is not sealed');
-            // (the shrine's door is its own generator's, #212: the houses generator leaves it where it is)
-            assert.deepStrictEqual(town.transporters.map((t) => t.targetRoom), ['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa3', 'ShrineAsahikawa1']);
+            // (the station's, the 7-Eleven's and the shops' doors are other generators': this one leaves them where they are)
+            assert.deepStrictEqual(town.transporters.map((t) => t.targetRoom), ['AsahikawaStation', 'AsahikawaStation', 'KonbiniAsahikawa1',
+                'HouseAsahikawa1', 'HouseAsahikawa3', 'ShopAsahikawa1', 'ShopAsahikawa2', 'ShopAsahikawa3', 'ShopAsahikawa4']);
             // the other two keep their numbers and their rooms, and nobody was moved to make way
             assert.deepStrictEqual(after.rooms.HouseAsahikawa1, orig.rooms.HouseAsahikawa1);
             assert.deepStrictEqual(after.rooms.HouseAsahikawa3, orig.rooms.HouseAsahikawa3);
@@ -321,7 +325,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             const again = JSON.parse(read());
             assert.deepStrictEqual(again.rooms.HouseAsahikawa2, orig.rooms.HouseAsahikawa2);
             assert.deepStrictEqual(new Set(again.rooms.Asahikawa.transporters.map((t) => t.targetRoom)),
-                new Set(['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3', 'ShrineAsahikawa1']));
+                new Set(['AsahikawaStation', 'KonbiniAsahikawa1', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3',
+                    'ShopAsahikawa1', 'ShopAsahikawa2', 'ShopAsahikawa3', 'ShopAsahikawa4']));
             assert.ok(!(`${dx},${dy}` in tiles(again.rooms.Asahikawa, 'Colliders')), 'the door did not open again');
         });
     });
@@ -415,31 +420,33 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         }
     });
 
-    test('what is not a house is not opened as one: ramen alley stays sealed, the shrine and the station house keep their own doors (#208, #212)', () => {
+    test('what is not a house is not opened as one: the shops, the 7-Eleven and the station keep their own doors, the riverside row is the houses (#208, #219)', () => {
         const c = cfg(), name = (t) => c.tilePalette[t], town = c.rooms.Asahikawa;
         const sprites = tiles(town, 'Collidables'), solid = tiles(town, 'Colliders');
         const at = (x, y) => town.transporters.filter((t) => t.gridX === x && t.gridY === y).map((t) => t.targetRoom);
-        // the three machiya of ramen alley are shops (a ramen nobori at each front): door (x + 2, y + 4) solid, no way in
-        let alley = 0;
-        for (const [cell, t] of Object.entries(sprites)) {
-            if (!MACHIYA.includes(name(t))) continue;
-            const [x, y] = cell.split(',').map(Number);
-            assert.ok(`${x + 2},${y + 4}` in solid, `the ramen shop at ${cell} is open`);
-            assert.deepStrictEqual(at(x + 2, y + 4), []);
-            alley++;
+        const where = (key) => Object.keys(sprites).filter((cell) => name(sprites[cell]) === key).map((cell) => cell.split(',').map(Number));
+        // the riverside row: three Hokkaido houses, the door at each one's (1, 3), in door order west to east
+        const row = [...where('hokkaido-house-red_0_0'), ...where('hokkaido-house-blue_0_0')].sort((a, b) => a[0] - b[0]);
+        assert.deepStrictEqual(row.map(([x, y]) => at(x + 1, y + 3)), [['HouseAsahikawa1'], ['HouseAsahikawa2'], ['HouseAsahikawa3']]);
+        // the buildings with a door of their own lead into a shop floor, the 7-Eleven or the station, never into a House room
+        const own = [['heiwa-shop-sake_0_0', 1, 3, 'ShopAsahikawa1'], ['heiwa-shop-bakery_0_0', 1, 3, 'ShopAsahikawa2'],
+            ['heiwa-shop-woodcraft_0_0', 3, 2, 'ShopAsahikawa3'], ['ramen-shoyu-front_0_0', 3, 3, 'ShopAsahikawa4'],
+            ['seven-eleven_0_0', 1, 3, 'KonbiniAsahikawa1'], ['asahikawa-station-front_0_0', 4, 4, 'AsahikawaStation'],
+            ['asahikawa-station-front_0_0', 5, 4, 'AsahikawaStation']];
+        for (const [key, dx, dy, target] of own) {
+            const [[x, y]] = where(key);
+            assert.deepStrictEqual(at(x + dx, y + dy), [target], key);
+            assert.ok(!(`${x + dx},${y + dy}` in solid) && !c.rooms[target].house, `${key}: its door is a house's`);
         }
-        assert.strictEqual(alley, 3);
-        // the shrine hall's doorway (the building's 1,4) was solid until its own generator opened it (#212):
-        // it leads into the worship hall, never into a House room
-        const shrine = Object.keys(sprites).find((cell) => name(sprites[cell]) === 'shrine-building_0_0').split(',').map(Number);
-        assert.deepStrictEqual(at(shrine[0] + 1, shrine[1] + 4), ['ShrineAsahikawa1']);
-        assert.ok(!(`${shrine[0] + 1},${shrine[1] + 4}` in solid) && !c.rooms.ShrineAsahikawa1.house, 'the shrine is a house');
-        // every townhouse front is a house or the station - and the station's still leads to the station
-        const fronts = Object.entries(sprites).filter(([, t]) => name(t) in FRONTS).map(([cell]) => cell.split(',').map(Number));
-        const targets = fronts.map(([x, y]) => at(x + 1, y)).flat().sort();
-        assert.deepStrictEqual(targets, ['AsahikawaStation', 'HouseAsahikawa1', 'HouseAsahikawa2', 'HouseAsahikawa3']);
-        // the generator's own account of what it leaves alone
-        const src = fs.readFileSync(path.join(GV2, 'tools', 'generate_houses.py'), 'utf8');
-        assert.ok(/SHOP_SIGNS = \('ramen-banner_0_0',\)/.test(src));
+        // the bookshop and the other two ramen shops have nothing behind them: sealed all over, no way in
+        for (const [key, w, h] of [['heiwa-shop-books_0_0', 3, 3], ['ramen-narrow-front_0_0', 2, 4], ['ramen-miso-front_0_0', 3, 4]]) {
+            const [[x, y]] = where(key);
+            for (let cx = x; cx < x + w; cx++) {
+                assert.ok(`${cx},${y + h - 1}` in solid, `${key}: its foot at ${cx},${y + h - 1} is open`);
+                assert.deepStrictEqual(at(cx, y + h - 1), [], key);
+            }
+        }
+        // and that is every door in the town
+        assert.strictEqual(town.transporters.length, 10);
     });
 };

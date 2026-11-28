@@ -379,8 +379,20 @@ def test_spots(cfg):
             assert room_key in cfg['rooms'], f'{label}: no room {room_key!r}'
             assert label in by_room.get(room_key, {}), f'{label} is not found in {room_key}'
         if 'rooms' in options:
+            # ...nowhere else, unless another row carries the same label for another town: Sapporo's
+            # `ramen alley` hangs on Susukino's ramen gate, Asahikawa's on its own lantern gate
+            # (issue #219). An unscoped row counts for the towns that hold its sprite
             offered = {r for r in by_room if label in by_room[r]}
-            assert offered == set(options['rooms']), (label, offered)
+            expected = set()
+            for other_prefix, other_label, _, other in map(b.landmark_fields, b.LANDMARKS):
+                if other_label == label:
+                    expected |= set(other['rooms']) if 'rooms' in other else {
+                        r for r in by_room if any(key.startswith(other_prefix) for layer in cfg['rooms'][r]['layers']
+                                                  for key in b.decode_tiles(cfg, layer).values())}
+            assert offered == expected, (label, offered, expected)
+    # the two ramen alleys: each town's own, at its own sprite
+    assert by_room['Sapporo']['ramen alley'] == (25, 47), by_room['Sapporo']['ramen alley']
+    assert sorted(r for r in by_room if 'ramen alley' in by_room[r]) == ['Asahikawa', 'Sapporo']
     # ... and that filter is doing something: the gate's sprite is in both towns
     def has_tile(room_key, prefix):
         return any(key.startswith(prefix) for layer in cfg['rooms'][room_key]['layers']
@@ -860,7 +872,7 @@ def test_post_date(cfg):
     assert b.post_date(cfg, {'date': '2027-02-30T01:00:00Z'}) == '2027-02-30' and not b.is_day('2027-02-30')
     # end to end: the early-morning post lands on the Asahikawa day
     work = copy.deepcopy(cfg)
-    record = place(work, dict(post(2), date='2027-02-24T23:30:00Z'), 'Asahikawa · the shrine', spots)
+    record = place(work, dict(post(2), date='2027-02-24T23:30:00Z'), 'Asahikawa · the Asahiyama Zoo gate', spots)
     assert record['date'] == '2027-02-25', record
     assert [r for r, st in placements(work, 'Bailey', '2027-02-25') if st.get('present')] == ['Asahikawa']
     assert placements(work, 'Bailey', '2027-02-24') == []
@@ -888,7 +900,7 @@ def test_mock_steer(cfg):
 
 def test_not_in_the_way(cfg):
     """A placement never seals off part of the map or the people in it
-    (issue #119: Asahikawa's ramen alley is one cell wide)."""
+    (issue #119: Asahikawa's ramen alley was one cell wide)."""
     # walls_in on a hand-drawn lane: x 0..6 on row 1, an alcove at (3,0), a yard 2x2 at the east end
     lane = {(x, 1) for x in range(7)} | {(3, 0)} | {(5, 2), (6, 2)}
     assert b.walls_in((2, 1), lane), 'the middle of a one-cell lane'
@@ -920,16 +932,26 @@ def test_not_in_the_way(cfg):
     assert b.walkable_near(corner, 'A', 6, 0) != (6, 0)
     assert b.walkable_near(corner, 'A', 5, 2, {(6, 2)}) != (5, 2), 'would leave (6,2) unreachable'
 
-    # the shipped map: a post about ramen alley stands in a doorway, and the alley stays one walk
-    spots = b.find_spots(cfg)
-    room, x, y = spots['Asahikawa · ramen alley']
-    region = b.walk_region(cfg, room)
-    assert b.walls_in((x, y), region), 'the alley is no longer one cell wide: this test wants a new example'
+    # an alley one cell wide between two yards (what Asahikawa's ramen alley was until it was rebuilt two
+    # cells wide, issue #219): seven posts about it stand in the yards, and the alley stays one walk
+    alley = {(x, 2) for x in range(3, 10)} | {(x, y) for x in (0, 1, 2, 10, 11, 12) for y in range(5)}
+    town = {'game': {'gridSize': 64, 'worldWidth': 13 * 64, 'worldHeight': 5 * 64},
+            'rooms': {'A': {'layers': [{'name': 'Floor', 'tiles': {f'{x},{y}': 'f' for x, y in alley}}],
+                            'transporters': [{'gridX': 0, 'gridY': 0, 'targetRoom': 'A', 'targetX': 1, 'targetY': 1}]}}}
+    room, x, y = 'A', 6, 2
+    region = b.walk_region(town, room)
+    assert b.walls_in((x, y), region), 'the middle of the alley is in the way'
     taken = set()
     for _ in b.AUTHOR_NPCS:
-        cell = b.walkable_near(cfg, room, x, y, taken)
+        cell = b.walkable_near(town, room, x, y, taken)
         assert cell is not None and not b.walls_in(cell, region - taken), (cell, sorted(taken))
+        assert cell[1] != 2 or not 3 <= cell[0] <= 9, f'{cell} is in the alley'
         taken.add(cell)
+    # the shipped alley: anybody can be stood on any cell of its south row
+    region = b.walk_region(cfg, 'Asahikawa')
+    for ax in range(2, 17):
+        assert (ax, 15) in region and not b.walls_in((ax, 15), region), f'Asahikawa ({ax}, 15) is refused'
+    spots = b.find_spots(cfg)
     # every spot, seven deep: nobody walls anything in, and everyone can be walked up to
     for spot_id, (room, x, y) in sorted(spots.items()):
         region, taken = b.walk_region(cfg, room), set()

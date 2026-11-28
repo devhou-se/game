@@ -82,7 +82,7 @@ crossings, traffic lights, track) counts neither for nor against a city.
   printed against the targets and does not fail.
 - **The baseline** (28 Nov 2026, buildings / sprites / own): Tokyo 0.15 / 0.32 / 56%, Hokuriku 0.27 / 0.54 / 40%,
   Sendai 0.23 / 0.54 / 29%, Fukuoka 0.25 / 0.44 / 26%, Sapporo 0.06 / 0.18 / 78% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Osaka 0.18 / 0.44 / 17%,
-  Asahikawa 0.27 / 0.20 / 10%, San Franbourne 0.18 / 0.32 / 69%. `--update` records today's numbers: do it when a rebuild made a city better or
+  Asahikawa 0.00 / 0.11 / 87% (rebuilt from its own art, #219 stage B: it was 0.27 / 0.20 / 10%; Fukuoka, Hokuriku and Sendai, whose most-alike town it was, fell on buildings with no map of theirs changing), San Franbourne 0.18 / 0.32 / 69%. `--update` records today's numbers: do it when a rebuild made a city better or
   a new town landed, and say so in the commit. Never to hide a city getting worse.
 - The 28 Nov baseline records only gains since the 27 Nov one (issue #264; no number is worse): Osaka was
   0.20 / 0.45 / 11% before its Devhouse (`devhouse-osaka`) and the wheel's boarding platform (`wheel-boarding`)

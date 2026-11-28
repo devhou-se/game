@@ -42,6 +42,9 @@ Susukino
                                     beer, on rays) over stacked sign boards
   susukino-ramen-gate_0_0      3x3  the ramen alley's gate: a yellow board, a
                                     row of red paper lanterns; walk through
+  susukino-ramen-stall-a/-b    3x3  a ramen counter of the alley: tiled roof, a
+                                    kana board, a split noren (red / navy) over
+                                    an open counter, three stools; no door
   susukino-karaoke_0_0         4x5  a karaoke / bar front with lit rooms
   susukino-neon-lanterns_0_0   1x2  a pole of small neon signs, and
   ramen-alley-lanterns_0_0     1x2  a post of paper lanterns. Their keys hold
@@ -72,6 +75,8 @@ Ground
                                     autotile roles) - the arcade's floor
   snow-path-autotile_*         1x1  a path trodden through the snow (9 roles):
                                     the snow tile a shade lower, boot prints
+  susukino-asphalt-autotile_*  1x1  dark wet asphalt with neon lying in it (9
+                                    roles) - Susukino's ground
 
 This tool writes the PNGs into assets/sprites/ and registers every one in
 config.json (spriteMetadata, tileNames), as generate_fukuoka_art.py does; the
@@ -153,6 +158,9 @@ KANA = {       # 7x7 katakana, hand-set
     'bi': ['#...#.#', '#....#.', '#..##..', '###....', '#......', '#......', '.#####.'],
     'ko': ['#######', '......#', '......#', '......#', '......#', '......#', '#######'],
     'bar': ['.......', '.......', '.......', '#######', '.......', '.......', '.......'],
+    'mi': ['.###...', '....##.', '.......', '.###...', '....##.', '###....', '...####'],
+    'so': ['#.....#', '.#....#', '.#....#', '.....#.', '....#..', '...#...', '.##....'],
+    'shi': ['.#.....', '..#...#', '#.....#', '.#...#.', '....#..', '...#...', '###....'],
     'vbar': ['...#...'] * 7,                      # the long-vowel bar in vertical text
 }
 
@@ -799,6 +807,75 @@ def ramen_gate():
         else:
             lantern(d, x, 38, 9, 13)
     drift(d, 0, 18, 95, 4, seed=2); drift(d, 77, 95, 95, 4, seed=9)
+    outline(im)
+    return im
+
+
+def ramen_stall(variant='a'):
+    """A ramen counter of the alley behind the gate: a small tiled roof under
+    snow, a board in kana (a: miso on red, b: shio on navy), a split noren over
+    an open counter - the pot steaming, bowls set out, the lamp on - and three
+    stools in the snow. No door: you eat at the counter, as at a yatai."""
+    cloth, cloth_lo, ink_, word = ((RED, RED_DK, WHITE, ('mi', 'so')) if variant == 'a'
+                                   else (NAVY, rgb('1c2748'), WHITE, ('shi', 'o')))
+    im, d = canvas(3, 3)                 # 96 x 96
+    # the timber front: two posts, a head beam, the lit inside
+    d.rectangle([4, 30, 91, 91], fill=DARK)
+    d.rectangle([6, 44, 89, 64], fill=rgb('5a3b34'))
+    d.rectangle([20, 46, 76, 49], fill=WARM)                      # lamplight on the back wall
+    for x in (4, 86):
+        d.rectangle([x, 28, x + 5, 91], fill=WOOD)
+        d.line([(x, 28), (x, 91)], fill=WOOD_HI); d.line([(x + 5, 28), (x + 5, 91)], fill=WOOD_DK)
+    # the roof: tiles under snow, deeper at the eaves
+    rows_ = [(y, 5 - (y - 7), 90 + (y - 7)) for y in range(7, 15)]
+    tiles(d, rows_, rgb('3b4a66'), NAVY, step=3)
+    d.line([(0, 15), (95, 15)], fill=INK)
+    snow_cap(d, 5, 90, 4, 3, seed=7 if variant == 'a' else 2)
+    snow_cap(d, 0, 14, 11, 2, seed=1); snow_cap(d, 80, 95, 11, 2, seed=4)
+    # the board over the counter
+    d.rectangle([4, 16, 91, 29], fill=WOOD_DK)
+    d.rectangle([24, 17, 71, 28], fill=CREAM)
+    d.line([(24, 17), (71, 17)], fill=WHITE)
+    kana(d, word, 48 - kana_w(2) // 2, 19, cloth_lo if variant == 'a' else NAVY)
+    lantern(d, 9, 17, 9, 12)                                      # a paper lantern at each end of it
+    lantern(d, 78, 17, 9, 12, body=WHITE, hi=WHITE, lo=CREAM_LO)
+    d.rectangle([81, 21, 83, 24], fill=RED)
+    # the noren: five cloths on a rod, a bowl on the middle one
+    d.line([(8, 30), (87, 30)], fill=WOOD_HI)
+    for i, x in enumerate(range(11, 86, 15)):
+        drop = 13 if i % 2 else 11
+        d.rectangle([x, 31, x + 13, 31 + drop], fill=cloth)
+        d.line([(x + 13, 31), (x + 13, 31 + drop)], fill=cloth_lo)
+        d.line([(x, 31 + drop), (x + 13, 31 + drop)], fill=cloth_lo)
+        if i == 2:
+            d.pieslice([x + 2, 31, x + 11, 41], 0, 180, fill=ink_)
+            d.line([(x + 2, 36), (x + 11, 36)], fill=cloth_lo)
+        else:
+            d.line([(x + 6, 34), (x + 6, 39)], fill=ink_)
+    # behind the counter: the stock pot, steam, a stack of bowls
+    d.rectangle([14, 52, 30, 61], fill=STONE); d.rectangle([14, 52, 17, 61], fill=WHITE)
+    d.rectangle([12, 50, 32, 52], fill=STONE_DK)
+    for sx, sy in ((18, 47), (23, 45), (27, 48)):
+        d.point((sx, sy), fill=WHITE); d.point((sx + 1, sy - 2), fill=SNOW_LO)
+    for k, x in enumerate(range(40, 80, 10)):                     # bowls set out along the counter
+        d.pieslice([x, 52, x + 8, 64], 0, 180, fill=WHITE)
+        d.line([(x, 58), (x + 8, 58)], fill=cloth if k % 2 else RED)
+        d.line([(x + 2, 57), (x + 6, 57)], fill=AMBER)
+    # the counter and its boarded front
+    d.rectangle([6, 62, 89, 66], fill=WOOD_HI)
+    d.line([(6, 66), (89, 66)], fill=WOOD_LO)
+    d.rectangle([10, 67, 85, 90], fill=WOOD)
+    for x in range(10, 86, 9):
+        d.line([(x, 67), (x, 90)], fill=WOOD_DK)
+    d.line([(10, 67), (85, 67)], fill=WOOD_DK)
+    # three stools
+    for x in (17, 42, 67):
+        d.rectangle([x, 76, x + 11, 79], fill=cloth); d.line([(x, 76), (x + 11, 76)], fill=CREAM if variant == 'b' else RED_HI)
+        d.line([(x, 79), (x + 11, 79)], fill=cloth_lo)
+        d.rectangle([x + 2, 80, x + 3, 91], fill=STONE_DK); d.rectangle([x + 8, 80, x + 9, 91], fill=STONE_DK)
+        d.line([(x + 2, 86), (x + 9, 86)], fill=STONE_DK)
+    d.rectangle([4, 92, 91, 95], fill=STONE_LO); d.line([(4, 92), (91, 92)], fill=STONE)
+    drift(d, 0, 16, 95, 4, seed=3 if variant == 'a' else 8); drift(d, 78, 95, 95, 4, seed=6)
     outline(im)
     return im
 
@@ -1824,6 +1901,42 @@ def tram_rail(kind):
     return im
 
 
+def wet_asphalt(role):
+    """Susukino's ground: dark wet asphalt, the district's neon lying in it as
+    short smears of pink, cyan and amber, a little slush; a darker kerb line on
+    the sides the role names. Not a road tile: people stand on it."""
+    base, lo, hi = (58, 61, 86, 255), (48, 49, 71, 255), (70, 75, 101, 255)
+    im = Image.new('RGBA', (32, 32), base)
+    px = im.load()
+    for y in range(32):
+        for x in range(32):
+            n = (x * 37 + y * 101 + (x * y) % 13 * 7) % 53
+            if n in (0, 7):
+                px[x, y] = lo
+            elif n == 19:
+                px[x, y] = hi
+    mix = lambda c, t: tuple(int(base[i] + (c[i] - base[i]) * t) for i in range(3)) + (255,)
+    for x0, y, w, c in ((3, 6, 7, PINK), (19, 11, 9, CYAN), (8, 17, 6, AMBER), (22, 23, 6, PINK), (2, 27, 8, CYAN)):
+        for x in range(x0, x0 + w):                               # a reflection: brightest in its middle
+            t = 0.42 if x0 + 1 < x < x0 + w - 2 else 0.2
+            px[x, y] = mix(c, t)
+        for x in range(x0 + 2, x0 + w - 2, 2):
+            px[x, y + 1] = mix(c, 0.16)
+    for x, y in ((14, 3), (28, 15), (5, 22), (17, 29)):           # slush
+        px[x, y] = SNOW_SH; px[x + 1, y] = SNOW_DK
+    tail = role.split('-')[-1] if role != 'center' else ''
+    for a in range(32):
+        if 'n' in tail:
+            px[a, 0] = lo; px[a, 1] = ASPHALT_DK
+        if 's' in tail:
+            px[a, 31] = lo; px[a, 30] = ASPHALT_DK
+        if 'w' in tail:
+            px[0, a] = lo; px[1, a] = ASPHALT_DK
+        if 'e' in tail:
+            px[31, a] = lo; px[30, a] = ASPHALT_DK
+    return im
+
+
 def tram_pole():
     """An overhead-wire pole: a green steel mast, a tubular bracket arm on a
     tie rod, the contact wire hung from two insulators. No snow lies on it."""
@@ -2039,6 +2152,14 @@ PIECES = [
      'Ramen alley gate: red posts, small tiled roof with snow, yellow ramen kana board with bowls, a row of '
      'red and white paper lanterns. The alley is one cell wide. It does not glow by itself: stand a '
      'ramen-alley-lanterns post beside it.'),
+    ('susukino-ramen-stall-a_0_0', lambda: ramen_stall('a'), (3, 3), 'Susukino', dict(
+        solid=rows(3, 0, 2)),
+     'A ramen counter for the alley behind the gate (added with stage 4): tiled roof under snow, a miso kana '
+     'board, a red split noren over an open counter with the pot steaming and bowls set out, three stools. '
+     'No door: a bump on it sells over the counter, as a yatai. Solid all over.'),
+    ('susukino-ramen-stall-b_0_0', lambda: ramen_stall('b'), (3, 3), 'Susukino', dict(
+        solid=rows(3, 0, 2)),
+     'The same counter with a navy noren and a shio kana board, so two side by side differ.'),
     ('susukino-karaoke_0_0', karaoke, (4, 5), 'Susukino', dict(
         door=[[1, 4]], solid=rows(4, 2, 4)),
      'Karaoke / bar front: purple cladding, pink neon karaoke kana sign with microphone, two floors of rooms '
@@ -2111,6 +2232,9 @@ FAMILIES = [
     ('snow-path-autotile', snow_path, False, 'Odori Park',
      "A path trodden through the snow: the snow tile's own texture a shade lower, a soft shadow under the "
      'north and west banks, a lit lip on the south and east ones, boot prints. Opaque (snow outside the edge).'),
+    ('susukino-asphalt-autotile', wet_asphalt, True, 'Susukino',
+     "Dark wet asphalt with the district's neon lying in it (pink, cyan, amber smears) and a little slush: "
+     "Susukino's ground, added with stage 4. Not a road tile - people stand on it. Keep it to Susukino."),
 ]
 SPRITES = {key: (fn, True) for key, fn, *_ in PIECES}      # key: (builder, pixel-double?)
 for _fam, _fn, _double, *_ in FAMILIES:

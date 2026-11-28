@@ -19,6 +19,8 @@ const Interactions = {
         { kind: 'taproom', group: 'shop', pattern: /^pub-in-bar/, footprint: true },
         // the distillery's tasting bar in Sendai (tools/generate_distillery.py, issue #217): the counter is the till
         { kind: 'tasting', group: 'shop', pattern: /^distillery-in-counter/, footprint: true },
+        // Susukino's ramen alley (issue #219, stage 4): a counter under a noren, eaten at as a yatai is
+        { kind: 'ramen', group: 'shop', pattern: /^susukino-ramen-stall/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^(office-(shelf-drinks|shelf-glass|fridge|freezer)|konbini-coffee)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^(office-shelf-snacks|konbini-(chiller|gondola-(snacks|noodles|bread)))/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },

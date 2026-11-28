@@ -42,9 +42,9 @@ Ramen alley
   ramen-stockpot_0_0            1x2  a stock pot steaming on a gas ring
   ramen-alley-autotile_*        1x1  wet asphalt and slush (9 autotile roles)
 Asahibashi and the riverbank
-  asahibashi-deck_0_0           2x7  the deck: a plain grey road, flat, walked
-                                     ON; five rows of river under it
-  asahibashi-arch-w / -e_0_0    1x7  the green riveted arch ribs (a deep
+  asahibashi-deck_0_0           2x5  the deck: a plain grey road, flat, walked
+                                     ON; three rows of river under it
+  asahibashi-arch-w / -e_0_0    1x5  the green riveted arch ribs (a deep
                                      latticed truss), one each side of the
                                      deck, leaning away from it as seen from
                                      above; never over the deck
@@ -65,8 +65,9 @@ Asahiyama Zoo gate
   penguin-walk-a / -b_0_0       2x1  king penguins in a line, mid-waddle
   zoo-seal-statue_0_0           2x2  a spotted seal rearing on a boulder
 
-This tool only writes PNGs into assets/sprites/. It does NOT register anything
-in config.json: the Asahikawa rebuild does that when it places them.
+Writes the PNGs into assets/sprites/ and registers every one in config.json
+(spriteMetadata, tileNames, the night glow of the lit pieces, the deck's
+depthBias) through tools/art_register.py; tools/generate_asahikawa.py places them.
 
 Deterministic (no randomness, no clock): two runs give byte-identical files.
 Needs Pillow. Run from gamev2/:
@@ -77,6 +78,8 @@ import math
 import os
 import sys
 from PIL import Image, ImageDraw, ImageOps
+
+import art_register
 
 from generate_hokkaido import (rgb, canvas, outline, snow_cap, tiles, CLEAR, INK, NAVY,
                                RED, RED_HI, RED_LO, RED_DK, CREAM, CREAM_LO, CREAM_DK,
@@ -1090,7 +1093,7 @@ def round_lantern(d, cx, cy, r, name):
     d.rectangle([cx - 2, cy - r - 2, cx + 2, cy - r], fill=INK)
     d.rectangle([cx - 2, cy + r, cx + 2, cy + r + 1], fill=INK)
     d.line([(cx, cy + r + 2), (cx, cy + r + 4)], fill=RED)
-    glyphs(d, [KANA['vbar' if name == 'bar' else name]], cx - 3, cy - 3, RED_DK)
+    glyphs(d, [KANA[name]], cx - 3, cy - 3, RED_DK)       # the gate's row reads across: its long mark lies flat
 
 
 def ramen_gate():
@@ -1296,7 +1299,8 @@ def green_rail(d, x0, y0, y1, posts):
 
 
 DECK, DECK_LO, DECK_HI = rgb('878d9d'), rgb('787e90'), rgb('969cab')
-BRIDGE_ROWS = 7                          # the deck's length in cells: one on each bank, the rest over the river
+BRIDGE_ROWS = 5                          # the deck's length in cells: one on each bank, the rest over the river
+PIER_LAMP_Y = (2, (BRIDGE_ROWS * 32 - 17) * 2)   # the two pier lamps of a rib, in file pixels from its top
 
 
 def asahibashi_deck(n=BRIDGE_ROWS):
@@ -2077,27 +2081,29 @@ PIECES = [
         walk=rows(2, 0, BRIDGE_ROWS - 1), layer='flat'),
      'Asahibashi\'s deck seen from above: a plain grey road (its own surface, not Heiwa-dori\'s setts) between '
      'green riveted parapets with snow-capped posts, a pale kerb line each side with snow blown up behind it, a '
-     'worn centre line, a stone threshold at each bank. 2x7, flat, walked ON (Non-Collidables + depthBias '
-     '-200, the asahikawa-bridge_0_0 recipe): rows 1-5 lie over FIVE river rows, rows 0 and 6 on the banks. '
-     'All fourteen cells are walkable. Today\'s river is three rows: widen it to five under the bridge (or '
-     'change BRIDGE_ROWS in the tool and re-run; the kit redraws to any length).'),
+     'worn centre line, a stone threshold at each bank. 2x5, flat, walked ON (Non-Collidables + depthBias '
+     '-200, the asahikawa-bridge_0_0 recipe): rows 1-3 lie over the three river rows, rows 0 and 4 on the '
+     'banks. All ten cells are walkable. For another river width change BRIDGE_ROWS in the tool and re-run; '
+     'the kit redraws to any length.'),
     ('asahibashi-arch-w_0_0', lambda: asahibashi_arch('w'), (1, BRIDGE_ROWS), 'Asahibashi and the riverbank', dict(
         solid=rows(1, 0, BRIDGE_ROWS - 1),
-        glow=[([0, 0], [50, 2], '#f6dc8c', 'pier lamp'), ([0, 6], [50, 414], '#f6dc8c', 'pier lamp')]),
+        glow=[([0, 0], [50, PIER_LAMP_Y[0]], '#f6dc8c', 'pier lamp'),
+              ([0, BRIDGE_ROWS - 1], [50, PIER_LAMP_Y[1]], '#f6dc8c', 'pier lamp')]),
      'The west rib of the green steel arch: a deep riveted truss (two chords with a zigzag lattice web between '
-     'them, readable at 1x) springing from a stone pier with a lamp on each bank, seven thin hangers down to '
+     'them, readable at 1x) springing from a stone pier with a lamp on each bank, thin hangers down to '
      'the deck\'s edge, snow on its back. Stands in the column WEST of the deck, rows as the deck, so the arch '
-     'spans the five rows of water. Drawn leaning away from the deck, as a tall thing looks from above, so it '
-     'never covers a deck cell. Its cells are solid (five are river ice anyway).'),
+     'spans the river. Drawn leaning away from the deck, as a tall thing looks from above, so it '
+     'never covers a deck cell. Its cells are solid (three are river ice anyway).'),
     ('asahibashi-arch-e_0_0', lambda: asahibashi_arch('e'), (1, BRIDGE_ROWS), 'Asahibashi and the riverbank', dict(
         solid=rows(1, 0, BRIDGE_ROWS - 1),
-        glow=[([0, 0], [14, 2], '#f6dc8c', 'pier lamp'), ([0, 6], [14, 414], '#f6dc8c', 'pier lamp')]),
+        glow=[([0, 0], [14, PIER_LAMP_Y[0]], '#f6dc8c', 'pier lamp'),
+              ([0, BRIDGE_ROWS - 1], [14, PIER_LAMP_Y[1]], '#f6dc8c', 'pier lamp')]),
      'The east rib, for the column EAST of the deck: the same truss drawn for its own side and lit from the '
      'west like everything else (its bright chord is the one facing the deck), not a mirror of the west rib.'),
     ('asahibashi-brace_0_0', asahibashi_brace, (4, 1), 'Asahibashi and the riverbank', dict(
         walk=[[1, 0], [2, 0]], layer='above'),
      'Optional: the overhead lattice brace that joins the two crowns over the deck. One row, four cells, '
-     'starting in the west rib\'s column, in the bridge\'s MIDDLE row (deck row 3); it must draw above the '
+     'starting in the west rib\'s column, in the bridge\'s MIDDLE row (deck row 2); it must draw above the '
      'player (a Tops-type layer), who walks under it. Leave it out and the bridge still reads.'),
     ('hokkaido-house-red_0_0', house_red, (3, 4), 'Asahibashi and the riverbank', dict(
         door=[[1, 3]], solid=rows(3, 1, 3),
@@ -2179,6 +2185,22 @@ for _fam, _fn, _double, *_ in FAMILIES:
         SPRITES[f'{_fam}_{_r}'] = ((lambda r=_r, fn=_fn: fn(r)), _double)
 
 DISTRICTS = ('station', 'ramen', 'bridge', 'zoo')
+FLAT = {key for key, _fn, _size, _district, m, _desc in PIECES if m.get('layer') == 'flat'}   # walked ON
+
+
+def glow_spots():
+    """{key: [{x, y, r, color, a}]} in cells from the sprite's top-left, from each
+    piece's `glow` (which is in file pixels and has no size): a window or a door
+    is a soft warm spot, a lantern or a flame a smaller one. art_register drops
+    the two keys DayNight lights itself (heiwa-lamp-post, asahikawa-ramen-lanterns)."""
+    out = {}
+    for key, _fn, _size, _district, m, _desc in PIECES:
+        spots = [{'x': px / 64, 'y': py / 64, 'color': colour, 'a': 0.5,
+                  'r': 0.6 if ('lantern' in what or 'small' in what or 'lamp' in what) else 0.9}
+                 for _cell, (px, py), colour, what in m.get('glow', [])]
+        if spots:
+            out[key] = spots
+    return out
 
 
 def build():
@@ -2192,8 +2214,7 @@ def build():
 
 
 def manifest(built, out):
-    """What the rebuild needs to place these, as JSON (nothing here is registered
-    in config.json)."""
+    """What the rebuild needs to place these, as JSON."""
     sprites = []
     for key, _fn, (w, h), district, m, desc in PIECES:
         im = built[key]
@@ -2220,22 +2241,21 @@ def manifest(built, out):
         'notes': [
             "Files are in gamev2/assets/sprites/<key>.png. A cell is 64x64px in the file (art is drawn at 32px per "
             "cell and pixel-doubled, as generate_hokkaido.py / generate_sapporo_art.py do); 'size' is in cells.",
-            'Nothing is registered: config.json, tilePalette, spriteMetadata, prefabs, generators, '
-            'check_generators.py and docs are untouched. To register a multi-cell sprite follow '
-            'generate_hokkaido.py: spriteMetadata {frameCount:1, anchorX: 32/widthPx, anchorY: 32/heightPx} '
-            "(centre of the top-left cell; that is 'anchor'); 1x1 tiles use 0.5/0.5.",
+            'main() registers every sprite in config.json (tools/art_register.py): spriteMetadata '
+            '{frameCount:1, anchorX: 32/widthPx, anchorY: 32/heightPx} '
+            "(centre of the top-left cell; that is 'anchor'), 1x1 tiles 0.5/0.5, the glow list of a lit piece.",
             "'door' / 'doors', 'solid' and 'walk_through' are [col,row] from the sprite's top-left cell. 'solid' is "
             'the suggested footprint (rows above it are roof, snow or steam the player walks behind). A gate lists '
             "the cells you walk through under it in 'walk_through'; the deck lists the cells you walk ON.",
             "layer: 'standing' = Y-sorted on a Collidables-type layer; 'flat' = under the player (asahibashi-deck: "
             "Non-Collidables + depthBias -200, exactly the asahikawa-bridge_0_0 recipe in generate_hokkaido.FLAT and "
             "make_prefabs); 'overlay' = flat over a floor tile; 'above' = over the player (asahibashi-brace).",
-            'The bridge is 7 cells long and needs FIVE rows of river under it (today the river is rows 17-19 and '
-            'asahikawa-bridge_0_0 is 2x5 at (20,16)-(21,20)): with the arch over only three rows it stood mostly on '
-            'land. asahibashi-deck_0_0 (2x7) has its end rows on the banks; asahibashi-arch-w_0_0 goes in the '
-            'column west of the deck and -arch-e east, same seven rows. The ribs lean away from the deck, so no '
+            'The bridge is 5 cells long over the three rows of river (rows 17-19; the deck is at (20,16)-(21,20), '
+            'where asahikawa-bridge_0_0 was). asahibashi-deck_0_0 (2x5) has its end rows on the banks; '
+            'asahibashi-arch-w_0_0 goes in the '
+            'column west of the deck and -arch-e east, same five rows. The ribs lean away from the deck, so no '
             'deck cell is covered and the player is never behind them; their cells are solid. '
-            'asahibashi-brace_0_0 is optional (deck row 3). For another river width change BRIDGE_ROWS in the '
+            'asahibashi-brace_0_0 is optional (deck row 2). For another river width change BRIDGE_ROWS in the '
             'tool and re-run.',
             "night_glow lists each sprite's lit parts: the cell, the pixel in the file (from the sprite's top-left) "
             'and a colour. The game has no lit-window layer today: DayNight.buildGlows only puts a halo on cells '
@@ -2274,7 +2294,7 @@ SMALL = ('ice-crack-a_0_0', 'ice-crack-b_0_0', 'ice-fishing-hole_0_0', 'asahibas
 
 
 def bridge_patch(built, w=8):
-    """The bridge put together over five rows of river ice, with the ice details."""
+    """The bridge put together over its rows of river ice, with the ice details."""
     n = BRIDGE_ROWS
     snow, ice = spr('snow-autotile_center'), spr('ice-pond-autotile_center')
     im = Image.new('RGBA', (w * 64, n * 64), CLEAR)
@@ -2286,15 +2306,15 @@ def bridge_patch(built, w=8):
                 edge = {1: 'ice-pond-autotile_edge-n', n - 2: 'ice-pond-autotile_edge-s'}.get(y)
                 if edge:
                     im.alpha_composite(spr(edge), (x * 64, y * 64))
-    for name, x, y in (('ice-crack-a_0_0', 0, 2), ('ice-fishing-hole_0_0', 0, 4), ('ice-crack-b_0_0', 6, 2),
-                       ('ice-crack-a_0_0', 7, 4), ('ice-crack-b_0_0', 1, 5), ('ice-crack-a_0_0', 6, 5)):
+    for name, x, y in (('ice-crack-a_0_0', 0, 2), ('ice-fishing-hole_0_0', 1, n - 2), ('ice-crack-b_0_0', 6, 2),
+                       ('ice-crack-a_0_0', 7, n - 2), ('ice-crack-b_0_0', 1, 1), ('ice-crack-a_0_0', 6, 1)):
         im.alpha_composite(built[name], (x * 64, y * 64))
-    im.alpha_composite(built['ice-fishing-tent_0_0'], (0, 2 * 64))
+    im.alpha_composite(built['ice-fishing-tent_0_0'], (0, 64))
     im.alpha_composite(built['asahibashi-deck_0_0'], (3 * 64, 0))
     im.alpha_composite(built['asahibashi-arch-w_0_0'], (2 * 64, 0))
     im.alpha_composite(built['asahibashi-arch-e_0_0'], (5 * 64, 0))
-    im.alpha_composite(spr('james_front_frame_0'), (3 * 64, 4 * 64))
-    im.alpha_composite(built['asahibashi-brace_0_0'], (2 * 64, 3 * 64))
+    im.alpha_composite(spr('james_front_frame_0'), (3 * 64, (n - 1) * 64))
+    im.alpha_composite(built['asahibashi-brace_0_0'], (2 * 64, (n // 2) * 64))
     return im
 
 
@@ -2446,6 +2466,7 @@ def main():
         if 'autotile' not in key:
             print(f'{key}: {im.width}x{im.height}px ({im.width // 64}x{im.height // 64} cells)')
     print(', '.join(f[0] for f in FAMILIES) + f': {len(ROLES)} roles each')
+    art_register.register(built, glow_spots(), FLAT)
     for flag, fn in (('--sheet', sheet), ('--scenes', scenes), ('--manifest', manifest)):
         if flag in sys.argv:
             fn(built, sys.argv[sys.argv.index(flag) + 1])

@@ -114,10 +114,10 @@ POSTS = [
       ['Rehearsal: the river under the bridge is frozen.', 'Asahikawa is colder than Sapporo.'], photo=True),
     P(9012, 'Damian', '2027-02-25T10:00:00Z', 'Asahikawa · ramen alley', 'Rehearsal: ramen alley',
       ['Rehearsal: ramen alley, first night.', 'Shoyu. Obviously.']),
-    P(9013, 'Dylan', '2027-02-26T02:00:00Z', 'Asahikawa · the shrine', 'Rehearsal: the shrine',
-      ['Rehearsal: the shrine across the river.', 'Very quiet in the snow.'], photo=True),
-    P(9014, 'Julia', '2027-02-26T04:00:00Z', 'Asahikawa · the torii gate', 'Rehearsal: the torii',
-      ['Rehearsal: a red gate in white snow.', 'I took forty photos.']),
+    P(9013, 'Dylan', '2027-02-26T02:00:00Z', 'Asahikawa · the Asahiyama Zoo gate', 'Rehearsal: the zoo',
+      ['Rehearsal: the zoo gate across the river.', 'Very quiet in the snow.'], photo=True),
+    P(9014, 'Julia', '2027-02-26T04:00:00Z', 'Asahikawa · the Asahiyama Zoo gate', 'Rehearsal: the penguins',
+      ['Rehearsal: penguins walking in white snow.', 'I took forty photos.']),
     # ... and one sent to a district the way a landmark is
     P(9020, 'Xander', '2027-02-26T06:00:00Z', 'Asahikawa · Asahibashi and the riverbank (area)', 'Rehearsal: the riverbank',
       ['Rehearsal: Xander, walking the bank of the frozen river.', 'No landmark in sight, just snow.']),
@@ -126,8 +126,8 @@ POSTS = [
     # a second district, the way 9020 is sent to one
     P(9016, 'Sam', '2027-02-27T05:00:00Z', 'Asahikawa · Station front and Heiwa-dori (area)', 'Rehearsal: a day on Heiwa-dori',
       ['Rehearsal: Sam, out on the shopping street for the day.', 'The ice sculptures are taller than me.']),
-    P(9017, 'Xander', '2027-02-28T02:00:00Z', 'Asahikawa · the shrine', 'Rehearsal: last day',
-      ['Rehearsal: Xander at the shrine on the last day.', 'Same again next year.']),
+    P(9017, 'Xander', '2027-02-28T02:00:00Z', 'Asahikawa · the Asahiyama Zoo gate', 'Rehearsal: last day',
+      ['Rehearsal: Xander at the zoo gate on the last day.', 'Same again next year.']),
     # the evening after the last day (1 March in Japan): still devhouse 3's
     P(9018, 'Sam', '2027-02-28T16:30:00Z', 'Asahikawa · the vending machines', 'Rehearsal: the morning after',
       ['Rehearsal: Sam, the morning after.', 'Hot corn soup from a vending machine.']),
@@ -381,7 +381,8 @@ def rehearse(scratch, verbose=False):
           {bool(p['named']) for p in POSTS if p['spot'] in areas} == {True, False})
     offered = (len(areas), len({room for room, _ in areas.values()}))
     hokkaido = {'Sapporo · the Sapporo Clock Tower', 'Sapporo · the Sapporo TV Tower', 'Sapporo · Odori Park',
-                'Asahikawa · ramen alley', 'Asahikawa · the bridge over the frozen river', 'Asahikawa · the shrine'}
+                'Asahikawa · ramen alley', 'Asahikawa · the bridge over the frozen river',
+                'Asahikawa · the Asahiyama Zoo gate'}      # (the zoo gate stands where the shrine #119 named stood: #219, stage B)
     check('the six landmarks issue #119 names are all rehearsed', hokkaido <= {p['spot'] for p in POSTS},
           sorted(hokkaido - {p['spot'] for p in POSTS}))
 

@@ -93,6 +93,7 @@ ART_TOOLS += ['generate_flinders_art']       # the concourse of the station with
 ART_TOOLS += ['generate_devhouse_art']       # the two Devhouses and what stands in them (issue #69)
 ART_TOOLS += ['generate_tower_deck_art']     # Fukuoka Tower's observation deck and the lift's view (issue #242)
 ART_TOOLS += ['generate_wheel_art']          # Osaka: the gondola you board and the view from the wheel (issue #242)
+ART_TOOLS += ['generate_asahikawa_art']      # Asahikawa's own art (issue #219, stage B)
 # the art tools that also need a Japanese system font (generate_ads.find_font)
 FONT_TOOLS = ['generate_ads', 'extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS

@@ -949,6 +949,10 @@ Shop.VENUES = {
     bakery:   { title: 'BAKERY',    sells: i => ['melon-pan', 'nikuman', 'canned-coffee'].includes(i.id) },
     kissa:    { title: 'KISSATEN',  sells: i => ['canned-coffee', 'green-tea', 'melon-pan'].includes(i.id) },
     standbar: { title: 'STAND BAR', sells: i => ['highball', 'nama-beer', 'edamame', 'karaage'].includes(i.id) },
+    // Susukino (issue #219, stage 4): the karaoke bar's counter (a Shop<Town><n> room, as the three above)
+    // and the ramen alley's counters (a bump on a `susukino-ramen-stall*`, as the hot-drinks tent) - no stamp
+    bar:       { title: 'KARAOKE BAR', sells: i => ['highball', 'nama-beer', 'edamame'].includes(i.id) },
+    ramen:     { title: 'RAMEN ALLEY', sells: i => ['karaage', 'edamame', 'nama-beer'].includes(i.id) },
     // the airport pub (issue #218): the izakaya's drinks and food, over the bar; it buys no fish
     pub:     { title: 'AIRPORT PUB',     sells: i => i.where === 'izakaya' },
     // the pub in Sendai and the distillery's tasting bar (issue #217): over the bar; no stamp, no fish bought.

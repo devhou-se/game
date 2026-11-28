@@ -227,6 +227,28 @@ PREFABS = {
                                      colliders=[(x, y) for x in range(3) for y in (1, 2)], doors=[]),
     'tanukikoji-south-row-b':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'tanukikoji-south-row-b_0_0')],
                                      colliders=[(x, y) for x in range(3) for y in (1, 2)], doors=[]),
+    # ---- Susukino and the streetcar (issue #219, stage 4). The neon corner (5x7)
+    # collides from its second row down: only the parapet and the top of the fox
+    # board are walk-behind, over the arcade street's last row north of it. The
+    # karaoke front (4x5) is solid all over. Each has its door in the bottom row.
+    'susukino-neon-corner':     building(5, 7, door=2, roof=1),
+    'susukino-karaoke':         building(4, 5, door=1, roof=0),
+    # The ramen alley's gate: the posts collide, you walk through the middle cell
+    # under the board. A ramen counter is solid all over, as a yatai is.
+    'susukino-ramen-gate':      dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'susukino-ramen-gate_0_0')],
+                                     colliders=[(0, 2), (2, 2)], doors=[]),
+    'susukino-ramen-stall-a':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'susukino-ramen-stall-a_0_0')],
+                                     colliders=[(x, y) for x in range(3) for y in range(3)], doors=[]),
+    'susukino-ramen-stall-b':   dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'susukino-ramen-stall-b_0_0')],
+                                     colliders=[(x, y) for x in range(3) for y in range(3)], doors=[]),
+    # Poles: the foot collides, the signs / lanterns / bracket arm are overhead.
+    # (Their keys end `-lanterns`, so the lamp rule lights the first two at night.)
+    'susukino-neon-lanterns':   dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'susukino-neon-lanterns_0_0')],
+                                     colliders=[(0, 1)], doors=[]),
+    'ramen-alley-lanterns':     dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'ramen-alley-lanterns_0_0')],
+                                     colliders=[(0, 1)], doors=[]),
+    'tram-pole':                dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'tram-pole_0_0')],
+                                     colliders=[(0, 2)], doors=[]),
     # The bridge over Asahikawa's frozen river: a flat deck you walk ON. It sits
     # on Non-Collidables with a negative depthBias (spriteMetadata, written by
     # generate_hokkaido.py) so it draws over the ice but under everyone on it.
@@ -235,6 +257,78 @@ PREFABS = {
     # A ramen shop's nobori: the pole's foot collides, the cloth is overhead.
     'ramen-banner':        dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'ramen-banner_0_0')],
                                 colliders=[(0, 1)], doors=[]),
+    # ---- Asahikawa's own pieces (issue #219, stage B; art drawn by
+    # tools/generate_asahikawa_art.py). The station front: the glass hall (rows
+    # 2-4) collides, the train hall's tier behind it is roof; its doors are a pair.
+    'asahikawa-station-front': dict(w=10, h=5, sprites=[('Collidables', 0, 0, 'asahikawa-station-front_0_0')],
+                                    colliders=[(x, y) for x in range(10) for y in range(2, 5)],
+                                    doors=[(4, 4), (5, 4)]),
+    # Heiwa-dori's shops: the top row is roof and snow, the rest collides.
+    'heiwa-shop-sake':         building(3, 4, door=1, roof=1),
+    'heiwa-shop-bakery':       building(3, 4, door=1, roof=1),
+    'heiwa-shop-woodcraft':    building(4, 3, door=3, roof=1),
+    'heiwa-shop-books':        building(3, 3, door=2, roof=1),
+    # The ramen alley's three fronts stand in a row with a closed yard behind
+    # them: solid all over, so nobody steps in behind their roofs from the street.
+    'ramen-shoyu-front':       building(4, 4, door=3, roof=0),
+    'ramen-narrow-front':      building(2, 4, door=1, roof=0),
+    'ramen-miso-front':        building(3, 4, door=1, roof=0),
+    # The alley gate: the posts collide, you walk through the middle cell under the beam.
+    'asahikawa-ramen-gate':    dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'asahikawa-ramen-gate_0_0')],
+                                    colliders=[(0, 2), (2, 2)], doors=[]),
+    # Posts and what stands against a wall: the foot collides, the rest is overhead.
+    # (heiwa-lamp-post and asahikawa-ramen-lanterns are lit by the lamp rule.)
+    'heiwa-lamp':              dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'heiwa-lamp-post_0_0')],
+                                    colliders=[(0, 1)], doors=[]),
+    'asahikawa-ramen-lanterns': dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'asahikawa-ramen-lanterns_0_0')],
+                                     colliders=[(0, 1)], doors=[]),
+    'ramen-crates':            dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'ramen-crates_0_0')],
+                                    colliders=[(0, 1)], doors=[]),
+    'ramen-stockpot':          dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'ramen-stockpot_0_0')],
+                                    colliders=[(0, 1)], doors=[]),
+    'snow-fence-h':            dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'snow-fence-h_0_0')],
+                                    colliders=[(0, 1)], doors=[]),
+    'zoo-fence-h':             dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'zoo-fence-h_0_0')],
+                                    colliders=[(0, 1)], doors=[]),
+    'zoo-fence-end':           dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'zoo-fence-end_0_0')],
+                                    colliders=[(0, 1)], doors=[]),
+    # The ice sculptures stand on their blocks (the bottom row); the bench is solid.
+    'ice-sculpture-crane':     dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'ice-sculpture-crane_0_0')],
+                                    colliders=[(0, 1), (1, 1)], doors=[]),
+    'ice-sculpture-owl':       dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'ice-sculpture-owl_0_0')],
+                                    colliders=[(0, 1)], doors=[]),
+    'heiwa-bench':             dict(w=2, h=1, sprites=[('Collidables', 0, 0, 'heiwa-bench_0_0')],
+                                    colliders=[(0, 0), (1, 0)], doors=[]),
+    # Asahibashi. The deck is flat and walked ON, as the timber bridge it replaces
+    # was (Non-Collidables + the depthBias art_register writes); the two arch ribs
+    # stand in the column either side of it and are solid top to bottom; the brace
+    # joins their crowns over the deck, above the player.
+    'asahibashi-deck':         dict(w=2, h=5, sprites=[('Non-Collidables', 0, 0, 'asahibashi-deck_0_0')],
+                                    colliders=[], doors=[]),
+    'asahibashi-arch-w':       dict(w=1, h=5, sprites=[('Collidables', 0, 0, 'asahibashi-arch-w_0_0')],
+                                    colliders=[(0, y) for y in range(5)], doors=[]),
+    'asahibashi-arch-e':       dict(w=1, h=5, sprites=[('Collidables', 0, 0, 'asahibashi-arch-e_0_0')],
+                                    colliders=[(0, y) for y in range(5)], doors=[]),
+    'asahibashi-brace':        dict(w=4, h=1, sprites=[('Tops', 0, 0, 'asahibashi-brace_0_0')],
+                                    colliders=[], doors=[]),
+    # The riverbank's houses: the steep roof's top row is walk-behind.
+    'hokkaido-house-red':      building(3, 4, door=1, roof=1),
+    'hokkaido-house-blue':     building(3, 4, door=1, roof=1),
+    'ice-fishing-tent':        dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'ice-fishing-tent_0_0')],
+                                    colliders=[(0, 1), (1, 1)], doors=[]),
+    # The zoo gate has no back: its pylons collide, and so do the three cells
+    # behind the arch, so the way under the board is a porch one cell deep and
+    # nobody walks on under it into the wood behind.
+    'zoo-gate':                dict(w=5, h=4, sprites=[('Collidables', 0, 0, 'zoo-gate_0_0')],
+                                    colliders=[(0, 3), (4, 3), (1, 2), (2, 2), (3, 2)], doors=[]),
+    'zoo-ticket-booth':        dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'zoo-ticket-booth_0_0')],
+                                    colliders=[(x, y) for x in range(2) for y in (1, 2)], doors=[]),
+    'penguin-walk-a':          dict(w=2, h=1, sprites=[('Collidables', 0, 0, 'penguin-walk-a_0_0')],
+                                    colliders=[(0, 0), (1, 0)], doors=[]),
+    'penguin-walk-b':          dict(w=2, h=1, sprites=[('Collidables', 0, 0, 'penguin-walk-b_0_0')],
+                                    colliders=[(0, 0), (1, 0)], doors=[]),
+    'zoo-seal-statue':         dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'zoo-seal-statue_0_0')],
+                                    colliders=[(0, 1), (1, 1)], doors=[]),
     # ---- Sendai (issue #66; art drawn by tools/generate_sendai_art.py) ----------
     # Date Masamune on his plinth: the plinth (rows 2-3) collides, horse and rider
     # above it are walk-behind.

@@ -63,9 +63,11 @@ python3 tools/test_blog_to_npc.py                                   # unit check
   **Never in the way** (issue #119, `walls_in`): an NPC is solid, so the cell must also leave everything
   that could be walked to still walkable — not the middle of a one-cell lane, the mouth of a dead end or
   the cell in front of a door — and must not take the only cell a neighbour could be walked up to from.
-  Asahikawa's `ramen alley` is one cell wide: its standing cell (10,15) is refused and the author stands in
+  Asahikawa's `ramen alley` was one cell wide: its standing cell (10,15) was refused and the author stood in
   the shop doorway beside it (9,14); before the rule a ramen post sealed off the west half of the alley,
-  Sam's base spot included. `walk_region` is the whole stitched city for a district, so a walk that leaves
+  Sam's base spot included. The alley is two cells wide since its rebuild (#219: no prop's foot on row 14
+  within two columns of a bank shrub), and every cell of its south row is accepted (`asahikawa.test.js`,
+  `test_not_in_the_way`, which keeps the one-cell case on a made-up room). `walk_region` is the whole stitched city for a district, so a walk that leaves
   the district and comes back counts.
 - **Districts** (issue #219, config `districts`, written by `tools/districts.py`; the list and the fields are
   in `landmarks-and-towns.md`, "Districts"). A post often names an area and no landmark ("we stayed in

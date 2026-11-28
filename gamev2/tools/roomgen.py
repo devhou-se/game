@@ -35,10 +35,12 @@ _PF = {}
 # The houses tools/generate_houses.py can open (issue #208): the sprite on
 # Collidables that carries a house's front door -> the door cell, relative to
 # that sprite's own top-left cell. The three townhouse prefabs (house-blue /
-# -red / -black) end in a 3x1 `building-entrance`; a machiya is one 5x5 sprite.
+# -red / -black) end in a 3x1 `building-entrance`; a machiya is one 5x5 sprite;
+# a Hokkaido house (Asahikawa's riverbank, issue #219) is one 3x4 sprite.
 HOUSE_DOORS = {
     'building-entrance-1_0_0': (1, 0), 'building-entrance-2_0_0': (1, 0), 'building-entrance-3_0_0': (1, 0),
     'machiya-black_0_0': (2, 4), 'machiya-red_0_0': (2, 4), 'machiya-blue_0_0': (2, 4),
+    'hokkaido-house-red_0_0': (1, 3), 'hokkaido-house-blue_0_0': (1, 3),
 }
 HOUSE_PREFIX = 'House'      # rooms.House<Town><n>, the interiors generate_houses.py owns
 # The towers the same generator gives a lobby (issue #216): the one sprite a
@@ -52,6 +54,7 @@ TOWER_DOORS = {
     'highrise-yellow_0_0': [(1, 7)], 'highrise-blue_0_0': [(2, 10)], 'highrise-glass_0_0': [(1, 9), (2, 9)],
     'highrise-apartment_0_0': [(2, 7)], 'midrise-apartment_0_0': [(2, 5)],
     'sapporo-office-brick_0_0': [(2, 6)], 'sapporo-office-glass_0_0': [(2, 5)],
+    'susukino-neon-corner_0_0': [(2, 6)],       # Susukino's tenant building (issue #219, stage 4)
 }
 LOBBY_PREFIX = 'Lobby'      # rooms.Lobby<Town><n>
 # The shrine halls tools/generate_shrines.py can open (issue #212): the hall's
@@ -60,9 +63,14 @@ LOBBY_PREFIX = 'Lobby'      # rooms.Lobby<Town><n>
 SHRINE_DOORS = {'shrine-building_0_0': [(1, 4)], 'dazaifu-hall_0_0': [(3, 4)]}
 SHRINE_PREFIX = 'Shrine'    # rooms.Shrine<Town><n>, the worship halls generate_shrines.py owns
 # The shopfronts the same generator gives a small shop floor (issue #219, stage 3,
-# `generate_houses.py --shops`): the sprite -> its door cells. Tanukikoji's three.
+# `generate_houses.py --shops`): the sprite -> its door cells. Tanukikoji's three,
+# Susukino's karaoke bar (stage 4), and Asahikawa's (stage B): three of Heiwa-dori's
+# shops and one ramen front. A front with no row here keeps a solid door cell
+# (the bookshop, the other two ramen shops: one of a kind is opened per street).
 SHOP_DOORS = {'tanukikoji-shop-souvenir_0_0': [(1, 3)], 'tanukikoji-shop-crab_0_0': [(1, 3)],
-              'tanukikoji-shop-drug_0_0': [(1, 3)]}
+              'tanukikoji-shop-drug_0_0': [(1, 3)], 'susukino-karaoke_0_0': [(1, 4)],
+              'heiwa-shop-sake_0_0': [(1, 3)], 'heiwa-shop-bakery_0_0': [(1, 3)],
+              'heiwa-shop-woodcraft_0_0': [(3, 2)], 'ramen-shoyu-front_0_0': [(3, 3)]}
 SHOP_PREFIX = 'Shop'        # rooms.Shop<Town><n>
 # The palace's audience hall (issue #215, tools/generate_palace.py): the foot of
 # each end tower of the palace building (`pagoda-floor`, under its `pagoda-roof`)

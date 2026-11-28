@@ -65,7 +65,7 @@ their route in the room's map data rather than in coordinates, have no collision
     bridge (issue #180; `tools/make_bridge_tiles.py`, Pillow): `bridge-parapet-w|e` is a stone coping on
     the outer 14px of the deck's edge cells - not solid, so the two-cell pavement keeps its width - and
     `bridge-shade-w|e` is the deck's shadow on the water cell beside it. They lie flat on
-    `Non-Collidables` with `depthBias: -200` (the `asahikawa-bridge` recipe: over the Water layer and a
+    `Non-Collidables` with `depthBias: -200` (the `asahibashi-deck` recipe: over the Water layer and a
     passing boat, under everyone standing), and the shade is translucent, so `clearWater` does not
     count it as scenery hiding the canal. **Sendai's Matsushima bay** declares the one vertical waterway
     (issue #66: columns 66-68, from just under the rail embankment to the south edge of the map, which is
@@ -104,8 +104,9 @@ their route in the room's map data rather than in coordinates, have no collision
 ### Streetcars: a room's `tramways` (issues #219, #245)
 
 `AmbientTrains` only runs station liveries on `train-track*` rows. A tram in a street is declared instead, in the
-room's config; with no `tramways` nothing is built, nothing runs and nothing is drawn. **Three lines are declared,
-all shuttles that can be ridden** (below): Toyama's tram, and San Franbourne's cable car (west of the avenue) and
+room's config; with no `tramways` nothing is built, nothing runs and nothing is drawn. **Sapporo declares the first**
+(Susukino's tram street, issue #219 stage 4: row 48, one stop at column 23, `tools/generate_sapporo.py`). Other
+lines are shuttles that can be ridden (below): Toyama's tram, and San Franbourne's cable car (west of the avenue) and
 tram (east of it). Their generators write them (`generate_toyama.py`, `generate_sanfranbourne.py`), as Toyama's
 writes its `waterways`. A unit test (`tools/tests/glows-trams.test.js`) holds every declared row to what can run:
 a line `AmbientTrams.line` accepts, inside its room, with cars that are in `spriteMetadata` (so they are loaded),

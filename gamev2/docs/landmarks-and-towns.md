@@ -20,6 +20,7 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Sapporo Clock Tower | Sapporo | `sapporo-clock-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
 | Sapporo TV Tower | Sapporo | `sapporo-tv-tower_0_0` | shaded pixel art drawn by `tools/generate_hokkaido.py` |
 | Sapporo Station front (the star clock), the red-brick government hall (Akarenga) | Sapporo | `sapporo-station-front_0_0`, `sapporo-akarenga_0_0` | shaded pixel art drawn by `tools/generate_sapporo_art.py` |
+| Asahikawa Station's glass hall, Asahibashi (the green arch bridge), the ramen alley gate, the Asahiyama Zoo gate | Asahikawa | `asahikawa-station-front_0_0`, `asahibashi-deck_0_0` (with `-arch-w`, `-arch-e`, `-brace`), `asahikawa-ramen-gate_0_0`, `zoo-gate_0_0` | shaded pixel art drawn by `tools/generate_asahikawa_art.py` |
 | Date Masamune statue (Aoba Castle ruins) | Sendai | `sendai-masamune_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
 | Zuihoden | Sendai | `sendai-zuihoden_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py` |
 | The pub (HUB) | Sendai | `sendai-pub_0_0` | shaded pixel art drawn by `tools/generate_sendai_art.py`; its door opens into `PubSendai1` (see "The Sendai pub") |
@@ -93,7 +94,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
   `districts`; the HUD names the ROOM (`hudRoomName`), which for Tokyo's four ported rooms is the district.
 - **Names are the redesign plan's, bounds are today's map.** A district the plan names that is not built yet
   has NO entry: Ueno and Shibuya (Park is one district, "Park", whose description says it stands in for both),
-  Sapporo's Susukino, Asahikawa's zoo gate, Shirakawa-go's ryokan, Osaka's station front (a
+  Shirakawa-go's ryokan, Osaka's station front (a
   threshold, not a district). Add it in the change that builds it. San Franbourne (#218) was not on master when this landed: give it districts when it is.
 
 | Room (key) | Districts today |
@@ -136,7 +137,7 @@ the board) and sits detached, north-north-east of Tokyo, in `devhouse.world`.
   **Matsushima bay**.
 - **The bay** is `pond-autotile` water from column 59 (so it can be fished from the promenade or the pier):
   `pond-autotile_edge-w`, the set's missing west bank, is `edge-e` mirrored by `generate_sendai_art.py`. The
-  **pier** is flat (`Non-Collidables` + `depthBias: -200`, the `asahikawa-bridge` recipe) and its five cells
+  **pier** is flat (`Non-Collidables` + `depthBias: -200`, the `asahibashi-deck` recipe) and its five cells
   are the only water cells left out of the colliders; the two-deck boat is moored along it. Islets (one is
   post 487's "rock with a ball on top") keep to columns 60-64; columns 66-68 are the room's one `waterways`
   entry (`axis: 'v'`, open at the south edge), which gives it ambient boats (see Ambient Traffic).
@@ -278,18 +279,69 @@ pipeline has placed someone there.
   under; Occlusion fades the module), the two rows below are solid and stand where the south fence did. The
   three shops open into shop floors (`ShopSapporo1..3`, see Shop floors) - no building of the arcade is sealed.
   The six townhouses that stood here are gone and so are `HouseSapporo1..6`: Sapporo has no House interior.
-  The gate and the shops' windows glow at night (`Glows.SPRITES`). Still to come (stage 4: Susukino and the
-  streetcar, south of the arcade); until then the two south corners are snow and trees. The west row is closed by a shrub in each gap and a hedge behind it; the
+  The gate and the shops' windows glow at night (`Glows.SPRITES`). **Susukino** (stage 4, the neon crossing,
+  south of the arcade's back row; the room grew eight rows south for it, 56x43 to 56x51, and its
+  `devhouse.world` slot grew northward) stands on dark wet asphalt with the neon lying in it
+  (`susukino-asphalt-autotile`, its alone): one east-west tram street (rows 47-49) with the streetcar's rails
+  down its middle (`tram-rail-h` on row 48, `tram-rail-cross` where the three north-south streets, which now run
+  down to it, meet it). Everything stands with its feet on row 46 and faces the tram street; the strip behind
+  (row 43 up to the arcade's back wall) is closed. East of the station avenue, on its corner, the **neon
+  building** with the fox board (`susukino-neon-corner` at (33,40), door (35,46): a lobby, `LobbySapporo3`) and
+  the **karaoke bar** (`susukino-karaoke` at (39,42), door (40,46): a shop floor, `ShopSapporo4`, whose counter
+  is a bar), a pole of neon signs (`susukino-neon-lanterns`) after each. West of it the **ramen alley**: three
+  counters under noren (`susukino-ramen-stall-a` / `-b` at columns 18, 21 and 24, feet on row 44) against the
+  arcade's back wall, the alley itself one row (45) behind a ploughed bank with lantern posts
+  (`ramen-alley-lanterns`), entered under the ramen gate (`susukino-ramen-gate` at (27,44)) from the street. A
+  bump on a counter opens its list (RAMEN ALLEY, `Shop.VENUES.ramen`); nothing in Susukino is sealed. The
+  **streetcar** is declared, not placed (`rooms.Sapporo.tramways`, run by `src/AmbientTrams.js`, see Ambient
+  Traffic): in from off the map along row 48, a stop at column 23 outside the alley (a strip of platform, a
+  bench and the stop sign on the south kerb), out the other side, and back mirrored; overhead-wire poles
+  (`tram-pole`) stand along the south kerb. The two ends of the new rows (west of column 14, east of column 46)
+  are snow under trees behind a bank with a way through; the south kerb (row 50) is fenced. The fox board, the
+  karaoke front and the ramen gate glow at night (`Glows.SPRITES`). The two corners beside the arcade (rows
+  34-42) are still snow and trees, fenced along row 42. The west row is closed by a shrub in each gap and a hedge behind it; the
   station front, the government hall and the office blocks collide up to their roof lines (nothing of the
   station is walk-behind; of an office block only its top row), and both towers collide along their
   silhouettes (see their prefab comments): the Clock
   Tower is solid up to its pyramid roof (only the roof tip is walk-behind) and the TV Tower up to the top
   of its lattice (only the thin mast is), so the tower's shaft closes Kita-Odori's roadway at columns
   49-50 and you pass it on the north pavement. Nobody is fully hidden behind either landmark (on the pavement at (49-50,19) the foot of the mast covers half the player).
-- **Asahikawa** (`tools/generate_asahikawa.py`, 42x32) is the small day-trip town: **ramen alley** (three
-  machiya under red `ramen-banner` nobori), a frozen **river** running bank to bank with one timber
-  **bridge**, and on the south bank a torii, the blue shrine and cottages. The river is laid by hand
-  (`ice-pond-autotile` edge-n / center / edge-s rows, solid) because `Builder.pond` is two rows tall.
+- **Asahikawa** (`tools/generate_asahikawa.py`, 42x32) is the small day-trip town, rebuilt from its own art
+  (issue #219, stage B; `tools/generate_asahikawa_art.py`): a small cold river city of timber and glass.
+  - **The station** is `asahikawa-station-front` (10x5 at (28,5)) on the old station house's door cell: its two
+    door cells (32,9) and (33,9) lead into `AsahikawaStation`, whose mats still put you on (32,10). The platform
+    strip is gone; the rail corridor is fenced off (the row-6 fence runs only where no building's top row
+    stands on it).
+  - **Heiwa-dori** is the pedestrian street on `heiwa-paving-autotile` (rows 10-12 from the alley gate to the
+    station's far end, with a leg down to the bridgehead). One row of fronts, feet on row 9: the town's
+    **7-Eleven** ((12,6), door (13,9), `KonbiniAsahikawa1`), a bookshop (sealed: nothing in the catalogue is a
+    book), a sake shop, a bakery and a woodcraft shop (`ShopAsahikawa1..3`, see Shop floors). Two ice
+    sculptures, benches and the street's own lamps (`heiwa-lamp-post`) stand on the setts; a door front and a
+    stand cell are never under one.
+  - **Ramen alley** is two cells wide on `ramen-alley-autotile` (rows 14-15): `ramen-shoyu-front` (a shop
+    floor, `ShopAsahikawa4`, list `ramen`), `ramen-narrow-front` and `ramen-miso-front` (sealed), feet on row
+    13, behind `asahikawa-ramen-gate` (11,11) - through its middle cell (12,13) off Heiwa-dori, or round the
+    alley's open east end. Somebody stood on row 15 is walked round along row 14 or along the bank (row 16), so
+    **no prop's foot on row 14 stands within two columns of a bank shrub of row 16, and no single free cell is
+    left between two feet**: anyone can be stood on any cell of row 15 (the old alley was one cell wide and the
+    pipeline refused its stand cell). The
+    yard behind the fronts is closed (the fronts are solid all over, a hedge on column 11).
+  - **The frozen river** runs bank to bank (laid by hand: `ice-pond-autotile` edge-n / center / edge-s rows,
+    solid, because `Builder.pond` is two rows tall) and **Asahibashi**, the green steel arch, is the only way
+    over: `asahibashi-deck` (2x5 at (20,16), flat: `Non-Collidables` + `depthBias: -200`, its cells left out of
+    the colliders), a rib each side (`-arch-w` / `-arch-e`, solid) and `-brace` on `Tops` over the deck's middle
+    row. A fishing tent, holes and cracks are on the ice (`Non-Collidables`, over the Water layer).
+  - **The south bank**: three Hokkaido houses (`hokkaido-house-red` / `-blue`, doors (5,26), (10,26), (15,26):
+    `HouseAsahikawa1..3`) behind a snow fence, and the **Asahiyama Zoo gate** (`zoo-gate` at (29,22)) with its
+    ticket booth, fence, penguins and seal. The drawn gate has no back: its prefab seals the row behind the
+    arch, so the arch is a porch one cell deep, and the wood behind it is closed (a hedge on column 26, the
+    fence, the booth). The shrine, its foxes and the torii that stood there are gone, and `ShrineAsahikawa1`
+    with them (`generate_shrines.py` prunes nothing of a town it is not run for: the room, its door and its
+    map were deleted by hand).
+  - **The art tool registers what it draws**: `generate_asahikawa_art.py` calls `art_register.register`
+    (`tools/art_register.py`: `spriteMetadata`, `tileNames`, the `glow` spots of what is lit at night,
+    `depthBias: -200` for a flat sprite) and is in `check_generators.ART_TOOLS`. `tools/tests/asahikawa.test.js`
+    holds the town to all of the above.
 - **Art**: `tools/generate_hokkaido.py` (needs Pillow) draws the Clock Tower, TV Tower, bridge, banner and
   `road-plain` - at half size, pixel-doubled, in the GuttyKreum palette with a 1px ink outline, so they sit
   at the 2x scale of the building crops. They are not line-art placeholders. The LimeZu `Tileset_53_MV`
@@ -307,7 +359,9 @@ pipeline has placed someone there.
   (stage 1: `sapporo-station-front`, `sapporo-akarenga`, `sapporo-office-brick`, `sapporo-office-glass`;
   stage 2: the three `snow-sculpture-*`, the two `snowfest-stall-*`, `odori-fountain`, `odori-lamp`,
   `odori-bench`, the three `snowbank-*`; stage 3: the three `tanukikoji-shop-*`, `tanukikoji-gate`,
-  `tanukikoji-end-sign`, `tanukikoji-south-row-a` / `-b`; `tanukikoji-rib` and `sapporo-konbini` are drawn and not placed).
+  `tanukikoji-end-sign`, `tanukikoji-south-row-a` / `-b`; stage 4: `susukino-neon-corner`, `susukino-karaoke`,
+  `susukino-ramen-gate`, `susukino-ramen-stall-a` / `-b`, `susukino-neon-lanterns`, `ramen-alley-lanterns`,
+  `tram-pole`; `tanukikoji-rib` and `sapporo-konbini` are drawn and not placed).
   `--sheet`, `--scenes` and `--manifest` write a contact sheet, mock scenes and the door / footprint table.
 - **Flat sprites over water**: `Over Floor` and `Water` share one fixed depth, so a multi-cell sprite on
   `Over Floor` is drawn UNDER water tiles. The bridge therefore sits on `Non-Collidables` with
@@ -349,8 +403,8 @@ pipeline has placed someone there.
   26 sprites drawn by `tools/generate_konbini_art.py [--preview out.png]` (procedural, needs Pillow, in
   `check_generators.py`): run it before `generate_konbinis.py` when the kit changes. The Tanukikoji
   shop floors and Don Takote keep the `office-*` furniture. Tests: `tools/tests/konbini.test.js`.
-- **Build order**: `generate_hokkaido.py`, `generate_sapporo_art.py`, `make_prefabs.py`, `generate_sapporo.py`,
-  `generate_asahikawa.py`, `generate_konbinis.py Sapporo`, `generate_discount_stores.py Sapporo`,
+- **Build order**: `generate_hokkaido.py`, `generate_sapporo_art.py`, `generate_asahikawa_art.py`, `make_prefabs.py`, `generate_sapporo.py`,
+  `generate_asahikawa.py` (then `generate_konbinis.py Asahikawa`, `generate_houses.py Asahikawa` and `--shops Asahikawa`), `generate_konbinis.py Sapporo`, `generate_discount_stores.py Sapporo`,
   `generate_stations.py` (the towns fence and seal themselves - `b.finish()`; the station's way out is
   `TOWN_DOORS` there), `generate_houses.py Sapporo` and `generate_houses.py --lobbies Sapporo`, `generate_chikagai.py Sapporo` (see Underground arcades), then
   `config_to_tiled.py Sapporo Asahikawa SapporoStation AsahikawaStation KonbiniSapporo1 DonTakoteSapporo`
@@ -365,7 +419,7 @@ pipeline has placed someone there.
   one was in Yukimura, a made-up town that is deleted (issue #68). A town that gets a frozen pond adds a row
   scoped to it.
 - Asahikawa's three cottages were the first houses you could walk into (`HouseAsahikawa1..3`, see House
-  interiors below); the three machiya of ramen alley are shops and stay sealed.
+  interiors below); the keys are the three Hokkaido houses of the riverside row now (#219, stage B).
 - A room missing from `assets/map/world-map.json` is fine: `TrainTravel.dirTo` treats it as x=0. Re-run
   `tools/make_worldmap.py` to add new rooms (the studio lays the world out from it).
 - **A new town needs its dot on the Map**: add `"<Room>": { "geo": [lon, lat], "label": "..." }` to
@@ -399,7 +453,7 @@ after the existing stations in `tools/generate_stations.py`); it sits detached, 
   is measured on its first rimmed cross-section, and the open sea beside it has no rim to measure.
 - **Dazaifu Tenmangu** is inside the town, not a room of its own, and is laid out the way a shrine is walked:
   from the south lane through a `torii-red`, over the arched `dazaifu-bridge` (flat, `Non-Collidables` +
-  `depthBias: -200`, the `asahikawa-bridge` recipe; the two pond cells under it are left out of the colliders),
+  `depthBias: -200`, the `asahibashi-deck` recipe; the two pond cells under it are left out of the colliders),
   to the `dazaifu-hall` - the temporary hall of 2025 with a grove on its roof, as post 740 found it - between
   `plum-tree`s. All buildings face south, so a shrine approached from the north would show its back.
 - **Art**: `tools/generate_fukuoka_art.py` (needs Pillow; `--preview out.png` writes a contact sheet) draws all
@@ -450,7 +504,7 @@ and the blog pipeline never offers it (`"blog": false` on the room, see `blog-pi
 - **Art**: `tools/generate_sanfranbourne_art.py` (Pillow, in `ART_TOOLS`; `--preview out.png`) draws every
   `sfb-*` sprite, the `airport-*` furniture and the two flight pictures as shaded pixel art in the GuttyKreum
   palette - no brand marks but the 7-Eleven the game already has. The oval and the pier are flat
-  (`Non-Collidables` with a `depthBias`, the `asahikawa-bridge` recipe); the river is `pond-autotile`
+  (`Non-Collidables` with a `depthBias`, the `asahibashi-deck` recipe); the river is `pond-autotile`
   recoloured (`sfb-river_*`, so it is not a fishing spot); the light towers are named `...lamp-post` so
   `DayNight` lights them.
 - **Houses are sealed** (`generate_houses.py` has not been run for this town's houses), and there are no
@@ -481,7 +535,7 @@ the generator, `config_to_tiled` and lint for the rooms touched, then the five c
 
 | Town | Houses | Stay sealed |
 |---|---|---|
-| Asahikawa | `HouseAsahikawa1..3` (cottages) | ramen alley's three machiya (shops) |
+| Asahikawa | `HouseAsahikawa1..3` (the riverside row of Hokkaido houses, `hokkaido-house-red` / `-blue`, door at the sprite's (1, 3)) | - (the ramen fronts and Heiwa-dori's shops are shop floors or sealed, not houses) |
 | Fukuoka | `HouseFukuoka1..4` (two townhouses by the avenue, two machiya) | - |
 | Kanazawa (a district of Hokuriku) | `HouseKanazawa1..4`: the two machiya at the east end of Higashi Chaya's lane, the machiya downtown beside the whisky bar, the samurai's house in its court behind the Nagamachi gate | 5..7: the three roofs seen over Nagamachi's walls stand in compounds that are solid throughout - nobody can stand at their doors, so the numbers are kept and unused |
 | Market (a Tokyo district) | `HouseMarket1..3` (the shopfront townhouses on the south street) | the Izakaya's house keeps its own door |
@@ -500,7 +554,7 @@ A machiya's doorway is the one cell of its footprint you can step onto (`sendai.
   found by their ground floor (`building-entrance-1/2/3`, door in the middle), and the machiya
   (`machiya-black` / `-red` / `-blue`, door in the middle of the front). **Not** a house: one whose door
   already leads somewhere (the station houses, the Izakaya in Market), and one with a shop sign at its
-  front (`SHOP_SIGNS`: the ramen nobori - Asahikawa's ramen alley is three shops). 7-Elevens, the discount
+  front (`SHOP_SIGNS`: the ramen nobori - no town has one since Asahikawa's ramen alley got fronts of its own, #219). 7-Elevens, the discount
   store, high-rises and apartment blocks, shrine halls, pagodas, temple halls, landmark buildings and
   stations are never houses: each wants an interior of its own (a pagoda has one: see "Pagodas").
 - **A house is skipped, and stays sealed, rather than anything being moved**: when the cell in front of its
@@ -560,15 +614,19 @@ A machiya's doorway is the one cell of its footprint you can step onto (`sendai.
 A third row of the same generator's `KINDS` table: `tools/generate_houses.py --shops <Town> [<Town> ...]` gives
 every shopfront in `roomgen.SHOP_DOORS` a `Shop<Town><n>` room, found, numbered (door order), skipped, sealed,
 re-run and kept through a town rebuild exactly as a house or a lobby is. **Applied to Sapporo**: Tanukikoji's
-souvenir shop, crab shop and drugstore are `ShopSapporo1..3`.
+souvenir shop, crab shop and drugstore are `ShopSapporo1..3`, and Susukino's karaoke bar is `ShopSapporo4`.
+**And to Asahikawa** (stage B): Heiwa-dori's sake shop (`Sake bar · Asahikawa`, list `standbar`), bakery
+(`bakery`) and woodcraft shop (`Woodcraft · Asahikawa`, list `souvenirs`) are `ShopAsahikawa1..3`, and ramen
+alley's shoyu counter (`Ramen · Asahikawa`, list `ramen`) is `ShopAsahikawa4`.
 
 - **One layout** (`SHOP`): a white back wall with two posters, two shelves either side against it, seven by five
   cells of floor, a counter with a till, a plant in each front corner, the mat below the middle. All of it is the
   konbini's furniture (`office-*`) and the lobby's mat; no new art.
 - **Named by what the front sells** (`SHOP_TYPES`: sprite family -> label, list, shelves): `Souvenirs · Sapporo`,
-  `Crab shop · Sapporo`, `Drugstore · Sapporo` (numbered only where a town has several of one type).
+  `Crab shop · Sapporo`, `Drugstore · Sapporo`, `Karaoke bar · Sapporo` (numbered only where a town has several
+  of one type).
 - **It sells**: the room is `interior`, `shopEnabled: false` (not a store: no stamp, no Konbini Pilgrim, the
-  shelves are only to look at) and `shopMenu: souvenirs | crab | drugstore`, so a bump on the counter opens that
+  shelves are only to look at) and `shopMenu: souvenirs | crab | drugstore | bar`, so a bump on the counter opens that
   row of `Shop.VENUES` - two or three things off the existing catalogue (see Shop). The room's `shop` marker is
   `{host, door, type}`.
 - A new shopfront elsewhere is a row in `roomgen.SHOP_DOORS` and one in `SHOP_TYPES` (and a `Shop.VENUES` row
@@ -580,13 +638,13 @@ The same generator opens a second kind of building: `tools/generate_houses.py --
 gives every high-rise, office tower and block of flats a `Lobby<Town><n>` room (`Lobby · Osaka 2`). It is
 the house code with another row in its `KINDS` table, so everything above holds - found in the town's map
 data, numbered in door order, skipped and sealed by the same rules, a no-op on a re-run, kept through a
-town rebuild by `roomgen.save_config`. **Applied to every town that has a tower**: sixteen lobbies in eight
+town rebuild by `roomgen.save_config`. **Applied to every town that has a tower**: seventeen lobbies in eight
 towns, no tower skipped. Asahikawa, Tokyo, Park, Shirakawa-go and Toyama have no towers.
 
 | Town (display name) | Rooms | Tower and its door cell(s) in the town |
 |---|---|---|
 | Osaka | `LobbyOsaka1..3` "Lobby · Osaka 1..3" | the blue office block (5,17); the flats (5,37); the glass tower (43,38)+(44,38) |
-| Sapporo | `LobbySapporo1..2` "Lobby · Sapporo 1..2" | its own office blocks (#219): the brick one in the Clock Tower block (51,15); the glass one west of the station plaza (12,16) |
+| Sapporo | `LobbySapporo1..3` "Lobby · Sapporo 1..3" | its own office blocks (#219): the brick one in the Clock Tower block (51,15); the glass one west of the station plaza (12,16); Susukino's neon corner building (35,46) |
 | Market (Asakusa) | `LobbyMarket1` "Lobby · Asakusa" | highrise-yellow (16,29) |
 | Palace (Marunouchi) | `LobbyPalace1..2` "Lobby · Marunouchi 1..2" | highrise-yellow (49,13); midrise-apartment (42,15) |
 | Fukuoka | `LobbyFukuoka1..4` "Lobby · Fukuoka 1..4" | highrise-glass (17,18)+(18,18); -blue (22,18); -yellow (26,18); midrise-apartment (38,18) |
@@ -613,8 +671,8 @@ A town's only lobby has no number. The way out of each is the cell below its (fi
   (`HUD_BRIEF_MAX`: what one row holds with the short date, its year and the starting wallet at 667x375) keeps
   the kind and its number instead: Marunouchi's read "Lobby 1" and "Lobby 2" ("Marunouchi lobby" is 16) and
   San Franbourne's only one "Lobby", and so count down on a lead-in day on both phones. The rule is the same
-  for a house or a shrine of a long-named town ("House 3", "Shrine"): Asahikawa's worship hall (#212) reads
-  "Shrine", because "Asahikawa shrine" is 16 and cost the bar its year at 667x375. The whole name still shows
+  for a house or a shrine of a long-named town ("House 3", "Shrine"): Asahikawa's worship hall (#212; gone
+  with its shrine in #219) read "Shrine", because "Asahikawa shrine" is 16 and cost the bar its year at 667x375. The whole name still shows
   wherever the bar has room for it. A town-led form can still be too long for the countdown, as a house's can: "Kanazawa
   lobby" (14) shows the date at 844x390, and every town-led lobby but Osaka's does at 667x375.
 
@@ -653,8 +711,8 @@ A town's only lobby has no number. The way out of each is the cell below its (fi
 A shrine hall is enterable: its top step (the `shrine` / `shrine-red` prefab's door cell, building cell
 `(1, 4)`) carries a hidden transporter into a worship hall of its own, `Shrine<Host><n>` (HUD: `Shrine | Asakusa`, the host's display name).
 Every hall in the world has one: **Tokyo** (`ShrineTokyo1`, Palace Shrine), **Market** and **Park**
-(`ShrineMarket1`, `ShrinePark1`), **Asahikawa** and **Kanazawa** (`ShrineAsahikawa1`, `ShrineKanazawa1`, blue,
-standard) and **Fukuoka**'s two, both red and large: Kushida Shrine (`ShrineFukuoka1`) and Dazaifu Tenmangu
+(`ShrineMarket1`, `ShrinePark1`), **Kanazawa** (`ShrineKanazawa1`, blue, standard; Asahikawa's
+`ShrineAsahikawa1` went when the zoo gate was built where its shrine stood, #219) and **Fukuoka**'s two, both red and large: Kushida Shrine (`ShrineFukuoka1`) and Dazaifu Tenmangu
 (`ShrineFukuoka2`). Dazaifu's hall is its own sprite (`dazaifu-hall`, stamped sealed right across): its door is
 building cell `(3, 4)`, the right half of its two-wide steps, in line with the bridge
 (`roomgen.SHRINE_DOORS` has a row per hall tile).
@@ -675,8 +733,8 @@ building cell `(3, 4)`, the right half of its two-wide steps, in line with the b
   `roomgen.OWNED_DOORS` (room-key prefix -> that marker and the door sprites, `SHRINE_DOORS`), so a door
   the room had on load is restored where the hall still stands (cell unsealed, transporter back in its
   place in the list) and dropped where the hall moved or its room is gone. No town generator needs an edit
-  for its shrine to stay open; `shrines.test.js` proves it on a scratch copy (Asahikawa, Fukuoka and Kanazawa
-  rebuilt, then Asahikawa's hall sealed and rolled out again), and `check_generators.py` for every wired
+  for its shrine to stay open; `shrines.test.js` proves it on a scratch copy (Fukuoka and Kanazawa
+  rebuilt, then Kanazawa's hall sealed and rolled out again), and `check_generators.py` for every wired
   town. Another kind of interior is one more row in `OWNED_DOORS`.
 - **The steps stay open.** The prefab seals the hall and leaves its door and the three cells of its bottom
   step open; a town must not plant on them. Kanazawa's wood did (a cedar's trunk across the door, the step's
@@ -724,7 +782,7 @@ building cell `(3, 4)`, the right half of its two-wide steps, in line with the b
   it for every dated position). `the shrine` LANDMARK stands its visitor at building cell `(1, 6)`, the foot
   of the two steps: two cells below the door, not in front of it, and walked round by the side of the
   bottom step. A base NPC is config data and is moved by hand when a door opens where it stood: Xander's
-  Asahikawa cell was the one in front of the hall's door (31,27) and is (33,28) now, by the east fox.
+  Asahikawa cell was the one in front of the hall's door (31,27) and is (33,28) now (the hall is the zoo gate since #219, and he stands in front of it).
 
 ### Underground arcades (chikagai)
 
@@ -754,8 +812,9 @@ street entrance, `chikagai-entrance-snow`, 2x3: solid but for the foot of its st
   station's doors (28,13), in Odori Park's east block on the path (33,23, where a tree stood), tucked in by the
   TV Tower (52,24, reached up the plaza's east side; the two shrubs there went) and east of Tanukikoji (47,37).
   Underground the station stairs are at the head of the north stem, Odori Park's and the TV Tower's at the two
-  ends of the hall, Tanukikoji's at the foot of the south stem. When stage 4 builds Susukino the south exit
-  belongs there: move its `street` cell in the table and re-run both generators.
+  ends of the hall, Tanukikoji's at the foot of the south stem. Stage 4 built Susukino and left the south exit
+  where it was (east of Tanukikoji, a short walk down the east street from the crossing); to move it to
+  Susukino, change its `street` cell in the table and re-run both generators.
 - **Another town**: add a row to `chikagai.TOWNS`, stamp `chikagai.ENTRANCE` at each exit's `street` cell in the
   town's generator, run `generate_chikagai_art.py` (exit signs), `generate_chikagai.py <Town>`, then
   `config_to_tiled.py Chikagai<Town> <Town>` and `play.js lint` for both. The entrance art has snow on its

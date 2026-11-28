@@ -14,8 +14,8 @@ see Shop, Food and Drink) and every high-rise's and apartment block's into a lob
 lobbies in `landmarks-and-towns.md`). Of the ported houses, one opens: the red house at Market `(6,33)` is the Izakaya
 (issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`). Houses (the
 `house-*` townhouses, and a machiya with no shop sign) get a generic home interior from
-`tools/generate_houses.py` - in Asahikawa, Fukuoka, Market, Osaka and Sendai (issue #208, see House interiors; Sapporo's last townhouses went when Tanukikoji was built, #219). The high-rises and
-apartment blocks get a lobby from the same tool (`--lobbies`; sixteen in the eight towns that have a tower, all but Sendai's flats over its 7-Eleven, issues #216 and #219, see Tower lobbies), and a shopfront in `roomgen.SHOP_DOORS` a small shop floor (`--shops`; Tanukikoji's three, see Shop floors).
+`tools/generate_houses.py` - in Fukuoka, Market, Osaka and Sendai (issue #208, see House interiors; Sapporo's last townhouses went when Tanukikoji was built and Asahikawa's are Hokkaido houses of its own art, #219). The high-rises and
+apartment blocks get a lobby from the same tool (`--lobbies`; seventeen in the eight towns that have a tower, all but Sendai's flats over its 7-Eleven, issues #216 and #219, see Tower lobbies), and a shopfront in `roomgen.SHOP_DOORS` a small shop floor (`--shops`; Tanukikoji's three, Susukino's karaoke bar, and in Asahikawa Heiwa-dori's three and the shoyu ramen counter, see Shop floors).
 
 | Prefab | Cells | Placed in |
 |---|---|---|
@@ -26,7 +26,7 @@ apartment blocks get a lobby from the same tool (`--lobbies`; sixteen in the eig
 | `midrise-apartment` (the same block, two floors lower) | 5x6 | Palace (40,10), feet on the forecourt edge |
 | `sapporo-office-brick` / `sapporo-office-glass` (Sapporo's own office blocks, `roof=1`: only the top row is walk-behind) | 4x7 / 5x6 | Sapporo (49,9) / (10,11) - each with a lobby |
 | `discount-store` (the "Don Quijote") | 5x8 | Market (46,22), Osaka (13,9) by the Dotonbori arch, Sapporo (16,11) - each with an interior |
-| `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Asahikawa's ramen alley, Sendai, Kanazawa, Toyama's old street, Fukuoka |
+| `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Sendai, Kanazawa, Toyama's old street, Fukuoka (Asahikawa's ramen alley has fronts of its own since #219) |
 | `devhouse-tokyo` (the trips' house in Minato, six storeys; `door=3`) / `devhouse-osaka` (the one on Dotonbori, four; `door=1`) | 5x8 / 3x7 | Park (10,9) under Tokyo Tower / Osaka (9,10) beside Don Takote - each opens onto its floors (issue #69, see "The Devhouses of Tokyo and Osaka"; art `tools/generate_devhouse_art.py`) |
 
 - **Art** is assembled by `tools/extract_city.py` from the GuttyKreum RPG Maker tile kits in `../art-source/GuttyKreum`
@@ -128,8 +128,8 @@ graded at night.
   `susukino-karaoke`, `susukino-ramen-gate`, `tanukikoji-gate` and the three `tanukikoji-shop-*` (placed in Tanukikoji since stage 3: the bulbs under the arch, the shops' lit windows), `sapporo-station-front`, `sapporo-konbini` and the
   two `snowfest-stall-*` (placed in Odori Park since stage 2, with `odori-lamp-post`, which the lamp rule lights; pink / cyan / yellow / green boards, warm windows, the cool white of the station's clock
   and name board). `susukino-neon-lanterns` and `ramen-alley-lanterns` are lanterns by name and are lit by the
-  lamp rule, so they are not in it. **Only the station front and the two stalls are placed so far** (stages 1-2 of
-  the rebuild); the rest light nothing until a stage places them. Indoors the table also holds the temple hall's
+  lamp rule, so they are not in it. Every row but `sapporo-konbini` is placed since stage 4 built Susukino (the
+  fox board, the karaoke front, the ramen gate); that one lights nothing until it is. Indoors the table also holds the temple hall's
   lights, `devhouse-lantern_0_0`, the stone lantern in the Osaka Devhouse's roof garden (the one Devhouse floor
   that is `lanternLight`, issue #69), and the pendant lamps and the town's lights in the panes of Fukuoka
   Tower's deck (`deck-in-downlight`, `deck-in-window-1..6`; the room is `daylight`, graded as the street is, issue #242). A unit

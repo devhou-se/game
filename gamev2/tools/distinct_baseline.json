@@ -1,16 +1,16 @@
 {
   "Asahikawa": {
-    "buildings": 0.265,
-    "own": 0.1,
-    "sprites": 0.195
+    "buildings": 0.0,
+    "own": 0.872,
+    "sprites": 0.108
   },
   "Fukuoka": {
-    "buildings": 0.25,
+    "buildings": 0.174,
     "own": 0.262,
     "sprites": 0.44
   },
   "Hokuriku": {
-    "buildings": 0.265,
+    "buildings": 0.214,
     "own": 0.396,
     "sprites": 0.544
   },
@@ -25,12 +25,12 @@
     "sprites": 0.321
   },
   "Sapporo": {
-    "buildings": 0.062,
-    "own": 0.781,
-    "sprites": 0.182
+    "buildings": 0.059,
+    "own": 0.81,
+    "sprites": 0.17
   },
   "Sendai": {
-    "buildings": 0.231,
+    "buildings": 0.214,
     "own": 0.286,
     "sprites": 0.544
   },

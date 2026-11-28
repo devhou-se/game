@@ -60,7 +60,8 @@ and the entrance mat below the middle of the floor. A bump on the directory
 or on a lift says one line. Nobody works there yet.
 
 A THIRD KIND, THE SHOP (issue #219, `--shops`): a shopfront in
-roomgen.SHOP_DOORS (Tanukikoji's souvenir shop, crab shop and drugstore) gets a
+roomgen.SHOP_DOORS (Tanukikoji's souvenir shop, crab shop and drugstore, Susukino's
+karaoke bar) gets a
 door into a `Shop<Town><n>` room, by the same rules. THE SHOP FLOOR is one
 layout (SHOP): a white back wall with posters, shelves against it, seven by
 five cells of floor, a counter with a till, a plant in each front corner and
@@ -200,6 +201,12 @@ SHOP_TYPES = {
     'tanukikoji-shop-souvenir': ('Souvenirs', 'souvenirs', 'office-shelf-snacks_0_0'),
     'tanukikoji-shop-crab': ('Crab shop', 'crab', 'office-freezer_0_0'),
     'tanukikoji-shop-drug': ('Drugstore', 'drugstore', 'office-shelf-glass_0_0'),
+    'susukino-karaoke': ('Karaoke bar', 'bar', 'office-shelf-drinks_0_0'),      # Susukino (stage 4): the bar sells over the counter
+    # Asahikawa (issue #219, stage B): Heiwa-dori's sake shop, bakery and woodcraft shop, and one ramen counter
+    'heiwa-shop-sake': ('Sake bar', 'standbar', 'office-shelf-drinks_0_0'),
+    'heiwa-shop-bakery': ('Bakery', 'bakery', 'office-shelf-snacks_0_0'),
+    'heiwa-shop-woodcraft': ('Woodcraft', 'souvenirs', 'office-shelf-glass_0_0'),
+    'ramen-shoyu-front': ('Ramen', 'ramen', 'office-shelf-drinks_0_0'),
 }
 SHOP_FLAVOUR = ('office-counter2',)
 
