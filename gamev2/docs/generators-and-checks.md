@@ -323,6 +323,10 @@ clear; a steel housing, its lip `dae2e4` lightest, the bottom and right darkest,
 shadow on the face; a lit face in scanlines or a painted one shaded, the text on it, the sub on a band along
 the bottom.
 
+Kanazawa's ten building fronts in `tools/generate_kanazawa_art.py` (the three `chaya-front`s, the gold-leaf
+shop, the phonograph museum, Katamachi's four bars and the samurai house; #307, part of #290) are drawn by it
+and held to it by `tools/tests/kanazawa-art.test.js`.
+
 ## Asset Generation
 
 Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/`:
