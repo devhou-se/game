@@ -119,6 +119,10 @@ DISTRICTS = {
         d('station-front', 'Sapporo Station front',
           'the star-clock station front on its stone-paved plaza: arrivals, the meeting point, the walk out into the snow',
           (21, 6, 33, 19), stand=(26, 15)),
+        d('akarenga', 'Akarenga block',
+          'west of the station: the red-brick former Hokkaido government office, the KITA office block and '
+          'the Don Takote discount store, open all night',
+          (2, 6, 20, 19), stand=(12, 19)),
         d('clock-tower', 'Clock Tower block',
           'the Sapporo Clock Tower on dark setts beside a red-brick office block',
           (34, 6, 53, 19), stand=(38, 18)),
@@ -242,6 +246,10 @@ DISTRICTS = {
         d('hakata-station', 'Hakata Station',
           'the front of Hakata Station: arrivals and goodbyes, the Christmas market and illuminations, ramen shops',
           (28, 3, 44, 10), stand=(36, 9)),
+        d('tenjin', 'Tenjin',
+          'downtown on the main road south of the station: office towers, a block of flats, old townhouses, '
+          'the 7-Eleven, vending machines, the zebra crossing',
+          (16, 11, 59, 23), stand=(40, 19)),
         d('momochi', 'Momochi',
           'Fukuoka Tower, the beach and the sea',
           (6, 6, 15, 23), stand=(11, 20)),
@@ -254,6 +262,10 @@ DISTRICTS = {
         d('nakasu', 'Nakasu',
           'yatai food stalls along the river at night, lanterns, bars and pubs',
           (9, 33, 59, 42), stand=(30, 37)),
+        d('ohori-park', 'Ohori Park',
+          'the park across the river from Nakasu: the long pond and its stone lanterns, a gravel walk, '
+          'trees on the lawn, two big cherry trees by the road',
+          (9, 43, 32, 59), stand=(18, 47)),
         d('dazaifu', 'Dazaifu',
           'Dazaifu Tenmangu: the torii and approach, the arched bridge over the pond, plum trees, the hall with a grove on its roof',
           (33, 43, 59, 56), stand=(46, 52)),

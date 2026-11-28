@@ -471,8 +471,9 @@ def test_spots(cfg):
             for other_prefix, other_label, _, other in map(b.landmark_fields, b.LANDMARKS):
                 if other_label == label:
                     expected |= set(other['rooms']) if 'rooms' in other else {
-                        r for r in by_room if any(key.startswith(other_prefix) for layer in cfg['rooms'][r]['layers']
-                                                  for key in b.decode_tiles(cfg, layer).values())}
+                        r for r in by_room if r not in other.get('not_rooms', ())
+                        and any(key.startswith(other_prefix) for layer in cfg['rooms'][r]['layers']
+                                for key in b.decode_tiles(cfg, layer).values())}
             assert offered == expected, (label, offered, expected)
     # the two ramen alleys: each town's own, at its own sprite
     assert by_room['Sapporo']['ramen alley'] == (25, 47), by_room['Sapporo']['ramen alley']
@@ -482,6 +483,10 @@ def test_spots(cfg):
         return any(key.startswith(prefix) for layer in cfg['rooms'][room_key]['layers']
                    for key in b.decode_tiles(cfg, layer).values())
     assert has_tile('Kanazawa', 'sendai-gate_') and has_tile('Sendai', 'sendai-gate_')
+    # a landmark's `not_rooms` keep it out of a town that holds its sprite (issue #392)
+    for prefix, label, _, options in map(b.landmark_fields, b.LANDMARKS):
+        for room_key in options.get('not_rooms', ()):
+            assert has_tile(room_key, prefix) and label not in by_room.get(room_key, {}), (label, room_key)
 
     # every spot is somewhere an author can stand and the player can walk up
     # to: a free cell at the landmark's standing cell or within two of it
@@ -1411,7 +1416,18 @@ def test_districts(cfg):
     asakusa = cfg['districts']['Market'][0]
     assert f"- Market · Asakusa (area): {asakusa['description']}" in offer
     assert '- Market · Senso-ji temple (in Asakusa)' in offer and '- Tokyo · the palace moat (in Imperial Palace)' in offer
-    assert '- Sapporo · the Don Takote discount store' in offer, 'a spot in no district is offered bare'
+    assert '- Sapporo · the Don Takote discount store (in Akarenga block)' in offer
+    bare = copy.deepcopy(cfg)
+    bare['districts']['Sapporo'] = [d for d in bare['districts']['Sapporo'] if d['key'] != 'akarenga']
+    assert b.offer_lines(bare, ['Sapporo · the Don Takote discount store']) == '- Sapporo · the Don Takote discount store', \
+        'a spot in no district is offered bare'
+    # the six spots that stood in no district (issue #392): five are in one now, and Osaka's vending
+    # machines, on the station front (a threshold, not a district), are not offered at all
+    for spot_id, name in (('Sapporo · the Don Takote discount store', 'Akarenga block'),
+                          ('Fukuoka · the 7-Eleven', 'Tenjin'), ('Fukuoka · the vending machines', 'Tenjin'),
+                          ('Fukuoka · the pond', 'Ohori Park'), ('Fukuoka · the sakura trees', 'Ohori Park')):
+        assert (b.district_at(cfg, *spots[spot_id]) or {}).get('name') == name, (spot_id, name)
+    assert 'Osaka · the vending machines' not in spots and 'Fukuoka · the vending machines' in spots
     assert '- TokyoStation · the platform' in offer
     assert 'Senso-ji' in asakusa['description'] and 'Ueno' in cfg['districts']['Park'][0]['description']
 

@@ -96,6 +96,9 @@ them over the player, see `occlusion.md`.)
   - `{'rooms': ('Kanazawa',)}` — the label names one place, so only those rooms offer it. Use it whenever a
     label would be wrong in another town built from the same sprites (`the Nagamachi samurai lane` is
     Kanazawa's, though Sendai has the same gate — issue #100).
+  - `{'not_rooms': ('Osaka',)}` — those rooms do not offer it, though they hold its sprite: for a spot that
+    stands in no district and should not have one drawn round it (Osaka's vending machines, on its station
+    front — issue #392).
   - `{'indoors': True}` — offered inside station rooms, and only there (issue #73).
 
 ### Districts: the named areas of every town (issue #219)
@@ -126,7 +129,8 @@ Every town is made of named areas, and the data says so: config `districts`, key
 - **Names are the redesign plan's, bounds are today's map.** A district the plan names that is not built yet
   has NO entry: Ueno and Shibuya (Park is one district, "Park", whose description says it stands in for both),
   Shirakawa-go's ryokan, Osaka's station front (a
-  threshold, not a district). Add it in the change that builds it. San Franbourne (#218) was not on master when this landed: give it districts when it is.
+  threshold, not a district: so Osaka does not offer `the vending machines`, whose first pair stands there,
+  by the landmark row's `not_rooms`, issue #392). Add it in the change that builds it. San Franbourne (#218) was not on master when this landed: give it districts when it is.
 
 | Room (key) | Districts today |
 |---|---|
@@ -136,14 +140,14 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Park | Park |
 | Shinjuku | Shinjuku |
 | Karuizawa | Larch road |
-| Sapporo | Sapporo Station front, Clock Tower block, Odori Park, Tanukikoji, Susukino |
+| Sapporo | Sapporo Station front, Akarenga block, Clock Tower block, Odori Park, Tanukikoji, Susukino |
 | Asahikawa | Station front and Heiwa-dori, Ramen alley, Asahibashi and the riverbank |
 | Osaka | Dotonbori, Shinsekai |
 | Himeji | Himeji Castle, Koko-en garden |
 | Okayama | Okayama Castle, Momotaro Avenue, Korakuen garden |
 | Nara | Todaiji, Nara Park, Kasuga Taisha |
 | Sendai | Sendai Station front, Aoba Castle ruins, Downtown, Zuihoden, Nikka distillery, Samurai quarter, Matsushima bay |
-| Fukuoka | Hakata Station, Momochi, Canal City, Old Hakata, Nakasu, Dazaifu |
+| Fukuoka | Hakata Station, Tenjin, Momochi, Canal City, Old Hakata, Nakasu, Ohori Park, Dazaifu |
 | Kanazawa | Station front, Higashi Chaya and the temple hill, Katamachi, Castle, Kenrokuen, Nagamachi, Teramachi |
 | Shirakawago | Far bank and bridge, Village, Viewpoint |
 | Toyama | Iwase port, Tram street |

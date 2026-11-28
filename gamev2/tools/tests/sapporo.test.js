@@ -686,7 +686,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.deepStrictEqual(d.spots, ['Susukino crossing', 'ramen alley', 'the streetcar stop']);
         assert.ok(/neon/.test(d.description) && /karaoke/.test(d.description) && /ramen alley/.test(d.description) && /streetcar/.test(d.description));
         assert.ok(reach.has(d.stand.join(',')) && fam(...d.stand) === 'susukino-asphalt-autotile' && !doorAt(d.stand[0], d.stand[1] - 1));
-        assert.deepStrictEqual(cfg.districts.Sapporo.map((x) => x.key), ['station-front', 'clock-tower', 'odori-park', 'tanukikoji', 'susukino']);
+        assert.deepStrictEqual(cfg.districts.Sapporo.map((x) => x.key), ['station-front', 'akarenga', 'clock-tower', 'odori-park', 'tanukikoji', 'susukino']);
         // the arcade's district is what it was
         assert.deepStrictEqual(cfg.districts.Sapporo.find((x) => x.key === 'tanukikoji').spots, ['Tanukikoji arcade', 'the 7-Eleven', 'the crab shop', 'the souvenir shop']);
         // the glow table lights the neon corner, the karaoke bar, the gate and the counters; the poles are the lamp rule's

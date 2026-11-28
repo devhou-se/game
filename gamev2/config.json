@@ -289,6 +289,25 @@
       },
       {
         "bounds": [
+          16,
+          11,
+          59,
+          23
+        ],
+        "description": "downtown on the main road south of the station: office towers, a block of flats, old townhouses, the 7-Eleven, vending machines, the zebra crossing",
+        "key": "tenjin",
+        "name": "Tenjin",
+        "spots": [
+          "the 7-Eleven",
+          "the vending machines"
+        ],
+        "stand": [
+          40,
+          19
+        ]
+      },
+      {
+        "bounds": [
           6,
           6,
           15,
@@ -359,6 +378,25 @@
         "stand": [
           30,
           37
+        ]
+      },
+      {
+        "bounds": [
+          9,
+          43,
+          32,
+          59
+        ],
+        "description": "the park across the river from Nakasu: the long pond and its stone lanterns, a gravel walk, trees on the lawn, two big cherry trees by the road",
+        "key": "ohori-park",
+        "name": "Ohori Park",
+        "spots": [
+          "the pond",
+          "the sakura trees"
+        ],
+        "stand": [
+          18,
+          47
         ]
       },
       {
@@ -896,6 +934,24 @@
         "stand": [
           26,
           15
+        ]
+      },
+      {
+        "bounds": [
+          2,
+          6,
+          20,
+          19
+        ],
+        "description": "west of the station: the red-brick former Hokkaido government office, the KITA office block and the Don Takote discount store, open all night",
+        "key": "akarenga",
+        "name": "Akarenga block",
+        "spots": [
+          "the Don Takote discount store"
+        ],
+        "stand": [
+          12,
+          19
         ]
       },
       {

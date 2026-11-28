@@ -171,6 +171,9 @@ def unmapped_author_warning(post_id, author, authors=None):
 # options:
 #   'rooms': (room keys)  the label names one place, so only these rooms offer
 #                         it — other rooms built from the same sprites do not
+#   'not_rooms': (room keys)  these rooms do not offer it, though they hold its
+#                         sprite: where it stands in no district and none
+#                         should be drawn round it (issue #392)
 #   'indoors': True       offered inside station rooms, and only there. Without
 #                         it a landmark is matched in outdoor rooms only, so an
 #                         interior is never picked up by a prop it happens to
@@ -191,7 +194,8 @@ LANDMARKS = [
     # the canopy's tile cell is its top-left corner; the trunk is under its
     # middle, two rows down — stand on the ground in front of the trunk (#183)
     ('sakura-large-top', 'the sakura trees', (1, 3)),
-    ('white-vending-machine-top', 'the vending machines'),
+    # not Osaka's: its first pair is on the station front, a threshold and not a district (issue #392)
+    ('white-vending-machine-top', 'the vending machines', {'not_rooms': ('Osaka',)}),
     # Named landmarks. These are single sprites many cells tall, whose tile
     # cell is their top-left corner (the tip of a tower) — so each carries the
     # cell, relative to that corner, where someone visiting it would stand:
@@ -334,6 +338,8 @@ def landmark_fields(entry):
 def landmark_applies(cfg, room_key, options):
     """Whether a landmark with these options may be offered in room_key."""
     if 'rooms' in options and room_key not in options['rooms']:
+        return False
+    if room_key in options.get('not_rooms', ()):
         return False
     return bool(options.get('indoors')) == is_indoors(cfg, room_key)
 
