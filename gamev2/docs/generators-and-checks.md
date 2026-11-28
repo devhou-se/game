@@ -11,7 +11,7 @@ committed world: it runs each one in a scratch copy and fails, naming the rooms 
 would change (issue #107, see "Generated rooms stay regenerable"). It also re-seeds every room with
 `config_to_tiled.py` and fails if a committed `tiled/*.tmj` would change (a config edit whose map was not
 re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_fukuoka_art`, `_hokuriku_art`, `_sapporo_art`, `_sanfranbourne_art`, `_tsutenkaku`, `_tokyo_art`,
-`_discount_art`, `_cooler_art`, `_konbini_art`, `_seven_eleven_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
+`_discount_art`, `_cooler_art`, `_konbini_art`, `_seven_eleven_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `make_bridge_tiles`, `generate_ads`, `generate_cast`, the
 `extract_*.py` scripts, `extract_station` among them) and fails if `assets/sprites`, `assets/ads`, `assets/map`, `tiled/prefabs` or `config.json` would
 change (issues #186, #193). Last it runs `make_worldmap.py --pil` and fails if `assets/map/world-map.png` or
 `world-map.json` would change (issue #270, see "The world map"). Run it after any edit to a

@@ -124,7 +124,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   each junction, so a joining road's mouth was closed by the other road's kerb and its centre line ran
   on into the junction. **`python3 tools/square_junctions.py`** lays each of the fourteen 3x3 boxes in
   Tokyo, Market, Palace and Park the way #147 laid the west gate: `road-plain` throughout, the kerb along a
-  CLOSED side (the far side of a T, the outside of a bend), a mitred `road-corner-*` where two closed
+  CLOSED side (the far side of a T, the outside of a bend), a two-kerb `road-corner-*` where two closed
   sides meet. `JUNCTIONS` lists them per district (top-left cell + closed sides); a box may hang over
   the map edge - the Tokyo/Market road is half in each map - and the neighbour's entry lays the rest.
   Sides are as the district reads on its own (`?stitch=0`): Park's top row is a kerb there, and

@@ -85,7 +85,7 @@ TILED = 'config_to_tiled'
 ART_TOOLS = [
     'make_prefabs', 'generate_hokkaido', 'generate_sendai_art', 'generate_tsutenkaku',
     'generate_discount_art', 'generate_cooler_art', 'make_snow_tiles',
-    'make_road_tiles', 'generate_ads', 'generate_cast', 'extract_city',
+    'make_road_tiles', 'make_bridge_tiles', 'generate_ads', 'generate_cast', 'extract_city',
     'extract_dotonbori', 'extract_shrine', 'extract_street', 'extract_train',
     'extract_train_interior', 'extract_station', 'generate_station_art',
     'generate_fukuoka_art', 'extract_house_interior', 'generate_house_art', 'generate_shrine_art', 'generate_palace_art',
