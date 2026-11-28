@@ -148,6 +148,15 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.ok(out.at < out.map, 'generate_fukuoka_town_art runs after make_worldmap');
     });
 
+    test('check_generators: Sendai\'s town art is checked, before the world map, and a rerun only writes what changed (#399)', () => {
+        const out = python('out["at"] = cg.ART_TOOLS.index("generate_sendai_town_art") if "generate_sendai_town_art" in cg.ART_TOOLS else -1\nout["map"] = cg.ART_TOOLS.index(cg.WORLDMAP)');
+        assert.ok(out.at >= 0, 'generate_sendai_town_art is not in ART_TOOLS');
+        assert.ok(out.at < out.map, 'generate_sendai_town_art runs after make_worldmap');
+        // a sprite saved unconditionally is rewritten (same pixels, other bytes) on every run: ~100 files of noise
+        const tool = fs.readFileSync(path.join(GV2, 'tools', 'generate_sendai_town_art.py'), 'utf8');
+        assert.ok(/save_png\(im, f'\{SPR\}\/\{key\}\.png'\)/.test(tool), 'generate_sendai_town_art.py does not save its sprites through save_png');
+    });
+
     test('check_generators: a world map that is not what make_worldmap draws is drift, and only the picture is named (#270)', () => {
         // a project like the committed one (devhouse.world beside it), but for a patch painted on its map
         const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'check-generators-worldmap-'));

@@ -102,7 +102,7 @@ from generate_sendai_art import (blob, trunk, rock, SLATE, SLATE_HI, SLATE_LO, P
                                  GOLD_HI, GOLD_LO, ROCK, ROCK_HI, ROCK_LO, ROCK_DK,
                                  BRONZE, BRONZE_HI, BRONZE_LO)
 from generate_sapporo_art import brick, glass_door, lantern, BRICK, BRICK_HI, BRICK_LO, BRICK_DK   # noqa: E402
-from generate_kanazawa_art import text, kana, text_w, h3, shade, curve_rows, night, roof               # noqa: E402
+from generate_kanazawa_art import text, kana, text_w, h3, shade, curve_rows, night, roof, save_png     # noqa: E402
 
 SPR = 'assets/sprites'
 ROLES = ('center', 'edge-n', 'edge-s', 'edge-e', 'edge-w',
@@ -3257,7 +3257,7 @@ def scenes(built, outdir):
 def main():
     built = build()
     for key, im in built.items():
-        im.save(f'{SPR}/{key}.png')
+        save_png(im, f'{SPR}/{key}.png')
         if 'autotile' not in key:
             print(f'{key}: {im.width}x{im.height}px ({im.width // 64}x{im.height // 64} cells)')
     print(', '.join(f[0] for f in FAMILIES) + f': {len(ROLES)} roles each')
