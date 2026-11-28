@@ -28,9 +28,10 @@ and the pixels are the same size as the houses, konbini and floors next door.
 (The Dotonbori arch / ferris wheel from extract_dotonbori.py are deliberately
 4x — oversized landmarks — do not copy that scale for street buildings.)
 
-The discount store's sign is drawn here in the style of tools/generate_ads.py
-(same font / pixel-text helpers) and, like that pool, carries no real
-branding: ドン・タコーテ ("Don Takote", an octopus instead of a penguin).
+The discount store's sign is drawn here in the house look (tools/house_look.py),
+built like the ad pool's boards in tools/generate_ads.py, its text in the game's
+own fonts/PixelMplus12-Grid.ttf (issue #346), and like that pool it carries no
+real branding: ドン・タコーテ ("Don Takote", an octopus instead of a penguin).
 
 Registers every key in config.json spriteMetadata + tileNames (the game only
 loads a tile that has a spriteMetadata entry). Needs Pillow.
@@ -39,8 +40,8 @@ Run from gamev2/ BEFORE make_prefabs.py:
     python3 tools/extract_city.py [--preview out.png]
 """
 import json, sys
-from PIL import Image, ImageDraw
-import generate_ads as ads
+from PIL import Image
+import house_look as hl
 
 GK = '../art-source/GuttyKreum/'
 SHEETS = {
@@ -139,36 +140,80 @@ def apartment(floors):
 
 
 # ---- discount store (GK_DB_B department-store facade + generated sign) ---------
-SIGN = dict(text='ドン・タコーテ', sub='なんでも激安  24h', yellow='#f9c22e', blue='#1155a8',
-            ink='#1c1c22', red='#c62828')
+SIGN = dict(text='ドン・タコーテ', sub='なんでも激安  24h')
+# the octopus mascot, one character a pixel (house_look.pixmap): H lit, h base, R and r
+# the shadow side, W the eyes' whites, k the pupils and mouth, p the cheeks
+OCTOPUS = ['.......HHHHHH.......',
+           '.....HHHhhhhhRR.....',
+           '....HHhhhhhhhhhRR...',
+           '...HHhhhhhhhhhhhRr..',
+           '..HHhhhhhhhhhhhhhRr.',
+           '..Hhhhhhhhhhhhhhhhr.',
+           '.HhhhWWWhhhhWWWhhhRr',
+           '.HhhWWWkkhhWWWkkhhRr',
+           '.HhhWWWkkhhWWWkkhhRr',
+           '.HhhhWWWhhhhWWWhhhRr',
+           '.hhpphhhhhhhhhpphhRr',
+           '.hhhhhhhkkkkhhhhhRRr',
+           '..hhhhhhhhhhhhhhRRr.',
+           '..rhhhhhhhhhhhhRRrr.',
+           '.hhhhhhhhhhhhhhhhRr.',
+           'HhR.HhR.HhR.HhR.HhR.',
+           'HhR.HhR.HhR.HhR.HhR.',
+           'HhR.HhR.HhR.HhR.HhR.',
+           '.hR..hR.HhR.hR..hRR.',
+           '.hRR.hR..hR.hR.hR...',
+           '..R..RR..RR.RR..R...']
+BAND = 13       # the sub's band: a lit top row and the 12 rows of the text, as the ads have it
 
 
 def store_sign(w, h):
-    """The rooftop sign, drawn at sheet resolution so its pixels match the
-    facade's once everything is scaled: yellow board, blue price band, red
-    octopus mascot. generate_ads.py style — parody name, no real branding."""
-    ads.FONT_PATH, ads.FONT_INDEX = ads.find_font()
-    s = SIGN
-    im = Image.new('RGBA', (w, h), s['yellow'])
-    d = ImageDraw.Draw(im)
-    d.rectangle([0, 0, w - 1, h - 1], outline=s['ink'], width=2)
-    d.rectangle([2, 2, w - 3, h - 3], outline=s['red'], width=1)
-    band = 15                                              # blue hook band along the bottom
-    d.rectangle([3, h - 3 - band, w - 4, h - 4], fill=s['blue'])
-    ads.paste_center(im, ads.fit_text(s['sub'], w - 16, band - 4, '#ffffff'), w / 2, h - 4 - band / 2)
-    for x in range(8, w - 8, 8):                           # marquee bulbs
-        d.rectangle([x, 5, x + 1, 6], fill=s['red'])
-    # mascot: a round red octopus on the left
-    cx, cy, r = 21, 25, 11
-    d.ellipse([cx - r, cy - r, cx + r, cy + r - 2], fill=s['red'], outline=s['ink'])
-    for i, lx in enumerate(range(cx - r + 1, cx + r, 5)):
-        d.rectangle([lx, cy + r - 4, lx + 2, cy + r + (1 if i % 2 else 3)], fill=s['red'], outline=s['ink'])
-    for ex in (cx - 5, cx + 3):
-        d.rectangle([ex, cy - 4, ex + 2, cy - 1], fill='#ffffff')
-        d.point([ex + 1, cy - 2], fill=s['ink'])
-    d.line([cx - 3, cy + 3, cx + 3, cy + 3], fill=s['ink'])
-    name = ads.fit_text(s['text'], w - 46, 26, s['ink'])
-    ads.paste_center(im, name, 38 + (w - 44) / 2, 9 + (h - band - 14) / 2)
+    """The rooftop sign, drawn at sheet resolution (half the game's size, as
+    tools/house_look.py draws) so its pixels match the facade's once everything
+    is scaled. Built like the ad pool's boards (tools/generate_ads.py): a steel
+    housing edged in ink, a shaded gold face with a row of marquee bulbs, the
+    octopus mascot and the name in blue with an ink shadow, the hook on a blue band; the text in
+    the game's PixelMplus12. Parody name, no real branding."""
+    im = hl.canvas(w, h)
+    # the housing, lit from the upper left, then the ink round it (the corners stay clear)
+    hl.fill(im, (1, 1, 1, h - 2), hl.tone('steel', 4))
+    hl.fill(im, (w - 2, 1, w - 2, h - 2), hl.tone('steel', 2))
+    hl.fill(im, (1, 1, w - 2, 1), hl.tone('steel', 5))
+    hl.fill(im, (1, h - 2, w - 2, h - 2), hl.tone('steel', 1))
+    hl.outline(im)
+    face = hl.material('gold', 2)
+    hl.fill(im, (2, 2, w - 3, 2), face[3])                  # the lip's shadow on the face
+    x0, x1, y0, y1 = 2, w - 3, 3, h - 3
+    fw = x1 - x0 + 1
+    # the band along the bottom, the sub centred on its 12 rows
+    top = y1 - BAND + 1
+    band = hl.material('blue', 2)
+    hl.fill(im, (x0, top, x1, y1), band[0])
+    hl.fill(im, (x0, top, x1, top), band[1])
+    sw, sh = hl.text_size(SIGN['sub'])
+    hl.text(im, x0 + (fw - sw) // 2, top + 1 + (BAND - 1 - sh) // 2, SIGN['sub'], hl.tone('cream', 3))
+    y1 = top - 1
+    hl.shade(im, (x0, y0, x1, y1), face)
+    for x in range(x0 + 5, x1 - 4, 8):                      # marquee bulbs, lit at the upper left
+        hl.fill(im, (x, y0 + 2, x + 1, y0 + 3), hl.tone('red', 1))
+        hl.fill(im, (x, y0 + 2, x, y0 + 2), hl.tone('red', 3))
+    # the mascot on the left, the name centred in what is left of the face below the bulbs
+    colours = dict(H=hl.tone('red', 3), h=hl.tone('red', 2), R=hl.tone('red', 1), r=hl.tone('red', 0),
+                   W=hl.tone('cream', 3), k=hl.INK, p=hl.tone('pink', 2))
+    octo = hl.canvas(len(OCTOPUS[0]) + 2, len(OCTOPUS) + 2)
+    hl.stamp(octo, hl.pixmap(OCTOPUS, colours), 1, 1)
+    hl.outline(octo)
+    fy0 = y0 + 5
+    fh = y1 - fy0 + 1
+    hl.stamp(im, octo, x0 + 6, fy0 + (fh - octo.height) // 2)
+    nx0 = x0 + 6 + octo.width
+    # the name in bold: its ink stamped twice a pixel apart, the shadow under both
+    name = hl.text_mask(SIGN['text'])
+    tw, th = name.width + 1, name.height
+    x, y = nx0 + (x1 + 1 - nx0 - tw) // 2, fy0 + (fh - th) // 2
+    for colour, dy in ((hl.INK, 1), (hl.tone('blue', 1), 0)):
+        for dx in (0, 1):
+            im.paste(colour, (x + dx + dy, y + dy), name)
     return im
 
 

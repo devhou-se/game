@@ -1,5 +1,5 @@
 // Underground arcades (chikagai): tools/chikagai.py, tools/generate_chikagai.py, tools/generate_chikagai_art.py.
-module.exports = ({ test, assert, fs, path, GV2, game }) => {
+module.exports = ({ test, assert, fs, path, GV2, game, require }) => {
     const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
     const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
     const tiles = (room, layer) => (room.layers.find((l) => l.name === layer) || { tiles: {} }).tiles;
@@ -142,5 +142,50 @@ module.exports = ({ test, assert, fs, path, GV2, game }) => {
         // no door back beside you: nothing to turn from
         assert.strictEqual(faceAway(cfg.rooms.Sapporo.transporters, 'ChikagaiSapporo', 10, 20), null);
         assert.strictEqual(faceAway(cfg.rooms.Sapporo.transporters, 'SapporoStation', 28, 16), null);
+    });
+
+    test('the arcade\'s art is in the pack\'s colours at the sizes the maps place it by (#316)', () => {
+        const png = require('./png');
+        const SIZES = { 'chika-floor-a': [1, 1], 'chika-floor-b': [1, 1], 'chika-wall': [1, 2], 'chika-wall-poster-a': [1, 2],
+            'chika-wall-poster-b': [1, 2], 'chika-side-w': [1, 1], 'chika-side-e': [1, 1], 'chika-front': [1, 1],
+            'chika-front-w': [1, 1], 'chika-front-e': [1, 1], 'chika-exit-south-w': [1, 1], 'chika-exit-south-e': [1, 1],
+            'chika-gacha': [2, 2], 'chika-map': [1, 2], 'chikagai-entrance-snow': [2, 3],
+            'chika-shop-bakery': [3, 2], 'chika-shop-kissa': [3, 2], 'chika-shop-bar': [3, 2], 'chika-shop-books': [3, 2],
+            'chika-shop-flowers': [3, 2], 'chika-shop-shutter': [3, 2], 'chika-exit-sapporo-station': [4, 2],
+            'chika-exit-odori-park': [4, 2], 'chika-exit-tv-tower': [4, 2], 'chika-sign-tanukikoji': [4, 1] };
+        const PALETTE = new Set(('080d16 172459 fafcfd dae2e4 bcc7cc a4b0b5 848295 646e86 e4cecc d7b6ab be9e8c 8e7366 '
+            + '78768a 5f6177 47485d d1e2eb 94a2a8 575c6d 93c297 508582 4a6262 395050 2e4040 f3d890 c6a663 a7843b 86624f '
+            + 'd16b56 aa4d31 8a3a22 f6a583 ce6a42 904a37 7db9fa 588cc6 425faa 314b8e a68777 7c5d56 594b45 5a3827 7f513b '
+            + 'e3c587 bb8971 3c3a4c 1b1e2a d78bc1 bb6479 83374f bfabd7 8f72b6 444679 6c8e7f 506b6b 83af6f '
+            + '2c2d51 2a3151 4b6396 ecfaff b7c3e3 b1dfdc 3c396d').split(' '));
+        const keys = Object.keys(cfg.spriteMetadata).filter((k) => /^(chika-|chikagai-entrance-snow)/.test(k)).sort();
+        assert.deepStrictEqual(keys, Object.keys(SIZES).map((k) => k + '_0_0').sort());
+        const img = {};
+        for (const key of keys) {
+            const im = img[key] = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png')));
+            const [w, h] = SIZES[key.replace(/_0_0$/, '')];
+            assert.deepStrictEqual([im.width, im.height], [w * 64, h * 64], key);
+            const meta = cfg.spriteMetadata[key];
+            assert.deepStrictEqual([meta.frameCount, meta.anchorX, meta.anchorY], [1, 32 / im.width, 32 / im.height], key);
+            const opaque = /^chika-(floor|wall|side|front|shop|exit)/.test(key), shaded = /^chika-(gacha|map)_/.test(key);
+            const count = {};
+            for (let p = 0; p < im.data.length; p += 4) {
+                const a = im.data[p + 3], hex = im.data.toString('hex', p, p + 3);
+                if (a === 0) { assert.ok(!opaque, `${key}: a see-through pixel`); continue; }
+                if (a === 90 && hex === '2a3151' && shaded) continue;
+                assert.ok(a === 255 && PALETTE.has(hex), `${key}: ${hex} at alpha ${a} is not one of the pack's colours`);
+                count[hex] = (count[hex] || 0) + 1;
+            }
+            im.count = count;
+        }
+        // the glass is dark, and nothing is lit
+        for (const key of ['chika-shop-bakery_0_0', 'chika-gacha_0_0', 'chikagai-entrance-snow_0_0']) assert.ok(img[key].count['2c2d51'], `${key}: no dark glass`);
+        const sign = img['chika-sign-tanukikoji_0_0'];
+        assert.ok(sign.count.c6a663 > sign.width * sign.height / 4, 'the exit sign is not the pack\'s dim gold');
+        // the wall joins the exits and the shops
+        const column = (im, rows) => Array.from({ length: rows }, (_, y) => im.data.toString('hex', y * im.width * 4, y * im.width * 4 + 4)).join();
+        const wall = img['chika-wall_0_0'];
+        for (const key of keys.filter((k) => /^chika-exit-(?!south)/.test(k))) assert.strictEqual(column(img[key], wall.height), column(wall, wall.height), key);
+        for (const key of keys.filter((k) => /^chika-shop-/.test(k))) assert.strictEqual(column(img[key], 8), column(wall, 8), key);
     });
 };

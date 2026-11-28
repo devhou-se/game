@@ -48,8 +48,12 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             '    open(os.path.join(base, "tiled", "room.tmj"), "w").write(text)',
             'read = lambda base, f: open(at(base, f), "rb").read()',
             'out["packed"] = read(root, "same.png") != read(work, "same.png")',
+            'before = os.stat(os.path.join(work, "tiled", "room.tmj"))',
             'out["first"] = cg.restore(root, work)',
             'out["putBack"] = all(read(root, f) == read(work, f) for f in ("same.png", "pixel.png", "size.png"))',
+            // the put-back room.tmj given the size and times it had before (#389): a comparison cached by them
+            // would still call it changed, as it did when both copies fell in the same clock tick
+            'os.utime(os.path.join(work, "tiled", "room.tmj"), ns=(before.st_atime_ns, before.st_mtime_ns))',
             'out["second"] = cg.restore(root, work)',
         ].join('\n'));
         assert.ok(out.packed, 'the two same.png files have the same bytes: the case tests nothing');
@@ -123,19 +127,25 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             'out["args"] = cg.ARGS',
             // play.js loads the game's code from src/ and the tool writes under assets/map
             'out["copied"] = "src" in cg.INPUTS and "tools" in cg.INPUTS and "assets/map" in cg.OUTPUTS and "assets/sprites" in cg.OUTPUTS',
-            'out["noPillow"] = cg.skips([cg.WORLDMAP, "generate_osaka"], False, False)',
-            'out["noFont"] = cg.skips([cg.WORLDMAP], True, False)',
+            'out["noPillow"] = cg.skips([cg.WORLDMAP, "generate_osaka"], False)',
+            'out["withPillow"] = cg.skips([cg.WORLDMAP], True)',
         ].join('\n'));
         assert.ok(out.last, 'make_worldmap is the last of ART_TOOLS: it draws what the other tools made');
         // without --pil the tool draws with tmxrasterizer where Tiled is installed, and that is another picture
         assert.deepStrictEqual(out.args, { make_worldmap: ['--pil'] });
         assert.ok(out.copied, 'the scratch project lacks something make_worldmap reads or writes');
         assert.deepStrictEqual(out.noPillow, { make_worldmap: 'needs Pillow' });
-        assert.deepStrictEqual(out.noFont, {}, 'the map sets no Japanese text');
+        assert.deepStrictEqual(out.withPillow, {});
         const tool = fs.readFileSync(path.join(GV2, 'tools', 'make_worldmap.py'), 'utf8');
         assert.ok(/'--pil' not in sys\.argv/.test(tool), 'make_worldmap.py no longer takes --pil');
         const meta = JSON.parse(fs.readFileSync(path.join(GV2, 'assets', 'map', 'world-map.json'), 'utf8'));
         assert.strictEqual(meta.custom, false, 'a hand-made map ("custom": true) is not one make_worldmap rebuilds: take it out of ART_TOOLS');
+    });
+
+    test('check_generators: Fukuoka\'s town art is checked, before the world map that shows it (#362)', () => {
+        const out = python('out["at"] = cg.ART_TOOLS.index("generate_fukuoka_town_art") if "generate_fukuoka_town_art" in cg.ART_TOOLS else -1\nout["map"] = cg.ART_TOOLS.index(cg.WORLDMAP)');
+        assert.ok(out.at >= 0, 'generate_fukuoka_town_art is not in ART_TOOLS');
+        assert.ok(out.at < out.map, 'generate_fukuoka_town_art runs after make_worldmap');
     });
 
     test('check_generators: a world map that is not what make_worldmap draws is drift, and only the picture is named (#270)', () => {
@@ -196,7 +206,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.deepStrictEqual(code.slice(0, 2), ['ARG WORKSHOP_BASE', 'FROM ${WORKSHOP_BASE}']);
         assert.deepStrictEqual(code.filter((l) => l.startsWith('USER ')), ['USER root', 'USER agent']);
         assert.ok(!code.some((l) => /^(ENTRYPOINT|WORKDIR|CMD)\b|CLAUDE_CONFIG_DIR/.test(l)), 'ENTRYPOINT, WORKDIR and CLAUDE_CONFIG_DIR stay the base image\'s');
-        // no Japanese font: with one the two font tools are run and report DRIFT (check_generators.py, FONT_TOOLS)
+        // no system font: the art tools set their text in the game's own fonts/, and a stray one is not needed (#346)
         assert.ok(!code.some((l) => /fonts-|noto/i.test(l)), 'the image installs no font');
     });
 };

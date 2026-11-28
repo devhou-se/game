@@ -203,8 +203,7 @@ attribution lines.
   an hour.
 - The "Checks" workflow (`.github/workflows/checks.yml`) runs the five checks of section 4 on every push to
   master and every pull request that touches the game. It installs the Pillow pinned in `tools/requirements-art.txt`, so it checks
-  the art tools too (all but the two that need a Japanese system font, which it lists as `skip`),
-  and it does not gate the deploy: it is a second signal, not a replacement for running the checks yourself.
+  the art tools too, and it does not gate the deploy: it is a second signal, not a replacement for running the checks yourself.
 
 ## 8. When something is broken
 

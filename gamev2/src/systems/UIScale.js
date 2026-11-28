@@ -167,7 +167,8 @@ class UIScale {
     /**
      * For whoever builds a float Text (the toast): the widest it can be at
      * overlay `y` in this view and still be shown at the text floor
-     * (UIScale.floatWidth). Infinity on a desktop-sized window.
+     * (UIScale.floatWidth), or, in a cropped view, without being shrunk.
+     * Infinity on a desktop-sized window.
      */
     floatWidth(font, y) {
         const main = this.scene.cameras.main, W = main.width;
@@ -510,10 +511,13 @@ class UIScale {
      * cannot be re-flowed in place, so it is for its owner to break before
      * it is drawn (the shop's toast does: Shop.toastLines). Infinity where
      * the floor asks nothing (the canvas is shown large enough for the font:
-     * a desktop, a tablet) or is not kept (a cropped view): nothing is
-     * broken there.
+     * a desktop, a tablet): nothing is broken there. In a cropped view (a
+     * portrait phone) the floor is not kept, but the slice is so narrow that
+     * a long line would be shrunk to a strip to fit it (#388): there it is
+     * `room`, so a line is broken rather than shown under its own size.
      */
     static floatWidth(font, down, room, cropped) {
+        if (cropped) return room;
         const least = UIScale.floatFloor(font, down, cropped);
         return least > 1 ? room / least : Infinity;
     }

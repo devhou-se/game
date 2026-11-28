@@ -11,7 +11,9 @@ OsakaStation interior (built by generate_stations.py). It is also the town of
 the stitched `KansaiCity` (issue #255; tools/kansai.py has the layout): its
 west edge meets Himeji's east edge, so you walk out along Canal-side Avenue
 (rows 24-28) to the castle, and the canal (rows 20-22) runs on as the castle
-moat. A later Osaka must keep those rows at the west edge.
+moat. Its east edge meets Nara's west edge (issue #268): the avenue walks on to
+the Great Buddha Hall and the canal runs on as Nara's river. A later Osaka must
+keep those rows at both edges.
 From the station you walk south down the main street:
 
   north   the rail line, the platform and the station house
@@ -100,9 +102,10 @@ for x in range(1, W - 1):
 for x in list(range(1, 10)) + list(range(27, W - 1)):
     b.fence(x, 6, x)                                  # south fence, gap at the platform
 for y in (3, 4, 5):                                   # caps at the corridor ends
-    if not ks.is_open('Osaka', 'w'):                  # not where the line carries on west across
-        b.stamp('shrub-small', 0, y)                  # the stitched city: bushes on the track there
-    b.stamp('shrub-small', W - 1, y)
+    if not ks.is_open('Osaka', 'w'):                  # not where the line carries on west (or east)
+        b.stamp('shrub-small', 0, y)                  # across the stitched city: bushes on the track there
+    if not ks.is_open('Osaka', 'e'):
+        b.stamp('shrub-small', W - 1, y)
 for x in range(4, W - 3, 6):                          # blossom beyond the tracks
     b.stamp('sakura-small', x, 0)
 
@@ -299,10 +302,16 @@ if ks.is_open('Osaka', 'w'):
     b.put('Floor', 0, ks.O_AVENUE[0], 'flat-grey-brick-autotile_edge-n')
     b.put('Floor', 0, ks.O_AVENUE[-1], 'flat-grey-brick-autotile_edge-s')
     b.stamp('kansai-fingerpost', 2, ks.O_AVENUE[-1])  # feet on (2, 29), beside the pavement
+# ...and the seam with Nara (issue #268), the same at the east end of the avenue
+if ks.is_open('Osaka', 'e'):
+    b.put('Floor', W - 1, ks.O_AVENUE[0], 'flat-grey-brick-autotile_edge-n')
+    b.put('Floor', W - 1, ks.O_AVENUE[-1], 'flat-grey-brick-autotile_edge-s')
+    b.stamp('nara-fingerpost', W - 3, ks.O_AVENUE[-1])   # feet on (47, 29)
 
 # The ways out: the station house door into OsakaStation, and the avenue west
-# into Himeji (the seam cells carry hidden transporters for ?stitch=0; stitched,
-# you just walk). The discount store's door leads to its own interior and back.
+# into Himeji and east into Nara (the seam cells carry hidden transporters for
+# ?stitch=0; stitched, you just walk: west five, then east five, in the row order
+# of ks.JOINS). The discount store's door leads to its own interior and back.
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) — keep them.
 prev = cfg['rooms'].get('Osaka', {})
 b.finish()      # picket fences + solid tracks: the room is complete without a post-pass

@@ -585,11 +585,14 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         const catalogue = new Set([...src.matchAll(/\{ id: '([a-z-]+)',\s+name:/g)].map((m) => m[1]));
         const I = vmWith('utils/Interactions.js', 'Interactions');
         const list = (menu) => {
-            const row = new RegExp(`\\b${menu}:\\s*\\{ title: '([A-Z ]+)',\\s*sells: i => \\[([^\\]]+)\\]\\.includes\\(i\\.id\\) \\}`).exec(src);
+            // a short list off the catalogue, and (issue #367) maybe the items of its own (`where: '<menu>'`) first
+            const row = new RegExp(`\\b${menu}:\\s*\\{ title: '([A-Z ]+)',\\s*sells: i => (i\\.where === '${menu}' \\|\\| )?\\[([^\\]]+)\\]\\.includes\\(i\\.id\\) \\}`).exec(src);
             assert.ok(row, `Shop.VENUES.${menu}`);
-            const ids = row[2].split(',').map((x) => x.trim().replace(/'/g, ''));
+            const ids = row[3].split(',').map((x) => x.trim().replace(/'/g, ''));
             assert.ok(ids.length >= 2 && ids.length <= 3 && ids.every((id) => catalogue.has(id)), `${menu}: ${ids}`);
-            return ids;
+            const own = row[2] ? [...src.matchAll(new RegExp(`\\{ id: '([a-z-]+)',[^\\n]*where: '${menu}'`, 'g'))].map((m) => m[1]) : [];
+            assert.ok(!row[2] || own.length, `${menu}: sells its own items, and there are none`);
+            return own.concat(ids);
         };
         // the neon corner: a tower's lobby, by the rules every lobby keeps
         const lobby = cfg.rooms.LobbySapporo3;
@@ -613,6 +616,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         // every one has the alley in front of it
         for (const v of 'ab') assert.deepStrictEqual({ ...I.match(`susukino-ramen-stall-${v}_0_0`, room, {}) }, { kind: 'ramen', group: 'shop', footprint: true });
         assert.ok(list('ramen').some((id) => new RegExp(`\\{ id: '${id}',[^\\n]*category: 'food'`).test(src)), 'something to eat');
+        assert.strictEqual(list('ramen')[0], 'miso-ramen', 'and a bowl of ramen first (#367)');
         for (const [x, y] of [...at('susukino-ramen-stall-a_0_0'), ...at('susukino-ramen-stall-b_0_0')]) {
             for (let dx = 0; dx < 3; dx++) assert.ok(solid(x + dx, y + 2) && reach.has(`${x + dx},${y + 3}`), `${x + dx},${y + 3}`);
         }
@@ -689,6 +693,41 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         const glows = fs.readFileSync(path.join(GV2, 'src', 'utils', 'Glows.js'), 'utf8');
         for (const key of ['susukino-neon-corner_0_0', 'susukino-karaoke_0_0', 'susukino-ramen-gate_0_0', 'susukino-ramen-stall-a_0_0', 'susukino-ramen-stall-b_0_0']) {
             assert.ok(glows.includes(`'${key}': [`), key);
+        }
+    });
+
+    test('Odori Park: its pieces are in the pack\'s colours - shaded snow, tents roofed from above, a dim gold lamp - at the sizes the map places them by (#289)', () => {
+        const png = require(path.join(GV2, 'tools', 'png'));
+        const cells = {
+            'snow-sculpture-castle_0_0': [5, 4], 'snow-sculpture-tanuki_0_0': [2, 3], 'snow-sculpture-bear_0_0': [3, 2],
+            'snowfest-stall-corn_0_0': [3, 3], 'snowfest-stall-drinks_0_0': [3, 3], 'odori-fountain_0_0': [3, 3],
+            'odori-lamp-post_0_0': [1, 2], 'odori-bench_0_0': [2, 1], 'ramen-alley-lanterns_0_0': [1, 2],
+        };
+        // the old off-pack whites, golds, blues and inks these were drawn in
+        const old = new Set(('f2f5fb c9d6ea a9bbd6 8497b8 f9c22e f6dc8c fbf3d2 fde38a c98f1c 3a5fb0 2a2330 5a3b34 d2a58c '
+            + 'bfe3f6 e6f6fd 8fc3e6 f0669e 66dcea 3d6a52 5d8f70 294a3b 0a1627').split(' '));
+        const snow = ['fafcfd', 'ecfaff', 'd1e2eb', 'b7c3e3', '99a1ca', '8085b1'];
+        const hex = (d, i) => [d[i], d[i + 1], d[i + 2]].map((v) => v.toString(16).padStart(2, '0')).join('');
+        for (const [key, [cw, ch]] of Object.entries(cells)) {
+            const { width, height, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png')));
+            assert.deepStrictEqual([width, height], [cw * 64, ch * 64], `${key}: the map places it by ${cw}x${ch} cells`);
+            const count = {}, top = {};
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i + 3] !== 255) continue;
+                const c = hex(data, i);
+                count[c] = (count[c] || 0) + 1;
+                if (i / 4 / width < 72) top[c] = (top[c] || 0) + 1;
+            }
+            for (const c of Object.keys(count)) assert.ok(!old.has(c), `${key} still has the off-pack ${c}`);
+            assert.ok(count['080d16'], `${key} is inked in the pack's 080d16`);
+            assert.ok(count['b7c3e3'], `${key}'s snow is shaded with b7c3e3`);
+            assert.ok(snow.filter((c) => count[c]).length >= 3, `${key}'s snow is a ramp of the pack's blues`);
+            if (key === 'odori-lamp-post_0_0') {
+                assert.ok(count['c6a663'] >= 300, `the lamp's globe is dim gold c6a663 (${count['c6a663']} px)`);
+                assert.ok(count['f3d890'] && count['a7843b'], 'the globe is lit and shaded');
+            }
+            const stripe = { 'snowfest-stall-corn_0_0': ['f3d890', 'c6a663', 'a7843b'], 'snowfest-stall-drinks_0_0': ['588cc6', '425faa', '314b8e'] }[key];
+            for (const c of stripe || []) assert.ok(top[c], `${key}'s roof has its stripe in ${c}`);
         }
     });
 };

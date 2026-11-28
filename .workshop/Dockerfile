@@ -22,8 +22,7 @@ RUN npm install --global --no-audit --no-fund playwright-core@1.65.1
 
 ENV NODE_PATH=${NODE_PATH:+${NODE_PATH}:}/usr/local/lib/node_modules
 
-# No Japanese font on purpose: generate_ads and extract_city set their text in the Mac's, and any other
-# draws other pixels, so with one installed check_generators.py would report them as DRIFT, not `skip`.
+# No Japanese font: the art tools set their text in the game's own fonts in gamev2/fonts (#346).
 
 # Fail the build here, not in a later ticket, if any of the above did not take.
 RUN set -eux; \
@@ -32,4 +31,4 @@ RUN set -eux; \
 
 USER agent
 
-LABEL workshop.environment="Adds Pillow 11.3.0 (the pin in gamev2/tools/requirements-art.txt) for the art tools, numpy and OpenCV for the photo tools, and playwright-core 1.65.1 on NODE_PATH for gamev2/tools/browser (which also needs a Chromium). Checks, from gamev2/: node tools/test_game.js; python3 tools/test_blog_to_npc.py; node tools/play.js check; python3 tools/check_generators.py (generate_ads and extract_city are listed as skip: they need a macOS font); python3 tools/sync_cities.py --check."
+LABEL workshop.environment="Adds Pillow 11.3.0 (the pin in gamev2/tools/requirements-art.txt) for the art tools, numpy and OpenCV for the photo tools, and playwright-core 1.65.1 on NODE_PATH for gamev2/tools/browser (which also needs a Chromium). Checks, from gamev2/: node tools/test_game.js; python3 tools/test_blog_to_npc.py; node tools/play.js check; python3 tools/check_generators.py; python3 tools/sync_cities.py --check."

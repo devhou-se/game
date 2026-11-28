@@ -105,7 +105,7 @@ module.exports = ({ test, assert, fs, path, GV2, ctx, game, shopWith, showdownWi
         assert.strictEqual(shop.buff('speed'), 1.4);
         assert.ok(/Grilled Unagi: speed \+40% for 3:00/.test(toasts.pop()));
         // fish are not part of "try every food and drink"
-        assert.strictEqual(shop.consumables().length, 12);
+        assert.strictEqual(shop.consumables().length, 15);   // 12, and the three bowls of ramen (#367)
         assert.ok(shop.consumables().every(i => !i.sell));
     });
 
@@ -215,5 +215,73 @@ module.exports = ({ test, assert, fs, path, GV2, ctx, game, shopWith, showdownWi
         const toastMs = game('Shop.toastMs');
         assert.strictEqual(toastMs('ok'), 1800);
         assert.ok(toastMs(game('Fishing.catchMessage')({ name: 'Unagi', value: 520 }, '¥520')) > 3000);
+    });
+
+    test('ramen: three bowls, each eaten at its own counter, first on that list (#367)', () => {
+        const VENUES = game('Shop.VENUES'), items = Array.from(game('Shop.DEFAULT_ITEMS'));
+        const bowls = { 'miso-ramen': 'ramen', 'shoyu-ramen': 'ramenya', 'tonkotsu-ramen': 'yatai' };
+        for (const [id, venue] of Object.entries(bowls)) {
+            const bowl = items.find(i => i.id === id);
+            assert.ok(bowl, id);
+            assert.strictEqual(bowl.category, 'food', id);
+            assert.strictEqual(bowl.eatIn, true, id);
+            assert.strictEqual(bowl.energy, 100, id);
+            assert.strictEqual(bowl.icon.shape, 'bowl', id);
+            assert.strictEqual(bowl.effect.secs, 300, id);
+            for (const key in bowl.effect) assert.ok(key === 'secs' || game('Shop.EFFECT_KINDS')[key], `${id}: ${key}`);
+            const sold = Object.keys(VENUES).filter(v => VENUES[v].sells(bowl));
+            assert.deepStrictEqual(sold, [venue], `${id} is sold at ${venue} only`);
+            assert.strictEqual(items.filter(VENUES[venue].sells)[0].id, id, `${id} is the first row at ${venue}`);
+            assert.ok(/^[A-Z ]+$/.test(VENUES[venue].title), venue);
+        }
+        assert.deepStrictEqual(items.filter(VENUES.ramen.sells).map(i => i.id), ['miso-ramen', 'nama-beer', 'edamame', 'karaage']);
+        assert.deepStrictEqual(items.filter(VENUES.ramenya.sells).map(i => i.id), ['shoyu-ramen', 'nama-beer', 'karaage']);
+        assert.deepStrictEqual(items.filter(VENUES.yatai.sells).map(i => i.id), ['tonkotsu-ramen', 'nama-beer', 'edamame']);
+    });
+
+    test('ramen: an eat-in item is ordered one at a time and eaten on the spot, never carried (#367)', () => {
+        const eater = (saved) => {
+            const s = shopWith(saved);
+            s.shop.scene.player = { sprite: { setTint() {}, clearTint() {}, setScale() {}, scale: 1 } };
+            s.shop.scene.tweens = { add: () => ({ stop() {} }) };
+            return s;
+        };
+        const { shop, toasts, saved } = eater({ v: 4, money: 2000, items: {}, energy: 0 });
+        Object.assign(shop, { visible: true, mode: 'buy', kind: 'ramen', selected: 0, qty: 1 });
+        shop.refreshStock();
+        const bowl = shop.stock[0];
+        assert.strictEqual(bowl.id, 'miso-ramen');
+        assert.strictEqual(shop.maxQty(bowl), 1, 'one bowl at a time');
+        shop.qty = 3;                                  // however the quantity got there, one is served
+        shop.buy(false);                               // plain ENTER
+        assert.strictEqual(shop.money, 2000 - 950);
+        assert.strictEqual(shop.items['miso-ramen'], undefined, 'it is never in the bag');
+        assert.strictEqual(shop.used['miso-ramen'], 1);
+        assert.strictEqual(shop.energy, 100);
+        assert.strictEqual(shop.effects.food.id, 'miso-ramen');
+        assert.strictEqual(shop.buff('speed'), 1.2);
+        assert.ok(/^Miso Ramen: speed \+20% for 5:00 · energy \+100$/.test(toasts.pop()));
+        assert.deepStrictEqual({ ...saved().items }, {});
+        assert.strictEqual(saved().money, 1050);
+        // SHIFT+ENTER is the same order
+        shop.buy(true);
+        assert.strictEqual(shop.money, 100);
+        assert.strictEqual(shop.used['miso-ramen'], 2);
+        assert.ok(/timer refreshed/.test(toasts.pop()));
+        // with too little money nothing changes
+        shop.buy(false);
+        assert.strictEqual(shop.money, 100);
+        assert.strictEqual(shop.used['miso-ramen'], 2);
+        assert.deepStrictEqual({ ...shop.items }, {});
+        assert.ok(/not enough yen — that's ¥950/.test(toasts.pop()));
+
+        // the selected row's buttons and hint
+        const labels = game('Shop.buyLabels'), byId = (id) => shop.itemById(id);
+        assert.deepStrictEqual({ ...labels(byId('miso-ramen')) }, { buy: '', useNow: '[ order & eat ]', hint: 'ENTER order & eat' });
+        assert.deepStrictEqual({ ...labels(byId('zone-energy')) },
+            { buy: '[ buy ]', useNow: '[ buy & use now ]', hint: 'ENTER buy · SHIFT+ENTER buy & use now' });
+        assert.deepStrictEqual({ ...labels(byId('fishing-rod')) }, { buy: '[ buy ]', useNow: '', hint: 'ENTER buy · SHIFT+ENTER buy & use now' });
+        assert.strictEqual(game('Shop.eatsIn')(byId('onigiri')), false);
+        assert.strictEqual(game('Shop.eatsIn')(null), false);
     });
 };

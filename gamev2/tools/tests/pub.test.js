@@ -128,4 +128,38 @@ module.exports = (helpers) => {
         // the town's generator knows nothing of the door: roomgen keeps it through a rebuild
         assert.ok(!/Pub|pub-in/.test(I.tool('generate_sendai.py').replace(/sendai-pub/g, '')));
     });
+
+    test('the pub is drawn in the house look: pack colours only, navy outlines, dark glass behind the bottles, nothing lit, at the sizes the room places it by (#334)', () => {
+        const { fs, path, GV2 } = helpers, png = helpers.require('./png');
+        const SIZES = { bar: [448, 128], booth: [128, 192], doorlight: [128, 192], 'wall-darts': [128, 192], 'wall-backbar': [448, 192],
+            'wall-tv': [256, 192], 'wall-panel': [64, 192], 'wall-print': [64, 192], chalkboard: [64, 128], 'lamp-hang': [64, 128], table: [128, 64] };
+        for (const piece of ['floor-a', 'floor-b', 'side-w', 'side-e', 'wall-front', 'threshold-w', 'threshold-e', 'stool', 'chair-w', 'chair-e']) SIZES[piece] = [64, 64];
+        const PALETTE = new Set(('080d16 172459 1b1e2a 2a2636 2a3151 2c2d51 2e4040 314b8e 395050 47485d 4a6262 4b6396 4d3326 508582 '
+            + '588cc6 5a3827 656e92 678e57 68422d 6c8e7f 71412a 7f513b 83af6f 85553e 8a3a22 904a37 93c297 a4b0b5 a7843b aa4d31 aa775f '
+            + 'b07c63 bb6479 bbe9ff c6a663 ce6a42 d16b56 d1e2eb d78bc1 d7b6ab e4cecc f3d890 f6a583 fafcfd ff9b92 ffe2e0').split(' '));
+        assert.strictEqual(Object.keys(SIZES).length, 21);
+        const counts = {};
+        for (const [piece, size] of Object.entries(SIZES)) {
+            const { width, height, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', `pub-in-${piece}_0_0.png`)));
+            assert.deepStrictEqual([width, height], size, `${piece}: the room places it by its size`);
+            const n = counts[piece] = {};
+            for (let p = 0; p < data.length; p += 4) {
+                const a = data[p + 3];
+                if (!a) continue;
+                const hex = data.toString('hex', p, p + 3);
+                assert.ok(PALETTE.has(hex), `${piece}: #${hex} is not one of the pack's colours`);
+                n[hex] = (n[hex] || 0) + 1;
+                if (piece === 'doorlight') {
+                    assert.ok(hex === 'e4cecc' && [28, 56, 84, 112].includes(a), `doorlight: #${hex} at ${a} is not a step of cream daylight`);
+                } else if (a < 255) {
+                    assert.ok(hex === '2a3151' && a === 90, `${piece}: #${hex} at ${a} is not a navy shadow`);
+                }
+            }
+            if (!['floor-a', 'floor-b', 'doorlight'].includes(piece)) assert.ok(n['172459'], `${piece}: outlined in the pack's navy`);
+        }
+        // the back bar is dark glass with a glare, and the lamp is unlit: dim gold, its core smaller than it
+        assert.ok(counts['wall-backbar']['2c2d51'] > 10000 && counts['wall-backbar']['4b6396'], JSON.stringify(counts['wall-backbar']));
+        const lamp = counts['lamp-hang'];
+        assert.ok(lamp.c6a663 && (lamp.f3d890 || 0) < lamp.c6a663, JSON.stringify(lamp));
+    });
 };

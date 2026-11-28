@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""generate_kansai_art.py — draw the Kansai sprites (issues #255, #267): Himeji,
-Okayama, and the fingerposts where the districts meet.
+"""generate_kansai_art.py — draw the Kansai sprites (issues #255, #267, #268):
+Himeji, Okayama, Nara, and the fingerposts where the districts meet.
 
 No asset pack has them, so they are drawn here the way
 tools/generate_hokuriku_art.py draws Hokuriku (it imports that file's and
@@ -27,6 +27,11 @@ Himeji
                                  coping, loopholes, a stone footing. Tiles side
                                  by side into a run of any length and fills
                                  both its cells
+  himeji-kokoen-wall-v_0_0       1x1  Koko-en's earthen wall running north-south,
+  himeji-kokoen-wall-v-top_0_0   1x1  seen from above: its tiled coping down the
+  himeji-kokoen-wall-v-end_0_0   1x2  middle of the cell. 'v' tiles into a run,
+                                      'top' is a run's north end, 'end' its south
+                                      end, where the wall's end face shows
 Okayama
   okayama-keep_0_0         8x7   the "crow castle": black weatherboards under a
                                  band of white plaster at each storey, darker
@@ -38,33 +43,58 @@ Okayama
   okayama-bank-rock_0_0    2x2   a heap of the pond rim's white stones, centred
                                  where its four cells meet (flat): the rim has
                                  no inner-corner piece, and this covers the
-                                 notch at each corner of Korakuen's island
+                                 notch at the inner corner of a river's bend
   okayama-crane_0_0        1x2   a red-crowned crane
+  okayama-mound_0_0        5x4   Yuishinzan, Korakuen's hill: a bell of turf,
+                                 clipped azaleas and rocks, stone steps up the
+                                 south face to a stone on top
   okayama-momotaro_0_0     2x3   the bronze Momotaro on a stone plinth, the
                                  pheasant on his hand, the dog and the monkey
                                  at his feet
   okayama-bizen-stall_0_0  3x3   an open stall of Bizen ware: an awning, a
                                  counter, rows of brown unglazed pots
+Nara
+  nara-daibutsuden_0_0     12x8  Todaiji's Great Buddha Hall: two broad hipped
+                                 roofs of dark tiles, the gold horns (shibi) on
+                                 the ridge, white plaster between dark posts,
+                                 the curved gable over the middle doors and the
+                                 window under it, a low stone platform. Exactly
+                                 its footprint
+  nara-nandaimon_0_0       6x4   the Great South Gate: two tiers of roof on bare
+                                 timber, a guardian in the dark of each side
+                                 bay; columns 2-3 are the gateway, open below
+                                 the roof
+  nara-kasuga-torii_0_0    4x4   Kasuga Taisha's vermilion torii: a black cap on
+                                 the lintel, black feet on the posts (columns 0
+                                 and 3); nothing below the top row between
+  nara-deer-bow_0_0        1x1   a standing deer, its head down in a bow, in the
+                                 colours of the sheet's resting deer
+                                 (tools/extract_street.py cuts those two)
+  nara-senbei-stall_0_0    2x2   a handcart of deer crackers under a red parasol
+  nara-stone-lantern_0_0   1x2   a tall mossy stone lantern, a hexagonal cap,
+                                 unlit
 Kansai
   kansai-fingerpost_0_0    1x2   a wooden fingerpost, one arm west, one east
   okayama-fingerpost_0_0   1x2   the same post, where Himeji and Okayama meet
                                  (its own key: a bump's line goes by the key)
+  nara-fingerpost_0_0      1x2   ...and where Osaka and Nara meet
 
 Deterministic and idempotent: rewrites the PNGs in assets/sprites/, registers
 them in config.json spriteMetadata + tileNames, and asks the camera to look up
-at the two keeps (game.lookUp.sprites). Needs Pillow.
+at the two keeps and the hall (game.lookUp.sprites). Needs Pillow.
 
 Run from gamev2/ BEFORE make_prefabs.py and the generators:
     python3 tools/generate_kansai_art.py [--preview out.png]
 """
 import json
+import math
 import sys
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from generate_hokkaido import (CLEAR, rgb, canvas, outline, INK, CREAM, CREAM_LO, WHITE, SNOW_LO, WOOD, WOOD_LO,
                                WOOD_DK, STONE, STONE_LO, STONE_DK, GOLD)
 from generate_sendai_art import (roof_rows, coping, plaster, footing, LACQUER_LO, GOLD_HI, GOLD_LO,
-                                 SLATE_LO)
+                                 SLATE, SLATE_HI, SLATE_LO)
 from generate_hokuriku_art import (masonry, PLASTER, PLASTER_LO, BOARD, BOARD_LO, SOOT, SOOT_HI, SOOT_LO,
                                    INDIGO, INDIGO_HI)
 
@@ -405,6 +435,30 @@ def wall():
     return im
 
 
+def kokoen_wall_v(part):
+    """Koko-en's earthen wall running north-south, seen from above: its tiled
+    coping, 16px wide down the middle of the cell. 'v' tiles into a run, 'top'
+    is a run's north end, 'end' (1x2) its south end, where the wall's end face shows."""
+    im, d = canvas(1, 2 if part == 'end' else 1)
+    x0, x1 = 8, 23
+    y0, y1 = (1 if part == 'top' else 0), (13 if part == 'end' else 31)
+    d.rectangle([x0, y0, x1, y1], fill=SLATE)
+    for y in range(y0, y1 + 1):
+        if y % 4 == 3:
+            d.line([(x0, y), (x1, y)], fill=SLATE_LO)             # the courses of tiles, falling east and west
+    d.line([(x0, y0), (x0, y1)], fill=SLATE_LO); d.line([(x1, y0), (x1, y1)], fill=SLATE_LO)
+    d.line([(x0 + 1, y0), (x0 + 1, y1)], fill=SLATE_HI)
+    d.rectangle([15, y0, 16, y1], fill=SLATE_LO); d.line([(15, y0), (15, y1)], fill=SLATE_HI)   # the ridge
+    if part == 'top':
+        d.line([(x0, 1), (x1, 1)], fill=SLATE_LO)
+    if part == 'end':
+        coping(d, x0, x1, 12)
+        plaster(d, x0, x1, 26, 55)
+        footing(d, x0, x1, 56, 63)
+    outline(im)
+    return im
+
+
 def fingerpost():
     im, d = canvas(1, 2)                 # 32 x 64
     d.rectangle([14, 8, 17, 60], fill=BOARD); d.line([(14, 8), (14, 60)], fill=WOOD)
@@ -507,6 +561,76 @@ def bank_rock():
                       ([(32, 40), (39, 38), (45, 41), (43, 47), (34, 47)], 0),
                       ([(25, 27), (33, 23), (40, 27), (41, 35), (34, 41), (27, 39), (23, 33)], 0)):
         pebble(im, pts, tone)
+    return im
+
+
+def mound():
+    """Yuishinzan, the hill heaped up in Korakuen: a bell of turf lit from the upper left,
+    clipped azaleas and rocks on its slope, and stone steps up the south face to the stone on top."""
+    im, d = canvas(5, 4)                 # 160 x 128
+    TURF, TURF_HI, TURF_LO, TURF_DK = rgb('83af6f'), rgb('93c297'), rgb('6c8e7f'), rgb('506b6b')
+    top, base, cx, half = 20, 122, 80, 77
+    span = {}
+    for y in range(top, base + 1):
+        t = (base - y) / (base - top)                             # 0 at the foot, 1 at the top
+        w = half * (0.55 * math.acos(2 * t - 1) / math.pi + 0.45 * (1 - t ** 2) ** 0.5)
+        span[y] = (cx - round(w), cx + round(w))
+    for y, (x0, x1) in span.items():
+        wide = x1 - x0
+        for x in range(x0, x1 + 1):
+            f = (x - x0) / max(1, wide)
+            c = TURF
+            if f > 0.72 + ((x + y) % 2) * 0.03:
+                c = TURF_LO                                       # the flank turned from the light
+            if f > 0.93 or y >= base - 2:
+                c = TURF_DK
+            elif y >= base - 5 and (x + y) % 2:
+                c = TURF_DK if f > 0.72 else TURF_LO              # the foot, dithered into its shade
+            d.point((x, y), fill=c)
+        for x in range(x0, x0 + 2 + (y < top + 12) * 4):
+            d.point((x, y), fill=TURF_HI)                         # the lit rim
+    for i in range(110):                                          # tufts: short dashes, staggered
+        y = top + 6 + (i * 37) % (base - top - 12)
+        x0, x1 = span[y]
+        x = x0 + 5 + (i * 53) % max(1, x1 - x0 - 12)
+        f = (x - x0) / (x1 - x0)
+        d.rectangle([x, y, x + 2, y], fill=TURF_DK if f > 0.72 else TURF_HI if i % 3 == 0 else TURF_LO)
+
+    def azalea(x, y, w, h):
+        """A clipped azalea: a low dome, lit on top, dark under, its shadow on the turf."""
+        for j in range(h):
+            inset = (3, 1, 0)[j] if j < 3 else (1 if j == h - 1 else 0)
+            d.rectangle([x + inset, y + j, x + w - 1 - inset, y + j],
+                        fill=rgb('395050') if j >= h - 2 else rgb('506b6b') if j >= h - 5 or j == 0 else rgb('6c8e7f'))
+        d.rectangle([x + w - 3, y + 2, x + w - 1, y + h - 3], fill=rgb('395050'))
+        d.rectangle([x + 4, y + 1, x + w // 2 + 1, y + 1], fill=rgb('93c297'))
+        d.rectangle([x + 2, y + 2, x + 4, y + 2], fill=rgb('93c297'))
+        d.rectangle([x + 1, y + h, x + w, y + h], fill=rgb('506b6b'))
+
+    def rock(x, y, w, h):
+        d.rectangle([x + 1, y, x + w - 2, y], fill=rgb('dae2e4'))
+        d.rectangle([x, y + 1, x + w - 1, y + h - 1], fill=rgb('a4b0b5'))
+        d.rectangle([x, y + 1, x + w * 2 // 3, y + 2], fill=rgb('dae2e4'))
+        d.rectangle([x + w - 3, y + 2, x + w - 1, y + h - 1], fill=rgb('848295'))
+        d.rectangle([x, y + h - 2, x + w - 1, y + h - 1], fill=rgb('575f79'))
+        d.rectangle([x, y + h, x + w, y + h], fill=rgb('506b6b'))
+
+    for x, y, w, h in ((14, 104, 16, 9), (34, 108, 20, 10), (30, 84, 15, 8), (48, 66, 14, 8), (58, 92, 13, 7),
+                       (60, 44, 12, 7), (100, 58, 14, 8), (104, 84, 16, 9), (122, 104, 18, 9), (100, 108, 15, 8),
+                       (134, 110, 12, 7)):
+        azalea(x, y, w, h)
+    for x, y, w, h in ((22, 96, 8, 6), (118, 94, 9, 6), (92, 40, 7, 5)):
+        rock(x, y, w, h)
+    # the steps: slabs up the south face, turning once
+    for i, (x, y) in enumerate(((75, 113), (76, 105), (78, 97), (81, 89), (84, 81), (86, 73), (85, 65), (82, 57),
+                                (79, 49), (77, 41), (76, 34))):
+        w = 10 - i // 3
+        d.rectangle([x, y, x + w, y + 2], fill=rgb('dae2e4'))
+        d.rectangle([x, y + 3, x + w, y + 3], fill=rgb('a4b0b5'))
+        d.rectangle([x + w, y + 1, x + w, y + 3], fill=rgb('848295'))
+        d.rectangle([x, y + 4, x + w, y + 4], fill=rgb('506b6b'))
+    rock(72, 21, 16, 10)                                          # the stone on top
+    outline(im)
     return im
 
 
@@ -652,6 +776,254 @@ def bizen_stall():
     return im
 
 
+# ---------------------------------------------------------------- Nara
+# Todaiji's roof: dark grey tiles, a little green in them; its timber: dark,
+# weathered red-brown between white plaster
+NARA_TILES = (rgb('5a6470'), rgb('8a95a0'), rgb('424b58'), rgb('2c333f'))
+TIMBER, TIMBER_HI, TIMBER_LO = rgb('7a4a36'), rgb('9c6650'), rgb('4e2f26')
+VERMILION, VERMILION_HI, VERMILION_LO = rgb('d9543a'), rgb('f0826a'), rgb('a83a28')
+MOSS, MOSS_HI = rgb('6f8a4e'), rgb('9cb36a')
+PARASOL, PARASOL_HI, PARASOL_LO = rgb('cf3f36'), rgb('ec6c5e'), rgb('962a2a')
+CRACKER, CRACKER_HI, CRACKER_LO = rgb('d9a868'), rgb('f0cf94'), rgb('a8773f')
+DEER, DEER_LO, DEER_DK, DEER_HI = rgb('aa775f'), rgb('7f513b'), rgb('4d3326'), rgb('bb8971')
+DEER_PALE, DEER_SPOT, DEER_HOOF = rgb('e4cecc'), rgb('be9e8c'), rgb('827265')
+
+
+def shibi(d, x, y, sx):
+    """One of the two gold horns on the hall's ridge (shibi), standing on (x, y)
+    and curling outwards (`sx` -1 west, 1 east)."""
+    for i in range(16):
+        w = 5 - i // 4
+        cx = x + sx * (i * i // 40)
+        d.line([(cx - w, y - i), (cx + w, y - i)], fill=GOLD)
+        d.point((cx - sx * w, y - i), fill=GOLD_HI)
+        d.point((cx + sx * w, y - i), fill=GOLD_LO)
+    d.line([(x - sx * 2, y - 2), (x - sx * 2, y - 11)], fill=GOLD_HI)
+    for i in range(3, 14, 4):                                     # the scales down its face
+        d.point((x + sx * (i * i // 40), y - i), fill=GOLD_LO)
+
+
+def timber_bay(d, x0, x1, y0, y1, kind):
+    """One bay of the hall's wall between two posts: white plaster, or the
+    lattice of a window, or a door, the posts and the tie beams dark timber."""
+    d.rectangle([x0, y0, x1, y1], fill=PLASTER)
+    d.rectangle([x1 - 2, y0, x1, y1], fill=PLASTER_LO)
+    if kind == 'window':
+        d.rectangle([x0 + 4, y0 + 8, x1 - 4, y1 - 10], fill=SLATE_LO)
+        for bx in range(x0 + 6, x1 - 4, 3):
+            d.line([(bx, y0 + 9), (bx, y1 - 10)], fill=TIMBER_LO)
+        d.line([(x0 + 4, (y0 + y1) // 2), (x1 - 4, (y0 + y1) // 2)], fill=TIMBER_LO)
+    elif kind == 'door':
+        d.rectangle([x0 + 2, y0 + 6, x1 - 2, y1], fill=SOOT_LO)
+        d.rectangle([x0 + 2, y0 + 6, x1 - 2, y0 + 9], fill=TIMBER_LO)
+        for gx in (x0 + 4, x1 - 6):                               # the two leaves, folded back
+            d.rectangle([gx, y0 + 10, gx + 2, y1], fill=TIMBER)
+        d.point(((x0 + x1) // 2, y0 + 20), fill=GOLD)             # the Buddha's light, far inside
+        d.point(((x0 + x1) // 2 + 1, y0 + 20), fill=GOLD_LO)
+    d.rectangle([x0, y0, x1, y0 + 3], fill=TIMBER)                # the tie beam
+    d.line([(x0, y0 + 3), (x1, y0 + 3)], fill=TIMBER_LO)
+
+
+def daibutsuden():
+    im, d = canvas(12, 8)                # 384 x 256: the hall fills its footprint, nothing above it
+    cx = 192
+    T = NARA_TILES
+    # ---- the stone platform it stands on, and the steps up to the middle doors
+    masonry(d, 2, 232, 381, 254, 6)
+    d.rectangle([cx - 26, 236, cx + 25, 254], fill=STONE)
+    for y in range(238, 254, 4):
+        d.line([(cx - 26, y), (cx + 25, y)], fill=STONE_LO)
+    # ---- the lower storey: seven bays of white plaster between dark posts
+    x0, x1, wy0, wy1 = 14, 369, 168, 231
+    bays = 11
+    edges = [round(x0 + (x1 - x0) * i / bays) for i in range(bays + 1)]
+    for i in range(bays):
+        kind = 'door' if i in (4, 5, 6) else 'window' if i in (1, 3, 7, 9) else 'plain'
+        timber_bay(d, edges[i] + 3, edges[i + 1] - 3, wy0, wy1, kind)
+    for x in edges:                                               # the posts
+        d.rectangle([x - 3, wy0, x + 3, wy1], fill=TIMBER)
+        d.line([(x - 3, wy0), (x - 3, wy1)], fill=TIMBER_HI); d.line([(x + 3, wy0), (x + 3, wy1)], fill=TIMBER_LO)
+    d.rectangle([x0 - 3, wy0, x1 + 3, wy0 + 5], fill=TIMBER_LO)   # the beam under the eave's brackets
+    for x in range(x0, x1, 8):
+        d.rectangle([x, wy0 - 1, x + 4, wy0 + 3], fill=TIMBER)    # the brackets
+    # ---- the upper storey: a short band of plaster and windows under the upper roof
+    ux0, ux1, uy0, uy1 = 70, 313, 80, 110
+    d.rectangle([ux0, uy0, ux1, uy1], fill=PLASTER)
+    d.rectangle([ux1 - 3, uy0, ux1, uy1], fill=PLASTER_LO)
+    for x in range(ux0, ux1 + 1, 27):
+        d.rectangle([x - 2, uy0, x + 2, uy1], fill=TIMBER)
+        d.line([(x + 2, uy0), (x + 2, uy1)], fill=TIMBER_LO)
+    for x in range(ux0 + 6, ux1 - 20, 27):
+        d.rectangle([x, uy0 + 8, x + 14, uy1 - 6], fill=SLATE_LO)
+        for bx in range(x + 2, x + 14, 3):
+            d.line([(bx, uy0 + 9), (bx, uy1 - 6)], fill=TIMBER_LO)
+    d.rectangle([ux0, uy0, ux1, uy0 + 4], fill=TIMBER_LO)
+    # ---- the lower roof: broad and shallow, all round the hall
+    castle_roof(d, roof_rows(112, 160, (60, 323), (4, 379)), T)
+    d.line([(60, 112), (323, 112)], fill=T[2])
+    eave(d, 4, 379, 161, lift=5, tiles=T)
+    # the curved gable over the middle doors (kara-hafu), and the window under it the Buddha looks out of
+    karahafu(d, cx, 162, 46, 26, T, (PLASTER, PLASTER_LO, SLATE_LO, PLASTER))
+    d.rectangle([cx - 16, 146, cx + 15, 158], fill=SLATE_LO)
+    for bx in range(cx - 14, cx + 15, 4):
+        d.line([(bx, 147), (bx, 158)], fill=TIMBER_LO)
+    d.rectangle([cx - 46, 160, cx + 45, 164], fill=T[2]); d.line([(cx - 46, 165), (cx + 45, 165)], fill=T[3])
+    # ---- the upper roof: hipped, the ridge long and straight
+    castle_roof(d, roof_rows(30, 78, (96, 287), (36, 347)), T)
+    d.line([(96, 30), (287, 30)], fill=T[2])
+    eave(d, 36, 347, 79, lift=6, tiles=T)
+    for sx in (-1, 1):                                            # the hips, running down to the corners
+        for y in range(31, 79, 2):
+            x = cx + sx * (96 + (y - 30) * 60 // 48)
+            d.point((x, y), fill=T[1] if sx < 0 else T[3])
+    d.rectangle([92, 22, 291, 29], fill=T[2]); d.line([(92, 22), (291, 22)], fill=T[1])   # the ridge
+    d.line([(92, 29), (291, 29)], fill=T[3])
+    for x in range(96, 290, 6):
+        d.point((x, 25), fill=T[1])
+    for sx, x in ((-1, 96), (1, 287)):                            # the two gold horns
+        shibi(d, x, 22, sx)
+    outline(im)
+    return im
+
+
+def nandaimon():
+    im, d = canvas(6, 4)                 # 192 x 128; the gateway is columns 2-3 (x 64-127), open below the roof
+    # ---- the bays either side: bare timber posts, a dark bay where a guardian stands
+    for bx0, bx1 in ((6, 62), (130, 186)):
+        d.rectangle([bx0, 70, bx1, 124], fill=SOOT_LO)
+        for x in (bx0, (bx0 + bx1) // 2, bx1):
+            d.rectangle([x - 3, 66, x + 3, 126], fill=TIMBER)
+            d.line([(x - 3, 66), (x - 3, 126)], fill=TIMBER_HI); d.line([(x + 3, 66), (x + 3, 126)], fill=TIMBER_LO)
+        for gx in ((bx0 + (bx0 + bx1) // 2) // 2, ((bx0 + bx1) // 2 + bx1) // 2):
+            d.rectangle([gx - 4, 84, gx + 4, 118], fill=TIMBER_LO)   # the guardians, in the dark
+            d.ellipse([gx - 4, 76, gx + 4, 86], fill=TIMBER_LO)
+            d.point((gx - 2, 80), fill=GOLD); d.point((gx + 2, 80), fill=GOLD)
+        d.rectangle([bx0 - 2, 108, bx1 + 2, 111], fill=TIMBER)    # the low rail before them
+        d.line([(bx0 - 2, 108), (bx1 + 2, 108)], fill=TIMBER_HI)
+        d.rectangle([bx0 - 4, 122, bx1 + 4, 126], fill=STONE_LO); d.line([(bx0 - 4, 122), (bx1 + 4, 122)], fill=STONE)
+    for x in (66, 125):                                           # the gateway's own posts
+        d.rectangle([x - 3, 60, x + 3, 126], fill=TIMBER)
+        d.line([(x - 3, 60), (x - 3, 126)], fill=TIMBER_HI); d.line([(x + 3, 60), (x + 3, 126)], fill=TIMBER_LO)
+        d.rectangle([x - 4, 121, x + 4, 126], fill=STONE_LO)
+    # ---- the bracket sets and the beam the lower roof sits on
+    d.rectangle([2, 56, 189, 63], fill=TIMBER); d.line([(2, 63), (189, 63)], fill=TIMBER_LO)
+    for x in range(4, 188, 7):
+        d.rectangle([x, 58, x + 3, 61], fill=TIMBER_LO)
+    # ---- two tiers of roof: the lower all round, the upper over a short storey of timber
+    T = NARA_TILES
+    castle_roof(d, roof_rows(40, 53, (16, 175), (1, 190)), T)
+    eave(d, 1, 190, 54, lift=4, tiles=T)
+    d.rectangle([30, 26, 161, 39], fill=TIMBER_LO)
+    for x in range(30, 162, 9):
+        d.rectangle([x, 28, x + 4, 37], fill=TIMBER)
+    castle_roof(d, roof_rows(8, 22, (40, 151), (14, 177)), T)
+    d.line([(40, 8), (151, 8)], fill=T[2])
+    eave(d, 14, 177, 23, lift=4, tiles=T)
+    d.rectangle([38, 3, 153, 7], fill=T[2]); d.line([(38, 3), (153, 3)], fill=T[1])
+    outline(im)
+    return im
+
+
+def kasuga_torii():
+    im, d = canvas(4, 4)                 # 128 x 128; the posts on columns 0 and 3, nothing below the top row between
+    for x0 in (12, 104):                                          # the posts, a black foot each
+        d.rectangle([x0, 18, x0 + 11, 126], fill=VERMILION)
+        d.line([(x0, 18), (x0, 126)], fill=VERMILION_HI); d.line([(x0 + 1, 18), (x0 + 1, 126)], fill=VERMILION_HI)
+        d.rectangle([x0 + 9, 18, x0 + 11, 126], fill=VERMILION_LO)
+        d.rectangle([x0 - 1, 112, x0 + 12, 126], fill=SOOT)
+        d.line([(x0 - 1, 112), (x0 + 12, 112)], fill=SOOT_HI)
+    # the tie beam (nuki), through both posts and out past them
+    d.rectangle([4, 22, 123, 27], fill=VERMILION); d.line([(4, 22), (123, 22)], fill=VERMILION_HI)
+    d.line([(4, 27), (123, 27)], fill=VERMILION_LO)
+    d.rectangle([60, 14, 67, 22], fill=VERMILION)                 # the strut between the beams
+    # the top lintel: vermilion under a black cap, its ends swept up
+    for y in range(6, 15):
+        lift = max(0, 3 - (y - 6)) if y < 9 else 0
+        d.line([(1, y), (126, y)], fill=VERMILION if y >= 10 else SOOT)
+    for sx, x in ((1, 1), (-1, 126)):
+        d.polygon([(x, 6), (x + sx * 10, 6), (x, 1)], fill=SOOT)
+    d.line([(1, 6), (126, 6)], fill=SOOT_HI)
+    d.line([(1, 14), (126, 14)], fill=VERMILION_LO)
+    outline(im)
+    return im
+
+
+def deer_bow():
+    im, d = canvas(1, 1)                 # 32 x 32: a standing deer facing west, its head down in a bow
+    d.ellipse([6, 27, 28, 31], fill=rgb('3a5f66', 150))           # ground shadow
+    for x in (10, 13, 22, 25):                                    # the legs
+        d.rectangle([x, 20, x + 1, 29], fill=DEER_LO)
+        d.point((x, 29), fill=DEER_HOOF); d.point((x + 1, 29), fill=DEER_HOOF)
+    d.ellipse([8, 12, 28, 22], fill=DEER)                         # the body
+    d.chord([8, 12, 28, 22], 20, 160, fill=DEER_LO)
+    d.line([(11, 13), (24, 13)], fill=DEER_HI)
+    for x, y in ((14, 15), (18, 14), (22, 16), (16, 17)):        # the dappling
+        d.point((x, y), fill=DEER_SPOT)
+    d.rectangle([26, 13, 28, 16], fill=DEER_PALE)                 # the white rump and tail
+    d.polygon([(10, 14), (6, 18), (5, 22), (8, 22), (11, 17)], fill=DEER)          # the neck, bowed
+    d.ellipse([2, 20, 9, 25], fill=DEER)                          # the head, low
+    d.point((2, 23), fill=DEER_DK); d.point((5, 21), fill=DEER_DK)                 # nose, eye
+    d.polygon([(7, 19), (9, 16), (10, 19)], fill=DEER_LO)         # an ear
+    d.line([(4, 25), (7, 25)], fill=DEER_PALE)                    # the pale throat
+    outline(im)
+    return im
+
+
+def senbei_stall():
+    im, d = canvas(2, 2)                 # 64 x 64: a handcart of deer crackers under a red parasol
+    d.ellipse([4, 56, 60, 63], fill=rgb('3a5f66', 150))           # ground shadow
+    d.rectangle([8, 36, 55, 52], fill=WOOD); d.line([(8, 36), (55, 36)], fill=PLANK_HI)   # the cart
+    d.rectangle([8, 50, 55, 52], fill=WOOD_LO)
+    for x in range(14, 55, 8):
+        d.line([(x, 38), (x, 49)], fill=WOOD_LO)
+    for x in (13, 50):                                            # its wheels
+        d.ellipse([x - 5, 49, x + 5, 59], fill=WOOD_DK); d.ellipse([x - 2, 52, x + 2, 56], fill=WOOD)
+    for i, x in enumerate((11, 21, 31, 41)):                      # stacks of crackers, each tied with a paper band
+        h = 10 - (i % 2) * 2
+        for j in range(h):
+            y = 35 - j
+            d.line([(x, y), (x + 8, y)], fill=CRACKER_HI if j == h - 1 else CRACKER if j % 2 else CRACKER_LO)
+        d.rectangle([x, 35 - h // 2 - 1, x + 8, 35 - h // 2 + 1], fill=WHITE)
+        d.point((x + 4, 35 - h // 2), fill=PARASOL)
+    d.line([(32, 4), (32, 36)], fill=WOOD_DK)                     # the parasol's pole
+    for y in range(4, 18):                                        # the parasol, red, ribbed
+        w = (y - 3) * 30 // 14
+        for x in range(32 - w, 33 + w):
+            d.point((x, y), fill=PARASOL_HI if x < 32 - w // 2 else PARASOL_LO if x > 32 + w // 2 else PARASOL)
+    for x in range(3, 62, 6):
+        d.line([(32, 4), (x, 17)], fill=PARASOL_LO)
+    d.line([(2, 18), (62, 18)], fill=PARASOL_LO)
+    d.rectangle([31, 1, 33, 4], fill=WOOD_DK)
+    outline(im)
+    return im
+
+
+def nara_lantern():
+    im, d = canvas(1, 2)                 # 32 x 64: a tall stone lantern of the Kasuga approach, moss on it
+    d.rectangle([7, 57, 24, 62], fill=STONE_LO); d.line([(7, 57), (24, 57)], fill=STONE)      # the foot
+    d.rectangle([12, 34, 19, 57], fill=STONE); d.line([(12, 34), (12, 57)], fill=WHITE)       # the tall shaft
+    d.rectangle([18, 34, 19, 57], fill=STONE_LO)
+    for y in (40, 50):
+        d.line([(11, y), (20, y)], fill=STONE_LO)                                             # its collars
+    d.rectangle([8, 30, 23, 34], fill=STONE); d.line([(8, 34), (23, 34)], fill=STONE_DK)      # the platform
+    d.rectangle([10, 19, 21, 30], fill=STONE_LO)                                              # the six-sided light box
+    d.rectangle([12, 21, 19, 28], fill=SOOT_LO); d.line([(15, 21), (15, 28)], fill=STONE_DK)  # unlit
+    d.line([(10, 19), (10, 30)], fill=STONE)
+    d.polygon([(2, 19), (29, 19), (22, 11), (9, 11)], fill=STONE)                             # the hexagonal cap
+    d.line([(9, 11), (2, 19)], fill=WHITE); d.line([(22, 11), (29, 19)], fill=STONE_LO)
+    d.line([(2, 19), (29, 19)], fill=STONE_DK)
+    for x in (2, 29):
+        d.point((x, 17), fill=STONE)                                                          # its corners curled up
+    d.rectangle([14, 6, 17, 11], fill=STONE); d.rectangle([15, 3, 16, 6], fill=STONE_LO)      # the jewel
+    for pts in (((9, 12), (12, 12), (16, 15), (6, 16)), ((19, 12), (22, 12), (25, 15), (21, 15)),
+                ((7, 55), (12, 54), (14, 57), (7, 57)), ((19, 47), (19, 52), (17, 53))):      # the moss
+        d.polygon(pts, fill=MOSS)
+    d.point((10, 12), fill=MOSS_HI); d.point((20, 12), fill=MOSS_HI); d.point((13, 44), fill=MOSS)
+    d.point((8, 31), fill=MOSS); d.point((9, 31), fill=MOSS_HI)
+    outline(im)
+    return im
+
+
 SPRITES = {      # key: (builder, scale, tileNames label)
     'himeji-keep_0_0': (keep, 2, 'himeji-keep'),
     'himeji-turret_0_0': (turret, 2, 'himeji-turret'),
@@ -659,6 +1031,9 @@ SPRITES = {      # key: (builder, scale, tileNames label)
     'himeji-bridge_0_0': (bridge, 2, 'himeji-bridge'),
     'himeji-kokoen-gate_0_0': (kokoen_gate, 2, 'himeji-kokoen-gate'),
     'himeji-wall_0_0': (wall, 2, 'himeji-wall'),
+    'himeji-kokoen-wall-v_0_0': (lambda: kokoen_wall_v('v'), 2, 'himeji-kokoen-wall-v'),
+    'himeji-kokoen-wall-v-top_0_0': (lambda: kokoen_wall_v('top'), 2, 'himeji-kokoen-wall-v-top'),
+    'himeji-kokoen-wall-v-end_0_0': (lambda: kokoen_wall_v('end'), 2, 'himeji-kokoen-wall-v-end'),
     'kansai-fingerpost_0_0': (fingerpost, 2, 'kansai-fingerpost'),
     'okayama-keep_0_0': (crow_keep, 2, 'okayama-keep'),
     'okayama-bridge_0_0': (tsukimi_bridge, 2, 'okayama-bridge'),
@@ -666,7 +1041,15 @@ SPRITES = {      # key: (builder, scale, tileNames label)
     'okayama-crane_0_0': (crane, 2, 'okayama-crane'),
     'okayama-momotaro_0_0': (momotaro, 2, 'okayama-momotaro'),
     'okayama-bizen-stall_0_0': (bizen_stall, 2, 'okayama-bizen-stall'),
+    'okayama-mound_0_0': (mound, 2, 'okayama-mound'),
     'okayama-fingerpost_0_0': (fingerpost, 2, 'okayama-fingerpost'),
+    'nara-daibutsuden_0_0': (daibutsuden, 2, 'nara-daibutsuden'),
+    'nara-nandaimon_0_0': (nandaimon, 2, 'nara-nandaimon'),
+    'nara-kasuga-torii_0_0': (kasuga_torii, 2, 'nara-kasuga-torii'),
+    'nara-deer-bow_0_0': (deer_bow, 2, 'nara-deer-bow'),
+    'nara-senbei-stall_0_0': (senbei_stall, 2, 'nara-senbei-stall'),
+    'nara-stone-lantern_0_0': (nara_lantern, 2, 'nara-stone-lantern'),
+    'nara-fingerpost_0_0': (fingerpost, 2, 'nara-fingerpost'),
 }
 
 # Flat decks you walk ON: Non-Collidables with a depth nudge that puts them over
@@ -674,7 +1057,7 @@ SPRITES = {      # key: (builder, scale, tileNames label)
 # recipe, see generate_hokkaido.FLAT).
 FLAT = {'himeji-bridge_0_0': -200, 'okayama-bridge_0_0': -200, 'okayama-bank-rock_0_0': -200}
 # Worth looking up at (config game.lookUp.sprites: family -> 0 for a one-sprite landmark)
-LOOK_UP = {'himeji-keep': 0, 'okayama-keep': 0}
+LOOK_UP = {'himeji-keep': 0, 'okayama-keep': 0, 'nara-daibutsuden': 0}
 
 
 def main():

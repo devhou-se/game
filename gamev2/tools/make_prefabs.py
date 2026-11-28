@@ -493,7 +493,7 @@ PREFABS = {
     # generate_okayama.py closes the two roof rows above as well.
     'okayama-keep':           dict(w=8, h=7, sprites=[('Collidables', 0, 0, 'okayama-keep_0_0')],
                                    colliders=[(x, y) for x in range(8) for y in range(2, 7)], doors=[]),
-    # the Tsukimi bridge and the rocks at the corners of Korakuen's island: flat,
+    # the Tsukimi bridge and the rocks at the inner corner of the river's bend: flat,
     # walked on or lying on the bank (Non-Collidables + depthBias)
     'okayama-bridge':         dict(w=2, h=4, sprites=[('Non-Collidables', 0, 0, 'okayama-bridge_0_0')],
                                    colliders=[], doors=[]),
@@ -505,8 +505,34 @@ PREFABS = {
                                    colliders=[(0, 2), (1, 2)], doors=[]),
     'okayama-bizen-stall':    dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'okayama-bizen-stall_0_0')],
                                    colliders=[(x, y) for x in range(3) for y in (1, 2)], doors=[]),
+    # Yuishinzan, the garden's hill (issue #276): solid over all of it
+    'okayama-mound':          dict(w=5, h=4, sprites=[('Collidables', 0, 0, 'okayama-mound_0_0')],
+                                   colliders=[(x, y) for x in range(5) for y in range(4)], doors=[]),
     # the fingerpost again, under its own key: where Himeji and Okayama meet it says another line
     'okayama-fingerpost':     dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'okayama-fingerpost_0_0')],
+                                   colliders=[(0, 1)], doors=[]),
+    # Nara (issue #268). The Great Buddha Hall: solid from the third row down;
+    # generate_nara.py closes the two roof rows above as well.
+    'nara-daibutsuden':       dict(w=12, h=8, sprites=[('Collidables', 0, 0, 'nara-daibutsuden_0_0')],
+                                   colliders=[(x, y) for x in range(12) for y in range(2, 8)], doors=[]),
+    # the Nandaimon: walked through on columns 2-3, as himeji-kokoen-gate is
+    'nara-nandaimon':         dict(w=6, h=4, sprites=[('Collidables', 0, 0, 'nara-nandaimon_0_0')],
+                                   colliders=[(x, y) for x in (0, 1, 4, 5) for y in range(4)], doors=[]),
+    # Kasuga Taisha's torii: walked under on columns 1-2
+    'nara-kasuga-torii':      dict(w=4, h=4, sprites=[('Collidables', 0, 0, 'nara-kasuga-torii_0_0')],
+                                   colliders=[(x, y) for x in (0, 3) for y in range(4)], doors=[]),
+    'nara-deer-doe':          dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'nara-deer-doe_0_0')],
+                                   colliders=[(0, 0)], doors=[]),
+    'nara-deer-stag':         dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'nara-deer-stag_0_0')],
+                                   colliders=[(0, 0)], doors=[]),
+    'nara-deer-bow':          dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'nara-deer-bow_0_0')],
+                                   colliders=[(0, 0)], doors=[]),
+    'nara-senbei-stall':      dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'nara-senbei-stall_0_0')],
+                                   colliders=[(x, y) for x in range(2) for y in range(2)], doors=[]),
+    'nara-stone-lantern':     dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'nara-stone-lantern_0_0')],
+                                   colliders=[(0, 1)], doors=[]),
+    # the fingerpost again, under its own key: where Osaka and Nara meet it says another line
+    'nara-fingerpost':        dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'nara-fingerpost_0_0')],
                                    colliders=[(0, 1)], doors=[]),
     # ---- street accessories (issue #19; art from tools/extract_street.py) --------
     # One sprite on Collidables each, so it Y-sorts by its feet: the bottom cell

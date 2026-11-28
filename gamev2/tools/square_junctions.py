@@ -12,7 +12,7 @@ A junction is the 3x3 box where the roads meet. This lays each one the way
     every centre line stops at its edge;
   - the kerb (`road-edge-*`) along a CLOSED side of the box - the side no road
     leaves by (the far side of a T-junction, the outside of a bend);
-  - a mitred `road-corner-*` (tools/make_road_tiles.py) where two closed sides
+  - a two-kerb `road-corner-*` (tools/make_road_tiles.py) where two closed sides
     meet, the outer corner of a bend.
 
 JUNCTIONS lists the boxes per district, in the district's own cells: the

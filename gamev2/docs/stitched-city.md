@@ -124,7 +124,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   each junction, so a joining road's mouth was closed by the other road's kerb and its centre line ran
   on into the junction. **`python3 tools/square_junctions.py`** lays each of the fourteen 3x3 boxes in
   Tokyo, Market, Palace and Park the way #147 laid the west gate: `road-plain` throughout, the kerb along a
-  CLOSED side (the far side of a T, the outside of a bend), a mitred `road-corner-*` where two closed
+  CLOSED side (the far side of a T, the outside of a bend), a two-kerb `road-corner-*` where two closed
   sides meet. `JUNCTIONS` lists them per district (top-left cell + closed sides); a box may hang over
   the map edge - the Tokyo/Market road is half in each map - and the neighbour's entry lays the rest.
   Sides are as the district reads on its own (`?stitch=0`): Park's top row is a kerb there, and
@@ -174,13 +174,15 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   pipeline is Tokyo-specific - every one of them loops over config `cities` - so the second city needed no
   code change; `tools/tests/kanazawa.test.js` walks it stitched and with `--stitch=0`. A city's key sorts
   into config order (`HokurikuCity` before `TokyoCity`): do not read "the city" as the first entry.
-- **The third city** (issue #255): `KansaiCity` stitches Osaka, Himeji and Okayama (see "Kansai" in
+- **The third city** (issue #255): `KansaiCity` stitches Osaka, Himeji, Okayama and Nara (see "Kansai" in
   `landmarks-and-towns.md`), again with no code change. It is the first city planned to GROW: its layout
   module (`tools/kansai.py`) places five districts and names the ones built, a generator closes an edge
   whose neighbour is not built yet, and `cities.KansaiCity.rooms` lists only the built ones. It began as
   two districts; Okayama (issue #267) was the first added, west of Himeji, and moved nothing: the city
   grew from 94x46 to 138x46 and its (0,0) is Okayama's corner of the union now, so a CITY cell of Himeji
   or Osaka is 44 columns further east than it was (district cells, which is what is authored, did not change).
+  Nara (issue #268) was the second, east of Osaka: it moved nothing either (the union's (0,0) stays
+  Okayama's corner), and the city is 190x46 with four districts.
   `tools/tests/kansai.test.js` walks it stitched and with `--stitch=0`. A town that used to be a room of its
   own becomes a district this way: the room the game plays in Osaka is `KansaiCity` now, and code or a test
   that wants "a town that is not stitched" must not use Osaka (Sendai is one).

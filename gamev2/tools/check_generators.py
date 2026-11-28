@@ -44,13 +44,11 @@ Run from gamev2/:  python3 tools/check_generators.py [generator ...]
 Exit 0 when every generator reproduces the committed world, 1 otherwise.
 The room generators and config_to_tiled need no Pillow. The art tools do:
 without it they are listed as skipped, not as ok — run the check with a
-python3 that has Pillow to cover them. The two that draw Japanese text
-(FONT_TOOLS) are skipped the same way where no Japanese system font is
-readable (a sandboxed shell, a machine without one): the glyphs decide the
-pixels, so no stand-in font would rebuild the committed art. A new room
+python3 that has Pillow to cover them. None needs a system font: the tools that
+set Japanese text use the game's own fonts in fonts/ (#346), so the glyphs, which
+decide the pixels, are the same on every machine. A new room
 generator belongs in GENERATORS, a new art tool in ART_TOOLS.
 """
-import filecmp
 import json
 import os
 import shutil
@@ -74,6 +72,7 @@ GENERATORS = [
 GENERATORS += ['generate_kanazawa', 'generate_shirakawago', 'generate_toyama']     # Hokuriku (issue #68)
 GENERATORS += ['generate_himeji']            # Kansai: Himeji, stitched to Osaka (issue #255; generate_osaka is above)
 GENERATORS += ['generate_okayama']           # ...and Okayama, west of Himeji (issue #267)
+GENERATORS += ['generate_nara']              # ...and Nara, east of Osaka (issue #268)
 GENERATORS += ['generate_karuizawa']         # Karuizawa, and Tokyo's west gate into it (issue #260)
 GENERATORS += ['generate_shinjuku']          # Tokyo's street of high-rises (issue #94)
 # config `districts` from tools/districts.py: last, it reads where the landmarks of every room stand (issue #219)
@@ -86,7 +85,7 @@ TILED = 'config_to_tiled'
 ART_TOOLS = [
     'make_prefabs', 'generate_hokkaido', 'generate_sendai_art', 'generate_tsutenkaku',
     'generate_discount_art', 'generate_cooler_art', 'make_snow_tiles',
-    'make_road_tiles', 'generate_ads', 'generate_cast', 'extract_city',
+    'make_road_tiles', 'make_bridge_tiles', 'generate_ads', 'generate_cast', 'extract_city',
     'extract_dotonbori', 'extract_shrine', 'extract_street', 'extract_train',
     'extract_train_interior', 'extract_station', 'generate_station_art',
     'generate_fukuoka_art', 'extract_house_interior', 'generate_house_art', 'generate_shrine_art', 'generate_palace_art',
@@ -110,6 +109,8 @@ ART_TOOLS += ['generate_wheel_art']          # Osaka: the gondola you board and 
 ART_TOOLS += ['generate_tokyo_art']          # Tokyo Tower and Tokyo Station, placeholders until the real art (issue #70)
 ART_TOOLS += ['generate_karuizawa_art']      # Karuizawa's own art: the fingerpost, the Ginza's three shopfronts, the larches, Shiraito Falls and the corn stall (issues #260, #261, #262)
 ART_TOOLS += ['generate_asahikawa_art']      # Asahikawa's own art (issue #219, stage B)
+ART_TOOLS += ['generate_izakaya_art']        # the Izakaya's interior in Tokyo, in the house look (issue #286)
+ART_TOOLS += ['generate_fukuoka_town_art']   # Fukuoka's own town pieces and ground families (issues #219, #362)
 # make_worldmap.py: assets/map/world-map.png and .json, the overworld drawn from the committed maps and
 # sprites. Last: it makes no art of its own, it shows what the tools above made (issue #270)
 WORLDMAP = 'make_worldmap'
@@ -117,14 +118,12 @@ ART_TOOLS += [WORLDMAP]
 # what a tool is run with. --pil: the map as play.js draws it on any machine, the one that is committed;
 # without it the tool uses Tiled's tmxrasterizer where the app is installed, and that is another picture
 ARGS = {WORLDMAP: ['--pil']}
-# the art tools that also need a Japanese system font (generate_ads.find_font)
-FONT_TOOLS = ['generate_ads', 'extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS
 # what a tool reads and may write, relative to gamev2/ — copied to the scratch
 # project once (plus config.json), compared and put back after every run
 OUTPUTS = ['tiled', 'assets/sprites', 'assets/ads', 'assets/map']
 # (src: generate_cast reads the character creator's tables, and make_worldmap's play.js loads the game's
-# own code; fonts: generate_station_art sets its signs in the game's own pixel fonts)
+# own code; fonts: generate_station_art, generate_ads and extract_city set their text in the game's own pixel fonts)
 INPUTS = ['tools', 'src', 'fonts'] + OUTPUTS
 
 
@@ -141,23 +140,10 @@ def have_pillow():
     return pillow_version() is not None
 
 
-def have_jp_font():
-    """Whether generate_ads.find_font finds a font it can read (needs Pillow)."""
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    import generate_ads
-    try:
-        generate_ads.find_font()
-        return True
-    except SystemExit:
-        return False
-
-
-def skips(names, pillow, font):
+def skips(names, pillow):
     """{tool: why it cannot be checked here} for the art tools among `names`:
-    all of them without Pillow, the FONT_TOOLS without a Japanese font."""
-    if not pillow:
-        return {n: 'needs Pillow' for n in names if n in ART_TOOLS}
-    return {} if font else {n: 'needs a Japanese system font' for n in names if n in FONT_TOOLS}
+    all of them without Pillow, none with it."""
+    return {} if pillow else {n: 'needs Pillow' for n in names if n in ART_TOOLS}
 
 
 def tiled_rooms(root='.'):
@@ -204,6 +190,14 @@ def same_picture(a, b):
         return False
 
 
+def same_bytes(a, b):
+    """Whether two files hold the same bytes. Read every time: filecmp caches a
+    comparison by size and mtime, so a file put back within the same clock tick
+    could still be reported changed (#389)."""
+    with open(a, 'rb') as fa, open(b, 'rb') as fb:
+        return fa.read() == fb.read()
+
+
 def restore(root, work):
     """Differences under OUTPUTS between the scratch project and the committed
     one, as ['tiled/x.tmj changed', ...] — and the scratch copy put back the
@@ -217,7 +211,7 @@ def restore(root, work):
             if f not in a:
                 out.append(f'{f} ADDED')
                 os.remove(dst)
-            elif f not in b or not filecmp.cmp(src, dst, shallow=False):
+            elif f not in b or not same_bytes(src, dst):
                 if f not in b:
                     out.append(f'{f} REMOVED')
                 elif not same_picture(src, dst):
@@ -323,7 +317,7 @@ def main(argv):
         print(f'unknown generator(s) {unknown}; expected some of {CHECKS}')
         return 2
     pillow = have_pillow()
-    skipped = skips(names, pillow, pillow and have_jp_font())
+    skipped = skips(names, pillow)
     failures = check([n for n in names if n not in skipped])
     what = lambda n: ('the Tiled maps' if n == TILED else 'the world map' if n == WORLDMAP else
                       'the sprites and prefabs' if n in ART_TOOLS else 'config.json')
@@ -349,10 +343,8 @@ def main(argv):
             print(f'The art tools ran on Pillow {pillow_version()}. A sprite drawn a pixel off by another Pillow\n'
                   'shows as drift too: docs/generators-and-checks.md lists the versions that rebuild the art.')
     if skipped:
-        print(f'\n{len(skipped)} art tool(s) not checked: ' +
-              ('this python3 has no Pillow. Run the check with one that does.' if not pillow else
-               'no Japanese system font is readable here (generate_ads.find_font). '
-               'Run the check where the system fonts are.'))
+        print(f'\n{len(skipped)} art tool(s) not checked: this python3 has no Pillow. '
+              'Run the check with one that does.')
     return 1 if failures else 0
 
 

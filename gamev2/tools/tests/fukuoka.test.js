@@ -280,4 +280,12 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.ok(r.x >= 0 && r.y >= 0 && r.x + r.w <= map.width + 0.5 && r.y + r.h <= map.height + 0.5);
         assert.ok(r.x + r.w <= map.rooms.Osaka.x && r.y + r.h / 2 > map.rooms.Osaka.y + map.rooms.Osaka.h / 2, 'drawn south-west of Osaka');
     });
+
+    test('Fukuoka: a bump on a ramen yatai opens its list, and the yakitori and oden carts sell nothing (#367)', () => {
+        const ctx = require('vm').createContext({ window: {} });
+        require('vm').runInContext(fs.readFileSync(path.join(GV2, 'src', 'utils', 'Interactions.js'), 'utf8') + '\nthis.Interactions = Interactions;', ctx);
+        assert.deepStrictEqual({ ...ctx.Interactions.match('yatai-ramen_0_0', room, {}) }, { kind: 'yatai', group: 'shop', footprint: true });
+        for (const k of ['yatai-yakitori_0_0', 'yatai-oden_0_0']) assert.strictEqual(ctx.Interactions.match(k, room, {}), null, k);
+        assert.ok(/\byatai:\s*\{ title: '[A-Z ]+'/.test(fs.readFileSync(path.join(GV2, 'src', 'Shop.js'), 'utf8')), 'Shop.VENUES.yatai');
+    });
 };

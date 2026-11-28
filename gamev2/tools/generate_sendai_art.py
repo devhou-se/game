@@ -359,13 +359,13 @@ NEEDLE = [rgb(c) for c in ('93c297', '83af6f', '508582', '4a6262', '3c396d', '2a
 AUTUMN = [rgb(c) for c in ('e4cecc', 'e78d7b', 'd16b56', 'aa4d31', '83374f', '5b283b')]
 P_BARK, P_BARK_HI, P_BARK_LO = rgb('7f513b'), rgb('a68777'), rgb('594b45')
 P_SHADE = rgb('2a3151', 90)
-P_ROOF, P_ROOF_HI, P_ROOF_RIB, P_ROOF_LO = rgb('5b6c79'), rgb('698592'), rgb('4a6262'), rgb('2b373c')
+P_ROOF, P_ROOF_HI, P_ROOF_RIB, P_ROOF_LO = rgb('5b6c79'), rgb('698592'), rgb('4a6262'), rgb('2e4040')
 P_STEEL, P_STEEL_HI = rgb('94a2a8'), rgb('d1e2eb')
 P_SIDING, P_SIDING_HI, P_SIDING_LO, P_SIDING_DK = rgb('a68777'), rgb('be9e8c'), rgb('8e7366'), rgb('7c5d56')
 P_PLASTER, P_WHITE, P_GREY = rgb('e4cecc'), rgb('fafcfd'), rgb('a4b0b5')
 P_GLASS, P_GLASS_LO, P_GLARE = rgb('2c2d51'), rgb('2a3151'), rgb('4b6396')
 P_RED, P_RED_HI, P_RED_LO = rgb('aa4d31'), rgb('d16b56'), rgb('8a3a22')
-P_JOIN, P_JOIN_HI, P_JOIN_LO = rgb('4a6262'), rgb('508582'), rgb('2b373c')
+P_JOIN, P_JOIN_HI, P_JOIN_LO = rgb('4a6262'), rgb('508582'), rgb('2e4040')
 P_WOOD, P_WOOD_LO = rgb('7f513b'), rgb('594b45')
 P_LAMP, P_LAMP_HI = rgb('c6a663'), rgb('f3d890')
 

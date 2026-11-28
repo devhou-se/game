@@ -8,11 +8,14 @@ sides of a deck that runs north-south:
 
   bridge-parapet-w_0_0   a stone coping down the WEST edge of a deck cell, with
   bridge-parapet-e_0_0   a pier at the cell's top and bottom (stacked cells
-                         join them into one pier per boundary) and a thin
-                         shadow on the paving beside it. It takes the outer
-                         14px of the cell, so it needs no collider: a walker
-                         in that cell stands clear of it, and the deck keeps
-                         its full width (#139).
+                         join them into one pier per boundary) / the EAST
+                         edge. It takes the outer 14px of the cell, so it needs
+                         no collider: a walker in that cell stands clear of it,
+                         and the deck keeps its full width (#139). Drawn in the
+                         house look (#359): the pack's steel ramp edged in its
+                         navy ink, lit from the upper left, so the west coping
+                         casts a thin shadow on the paving beside it and the
+                         east one, lit on the deck side, casts none there.
   bridge-shade-w_0_0     the deck's shadow on the WATER cell west of it (a dark
   bridge-shade-e_0_0     band against the deck's edge) / east of it.
 
@@ -30,41 +33,67 @@ Run from gamev2/ BEFORE generate_osaka.py:
 import json
 from PIL import Image
 
+import house_look as hl
+
 SRC = 'assets/sprites'
 A = 32                              # art pixels per cell; the sheet's 2x upscale makes it 64
 
-# the ported stonework's own palette (castle-wall-siding)
-INK, DARK = (8, 13, 22, 255), (71, 72, 93, 255)
-MID, LIGHT, SHINE = (164, 176, 181, 255), (188, 199, 204, 255), (225, 233, 236, 255)
-CAST = (8, 13, 22, 70)              # the coping's shadow on the paving
-SHADE = [(8, 13, 40, 35), (8, 13, 40, 70)] + [(8, 13, 40, 105)] * 4               # on the water, deck side last
+# the house look (issue #359): the stone in the pack's steel ramp, edged in its navy ink,
+# lit from the upper left (tools/house_look.py, docs/generators-and-checks.md)
+INK = hl.INK
+LO, BASE, HI = hl.tone('steel', 3), hl.tone('steel', 4), hl.tone('steel', 5)
+JOINT = hl.tone('steel', 1)         # the line between two coping stones
+CAST = INK[:3] + (70,)              # the coping's shadow on the paving
+SHADE = [INK[:3] + (35,), INK[:3] + (70,)] + [INK[:3] + (105,)] * 4      # on the water, deck side last
 
-COPING = [INK, SHINE, LIGHT, LIGHT, MID, DARK, CAST]      # west parapet, outside edge first
+COPING = [INK, HI, BASE, BASE, LO, INK]                  # west to east, lit on its west side
 PIER = 3                            # rows of pier at the cell's top and at its bottom
+PIER_W = 8
 FLAT_BIAS = -200                    # see generate_hokkaido.py FLAT
 
 
-def parapet():
-    """The west one; the east one is its mirror."""
-    im = Image.new('RGBA', (A, A), (0, 0, 0, 0))
+def pier_row(kind):
+    """One row of a pier, west to east: its edge rows ink, its top row lit and its
+    bottom row in shadow, its west column lit and its east one in shadow."""
+    if kind == 'ink':
+        return [INK] * PIER_W
+    face = {'hi': HI, 'base': BASE, 'lo': LO}[kind]
+    return [INK, LO if kind == 'lo' else HI] + [face] * (PIER_W - 4) + [LO, INK]
+
+
+# a pier's rows from the top: the bottom of one cell, then the top of the next, so that
+# stacked cells join them into one pier per boundary
+PIER_TOP = ['base', 'lo', 'ink']                         # rows 0 .. PIER-1
+PIER_BOTTOM = ['ink', 'hi', 'base']                      # rows A-PIER .. A-1
+
+
+def parapet(side):
+    """A coping down the deck's `side` edge. Both are lit on their west side, so the
+    east one is not the west one's mirror: only the west one casts its shadow
+    on the paving (the east one's falls beyond the deck)."""
+    im = hl.canvas(A, A)
     px = im.load()
+    x0 = 0 if side == 'w' else A - len(COPING)
     for y in range(A):
-        for x, colour in enumerate(COPING):
-            px[x, y] = colour
+        for i, colour in enumerate(COPING):
+            px[x0 + i, y] = colour
+        if side == 'w':
+            px[len(COPING), y] = CAST
         if y == A // 2:                                 # a joint in the coping stones
-            for x in range(1, 5):
-                px[x, y] = MID
-    for y in list(range(PIER)) + list(range(A - PIER, A)):
-        inner = y == PIER - 1 or y == A - PIER          # the pier's edge facing the next stone
-        for x in range(8):
-            px[x, y] = INK if (x in (0, 7) or inner) else SHINE if x < 4 else LIGHT
-        px[8, y] = CAST
+            for i in range(1, len(COPING) - 1):
+                px[x0 + i, y] = JOINT
+    x0 = 0 if side == 'w' else A - PIER_W
+    for y, kind in list(enumerate(PIER_TOP)) + [(A - PIER + i, k) for i, k in enumerate(PIER_BOTTOM)]:
+        for i, colour in enumerate(pier_row(kind)):
+            px[x0 + i, y] = colour
+        if side == 'w':
+            px[PIER_W, y] = CAST
     return im
 
 
 def shade():
     """For the water cell WEST of the deck: the band is on its east edge."""
-    im = Image.new('RGBA', (A, A), (0, 0, 0, 0))
+    im = hl.canvas(A, A)
     px = im.load()
     for y in range(A):
         for i, colour in enumerate(SHADE):
@@ -77,8 +106,8 @@ def mirror(im):
 
 
 TILES = {
-    'bridge-parapet-w': parapet,
-    'bridge-parapet-e': lambda: mirror(parapet()),
+    'bridge-parapet-w': lambda: parapet('w'),
+    'bridge-parapet-e': lambda: parapet('e'),
     'bridge-shade-w': shade,
     'bridge-shade-e': lambda: mirror(shade()),
 }
@@ -88,7 +117,7 @@ def main():
     cfg = json.load(open('config.json'))
     for name, draw in TILES.items():
         key = f'{name}_0_0'
-        draw().resize((A * 2, A * 2), Image.NEAREST).save(f'{SRC}/{key}.png')
+        hl.double(draw()).save(f'{SRC}/{key}.png')
         cfg['spriteMetadata'][key] = {'anchorX': 0.5, 'anchorY': 0.5, 'depthBias': FLAT_BIAS, 'frameCount': 1}
         cfg.setdefault('tileNames', {})[key] = name
     open('config.json', 'w').write(json.dumps(cfg, indent=2, sort_keys=True))

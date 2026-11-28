@@ -38,8 +38,9 @@ apartment blocks get a lobby from the same tool (`--lobbies`; twenty-six in the 
   Do not mix in the LimeZu `Modern_Exteriors` pack (different, more saturated style; it left the tree with the
   Godot project and is in git history, see `art-source/README.md`).
 - **The discount store** carries no real branding, like the ad pool: its sign is drawn by `extract_city.py`
-  with `tools/generate_ads.py`'s text helpers - ドン・タコーテ ("Don Takote"), yellow board, blue band, a red
-  octopus. It needs a Japanese font from `generate_ads.find_font()` (macOS system fonts).
+  in the house look (`tools/house_look.py`), built like the ad pool's boards - ドン・タコーテ ("Don Takote") in
+  the game's own `fonts/PixelMplus12-Grid.ttf`, a shaded gold board in a steel housing, marquee bulbs, a blue
+  band, a red octopus (#346). It needs no system font, so `check_generators.py` checks it wherever Pillow is.
 - **Placing one**: generated rooms `b.stamp('highrise-glass', x, y)` in their generator (Osaka does). Ported
   rooms use **`tools/stamp_prefab.py <Room> --add <prefab> x y [--remove <prefab> x y] [--dry-run]`**,
   which refuses to write if the prefab overlaps another standing sprite, lands on a solid cell, covers a
@@ -90,8 +91,8 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
   of the map to the other, through a gap in the border hedge at both ends. The street is four cells wide,
   not the usual three, **on purpose**: the arch's opening is four cells and the arch is the landmark, so
   the road keeps its axis and gets its centre line from the two lane tiles, which carry half the line each
-  on their shared edge. Those, and the mitred two-kerb corners (`road-corner-nw|ne|sw|se`), are derived
-  from the sheet's own road tiles by **`tools/make_road_tiles.py`** (Pillow; no new art). The crossing is the `crossing-v`
+  on their shared edge. Those are derived from the sheet's own road tiles, and the two-kerb corners
+  (`road-corner-nw|ne|sw|se`) are cut from the sheet's own corners, by **`tools/make_road_tiles.py`** (Pillow; no new art). The crossing is the `crossing-v`
   tiles laid by hand with the middle one repeated (the prefab is three cells). It is on row 18 and
   both signals stand just south of it at the bridgehead (bases `(22,19)` and `(27,19)`): north of it their
   heads would be lost in the arch's side boards. The pavement is one cell either side of the road

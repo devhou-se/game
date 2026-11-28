@@ -36,6 +36,14 @@ one spot).
 Run from gamev2/:  python3 tools/districts.py            write config.json `districts`
                    python3 tools/districts.py --report   print each district's spots and where
                                                          seven authors would stand; write nothing
+                   python3 tools/districts.py --coverage print where everyone the game shows
+                                                         stands on every trip day, and who is in
+                                                         no district; write nothing, exit 1 on a
+                                                         problem
+
+Everyone the game shows on a trip day (lead-in included) stands inside a
+district of their room or on a station's platform; UNCOVERED lists the
+exceptions, each with the ticket that ends it.
 
 It is a generator in tools/check_generators.py: a re-run on an unchanged
 world writes identical bytes. After a map change that moves a landmark across
@@ -43,6 +51,7 @@ a district's edge, or an edit here, run it again. `python3
 tools/test_blog_to_npc.py` checks every district (inside its room, no overlap,
 somewhere to stand, room for every author).
 """
+import datetime
 import json
 import sys
 
@@ -51,6 +60,15 @@ import blog_to_npc as b
 # Rooms that are towns but get no districts. None today: the made-up towns
 # this listed (Machi, Inaka, Yukimura) are deleted (issue #68).
 UNLABELLED = ()
+
+# Stands that are in no district on purpose, until the ticket named ends them:
+# (NPC name, first day of the stand) -> why. Everyone the game shows on a trip
+# day stands inside a district of their room or on a station's platform
+# (coverage below); tools/test_blog_to_npc.py fails on an uncovered stand that
+# is not listed here, and on a line here that matches no uncovered stand.
+UNCOVERED = {
+    ('Dylan', '2025-11-05'): "post 636 is about Lake Biwa; it waits by Osaka's platform until #382 re-homes it",
+}
 
 
 def d(key, name, description, bounds, stand=None):
@@ -65,7 +83,7 @@ DISTRICTS = {
     'Tokyo': [
         d('imperial-palace', 'Imperial Palace',
           'the moat, stone walls and blue-tiled gate of the palace, its gardens, pond and cherry trees',
-          (6, 5, 54, 39), stand=(27, 35)),
+          (6, 5, 54, 44), stand=(27, 35)),
     ],
     'Market': [
         d('asakusa', 'Asakusa',
@@ -128,7 +146,7 @@ DISTRICTS = {
         d('riverbank', 'Asahibashi and the riverbank',
           'the green arch bridge over the frozen river, ice fishing, the snowy banks, three Hokkaido houses and '
           'the Asahiyama Zoo gate on the south side',
-          (2, 16, 39, 27), stand=(23, 21)),
+          (2, 16, 39, 29), stand=(23, 21)),
     ],
     # --- Kansai -----------------------------------------------------------
     'Osaka': [
@@ -143,23 +161,38 @@ DISTRICTS = {
     # Himeji: walked to from Osaka, the stitched KansaiCity (issue #255)
     'Himeji': [
         d('castle', 'Himeji Castle',
-          'the white castle on its hill: the keep, the stone walls, the gate and the bridge over the moat',
-          (6, 2, 41, 13), stand=(22, 8)),
+          'the white castle on its hill: over the moat by the bridge and the gate, then three courts climbed as a hairpin to the keep',
+          (6, 2, 41, 13), stand=(30, 8)),
         d('kokoen', 'Koko-en garden',
-          'the walled strolling garden beside the castle: its pond and bridge, lanterns, pines and maples',
-          (5, 26, 41, 35), stand=(22, 28)),
+          'the walled garden beside the castle, three rooms in a row: pines and lanterns, the koi pond and its bridge, maples',
+          (6, 26, 40, 37), stand=(27, 28)),
     ],
     # Okayama: walked to from Himeji, the west end of KansaiCity (issue #267)
     'Okayama': [
         d('castle', 'Okayama Castle',
-          'the black "crow" castle on its stone wall above the river: the keep, the gravel terrace, pines and lanterns',
-          (13, 2, 40, 14), stand=(22, 10)),
+          'the black "crow" castle at the water: the keep on the north bank of the river and the gravel court beside it',
+          (22, 14, 33, 18), stand=(27, 16)),
         d('momotaro', 'Momotaro Avenue',
-          'the avenue in from Himeji and the plaza it ends in: the Momotaro statue and a stall of Bizen ware',
-          (5, 15, 40, 23), stand=(14, 22)),
+          'the avenue in from Himeji and the plaza it ends in on the east bank: the Momotaro statue and a stall of Bizen ware',
+          (34, 14, 43, 23), stand=(36, 20)),
         d('korakuen', 'Korakuen garden',
-          'the strolling garden on its island in the river, over the Tsukimi bridge: lawns, a pond, red-crowned cranes',
-          (7, 27, 38, 35), stand=(22, 28)),
+          'the strolling garden inside the bend of the river, over the Tsukimi bridge: open lawn, a hill, a pond, '
+          'red-crowned cranes, the castle across the water',
+          (3, 22, 28, 37), stand=(18, 30)),
+    ],
+    # Nara: walked to from Osaka, the east end of KansaiCity (issue #268)
+    'Nara': [
+        d('todaiji', 'Todaiji',
+          'the Great Buddha Hall behind the Nandaimon gate, its gravel court, and the plaza where the avenue ends: '
+          'the deer cracker stall',
+          (30, 2, 46, 23), stand=(35, 11)),
+        d('nara-park', 'Nara Park',
+          'the deer park: the lawn and its maples south of the avenue in from Osaka, deer resting on the grass, '
+          'the river and its towpath',
+          (2, 17, 29, 33), stand=(16, 25)),
+        d('kasuga', 'Kasuga Taisha',
+          'the vermilion shrine in the cedar wood: the torii, the approach lined with stone lanterns, the hall',
+          (30, 24, 46, 37), stand=(40, 35)),
     ],
     # --- Tohoku -----------------------------------------------------------
     'Sendai': [
@@ -226,6 +259,9 @@ DISTRICTS = {
         d('nagamachi', 'Nagamachi',
           'the samurai district: earthen walls, the canal and its stone bridge, a samurai house',
           (2, 34, 33, 51), stand=(18, 39)),
+        d('teramachi', 'Teramachi',
+          'the wood of shrines south of the avenue: a blue-roofed shrine in a clearing among cedars, its stone foxes',
+          (35, 34, 57, 50), stand=(46, 45)),
     ],
     'Shirakawago': [
         d('far-bank', 'Far bank and bridge',
@@ -291,19 +327,103 @@ def report(cfg):
         print(f"no districts: {', '.join(missing)}")
 
 
+def coverage(cfg):
+    """Where everyone the game shows stands on every trip day, lead-in
+    included, as the game resolves it (the izakaya's drinking-game
+    opponents left out): rows {'trip', 'name', 'room', 'cell': (x, y),
+    'first', 'last', 'days', 'zone', 'posts'} in order of first day. One row
+    is a stand: consecutive days of one trip on one cell, until a dated state
+    in that room. `zone` is the district's name, 'the platform' in a station,
+    or None (an interior, or outdoors in no district). `posts` are the post
+    ids of the state dated `first` ([] for a base stand)."""
+    rows, current = [], {}
+    for trip in sorted(cfg.get('trips') or [], key=lambda t: t['start']):
+        day, end = datetime.date.fromisoformat(b.trip_opens(trip)), datetime.date.fromisoformat(trip['end'])
+        while day <= end:
+            date, yesterday = day.isoformat(), (day - datetime.timedelta(days=1)).isoformat()
+            day += datetime.timedelta(days=1)
+            window = b.trip_window(cfg, date)
+            if window is None or window['trip'] is not trip:
+                continue
+            for room_key, room in cfg['rooms'].items():
+                for npc in room.get('npcs', []):
+                    if npc.get('drinkingGameOpponent'):
+                        continue
+                    present, x, y = b.resolve_pos(npc, date, window)
+                    if not present or x is None:
+                        continue
+                    state = npc.get('states', {}).get(date)
+                    key = (trip['id'], npc['name'], room_key)
+                    row = current.get(key)
+                    if row and row['cell'] == (x, y) and state is None \
+                            and row['last'] == yesterday:
+                        row['last'], row['days'] = date, row['days'] + 1
+                        continue
+                    district = b.district_at(cfg, room_key, x, y)
+                    zone = district['name'] if district else 'the platform' if room_key in cfg.get('stations', {}) else None
+                    row = {'trip': trip['id'], 'name': npc['name'], 'room': room_key, 'cell': (x, y),
+                           'first': date, 'last': date, 'days': 1, 'zone': zone,
+                           'posts': [str(p['id']) for p in (state or {}).get('posts') or [] if p.get('id') is not None]}
+                    rows.append(row)
+                    current[key] = row
+    return sorted(rows, key=lambda r: r['first'])
+
+
+def coverage_problems(cfg, rows=None):
+    """The lines the --coverage report and the test print: an uncovered stand
+    UNCOVERED does not list, and a line of UNCOVERED that is covered now."""
+    rows = coverage(cfg) if rows is None else rows
+    uncovered = {(r['name'], r['first']): r for r in rows if r['zone'] is None}
+    out = []
+    for (name, first), r in uncovered.items():
+        if (name, first) not in UNCOVERED:
+            x, y = r['cell']
+            posts = f" (post {', '.join(r['posts'])})" if r['posts'] else ''
+            out.append(f"{name} stands in no district at {r['room']} ({x},{y}) from {r['first']} to {r['last']}{posts}: "
+                       'grow or add a district in tools/districts.py, move them with blog_to_npc.py --rehome, '
+                       'or list the stand in UNCOVERED')
+    for name, first in UNCOVERED:
+        if (name, first) not in uncovered:
+            out.append(f"{name} from {first} is listed in UNCOVERED and is covered now: delete the line")
+    return out
+
+
+def print_coverage(cfg):
+    """The --coverage report; returns the problems."""
+    rows = coverage(cfg)
+    for trip in sorted(cfg.get('trips') or [], key=lambda t: t['start']):
+        mine = [r for r in rows if r['trip'] == trip['id']]
+        print(f"{trip['id']}  opens {b.trip_opens(trip)}, {trip['start']}..{trip['end']}")
+        for r in mine:
+            x, y = r['cell']
+            zone = r['zone'] or f"IN NO DISTRICT ({UNCOVERED.get((r['name'], r['first']), 'not listed')})"
+            posts = f"  post {', '.join(r['posts'])}" if r['posts'] else ''
+            print(f"  {r['first']}..{r['last']}  {r['days']:>2}d  {r['name']:<7} {r['room']} ({x},{y})  {zone}{posts}")
+        platform = sum(r['days'] for r in mine if r['zone'] == 'the platform')
+        none = sum(r['days'] for r in mine if r['zone'] is None)
+        print(f"  person-days: {sum(r['days'] for r in mine) - platform - none} in a district, "
+              f"{platform} on a platform, {none} in none")
+    problems = coverage_problems(cfg, rows)
+    for line in problems:
+        print(line)
+    return problems
+
+
 def main(argv):
     if '-h' in argv or '--help' in argv:
         print(__doc__.strip())
         return 0
-    unknown = [a for a in argv if a != '--report']
+    unknown = [a for a in argv if a not in ('--report', '--coverage')]
     if unknown:
-        print(f"unknown option {' '.join(unknown)}; options: --help --report", file=sys.stderr)
+        print(f"unknown option {' '.join(unknown)}; options: --help --report --coverage", file=sys.stderr)
         return 2
     cfg = b.load_config()
     cfg['districts'] = build(cfg)
     if '--report' in argv:
         report(cfg)
         return 0
+    if '--coverage' in argv:
+        return 1 if print_coverage(cfg) else 0
     b.save_config(cfg)
     print(f"{sum(len(v) for v in cfg['districts'].values())} districts in {len(cfg['districts'])} rooms written to config.json")
     return 0

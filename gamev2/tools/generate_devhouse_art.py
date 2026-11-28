@@ -12,11 +12,19 @@ stands - but with rectangles, points and whole-number arithmetic only (no
 Pillow ellipse, polygon or slanted line: those move by a pixel from one Pillow
 to the next, and tools/check_generators.py compares bytes).
 
+The two buildings seen from the street are in the house look (#319): GuttyKreum
+sheet colours only (the S_* block), a navy outline, the pack's dark glass with
+its slanted glare in place of lit windows, ragged foliage and the pack's roof
+tile (from generate_sendai_art.py). The rest is still in the older look (#325).
+
   outside (one sprite each; prefabs in tools/make_prefabs.py)
-    devhouse-tokyo_0_0    5x8   six window rows, the stair tower up its east side,
-                                the entrance under its name at column 3
-    devhouse-osaka_0_0    3x7   dark timber and plaster, a noren over the door at
-                                column 1, the roof garden's green over the parapet
+    devhouse-tokyo_0_0    5x8   a flat roof seen from above (tank, condenser, aerial,
+                                the lift's motor room), six window rows, the stair
+                                tower up its east side, the entrance under its name
+                                at column 3
+    devhouse-osaka_0_0    3x7   the roof garden seen from above inside a tiled eave,
+                                dark timber and plaster, a noren over the door at
+                                column 1 under a tiled pent roof
   floors (1x1, Floor layer)
     devhouse-stairs-up_0_0 / -down_0_0    the step you take to the next floor
     devhouse-tile_0_0             the wet rooms
@@ -50,13 +58,14 @@ import json
 import sys
 from PIL import Image, ImageDraw, ImageOps
 
-from generate_hokkaido import (rgb, canvas, outline, INK, RED, RED_HI, RED_LO, CREAM, CREAM_LO, CREAM_DK,
+from generate_hokkaido import (rgb, canvas, outline, INK, NAVY, RED, RED_HI, RED_LO, CREAM, CREAM_LO, CREAM_DK,
                                WHITE, GLASS, GLASS_HI, GLASS_DK, WOOD, WOOD_LO, WOOD_DK, STONE, STONE_LO,
                                STONE_DK, GREEN, GREEN_LO, GREEN_HI, GOLD, AMBER)
 from generate_house_art import (WOOD_HI, BEAM, BEAM_HI, BEAM_LO, PAPER, PAPER_LO, PAPER_DK, PLASTER, INDIGO,
                                 INDIGO_HI, INDIGO_LO, ROSE, ROSE_HI, ROSE_LO, SKY, SKY_HI, SKY_LO, STEEL,
                                 STEEL_HI, STEEL_LO, IRON, IRON_HI, LIT, LIT_HI, ORANGE, box, speckle,
                                 wall_frame, plaster)
+from generate_sendai_art import pane as glass, foliage, roof_tile, speck, LEAF
 
 GRAIN = rgb('c99a80')
 TILE, TILE_HI, TILE_LO = rgb('dfe9ee'), rgb('f1f7f9'), rgb('b7c8d2')
@@ -655,191 +664,304 @@ def water_bowl():
 
 
 # ---- the two houses, from the street ---------------------------------------------------------
-def pane(d, x0, y0, x1, y1, glass=GLASS, hi=GLASS_HI, frame=CHAR):
+# the pack's colours, for the two houses seen from the street
+S_WALL, S_WALL_HI, S_WALL_LO, S_WALL_DK = rgb('dae2e4'), rgb('fafcfd'), rgb('bcc7cc'), rgb('a4b0b5')
+S_TOWER, S_TOWER_HI, S_TOWER_LO, S_TOWER_DK = rgb('a4b0b5'), rgb('bcc7cc'), rgb('919ea4'), rgb('848295')
+S_FRAME, S_FRAME_HI, S_FRAME_LO = rgb('47485d'), rgb('5f6177'), rgb('2a2636')
+S_METAL, S_METAL_HI, S_METAL_LO = rgb('94a2a8'), rgb('d1e2eb'), rgb('646e86')
+S_SLATE, S_SLATE_HI, S_SLATE_JOINT, S_SLATE_LO = rgb('5b6c79'), rgb('698592'), rgb('444f5e'), rgb('293038')
+S_DARK, S_GLARE = rgb('2c2d51'), rgb('4b6396')
+S_SHOJI, S_SHOJI_HI, S_SHOJI_LO = rgb('e4cecc'), rgb('fafcfd'), rgb('d2bab0')
+S_TIMBER, S_TIMBER_HI, S_TIMBER_LO, S_TIMBER_DK = rgb('aa775f'), rgb('c18e75'), rgb('7f513b'), rgb('5a3827')
+S_TIMBER_INK = rgb('3f210f')
+S_POT, S_POT_HI, S_POT_LO = rgb('aa4d31'), rgb('d16b56'), rgb('8a3a22')
+S_PINK, S_PINK_HI, S_PINK_LO = rgb('bb6479'), rgb('d78bc1'), rgb('83374f')
+S_CLOTH, S_CLOTH_HI, S_CLOTH_LO = rgb('314b8e'), rgb('4b6396'), rgb('232449')
+S_SIGN, S_BOARD_HI = rgb('f3d890'), rgb('ebbca2')
+S_WASH, S_WASH_LO = rgb('588cc6'), rgb('425faa')
+S_SOOT, S_SOOT_HI, S_SOOT_LO = rgb('3c3a4c'), rgb('47485d'), rgb('2a2636')
+S_BAMBOO, S_BAMBOO_HI, S_BAMBOO_LO, S_BAMBOO_DK = rgb('c6aa71'), rgb('e3c587'), rgb('a7843b'), rgb('86624f')
+S_REED, S_REED_LO = rgb('be9e8c'), rgb('aa775f')
+S_ROCK, S_ROCK_HI, S_ROCK_LO = rgb('848295'), rgb('bcc7cc'), rgb('53596d')
+S_RIDGE, S_RIDGE_HI, S_EAVE = rgb('434857'), rgb('53596d'), rgb('191c2a')
+
+
+def window(d, x0, y0, x1, y1, frame=S_FRAME, step=9):
+    """The pack's dark glass with its slanted glare, in a frame."""
     R(d, x0, y0, x1, y1, frame)
-    R(d, x0 + 1, y0 + 1, x1 - 1, y1 - 1, glass)
-    H(d, x0 + 1, x1 - 1, y0 + 1, hi)
-    P(d, hi, (x0 + 2, y0 + 2), (x0 + 3, y0 + 2), (x0 + 2, y0 + 3))
+    glass(d, x0 + 1, y0 + 1, x1 - 1, y1 - 1, step)
+
+
+def flat_roof(d, x0, y0, x1, y1):
+    """A flat roof seen from above: a steel coping lit on its top and left, slate panels inside it."""
+    R(d, x0, y0, x1, y1, S_METAL)
+    H(d, x0, x1, y0, S_METAL_HI); V(d, x0, y0, y1, S_METAL_HI)
+    H(d, x0, x1, y1, S_METAL_LO); V(d, x1, y0 + 1, y1, S_METAL_LO)
+    R(d, x0 + 3, y0 + 3, x1 - 3, y1 - 3, NAVY)
+    x0, y0, x1, y1 = x0 + 4, y0 + 4, x1 - 4, y1 - 4
+    R(d, x0, y0, x1, y1, S_SLATE)
+    for n, x in enumerate(range(x0, x1, 9)):               # panels, their joints staggered
+        V(d, x, y0, y1, S_SLATE_JOINT)
+        H(d, x + 1, min(x + 8, x1), y0, S_SLATE_HI)
+        for y in range(y0 + 4 + n % 3 * 5, y1, 13):
+            H(d, x + 1, min(x + 8, x1), y, S_SLATE_JOINT)
+            if y + 1 < y1:
+                H(d, x + 1, min(x + 8, x1), y + 1, S_SLATE_HI)
+    R(d, x0, y1 - 1, x1, y1, S_SLATE_LO); R(d, x1 - 1, y0, x1, y1, S_SLATE_LO)
 
 
 def devhouse_tokyo():
-    """160x256: six storeys of 39 rows under a roof deck, the ground floor two rows taller."""
+    """160x256: a flat roof seen from above, five storeys of 35 rows and a ground floor of 37."""
     im, d = canvas(5, 8)
-    # the roof: a rail, the water tank, the lift's motor room
-    R(d, 104, 4, 150, 19, CONCRETE_LO); R(d, 104, 4, 150, 5, CONCRETE); V(d, 150, 6, 19, STONE_LO)
-    R(d, 112, 10, 118, 15, CHAR); H(d, 112, 118, 10, CHAR_HI)
-    R(d, 22, 6, 44, 19, STEEL); R(d, 22, 6, 44, 8, STEEL_HI); V(d, 44, 9, 19, STEEL_LO)
-    for x in (28, 34, 40):
-        V(d, x, 9, 19, STEEL_LO)
-    for x in range(4, 100, 8):
-        V(d, x, 12, 19, CHAR)
-    H(d, 2, 102, 12, CHAR); H(d, 2, 102, 15, CHAR_HI)
-    V(d, 76, 0, 12, CHAR); H(d, 73, 79, 2, CHAR); H(d, 74, 78, 5, CHAR)                     # an aerial
-    # the body: pale tile, and the stair tower in darker tile up the east side
-    R(d, 1, 20, 158, 255, CONCRETE)
-    R(d, 96, 20, 158, 255, STONE)
-    R(d, 1, 20, 158, 23, CONCRETE_HI); H(d, 1, 158, 24, CONCRETE_LO)                        # the parapet
-    V(d, 1, 20, 255, CONCRETE_HI); V(d, 158, 20, 255, STONE_LO)
-    V(d, 96, 25, 255, STONE_LO); V(d, 97, 25, 255, rgb('d6dee2'))
-    for y in range(29, 256, 6):                            # the courses of tile
-        H(d, 2, 95, y, rgb('cbc7bf')); H(d, 98, 157, y, rgb('aab4ba'))
+    flat_roof(d, 1, 4, 158, 43)
+    # on the roof: the water tank, a condenser, an aerial, the lift's motor room over the stair tower
+    R(d, 19, 32, 44, 35, S_SLATE_LO)
+    R(d, 14, 14, 40, 33, NAVY); R(d, 15, 15, 39, 32, S_METAL)
+    R(d, 15, 15, 18, 32, S_METAL_HI); R(d, 34, 15, 39, 32, S_METAL_LO)
+    for y in (22, 27):
+        H(d, 15, 39, y, S_METAL_LO)
+    oval(d, 14, 7, 40, 20, NAVY); oval(d, 15, 8, 39, 19, S_WALL_LO)
+    oval(d, 17, 9, 33, 15, S_METAL_HI); R(d, 25, 12, 30, 15, S_METAL); H(d, 25, 30, 12, S_WALL_HI)
+    R(d, 52, 34, 71, 35, S_SLATE_LO)
+    R(d, 50, 20, 69, 33, NAVY); R(d, 51, 21, 68, 32, S_METAL); H(d, 51, 68, 21, S_METAL_HI)
+    R(d, 53, 24, 62, 31, S_METAL_LO); R(d, 55, 26, 60, 29, S_FRAME); P(d, S_METAL_HI, (57, 27))
+    R(d, 64, 24, 66, 25, S_DARK); R(d, 64, 28, 66, 29, S_DARK)
+    R(d, 82, 25, 90, 26, S_SLATE_LO)
+    R(d, 79, 22, 87, 25, S_FRAME); H(d, 79, 87, 22, S_FRAME_HI)
+    V(d, 83, 1, 21, S_FRAME); H(d, 79, 87, 3, S_FRAME); H(d, 80, 86, 6, S_FRAME); H(d, 81, 85, 9, S_FRAME)
+    R(d, 106, 36, 154, 38, S_SLATE_LO); R(d, 152, 10, 154, 36, S_SLATE_LO)
+    R(d, 103, 1, 151, 35, NAVY)
+    R(d, 104, 2, 150, 20, S_METAL); H(d, 104, 150, 2, S_METAL_HI); V(d, 104, 2, 20, S_METAL_HI)
+    H(d, 104, 150, 20, S_METAL_LO); V(d, 150, 3, 20, S_METAL_LO)
+    R(d, 107, 5, 147, 17, NAVY); R(d, 108, 6, 146, 16, S_SLATE_HI)
+    for x in range(108, 146, 9):
+        V(d, x, 6, 16, S_SLATE)
+    R(d, 108, 15, 146, 16, S_SLATE); R(d, 145, 6, 146, 16, S_SLATE)
+    R(d, 104, 21, 150, 34, S_TOWER); H(d, 104, 150, 21, S_TOWER_DK); H(d, 104, 150, 22, S_TOWER_LO)
+    for y in (27, 33):
+        H(d, 104, 150, y, S_TOWER_LO)
+    V(d, 104, 23, 34, S_TOWER_HI); V(d, 150, 21, 34, S_TOWER_DK)
+    R(d, 110, 24, 125, 31, S_FRAME)
+    for y in range(25, 31, 2):
+        H(d, 111, 124, y, S_METAL); H(d, 111, 124, y + 1, S_METAL_LO)
+    R(d, 132, 23, 143, 34, S_FRAME); R(d, 133, 24, 142, 34, S_METAL); V(d, 133, 24, 34, S_METAL_HI)
+    V(d, 142, 24, 34, S_METAL_LO); P(d, S_FRAME, (140, 29), (140, 30))
+    # the body: pale tile, and the stair tower in grey tile up the east side
+    R(d, 1, 44, 158, 255, S_WALL); R(d, 96, 44, 158, 255, S_TOWER)
+    for y in range(49, 256, 6):                            # the courses of tile
+        H(d, 2, 95, y, S_WALL_LO); H(d, 98, 157, y, S_TOWER_LO)
+    R(d, 1, 44, 95, 45, S_WALL_DK); R(d, 96, 44, 158, 45, S_TOWER_DK)                # the coping's shade
+    V(d, 1, 46, 255, S_WALL_HI); V(d, 158, 46, 255, S_TOWER_DK)
+    V(d, 96, 46, 255, S_TOWER_DK); V(d, 97, 46, 255, S_TOWER_HI)
     for n in range(6, 0, -1):                              # the top floor first
-        y = 25 + (6 - n) * 39
+        y = 44 + (6 - n) * 35
         if n < 6:                                          # the slab between floors
-            R(d, 1, y - 2, 158, y - 1, CONCRETE_LO); H(d, 1, 158, y - 2, CONCRETE_HI)
+            R(d, 1, y, 95, y + 1, S_WALL_DK); H(d, 1, 95, y, S_WALL_HI)
+            R(d, 96, y, 158, y + 1, S_TOWER_DK); H(d, 97, 158, y, S_TOWER_HI)
         if n == 1:
             break
-        # the stair tower: one tall landing window a floor, glass block
-        R(d, 132, y + 5, 151, y + 31, CHAR)
-        R(d, 133, y + 6, 150, y + 30, GLASS_HI if n in (3, 5) else GLASS)
-        for gy in range(y + 10, y + 30, 5):
-            H(d, 133, 150, gy, GLASS_DK if n not in (3, 5) else SKY)
-        for gx in range(137, 150, 5):
-            V(d, gx, y + 6, y + 30, GLASS_DK if n not in (3, 5) else SKY)
-        R(d, 104, y + 12, 120, y + 22, CHAR)               # and a small one beside it
-        R(d, 105, y + 13, 119, y + 21, LIT if n == 4 else GLASS_DK)
-        H(d, 105, 119, y + 13, LIT_HI if n == 4 else GLASS)
-        V(d, 112, y + 13, y + 21, CHAR)
+        # the stair tower: one tall landing window a floor, and a small one beside it
+        window(d, 132, y + 5, 151, y + 30, step=7)
+        V(d, 141, y + 6, y + 29, S_FRAME); V(d, 142, y + 6, y + 29, S_FRAME_HI)
+        for gy in (y + 13, y + 22):
+            H(d, 133, 150, gy, S_FRAME)
+        H(d, 131, 152, y + 31, S_TOWER_HI); H(d, 131, 152, y + 32, S_TOWER_DK)
+        window(d, 104, y + 11, 120, y + 21, step=7)
+        V(d, 112, y + 12, y + 20, S_FRAME)
+        H(d, 103, 121, y + 22, S_TOWER_HI); H(d, 103, 121, y + 23, S_TOWER_DK)
         # the rooms: three windows over a balcony
         for i, x0 in enumerate((6, 35, 64)):
-            lit = (n, i) in ((3, 0), (3, 1), (6, 2), (5, 1))
+            x1, y0, y1 = x0 + 25, y + 5, y + 20
+            R(d, x0, y0, x1, y1, S_FRAME)
             if n == 2:                                     # the floor that is not ours: blinds down
-                pane(d, x0, y + 6, x0 + 25, y + 22, STEEL, STEEL_HI)
-                for by in range(y + 9, y + 22, 3):
-                    H(d, x0 + 1, x0 + 24, by, STEEL_LO)
-            elif n == 5:                                   # the tatami room: paper screens behind the glass
-                pane(d, x0, y + 6, x0 + 25, y + 22, LIT_HI if lit else PAPER, WHITE)
-                for bx in range(x0 + 5, x0 + 25, 5):
-                    V(d, bx, y + 7, y + 21, WOOD_LO)
-                H(d, x0 + 1, x0 + 24, y + 14, WOOD_LO)
+                R(d, x0 + 1, y0 + 1, x1 - 1, y1 - 1, S_WALL_LO)
+                for by in range(y0 + 3, y1, 3):
+                    H(d, x0 + 1, x1 - 1, by, S_METAL)
+                H(d, x0 + 1, x1 - 1, y0 + 1, S_WALL_DK)
+            elif n == 5:                                   # the tatami room: paper screens, one slid open
+                R(d, x0 + 1, y0 + 1, x1 - 1, y1 - 1, S_SHOJI)
+                for bx in range(x0 + 5, x1, 5):
+                    V(d, bx, y0 + 1, y1 - 1, S_TIMBER)
+                H(d, x0 + 1, x1 - 1, y0 + 8, S_TIMBER)
+                H(d, x0 + 1, x1 - 1, y0 + 1, S_SHOJI_LO)
+                if i == 1:
+                    glass(d, x0 + 16, y0 + 1, x1 - 1, y1 - 1, 7)
+                    V(d, x0 + 15, y0 + 1, y1 - 1, S_TIMBER_LO)
             else:
-                pane(d, x0, y + 6, x0 + 25, y + 22, LIT if lit else GLASS, LIT_HI if lit else GLASS_HI)
-                V(d, x0 + 12, y + 7, y + 21, CHAR); V(d, x0 + 13, y + 7, y + 21, CHAR_HI)
+                glass(d, x0 + 1, y0 + 1, x1 - 1, y1 - 1)
+                V(d, x0 + 12, y0 + 1, y1 - 1, S_FRAME); V(d, x0 + 13, y0 + 1, y1 - 1, S_FRAME_HI)
                 if n == 4 and i != 1:                      # curtains half drawn
-                    R(d, x0 + 1, y + 7, x0 + 5, y + 21, ROSE); V(d, x0 + 3, y + 7, y + 21, ROSE_LO)
+                    R(d, x0 + 1, y0 + 1, x0 + 5, y1 - 1, S_PINK); V(d, x0 + 3, y0 + 1, y1 - 1, S_PINK_LO)
+                    V(d, x0 + 1, y0 + 1, y1 - 1, S_PINK_HI)
+                if (n, i) in ((3, 0), (3, 1), (6, 2)):     # a roller blind part down
+                    R(d, x0 + 1, y0 + 1, x1 - 1, y0 + 7, S_SHOJI); H(d, x0 + 1, x1 - 1, y0 + 8, S_SHOJI_LO)
+                    V(d, x0 + 12, y0 + 1, y0 + 8, S_FRAME); V(d, x0 + 13, y0 + 1, y0 + 8, S_FRAME_HI)
+            H(d, x0, x1, y0, S_FRAME_LO)
+            if n == 2:
+                H(d, x0 - 1, x1 + 1, y1 + 1, S_WALL_HI); H(d, x0 - 1, x1 + 1, y1 + 2, S_WALL_DK)
         if n > 2:                                          # the balcony: a rail of bars, something on it
-            R(d, 4, y + 24, 92, y + 25, CHAR); H(d, 4, 92, y + 24, CHAR_HI)
+            R(d, 4, y + 22, 92, y + 23, S_FRAME); H(d, 4, 92, y + 22, S_FRAME_HI)
             for bx in range(5, 92, 4):
-                V(d, bx, y + 26, y + 33, CHAR)
-            R(d, 4, y + 33, 92, y + 34, CONCRETE_LO)
+                V(d, bx, y + 24, y + 30, S_FRAME)
+            R(d, 4, y + 31, 92, y + 32, S_WALL_DK); H(d, 4, 92, y + 31, S_WALL_HI)
+            H(d, 5, 93, y + 33, S_WALL_LO)
         if n == 6:                                         # a plant in the sun
-            R(d, 12, y + 19, 17, y + 23, RED_LO); oval(d, 9, y + 11, 20, y + 20, GREEN); P(d, GREEN_HI, (12, y + 13), (16, y + 15))
+            R(d, 11, y + 25, 17, y + 30, S_POT); H(d, 11, 17, y + 25, S_POT_HI); R(d, 16, y + 26, 17, y + 30, S_POT_LO)
+            foliage(im, [(14, y + 19, 7, 6), (10, y + 21, 4, 4), (18, y + 22, 4, 3)], LEAF, 3)
         if n == 4:                                         # the washing
-            R(d, 44, y + 26, 49, y + 32, WHITE); R(d, 52, y + 26, 56, y + 31, SKY); R(d, 59, y + 26, 63, y + 32, RED_HI)
+            H(d, 40, 68, y + 23, S_METAL_HI)
+            R(d, 44, y + 24, 49, y + 30, S_WALL_HI); H(d, 44, 49, y + 30, S_WALL_LO)
+            R(d, 52, y + 24, 56, y + 29, S_WASH); H(d, 52, 56, y + 29, S_WASH_LO)
+            R(d, 59, y + 24, 63, y + 30, S_POT_HI); H(d, 59, 63, y + 30, S_POT)
         if n == 3:                                         # the air conditioner's box
-            R(d, 70, y + 26, 84, y + 33, CONCRETE_HI); oval(d, 73, y + 27, 79, y + 32, STEEL_LO); H(d, 70, 84, y + 33, CONCRETE_LO)
+            R(d, 69, y + 23, 85, y + 31, S_FRAME); R(d, 70, y + 24, 84, y + 30, S_METAL_HI)
+            oval(d, 72, y + 25, 78, y + 30, S_METAL_LO); P(d, S_FRAME, (75, y + 27), (75, y + 28))
+            H(d, 70, 84, y + 30, S_METAL); R(d, 80, y + 26, 83, y + 27, S_METAL)
     # the ground floor: a shutter that is never up, and the way in under the name
-    y = 220
-    R(d, 6, y + 4, 68, 253, STEEL_LO)
-    R(d, 7, y + 5, 67, 252, STEEL)
-    for sy in range(y + 7, 252, 3):
-        H(d, 7, 67, sy, STEEL_LO); H(d, 7, 67, sy + 1, STEEL_HI)
-    R(d, 6, y + 1, 68, y + 3, CHAR)
-    R(d, 74, y + 12, 88, y + 26, CONCRETE_HI); R(d, 75, y + 13, 87, y + 25, CHAR_HI)          # the post boxes
-    for py in range(y + 16, y + 25, 3):
-        H(d, 75, 87, py, CHAR_LO)
-    V(d, 81, y + 13, y + 25, CHAR_LO)
-    R(d, 99, y, 128, y + 8, CHAR_LO); H(d, 99, 128, y, CHAR_HI)                               # the name board
-    letters(d, 98, y + 2, 'DEVHOUSE', LIT_HI)
-    R(d, 99, y + 9, 128, 255, CHAR)                        # the door: glass, and a light on inside
-    R(d, 101, y + 11, 113, 255, LIT); R(d, 115, y + 11, 126, 255, LIT)
-    R(d, 101, y + 11, 113, y + 16, LIT_HI); R(d, 115, y + 11, 126, y + 16, LIT_HI)
-    R(d, 101, 250, 126, 255, rgb('d9a85a'))
-    R(d, 111, y + 20, 112, y + 27, CHAR); R(d, 116, y + 20, 117, y + 27, CHAR)
-    R(d, 134, y + 8, 141, y + 20, CHAR_HI); R(d, 135, y + 9, 140, y + 12, GLASS_DK)           # the intercom
-    for py in (y + 14, y + 16, y + 18):
-        P(d, STEEL_HI, (136, py), (138, py), (140, py))
-    P(d, RED, (140, y + 10))
-    R(d, 144, 243, 153, 253, RED_LO); H(d, 144, 153, 243, RED)                                # a pot by the door
-    oval(d, 141, 226, 156, 244, GREEN); oval(d, 144, 227, 153, 236, rgb('5f8062'))
-    P(d, GREEN_HI, (146, 230), (150, 233), (144, 238), (152, 240))
-    R(d, 1, 254, 158, 255, STONE_DK)                       # the kerb
-    R(d, 101, 254, 126, 255, rgb('b98a4a'))
-    outline(im)
+    y = 219
+    R(d, 5, y + 3, 69, 253, S_FRAME); H(d, 5, 69, y + 3, S_FRAME_HI)
+    R(d, 7, y + 7, 67, 252, S_METAL)
+    for sy in range(y + 8, 252, 3):
+        H(d, 7, 67, sy, S_METAL_LO); H(d, 7, 67, sy + 1, S_METAL_HI)
+    V(d, 67, y + 7, 252, S_METAL_LO)
+    R(d, 74, y + 11, 88, y + 25, S_FRAME); R(d, 75, y + 12, 87, y + 24, S_METAL_LO)               # the post boxes
+    for py in range(y + 15, y + 24, 3):
+        H(d, 75, 87, py, S_FRAME_LO); H(d, 75, 87, py + 1, S_ROCK)
+    V(d, 81, y + 12, y + 24, S_FRAME_LO)
+    R(d, 96, y + 2, 131, y + 10, S_FRAME_LO); H(d, 96, 131, y + 2, S_FRAME); H(d, 96, 131, y + 10, INK)   # the name board
+    letters(d, 98, y + 4, 'DEVHOUSE', S_SIGN)
+    R(d, 99, y + 11, 128, 255, S_FRAME)                      # the door: two leaves of dark glass
+    glass(d, 101, y + 13, 113, 251, 7); glass(d, 115, y + 13, 126, 251, 7)
+    R(d, 101, 247, 113, 251, S_FRAME_HI); R(d, 115, 247, 126, 251, S_FRAME_HI)
+    R(d, 111, y + 20, 112, y + 27, S_METAL_HI); R(d, 116, y + 20, 117, y + 27, S_METAL_HI)
+    R(d, 132, y + 9, 139, y + 21, S_FRAME); R(d, 133, y + 10, 138, y + 13, S_DARK)                # the intercom
+    P(d, S_GLARE, (133, y + 13), (134, y + 12), (135, y + 11), (136, y + 10))
+    for py in (y + 15, y + 17, y + 19):
+        P(d, S_METAL_HI, (134, py), (136, py), (138, py))
+    P(d, S_POT_HI, (138, y + 10))
+    R(d, 1, 252, 158, 253, S_ROCK); R(d, 1, 254, 158, 255, S_ROCK_LO)                            # the kerb
+    H(d, 1, 158, 252, S_WALL_DK)
+    R(d, 99, 252, 128, 255, S_WALL_DK); H(d, 99, 128, 252, S_WALL_LO)
+    R(d, 144, 242, 153, 251, S_POT); H(d, 144, 153, 242, S_POT_HI); R(d, 151, 243, 153, 251, S_POT_LO)   # a pot by the door
+    foliage(im, [(150, 234, 7, 8), (146, 238, 4, 4), (154, 239, 4, 5), (150, 228, 5, 4)], LEAF, 5)
+    outline(im, NAVY)
     return im
 
 
-def lattice(d, x0, y0, x1, y1, back=CHAR_LO, bar=WOOD_LO):
-    """A window behind wooden bars (koshi)."""
-    R(d, x0, y0, x1, y1, back)
+def kawara(im, d, x0, y0, x1, y1):
+    """A band of the pack's roof tile: a ridge course, the tiles, a dark eave."""
+    px = im.load()
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            px[x, y] = roof_tile(x, y - y0)
+    R(d, x0, y0, x1, y0 + 2, S_RIDGE); H(d, x0, x1, y0, S_RIDGE_HI)
+    R(d, x0, y1 - 1, x1, y1, S_EAVE)
+    V(d, x0, y0, y1, NAVY); V(d, x1, y0, y1, NAVY)
+
+
+def lattice(d, x0, y0, x1, y1, bar=S_TIMBER_LO):
+    """A window behind wooden bars (koshi): the dark of the room between them."""
+    R(d, x0, y0, x1, y1, S_DARK)
     for x in range(x0, x1 + 1, 3):
         V(d, x, y0, y1, bar)
-    H(d, x0, x1, y0, WOOD_DK); H(d, x0, x1, y1, WOOD_DK)
+    H(d, x0, x1, y0, S_TIMBER_DK); H(d, x0, x1, y1, S_TIMBER_DK)
 
 
 def devhouse_osaka():
-    """96x224: the roof garden's green over a parapet, then four storeys of 48 rows."""
+    """96x224: the roof garden seen from above inside a tiled eave, three storeys of 42 rows, the shop front."""
     im, d = canvas(3, 7)
-    # the roof garden: bamboo fence, clipped green and a pine over it
-    for x0, y0, x1, y1 in ((6, 6, 30, 26), (24, 2, 50, 26), (60, 8, 88, 26)):
-        oval(d, x0, y0, x1, y1, GREEN_LO); oval(d, x0, y0, x1, y1 - 4, GREEN)
-    oval(d, 28, 4, 44, 14, rgb('5f8062')); oval(d, 64, 10, 80, 18, rgb('5f8062'))
-    for x, y in ((12, 12), (18, 9), (34, 7), (41, 11), (30, 15), (68, 13), (76, 12), (82, 17), (22, 17), (46, 18)):
-        P(d, GREEN_HI, (x, y), (x + 1, y), (x, y + 1))
-    for x, y in ((15, 15), (38, 16), (72, 17), (85, 14)):
-        P(d, ROSE_HI, (x, y), (x + 1, y)); P(d, ROSE, (x, y + 1))
-    R(d, 2, 19, 93, 29, BAMBOO)
-    for x in range(2, 94, 4):
-        V(d, x, 19, 29, BAMBOO_HI); V(d, x + 3, 19, 29, BAMBOO_DK)
-    R(d, 2, 22, 93, 23, BAMBOO_HI); H(d, 2, 93, 24, BAMBOO_DK)
-    R(d, 2, 18, 93, 19, BEAM); H(d, 2, 93, 18, BEAM_HI)
-    # the parapet and the body: dark timber round plaster
-    R(d, 1, 30, 94, 223, CHAR)
-    R(d, 1, 30, 94, 35, CHAR_HI); H(d, 1, 94, 30, STEEL_LO); H(d, 1, 94, 35, CHAR_LO)
-    V(d, 1, 30, 223, CHAR_HI); V(d, 94, 30, 223, CHAR_LO)
+    # the roof garden, seen from above: raked gravel inside a bamboo fence
+    R(d, 1, 9, 94, 41, S_WALL)
+    for y in range(20, 42):
+        for x in range(3, 93):
+            s = speck(x, y, 11)
+            if y % 3 == 0:
+                P(d, S_WALL_LO if s > 12 else S_WALL_DK, (x, y))
+            elif s < 7:
+                P(d, S_WALL_HI, (x, y))
+            elif s > 95:
+                P(d, S_WALL_DK, (x, y))
+    R(d, 1, 9, 94, 18, S_BAMBOO)                             # the fence along the back
+    for x in range(1, 95, 4):
+        V(d, x, 11, 18, S_BAMBOO_HI); V(d, x + 3, 11, 18, S_BAMBOO_LO)
+    H(d, 1, 94, 13, S_BAMBOO_DK); H(d, 1, 94, 14, S_BAMBOO_HI)
+    R(d, 1, 9, 94, 10, S_TIMBER_LO); H(d, 1, 94, 9, S_TIMBER)
+    H(d, 1, 94, 19, S_WALL_DK)
+    for x in (1, 93):                                      # and down each side
+        R(d, x, 19, x + 1, 41, S_BAMBOO_LO)
+        for y in range(20, 41, 3):
+            P(d, S_BAMBOO_HI, (x, y)); P(d, S_BAMBOO_DK, (x + 1, y + 1))
+    for x0, y0 in ((45, 35), (40, 29), (47, 23)):          # stepping stones to the back
+        soft(d, x0, y0, x0 + 7, y0 + 4, S_ROCK); H(d, x0 + 1, x0 + 6, y0, S_ROCK_HI)
+        H(d, x0 + 1, x0 + 6, y0 + 4, S_ROCK_LO)
+    oval(d, 62, 26, 76, 37, NAVY); oval(d, 63, 27, 75, 36, S_ROCK); oval(d, 64, 27, 72, 32, S_ROCK_HI)   # a rock
+    oval(d, 66, 29, 75, 36, S_ROCK); R(d, 66, 35, 73, 36, S_ROCK_LO)
+    foliage(im, [(17, 11, 14, 10), (36, 8, 9, 7), (78, 11, 13, 9), (88, 16, 5, 6)], LEAF, 21)
+    foliage(im, [(13, 31, 8, 6), (22, 35, 5, 4), (84, 32, 6, 6)], LEAF, 31)
+    for x, y in ((9, 29), (16, 32), (12, 34), (82, 30), (86, 34), (24, 34)):                 # azalea
+        P(d, S_PINK_HI, (x, y), (x + 1, y)); P(d, S_PINK, (x, y + 1))
+    kawara(im, d, 0, 42, 95, 53)                           # the eave round it
+    # the body: charred boards round plaster
+    R(d, 1, 54, 94, 223, S_SOOT)
+    R(d, 1, 54, 94, 55, S_SOOT_LO)
+    V(d, 1, 56, 223, S_SOOT_HI); V(d, 94, 54, 223, S_SOOT_LO)
     for n in (4, 3, 2):
-        y = 36 + (4 - n) * 48
-        R(d, 5, y + 3, 90, y + 40, PAPER_LO)               # plaster between the posts
-        R(d, 5, y + 3, 90, y + 5, PAPER_DK)
+        y = 54 + (4 - n) * 42
+        R(d, 5, y + 2, 90, y + 33, S_SHOJI)                  # plaster between the posts
+        R(d, 5, y + 2, 90, y + 3, S_SHOJI_LO)
+        for x in range(5, 91):
+            if (x + y) % 2:
+                P(d, S_SHOJI_LO, (x, y + 4))
         for x in (5, 31, 64, 90):                          # the posts
-            V(d, x, y + 3, y + 40, CHAR_HI)
+            V(d, x, y + 2, y + 33, S_SOOT); V(d, x + (1 if x < 90 else -1), y + 4, y + 33, S_SHOJI_LO)
+        y0, y1 = y + 7, y + 28
         if n == 4:                                         # the tatami room: paper screens, one slid open
             for x0 in (9, 35, 68):
-                R(d, x0, y + 9, x0 + 18, y + 32, PAPER if x0 != 35 else LIT_HI)
+                R(d, x0, y0, x0 + 18, y1, S_SHOJI_HI)
                 for bx in range(x0 + 6, x0 + 18, 6):
-                    V(d, bx, y + 9, y + 32, WOOD_LO)
-                for by in range(y + 15, y + 32, 6):
-                    H(d, x0, x0 + 18, by, WOOD_LO)
-                R(d, x0 - 1, y + 8, x0 + 19, y + 8, WOOD_DK); R(d, x0 - 1, y + 33, x0 + 19, y + 33, WOOD_DK)
+                    V(d, bx, y0, y1, S_TIMBER)
+                for by in range(y0 + 5, y1, 6):
+                    H(d, x0, x0 + 18, by, S_TIMBER)
+                H(d, x0, x0 + 18, y0 + 1, S_SHOJI_LO)
+                if x0 == 35:
+                    glass(d, x0, y0 + 1, x0 + 8, y1 - 1, 7); V(d, x0 + 9, y0, y1, S_TIMBER_LO)
+                H(d, x0 - 1, x0 + 19, y0, S_TIMBER_DK); H(d, x0 - 1, x0 + 19, y1, S_TIMBER_DK)
+                V(d, x0 - 1, y0, y1, S_TIMBER_DK); V(d, x0 + 19, y0, y1, S_TIMBER_DK)
         elif n == 3:                                       # bars, and a reed blind let down
-            lattice(d, 9, y + 9, 27, y + 32); lattice(d, 35, y + 9, 60, y + 32, back=LIT)
-            lattice(d, 68, y + 9, 86, y + 32)
-            R(d, 68, y + 9, 86, y + 24, BAMBOO)
-            for by in range(y + 10, y + 24, 2):
-                H(d, 68, 86, by, BAMBOO_LO)
-            H(d, 68, 86, y + 24, BAMBOO_DK)
-        else:                                              # glass, the lights on
-            for x0, lit in ((9, True), (35, False), (68, True)):
+            lattice(d, 9, y0, 27, y1); lattice(d, 35, y0, 60, y1); lattice(d, 68, y0, 86, y1)
+            R(d, 68, y0, 86, y0 + 15, S_REED)
+            for by in range(y0 + 1, y0 + 15, 2):
+                H(d, 68, 86, by, S_REED_LO)
+            H(d, 68, 86, y0 + 15, S_TIMBER_LO)
+        else:                                              # glass in wooden frames
+            for x0 in (9, 35, 68):
                 w = 25 if x0 == 35 else 18
-                pane(d, x0, y + 9, x0 + w, y + 32, LIT if lit else GLASS, LIT_HI if lit else GLASS_HI, frame=WOOD_DK)
-                V(d, x0 + w // 2, y + 10, y + 31, WOOD_DK)
-                H(d, x0 + 1, x0 + w - 1, y + 20, WOOD_DK)
-        R(d, 3, y + 36, 92, y + 37, WOOD_DK)               # a rail of bars under the windows
+                window(d, x0, y0, x0 + w, y1, S_TIMBER_DK)
+                V(d, x0 + w // 2, y0 + 1, y1 - 1, S_TIMBER_DK)
+                H(d, x0 + 1, x0 + w - 1, y0 + 11, S_TIMBER_DK)
+        R(d, 3, y + 30, 92, y + 31, S_TIMBER_DK); H(d, 3, 92, y + 30, S_TIMBER_LO)    # a rail of bars under the windows
         for bx in range(4, 92, 3):
-            V(d, bx, y + 38, y + 43, WOOD_DK)
-        R(d, 1, y + 44, 94, y + 47, CHAR_LO); H(d, 1, 94, y + 44, CHAR_HI)       # the floor's beam
+            V(d, bx, y + 32, y + 37, S_TIMBER_DK)
+        R(d, 1, y + 38, 94, y + 41, S_SOOT_LO); H(d, 1, 94, y + 38, S_SOOT_HI)       # the floor's beam
     # the ground floor: a pent roof of tiles, the name, a noren over the door, bars either side
     y = 180
-    R(d, 0, y, 95, y + 7, CHAR_LO)
-    for x in range(0, 96, 4):
-        V(d, x, y + 1, y + 6, CHAR_HI)
-    H(d, 0, 95, y, STEEL_LO); H(d, 0, 95, y + 7, INK)
-    R(d, 2, y + 8, 93, 223, WOOD_DK)
-    lattice(d, 5, y + 12, 27, 216, bar=WOOD); lattice(d, 68, y + 12, 90, 216, bar=WOOD)
-    R(d, 3, 217, 29, 222, STONE_LO); R(d, 66, 217, 92, 222, STONE_LO)
-    H(d, 3, 29, 217, STONE); H(d, 66, 92, 217, STONE)
-    R(d, 32, y + 8, 63, y + 16, WOOD_HI); R(d, 32, y + 8, 63, y + 8, rgb('e6bfa3'))           # the name board
-    H(d, 32, 63, y + 16, WOOD_LO)
-    letters(d, 33, y + 10, 'DEVHOUSE', CHAR_LO)
-    R(d, 33, y + 17, 62, 223, LIT)                         # the doorway, lit
-    R(d, 33, y + 17, 62, y + 19, WOOD_LO)
-    R(d, 33, 218, 62, 223, rgb('d9a85a'))
-    V(d, 47, y + 30, 217, WOOD_LO); V(d, 48, y + 30, 217, WOOD_DK)
+    kawara(im, d, 0, y, 95, y + 11)
+    R(d, 2, y + 12, 93, 223, S_TIMBER_DK); R(d, 2, y + 12, 93, y + 13, S_TIMBER_INK)
+    lattice(d, 5, y + 16, 27, 216, S_TIMBER); lattice(d, 68, y + 16, 90, 216, S_TIMBER)
+    R(d, 3, 217, 29, 222, S_ROCK); R(d, 66, 217, 92, 222, S_ROCK)
+    H(d, 3, 29, 217, S_ROCK_HI); H(d, 66, 92, 217, S_ROCK_HI); H(d, 3, 29, 222, S_ROCK_LO); H(d, 66, 92, 222, S_ROCK_LO)
+    R(d, 32, y + 12, 63, y + 20, S_TIMBER_HI); H(d, 32, 63, y + 12, S_BOARD_HI)              # the name board
+    H(d, 32, 63, y + 20, S_TIMBER_LO)
+    letters(d, 33, y + 14, 'DEVHOUSE', S_SOOT_LO)
+    R(d, 33, y + 21, 62, 223, S_DARK)                        # the doorway: the dark of the hall
+    R(d, 33, y + 21, 62, y + 22, S_TIMBER_LO)
+    R(d, 33, 218, 62, 223, S_SOOT); H(d, 33, 62, 218, S_SOOT_HI)
+    V(d, 47, y + 35, 217, S_TIMBER_LO); V(d, 48, y + 35, 217, S_TIMBER_DK)
     for x0 in (34, 44, 54):                                # the noren, three widths of indigo
-        R(d, x0, y + 20, x0 + 8, y + 31, INDIGO)
-        V(d, x0, y + 20, y + 31, INDIGO_HI); H(d, x0, x0 + 8, y + 31, INDIGO_LO)
-        R(d, x0 + 3, y + 24, x0 + 5, y + 26, PAPER); P(d, INDIGO, (x0 + 4, y + 25))
-    outline(im)
+        R(d, x0, y + 23, x0 + 8, y + 34, S_CLOTH)
+        V(d, x0, y + 23, y + 34, S_CLOTH_HI); H(d, x0, x0 + 8, y + 34, S_CLOTH_LO)
+        R(d, x0 + 3, y + 27, x0 + 5, y + 29, S_SHOJI); P(d, S_CLOTH, (x0 + 4, y + 28))
+    outline(im, NAVY)
     return im
 
 

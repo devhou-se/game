@@ -63,7 +63,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         require('vm').runInContext(fs.readFileSync(path.join(GV2, 'src', 'utils', 'Interactions.js'), 'utf8') + '\nthis.Interactions = Interactions;', ctx);
         const src = fs.readFileSync(path.join(GV2, 'src', 'Shop.js'), 'utf8');
         const shops = { ShopAsahikawa1: [19, 9, 'Sake bar · Asahikawa', 'standbar'], ShopAsahikawa2: [22, 9, 'Bakery · Asahikawa', 'bakery'],
-            ShopAsahikawa3: [27, 9, 'Woodcraft · Asahikawa', 'souvenirs'], ShopAsahikawa4: [5, 13, 'Ramen · Asahikawa', 'ramen'] };
+            ShopAsahikawa3: [27, 9, 'Woodcraft · Asahikawa', 'souvenirs'], ShopAsahikawa4: [5, 13, 'Ramen · Asahikawa', 'ramenya'] };
         assert.deepStrictEqual(Object.keys(cfg.rooms).filter((k) => /^ShopAsahikawa/.test(k)).sort(), Object.keys(shops));
         for (const [key, [x, y, title, menu]] of Object.entries(shops)) {
             const r = cfg.rooms[key], d = doorAt(x, y);
@@ -191,7 +191,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.ok(!py.includes("'asahikawa-bridge_'") && !py.includes("('ramen-banner_'"), 'the rows of what is gone');
         const d = cfg.districts.Asahikawa;
         assert.deepStrictEqual(d.map((x) => [x.key, x.bounds, x.stand]), [['station-front', [11, 5, 39, 12], [28, 11]],
-            ['ramen-alley', [2, 13, 16, 15], [8, 15]], ['riverbank', [2, 16, 39, 27], [23, 21]]]);
+            ['ramen-alley', [2, 13, 16, 15], [8, 15]], ['riverbank', [2, 16, 39, 29], [23, 21]]]);
         for (const x of d) assert.ok(reach.has(x.stand.join(',')) && !doorFront(...x.stand), `${x.key}: its stand`);
         // they do not overlap
         for (const a of d) {
@@ -227,5 +227,34 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             assert.ok((cfg.spriteMetadata[key].glow || []).length >= 1, key);
         }
         assert.ok(!cfg.spriteMetadata['heiwa-lamp-post_0_0'].glow && !cfg.spriteMetadata['asahikawa-ramen-lanterns_0_0'].glow);
+    });
+
+    test('Asahikawa: the ramen shop is a counter you sit at - six stools, and no counter cell with floor in front (#367)', () => {
+        const r = cfg.rooms.ShopAsahikawa4, pal = cfg.tilePalette;
+        const tiles = (n) => ((r.layers.find((l) => l.name === n) || {}).tiles) || {};
+        const key = (n, x, y) => { const t = tiles(n)[`${x},${y}`]; return t == null ? '' : (typeof t === 'number' ? pal[t] : t); };
+        const blocked = (x, y) => `${x},${y}` in tiles('Colliders');
+        const stools = Object.keys(tiles('Collidables')).filter((xy) => key('Collidables', ...xy.split(',').map(Number)) === 'izakaya-stool_0_0');
+        assert.deepStrictEqual(stools.sort(), ['10,7', '11,7', '6,7', '7,7', '8,7', '9,7']);
+        const counter = new Set();
+        for (const xy of Object.keys(tiles('Collidables'))) {
+            const [x, y] = xy.split(',').map(Number);
+            if (key('Collidables', x, y) === 'office-counter2_0_0') { counter.add(`${x},${y}`); counter.add(`${x + 1},${y}`); }
+        }
+        assert.deepStrictEqual([...counter].sort(), ['10,6', '11,6', '6,6', '7,6', '8,6', '9,6']);
+        assert.strictEqual(key('Tops', 11, 6), 'office-register_0_0', 'the till on the last length');
+        for (const xy of stools) {
+            const [x, y] = xy.split(',').map(Number);
+            assert.ok(blocked(x, y), `${xy}: a seat has a collider`);
+            assert.ok(counter.has(`${x},${y - 1}`), `${xy}: the counter above`);
+            assert.ok(!blocked(x, y + 1) && key('Floor', x, y + 1), `${xy}: floor below`);
+        }
+        for (const xy of counter) {
+            const [x, y] = xy.split(',').map(Number);
+            assert.ok(blocked(x, y + 1), `${xy}: the counter is reached from a stool, not the floor`);
+        }
+        const S = require('vm').createContext({ window: {} });
+        require('vm').runInContext(fs.readFileSync(path.join(GV2, 'src', 'utils', 'Seats.js'), 'utf8') + '\nthis.Seats = Seats;', S);
+        assert.strictEqual(S.Seats.match('izakaya-stool_0_0').kind, 'stool');
     });
 };

@@ -255,10 +255,43 @@ module.exports = (helpers) => {
         I.plumbing({ generator: 'generate_flinders', art: 'generate_flinders_art', sprites: 14, after: 'mall-in-palm_0_0',
             owned: "FLINDERS_PREFIX: ('flinders', FLINDERS_DOORS)", table: "FLINDERS_DOORS = {'sfb-clocks-station_0_0': [(5, 6), (6, 6)]}" });
         assert.ok(/rg\.FLINDERS_DOORS/.test(I.tool('generate_flinders.py')), 'the generator has no door sprites of its own');
-        // the frame is the pub's: the art tool draws none of its own
+        // the frame is drawn here, in the pack's colours: only the plumbing is the pub art tool's (#309)
         const art = I.tool('generate_flinders_art.py');
-        assert.ok(/from generate_pub_art import/.test(art) && !/def wall_side|def threshold/.test(art));
+        assert.ok(/from generate_pub_art import C, new, text, latin, register\n/.test(art) && /def wall_side|def threshold/.test(art));
+        assert.ok(!/\b(mix|ellipse|pieslice|polygon|arc)\(/.test(art), 'no colour mixed at run time, no shape that moves between Pillow versions');
         // the town's generator knows nothing of the room: roomgen keeps the doors through a rebuild
         assert.ok(!/Flinders|flinders-in/.test(I.tool('generate_sanfranbourne.py')));
+    });
+
+    test('the concourse is drawn in the house look: every colour one the GuttyKreum sheets use, dark glass, nothing lit, at the sizes and anchors the room places it by (#309)', () => {
+        const { fs, path, GV2 } = helpers, png = helpers.require('./png'), c = cfg();
+        const SIZES = { board: [192, 128], clocks: [256, 192], doorlight: [128, 192], tickets: [192, 128], 'wall-arch': [256, 192],
+            'wall-bay': [192, 192], 'wall-name': [384, 192], 'floor-a': [64, 64], 'floor-b': [64, 64], 'side-w': [64, 64], 'side-e': [64, 64],
+            'wall-front': [64, 64], 'threshold-w': [64, 64], 'threshold-e': [64, 64] };
+        const PALETTE = new Set(('080d16 172459 e3c587 c6a663 a7843b 86624f aa4d31 904a37 5b283b 93c297 508582 4a6262 395050 2e4040 '
+            + 'fafcfd e4cecc d7b6ab be9e8c 78768a 5f6177 47485d d7d0ba c69f96 a4b0b5 d1e2eb 94a2a8 575c6d 2c2d51 2a3151 4b6396 '
+            + '588cc6 1b1e2a f3d890 83af6f ffe2e0').split(' '));
+        const counts = {};
+        for (const [piece, size] of Object.entries(SIZES)) {
+            const key = `flinders-in-${piece}_0_0`;
+            const { width, height, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png')));
+            assert.deepStrictEqual([width, height], size, `${piece}: the room places it by its size`);
+            const meta = c.spriteMetadata[key];
+            assert.deepStrictEqual([meta.frameCount, meta.anchorX, meta.anchorY, meta.depthBias], [1, 32 / width, 32 / height, piece === 'doorlight' ? -40 : undefined], piece);
+            const n = counts[piece] = {};
+            for (let p = 0; p < data.length; p += 4) {
+                if (!data[p + 3]) continue;
+                const hex = data.toString('hex', p, p + 3);
+                assert.ok(PALETTE.has(hex), `${piece}: #${hex} is not one of the pack's colours`);
+                n[hex] = (n[hex] || 0) + 1;
+                if (piece === 'doorlight') n[`a${data[p + 3]}`] = true;
+            }
+        }
+        for (const piece of ['wall-bay', 'wall-arch', 'wall-name']) assert.strictEqual(c.game.lookUp.sprites[`flinders-in-${piece}`], 2, piece);
+        // the glass is the pack's dark window with its glare, and nothing is lit: the lamps are its dim gold
+        assert.ok(counts['wall-arch']['2c2d51'] >= 4000 && counts['wall-arch']['4b6396'] >= 200, JSON.stringify(counts['wall-arch']));
+        assert.ok(counts.tickets['2c2d51'] && counts.tickets['4b6396'], 'the machines\' screens are glass');
+        assert.ok(counts.board.c6a663 && !counts.board.f3d890, 'the departures board is unlit');
+        assert.deepStrictEqual(Object.keys(counts.doorlight).sort(), ['a112', 'a28', 'a56', 'a84', 'fafcfd'], 'the daylight is four flat steps');
     });
 };

@@ -10,7 +10,8 @@
  *   - the bar in a room with `shopMenu`       -> that venue's menu (izakaya)
  * Bought items live in the inventory (menu → Items, or click the ¥ in the
  * HUD) and are used from there, or straight from the buy list with
- * SHIFT+ENTER ("buy & use now").
+ * SHIFT+ENTER ("buy & use now"). An `eatIn` item (a bowl of ramen, issue
+ * #367) is never carried: ENTER orders one and it is eaten there and then.
  *
  * Fish caught at a pond are inventory items too (issue #83): a konbini
  * counter and the izakaya bar buy them — the last row of their list switches
@@ -522,7 +523,7 @@ class Shop {
     maxQty(item) {
         if (!item) return 1;
         if (this.selling()) return Math.max(1, this.items[item.id] || 0);
-        if (item.permanent) return 1;
+        if (item.permanent || Shop.eatsIn(item)) return 1;
         return Math.max(1, Math.min(9, Math.floor(this.money / item.price)));
     }
 
@@ -532,12 +533,12 @@ class Shop {
         this.paint();
     }
 
-    /** Buy `qty` of the selected item; with useNow, consume one on the spot. */
+    /** Buy `qty` of the selected item; with useNow, consume one on the spot. An eat-in item is one, always eaten. */
     buy(useNow) {
         const item = this.stock[this.selected];
         if (!item) return;
         if (item.permanent && this.items[item.id]) return this.toast('you already have one');
-        const qty = item.permanent ? 1 : this.qty;
+        const qty = item.permanent || Shop.eatsIn(item) ? 1 : this.qty;
         const cost = item.price * qty;
         if (this.money < cost) return this.toast(`not enough yen — that's ${this.fmt(cost)}`);
         this.money -= cost;
@@ -545,7 +546,7 @@ class Shop {
         const stamp = this.stampPurchase();
         this.save();
         this.scene.updateHUD();
-        if (useNow && !item.permanent) {
+        if ((useNow || Shop.eatsIn(item)) && !item.permanent) {
             this.use(item.id);
             // the use toast has the screen: the stamp is said after it
             if (stamp) this.notices.push(stamp.replace(/^ · /, ''));
@@ -619,6 +620,7 @@ class Shop {
         this.objs = [];
         this.rows = [];
         this.descText = this.qtyText = this.totalText = this.useNowText = this.titleText = null;
+        this.buyText = this.hintText = null;
         this.stepper = [];
     }
 
@@ -671,11 +673,15 @@ class Shop {
             this.totalText.setFill('#ffd700');
             this.useNowText.setText(Shop.VENUES[this.kind].grills ? '[ grill & eat ]' : '');
         } else {
-            const cost = item.price * (item.permanent ? 1 : this.qty);
-            this.qtyText.setText(item.permanent ? '×1' : `×${this.qty}`);
+            const one = item.permanent || Shop.eatsIn(item);
+            const cost = item.price * (one ? 1 : this.qty);
+            const words = Shop.buyLabels(item);
+            this.qtyText.setText(one ? '×1' : `×${this.qty}`);
             this.totalText.setText(`total ${this.fmt(cost)}`);
             this.totalText.setFill(this.money >= cost ? '#ffd700' : '#aa6666');
-            this.useNowText.setText(item.permanent ? '' : '[ buy & use now ]');
+            this.useNowText.setText(words.useNow);
+            if (this.buyText) this.buyText.setText(words.buy);
+            if (this.hintText) this.hintText.setText(Hints.text(this.scene, words.hint));
         }
     }
 
@@ -791,14 +797,14 @@ class Shop {
                 button(text(px + 104, y, '›', '28px', true, '#ffffff', 0), () => this.setQty(this.qty + 1)),
                 this.totalText = text(px + 140, y, '', '20px', false, '#ffd700', 0),
                 this.useNowText = button(text(px + pw - 30, y, '', '20px', true, '#66ff88', 1), () => this.confirm(true)),
-                button(text(px + pw - 222, y, selling ? '[ sell ]' : '[ buy ]', '20px', true, '#ffffff', 1), () => this.confirm(false)),
+                this.buyText = button(text(px + pw - 222, y, selling ? '[ sell ]' : '[ buy ]', '20px', true, '#ffffff', 1), () => this.confirm(false)),
             ];
             if (!this.stock.length) {
                 // nothing to sell: the only row is the way back
                 text(W / 2, py + ph - 28, Hints.text(scene, 'ENTER back to the menu · ESC step away'), '16px', false, '#888888');
             } else {
                 text(W / 2, py + ph - 52, Hints.text(scene, '↑/↓ pick · ←/→ quantity · ESC step away'), '16px', false, '#888888');
-                text(W / 2, py + ph - 28, Hints.text(scene, !selling ? 'ENTER buy · SHIFT+ENTER buy & use now'
+                this.hintText = text(W / 2, py + ph - 28, Hints.text(scene, !selling ? Shop.BUY_HINT
                     : venue.grills ? 'ENTER sell · SHIFT+ENTER grill & eat one' : 'ENTER sell'), '16px', false, '#888888');
             }
         }
@@ -822,7 +828,8 @@ class Shop {
         o.said = msg;
         // UIScale magnifies a toast to the text floor but cannot re-flow it: a line too long to
         // be shown that big between a phone's touch controls (the energy hint at 667x375, #220)
-        // is broken here, before it is drawn. Never on a desktop-sized window.
+        // is broken here, before it is drawn, and so is one wider than a portrait phone's slice of
+        // the canvas, which would otherwise be shrunk to fit it (#388). Never on a desktop-sized window.
         const ui = this.scene.uiScale, widest = ui ? ui.floatWidth(T.font, y) : Infinity;
         if (o.width > widest) o.setText(Shop.toastLines(msg, o.width, widest, 2 * T.padX));
         o.setOrigin(0.5, 0.5); o.setResolution(1);
@@ -897,6 +904,23 @@ Shop.toastLines = (msg, width, widest, pad = 0) => {
     return fewest.join('\n');
 };
 
+/** Whether an item is eaten where it is sold (a bowl of ramen, issue #367): one at a time, never carried. */
+Shop.eatsIn = (item) => !!(item && item.eatIn);
+
+/** The buy list's last hint line, for a row that can be carried. */
+Shop.BUY_HINT = 'ENTER buy · SHIFT+ENTER buy & use now';
+
+/**
+ * The words for the selected row of the buy list: its two buttons and the
+ * hint under them ('' hides a button). An eat-in item has one way to buy:
+ * order it and eat it there.
+ */
+Shop.buyLabels = (item) => {
+    if (item && item.permanent) return { buy: '[ buy ]', useNow: '', hint: Shop.BUY_HINT };
+    if (Shop.eatsIn(item)) return { buy: '', useNow: '[ order & eat ]', hint: 'ENTER order & eat' };
+    return { buy: '[ buy ]', useNow: '[ buy & use now ]', hint: Shop.BUY_HINT };
+};
+
 /** Effect slots: one drink and one food effect can be active at a time. */
 Shop.SLOTS = ['drink', 'food'];
 
@@ -952,7 +976,11 @@ Shop.VENUES = {
     // Susukino (issue #219, stage 4): the karaoke bar's counter (a Shop<Town><n> room, as the three above)
     // and the ramen alley's counters (a bump on a `susukino-ramen-stall*`, as the hot-drinks tent) - no stamp
     bar:       { title: 'KARAOKE BAR', sells: i => ['highball', 'nama-beer', 'edamame'].includes(i.id) },
-    ramen:     { title: 'RAMEN ALLEY', sells: i => ['karaage', 'edamame', 'nama-beer'].includes(i.id) },
+    ramen:     { title: 'RAMEN ALLEY', sells: i => i.where === 'ramen' || ['karaage', 'edamame', 'nama-beer'].includes(i.id) },
+    // the ramen shop in Asahikawa (a Shop<Town><n> room's `shopMenu`) and Fukuoka's ramen yatai (a bump on a
+    // `yatai-ramen`): each its own bowl, eaten at the counter (issue #367) - no stamp
+    ramenya:   { title: 'RAMEN SHOP',  sells: i => i.where === 'ramenya' || ['karaage', 'nama-beer'].includes(i.id) },
+    yatai:     { title: 'YATAI',       sells: i => i.where === 'yatai' || ['edamame', 'nama-beer'].includes(i.id) },
     // the airport pub (issue #218): the izakaya's drinks and food, over the bar; it buys no fish
     pub:     { title: 'AIRPORT PUB',     sells: i => i.where === 'izakaya' },
     // the pub in Sendai and the distillery's tasting bar (issue #217): over the bar; no stamp, no fish bought.
@@ -1002,6 +1030,18 @@ Shop.EFFECT_KINDS = {
  * Energy.valueOf: food fills, a soft drink tops up, alcohol hardly counts).
  */
 Shop.DEFAULT_ITEMS = [
+    // --- ramen (issue #367): `eatIn`, so it is eaten at the counter it is sold at, never carried ---
+    { id: 'miso-ramen',    name: 'Miso Ramen',    price: 950, where: 'ramen', category: 'food', energy: 100, eatIn: true,
+      icon: { shape: 'bowl', colors: { a: '#c98a3c', b: '#b23a2e', c: '#f3dc8a', d: '#ffe14a' } },
+      desc: 'butter and corn on top. speed +20% for 5 min, on top of any drink.', effect: { speed: 1.2, secs: 300 } },
+    { id: 'shoyu-ramen',   name: 'Shoyu Ramen',   price: 900, where: 'ramenya', category: 'food', energy: 100, eatIn: true,
+      icon: { shape: 'bowl', colors: { a: '#7a4a22', b: '#2f4a8a', c: '#f0d9a0', d: '#e8a0a0' } },
+      desc: 'hot to the last sip: speed +15%, 8s more on the work clock. 5 min.',
+      effect: { speed: 1.15, focus: 8, secs: 300 } },
+    { id: 'tonkotsu-ramen', name: 'Tonkotsu Ramen', price: 850, where: 'yatai', category: 'food', energy: 100, eatIn: true,
+      icon: { shape: 'bowl', colors: { a: '#efe3c8', b: '#1f1f2a', c: '#fff6da', d: '#d8423a' } },
+      desc: 'lines the stomach: no wobble, showdown winnings +50%. 5 min.',
+      effect: { steady: true, prizeBonus: 1.5, secs: 300 } },
     // --- drinks ---
     { id: 'zone-energy',   name: 'Zone Energy',   price: 300, where: 'vending', category: 'drink', energy: 30,
       icon: { shape: 'can', colors: { a: '#7b4dff', b: '#4a2bb0', c: '#35218a', d: '#ffe14a' } },

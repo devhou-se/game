@@ -265,10 +265,15 @@ LANDMARKS = [
     # Kansai (issue #255): Himeji, walked to from Osaka
     ('himeji-keep_', 'Himeji Castle', (4, 8), {'rooms': ('Himeji',)}),   # the terrace in front of the keep's middle, where the camera looks up at it
     ('himeji-kokoen-gate_', 'Koko-en garden', (1, 5), {'rooms': ('Himeji',)}),   # the garden's path, inside the gate
-    ('okayama-keep_', 'Okayama Castle', (2, 7), {'rooms': ('Okayama',)}),         # (20, 9): in front of the keep, off the steps' columns
-    ('okayama-crane_', 'Korakuen garden', (-1, 1), {'rooms': ('Okayama',)}),      # (27, 31): the lawn beside the first crane
-    ('okayama-momotaro_', 'the Momotaro statue', (0, 3), {'rooms': ('Okayama',)}),    # (8, 20): the plaza in front of him
-    ('okayama-bizen-stall_', 'the Bizen-ware stall', (1, 3), {'rooms': ('Okayama',)}),  # (16, 18): the pavement at its counter
+    ('okayama-keep_', 'Okayama Castle', (10, 4), {'rooms': ('Okayama',)}),        # (24, 16): the court beside the keep, off the bridge's columns
+    ('okayama-crane_', 'Korakuen garden', (-1, 1), {'rooms': ('Okayama',)}),      # (13, 27): the lawn beside the first crane
+    ('okayama-momotaro_', 'the Momotaro statue', (0, 3), {'rooms': ('Okayama',)}),    # (35, 19): the plaza in front of him
+    ('okayama-bizen-stall_', 'the Bizen-ware stall', (1, 3), {'rooms': ('Okayama',)}),  # (38, 17): the plaza at its counter
+    ('nara-daibutsuden_', 'the Great Buddha Hall', (4, 8), {'rooms': ('Nara',)}),   # (35, 10): the court in front of the hall, off the axis
+    ('nara-nandaimon_', 'the Nandaimon gate', (1, 4), {'rooms': ('Nara',)}),       # (35, 16): the plaza below its west post, off the gateway
+    ('nara-senbei-stall_', 'the deer cracker stall', (0, 2), {'rooms': ('Nara',)}),   # (41, 18): the plaza at its counter
+    ('nara-deer-stag_', 'the deer of Nara Park', (1, 0), {'rooms': ('Nara',)}),    # (13, 29): the lawn beside the first stag
+    ('shrine-building', 'Kasuga Taisha', (2, 6), {'rooms': ('Nara',)}),            # (45, 32): the approach, east of the door's column
     ('karuizawa-fingerpost_', 'the road from Tokyo', (-1, 1), {'rooms': ('Karuizawa',)}),   # the verge beside its foot, clear of the road and the gate's landing cells
     ('karuizawa-falls_', 'Shiraito Falls', (1, 5), {'rooms': ('Karuizawa',)}),       # (13, 8): the bank, at the pool's south-west corner
     ('karuizawa-corn-stall_', 'the corn stall', (2, 2), {'rooms': ('Karuizawa',)}),  # (21, 8): at the east end of the counter
@@ -917,6 +922,14 @@ def npc_in_room(room, name):
 TRIP_LEAD = 14   # days before its start a trip opens (Trips.LEAD in the game)
 
 
+def trip_opens(trip):
+    """The ISO day a trip opens: its `start` less `lead` days (TRIP_LEAD when
+    `lead` is not a non-negative int)."""
+    lead = trip.get('lead')
+    lead = lead if isinstance(lead, int) and not isinstance(lead, bool) and lead >= 0 else TRIP_LEAD
+    return (datetime.date.fromisoformat(trip['start']) - datetime.timedelta(days=lead)).isoformat()
+
+
 def trip_window(cfg, date):
     """What `date` can see — {'trip', 'stay', 'from'} or None with no trips
     (mirrors Trips.windowFor in the game): its trip is the latest one opened
@@ -932,16 +945,12 @@ def trip_window(cfg, date):
                     and t['start'] <= t['end']), key=lambda t: t['start'])
     if not trips:
         return None
-    def opens(t):
-        lead = t.get('lead')
-        lead = lead if isinstance(lead, int) and not isinstance(lead, bool) and lead >= 0 else TRIP_LEAD
-        return (datetime.date.fromisoformat(t['start']) - datetime.timedelta(days=lead)).isoformat()
-    trip = ([t for t in trips if opens(t) <= date] or trips[:1])[-1]
+    trip = ([t for t in trips if trip_opens(t) <= date] or trips[:1])[-1]
     stays = sorted((s for s in trip.get('stays') or [] if s.get('room') and iso.match(s.get('from') or '')),
                    key=lambda s: s['from'])
     stay = ([s for s in stays if s['from'] <= date] or stays[:1] or [None])[-1]
     if date < trip['start'] and trip is not trips[0]:
-        return {'trip': trip, 'stay': stay, 'early': True, 'from': opens(trip)}
+        return {'trip': trip, 'stay': stay, 'early': True, 'from': trip_opens(trip)}
     return {'trip': trip, 'stay': stay, 'early': False,
             'from': stay['from'] if stay and stay['from'] > trip['start'] else trip['start']}
 

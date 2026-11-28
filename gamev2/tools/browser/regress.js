@@ -1726,6 +1726,64 @@ async function desktop(shared) {
             await idle(page);
         });
 
+        // 10c -------------------------------------------------------------- a bowl of ramen at the counter (issue #367)
+        await cleanly('ramen', async () => {
+            const kept = await page.evaluate(() => {
+                const sh = __t.s.shop, k = { money: sh.money, energy: sh.energy, effects: Object.assign({}, sh.effects), used: Object.assign({}, sh.used) };
+                sh.money = 5000; sh.energy = 0; sh.effects = {}; sh.save(); __t.s.updateHUD();
+                return k;
+            });
+            try {
+                // Susukino: up onto the middle stool of the first stall, then up again to the counter
+                await page.evaluate('__t.place("Sapporo", 19, 45)');
+                await idle(page);
+                await step(page, 0, -1);
+                need(await until(page, '__t.idle() && __t.s.player.lift !== 0', 1500), { notOnTheStool: await page.evaluate('__t.seated()') });
+                const sat = await page.evaluate('__t.seated()');
+                need(sat.pos.x === 19 && sat.pos.y === 44 && sat.seat && sat.seat.kind === 'stool' && sat.lift === sat.seat.dy && sat.lift < 0 &&
+                    sat.facing.join() === '0,-1', { pose: sat });
+                const opened = await press(page, 'ArrowUp', '__t.s.shop.visible');
+                const list = await page.evaluate(() => {
+                    const sh = __t.s.shop;
+                    return { kind: sh.kind, first: sh.stock[0] && sh.stock[0].id, selected: sh.selected, eat: sh.useNowText && sh.useNowText.text,
+                        buy: sh.buyText && sh.buyText.text, hint: sh.hintText && sh.hintText.text, pos: __t.pos() };
+                });
+                need(opened && list.kind === 'ramen' && list.first === 'miso-ramen' && list.selected === 0 && list.eat === '[ order & eat ]' &&
+                    list.buy === '' && /order & eat/.test(list.hint) && list.pos.x === 19 && list.pos.y === 44, { list });
+                await page.screenshot({ path: path.join(SHOTS, 'regress_ramen_list.png') });
+                const ate = await press(page, 'Enter', '__t.s.shop.money === 5000 - 950');
+                const after = await page.evaluate(() => {
+                    const sh = __t.s.shop, saved = JSON.parse(localStorage.getItem('gamev2_shop'));
+                    return { money: sh.money, energy: sh.energy, carried: sh.items['miso-ramen'] || 0, saved: saved.items['miso-ramen'] || 0,
+                        food: sh.effects.food && sh.effects.food.id, toast: sh.toastText(), open: sh.visible };
+                });
+                need(ate && after.energy === 100 && !after.carried && !after.saved && after.food === 'miso-ramen' && /^Miso Ramen: /.test(after.toast || '') && after.open,
+                    { didNotEat: after });
+                await press(page, 'Escape', '!__t.s.shop.isVisible()');
+                await page.screenshot({ path: path.join(SHOTS, 'regress_ramen_stool.png') });
+
+                // Asahikawa's ramen shop: from the floor up onto a stool, then up to the counter
+                await page.evaluate('__t.place("ShopAsahikawa4", 9, 8)');
+                await idle(page);
+                await step(page, 0, -1);
+                need(await until(page, '__t.idle() && __t.s.player.lift !== 0', 1500), { notOnTheShopStool: await page.evaluate('__t.seated()') });
+                const there = await page.evaluate('__t.seated()');
+                need(there.pos.x === 9 && there.pos.y === 7 && there.seat && there.seat.kind === 'stool', { shopStool: there });
+                const shopOpened = await press(page, 'ArrowUp', '__t.s.shop.visible');
+                const shop = await page.evaluate('({ kind: __t.s.shop.kind, first: __t.s.shop.stock[0] && __t.s.shop.stock[0].id })');
+                need(shopOpened && shop.kind === 'ramenya' && shop.first === 'shoyu-ramen', { shop });
+                await page.screenshot({ path: path.join(SHOTS, 'regress_ramen_shop.png') });
+                await press(page, 'Escape', '!__t.s.shop.isVisible()');
+            } finally {
+                await page.evaluate((k) => {
+                    const sh = __t.s.shop;
+                    Object.assign(sh, k); sh.save(); __t.s.updateHUD();
+                    __t.home();
+                }, kept);
+                await idle(page);
+            }
+        });
+
         // 11 --------------------------------------------------------------- night
         await cleanly('night', async () => {
             await boot(page, url(`${QUIET}&tod=night`));

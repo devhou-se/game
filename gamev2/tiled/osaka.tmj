@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 95,
+ "nextobjectid": 101,
  "properties": [
   {
    "name": "gv2room",
@@ -232,12 +232,6 @@
     {
      "id": 31,
      "image": "../assets/sprites/flat-grey-brick-autotile_corner-nw.png",
-     "imagewidth": 64,
-     "imageheight": 64
-    },
-    {
-     "id": 32,
-     "image": "../assets/sprites/flat-grey-brick-autotile_corner-se.png",
      "imagewidth": 64,
      "imageheight": 64
     },
@@ -744,6 +738,12 @@
      "image": "../assets/sprites/kansai-fingerpost_0_0.png",
      "imagewidth": 64,
      "imageheight": 128
+    },
+    {
+     "id": 122,
+     "image": "../assets/sprites/nara-fingerpost_0_0.png",
+     "imagewidth": 64,
+     "imageheight": 128
     }
    ],
    "wangsets": [
@@ -916,19 +916,6 @@
         0,
         0,
         0
-       ]
-      },
-      {
-       "tileid": 32,
-       "wangid": [
-        1,
-        0,
-        0,
-        0,
-        0,
-        0,
-        1,
-        1
        ]
       },
       {
@@ -2740,7 +2727,7 @@
     36,
     36,
     36,
-    31,
+    36,
     113,
     113,
     113,
@@ -2940,7 +2927,7 @@
     107,
     107,
     107,
-    33,
+    107,
     39,
     39,
     6,
@@ -11010,7 +10997,6 @@
     0,
     0,
     0,
-    99,
     0,
     0,
     0,
@@ -11060,7 +11046,8 @@
     0,
     0,
     0,
-    99,
+    0,
+    0,
     0,
     0,
     0,
@@ -11110,7 +11097,7 @@
     0,
     0,
     0,
-    99,
+    0,
     99,
     28,
     29,
@@ -13602,6 +13589,16 @@
     },
     {
      "id": 47,
+     "gid": 123,
+     "name": "nara-fingerpost_0_0",
+     "x": 3008,
+     "y": 1792,
+     "width": 64,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 48,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13611,7 +13608,7 @@
      "visible": true
     },
     {
-     "id": 48,
+     "id": 49,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13621,7 +13618,7 @@
      "visible": true
     },
     {
-     "id": 49,
+     "id": 50,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13631,7 +13628,7 @@
      "visible": true
     },
     {
-     "id": 50,
+     "id": 51,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13641,7 +13638,7 @@
      "visible": true
     },
     {
-     "id": 51,
+     "id": 52,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13651,7 +13648,7 @@
      "visible": true
     },
     {
-     "id": 52,
+     "id": 53,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13661,7 +13658,7 @@
      "visible": true
     },
     {
-     "id": 53,
+     "id": 54,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13671,7 +13668,7 @@
      "visible": true
     },
     {
-     "id": 54,
+     "id": 55,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13681,7 +13678,7 @@
      "visible": true
     },
     {
-     "id": 55,
+     "id": 56,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13691,7 +13688,7 @@
      "visible": true
     },
     {
-     "id": 56,
+     "id": 57,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13701,7 +13698,7 @@
      "visible": true
     },
     {
-     "id": 57,
+     "id": 58,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13711,7 +13708,7 @@
      "visible": true
     },
     {
-     "id": 58,
+     "id": 59,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13721,7 +13718,7 @@
      "visible": true
     },
     {
-     "id": 59,
+     "id": 60,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13731,7 +13728,7 @@
      "visible": true
     },
     {
-     "id": 60,
+     "id": 61,
      "gid": 120,
      "name": "devhouse-osaka_0_0",
      "x": 576,
@@ -18430,7 +18427,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 61,
+     "id": 62,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 640,
@@ -18440,7 +18437,7 @@
      "visible": true
     },
     {
-     "id": 62,
+     "id": 63,
      "gid": 17,
      "name": "building-roof-black_0_0",
      "x": 640,
@@ -18450,7 +18447,7 @@
      "visible": true
     },
     {
-     "id": 63,
+     "id": 64,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 960,
@@ -18460,7 +18457,7 @@
      "visible": true
     },
     {
-     "id": 64,
+     "id": 65,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 1024,
@@ -18470,7 +18467,7 @@
      "visible": true
     },
     {
-     "id": 65,
+     "id": 66,
      "gid": 94,
      "name": "sakura-large-top_0_0",
      "x": 1024,
@@ -18480,7 +18477,7 @@
      "visible": true
     },
     {
-     "id": 66,
+     "id": 67,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 128,
@@ -18490,7 +18487,7 @@
      "visible": true
     },
     {
-     "id": 67,
+     "id": 68,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 1408,
@@ -18500,7 +18497,7 @@
      "visible": true
     },
     {
-     "id": 68,
+     "id": 69,
      "gid": 18,
      "name": "building-roof-blue_0_0",
      "x": 1472,
@@ -18510,7 +18507,7 @@
      "visible": true
     },
     {
-     "id": 69,
+     "id": 70,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 1792,
@@ -18520,7 +18517,7 @@
      "visible": true
     },
     {
-     "id": 70,
+     "id": 71,
      "gid": 94,
      "name": "sakura-large-top_0_0",
      "x": 192,
@@ -18530,7 +18527,7 @@
      "visible": true
     },
     {
-     "id": 71,
+     "id": 72,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 1920,
@@ -18540,7 +18537,7 @@
      "visible": true
     },
     {
-     "id": 72,
+     "id": 73,
      "gid": 94,
      "name": "sakura-large-top_0_0",
      "x": 1984,
@@ -18550,7 +18547,7 @@
      "visible": true
     },
     {
-     "id": 73,
+     "id": 74,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 2176,
@@ -18560,7 +18557,7 @@
      "visible": true
     },
     {
-     "id": 74,
+     "id": 75,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 2176,
@@ -18570,7 +18567,7 @@
      "visible": true
     },
     {
-     "id": 75,
+     "id": 76,
      "gid": 18,
      "name": "building-roof-blue_0_0",
      "x": 2368,
@@ -18580,7 +18577,7 @@
      "visible": true
     },
     {
-     "id": 76,
+     "id": 77,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 256,
@@ -18590,7 +18587,7 @@
      "visible": true
     },
     {
-     "id": 77,
+     "id": 78,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 2560,
@@ -18600,7 +18597,7 @@
      "visible": true
     },
     {
-     "id": 78,
+     "id": 79,
      "gid": 94,
      "name": "sakura-large-top_0_0",
      "x": 2816,
@@ -18610,7 +18607,7 @@
      "visible": true
     },
     {
-     "id": 79,
+     "id": 80,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 2944,
@@ -18848,7 +18845,7 @@
     0,
     0,
     0,
-    38,
+    0,
     38,
     38,
     38,
@@ -18948,7 +18945,7 @@
     0,
     0,
     0,
-    38,
+    0,
     38,
     38,
     38,
@@ -20146,7 +20143,7 @@
     0,
     0,
     0,
-    0,
+    38,
     38,
     38,
     38,
@@ -20979,7 +20976,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 80,
+     "id": 81,
      "name": "transporter",
      "point": true,
      "x": 1568.0,
@@ -21016,7 +21013,7 @@
      ]
     },
     {
-     "id": 81,
+     "id": 82,
      "name": "transporter",
      "point": true,
      "x": 992.0,
@@ -21053,7 +21050,7 @@
      ]
     },
     {
-     "id": 82,
+     "id": 83,
      "name": "transporter",
      "point": true,
      "x": 352.0,
@@ -21090,7 +21087,7 @@
      ]
     },
     {
-     "id": 83,
+     "id": 84,
      "name": "transporter",
      "point": true,
      "x": 352.0,
@@ -21127,7 +21124,7 @@
      ]
     },
     {
-     "id": 84,
+     "id": 85,
      "name": "transporter",
      "point": true,
      "x": 2784.0,
@@ -21164,7 +21161,7 @@
      ]
     },
     {
-     "id": 85,
+     "id": 86,
      "name": "transporter",
      "point": true,
      "x": 2848.0,
@@ -21201,7 +21198,7 @@
      ]
     },
     {
-     "id": 86,
+     "id": 87,
      "name": "transporter",
      "point": true,
      "x": 736.0,
@@ -21238,7 +21235,7 @@
      ]
     },
     {
-     "id": 87,
+     "id": 88,
      "name": "transporter",
      "point": true,
      "x": 2464.0,
@@ -21275,7 +21272,7 @@
      ]
     },
     {
-     "id": 88,
+     "id": 89,
      "name": "transporter",
      "point": true,
      "x": 672.0,
@@ -21312,7 +21309,7 @@
      ]
     },
     {
-     "id": 89,
+     "id": 90,
      "name": "transporter",
      "point": true,
      "x": 32.0,
@@ -21349,7 +21346,7 @@
      ]
     },
     {
-     "id": 90,
+     "id": 91,
      "name": "transporter",
      "point": true,
      "x": 32.0,
@@ -21386,7 +21383,7 @@
      ]
     },
     {
-     "id": 91,
+     "id": 92,
      "name": "transporter",
      "point": true,
      "x": 32.0,
@@ -21423,7 +21420,7 @@
      ]
     },
     {
-     "id": 92,
+     "id": 93,
      "name": "transporter",
      "point": true,
      "x": 32.0,
@@ -21460,7 +21457,7 @@
      ]
     },
     {
-     "id": 93,
+     "id": 94,
      "name": "transporter",
      "point": true,
      "x": 32.0,
@@ -21497,7 +21494,192 @@
      ]
     },
     {
-     "id": 94,
+     "id": 95,
+     "name": "transporter",
+     "point": true,
+     "x": 3168.0,
+     "y": 1568.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Nara"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 18
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 96,
+     "name": "transporter",
+     "point": true,
+     "x": 3168.0,
+     "y": 1632.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Nara"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 19
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 97,
+     "name": "transporter",
+     "point": true,
+     "x": 3168.0,
+     "y": 1696.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Nara"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 20
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 98,
+     "name": "transporter",
+     "point": true,
+     "x": 3168.0,
+     "y": 1760.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Nara"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 21
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 99,
+     "name": "transporter",
+     "point": true,
+     "x": 3168.0,
+     "y": 1824.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Nara"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 22
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 100,
      "name": "boundary",
      "x": 0,
      "y": 0,

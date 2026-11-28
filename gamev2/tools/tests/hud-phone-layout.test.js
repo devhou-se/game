@@ -168,7 +168,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         // shrine since #220 ("Park shrine" counts down on both phones). Since #219 the Tokyo districts have
         // their real names: "Imperial Palace" (15) is too long for a countdown on either phone, "Asakusa
         // shrine" (14) one character too long at 844x390, and the palace's hall is "Palace Shrine" (13), a
-        // name of its own, because "Imperial Palace shrine" would not fit one row at 667x375 at all
+        // name of its own, because "Imperial Palace shrine" would not fit one row at 667x375 at all; Nara's
+        // is "Kasuga Taisha" (13, #268), its real name, which does the same
         // Since #218 also, at both widths, the two airports and the home city, whose names are as long as a station's
         const stations = Object.keys(config.stations).map(k => config.rooms[k].name).sort();
         const abroad = Object.keys(config.airports).map(k => config.rooms[k].name).concat(config.rooms.SanFranbourne.name);
@@ -210,7 +211,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
             'Lobby · Fukuoka 4', 'Lobby · Kanazawa 1', 'Lobby · Kanazawa 2', 'Lobby · Sapporo 1', 'Lobby · Sapporo 2', 'Lobby · Sapporo 3', 'Lobby · Sendai', ...SHINJUKU]);
         assert.deepStrictEqual(notHouses(bare[744]), stations.filter(n => n.length > 13).concat('Imperial Palace', NAMED, abroad).sort());
         assert.ok(bare[744].has('Kanazawa Station') && !bare[744].has('Tokyo Station'));
-        assert.deepStrictEqual(notHouses(bare[715]), stations.concat('Shirakawa-go', 'Imperial Palace', 'Palace Shrine', NAMED, abroad).sort());
+        assert.deepStrictEqual(notHouses(bare[715]), stations.concat('Shirakawa-go', 'Imperial Palace', 'Palace Shrine', 'Kasuga Taisha', NAMED, abroad).sort());
         // the three renamed districts and Park, on a lead-in day: Asakusa and Marunouchi count down on both phones
         assert.strictEqual(bar(744, 'Asakusa', '¥5,000', '2027-02-10'), 'Asakusa | devhouse 3 in 8 days | ¥5,000');
         assert.strictEqual(bar(715, 'Asakusa', '¥5,000', '2027-02-10'), 'Asakusa | devhouse 3 in 8d | ¥5,000');
@@ -539,7 +540,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         assert.deepStrictEqual([S.TOAST.font, S.TOAST.padX, S.TOAST.padY, S.TOAST.above], [20, 10, 6, 80]);
     });
 
-    test('a toast is not broken, and is as big as it was, on a desktop, a tablet and a portrait phone (#220)', () => {
+    test('a toast is not broken, and is as big as it was, on a desktop and a tablet (#220)', () => {
         const U = game('UIScale'), E = game('Energy');
         // desktop 1280x960: one line at its own 20px, whatever it says
         for (const msg of [E.HINT, E.PECKISH, 'x'.repeat(120)]) {
@@ -553,11 +554,9 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
             assert.deepStrictEqual([t.lines.length, t.widest], [1, Infinity], `${w}x${h}`);
             assert.ok(t.css >= U.MIN_TEXT, `${w}x${h}`);
         }
-        // the cropped portrait view keeps no floor (#200 left it alone, and so does this)
-        const port = toastIn(E.HINT, 390, 844, true, 1);
-        assert.deepStrictEqual([port.lines.length, port.widest], [1, Infinity]);
+        // the cropped portrait view keeps no floor (#200 left it alone, and so does this); its lines are broken to its room (#388)
         assert.strictEqual(U.floatFloor(20, 3, true), 1);
-        assert.strictEqual(U.floatWidth(20, 3, 500, true), Infinity);
+        assert.strictEqual(U.floatWidth(20, 3, 500, true), 500);
         // what floats were given before: the overlay's zoom, never under 1, text to the floor, the room over both
         const before = (font, zoom, down, room, width, cropped) =>
             Math.min(Math.max(1, zoom, font && !cropped ? U.MIN_TEXT * down / font : 1), room / width);
@@ -571,6 +570,36 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
                 }
             }
         }
+    });
+
+    test('a long toast is broken to the slice on a portrait phone, not shrunk to it, and landscape is as it was (#388)', () => {
+        const U = game('UIScale'), E = game('Energy');
+        const hall = 'the great buddha hall. fifteen metres of bronze sit inside, and a pillar with a hole the size of his nostril';
+        for (const [w, h] of [[390, 844], [360, 800], [430, 932], [375, 667], [320, 568]]) {
+            for (const msg of [hall, E.HINT, E.PECKISH, 'bought Onigiri']) {
+                for (const zoom of [1, 1.5]) {
+                    const t = toastIn(msg, w, h, true, zoom), at = `${JSON.stringify(t.lines)} at ${w}x${h}, zoom ${zoom}`;
+                    assert.strictEqual(t.widest, t.room, at);
+                    assert.strictEqual(t.lines.join(' '), msg, at);
+                    // never shrunk under its own 20px: as big on the screen as a short line, and inside the slice
+                    assert.ok(t.scale >= 1, `scale ${t.scale}: ${at}`);
+                    assert.ok(t.width <= t.room + 1e-9, at);
+                    assert.ok(t.bottom <= t.H - U.MARGIN + 1e-9 && t.top > t.H / 2, at);
+                }
+            }
+        }
+        // 390x844: the Great Buddha Hall's line was one strip at 0.54x (6.9 CSS px, about 3.5 a character); now two lines at 12.75
+        const before = toastIn(hall, 390, 844, true, 1);
+        assert.strictEqual(before.lines.length, 2);
+        assert.ok(before.unbroken < 7 && Math.abs(before.css - 12.75) < 0.01, `${before.unbroken} -> ${before.css}`);
+        assert.strictEqual(toastIn('bought Onigiri', 390, 844, true, 1).lines.length, 1);
+        // landscape phones are not cropped, and are broken (or not) to the #220 floor as before
+        for (const [w, h] of [[844, 390], [667, 375]]) {
+            const t = toastIn(hall, w, h, true, 1);
+            assert.strictEqual(t.widest, t.room / U.floatFloor(20, t.down, false), `${w}x${h}`);
+        }
+        assert.strictEqual(toastIn(E.HINT, 844, 390, true, 1).lines.length, 1);
+        assert.ok(toastIn(E.HINT, 667, 375, true, 1).widest < Infinity);
     });
 
     test('a toast too long for its line is broken at spaces into the fewest lines, as even as they come (#220)', () => {

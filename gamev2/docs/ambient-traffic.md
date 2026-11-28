@@ -36,6 +36,9 @@ their route in the room's map data rather than in coordinates, have no collision
     as it does to the east. An end of track that is not at the room's edge is still "closed", and a train
     fades in / out standing on the rails there. The depth rule uses the district's own row and is then moved down by the district's
     offset (`span.lift`), so the Palace train sits at the same place in the draw order as it does unstitched.
+  - In `KansaiCity` Osaka's track is carried on west over the wood above Himeji and Okayama and, since
+    Nara (issue #268), east across the bare strip the backdrop keeps clear of trees above Nara
+    (`extendClear`), to the city's edge both ways: no train stops in either.
 - **`AmbientBoats`** - a room gets boats from its waterways, which it finds in the map data in two ways:
   - **moat tiles** (the Tokyo moat): a "run" is a line of consecutive cells holding the same plain
     `moat-<north|south|east|west>` tile; `-rocks` tiles, corner pieces and gaps end a run, so a boat never
@@ -59,12 +62,14 @@ their route in the room's map data rather than in coordinates, have no collision
     so a few pixels of bank may differ and the joined band is the part they share). The joined run has
     both lists of `under`, and an end is open only on the room's edge: where two districts' canals meet
     the boat sails on instead of fading at the seam. They are joined before `clearWater` and `fit`, so
-    the water left in view and the hulls are those of the whole waterway. One pair of declared
-    waterways meets today, Osaka's canal and Himeji's moat (below; a unit test holds that it is the only
-    one). **Osaka's Dotonbori canal** is rows 20-22, the whole width of the map, `under` columns 21-28.
+    the water left in view and the hulls are those of the whole waterway. Two pairs of declared
+    waterways meet today, Himeji's moat and Osaka's canal, and Osaka's canal and Nara's river: one run
+    from the moat's bank to the river's bend (below; a unit test holds that they are the only ones). **Osaka's Dotonbori canal** is rows 20-22, the whole width of the map, `under` columns 21-28.
     In the stitched `KansaiCity` it **runs on west as Himeji's castle moat** (issue #255: Himeji rows
-    14-16, the same city rows, `under` columns 32-33, the castle's bridge), so a boat sails from Osaka's
-    east edge to the moat's bank or back without fading at the seam, under both bridges. The moat's west
+    14-16, the same city rows, `under` columns 32-33, the castle's bridge), and **on east as Nara's
+    river** (issue #268: Nara rows 14-16, declared `from` 0 `to` 19, the columns before it bends north),
+    so a boat sails from the bend in Nara to the moat's bank or back without fading at either seam, under
+    both bridges, and fades in and out at the bend (no waterway is declared north of it). The moat's west
     end is closed (a bank at column 6), and its run is declared `from` column 7, not 6: the band of open
     water is measured on the run's first cell, and the bank column's corner tiles give none - a run with
     no band is dropped, which would leave the canal ending at the seam again. Osaka's deck is dressed as a

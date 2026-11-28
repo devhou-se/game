@@ -11,14 +11,15 @@ committed world: it runs each one in a scratch copy and fails, naming the rooms 
 would change (issue #107, see "Generated rooms stay regenerable"). It also re-seeds every room with
 `config_to_tiled.py` and fails if a committed `tiled/*.tmj` would change (a config edit whose map was not
 re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_fukuoka_art`, `_hokuriku_art`, `_sapporo_art`, `_sanfranbourne_art`, `_tsutenkaku`, `_tokyo_art`,
-`_discount_art`, `_cooler_art`, `_konbini_art`, `_seven_eleven_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
+`_discount_art`, `_cooler_art`, `_konbini_art`, `_seven_eleven_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `make_bridge_tiles`, `generate_ads`, `generate_cast`, the
 `extract_*.py` scripts, `extract_station` among them) and fails if `assets/sprites`, `assets/ads`, `assets/map`, `tiled/prefabs` or `config.json` would
 change (issues #186, #193). Last it runs `make_worldmap.py --pil` and fails if `assets/map/world-map.png` or
 `world-map.json` would change (issue #270, see "The world map"). Run it after any edit to a
 generated room, a map or a generator. The room and map checks take a few seconds and need no Pillow; the
 art tools are listed as `skip` without it, so use `/Library/Developer/CommandLineTools/usr/bin/python3
-tools/check_generators.py` to cover them (ten seconds; `generate_ads` and `extract_city` also need a Japanese system font,
-see `generate_ads.find_font`, and are listed as `skip`, not checked, where none is readable — a sandboxed shell).
+tools/check_generators.py` to cover them (ten seconds). None needs a system font: `generate_ads` (#279) and
+`extract_city`'s Don Takote sign (#346) set their text in the game's own PixelMplus12, so they are checked wherever
+Pillow is.
 
 The `extract_*.py` tools cut their sprites from the source sheets in `../art-source/GuttyKreum` (the
 repository's `art-source/`, beside `gamev2/`; its `README.md` lists the sheets and how to bring back another
@@ -37,10 +38,11 @@ with a Pillow that draws the same pixels will do, not only the macOS one:
   move the pin only together with the art it changes.
 - Workshop's agent image (`.workshop/Dockerfile` at the repository root) installs the same release, so plain
   `python3 tools/check_generators.py` covers the art tools there. The image has no Japanese font, so
-  `generate_ads` and `extract_city` stay `skip` as they do in the workflow. The pin is written out in the
+  `extract_city` stays `skip` as it does in the workflow. The pin is written out in the
   Dockerfile (the build cannot read `requirements-art.txt`): move the two together.
 - **Pillow 11.2 to 13.0 rebuild the committed art** (11.2.1, 11.3.0, 12.0.0, 12.1.1, 12.3.0 and 13.0.0 were
-  run on Linux on 27 Nov 2026, every art tool but the two that need a Japanese font).
+  run on Linux on 27 Nov 2026, every art tool but the two that then needed a Japanese font; `generate_ads`,
+  checked since #279, has been run on 11.3.0: its text is 1-bit PixelMplus12 as `generate_station_art`'s is).
 - **Pillow 11.1 and older do not**: they draw some curves and slanted lines a pixel off, and the check reports
   `DRIFT` for 8 to 15 sprites (`sendai-cedar`, `palace-in-fusuma-tiger`, ...). That is Pillow, not the tool:
   use a newer one. When an art tool drifts the check prints the Pillow version it ran on.
@@ -88,7 +90,7 @@ crossings, traffic lights, track) counts neither for nor against a city.
   a higher overlap or a lower own share than recorded. A city that is not in the baseline (a new town) is
   printed against the targets and does not fail.
 - **The baseline** (28 Nov 2026, buildings / sprites / own): Tokyo 0.18 / 0.33 / 54% (0.15 / 0.32 / 56% before Shinjuku, issue #94: its nine towers are the city kit's, which Osaka and Fukuoka use too, and the street of high-rises was the point; Fukuoka, whose towers are the same kit, reads Tokyo as its most-alike town at 0.18 where it was 0.17 / Hokuriku; both entries were re-recorded after it with `--update`, nothing else moved), Hokuriku 0.27 / 0.54 / 40%,
-  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.18 / 0.39 / 26%, Sapporo 0.04 / 0.17 / 81% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Kansai 0.12 / 0.41 / 27% (Osaka and Himeji as one city, issue #255; Osaka alone was 0.18 / 0.44 / 17%; with Okayama, issue #267, it measures 0.11 / 0.38 / 37% and passes all three targets - a gain, not recorded: the baseline was not re-run),
+  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.18 / 0.39 / 26%, Sapporo 0.04 / 0.17 / 81% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Kansai 0.12 / 0.41 / 27% (Osaka and Himeji as one city, issue #255; Osaka alone was 0.18 / 0.44 / 17%; with Okayama, issue #267, it measures 0.11 / 0.38 / 37% and passes all three targets - a gain, not recorded: the baseline was not re-run; with Nara, issue #268, 0.11 / 0.35 / 45%, passing, not recorded either - Nara's torii is its own drawing because the kit's `torii-red` beside `shrine-red` measured Kansai's building overlap at 0.14, worse than the baseline),
   Asahikawa 0.00 / 0.11 / 87% (rebuilt from its own art, #219 stage B: it was 0.27 / 0.20 / 10%; Fukuoka, Hokuriku and Sendai, whose most-alike town it was, fell on buildings with no map of theirs changing), San Franbourne 0.13 / 0.32 / 69%. `--update` records today's numbers: do it when a rebuild made a city better or
   a new town landed, and say so in the commit. Never to hide a city getting worse.
 - The 28 Nov baseline records only gains since the 27 Nov one (issue #264; no number is worse): Osaka was
@@ -276,6 +278,59 @@ stores, houses and shrines takes any door or seed), keep their digests, and comp
   otherwise (or with `--pil`, which is how the committed map is made) draws the rooms itself via `node tools/play.js render`, which is also the
   "look at the render" step for a new room: `node tools/play.js render <Room> out.png [--scale .5] [--colliders]`.
 
+## House look: GuttyKreum
+
+The look every generated sprite is drawn in, so that it sits beside the purchased GuttyKreum art it hangs on
+(issue #279, the pilot of #278: the ad pool; #280 to #284 redraw the rest). Every number here was measured
+from the 11 sheets in `../art-source/GuttyKreum`. **Compare a redraw against the sheets, on a contact sheet
+(`python3 tools/house_look.py --sheet OUT.png [--scale N] PNG...`), not from memory**; keep a crop of the
+sheets outside the repository and outside anything published (the packs may not be redistributed).
+
+- **Grid**: draw at half size, 32px a cell, and double (`Image.NEAREST`). Never mix pixel sizes in one sprite.
+- **Palette**: only colours of the sheets (516 between them; 55 to 189 a sheet), taken as ramps of 4 to 6
+  tones (`house_look.RAMPS`). A shadow is not the base mixed with black: it moves in hue toward red-brown,
+  indigo or navy (gold `c6a663` h41 -> `86624f` h21; green `6c8e7f` h154 -> `506b6b` h180; blue `5a86de`
+  h220 -> `172459` h228), and a highlight toward cream, pink or cyan (red `d16b56` -> `ffe2e0`; blue ->
+  `bbe9ff` h199). The darkest tones are `2a2636`, `2c2d51`, `0a1627`; pure black is not used.
+- **Outline**: the silhouette is 1px of ink, `0a1627` (or `080d16`): 100% of UrbanAccessories' silhouette
+  pixels, 81 to 90% of `GK_JC_B` and `GK_DB_B`'s (the rest, and half of `GK_DB_F`'s, is `2a2636`). Never
+  black. Lines inside the silhouette take the darkest tone of the family they cross (`8a3a22` in red,
+  `172459` in blue, `2c2d51` in glass, browns in wood), ink only between two families (`line_art`'s rule 6).
+- **Light**: from the upper left. Top and left edges take the `hi` tone, bottom and right the `lo`; a lip
+  casts one row of shadow on what is under it.
+- **Colours per sprite**: 8 to 16 for a sprite of one or two cells (the sheets' signs use 10 to 12), up to
+  24 for a larger one (the sheets' objects: median 17, quartiles 12 and 25). Two or three ramps and ink.
+- **Flat areas**: a face is never one colour from edge to edge, and no colour covers half a sprite. Either
+  texture it with alternating rows of two neighbouring tones (scanlines, courses, planks), or shade it: a
+  lighter row along the lit edge and a darker part on the far side, joined by a single dithered row. Dither
+  is an edge, never a gradient (at most 1.6% of a sheet's 2x2 blocks are checkered).
+- **Text**: PixelMplus12 at 12px, 1-bit, one pixel thick, lighter than its ground with a (+1, +1) shadow in
+  the ground's `line` tone, or darker with none.
+
+`tools/house_look.py` holds the helpers, and is a leaf: it imports only the standard library and Pillow, so
+any generator can import it (it must not import `line_art` or a generator, which would make a cycle). A
+material is `line_art`'s `(base, hi, lo, line)` tuple (`material(ramp, i)`: tones i, i+1, i-1, i-2), so
+`line_art.paint` takes it as it is. `canvas`, `double`, `fill`; `outline` (ink on the clear pixels
+4-adjacent to drawn ones, the rule of `generate_hokkaido.outline`); `bevel` (light from the upper left);
+`scanlines`; `shade` (a painted face: a lit top row, the lowest third darker, one dithered row between);
+`pixmap` (a hand-set picture, one character a pixel) and `stamp`; `text` / `text_size` (PixelMplus12,
+horizontal or vertical, ー upright and small kana in the upper right when vertical); `sheet`. Rectangles,
+pixel access and 1-bit text only, so every Pillow paints the same pixels. `tools/tests/house-look.test.js`
+holds the ramps to the sheets and the ad pool to the recipe.
+
+A sign board (`generate_ads.py`), as the sheets' own boards are built: an ink outline with the corner pixels
+clear; a steel housing, its lip `dae2e4` lightest, the bottom and right darkest, and the lip's one-row
+shadow on the face; a lit face in scanlines or a painted one shaded, the text on it, the sub on a band along
+the bottom.
+
+Kanazawa's ten building fronts in `tools/generate_kanazawa_art.py` (the three `chaya-front`s, the gold-leaf
+shop, the phonograph museum, Katamachi's four bars and the samurai house; #307, part of #290) are drawn by it
+and held to it by `tools/tests/kanazawa-art.test.js`. The castle's gate, turret, storehouse and five wall
+pieces and the Tsuzumi-mon (#385, part of #312) are drawn the same way, their roofs hipped and seen from
+above in the pack's tile, and held by the same test file. Kenrokuen's lanterns, pines, tea house, bridge, moss
+and path tiles (#386) are drawn the same way; the ground tiles and the bridge are flat, and `2a3151` at alpha 90
+is their only translucent colour.
+
 ## Asset Generation
 
 Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/`:
@@ -287,10 +342,23 @@ Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/
 
 Run with: `python3 tools/generate_<type>.py`
 
+`tools/generate_ads.py [--sheet out.png]` draws the ad pool, `assets/ads/` and its `manifest.json`, that
+`RoomManager.placeSignage` hangs on the `signage` spots (issues #26, #279): 12 square, 12 tall, 14 wide and 6
+big boards from `SPECS`, in the house look above (`--sheet` also writes a contact sheet of the pool, in
+manifest order). The text is the game's `fonts/PixelMplus12-Grid.ttf` at 12px, so the tool runs, and is
+checked, on any machine with Pillow. A 12px glyph holds less than scaled text did, so each shape has a fixed
+budget and a spec that does not fit raises, naming itself: a square 1 or 2 glyphs, a tall 2 to 4 set
+vertically (a sub only under 3 or fewer), a wide or big 60px of title (5 full-width glyphs), a sub 24px on a
+square or tall and 60px on a wide or big (a half-width glyph is 6px). A big has a picture panel, the
+hand-set `PICTURES` its spec names in `motif`. `--claude N` asks for more specs and skips the ones that do
+not fit. The file names are numbered per shape in `SPECS` order, which `generate_izakaya.py`'s pinned
+boards depend on: append, do not reorder.
+
 `tools/generate_cooler_art.py [--preview out.png]` draws `office-fridge_0_0`, the konbini's upright
 glass-door drinks cooler (issue #140): 1x2 cells, fully procedural (no source image or font, so a re-run is
-byte-identical), in the steel greys and glass blues of the `office-shelf-*` / `office-freezer` furniture
-and, like them, drawn at half size and pixel-doubled. Size (64x128) and anchor (0.5, 0.25) are fixed by the
+byte-identical), in the house look: the pack's steel lit from the upper left, and its dark glass with a
+slanted glare (`pane` from `generate_sendai_art.py`) with the drinks showing through; drawn at half size and
+pixel-doubled. Size (64x128) and anchor (0.5, 0.25) are fixed by the
 maps that already place it - change the art, not the footprint. Needs Pillow. In a 7-Eleven it stands
 against the back wall, its upper cell over the wall's lower row (issue #221).
 
@@ -302,6 +370,14 @@ blocks, the ice-cream chest, the magazine rack, the baskets and the mat. Fully p
 byte-identical; it writes each sprite's `spriteMetadata` and `tileNames` and `generate_konbinis.py`
 appends the keys to the palette as it places them. Sizes are whole cells and are what the plans in
 `generate_konbinis.py` assume - change the art, not the footprint. Needs Pillow.
+
+`tools/generate_izakaya_art.py [--sheet out.png]` draws the Izakaya's interior in Tokyo, the 15
+`izakaya-in-*` sprites (issue #286), in the house look (above, with `house_look.py`'s helpers and a timber
+ramp of sheet colours of its own): the board floor, the wall tops and the doorway's thresholds, the two-row
+back wall (plain, with the menu strips, with the clock), the back bar, the bar, the table, the hung lantern
+(its night glow is in its `spriteMetadata`) and the sake casks. Fully procedural with fixed seeds, so a
+re-run is identical; it writes each sprite's `spriteMetadata` and `tileNames` and `generate_izakaya.py`
+appends the keys to the palette as it places them. Needs Pillow.
 
 `tools/generate_seven_eleven_art.py [--preview out.png]` draws `seven-eleven_0_0`, the 7-Eleven on the
 street (issue #89): 3x4 cells, a one-storey store drawn in the manner of the GuttyKreum city pack - the flat
@@ -325,3 +401,8 @@ drawn with rectangles and points only (no Pillow ellipse, polygon or slanted lin
 between Pillow versions), so a re-run draws the same pixels on any Pillow; it writes each sprite's
 `spriteMetadata` and `tileNames`, and `generate_devhouses.py` appends the keys to the palette as it places
 them. Sizes are whole cells and are what the floor grids assume. Needs Pillow.
+The two buildings that stand on a street are in the house look (#319): sheet colours only (their own `S_*`
+block), a navy `172459` outline, the pack's dark glass with its slanted glare, ragged foliage and tiled
+roof, from `generate_sendai_art.py` (`pane`, `foliage`, `roof_tile`, `speck`, `LEAF`); Tokyo has a flat roof
+seen from above, Osaka its roof garden seen from above inside a kawara eave. The 35 interior sprites are
+still in the older look (#325).

@@ -37,10 +37,13 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Gassho farmhouses, the suspension bridge, the viewpoint, the peaks | Shirakawago | `shirakawa-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 | Glass Art Museum, tram and stop, black-ramen shop, port observation tower | Toyama | `toyama-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 | Himeji Castle: the keep, a corner turret, the gatehouse, the white wall, the moat bridge | Himeji | `himeji-keep_0_0`, `himeji-turret_0_0`, `himeji-gate_0_0`, `himeji-wall_0_0`, `himeji-bridge_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
-| Koko-en's roofed gate | Himeji | `himeji-kokoen-gate_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| Koko-en's roofed gate and its north-south walls | Himeji | `himeji-kokoen-gate_0_0`, `himeji-kokoen-wall-v_0_0`, `-v-top_0_0`, `-v-end_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 | Okayama Castle: the black "crow" keep | Okayama | `okayama-keep_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
-| Korakuen: the Tsukimi bridge, the red-crowned cranes, the stones at the island's corners | Okayama | `okayama-bridge_0_0`, `okayama-crane_0_0`, `okayama-bank-rock_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| Korakuen: the Tsukimi bridge, the red-crowned cranes, Yuishinzan (the hill), the stones at the bend's inner corner | Okayama | `okayama-bridge_0_0`, `okayama-crane_0_0`, `okayama-mound_0_0`, `okayama-bank-rock_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 | The Momotaro statue, the Bizen-ware stall | Okayama | `okayama-momotaro_0_0`, `okayama-bizen-stall_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| Todaiji: the Great Buddha Hall, the Nandaimon gate | Nara | `nara-daibutsuden_0_0`, `nara-nandaimon_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
+| Kasuga Taisha: the torii, the stone lanterns (the hall is the stock `shrine-red`) | Nara | `nara-kasuga-torii_0_0`, `nara-stone-lantern_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| The deer of Nara Park, the deer cracker stall | Nara | `nara-deer-doe_0_0`, `nara-deer-stag_0_0` (cut from the UrbanAccessoriesv2 sheet by `tools/extract_street.py`), `nara-deer-bow_0_0`, `nara-senbei-stall_0_0` | the bowing deer and the stall drawn by `tools/generate_kansai_art.py` |
 
 The three placeholders are line drawings with colour laid on (#271): the drawing is kept in
 `../art-source/line-art/`, `tools/line_art.py` paints it by rule (regions of the drawing take a material, small
@@ -70,7 +73,8 @@ them over the player, see `occlusion.md`.)
   this ground line (#70) or moves the colliders with it: `map-data.test.js` fails on a solid bottom-row cell
   with nothing standing on it and on an open cell under the art.
 - **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reached by train, and the town of the
-  stitched city `KansaiCity` (see "Kansai": Himeji is walked to from its west edge, and Okayama from Himeji's):
+  stitched city `KansaiCity` (see "Kansai": Himeji is walked to from its west edge, Okayama from Himeji's, and
+  Nara from its east edge):
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
   plaza, with the ferris wheel on the north bank (a gondola at its foot is boarded for one turn and the view:
   see "A turn on the Dotonbori wheel", issue #242). The Dotonbori canal (rows 20-22) runs the whole width of
@@ -80,7 +84,7 @@ them over the player, see `occlusion.md`.)
   platform-edge fence and the continuous border hedges keep the player off the ballast and out from behind
   the fences. `OsakaStation` is registered in `tools/generate_stations.py`
   (`STATIONS` / `TOWN_DOORS`) and so in config `stations`; in `devhouse.world` Osaka sits where
-  `tools/kansai.py` puts it, with Himeji against its west edge (see "Kansai").
+  `tools/kansai.py` puts it, with Himeji against its west edge and Nara against its east edge (see "Kansai").
 - **Adding a landmark**: put a cell-aligned PNG in `assets/sprites/` (register `spriteMetadata` with
   `anchorX = 32/width`, `anchorY = 32/height`, plus `tileNames`), add a prefab spec to
   `tools/make_prefabs.py` (colliders = the base cells only), stamp it from the room generator, and add it to
@@ -108,12 +112,15 @@ Every town is made of named areas, and the data says so: config `districts`, key
 - **One authored list**: `DISTRICTS` in `tools/districts.py`. `python3 tools/districts.py` writes config
   `districts` from it (and works out each district's `spots`: the `LANDMARKS` labels whose standing cell is
   inside its bounds); `--report` prints every district with its spots and where seven authors would stand,
-  and what is in no district. It is a generator in `check_generators.py`: re-run it after an edit to the list
+  and what is in no district; `--coverage` prints where everyone the game shows stands on every trip day,
+  and who is in no district (exit 1 on a stand `UNCOVERED` does not list, or a stale line there). It is a generator in `check_generators.py`: re-run it after an edit to the list
   or a map change that moves a landmark. Never edit config `districts` by hand.
 - **Fields**: `bounds` is `[x0, y0, x1, y1]`, inclusive, in the room's OWN cells (district-local in Tokyo,
   like everything authored); `stand` the cell a visitor to "the district" stands nearest to; `description`
   one line of what is there, written for the blog placement model. Districts of one room never overlap; a
-  room need not be covered edge to edge.
+  room need not be covered edge to edge, but everyone the game shows on a trip day stands inside a district
+  or on a station's platform (`test_shipped_coverage`, #383); `UNCOVERED` in `districts.py` lists the
+  exceptions, each with the ticket that ends it.
 - **What it is for today**: the blog pipeline (`blog-pipeline.md`, "Districts"). The game does not read
   `districts`; the HUD names the ROOM (`hudRoomName`), which for Tokyo's five rooms is the district.
 - **Names are the redesign plan's, bounds are today's map.** A district the plan names that is not built yet
@@ -128,14 +135,16 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Palace | Marunouchi |
 | Park | Park |
 | Shinjuku | Shinjuku |
-| Sapporo | Sapporo Station front, Clock Tower block, Odori Park, Tanukikoji |
+| Karuizawa | Larch road |
+| Sapporo | Sapporo Station front, Clock Tower block, Odori Park, Tanukikoji, Susukino |
 | Asahikawa | Station front and Heiwa-dori, Ramen alley, Asahibashi and the riverbank |
 | Osaka | Dotonbori, Shinsekai |
 | Himeji | Himeji Castle, Koko-en garden |
 | Okayama | Okayama Castle, Momotaro Avenue, Korakuen garden |
+| Nara | Todaiji, Nara Park, Kasuga Taisha |
 | Sendai | Sendai Station front, Aoba Castle ruins, Downtown, Zuihoden, Nikka distillery, Samurai quarter, Matsushima bay |
 | Fukuoka | Hakata Station, Momochi, Canal City, Old Hakata, Nakasu, Dazaifu |
-| Kanazawa | Station front, Higashi Chaya and the temple hill, Katamachi, Castle, Kenrokuen, Nagamachi |
+| Kanazawa | Station front, Higashi Chaya and the temple hill, Katamachi, Castle, Kenrokuen, Nagamachi, Teramachi |
 | Shirakawago | Far bank and bridge, Village, Viewpoint |
 | Toyama | Iwase port, Tram street |
 
@@ -247,7 +256,7 @@ station: the owner's rule is that small places are walked to from their town, no
   cones). Between the gate and the avenue, **Kenrokuen**: the pond with the two-legged **Kotoji lantern** on
   its bank. South-west, **Nagamachi**: an earth lane between earthen walls (Sendai's wall, gate and pine
   sprites), the canal along it, a flat stone bridge (`kanazawa-canal-bridge`, `depthBias: -200`) to a samurai
-  gate and a house in its court. South-east, a shrine in a cedar wood (Teramachi, post 707). Four of its
+  gate and a house in its court. South-east, a shrine in a cedar wood, the Teramachi district (post 707). Four of its
   houses can be walked into (`HouseKanazawa1..4`, `generate_houses.py Kanazawa`, see House interiors): the
   two machiya on Higashi Chaya's lane, the machiya downtown and the samurai's house; the town generator
   knows nothing of them (`roomgen.save_config` keeps their doors through a rebuild).
@@ -288,27 +297,33 @@ station: the owner's rule is that small places are walked to from their town, no
   7-Eleven / vending / pond spots. Fourteen devhouse 2 placements were re-homed there with `--rehome`
   (see `blog-pipeline.md`).
 
-### Kansai: Osaka, with Himeji and Okayama on foot (issues #255, #267; #68, runs 2 and 4)
+### Kansai: Osaka, with Himeji, Okayama and Nara on foot (issues #255, #267, #268; #68, runs 2, 4 and 5)
 
-Osaka, **Himeji** and **Okayama** are three generated rooms the game stitches into ONE walkable room,
-**`KansaiCity`** - the third stitched city, built as Hokuriku is (above; `stitched-city.md`). Osaka is the
-town and has the region's one station. Himeji and Okayama are small places with NO station: you walk to
-Himeji from Osaka, west along Canal-side Avenue, and on along the same avenue to Okayama, where it ends.
-Devhouse 2's Damian was in Okayama on 12 November 2025 (post 745) and in Himeji on the 13th (post 754).
-All three are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji and Okayama" below.
+Osaka, **Himeji**, **Okayama** and **Nara** are four generated rooms the game stitches into ONE walkable
+room, **`KansaiCity`** - the third stitched city, built as Hokuriku is (above; `stitched-city.md`). Osaka is
+the town and has the region's one station. Himeji, Okayama and Nara are small places with NO station: you
+walk to Himeji from Osaka, west along Canal-side Avenue, and on along the same avenue to Okayama, where it
+ends; and east along it the other way to Nara, where it ends below the Nandaimon. Devhouse 2's Damian was in
+Okayama on 12 November 2025 (post 745), in Himeji on the 13th (post 754) and in Nara on the 14th (post 764).
+All four are to be rebuilt to one plan, one at a time (Himeji is, by #275): see "Kansai: one plan for Osaka,
+Himeji and Okayama" below.
 
 - **Layout** (`tools/kansai.py`, the one place the generators agree on it; city cells, the union's top-left
   is 0,0). Kansai is planned as FIVE districts, one ticket each, and `AT` / `SIZE` hold all five so that a
   later ticket moves nothing: **Okayama** 44x40 at (0,36), **Himeji** 44x40 at (44,36), **Osaka** 50x46 at
   (88,30), Nara 52x40 at (138,36), LakeBiwa 46x36 at (152,0). **`BUILT`** names the ones that exist
-  (`('Himeji', 'Okayama', 'Osaka')` today); config `cities.KansaiCity.rooms` is exactly those. A join
-  (`JOINS`, two today) is open only when both its districts are built: a generator asks
+  (`('Himeji', 'Nara', 'Okayama', 'Osaka')` today); config `cities.KansaiCity.rooms` is exactly those. A
+  join (`JOINS`, four rows today) is open only when both its districts are built: a generator asks
   `ks.is_open(district, side)` and closes its edge otherwise, so Himeji's west edge opened when Okayama was
-  built (`generate_himeji.py` keeps the closed branch), and Osaka's west rail caps and seam pieces are there
-  only because Himeji is. **Okayama's own west edge has no join**: nothing is planned beyond it. The city
-  today is 138x46 (`depthScale` 1): Himeji's and Okayama's top row is six rows below Osaka's, and that gap
-  is the stitcher's woodland (`cities.KansaiCity.backdrop`, a copy of Hokuriku's), which also carries
-  Osaka's railway on west to the city's edge - the track runs two rows above Himeji's keep's roof.
+  built (`generate_himeji.py` keeps the closed branch), Osaka's west and east rail caps and seam pieces are
+  there only because Himeji and Nara are, and **Nara's north edge is wood until Lake Biwa is built** (its row
+  `('Nara', 'n', …, 'LakeBiwa', …)` is already in `JOINS`, inert until then; issue #269 opens it).
+  **Okayama's own west edge has no join**, nor Nara's east and south ones: nothing is planned beyond them.
+  The city today is 190x46 (`depthScale` 1): Himeji's, Okayama's and Nara's top row is six rows below
+  Osaka's, and that gap is the stitcher's woodland (`cities.KansaiCity.backdrop`, a copy of Hokuriku's),
+  which also carries Osaka's railway on west and east to the city's edges - the track runs two rows above
+  Himeji's keep's roof, and above Nara on the bare strip the backdrop keeps clear of trees
+  (`extendClear`), in view from the end of the towpath.
 - **The seam**: Osaka's west edge meets Himeji's east edge. **Canal-side Avenue** (Osaka rows 24-28: a
   pavement, three rows of road, a pavement) is Himeji rows 18-22, and **Osaka's canal** (rows 20-22) runs on
   as the **castle moat** (Himeji rows 14-16): the same Floor and Water tiles either side of the edge, with
@@ -324,45 +339,105 @@ All three are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji
   same drawing): a `flavour` rule is matched by sprite key alone, so one key cannot say two lines, and a
   key beginning `kansai-fingerpost` would be caught by the first rule. Himeji has one of each, by the seam
   it is for.
-- **Osaka** changed only at its west edge: no bushes cap the rail corridor on (0, 3..5) - the line carries
-  on west - the pavement's seam pieces on (0,24) and (0,28), the fingerpost at (2,28), and the five seam
-  transporters. A later Osaka must keep the avenue on rows 24-28 and the canal on rows 20-22 at that edge.
-- **Himeji** (`tools/generate_himeji.py`): north, **Himeji Castle** on its hill - the white **keep**
-  (`himeji-keep`, 10x8 at (8,0), on the district's top row, so its art is exactly its footprint: nothing may
-  overhang into the row above, which is not Himeji's; `game.lookUp.sprites` has it, so the camera looks up
-  from the terrace in front of it), a corner **turret**, and a gravel terrace with pines and stone lanterns.
-  Two wall tiers hold the hill up (rows 10-13: the castle's own white plaster wall, `himeji-wall`, over a
-  stone base) and the only way up is the **gatehouse** (`himeji-gate`, 6x4 at (30,10); the gateway is its
-  columns 2-3): over the timber **bridge** across the moat (`himeji-bridge`, 2x4, flat with
-  `depthBias: -200`), through the gateway, up the steps. The **moat** ends at a bank at column 6 and is
-  Himeji's `waterways` entry, declared from column 7 (see "Boats" in `ambient-traffic.md`), so the canal's
-  boats sail it; it is `pond-autotile`, so it can be fished. The avenue runs on out of the west edge to
-  Okayama (it ended at the woods at column 5 until #267). South
-  of it, **Koko-en**: a garden behind an earthen wall (Sendai's wall and pine sprites), entered through its
-  roofed gate (`himeji-kokoen-gate`, 4x3 at (20,23); the gateway is its columns 1-2) - a gravel loop round a
-  pond, crossed by the same timber bridge, with lanterns, pines and maples. There is no building with a
-  door: the keep and the turret are solid over their whole footprint, and the keep is looked at, not entered.
-- **Okayama** (`tools/generate_okayama.py`, issue #267) is laid out on one north-south axis, columns
-  21-22: the keep, the steps down the stone wall, across the avenue, the bridge, the island. North,
-  **Okayama Castle**, the black "crow castle" (`okayama-keep`, 8x7 at (18,2): black boarded walls with a
-  white band under each eave, gold shachi on the ridge, a low stone base; solid over its whole
-  footprint, roof rows too; `game.lookUp.sprites` has it), on a gravel terrace with pines and stone lanterns
-  above a **stone wall** (rows 13-14) whose only way up is the steps on the axis. The avenue (rows 18-22)
-  ends west in a paved **plaza** with the bronze **Momotaro** and his dog, monkey and pheasant
-  (`okayama-momotaro`, 2x3 at (8,17)); a **stall of Bizen ware** (`okayama-bizen-stall`, 3x3 at (15,15))
-  stands beside the pavement. South, **Korakuen** is an island (7..38, 27..35) in a **river**: a ring of
-  solid `pond-autotile` (5..40, 24..37; it can be fished), crossed only by the steel **Tsukimi bridge**
-  (`okayama-bridge`, 2x4 at (21,24), flat with `depthBias: -200`). The pond set has no inner-corner piece,
-  so a heap of the rim's own stones (`okayama-bank-rock`, 2x2, flat) lies over each corner of the island,
-  under a pine. On the island: a gravel loop round the lawns, a pond, maples and pines, lanterns and two
-  red-crowned **cranes** (`okayama-crane`, 1x2). The statue, the stall and a crane each answer a bump
-  (`flavour` rows). The river is NOT a `waterways` run: no arm of the ring leads anywhere, so a boat would
-  fade in and out in full view. There is no building with a door and no ordinary sealed building: the keep
-  is looked at, not entered, and the stall is an open counter. The west, north and south edges are wood.
-- **The Map** has a dot for Himeji and one for Okayama (`config.places.Himeji` / `.Okayama`,
-  `"minor": true`: a small place, whose label gives way to the towns' - `hud-input-touch.md`). Debug
-  map-click travel lands on Himeji (40,18), on the avenue three cells in from Osaka, and on Okayama (40,18),
-  three cells in from Himeji (`Places.arrival`).
+- **The third seam** (issue #268): Osaka's east edge meets Nara's west edge. The avenue carries on (Nara
+  rows 18-22) and the canal runs on as Nara's **river** (rows 14-16), with the same seam pieces and five
+  hidden transporters each way. Osaka's ten are its west five, then its east five: the row order of
+  `JOINS`, which `generate_osaka.py` writes as it is (it does not call `kept_order`), so keep Osaka's west
+  row first there. Its fingerposts are a third key, **`nara-fingerpost`**: Osaka (47,28), Nara (3,22).
+- **Osaka** changed only at its two edges: no bushes cap the rail corridor on (0, 3..5) or (49, 3..5) - the
+  line carries on west and east - the pavement's seam pieces on (0,24), (0,28), (49,24) and (49,28), the
+  fingerposts at (2,28) and (47,28), and the ten seam transporters. A later Osaka must keep the avenue on
+- **Himeji** (`tools/generate_himeji.py`; rebuilt to the plan below by #275): a climb. North,
+  **Himeji Castle** on its hill - the white **keep** (`himeji-keep`, 10x8 at (8,0), on the district's top
+  row, so its art is exactly its footprint: nothing may overhang into the row above, which is not Himeji's;
+  `game.lookUp.sprites` has it, so the camera looks up from the court in front of it) - reached by a
+  **hairpin through three courts** of swept `sand-autotile` (Fukuoka's beach; no `gravel-autotile` in
+  Himeji). Over the timber **bridge** across the moat (`himeji-bridge`, 2x4 at (32,14), flat with
+  `depthBias: -200`) and through the **gatehouse** (`himeji-gate`, 6x4 at (30,10); the gateway is its
+  columns 2-3, with steps) in the white wall (rows 10-13: `himeji-wall` over a stone base, x 6..41) into
+  **Sannomaru** (23..41, 6..9); east to the **steps** (38-39) in an inner stone wall (rows 4-5, x 20..41);
+  back west along the **upper walk** (18..41, 2..3); down the **lane** on the keep's east flank (18..19,
+  2..7) into **Honmaru** (6..19, 8..9), in front of the keep. The corner **turret** (`himeji-turret`, 3x4
+  at (20,6), solid) stands against the inner wall down to the white wall and closes Honmaru from Sannomaru,
+  so the hairpin is the only way: 51 steps from the bridge's landing to the keep's visitor at (12,8). Pines
+  and stone lanterns stand in the courts, never on (9..16, 8..9). The **moat** ends at a bank at column 6
+  and is Himeji's `waterways` entry, declared from column 7 (see "Boats" in `ambient-traffic.md`), so the
+  canal's boats sail it; it is `pond-autotile`, so it can be fished. The avenue runs on out of the west
+  edge to Okayama. South of it, **Koko-en**: behind an earthen wall on rows 24-25 (Sendai's wall sprite),
+  entered through its roofed gate at the Okayama end (`himeji-kokoen-gate`, 4x3 at (8,23); the gateway is
+  its columns 1-2, paved), it is **three walled rooms in a row** on rows 26-37 - A (x 6..17) pines and
+  lanterns, B (19..30) the koi pond (`pond-autotile`, 8x3 at (21..28, 30..32), written by hand: `b.pond`
+  makes two rows) under the same timber bridge at (24,30), C (32..40) maples. A north-south earthen wall
+  one cell thick (`himeji-kokoen-wall-v` in a run, `-v-top` at a run's north end below an opening, `-v-end`
+  1x2 at its south end, where the end face shows; each `b.prop`, solid) closes the west and east sides
+  (columns 5 and 41, unbroken) and parts the rooms (column 18 open on rows 28-29, column 31 on rows 34-35),
+  so the walk is a zigzag. Its paths are one cell of stepping stones (`b.paver`), not gravel. The border
+  woods are pine and cedar; maples grow only in room C. There is no building with a door: the keep and
+  the turret are solid over their whole footprint, and the keep is looked at, not entered.
+- **Okayama** (`tools/generate_okayama.py`, issues #267, #276) is a stroll: the garden is the district, the
+  keep is scenery, and the road ends. The avenue comes in from Himeji (34..43, 18..22; road
+  `k.road_h(38, 43, 19, cap_w=True)`, six cells, capped west) and stops in a paved **plaza** on the river's
+  east bank (34..40, 14..22; row 23 is the grass verge the fingerpost's feet stand on, (39,23)): the bronze
+  **Momotaro** and his dog, monkey and pheasant (`okayama-momotaro`, 2x3 at (35,16)) and a **stall of Bizen
+  ware** (`okayama-bizen-stall`, 3x3 at (37,14), bumped from row 17; its top row (37..39, 14) is solid too, so
+  nobody stands behind the awning). The **river** is one bend of solid `pond-autotile` written by hand on
+  `Water`: an east-west reach (0..32, 19..21) in at the west edge, turning south as a reach (29..32,
+  22..39) out of the bottom edge (row 19 `edge-n`, (32,19) `corner-ne`, column 32 below it `edge-e`, row 21
+  west of 29 `edge-s`, column 29 from row 22 `edge-w`, the rest `center`). It can be fished; it is not a
+  `waterways` run, and it has no `corner-nw`: keep it so. The pond set has no inner-corner piece, so a heap
+  of the rim's own stones (`okayama-bank-rock`, 2x2, flat) is stamped at (28,21), over the bend's one inner
+  corner at the garden's tip. North of it, **Okayama Castle**, the black "crow castle" (`okayama-keep`, 8x7
+  at (14,12): black boarded walls with a white band under each eave, gold shachi on the ridge, a low stone
+  base; solid over its whole footprint, roof rows too; `game.lookUp.sprites` has it), stands low at the
+  water, its foot on row 18 and the river under it, beside a small gravel **court** (22..33, 14..18) that
+  opens onto the plaza on all five rows, with one pine (trunk (31,15)). No terrace, wall or steps. Beside
+  the keep, the steel **Tsukimi bridge** (`okayama-bridge`, 2x4 at (22,19), flat with `depthBias: -200`;
+  open cells (22..23, 19..21)) lands on row 22 and is the only way into **Korakuen**, the inside of the bend
+  (3..28, 22..37; one column wider than the plan's 3..27, so column 28 is lawn on the bank and not wood):
+  open lawn, one cranked two-cell gravel path ((22..23, 22..25), (10..23, 24..25), (10..11, 24..31): one
+  gravel region with the court and the bridge's deck), the hill **Yuishinzan** (`okayama-mound`, 5x4 at
+  (4,25), solid over all of it), the pond (6..13, 32..35, solid, corners and edges by position), two
+  red-crowned **cranes** (`okayama-crane`, 1x2, feet (14,27) and (16,28)), three maples, two cedars, the
+  pond's pine and one stone lantern (feet (12,31), where the path meets the pond). The woods round it all
+  are solid maple and cedar (`AUTUMN`, no pine), and the only open edge cells are the five seam cells.
+  **The look-up**, measured: from the garden's bank, row 22 under the keep's columns (x 14..21), four
+  cells south of its foot, the weight is 0.83 and a desktop (1280x960, offset 207px) and a portrait phone
+  (390x844, 228px) see the whole keep across the water (on desktop about 25px of its top row is behind the
+  40px bar). A **landscape phone** (844x390, 101px, capped by `foot`) sees only its stone base and the foot
+  of the first storey: its view is 7.5 cells tall and the keep's top is 10 rows north of the bank, the same
+  limit Himeji's keep has. Row 23 gives 0.5, the bridge 0.75, the court beside the keep 0. Rows 22-23 west
+  of the bridge stay clear: no tree or prop there. The statue, the stall, a crane and the hill each answer a
+  bump (`flavour` rows; the hill's kind is `mound`). There is no building with a door and no ordinary
+  sealed building: the keep is looked at, not entered, and the stall is an open counter.
+- **Nara** (`tools/generate_nara.py`, issue #268, 52x40). **Todaiji** stands on one north-south axis,
+  columns 36-37: the **Great Buddha Hall** (`nara-daibutsuden`, 12x8 at (31,2): two broad hipped roofs, the
+  gold horns on the ridge, white plaster between dark posts, the curved gable over the middle doors; solid
+  over its whole footprint, roof rows too, with wood on rows 0-1 behind it; `game.lookUp.sprites` has it, so
+  the camera looks up from the court) over its gravel **court**, behind an earthen wall (rows 14-15,
+  Sendai's) crossed only through the **Nandaimon** (`nara-nandaimon`, 6x4 at (34,12); the gateway is its
+  columns 2-3, walked under like Koko-en's gate). The avenue in from Osaka ends below it in a paved **plaza**
+  with a **deer cracker stall** (`nara-senbei-stall`, 2x2 at (41,16)). West, Osaka's canal runs on as a
+  **river** (rows 14-16) that bends north up columns 20-22, with a gravel **towpath** (23-24) beside it; both
+  stop at row 2 until Lake Biwa joins there (the river's closed head is `edge-n` and a `corner-ne`, with an
+  `okayama-bank-rock` over its west corner and another over the inside of the bend: no `corner-nw`, which
+  the blog pipeline would read as "the pond"). The river is Nara's `waterways` entry as far as the bend
+  (columns 0-19), so the canal's boats sail on into it and fade out where it turns north. South, **Nara
+  Park**'s lawn with maples and pines, and **deer** on the lawn, the court and the plaza: the two resting
+  ones of the UrbanAccessoriesv2 sheet (`nara-deer-doe`, `nara-deer-stag`) and a drawn bowing one
+  (`nara-deer-bow`), all 1x1 and solid. South-east, **Kasuga Taisha**: through a vermilion torii
+  (`nara-kasuga-torii`, 4x4 at (31,24), its own art and not the kit's `torii-red`, which made Kansai worse
+  than its distinctness baseline), up a gravel approach lined with **stone lanterns** (`nara-stone-lantern`,
+  1x2, nineteen) round a cedar wood, to the stock `shrine-red` at (42,24), whose door (44,30) leads into its
+  worship hall `ShrineNara1`, named "Kasuga Taisha" (`generate_shrines.py` `NAMES`). The nineteenth
+  lantern, at the plaza's south-east corner, closes the one cell behind the shrine's roof (42,24). The
+  lanterns are unlit at night, like Sendai's (`DayNight.js` halos `-lanterns`, not `-lantern`: keep the key
+  singular). Every Nara sprite answers a bump (`flavour` rows). No station, no railway, no bin, no building
+  with a door but the shrine. The east and south edges are wood, and the north edge until Lake Biwa.
+- **The Map** has a dot each for Himeji, Okayama and Nara (`config.places.Himeji` / `.Okayama` / `.Nara`,
+  `"minor": true`: a small place, whose label gives way to the towns' - `hud-input-touch.md`). Nara's geo is
+  Todaiji's, so its dot touches Osaka's (`Places.order`). Debug map-click travel lands on Himeji (40,18), on
+  the avenue three cells in from Osaka, on Okayama (40,18), three cells in from Himeji, and on Nara (3,18),
+  three cells in from Osaka's east end (`Places.arrival`).
 - **Districts and the blog pipeline**: `districts.py` has `castle` and `kokoen`; `LANDMARKS` has `Himeji
   Castle` (the visitor stands at (12,8), on the terrace in front of the keep's middle, where the camera
   looks up) and `Koko-en garden`, both `rooms:`-scoped. "the pond" is a spot of Koko-en, not of the castle:
@@ -370,18 +445,26 @@ All three are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji
   found first (`kansai.test.js` holds it there). Damian's 13 November placement was re-homed from Osaka with
   `blog_to_npc.py --rehome Damian 2025-11-13 "Himeji · Himeji Castle"` (see `blog-pipeline.md`).
   Okayama has `castle`, `momotaro` (the avenue and the plaza) and `korakuen`, and four `rooms:`-scoped
-  `LANDMARKS` rows: `Okayama Castle` (the visitor stands at (20,9), in front of the keep and off the steps'
-  columns), `Korakuen garden` (anchored on the first crane: (27,31), the lawn beside it), `the Momotaro
-  statue` (8,20) and `the Bizen-ware stall` (16,18). "the pond" is a spot of Korakuen for the same reason
-  it is Koko-en's: the label's tile is found in `"x,y"` string order, and the garden pond's `"14,31"` sorts
-  before the river's corner `"5,24"` - keep the garden pond's first column between 10 and 43. Damian's 12
-  November placement was re-homed from Hakata's platform with
+  `LANDMARKS` rows: `Okayama Castle` (the visitor stands at (24,16), on the court beside the keep and off
+  the bridge's columns; there is no look-up there, so a castle post gets the court and the view is from the
+  garden), `Korakuen garden` (anchored on the first crane: (13,27), the lawn beside it), `the Momotaro
+  statue` (35,19) and `the Bizen-ware stall` (38,17). "the pond" is a spot of Korakuen because the garden
+  pond's `pond-autotile_corner-nw` (6,32) is the room's only one: the river has no `corner-nw`: keep it
+  so. Damian's 12 November placement was re-homed from Hakata's platform with
   `blog_to_npc.py --rehome Damian 2025-11-12 "Okayama · Korakuen garden"`.
-- **Build order** (art tools with a Pillow python): `generate_kansai_art.py`, `make_prefabs.py`,
-  `generate_okayama.py`, `generate_himeji.py`, `generate_osaka.py`, the maps in `../devhouse.world` (as
-  `kansai.AT` places them: the city's (0,0) is world cell (-258,31), which is Okayama's corner now) and
-  `config cities.KansaiCity`, `sync_cities.py`, `districts.py`, `config_to_tiled.py Osaka Himeji Okayama`,
-  `play.js lint` for `Osaka`, `Himeji`, `Okayama` and `KansaiCity`,
+  Nara has `todaiji` (the hall, the court and the plaza), `nara-park` (the lawn, the river and the towpath)
+  and `kasuga`, and five `rooms:`-scoped `LANDMARKS` rows: `the Great Buddha Hall` (35,10), in front of the
+  hall and off the axis; `the Nandaimon gate` (35,16), the plaza below its west post; `the deer cracker
+  stall` (41,18); `the deer of Nara Park` (anchored on the first stag in `"x,y"` order, (12,29): the lawn
+  beside it, (13,29)); and `Kasuga Taisha` (45,32), the approach east of the door's column (the generic
+  `the shrine` is there too). Damian's 14 November placement was re-homed from Osaka's canal bank with
+  `blog_to_npc.py --rehome Damian 2025-11-14 "Nara · the Great Buddha Hall"`. No start room changed.
+- **Build order** (art tools with a Pillow python): `extract_street.py` (the deer), `generate_kansai_art.py`,
+  `make_prefabs.py`, `generate_okayama.py`, `generate_himeji.py`, `generate_nara.py`, `generate_osaka.py`,
+  `generate_shrines.py Nara`, the maps in `../devhouse.world` (as `kansai.AT` places them: the city's (0,0)
+  is world cell (-258,31), which is Okayama's corner now) and `config cities.KansaiCity`, `sync_cities.py`,
+  `districts.py`, `config_to_tiled.py Osaka Himeji Okayama Nara ShrineNara1`, `play.js lint` for `Osaka`,
+  `Himeji`, `Okayama`, `Nara`, `ShrineNara1` and `KansaiCity`,
   `make_worldmap.py`, `check_distinct.py` (its row is `Kansai`). A ticket that builds the next district
   adds its generator, adds the district to `BUILT` and to `cities.KansaiCity.rooms`, re-runs the neighbours'
   generators (their edge opens) and drops its stub from `japan-map.test.js`. In `devhouse.world` the five
@@ -396,7 +479,8 @@ tickets rebuilds one room to this plan, rewrites that room's bullet above, and d
 **Fixed** means a ticket may not move it. A **target** is the cell the plan was drawn with: the ticket's own
 design may shift it by blockout, but not change what it is or which side of what it stands on.
 
-- **What repeats today.** Himeji and Okayama are the same room twice:
+- **What repeated.** Himeji and Okayama were the same room twice as #274 found them. Neither is that room
+  now (#275, #276): the list is history, kept so that a later district does not bring it back:
   1. *The same three bands on the same rows of a 44x40 room*: castle north (Himeji rows 0-13, Okayama
      3-14), the avenue straight through on rows 18-22, a garden south (rows 24-37).
   2. *The same castle*: a salmon `gravel-autotile` terrace as wide as the room (Himeji 6..41, Okayama
@@ -450,53 +534,6 @@ design may shift it by blockout, but not change what it is or which side of what
   - `check_distinct.py`: no ticket leaves Kansai worse than `tools/distinct_baseline.json`. It is "most
     like Sendai" through the `sendai-*` trees, lantern and wall: no ticket adds another `sendai-*` kind.
 
-- **Himeji (#275): a climb.** The castle is the district, and you earn the keep.
-  - *Fixed*: the keep `himeji-keep` 10x8 at (8,0) and its visitor's cell (12,8); the moat on rows 14-16
-    from its bank at x=6 to x=43 with its `waterways` entry from 7; the avenue on rows 18-22 across the
-    whole room.
-  - *North of the moat, three courts walked as a hairpin* (targets): over the bridge (columns 32-33) and
-    through the gatehouse (6x4 at (30,10)) in the white wall on its stone base (rows 10-13, x 6..41) into
-    **Sannomaru** (23..41, 6..9); east to steps (38-39) up an inner stone wall (rows 4-5, x 20..41); back
-    west along the **upper walk** (18..41, 2..3); down the lane by the keep's east flank (18..19, 2..7)
-    into **Honmaru** (6..19, 8..9), in front of the keep. The turret (3x4, solid) stands on (20,6) and
-    closes Honmaru from Sannomaru, so the hairpin is the only way. About 50 cells from the bridge to the
-    visitor, where it is 28 today.
-  - *South of the avenue, Koko-en as three walled rooms in a row* (targets), not a loop: the earthen wall
-    on row 24; the roofed gate 4x3 at (8,23), gateway columns 9-10, at the Okayama end; rooms A (7..16), B
-    (19..30) and C (33..40) on rows 26-37, parted by solid tree lines two cells thick with one opening
-    each, staggered (A-B on rows 28-29, B-C on rows 34-35) so the walk is a zigzag. B is the lord's garden
-    with the koi pond (21..28, 30..32) under the timber bridge; A is pines and lanterns; C is maples.
-    Paths are one cell of `k.paved`, not gravel.
-  - *Ground and trees*: `sand-autotile` for all three courts; no `gravel-autotile` in Himeji. (The sand
-    is Fukuoka's beach, from `generate_fukuoka_art.py`. If `check_distinct.py` counts that against
-    Kansai, #275 recolours a court family of its own in `generate_kansai_art.py`.) Pines north of the
-    avenue and in the border woods (pine and cedar); maples only in Koko-en.
-  - *On arrival from Osaka* the canal becomes the moat beside the road and the white wall rises behind it;
-    the bridge and gate are eight cells in, and the keep is not seen until the upper walk. *From Okayama*
-    the Koko-en gate comes first, and the keep is overhead behind a wall with no way in until the far end.
-- **Okayama (#276): a stroll.** The garden is the district; the keep is scenery, and the road ends.
-  - *Fixed*: the avenue's cells at the seam; Momotaro, the Bizen-ware stall and two cranes stay in the
-    room; Damian's post of 12 November stays in Korakuen beside the first crane (cells under "Posts").
-  - *The river* (targets) is a bend of `pond-autotile`, solid: an east-west reach on rows 19-21 from the
-    west edge to x=32 - the avenue's three road rows carried on as water - turning south as a reach on
-    columns 29-32 to the bottom edge. It leaves by the city's own west and south edges only. The pond set
-    has no inner-corner piece, so a heap of `okayama-bank-rock` covers the one inner corner, at the
-    garden's north-east tip (28,22). It is not a `waterways` run.
-  - *East bank* (targets): the avenue (34..43, 18..22; road from x=38, capped west) ends in the **plaza**
-    (34..40, 14..23) on the outside of the bend, water ahead and to the south-west: Momotaro 2x3 at
-    (35,16), the stall 3x3 at (37,14).
-  - *North bank* (targets): west from the plaza along a small gravel **court** (22..33, 14..18) to the
-    **keep** `okayama-keep` 8x7 at (14,12), its stone base on the bank (foot row 18) with no terrace in
-    front and no wall across the room. The `Okayama Castle` visitor stands on the court beside it.
-  - *The Tsukimi bridge* (`okayama-bridge`, 2x4 as drawn) at (22,19), beside the keep, is the only way
-    into the garden, as it is in Okayama: plaza, court, keep, bridge, garden.
-  - *Korakuen* (targets) is the inside of the bend (3..27, 22..37): open lawn to walk on, one cranked
-    gravel path from the bridge's landing to the pond, the pond (6..13, 32..35), a mound (Yuishinzan, new
-    art, about 5x4 at (4,25)), the cranes' feet on (14,27) and (16,28). From its north bank (row 22, x
-    14..21) the keep is four cells north across the water, inside the look-up's fade (`lookUp.cells` 3,
-    `fade` 3): the garden borrows the castle. #276 measures that in a browser at desktop and phone size.
-  - *On arrival* the road runs through wood for a few cells and stops at a small plaza on the water: the
-    statue, the stall, the river ahead, the keep low on the far side of the court, the lawn over the bend.
 - **Osaka (#277): a browse.** `docs/workshop/219-city-redesign-plan-from-the-210-audit-ne.md`, "Stage E -
   Osaka", with its fixed cells, row bands for rows 0-22, interiors, labels and tests, and three amendments:
   1. **The avenue stays**: rows 24-28 from edge to edge (pavement, three road rows, pavement), open at
@@ -523,15 +560,15 @@ design may shift it by blockout, but not change what it is or which side of what
   | Post | Today | After |
   |---|---|---|
   | Himeji: Damian 13 Nov (754), `Himeji Castle` | (12,8) | unchanged (fixed) |
-  | Okayama: Damian 12 Nov (745), `Korakuen garden` | (27,31), beside the first crane (28,31) | **(13,27)**, beside the first crane (14,27): #276 re-runs `blog_to_npc.py --rehome Damian 2025-11-12 "Okayama · Korakuen garden"` and moves the pins in `test_blog_to_npc.py` and `kansai.test.js` |
+  | Okayama: Damian 12 Nov (745), `Korakuen garden` | (13,27), beside the first crane (14,27) | unchanged (fixed) |
   | Osaka: 568, 615 (Dylan) and 764 (Damian) at the wheel (39,19); 768 (Damian) at the arch (21,18); 769 (Bailey) at Tsutenkaku (26,43); 636 (Dylan) at the platform's vending machines (14,6) | | unchanged (Stage E's fixed cells) |
   | Osaka: 590 (Dylan) (17,35); 681 (Dylan) (30,17) | under a sakura; the crab house's door front | re-homed by #277 as Stage E says: `Osaka · the Dotonbori boat pier`, `Osaka · Dotonbori (area)` |
 
   A stand-in that #268 or #269 has moved out of Osaka by then is no longer Osaka's.
 - **Build order and rooms.** One at a time, because map data is serial; each leaves the city walkable end
   to end and the checks green.
-  1. **#275 Himeji** - room `Himeji` only. Okayama is still the old room beside it.
-  2. **#276 Okayama**, after #275 is merged - room `Okayama` only.
+  1. **#275 Himeji** - room `Himeji` only. **Built**: see the Himeji bullet in the section above.
+  2. **#276 Okayama** - room `Okayama` only. **Built**: see the Okayama bullet in the section above.
   3. **#277 Osaka**, after both - room `Osaka` and its interiors (`LobbyOsaka1` kept, `LobbyOsaka2`,
      `LobbyOsaka3`, `HouseOsaka1`, `HouseOsaka2` pruned, the shop rooms Stage E adds; the doors of
      `OsakaStation`, `DonTakoteOsaka` and `DevhouseOsaka1F` keep their cells). **Not while #268 (Nara) is
@@ -692,7 +729,9 @@ pipeline has placed someone there.
   counters under noren (`susukino-ramen-stall-a` / `-b` at columns 18, 21 and 24, feet on row 44) against the
   arcade's back wall, the alley itself one row (45) behind a ploughed bank with lantern posts
   (`ramen-alley-lanterns`), entered under the ramen gate (`susukino-ramen-gate` at (27,44)) from the street. A
-  bump on a counter opens its list (RAMEN ALLEY, `Shop.VENUES.ramen`); nothing in Susukino is sealed. The
+  bump on a counter opens its list (RAMEN ALLEY, `Shop.VENUES.ramen`, with a bowl of Miso Ramen eaten there,
+  issue #367), and each counter's middle stool, (19 | 22 | 25, 44), is a seat to order from (`Seats`' `at`);
+  nothing in Susukino is sealed. The
   **streetcar** is declared, not placed (`rooms.Sapporo.tramways`, run by `src/AmbientTrams.js`, see Ambient
   Traffic): in from off the map along row 48, a stop at column 23 outside the alley (a strip of platform, a
   bench and the stop sign on the south kerb), out the other side, and back mirrored; overhead-wire poles
@@ -719,7 +758,7 @@ pipeline has placed someone there.
     sculptures, benches and the street's own lamps (`heiwa-lamp-post`) stand on the setts; a door front and a
     stand cell are never under one.
   - **Ramen alley** is two cells wide on `ramen-alley-autotile` (rows 14-15): `ramen-shoyu-front` (a shop
-    floor, `ShopAsahikawa4`, list `ramen`), `ramen-narrow-front` and `ramen-miso-front` (sealed), feet on row
+    floor, `ShopAsahikawa4`, list `ramenya`: a counter with stools and Shoyu Ramen, issue #367), `ramen-narrow-front` and `ramen-miso-front` (sealed), feet on row
     13, behind `asahikawa-ramen-gate` (11,11) - through its middle cell (12,13) off Heiwa-dori, or round the
     alley's open east end. Somebody stood on row 15 is walked round along row 14 or along the bank (row 16), so
     **no prop's foot on row 14 stands within two columns of a bank shrub of row 16, and no single free cell is
@@ -763,6 +802,11 @@ pipeline has placed someone there.
   `susukino-ramen-gate`, `susukino-ramen-stall-a` / `-b`, `susukino-neon-lanterns`, `ramen-alley-lanterns`,
   `tram-pole`; `tanukikoji-rib` and `sapporo-konbini` are drawn and not placed).
   `--sheet`, `--scenes` and `--manifest` write a contact sheet, mock scenes and the door / footprint table.
+  Odori's pieces (the sculptures, the two tents, now ridge tents seen from above, the fountain, the lamp,
+  now a dim gold `c6a663` globe, the bench) and `ramen-alley-lanterns` are in the house look: each ends in
+  `odori_finish`, which shades the snow onto the pack's blues (`form()`), swaps every off-pack colour
+  (`O_SWAP`) and inks with the pack's `080d16` (#302); the shared snow helpers (`snow_cap`, `drift`, the
+  `SNOW*` colours) are untouched until #285, so they still draw the old whites elsewhere.
 - **Flat sprites over water**: `Over Floor` and `Water` share one fixed depth, so a multi-cell sprite on
   `Over Floor` is drawn UNDER water tiles. The bridge therefore sits on `Non-Collidables` with
   `spriteMetadata.depthBias: -200` (written by `generate_hokkaido.py`'s `FLAT` table): above every ground
@@ -845,7 +889,9 @@ after the existing stations in `tools/generate_stations.py`); it sits detached, 
 - **The ramen river street**: ten **yatai** (rows 34-36: `yatai-ramen|yakitori|oden`, 3x3, solid all over)
   face a two-row promenade and the bank; a hedge runs behind the row and behind every gap in it, so the stalls
   are only ever seen from the front. Between them stand `yatai-lanterns` posts: the key holds `-lanterns`, so
-  `DayNight` lights them at night with the lanterns and lamp posts (no code change).
+  `DayNight` lights them at night with the lanterns and lamp posts (no code change). A bump on a ramen yatai
+  opens YATAI (`Shop.VENUES.yatai`: Tonkotsu Ramen, eaten there; issue #367) and its middle stool, (x+1, 36),
+  is a seat to order from; the yakitori and oden carts sell nothing.
 - **The Naka river** (rows 40-42, from the first column east of the waterline to the east edge of the map) is
   the room's one `waterways` entry, built exactly like Osaka's canal (`pond-autotile` edge-n / center / edge-s,
   parapet and shade tiles on the four-cell deck, `under` columns 29-32), so it carries the ambient boats and
@@ -906,7 +952,14 @@ and the blog pipeline never offers it (`"blog": false` on the room, see `blog-pi
   palette - no brand marks but the 7-Eleven the game already has. The oval and the pier are flat
   (`Non-Collidables` with a `depthBias`, the `asahibashi-deck` recipe); the river is `pond-autotile`
   recoloured (`sfb-river_*`, so it is not a fishing spot); the light towers are named `...lamp-post` so
-  `DayNight` lights them.
+  `DayNight` lights them. The bridge, the station, the painted ladies, the lane and the two towers are in the
+  house look (#322: sheet colours only, `generate_sendai_art`'s `pane` for dark glass with a glare, roofs seen
+  from above, gold only as the unlit `c6a663`, integer drawing only); the cable rails and the lane wall are
+  drawn flat on purpose (a rail tiled down the deck, a wall face the murals are painted on).
+  The transport, sports, terrain and creature sprites (cable car, tram, rail, oval,
+  goalposts, light towers, fog, terminal, pier, sea lions, palm, rock and the leaners) are in the house look
+  (#328: `generate_sendai_art`'s `foliage` and `pane`; roofs from above, dark glass, unlit gold lamps), and
+  the oval, pier, rail and fog are drawn flat on purpose.
 - **Houses are sealed** (`generate_houses.py` has not been run for this town's houses), and there are no
   rubbish bins. The glass tower's pair of doors (47,27) and (48,27) open into `LobbySanFranbourne1` (see Tower
   lobbies; `generate_houses.py --lobbies SanFranbourne`, kept through a rebuild of the town).
@@ -996,8 +1049,11 @@ A machiya's doorway is the one cell of its footprint you can step onto (`sendai.
 - **Art**: none of the GuttyKreum packs has a home interior (they are exteriors and a train car;
   there is no `Modern_Interiors`). `tools/extract_house_interior.py` takes what fits - floorboards from the
   Train Interiors car floor (`home-wood-floor`), a potted plant from the Japanese City pack (`home-plant`) -
-  and `tools/generate_house_art.py` draws the other 34 `home-*` sprites in the `generate_hokkaido.py` style
-  (half size, pixel-doubled, GuttyKreum palette, 1px ink outline; `--preview out.png` on both). The wall
+  and `tools/generate_house_art.py` draws the other 34 `home-*` sprites in the house look (#330): half size,
+  pixel-doubled, drawn with the file's own colours and repainted to GuttyKreum sheet colours by `SWAP` as each
+  is saved, a 1px navy outline on what stands, the pack's dark glass in the windows, nothing lit yellow
+  (`--preview out.png` on both). The colour constants and `box` / `speckle` / `wall_frame` / `plaster` are
+  shared with `generate_devhouse_art.py`, so change a colour of the home kit in `SWAP`, not in the constant. The wall
   pieces share one beam / rail / skirting (`wall_frame`) so they join side by side; shoji, fusuma and the
   tokonoma show no plaster, so they sit in a wall of either colour.
 - **Lint** (`play.js lint`, and so `play.js check`): a home with floor its furniture has sealed off is
@@ -1017,19 +1073,22 @@ re-run and kept through a town rebuild exactly as a house or a lobby is. **Appli
 souvenir shop, crab shop and drugstore are `ShopSapporo1..3`, and Susukino's karaoke bar is `ShopSapporo4`.
 **And to Asahikawa** (stage B): Heiwa-dori's sake shop (`Sake bar · Asahikawa`, list `standbar`), bakery
 (`bakery`) and woodcraft shop (`Woodcraft · Asahikawa`, list `souvenirs`) are `ShopAsahikawa1..3`, and ramen
-alley's shoyu counter (`Ramen · Asahikawa`, list `ramen`) is `ShopAsahikawa4`.
+alley's shoyu counter (`Ramen · Asahikawa`, list `ramenya`) is `ShopAsahikawa4`.
 **And to Karuizawa** (issue #261): Kyu-Karuizawa Ginza's bakery (`Bakery · Karuizawa`, list `bakery`), jam
 shop (`Souvenirs · Karuizawa`, list `souvenirs`) and cocktail lounge (`Lounge · Karuizawa`, list `lounge`)
 are `ShopKaruizawa1..3` (see Karuizawa).
 
-- **One layout** (`SHOP`): a white back wall with two posters, two shelves either side against it, seven by five
-  cells of floor, a counter with a till, a plant in each front corner, the mat below the middle. All of it is the
-  konbini's furniture (`office-*`) and the lobby's mat; no new art.
+- **Two layouts**. `SHOP`, for most: a white back wall with two posters, two shelves either side against it, seven
+  by five cells of floor, a counter with a till, a plant in each front corner, the mat below the middle. `RAMEN`,
+  for a list in `SHOP_LAYOUTS` (`ramenya`, issue #367): shelves wall to wall, a counter the width of the room (three
+  lengths of `office-counter2`, the till on the last, closed by a plant) and a row of six `izakaya-stool` seats in
+  front of it, so the counter is only reached from a stool (`check_interior` and `play.js lint` allow that). All of
+  it is the konbini's furniture (`office-*`), the Izakaya's stools and the lobby's mat; no new art.
 - **Named by what the front sells** (`SHOP_TYPES`: sprite family -> label, list, shelves): `Souvenirs · Sapporo`,
   `Crab shop · Sapporo`, `Drugstore · Sapporo`, `Karaoke bar · Sapporo` (numbered only where a town has several
   of one type).
 - **It sells**: the room is `interior`, `shopEnabled: false` (not a store: no stamp, no Konbini Pilgrim, the
-  shelves are only to look at) and `shopMenu: souvenirs | crab | drugstore | bar | standbar | bakery | ramen | lounge`, so a bump on the counter opens that
+  shelves are only to look at) and `shopMenu: souvenirs | crab | drugstore | bar | standbar | bakery | ramenya | lounge`, so a bump on the counter opens that
   row of `Shop.VENUES` - two or three things off the existing catalogue (see Shop). The room's `shop` marker is
   `{host, door, type}`.
 - A new shopfront elsewhere is a row in `roomgen.SHOP_DOORS` and one in `SHOP_TYPES` (and a `Shop.VENUES` row
@@ -1195,6 +1254,8 @@ gets one from three files: `tools/chikagai.py` (data only: the arcade's shape, i
 where each exit's entrance stands on the street), `tools/generate_chikagai.py [Host ...]` (the room
 `Chikagai<Host>` and the doors into it) and `tools/generate_chikagai_art.py` (the `chika-*` sprites and the
 street entrance, `chikagai-entrance-snow`, 2x3: solid but for the foot of its steps, a pair of door cells).
+The art is drawn in the house look, in the pack's colours only, and owns its palette: it takes only the canvas
+and text helpers from `generate_station_art.py`, and `pane`, `foliage` from `generate_sendai_art.py` (#316).
 
 - **The town's own generator stamps the entrances** where the table says (`chikagai.TOWNS[town]['exits'][slug]
   ['street']`), sealed; `generate_chikagai.py` opens them and wires both door cells of each, and
@@ -1202,7 +1263,7 @@ street entrance, `chikagai-entrance-snow`, 2x3: solid but for the foot of its st
   as a house's or a lobby's). Walking onto the steps takes you down to the foot of the matching stairs; each
   exit brings you back up onto the cell in front of its entrance.
 - **The room** is a cross of corridors: an east-west hall with 3x2 shopfronts set into its north wall behind a
-  tan apron, and a stem north and south. Exits in a north wall are stairs under a yellow exit sign with the
+  stone apron, and a stem north and south. Exits in a north wall are stairs under a gold exit sign with the
   place's name (`chika-exit-<slug>`, drawn from the table); one in a south wall is steps in the front wall under
   a hanging sign (`chika-sign-<slug>`). Tactile paving runs from every exit to a line down the hall; pillars,
   benches and planters stand south of it (the station interior's sprites); coin lockers and a floor map at the
@@ -1342,8 +1403,12 @@ be redone. `tools/generate_temple.py` is written for one hall; a second one is a
   per bump by the offering box's rule (`ShrineVisit.fresh` / `.held`). A toast is one line, so every line is
   96 characters or fewer.
 - **Art**: `tools/generate_temple_art.py` (needs Pillow; `--preview out.png`) draws all 29 sprites
-  (`temple-in-<piece>`) as shaded pixel art at the shrine kit's scale; every scatter is seeded, so a re-run is
-  byte-identical. It and the generator are in `check_generators.py`.
+  (`temple-in-<piece>`) as shaded pixel art at the shrine kit's scale, in the GuttyKreum pack's colours only
+  (the tool's closed list `PACK`; `settle()` moves any other pixel to its nearest, and `temple.test.js` checks
+  every pixel against the sheets in `art-source/GuttyKreum`), outlined in the pack's temple navy `1f1f3b`. Its
+  lamps and candle flames are the pack's dim gold `c6a663` with a small `f3d890` core, never lit yellow: their
+  night glow is left to `Glows.js` (#326). Every scatter is seeded, so a re-run is byte-identical. It and the
+  generator are in `check_generators.py`.
 - **Doors and blog NPCs**: no dated position or district stand cell is on a door leaf or the step in front of
   it (`temple.test.js` holds it for every date). The `Senso-ji temple` LANDMARK stands its visitor one cell
   below the WEST end of the steps (26,17: Bailey on 1 November 2025), beside the way up, not on it. He
@@ -1394,9 +1459,13 @@ again: it finds the building where it now is and wires the door anew. Nothing el
   line each (`flavour` rules in `Interactions.js`; the screen's is post 505's own words). No new overlay, key
   or save field.
 - **Art**: `tools/generate_pub_art.py` (needs Pillow; `--preview out.png`) draws the 21 sprites
-  (`pub-in-<piece>`) at the palace kit's scale. Its frame (`wall_side`, `wall_front`, `threshold`,
-  `doorlight`, each taking a palette), its helpers and `register()` are imported by the distillery's and
-  Canal City's art tools. It and the generator are in `check_generators.py`.
+  (`pub-in-<piece>`) at the palace kit's scale, in the house look (#334): GuttyKreum colours only, a navy
+  outline, dark glass behind the bottles, the lamps unlit in the pack's dim gold `c6a663` (night light is
+  `Glows.js`), held by `pub.test.js`. Its frame (`wall_side`, `wall_front`, `threshold`, `doorlight`, each
+  taking a palette), its helpers, its colour constants (pack colours too) and `register()` are imported by
+  `generate_distillery_art.py`, `generate_mall_art.py`, `generate_tower_deck_art.py`, `generate_wheel_art.py`
+  and `generate_flinders_art.py`: after changing a value, rerun those and look at their rooms. It and the
+  generator are in `check_generators.py`.
 - **Doors and blog NPCs**: no dated position or district stand cell is on the door or the cell in front of
   it, and a wanderer never steps there (`NPCManager.atDoorway`). The `the HUB pub` LANDMARK stands its
   visitor on the pavement beside the door (the sprite's cell + (3,5): Julia on 29 October 2025).
@@ -1555,9 +1624,10 @@ rest of the building still bumps its line from the street. Like the pub's, the d
   high as it goes with two rows kept under you, and the name board and the windows are in view. From the
   second concourse row south of the gates it is the ordinary camera.
 - **Art**: `tools/generate_flinders_art.py` (needs Pillow; `--preview out.png`) draws the 14 sprites
-  (`flinders-in-<piece>`); the frame is the pub art tool's, in the building's colours. The track, the gates,
-  the railing, the benches, the pillars and the planters are the station kit's
-  (`tools/generate_station_art.py`). It and the generator are in `check_generators.py`.
+  (`flinders-in-<piece>`) and their frame itself, in the house look (#309): GuttyKreum colours only, the
+  pack's navy outline, dark glass with a slanted glare, unlit lamps in its dim gold; it imports only
+  plumbing from `generate_pub_art.py`. The track, the gates, the railing, the benches, the pillars and
+  the planters are the station kit's (`tools/generate_station_art.py`). It and the generator are in `check_generators.py`.
 - **Doors and blog NPCs**: no dated position or district stand cell is on a door or the cell in front of one,
   and a wanderer never steps there. The blog stands nobody at the station, and never places into an
   `interior` room.
@@ -1777,7 +1847,7 @@ plus `tools/generate_devhouse_art.py`.
 | | Tokyo | Osaka |
 |---|---|---|
 | Where | Minato: the paved square under Tokyo Tower's feet, in the district `Park` | Dotonbori, beside Don Takote, on the lot the black townhouse had |
-| Outside | `devhouse-tokyo` (5x8, six storeys), stamped at `Park` 10,9 | `devhouse-osaka` (3x7, four storeys), `b.stamp('devhouse-osaka', 9, 10)` in `generate_osaka.py` |
+| Outside | `devhouse-tokyo` (5x8, six storeys under a flat roof seen from above), stamped at `Park` 10,9 | `devhouse-osaka` (3x7, four storeys, the roof garden seen from above inside a tiled eave), `b.stamp('devhouse-osaka', 9, 10)` in `generate_osaka.py` |
 | Street door | `Park` 13,16; you leave onto 13,17 | `Osaka` 10,16; you leave onto 10,17 |
 | Rooms | `DevhouseTokyo1F..6F` | `DevhouseOsaka1F..4F` |
 | Floors | 1F and 2F are not ours: a locked door and the stairs. 3F the kitchen, the long table and the sofa; 4F beds and a bunk; 5F the tatami room, the bath and the "Staff Only" door; 6F two beds, the small table, the washer | 1F the kitchen and the tall table; 2F two tatami bedrooms and the armchairs; 3F bedrooms and the washer; 4F a tatami room that opens onto a zen garden on the roof |

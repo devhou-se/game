@@ -489,4 +489,127 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
             assert.ok(mine.x >= m.x + m.width + 1024 && mine.y >= m.y + m.height + 1024, `${path.basename(m.fileName)} is not north-west of the home city`);
         }
     });
+
+    test("San Franbourne's bridge, station, ladies, lane and towers are drawn in the house look: sheet colours, dark glass, unlit gold (#322)", () => {
+        const png = require(path.join(GV2, 'tools', 'png.js'));
+        const SHEET = new Set(('0a1627 172459 fafcfd dae2e4 a4b0b5 848295 575f79 47485d 2a2636 f3d890 e3c587 c6a663 a7843b 86624f '
+            + 'aa4d31 904a37 5b283b b1dfdc 93c297 508582 4a6262 395050 698592 5b6c79 444f5e 78768a 5f6177 db785c c66347 8a3a22 '
+            + 'be9e8c bb8971 7f513b 594b45 e4cecc 8e7366 2c2d51 2a3151 4b6396 bbe9ff 8ec2fa 7db9fa 588cc6 425faa 314b8e '
+            + 'ffe2e0 ff9b92 e78d7b bb6479 d7b6ab d16b56 8f72b6 3c396d 3f827f 6c8e7f 506b6b').split(' '));
+        const SIZES = {
+            'sfb-clocks-station': [768, 448], 'sfb-bridge-tower': [384, 448], 'sfb-bridge-cable-w': [64, 64],
+            'sfb-bridge-cable-e': [64, 64], 'sfb-rowers': [256, 64], 'sfb-lady-a': [192, 320], 'sfb-lady-b': [192, 320],
+            'sfb-lady-c': [192, 320], 'sfb-lady-d': [192, 320], 'sfb-mural-a': [192, 128], 'sfb-mural-b': [192, 128],
+            'sfb-mural-c': [192, 128], 'sfb-coffee': [192, 128], 'sfb-crates': [64, 64], 'sfb-pyramid': [256, 768],
+            'sfb-spire': [256, 704],
+        };
+        // [glass, glare] at least: the windows are the pack's dark pane, not lit
+        const GLASS = { 'sfb-clocks-station': [20000, 3000], 'sfb-pyramid': [15000, 1000], 'sfb-spire': [6000, 1000] };
+        for (const k of ['a', 'b', 'c', 'd']) GLASS[`sfb-lady-${k}`] = [4000, 600];
+        for (const [key, [w, h]] of Object.entries(SIZES)) {
+            const im = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '_0_0.png')));
+            assert.deepStrictEqual([im.width, im.height], [w, h], `${key}: size`);
+            const count = new Map();
+            for (let i = 0; i < im.width * im.height; i++) {
+                const a = im.data[i * 4 + 3];
+                if (!a) continue;
+                const hex = [0, 1, 2].map((j) => im.data[i * 4 + j].toString(16).padStart(2, '0')).join('');
+                assert.ok(SHEET.has(hex), `${key}: ${hex} is not a GuttyKreum sheet colour`);
+                assert.ok(a === 255 || (hex === '2a3151' && a === 90), `${key}: ${hex} at alpha ${a}`);
+                if (a === 255) count.set(hex, (count.get(hex) || 0) + 1);
+            }
+            assert.ok(count.size <= 24, `${key}: ${count.size} colours`);
+            if (GLASS[key]) {
+                assert.ok((count.get('2c2d51') || 0) >= GLASS[key][0], `${key}: dark glass`);
+                assert.ok((count.get('4b6396') || 0) >= GLASS[key][1], `${key}: the glare on it`);
+            }
+            if (key === 'sfb-clocks-station' || key === 'sfb-spire') assert.ok(count.get('c6a663') > 0, `${key}: the pack's unlit gold`);
+        }
+    });
+
+    test('San Franbourne: the transport, sports, terrain and creature sprites are in the house look (#328)', () => {
+        const png = require(path.join(GV2, 'tools', 'png'));
+        const SIZES = {
+            'sfb-cable-car': [192, 128], 'sfb-tram': [256, 128], 'sfb-rail-h': [64, 64], 'sfb-oval': [768, 448],
+            'sfb-goalposts': [128, 192], 'sfb-oval-lamp-post': [64, 320], 'sfb-fog-a': [320, 128], 'sfb-fog-b': [320, 128],
+            'sfb-terminal': [576, 320], 'sfb-pier': [256, 576], 'sfb-sea-lions': [192, 128], 'sfb-palm': [192, 256],
+            'sfb-rock': [320, 192], 'sfb-lean-a': [64, 64], 'sfb-lean-b': [64, 64], 'sfb-lean-c': [64, 64], 'sfb-lean-d': [64, 64],
+        };
+        // every one of these is a colour of the art-source/GuttyKreum sheets
+        const SHEET = new Set(('0a1627 172459 fafcfd dae2e4 a4b0b5 848295 575f79 47485d 2a2636 bcc7cc 191c2a e4cecc be9e8c '
+            + '8e7366 d16b56 aa4d31 904a37 8a3a22 e78d7b f3d890 c6a663 a7843b 86624f 93c297 83af6f 678e57 508582 395050 '
+            + 'b1dfdc 425faa 3c396d bb8971 a68777 594b45 7f513b 2c2d51 2a3151 4b6396 314b8e 413f53 ffe2e0 d7b6ab').split(' '));
+        const meta = realConfig().spriteMetadata;
+        for (const [name, [w, h]] of Object.entries(SIZES)) {
+            const key = `${name}_0_0`;
+            const im = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png')));
+            assert.deepStrictEqual([im.width, im.height], [w, h], `${key} changed size`);
+            assert.ok(meta[key], `${key} has no spriteMetadata`);
+            const fog = name.startsWith('sfb-fog');
+            const opaque = new Map();
+            for (let i = 0; i < im.data.length; i += 4) {
+                const a = im.data[i + 3];
+                if (!a) continue;
+                const c = [0, 1, 2].map((k) => im.data[i + k].toString(16).padStart(2, '0')).join('');
+                assert.ok(SHEET.has(c), `${key}: ${c} is not a sheet colour`);
+                if (fog) assert.ok((c === 'dae2e4' && (a === 70 || a === 110)) || (c === 'fafcfd' && a === 150), `${key}: ${c} at ${a}`);
+                else if (a !== 255) assert.ok(c === '2a3151' && a === 90, `${key}: ${c} at alpha ${a}`);
+                else opaque.set(c, (opaque.get(c) || 0) + 1);
+            }
+            assert.ok(opaque.size <= 24, `${key} has ${opaque.size} colours`);
+            SIZES[name] = opaque;
+        }
+        for (const key of ['sfb-oval_0_0', 'sfb-pier_0_0']) assert.strictEqual(meta[key].depthBias, -200, `${key} is not flat`);
+        // the glass is dark, with a glare; the lamps are the pack's dim gold, unlit
+        assert.ok(SIZES['sfb-terminal'].get('2c2d51') >= 20000 && SIZES['sfb-terminal'].get('4b6396') >= 1000, 'the terminal is not dark glass');
+        for (const name of ['sfb-tram', 'sfb-cable-car', 'sfb-rock']) {
+            assert.ok(SIZES[name].get('2c2d51') && SIZES[name].get('4b6396'), `${name} has no dark glass`);
+        }
+        assert.ok(SIZES['sfb-oval-lamp-post'].get('c6a663'), 'the light tower has no dim gold lamps');
+    });
+
+    test('san franbourne art: a rerun of generate_sanfranbourne_art.py leaves the committed PNGs byte for byte (#390)', () => {
+        // Into a copy of the committed sprites and config: every file whose pixels are unchanged is left as it is,
+        // even when Pillow would encode it differently; a missing file is written and a file with other pixels
+        // rewritten, both with the committed pixels (not bytes: the committed files came from another encoder).
+        const snippet = [
+            'import contextlib, io, json, os, shutil, sys, tempfile',
+            'try:',
+            '    from PIL import Image',
+            'except ImportError:',
+            '    print(json.dumps({"pillow": False})); sys.exit(0)',
+            'import generate_sanfranbourne_art as s',
+            'keys = sorted(s.SPRITES) + sorted(s.river_tiles()) + sorted(s.PICTURES)',
+            'tmp = tempfile.mkdtemp()',
+            'try:',
+            '    for key in keys:',
+            '        shutil.copy("assets/sprites/%s.png" % key, tmp)',
+            '    shutil.copy("config.json", tmp)',
+            '    p = lambda key: os.path.join(tmp, key + ".png")',
+            '    gone, other, reenc = keys[0], "plane-sky", "airport-wall_0_0"',
+            '    os.remove(p(gone))',
+            '    Image.new("RGBA", (64, 64), (255, 0, 0, 255)).save(p(other))',
+            '    Image.open(p(reenc)).convert("RGBA").save(p(reenc), compress_level=0)',
+            '    stamp = open(p(reenc), "rb").read()',
+            '    s.SPR, s.CONFIG, sys.argv = tmp, os.path.join(tmp, "config.json"), ["generate_sanfranbourne_art.py"]',
+            '    with contextlib.redirect_stdout(io.StringIO()):',
+            '        s.main()',
+            '    rewritten = [key for key in keys if key not in (gone, other, reenc) and open(p(key), "rb").read() != open("assets/sprites/%s.png" % key, "rb").read()]',
+            '    px = lambda f: Image.open(f).convert("RGBA").tobytes()',
+            '    redrawn = [key for key in (gone, other) if px(p(key)) != px("assets/sprites/%s.png" % key)]',
+            '    print(json.dumps({"pillow": True, "rewritten": rewritten, "redrawn": redrawn, "reenc_kept": open(p(reenc), "rb").read() == stamp}))',
+            'finally:',
+            '    shutil.rmtree(tmp)',
+        ].join('\n');
+        const { spawnSync } = require('child_process');
+        const run = spawnSync('python3', ['-c', snippet], { cwd: GV2, encoding: 'utf8',
+            timeout: 120000, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHONPATH: path.join(GV2, 'tools') } });
+        assert.ok(!run.error, `python3 did not finish: ${run.error}`);
+        assert.strictEqual(run.status, 0, run.stderr);
+        const out = JSON.parse(run.stdout.trim().split('\n').pop());
+        if (!out.pillow) return;
+        assert.ok(out.reenc_kept, 'a file with the same pixels in another encoding was rewritten');
+        assert.deepStrictEqual(out.rewritten, [], 'files differ from the committed ones after a run');
+        assert.deepStrictEqual(out.redrawn, [], 'a missing file or one with other pixels is not drawn back as committed');
+    });
 };

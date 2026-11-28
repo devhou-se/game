@@ -42,7 +42,7 @@ def rgb(s):
 
 
 INK, EDGE = rgb('0a1627'), rgb('172459')
-ROOF, ROOF_LIGHT, ROOF_JOINT, ROOF_DARK = rgb('5b6c79'), rgb('698592'), rgb('444f5e'), rgb('2b373c')
+ROOF, ROOF_LIGHT, ROOF_JOINT, ROOF_DARK = rgb('5b6c79'), rgb('698592'), rgb('444f5e'), rgb('2e4040')
 STEEL, STEEL_LIGHT, STEEL_DARK = rgb('94a2a8'), rgb('d1e2eb'), rgb('575c6d')
 PLASTER, WHITE, WHITE_SHADE, GREY = rgb('e4cecc'), rgb('fafcfd'), rgb('dae2e4'), rgb('a4b0b5')
 GLASS, GLASS_DARK, GLARE, GLASS_LIGHT = rgb('2c2d51'), rgb('2a3151'), rgb('4b6396'), rgb('8689a6')

@@ -21,9 +21,11 @@ const Interactions = {
         { kind: 'tasting', group: 'shop', pattern: /^distillery-in-counter/, footprint: true },
         // Susukino's ramen alley (issue #219, stage 4): a counter under a noren, eaten at as a yatai is
         { kind: 'ramen', group: 'shop', pattern: /^susukino-ramen-stall/, footprint: true },
+        // Fukuoka's ramen yatai (issue #367): the same, with its own bowl (the yakitori and oden carts sell nothing)
+        { kind: 'yatai', group: 'shop', pattern: /^yatai-ramen/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^(office-(shelf-drinks|shelf-glass|fridge|freezer)|konbini-coffee)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^(office-shelf-snacks|konbini-(chiller|gondola-(snacks|noodles|bread)))/, footprint: true, room: 'konbini' },
-        { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },
+        { kind: 'venue', group: 'shop', pattern: /^(office-counter2|izakaya-in-bar)/, footprint: true, room: 'venue' },
         { kind: 'water', group: 'water', pattern: /^(office-watercooler|konbini-water)/, footprint: true, room: 'konbini' },
         // inside a shrine's worship hall (tools/generate_shrines.py; src/ShrineVisit.js)
         { kind: 'offering', group: 'shrine', pattern: /^shrine-in-saisen/, footprint: true },
@@ -39,8 +41,8 @@ const Interactions = {
         { kind: 'pond', group: 'pond', pattern: /^pond-autotile/ },
         { kind: 'clock', group: 'clock', pattern: /^(office-clock|office-poster-menu)/ },
         // a 7-Eleven's clock is part of its back wall (tools/generate_konbinis.py, issue #221): the
-        // sprite sits on the wall's upper cell and the bump lands on the lower one
-        { kind: 'clock', group: 'clock', pattern: /^konbini-wall-clock/, footprint: true },
+        // sprite sits on the wall's upper cell and the bump lands on the lower one (the Izakaya's too, issue #286)
+        { kind: 'clock', group: 'clock', pattern: /^(konbini|izakaya-in)-wall-clock/, footprint: true },
         // a home's furniture (issue #208, tools/generate_houses.py): a bump says one line
         // (`say`, shown as a toast by GameScene) and nothing else happens
         { kind: 'kotatsu', group: 'flavour', pattern: /^home-kotatsu/, footprint: true, say: 'the kotatsu is warm. you could stay under it all winter' },
@@ -69,6 +71,8 @@ const Interactions = {
         { kind: 'baseball', group: 'flavour', pattern: /^pub-in-wall-tv/, footprint: true, say: 'the baseball is on. a man in a gold chain claps for the Eagles and the bar claps with him' },
         { kind: 'darts', group: 'flavour', pattern: /^pub-in-wall-darts/, footprint: true, say: 'three darts in the wall, none in the board. nobody is owning up' },
         { kind: 'specials', group: 'flavour', pattern: /^pub-in-chalkboard/, footprint: true, say: 'today\'s special is fish and chips. it has been today\'s special for some years' },
+        // the Izakaya in Tokyo (issue #286): the menu strips on its back wall
+        { kind: 'menu-strips', group: 'flavour', pattern: /^izakaya-in-wall-menu/, footprint: true, say: 'beer, edamame, karaage, in a hand that has written them ten thousand times. order at the counter' },
         // the distillery in Sendai (issue #217): the one pot still, and the casks on the wall and on the floor
         { kind: 'pot-still', group: 'flavour', pattern: /^distillery-in-still/, footprint: true, say: 'a copper pot still, warm to the hand. whatever is in it will be ready in about twelve years' },
         { kind: 'casks', group: 'flavour', pattern: /^distillery-in-(wall-casks|cask)/, footprint: true, say: 'the casks are asleep. the chalk on the nearest one says not before 2037' },
@@ -119,6 +123,16 @@ const Interactions = {
         { kind: 'momotaro', group: 'flavour', pattern: /^okayama-momotaro/, footprint: true, say: 'momotaro the peach boy, with his dog, monkey and pheasant. the ogres never stood a chance' },
         { kind: 'bizen-stall', group: 'flavour', pattern: /^okayama-bizen-stall/, footprint: true, say: 'bizen ware: no glaze, two weeks in the kiln, no two alike. beer tastes better from it, they say' },
         { kind: 'crane', group: 'flavour', pattern: /^okayama-crane/, footprint: true, say: 'a red-crowned crane. it looks at you, then at the pond, and chooses the pond' },
+        { kind: 'mound', group: 'flavour', pattern: /^okayama-mound/, footprint: true, say: 'yuishinzan: six metres of hill, heaped up so a lord could look down on his own garden' },
+        // ...the ones either side of the seam where Osaka's avenue walks on to Nara (issue #268), and what stands in Nara
+        { kind: 'fingerpost', group: 'flavour', pattern: /^nara-fingerpost/, footprint: true, say: 'west: osaka, dotonbori. east: nara, the great buddha and the deer' },
+        { kind: 'deer', group: 'flavour', pattern: /^nara-deer-(doe|stag)/, footprint: true, say: 'a deer, resting. it has seen ten thousand visitors today and you are not the interesting one' },
+        { kind: 'deer-bow', group: 'flavour', pattern: /^nara-deer-bow/, footprint: true, say: 'the deer bows. it wants a cracker. it bows again, lower, and stands on your foot' },
+        { kind: 'senbei-stall', group: 'flavour', pattern: /^nara-senbei-stall/, footprint: true, say: 'deer crackers, 200 yen a stack. every deer in the park knows the sound of the paper band' },
+        { kind: 'stone-lantern', group: 'flavour', pattern: /^nara-stone-lantern/, footprint: true, say: 'a stone lantern, furred with moss. there are two thousand along this path, each one given by somebody' },
+        { kind: 'nandaimon', group: 'flavour', pattern: /^nara-nandaimon/, footprint: true, say: 'the great south gate. two wooden guardians, eight metres tall, glare out of the dark either side' },
+        { kind: 'great-buddha-hall', group: 'flavour', pattern: /^nara-daibutsuden/, footprint: true, say: 'the great buddha hall. fifteen metres of bronze sit inside, and a pillar with a hole the size of his nostril' },
+        { kind: 'torii', group: 'flavour', pattern: /^nara-kasuga-torii/, footprint: true, say: 'the vermilion gate of kasuga taisha. the deer walk through without bowing' },
         // ...and the people folded double at the waist on its pavements: one line each
         // an underground arcade's other fronts and furniture
         { kind: 'bookshop', group: 'flavour', pattern: /^chika-shop-books/, footprint: true, say: 'this week\'s manga, tied shut with string. everyone is reading them standing up anyway' },

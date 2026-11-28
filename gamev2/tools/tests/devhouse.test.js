@@ -466,4 +466,58 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, worldWith, requi
             assert.ok(help.status === 0 && /THE HELD-KEY RULE/.test(help.stdout) && read() === before);
         });
     });
+
+    test('the two Devhouses seen from the street are in the house look: sheet colours, a navy edge, dark glass, nothing lit (#319)', () => {
+        const png = need(path.join(GV2, 'tools', 'png'));
+        const hex = (d, i) => [d[i], d[i + 1], d[i + 2]].map((v) => v.toString(16).padStart(2, '0')).join('');
+        const sheets = new Set();
+        const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).forEach((e) => {
+            const p = path.join(dir, e.name);
+            if (e.isDirectory()) walk(p);
+            else if (e.name.endsWith('.png') && !e.name.startsWith('preview')) {
+                const { data } = png.decode(fs.readFileSync(p));
+                for (let i = 0; i < data.length; i += 4) if (data[i + 3] === 255) sheets.add(hex(data, i));
+            }
+        });
+        walk(path.join(GV2, '..', 'art-source', 'GuttyKreum'));
+        const LIT = ['f2c66a', 'fbe6a4', 'f9c22e', 'f0943a', 'e8623a'], GLASS = ['2c2d51', '4b6396'];
+        const c = cfg();
+        // sprite: [width, height, a roof pixel and the tones it may be, a door pixel]
+        const STREET = {
+            'devhouse-tokyo_0_0': [320, 512, [188, 62], ['5b6c79', '698592', '444f5e'], [220, 480]],
+            'devhouse-osaka_0_0': [192, 448, null, ['2e4040', '395050'], [80, 432]],
+        };
+        for (const [k, [W, Hh, roof, tones, door]] of Object.entries(STREET)) {
+            const { width: w, height: h, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', k + '.png')));
+            assert.deepStrictEqual([w, h], [W, Hh], k);
+            assert.deepStrictEqual(c.spriteMetadata[k], { frameCount: 1, anchorX: 32 / w, anchorY: 32 / h }, k);
+            const at = (x, y) => (y * w + x) * 4;
+            const clear = (x, y) => x >= 0 && y >= 0 && x < w && y < h && data[at(x, y) + 3] === 0;
+            const count = new Map();
+            let opaque = 0;
+            for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+                const i = at(x, y), a = data[i + 3];
+                assert.ok(a === 0 || a === 255, `${k}: (${x},${y}) alpha ${a}`);
+                if (x % 2 === 0 && y % 2 === 0) {
+                    const v = data.readUInt32BE(i);
+                    assert.ok([[1, 0], [0, 1], [1, 1]].every(([dx, dy]) => data.readUInt32BE(at(x + dx, y + dy)) === v), `${k}: (${x},${y}) is not a 2x2 block`);
+                }
+                if (a === 0) continue;
+                const col = hex(data, i);
+                opaque++; count.set(col, (count.get(col) || 0) + 1);
+                if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => clear(x + dx, y + dy))) assert.strictEqual(col, '172459', `${k}: (${x},${y}) edge is not navy`);
+            }
+            for (const [col, n] of count) {
+                assert.ok(sheets.has(col), `${k}: ${col} is in no GuttyKreum sheet`);
+                assert.ok(!LIT.includes(col), `${k}: ${col} is lit yellow`);
+                assert.ok(n <= opaque / 4, `${k}: ${col} covers ${n} of ${opaque} pixels`);
+            }
+            for (const g of GLASS) assert.ok(count.has(g), `${k}: no ${g} glass`);
+            // a roof seen from above
+            if (roof) assert.ok(tones.includes(hex(data, at(...roof))), `${k}: ${hex(data, at(...roof))} at ${roof} is not the slate roof`);
+            else assert.ok(Array.from({ length: w }, (_, x) => hex(data, at(x, 96))).some((col) => tones.includes(col)), `${k}: no kawara in row 96`);
+            // the door is dark glass or the hall's dark, not lit
+            assert.ok(GLASS.includes(hex(data, at(...door))), `${k}: door ${door} is ${hex(data, at(...door))}`);
+        }
+    });
 };

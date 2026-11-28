@@ -111,11 +111,17 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
     `avoid`, and the dashes one stands on are left out (`Places.uncovered`), so nothing is drawn under a
     label.
     **A small place** (a `places` entry with `"minor": true`: somewhere walked to from a town, issue #68;
-    Himeji, issue #255, Karuizawa, issue #260, and Okayama, issue #267, are the first three) has its label laid out after the towns', so a town's label keeps the spot beside
+    Himeji, issue #255, Karuizawa, issue #260, Okayama, issue #267, and Nara, issue #268, are the first
+    four) has its label laid out after the towns', so a town's label keeps the spot beside
     its dot and the small place's stands off on a leader line. Its label is never left out, and it
     chooses with the towns while the player or friends are there (`showMap` drops `minor` from that dot).
-    The label test lays out today's Map and the two small places still to come (Nara, Lake Biwa) from stub
-    entries, in the two combinations their tickets pass through, in the views phones really get (`viewOf`).
+    The order is `Places.order(dots)`, and in it **a small place whose dot touches a town's does not hem
+    that town in** (issue #268: Nara's dot touches Osaka's; counted, it made Osaka the most crowded dot and
+    pushed Karuizawa's lit label onto a leader on 2 November 2025). One that stands clear of the town still
+    counts, and so does a lit one: on 14 November 2025 Nara is lit, and Osaka's label is the one that stands
+    off its dot on a phone (it still reads; the Map test of that day holds every label clear).
+    The label test lays out today's Map and the one small place still to come (Lake Biwa) from a stub
+    entry, in the one combination its ticket passes through, in the views phones really get (`viewOf`).
   - **Size**: `UIScale.mapFit(W, H, w, h, cropped, UIScale.MAP_MAX_SCALE)` — the same fit the old
     overworld picture used, now allowed past 1:1 and stepped in halves from 2x so the pixel art stays
     even: 3x at 1280x960 and on a landscape phone, 2.5x in the portrait view. Labels are 16px through
@@ -302,8 +308,11 @@ The game always renders 1280x960; everything below is about showing that on anyt
     hint (83 characters) was 9.77. `Shop.toast` therefore asks `scene.uiScale.floatWidth(font, y)` for the
     widest a line can be and still reach the floor, and breaks a longer message at its spaces into the
     fewest, most even lines (`Shop.toastLines`) before it is drawn: the hint is two lines at 18 CSS px
-    there. `floatWidth` is `Infinity` where the floor asks nothing (the canvas is shown at half size or
-    more: a desktop, a tablet) or is not kept (the cropped portrait view), so a toast is one line there
+    there. In the cropped portrait view the floor is not kept, but a long line was shrunk to the slice's
+    width instead (a 107-character flavour line was about 3.5 CSS px a character at 390x844, #388), so
+    there `floatWidth` is the room itself: a line wider than the slice is broken, and every line is shown
+    at its own size (20px, 12.75 CSS px at 390x844). `floatWidth` is `Infinity` where the floor asks
+    nothing (the canvas is shown at half size or more: a desktop, a tablet), so a toast is one line there
     as it always was, and 844x390, where the hint
     already measured 11.9 CSS px on one line, is unchanged too. A float of several lines is not
     magnified past the view's bottom margin. A new float Text with long lines should do as the toast does.
