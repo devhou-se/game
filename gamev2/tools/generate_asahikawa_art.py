@@ -85,23 +85,27 @@ from generate_hokkaido import (rgb, canvas, outline, snow_cap, tiles, CLEAR, INK
                                RED, RED_HI, RED_LO, RED_DK, CREAM, CREAM_LO, CREAM_DK,
                                WHITE, SNOW, SNOW_LO, GLASS, GLASS_HI, GLASS_DK,
                                WOOD, WOOD_LO, WOOD_DK, STONE, STONE_LO, STONE_DK,
-                               GREEN, GREEN_LO, GREEN_HI, GOLD, AMBER)
+                               GREEN, GREEN_LO, GREEN_HI, GOLD)
 from generate_sapporo_art import (FONT, KANA, glyphs, kana_w, drift, lantern, rows, ROLES,
-                                  Scene, spr, _wob, SNOW_SH, SNOW_DK, DARK, WARM, WOOD_HI)
+                                  Scene, spr, _wob, SNOW_SH, SNOW_DK, DARK, WOOD_HI)
+from generate_sendai_art import repaint, roof_tile                       # the house look's helpers
+from generate_fukuoka_art import glaze, flat_roof
 
 SPR = 'assets/sprites'
 
-TIMBER, TIMBER_HI, TIMBER_LO, TIMBER_DK = rgb('d9a066'), rgb('efc793'), rgb('b47c48'), rgb('7d5233')
-CHAR, CHAR_LO, CHAR_HI = rgb('4a3e3c'), rgb('332a2b'), rgb('6a5a55')          # charred cladding
-PLASTER, PLASTER_LO, PLASTER_DK = rgb('f1ece4'), rgb('d2c9be'), rgb('a39a92')
-BG, BG_HI, BG_LO, BG_DK = rgb('6fa888'), rgb('a6d6b8'), rgb('4a7d64'), rgb('2f5646')   # Asahibashi's green
-ICE, ICE_HI, ICE_LO, ICE_DK = rgb('bfe3f6'), rgb('ecf9ff'), rgb('8fc3e6'), rgb('5f9fd0')
-ROOF_R, ROOF_R_HI, ROOF_R_LO = rgb('b8463c'), rgb('d4685a'), rgb('8c322d')
-ROOF_B, ROOF_B_HI, ROOF_B_LO = rgb('3f6fb0'), rgb('6a97d2'), rgb('2c4f85')
-ROOF_G, ROOF_G_HI, ROOF_G_LO = rgb('4f8f6c'), rgb('78b592'), rgb('356650')
-KAWARA, KAWARA_LO, KAWARA_HI = rgb('4a5568'), rgb('2f3848'), rgb('6b7890')
-ORANGE = rgb('f08a3c')
-PEN, PEN_HI = rgb('1f2633'), rgb('3b4a60')
+# The palette, in the GuttyKreum sheets' own colours (the house look, docs/generators-and-checks.md)
+TIMBER, TIMBER_HI, TIMBER_LO, TIMBER_DK = rgb('bb8971'), rgb('d7b6ab'), rgb('aa775f'), rgb('7f513b')
+CHAR, CHAR_LO, CHAR_HI = rgb('493938'), rgb('2a2636'), rgb('6d574e')          # charred cladding
+PLASTER, PLASTER_LO, PLASTER_DK = rgb('fafcfd'), rgb('dae2e4'), rgb('a4b0b5')
+BG, BG_HI, BG_LO, BG_DK = rgb('6c8e7f'), rgb('93c297'), rgb('506b6b'), rgb('395050')   # Asahibashi's green
+ICE, ICE_HI, ICE_LO, ICE_DK = rgb('bbe9ff'), rgb('ecfaff'), rgb('8ec2fa'), rgb('588cc6')
+ROOF_R, ROOF_R_HI, ROOF_R_LO = rgb('aa4d31'), rgb('d16b56'), rgb('8a3a22')
+ROOF_B, ROOF_B_HI, ROOF_B_LO = rgb('425faa'), rgb('5a86de'), rgb('314b8e')
+ROOF_G, ROOF_G_HI, ROOF_G_LO = rgb('508582'), rgb('6c8e7f'), rgb('395050')
+KAWARA, KAWARA_LO, KAWARA_HI = rgb('53596d'), rgb('39374c'), rgb('78768a')
+ORANGE = rgb('ce6a42')
+PEN, PEN_HI = rgb('191c2a'), rgb('2c2d51')
+LAMP, LAMP_HI, LAMP_LO = rgb('c6a663'), rgb('f3d890'), rgb('a7843b')    # a lamp: the pack's dim gold, never white
 
 FONT = dict(FONT)
 FONT.update({
@@ -140,10 +144,6 @@ def text_w(s, scale=1):
 
 def kanji(d, names, x, y, fill, scale=1, gap=2):
     glyphs(d, [KANJI[n] for n in names], x, y, fill, scale, gap)
-
-
-def mix(a, b, t):
-    return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(3)) + (255,)
 
 
 # ---- surfaces -------------------------------------------------------------------
@@ -196,6 +196,30 @@ def snow_slab(d, x0, x1, y0, y1, seed=0, shade_from=None):
             d.line([(x, top + 2), (x, bot - 1)], fill=SNOW_LO)
 
 
+def snowy_roof(im, x0, y0, x1, y1, seed=0):
+    """A flat roof seen from above under snow: the pack's slate inside a steel coping
+    (flat_roof), the snow lying over the slate, lit along its back and left, in shade
+    at its right end and along its last row, the slate bare in a ragged strip at the
+    front and in a few patches where the wind has scoured it."""
+    px = im.load()
+    flat_roof(px, x0, y0, x1, y1)
+    for x in range(x0 + 3, x1 - 2):
+        front = y1 - 4 - ((x * 7 + seed * 5) % 5 in (0, 1)) - ((x * 3 + seed) % 7 == 0)
+        for y in range(y0 + 3, front + 1):
+            h = (x * 11 + y * 7 + seed * 13) % 23
+            if (x // 5 * 7 + y // 2 * 3 + seed) % 17 == 0 and y0 + 4 < y < front - 1:
+                continue                                              # a scoured patch
+            if y == front:
+                c = SNOW_SH
+            elif y == y0 + 3 or x == x0 + 3:
+                c = WHITE
+            elif x >= x1 - 7 or h in (5, 12):
+                c = SNOW_LO
+            else:
+                c = SNOW
+            px[x, y] = c
+
+
 def icicles(d, x0, x1, y, seed=0):
     for x in range(x0, x1 + 1, 3):
         n = (x * 7 + seed * 3) % 5
@@ -206,16 +230,35 @@ def icicles(d, x0, x1, y, seed=0):
             d.point((x, y + n), fill=ICE_LO)
 
 
+def kawara(d, scan):
+    """A tiled roof over (y, x0, x1) scanlines in the pack's kawara, its eave ends in shade."""
+    for y, x0, x1 in scan:
+        for x in range(x0, x1 + 1):
+            d.point((x, y), fill=roof_tile(x, y))
+        d.point((x0, y), fill=KAWARA_LO); d.point((x1, y), fill=KAWARA_LO)
+
+
+def plaster(d, x0, y0, x1, y1):
+    """A plaster face: the eave's shade along its head, its right end and lowest third a tone
+    down, joined to the lit part by one checker row."""
+    d.rectangle([x0, y0, x1, y1], fill=PLASTER)
+    lo = y1 - (y1 - y0) // 3
+    d.rectangle([x0, lo, x1, y1], fill=PLASTER_LO)
+    for x in range(x0 + lo % 2, x1 + 1, 2):
+        d.point((x, lo - 1), fill=PLASTER_LO)
+    d.rectangle([x0, y0, x1, y0 + 2], fill=PLASTER_DK)
+    d.rectangle([x1 - 5, y0 + 3, x1, y1], fill=PLASTER_LO)
+
+
 def lit_window(d, x0, y0, x1, y1, frame=WHITE, lit=True, bars=True, curtain=None):
-    """A double-glazed house window: a fat frame, a lit or dark pane."""
+    """A double-glazed house window: a fat frame, the pack's dark glass (`lit` is kept for the
+    callers: a window is lit only by its glow spot at night, never by a pale pane)."""
     d.rectangle([x0, y0, x1, y1], fill=frame)
-    d.rectangle([x0 + 1, y0 + 1, x1 - 1, y1 - 1], fill=WARM if lit else GLASS)
-    d.line([(x0 + 1, y0 + 1), (x1 - 1, y0 + 1)], fill=WHITE if lit else GLASS_HI)
+    d.rectangle([x0 + 1, y0 + 1, x1 - 1, y1 - 1], fill=GLASS)
+    d.line([(x0 + 1, y0 + 1), (x1 - 1, y0 + 1)], fill=GLASS_HI)
     if curtain:
         d.rectangle([x0 + 1, y0 + 2, x0 + 3, y1 - 1], fill=curtain)
         d.rectangle([x1 - 3, y0 + 2, x1 - 1, y1 - 1], fill=curtain)
-    if not lit:
-        d.line([(x0 + 3, y0 + 3), (x0 + 3, y1 - 3)], fill=GLASS_HI)
     if bars:
         m = (x0 + x1) // 2
         d.line([(m, y0 + 1), (m, y1 - 1)], fill=frame)
@@ -224,7 +267,7 @@ def lit_window(d, x0, y0, x1, y1, frame=WHITE, lit=True, bars=True, curtain=None
     d.line([(x0, y0 - 1), (x1, y0 - 1)], fill=SNOW)                   # snow on its head
 
 
-def puffs(im, x, y, n=7, seed=0, lean=1, colour=(255, 255, 255), a0=235, grow=3):
+def puffs(im, x, y, n=7, seed=0, lean=1, colour=rgb('fafcfd')[:3], a0=235, grow=3):
     """Steam / smoke, drawn after the outline: soft unoutlined puffs that
     rise from (x, y), drift with the wind and thin out."""
     lay = Image.new('RGBA', im.size, CLEAR)
@@ -235,7 +278,7 @@ def puffs(im, x, y, n=7, seed=0, lean=1, colour=(255, 255, 255), a0=235, grow=3)
         r = 1 + min(grow, (i + 1) // 2)
         a = max(60, a0 - i * 26)
         ld.ellipse([cx - r, cy - r, cx + r, cy + r], fill=colour + (a,))
-        ld.point((cx - r + 1, cy - r + 1), fill=(255, 255, 255, min(255, a + 20)))
+        ld.point((cx - r + 1, cy - r + 1), fill=rgb('fafcfd', min(255, a + 20)))
     im.alpha_composite(lay)
 
 
@@ -244,7 +287,7 @@ def under(im, shapes):
     base = Image.new('RGBA', im.size, CLEAR)
     bd = ImageDraw.Draw(base)
     for box in shapes:
-        bd.ellipse(box, fill=SNOW_SH[:3] + (150,))
+        bd.ellipse(box, fill=rgb('99a1ca', 150))
     base.alpha_composite(im)
     return base
 
@@ -261,42 +304,39 @@ def bowl(d, x, y, fill=WHITE, band=RED):
 # Station front and Heiwa-dori
 # ==============================================================================
 def wood_glass(d, x0, y0, x1, y1, bay=16, transoms=(), lamps=True, phase=0):
-    """A glass wall with the station's timber lining showing through it: a
-    slatted ceiling, a boarded wall, pendant lamps, a dim floor; then the sky
-    sliding across the panes and the mullions in front."""
+    """A glass wall with the station's timber lining seen dim through the pack's dark glass: a
+    slatted ceiling, a boarded wall, pendant lamps, a dark floor; then the sky's glare sliding
+    across the panes and the mullions in front."""
     h = y1 - y0
     for y in range(y0, y1 + 1):
         for x in range(x0, x1 + 1):
             ry = y - y0
-            if ry < h * 0.13:                                         # the slatted ceiling
-                c = TIMBER_DK if (x + ry) % 3 == 0 else TIMBER_LO
-            elif ry > h * 0.80:                                       # the concourse floor, dim
-                c = mix(TIMBER_DK, DARK, 0.35 if (x // 2 + ry) % 5 else 0.15)
+            if ry * 100 < h * 13:                                     # the slatted ceiling
+                c = CHAR if (x + ry) % 3 == 0 else CHAR_LO
+            elif ry * 100 > h * 80:                                   # the concourse floor
+                c = rgb('2c2d51') if (x // 2 + ry) % 5 == 0 else CHAR_LO
+            elif ry * 100 > h * 62:
+                c = CHAR_HI if x % 4 == 0 else CHAR
             else:
                 k = x % 4
-                c = TIMBER_LO if k == 3 else (TIMBER_HI if k == 0 else TIMBER)
-                if ry > h * 0.62:
-                    c = mix(c, TIMBER_DK, 0.35)
+                c = TIMBER_DK if k == 0 else (CHAR if k == 3 else CHAR_HI)
             s = (x - x0 + (y - y0) + phase) % 52                      # the sky on the glass
-            if s < 9:
-                c = mix(c, GLASS_HI, 0.55)
-            elif s < 13 or 24 <= s < 28:
-                c = mix(c, WHITE, 0.28)
-            else:
-                c = mix(c, GLASS, 0.20)
+            if s < 2:
+                c = rgb('444679')
+            elif s == 24:
+                c = rgb('2c2d51')
             d.point((x, y), fill=c)
     if lamps:
-        ly = y0 + int(h * 0.13) + 3
+        ly = y0 + h * 13 // 100 + 3
         for x in range(x0 + bay // 2, x1 - 2, bay):
-            d.line([(x, y0 + 1), (x, ly - 1)], fill=TIMBER_DK)
-            d.rectangle([x - 1, ly, x + 1, ly + 2], fill=WARM)
-            d.point((x, ly + 1), fill=WHITE)
-            d.point((x - 2, ly + 1), fill=TIMBER_HI); d.point((x + 2, ly + 1), fill=TIMBER_HI)
-            d.point((x, ly + 3), fill=TIMBER_HI)
+            d.line([(x, y0 + 1), (x, ly - 1)], fill=CHAR_LO)
+            d.rectangle([x - 1, ly, x + 1, ly + 2], fill=LAMP)
+            d.point((x, ly + 1), fill=LAMP_HI)
+            d.point((x, ly + 3), fill=LAMP_LO)
     for x in range(x0, x1 + 1, bay):
         d.line([(x, y0), (x, y1)], fill=STONE_DK)
         if x + 1 <= x1:
-            d.line([(x + 1, y0), (x + 1, y1)], fill=mix(STONE, GLASS_HI, 0.4))
+            d.line([(x + 1, y0), (x + 1, y1)], fill=STONE_LO)
     for ty in transoms:
         d.line([(x0, ty), (x1, ty)], fill=STONE_DK)
     d.rectangle([x0, y0, x1, y1], outline=STONE_DK)
@@ -316,26 +356,17 @@ def tree_column(d, x, y_top, y_fork, y_foot, spread=15):
 
 def sliding_doors(d, x0, y0, x1, y1):
     """A pair of automatic sliding glass doors: an operator housing with a
-    sensor light, two aluminium-framed leaves of tinted glass (the lit
-    concourse beyond, the sky streaking across), a dark split between them
-    with a pull on each leaf, kick plates, a dark threshold."""
+    sensor light, two aluminium-framed leaves of the pack's dark glass (its
+    glare slanting across), a dark split between them with a pull on each
+    leaf, kick plates, a dark threshold."""
     m = (x0 + x1 + 1) // 2
     ym = (y0 + y1) // 2
     d.rectangle([x0, y0, x1, y1], fill=STONE_DK)
     d.rectangle([x0, y0, x1, y0 + 4], fill=CHAR)
     d.line([(x0, y0), (x1, y0)], fill=CHAR_HI)
-    d.rectangle([m - 2, y0 + 2, m + 1, y0 + 3], fill=rgb('7fd08a'))
+    d.rectangle([m - 2, y0 + 2, m + 1, y0 + 3], fill=rgb('93c297'))
     for a, b in ((x0 + 1, m - 2), (m + 1, x1 - 1)):
-        for y in range(y0 + 6, y1 - 1):
-            for x in range(a, b + 1):
-                t = (y - y0) / (y1 - y0)
-                c = mix(mix(WARM, TIMBER, 0.1 + 0.5 * t), GLASS, 0.28)
-                s = (x - x0 + y) % 30
-                if s < 4:
-                    c = mix(c, WHITE, 0.65)
-                elif s < 6 or 12 <= s < 14:
-                    c = mix(c, WHITE, 0.3)
-                d.point((x, y), fill=c)
+        d.rectangle([a, y0 + 6, b, y1 - 2], fill=GLASS)
         d.rectangle([a, y0 + 6, b, y1 - 2], outline=STONE)
         d.line([(a, y0 + 6), (a, y1 - 2)], fill=WHITE)
         d.rectangle([a, y1 - 9, b, y1 - 2], fill=STONE)
@@ -354,13 +385,12 @@ def station_front():
     d.rectangle([44, 12, 275, 40], fill=STONE)
     wood_glass(d, 47, 14, 272, 39, bay=12, lamps=False, phase=20)
     d.line([(47, 27), (272, 27)], fill=STONE_DK)
-    d.rectangle([40, 8, 279, 12], fill=WHITE)
-    d.line([(40, 12), (279, 12)], fill=STONE_LO); d.rectangle([272, 9, 279, 12], fill=STONE)
+    d.rectangle([40, 8, 279, 12], fill=rgb('94a2a8'))                 # its roof's steel coping
+    d.line([(40, 8), (279, 8)], fill=rgb('d1e2eb')); d.line([(40, 12), (279, 12)], fill=STONE_DK)
     snow_slab(d, 40, 279, 4, 7, seed=4)
     # the roof slab: thin, wide, a timber soffit under its overhang
-    d.rectangle([0, 44, 319, 49], fill=WHITE)
-    d.rectangle([0, 48, 319, 49], fill=STONE)
-    d.rectangle([312, 45, 319, 49], fill=STONE)
+    d.rectangle([0, 44, 319, 49], fill=rgb('94a2a8'))                 # a steel coping round its edge
+    d.line([(0, 44), (319, 44)], fill=rgb('d1e2eb')); d.line([(0, 49), (319, 49)], fill=STONE_DK)
     for x in range(2, 318):
         d.line([(x, 50), (x, 54)], fill=TIMBER_DK if x % 4 == 3 else (TIMBER if x % 4 == 0 else TIMBER_LO))
     d.line([(2, 54), (317, 54)], fill=TIMBER_DK)
@@ -378,12 +408,12 @@ def station_front():
     d.rectangle([110, 59, 209, 76], fill=DARK)
     d.line([(110, 59), (209, 59)], fill=CHAR_HI); d.line([(110, 76), (209, 76)], fill=INK)
     kanji(d, ('asahi', 'kawa'), 116, 62, WHITE)
-    text(d, 'ASAHIKAWA', 146, 64, WARM)
-    d.line([(146, 73), (198, 73)], fill=TIMBER)
+    text(d, 'ASAHIKAWA', 146, 64, LAMP)
+    d.line([(146, 73), (198, 73)], fill=LAMP_LO)
     # the entrance (cells 4,4 and 5,4): a canopy, two pairs of sliding glass doors, a mat
     d.rectangle([120, 92, 199, 153], fill=STONE_DK)
-    d.rectangle([116, 88, 203, 92], fill=WHITE)
-    d.line([(116, 92), (203, 92)], fill=STONE_LO); d.rectangle([198, 89, 203, 92], fill=STONE)
+    d.rectangle([116, 88, 203, 92], fill=rgb('94a2a8'))
+    d.line([(116, 88), (203, 88)], fill=rgb('d1e2eb')); d.line([(116, 92), (203, 92)], fill=STONE_DK)
     snow_cap(d, 116, 203, 85, 3, seed=2)
     sliding_doors(d, 123, 95, 158, 153)
     sliding_doors(d, 161, 95, 196, 153)
@@ -406,7 +436,7 @@ def station_front():
 def komodaru(d, cx, cy, r=8, mark=RED):
     """A straw-wrapped sake cask lying on its side, its round end to you: a
     rope hoop, a white paper face with the brewer's mark, rope ties."""
-    straw, straw_lo, straw_hi, rope = rgb('dcc48c'), rgb('a98f5c'), rgb('f1e2b4'), rgb('7a6540')
+    straw, straw_lo, straw_hi, rope = rgb('e3c587'), rgb('bb8971'), rgb('e4cecc'), rgb('86624f')
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=straw)
     d.chord([cx - r, cy - r, cx + r, cy + r], 320, 110, fill=straw_lo)
     d.arc([cx - r, cy - r, cx + r, cy + r], 170, 290, fill=straw_hi)
@@ -422,9 +452,7 @@ def shop_sake():
     im, d = canvas(3, 4)                 # 96 x 128
     # the main roof, eaves to the street, dark tile under deep snow
     scan = [(y, 6 - (y - 26) // 4, 89 + (y - 26) // 4) for y in range(26, 50)]
-    tiles(d, scan, KAWARA, KAWARA_LO, step=4)
-    for y, x0, x1 in scan:
-        d.point((x0, y), fill=KAWARA_HI); d.point((x1, y), fill=KAWARA_LO)
+    kawara(d, scan)
     d.rectangle([1, 50, 94, 51], fill=KAWARA_LO)
     snow_slab(d, 6, 89, 22, 29, seed=3, shade_from=80)
     d.rectangle([12, 21, 83, 23], fill=KAWARA_LO)                       # the ridge shows through
@@ -433,9 +461,7 @@ def shop_sake():
         d.line([(x, 36 + (x % 4)), (x + 3 + x % 3, 36 + (x % 4))], fill=SNOW)
     icicles(d, 3, 92, 52, seed=2)
     # the upper wall: white plaster, a name board
-    d.rectangle([8, 52, 87, 72], fill=PLASTER)
-    d.rectangle([8, 52, 87, 54], fill=PLASTER_DK)
-    d.rectangle([82, 55, 87, 72], fill=PLASTER_LO)
+    plaster(d, 8, 52, 87, 72)
     d.rectangle([13, 57, 82, 70], fill=TIMBER_HI)
     d.rectangle([13, 57, 82, 70], outline=WOOD_LO)
     d.line([(14, 58), (81, 58)], fill=WHITE)
@@ -443,45 +469,44 @@ def shop_sake():
     text(d, 'SAKAGURA', 31, 60, DARK)
     # the pent roof over the shop front
     scan = [(y, 3 - (y - 73) // 2, 92 + (y - 73) // 2) for y in range(73, 80)]
-    tiles(d, scan, KAWARA, KAWARA_LO, step=3)
+    kawara(d, scan)
     d.line([(0, 80), (95, 80)], fill=KAWARA_LO)
     snow_slab(d, 2, 93, 70, 73, seed=8, shade_from=82)
     # the ground floor: plaster over a namako (tile and white lattice) dado
-    d.rectangle([6, 81, 89, 123], fill=PLASTER)
-    d.rectangle([6, 81, 89, 83], fill=PLASTER_DK)
-    d.rectangle([84, 84, 89, 123], fill=PLASTER_LO)
+    plaster(d, 6, 81, 89, 104)
+    d.rectangle([84, 105, 89, 123], fill=PLASTER_LO)
     for y in range(105, 124):
         for x in range(6, 90):
             on = (x + y) % 8 == 0 or (x - y) % 8 == 0
             d.point((x, y), fill=PLASTER if on else (KAWARA_LO if x > 83 else KAWARA))
     d.line([(6, 104), (89, 104)], fill=PLASTER_DK)
-    # a slatted window, lamplit
+    # a slatted window
     d.rectangle([10, 87, 33, 102], fill=WOOD_DK)
-    d.rectangle([11, 88, 32, 101], fill=WARM)
+    d.rectangle([11, 88, 32, 101], fill=GLASS)
     for x in range(12, 33, 3):
         d.line([(x, 88), (x, 101)], fill=WOOD_LO)
     d.line([(11, 94), (32, 94)], fill=WOOD_LO)
-    # the doorway (cell 1,3): a navy noren, a lit sliding door
+    # the doorway (cell 1,3): a navy noren, a glazed sliding door
     d.rectangle([37, 84, 58, 123], fill=WOOD_DK)
-    d.rectangle([39, 86, 56, 123], fill=mix(WARM, WOOD, 0.3))
+    d.rectangle([39, 86, 56, 123], fill=GLASS)
     for x in range(41, 56, 4):
         d.line([(x, 100), (x, 123)], fill=WOOD_LO)
     d.line([(39, 110), (56, 110)], fill=WOOD_LO)
     d.rectangle([47, 86, 48, 123], fill=WOOD_DK)
     for i, x in enumerate(range(39, 57, 6)):
         d.rectangle([x, 86, x + 4, 99], fill=NAVY)
-        d.line([(x, 86), (x, 99)], fill=rgb('2c3d80'))
+        d.line([(x, 86), (x, 99)], fill=rgb('314b8e'))
         d.rectangle([x + 1, 91, x + 3, 93], fill=WHITE); d.point((x + 2, 92), fill=NAVY)
     # the cedar ball under the eave
     d.line([(48, 76), (48, 79)], fill=INK)
     d.rectangle([44, 73, 52, 75], fill=WOOD_DK); d.line([(43, 72), (53, 72)], fill=SNOW)
-    d.ellipse([41, 77, 55, 91], fill=rgb('6c7a44'))
-    d.chord([41, 77, 55, 91], 300, 110, fill=rgb('4c5830'))
-    d.arc([42, 78, 54, 90], 180, 290, fill=rgb('93a35c'))
+    d.ellipse([41, 77, 55, 91], fill=rgb('6c8e7f'))
+    d.chord([41, 77, 55, 91], 300, 110, fill=rgb('506b6b'))
+    d.arc([42, 78, 54, 90], 180, 290, fill=rgb('93c297'))
     for k in range(9):
         px_, py_ = 43 + (k * 5) % 11, 79 + (k * 7) % 11
         if (px_ - 48) ** 2 + (py_ - 84) ** 2 < 36:
-            d.point((px_, py_), fill=rgb('93a35c') if k % 2 else rgb('3d4728'))
+            d.point((px_, py_), fill=rgb('93c297') if k % 2 else rgb('395050'))
     # casks stacked by the door, snow on the top one
     komodaru(d, 69, 114); komodaru(d, 85, 114, mark=NAVY)
     komodaru(d, 77, 100)
@@ -503,10 +528,13 @@ def chair(d, x, y, c=TIMBER, lo=TIMBER_DK):
 
 def shop_woodcraft():
     im, d = canvas(4, 3)                 # 128 x 96
-    # a flat roof: a dark metal parapet, snow lying on it
-    d.rectangle([3, 12, 124, 18], fill=CHAR)
-    d.line([(3, 12), (124, 12)], fill=CHAR_HI); d.rectangle([3, 17, 124, 18], fill=CHAR_LO)
-    snow_slab(d, 3, 124, 7, 11, seed=6)
+    # a flat roof seen from above under snow, a steel vent through it, a dark fascia
+    snowy_roof(im, 3, 1, 124, 15, seed=6)
+    d.rectangle([20, 4, 31, 10], fill=STONE)
+    d.rectangle([20, 4, 31, 5], fill=SNOW); d.line([(20, 4), (31, 4)], fill=WHITE)
+    d.rectangle([29, 6, 31, 10], fill=STONE_LO); d.line([(20, 10), (31, 10)], fill=STONE_DK)
+    d.rectangle([3, 16, 124, 18], fill=CHAR)
+    d.line([(3, 16), (124, 16)], fill=CHAR_HI); d.line([(3, 18), (124, 18)], fill=CHAR_LO)
     # the upper band: horizontal timber cladding and a carved board
     boards_h(d, 5, 19, 122, 42, TIMBER, TIMBER_LO, TIMBER_HI, step=4)
     d.rectangle([117, 19, 122, 42], fill=TIMBER_LO)
@@ -516,14 +544,14 @@ def shop_woodcraft():
     text(d, 'KAGU', 40, 27, TIMBER_HI)
     d.rectangle([66, 30, 68, 31], fill=TIMBER)
     text(d, 'CRAFT', 73, 27, WHITE)
-    # the ground floor: charred posts, one long lit window, a door (cell 3,2)
-    d.rectangle([5, 43, 122, 91], fill=CHAR)
+    # the ground floor: charred boards, one long showroom window, a door (cell 3,2)
+    boards_v(d, 5, 46, 122, 91, CHAR, CHAR_LO, CHAR_HI, step=6)
     d.rectangle([5, 43, 122, 45], fill=CHAR_LO)
     d.rectangle([9, 48, 89, 86], fill=WOOD_DK)
-    d.rectangle([10, 49, 88, 85], fill=WARM)
-    d.rectangle([10, 49, 88, 50], fill=WHITE)
-    d.rectangle([10, 78, 88, 85], fill=TIMBER_HI)                   # the showroom floor
-    d.line([(10, 78), (88, 78)], fill=TIMBER)
+    d.rectangle([10, 49, 88, 85], fill=GLASS)
+    d.rectangle([10, 49, 88, 50], fill=GLASS_HI)
+    d.rectangle([10, 78, 88, 85], fill=TIMBER_DK)                   # the showroom floor
+    d.line([(10, 78), (88, 78)], fill=TIMBER_LO)
     # in the window: a chair, a table with a lamp, a tall shelf, a stool
     chair(d, 15, 80)
     d.rectangle([32, 66, 54, 67], fill=TIMBER_LO); d.line([(32, 66), (54, 66)], fill=TIMBER)
@@ -539,13 +567,13 @@ def shop_woodcraft():
     d.line([(85, 74), (86, 80)], fill=TIMBER_DK)
     for x in (47,):                                                   # a pendant lamp
         d.line([(x, 51), (x, 54)], fill=WOOD_DK); d.polygon([(x - 3, 58), (x, 54), (x + 3, 58)], fill=CHAR)
-        d.line([(x - 2, 59), (x + 2, 59)], fill=WHITE)
+        d.line([(x - 2, 59), (x + 2, 59)], fill=LAMP)
     for x in (36, 62):                                                # the window's posts
         d.rectangle([x, 49, x + 1, 85], fill=WOOD_DK)
     d.rectangle([98, 50, 117, 91], fill=WOOD_DK)                      # the door
     d.rectangle([100, 52, 115, 91], fill=TIMBER)
     d.line([(100, 52), (100, 91)], fill=TIMBER_HI)
-    d.rectangle([103, 56, 112, 74], fill=WARM); d.line([(103, 56), (112, 56)], fill=WHITE)
+    d.rectangle([103, 56, 112, 74], fill=GLASS); d.line([(103, 56), (112, 56)], fill=GLASS_HI)
     d.rectangle([113, 72, 114, 78], fill=CHAR_LO)
     d.rectangle([94, 46, 121, 49], fill=CHAR_HI); snow_cap(d, 94, 121, 43, 3, seed=9)
     d.rectangle([3, 92, 124, 94], fill=STONE_LO); d.line([(3, 92), (124, 92)], fill=STONE)
@@ -559,7 +587,7 @@ def shop_woodcraft():
     return im
 
 
-MINT, MINT_LO, MINT_HI, MINT_DK = rgb('8fbfae'), rgb('6d9c8c'), rgb('b3d9cb'), rgb('4f7669')
+MINT, MINT_LO, MINT_HI, MINT_DK = rgb('8fb2b0'), rgb('6c8e7f'), rgb('b1dfdc'), rgb('506b6b')
 
 
 def shop_bakery():
@@ -572,68 +600,70 @@ def shop_bakery():
         x0, x1 = (34, 61) if y < 20 else ((20, 75) if y < 30 else (6, 89))
         d.line([(x0, y), (x1, y)], fill=MINT_LO)
     for x0, y0, x1 in ((6, 30, 19), (20, 20, 33), (34, 12, 61), (62, 20, 75), (76, 30, 89)):
-        d.rectangle([x0 - 1, y0 - 2, x1 + 1, y0], fill=WHITE)
+        d.rectangle([x0 - 1, y0 - 2, x1 + 1, y0], fill=rgb('dae2e4'))   # a steel coping on each step
+        d.line([(x0 - 1, y0 - 2), (x1 + 1, y0 - 2)], fill=rgb('fafcfd'))
         d.line([(x0 - 1, y0), (x1 + 1, y0)], fill=MINT_DK)
+        d.rectangle([x0, y0 + 1, x1, y0 + 2], fill=MINT_LO)             # its shade on the front
         snow_cap(d, x0 - 1, x1 + 1, y0 - 5, 3, seed=x0)
     d.rectangle([84, 31, 89, 123], fill=MINT_LO)
     d.line([(6, 31), (6, 123)], fill=MINT_HI)
     # a brick chimney behind the parapet
-    d.rectangle([70, 4, 79, 17], fill=rgb('b8614a'))
+    d.rectangle([70, 4, 79, 17], fill=rgb('aa4d31'))
     for y in range(6, 18, 3):
-        d.line([(70, y), (79, y)], fill=rgb('8f4636'))
-    d.rectangle([77, 5, 79, 17], fill=rgb('8f4636'))
+        d.line([(70, y), (79, y)], fill=rgb('8a3a22'))
+    d.rectangle([77, 5, 79, 17], fill=rgb('8a3a22'))
     d.rectangle([68, 2, 81, 4], fill=STONE_LO); d.line([(68, 1), (81, 1)], fill=SNOW)
     # the oval board: PAN (bread) in kana, a loaf
     d.ellipse([16, 33, 79, 56], fill=CREAM)
     d.ellipse([16, 33, 79, 56], outline=WOOD_LO)
     d.ellipse([18, 35, 77, 54], outline=GOLD)
     kana(d, ('pa', 'n'), 27, 41, WOOD_DK)
-    d.ellipse([49, 41, 69, 50], fill=rgb('c98a4b'))
-    d.chord([49, 41, 69, 50], 20, 160, fill=rgb('a3683a'))
+    d.ellipse([49, 41, 69, 50], fill=rgb('a7843b'))
+    d.chord([49, 41, 69, 50], 20, 160, fill=rgb('86624f'))
     for x in (54, 59, 64):
-        d.line([(x, 42), (x - 2, 46)], fill=rgb('f0c98a'))
+        d.line([(x, 42), (x - 2, 46)], fill=rgb('e3c587'))
     # a striped awning
     for x in range(4, 92):
-        c = rgb('8a4b3a') if (x // 6) % 2 == 0 else CREAM
-        lo = rgb('6a3729') if (x // 6) % 2 == 0 else CREAM_LO
+        c = rgb('904a37') if (x // 6) % 2 == 0 else CREAM
+        lo = rgb('8a3a22') if (x // 6) % 2 == 0 else CREAM_LO
         d.line([(x, 62), (x, 71)], fill=c)
         d.line([(x, 72), (x, 73 + ((x % 6) in (2, 3)))], fill=lo)
     d.line([(4, 61), (91, 61)], fill=WOOD_DK)
     snow_cap(d, 4, 91, 58, 3, seed=5)
-    # the window: loaves and rolls on two shelves, lamplit
+    # the window: loaves and rolls on two shelves behind the glass
     d.rectangle([9, 78, 44, 110], fill=WHITE)
-    d.rectangle([11, 80, 42, 108], fill=WARM)
-    d.line([(11, 80), (42, 80)], fill=WHITE)
+    d.rectangle([11, 80, 42, 108], fill=GLASS)
+    d.line([(11, 80), (42, 80)], fill=GLASS_HI)
     for sy in (93, 107):
         d.line([(11, sy), (42, sy)], fill=WOOD_LO)
     for k, (bx, by, bw) in enumerate(((13, 92, 8), (23, 92, 6), (31, 92, 9), (13, 106, 6), (21, 106, 9), (32, 106, 7))):
-        d.ellipse([bx, by - 6, bx + bw, by], fill=(rgb('c98a4b'), rgb('dba862'), rgb('b3733f'))[k % 3])
-        d.line([(bx + 2, by - 5), (bx + bw - 2, by - 5)], fill=rgb('f0c98a'))
+        d.ellipse([bx, by - 6, bx + bw, by], fill=(rgb('a7843b'), rgb('c6a663'), rgb('a7843b'))[k % 3])
+        d.line([(bx + 2, by - 5), (bx + bw - 2, by - 5)], fill=rgb('e3c587'))
     d.line([(26, 80), (26, 108)], fill=WHITE)
     d.rectangle([9, 111, 44, 123], fill=MINT_DK)
     for x in range(13, 44, 8):
         d.rectangle([x, 114, x + 4, 120], fill=MINT_LO)
     # the door (cell 1,3), a glazed half
     d.rectangle([50, 78, 69, 123], fill=WHITE)
-    d.rectangle([52, 80, 67, 123], fill=rgb('8a4b3a'))
-    d.line([(52, 80), (52, 123)], fill=rgb('b06a52'))
-    d.rectangle([54, 83, 65, 102], fill=WARM); d.line([(54, 83), (65, 83)], fill=WHITE)
-    d.line([(54, 92), (65, 92)], fill=rgb('8a4b3a')); d.line([(59, 83), (59, 102)], fill=rgb('8a4b3a'))
+    d.rectangle([52, 80, 67, 123], fill=rgb('904a37'))
+    d.line([(52, 80), (52, 123)], fill=rgb('aa775f'))
+    d.rectangle([54, 83, 65, 102], fill=GLASS); d.line([(54, 83), (65, 83)], fill=GLASS_HI)
+    d.line([(54, 92), (65, 92)], fill=rgb('904a37')); d.line([(59, 83), (59, 102)], fill=rgb('904a37'))
     d.rectangle([64, 104, 65, 108], fill=GOLD)
     d.rectangle([49, 123, 70, 125], fill=STONE_LO)
     # a hanging cup sign, and the chalkboard on the step
     d.line([(74, 80), (86, 80)], fill=INK); d.line([(84, 80), (84, 83)], fill=INK)
     d.ellipse([77, 83, 90, 96], fill=CREAM); d.ellipse([77, 83, 90, 96], outline=WOOD_LO)
-    d.rectangle([80, 88, 86, 92], fill=rgb('8a4b3a')); d.arc([85, 88, 89, 92], 270, 90, fill=rgb('8a4b3a'))
+    d.rectangle([80, 88, 86, 92], fill=rgb('904a37')); d.arc([85, 88, 89, 92], 270, 90, fill=rgb('904a37'))
     d.line([(82, 86), (82, 85)], fill=WOOD_LO); d.line([(85, 86), (85, 84)], fill=WOOD_LO)
     d.polygon([(74, 123), (77, 104), (88, 104), (91, 123)], fill=WOOD_LO)
-    d.rectangle([78, 106, 87, 119], fill=rgb('2f3b36'))
+    d.rectangle([78, 106, 87, 119], fill=rgb('2e4040'))
     for k, y in enumerate((108, 111, 114, 117)):
-        d.line([(80, y), (85 - (k % 2) * 2, y)], fill=WHITE if k == 0 else rgb('c9d6c8'))
+        d.line([(80, y), (85 - (k % 2) * 2, y)], fill=WHITE if k == 0 else rgb('bcc7cc'))
     d.line([(77, 104), (88, 104)], fill=SNOW)
     drift(d, 2, 48, 127, 4, seed=4); drift(d, 70, 94, 127, 3, seed=2)
     outline(im)
-    puffs(im, 75, -1 + 2, n=1, seed=1, colour=(214, 222, 236), a0=200)
+    puffs(im, 75, -1 + 2, n=1, seed=1, colour=rgb('d1e2eb')[:3], a0=200)
     return im
 
 
@@ -681,7 +711,7 @@ def ice_crane():
     d.ellipse([17, 1, 24, 7], fill=ICE)                                  # the head, the long bill
     d.polygon([(18, 3), (6, 1), (18, 5)], fill=ICE_LO); d.line([(18, 3), (7, 1)], fill=ICE_HI)
     d.point((21, 4), fill=ICE_DK)
-    d.rectangle([19, 1, 22, 1], fill=rgb('e58b93'))                      # a blush of red on its crown
+    d.rectangle([19, 1, 22, 1], fill=rgb('e78d7b'))                      # a blush of red on its crown
     for x in (31, 38):                                                   # the legs: a third of its height
         d.rectangle([x, 36, x + 1, 51], fill=ICE_LO); d.line([(x, 36), (x, 51)], fill=ICE)
         d.point((x - 1, 43), fill=ICE); d.line([(x - 2, 51), (x + 3, 51)], fill=ICE)
@@ -748,8 +778,8 @@ def bench():
     return under(im, [(3, 26, 60, 31)])
 
 
-PAVE = (rgb('c5bbb0'), rgb('b8ada3'), rgb('cdc4ba'), rgb('aea39b'), rgb('bfb3a8'))
-PAVE_ROSE, PAVE_ROSE_LO, PAVE_JOINT, PAVE_HI = rgb('c4aca2'), rgb('b39c93'), rgb('a69d96'), rgb('dcd5cc')
+PAVE = (rgb('d2bab0'), rgb('b3aaa0'), rgb('bebaba'), rgb('ac9f96'), rgb('c2ac9e'))
+PAVE_ROSE, PAVE_ROSE_LO, PAVE_JOINT, PAVE_HI = rgb('c69f96'), rgb('ac9f96'), rgb('9e9e9e'), rgb('e4cecc')
 
 
 def paving_px(x, y):
@@ -760,18 +790,18 @@ def paving_px(x, y):
     xo = x + (4 if by % 2 else 0)
     bx, ix = (xo // 8) % 4, xo % 8
     if ix == 7 or iy == 7:
-        return SNOW_LO if (bx * 5 + by * 3 + ix + iy) % 13 == 0 else PAVE_JOINT
+        return rgb('d1e2eb') if (bx * 5 + by * 3 + ix + iy) % 13 == 0 else PAVE_JOINT
     rose = (bx, by) in ((1, 0), (2, 3))
     c = PAVE_ROSE if rose else PAVE[(bx * 3 + by * 7 + bx * by) % 5]
     if ix == 0 or iy == 0:
-        return mix(c, WHITE, 0.18)
+        return PAVE_HI
     if (x * 7 + y * 13) % 29 == 0:
         return PAVE_ROSE_LO if rose else PAVE[3]
     return c
 
 
-ASPH, ASPH_HI, ASPH_DK, ASPH_WET = rgb('5d6274'), rgb('6c7286'), rgb('4c5062'), rgb('3f4354')
-SLUSH, SLUSH_HI = rgb('a4adbf'), rgb('d5dce8')
+ASPH, ASPH_HI, ASPH_DK, ASPH_WET = rgb('5f6177'), rgb('726f86'), rgb('504e65'), rgb('413f53')
+SLUSH, SLUSH_HI = rgb('adb2c2'), rgb('d1e2eb')
 
 
 def alley_px(x, y):
@@ -786,7 +816,7 @@ def alley_px(x, y):
     if v > 1.7 or (v > 1.3 and h % 3 == 0):
         return SLUSH if h % 5 else SLUSH_HI
     if v < -2.0:
-        return ASPH_WET if h % 4 else rgb('6f7f9c')
+        return ASPH_WET if h % 4 else rgb('575f79')
     if h == 0:
         return ASPH_HI
     if h in (5, 11):
@@ -796,8 +826,9 @@ def alley_px(x, y):
 
 def ground(role, px_fn):
     """A ground tile of a family. Opaque; on an edge the snow field lies over
-    it with a wavy lip (the snow tile's own texture outside), shadowed where
-    the bank faces away from the light."""
+    it with a wavy lip (the snow tile's own texture outside, copied as it is
+    so the seam with snow-autotile stays invisible), shadowed where the bank
+    faces away from the light. Sheet colours only, but for the copied snow."""
     im = Image.new('RGBA', (64, 64), CLEAR)
     px = im.load()
     for y in range(64):
@@ -818,13 +849,13 @@ def ground(role, px_fn):
             if dist < 0:
                 px[x, y] = snow[x, y]
                 if dist >= -2 and (min(ds, de) < 0):                  # the lit lip of a south / east bank
-                    px[x, y] = (250, 252, 255, 255)
+                    px[x, y] = rgb('fafcfd')
             elif dist < 4 and min(dn, dw) < 4:                        # the bank's shadow on the ground
                 r, g, bl, _ = px[x, y]
                 k = 0.72 if dist < 2 else 0.86
-                px[x, y] = (int(r * k), int(g * k), int(bl * (k + 0.08)), 255)
+                px[x, y] = nearest(int(r * k), int(g * k), int(bl * (k + 0.08))) + (255,)
             elif dist < 2:
-                px[x, y] = (236, 242, 250, 255)                         # snow scuffed onto it
+                px[x, y] = rgb('ecfaff')                                # snow scuffed onto it
     return im
 
 
@@ -840,7 +871,8 @@ def alley_ground(role):
 
 def heiwa_lamp():
     """Heiwa-dori's street lamp (`lamp-post`: it glows at night): a timber
-    post on a stone foot carrying a woodcraft lantern box, snow on its cap.
+    post on a stone foot carrying a woodcraft lantern box (its pane the
+    pack's dim gold, never white), snow on its cap.
     The lantern is in the top cell, which is the cell the tile is placed on."""
     im, d = canvas(1, 2)                 # 32 x 64
     d.rectangle([14, 23, 17, 58], fill=TIMBER)
@@ -849,8 +881,9 @@ def heiwa_lamp():
         d.line([(14, y), (17, y)], fill=CHAR_LO)
     d.rectangle([12, 57, 19, 61], fill=STONE_DK); d.line([(12, 57), (19, 57)], fill=STONE_LO)
     d.rectangle([9, 9, 22, 22], fill=TIMBER_DK)                          # the lantern box
-    d.rectangle([11, 11, 20, 20], fill=WARM)
-    d.rectangle([13, 13, 18, 18], fill=mix(WARM, WHITE, 0.6)); d.rectangle([15, 14, 16, 17], fill=WHITE)
+    d.rectangle([11, 11, 20, 20], fill=LAMP)
+    d.line([(11, 11), (20, 11)], fill=LAMP_LO); d.rectangle([11, 19, 20, 20], fill=LAMP_LO)
+    d.rectangle([14, 14, 17, 16], fill=LAMP_HI)
     for y in (13, 18):
         d.line([(11, y), (20, y)], fill=TIMBER_LO)
     d.line([(9, 9), (9, 22)], fill=TIMBER_LO)
@@ -866,35 +899,36 @@ def heiwa_lamp():
 
 
 def shop_books():
-    """A second-hand bookshop: a low front in slate-blue tile, a cream BOOKS
-    board, a green awning, a lit window of spines, a sale cart in the snow."""
+    """A second-hand bookshop: a flat roof seen from above under snow, a low
+    front in slate-blue tile, a cream BOOKS board, a green awning, a window of
+    spines, a sale cart in the snow."""
     im, d = canvas(3, 3)                 # 96 x 96
-    tile, tile_lo, tile_hi = rgb('7d8fa6'), rgb('5f7088'), rgb('9db0c6')
-    d.rectangle([3, 12, 92, 17], fill=tile_lo)
-    d.line([(3, 12), (92, 12)], fill=tile_hi); d.line([(3, 17), (92, 17)], fill=rgb('46546a'))
-    snow_slab(d, 3, 92, 7, 11, seed=3)
+    tile, tile_lo, tile_hi = rgb('8085b1'), rgb('575f79'), rgb('99a1ca')
+    snowy_roof(im, 3, 1, 92, 15, seed=3)
+    d.rectangle([3, 16, 92, 17], fill=tile_lo)                          # the parapet
+    d.line([(3, 16), (92, 16)], fill=tile_hi); d.line([(3, 17), (92, 17)], fill=rgb('47485d'))
     for y in range(18, 92):
         for x in range(5, 91):
             joint = (y % 5 == 4) or ((x + (y // 5 % 2) * 3) % 6 == 5)
             c = tile_lo if joint else (tile_hi if (x * 3 + (y // 5) * 7) % 11 == 0 else tile)
-            d.point((x, y), fill=mix(c, tile_lo, 0.5) if x > 85 else c)
+            d.point((x, y), fill=tile_lo if x > 85 else c)
     d.rectangle([10, 21, 85, 36], fill=CREAM)                            # the board
     d.rectangle([10, 21, 85, 36], outline=NAVY)
     d.line([(11, 22), (84, 22)], fill=WHITE)
-    for k, c in enumerate((RED, ROOF_G, AMBER)):                         # three books on end
+    for k, c in enumerate((RED, ROOF_G, LAMP)):                         # three books on end
         d.rectangle([15 + k * 4, 25 + (k == 1), 17 + k * 4, 33], fill=c)
         d.line([(15 + k * 4, 27 + (k == 1)), (17 + k * 4, 27 + (k == 1))], fill=WHITE)
     text(d, 'BOOKS', 34, 25, NAVY)
-    d.rectangle([68, 28, 80, 29], fill=NAVY); d.rectangle([68, 31, 76, 32], fill=RED_DK)
+    d.rectangle([68, 28, 80, 29], fill=NAVY); d.rectangle([68, 31, 76, 32], fill=RED)
     for x in range(4, 92):                                               # a green awning, scalloped
         d.line([(x, 40), (x, 46)], fill=ROOF_G if (x // 8) % 2 else ROOF_G_HI)
         d.line([(x, 47), (x, 47 + ((x % 8) in (2, 3, 4, 5)))], fill=ROOF_G_LO)
-    d.line([(4, 39), (91, 39)], fill=WOOD_DK)
+    d.line([(4, 39), (91, 39)], fill=ROOF_G_LO)
     snow_cap(d, 4, 91, 36, 3, seed=7)
     d.rectangle([8, 51, 58, 85], fill=WHITE)                             # the window: three shelves of spines
-    d.rectangle([10, 53, 56, 83], fill=WARM)
-    d.line([(10, 53), (56, 53)], fill=WHITE)
-    cols = (RED, NAVY, ROOF_G, AMBER, rgb('8a4b3a'), CREAM, ROOF_B, rgb('7a5aa0'))
+    d.rectangle([10, 53, 56, 83], fill=GLASS)
+    d.line([(10, 53), (56, 53)], fill=GLASS_HI)
+    cols = (RED, NAVY, ROOF_G, LAMP, RED, CREAM, NAVY, ROOF_G)          # five colours of spine
     for j, sy in enumerate((63, 73, 83)):
         d.line([(10, sy), (56, sy)], fill=WOOD_LO)
         x = 11
@@ -906,10 +940,9 @@ def shop_books():
             x += w + 1
     d.line([(33, 53), (33, 83)], fill=WHITE)
     d.rectangle([66, 51, 87, 91], fill=WHITE)                            # the door (cell 2,2), glazed
-    d.rectangle([68, 53, 85, 91], fill=rgb('46546a'))
-    d.rectangle([70, 56, 83, 78], fill=WARM); d.line([(70, 56), (83, 56)], fill=WHITE)
-    d.line([(72, 59), (72, 74)], fill=WHITE)
-    d.rectangle([73, 64, 80, 68], fill=CREAM); d.line([(74, 66), (79, 66)], fill=RED_DK)   # OPEN card
+    d.rectangle([68, 53, 85, 91], fill=rgb('47485d'))
+    d.rectangle([70, 56, 83, 78], fill=GLASS); d.line([(70, 56), (83, 56)], fill=GLASS_HI)
+    d.rectangle([73, 64, 80, 68], fill=CREAM); d.line([(74, 66), (79, 66)], fill=RED)   # OPEN card
     d.rectangle([82, 79, 83, 84], fill=GOLD)
     d.rectangle([3, 92, 92, 94], fill=STONE_LO); d.line([(3, 92), (92, 92)], fill=STONE)
     d.rectangle([12, 80, 38, 90], fill=TIMBER)                           # the sale cart
@@ -945,7 +978,7 @@ def ramen_shoyu():
     im, d = canvas(4, 4)                 # 128 x 128
     # a low tin roof, deep in snow, a stovepipe through it
     scan = [(y, 6 - (y - 14) // 3, 121 + (y - 14) // 3) for y in range(14, 30)]
-    seam_roof(d, scan, rgb('7a4a3a'), rgb('9a6450'), rgb('573428'), step=7)
+    seam_roof(d, scan, rgb('7f513b'), rgb('aa775f'), rgb('594b45'), step=7)
     d.rectangle([97, 2, 103, 20], fill=STONE)
     d.line([(97, 2), (97, 20)], fill=WHITE); d.rectangle([102, 2, 103, 20], fill=STONE_LO)
     d.rectangle([94, 0, 106, 2], fill=STONE_LO); d.line([(94, 0), (106, 0)], fill=STONE)
@@ -969,12 +1002,10 @@ def ramen_shoyu():
     d.rectangle([5, 56, 122, 58], fill=INK)
     for x in (5, 119):
         d.rectangle([x, 56, x + 3, 123], fill=WOOD_LO); d.line([(x, 56), (x, 123)], fill=WOOD)
-    # the counter window: lamplight, the cook, pots steaming, bowls, menu slips
+    # the counter window: the cook behind the glass, pots steaming, bowls, menu slips
     d.rectangle([22, 60, 82, 101], fill=WOOD_DK)
-    d.rectangle([24, 62, 80, 99], fill=WARM)
-    d.rectangle([24, 86, 80, 99], fill=rgb('e2b45c'))
-    d.rectangle([24, 62, 80, 76], fill=mix(WARM, WHITE, 0.4))
-    d.ellipse([46, 76, 54, 85], fill=rgb('e9b796'))                    # the cook, a towel round his head
+    d.rectangle([24, 62, 80, 99], fill=GLASS)
+    d.ellipse([46, 76, 54, 85], fill=rgb('e4cecc'))                    # the cook, a towel round his head
     d.rectangle([46, 76, 54, 78], fill=WHITE); d.point((55, 78), fill=WHITE)
     d.rectangle([43, 85, 57, 99], fill=WHITE); d.line([(50, 85), (50, 99)], fill=CREAM_LO)
     d.point((48, 81), fill=INK); d.point((52, 81), fill=INK)
@@ -996,9 +1027,9 @@ def ramen_shoyu():
     for x in (30, 44, 58, 72):                                           # stools tucked under
         d.rectangle([x, 108, x + 7, 109], fill=RED); d.line([(x, 108), (x + 7, 108)], fill=RED_HI)
         d.line([(x + 1, 110), (x, 122)], fill=INK); d.line([(x + 6, 110), (x + 7, 122)], fill=INK)
-    # the door (cell 3,3): a lamplit lattice, a red noren
+    # the door (cell 3,3): a glazed lattice, a red noren
     d.rectangle([97, 62, 116, 123], fill=WOOD_DK)
-    d.rectangle([99, 64, 114, 123], fill=mix(WARM, WOOD_HI, 0.35))
+    d.rectangle([99, 64, 114, 123], fill=GLASS)
     for x in range(101, 114, 3):
         d.line([(x, 78), (x, 123)], fill=WOOD_LO)
     for y in (92, 108):
@@ -1029,7 +1060,7 @@ def ramen_narrow():
     snow_slab(d, 3, 60, 10, 17, seed=6)
     d.rectangle([2, 24, 61, 25], fill=ROOF_B_LO)
     icicles(d, 4, 60, 26, seed=1)
-    wall, wall_lo, wall_hi = rgb('d8b66a'), rgb('b3924e'), rgb('ecd292')
+    wall, wall_lo, wall_hi = rgb('c6aa71'), rgb('a7843b'), rgb('e3c587')
     d.rectangle([5, 26, 58, 123], fill=wall)
     d.rectangle([5, 26, 58, 28], fill=wall_lo)
     d.rectangle([54, 29, 58, 123], fill=wall_lo)
@@ -1037,14 +1068,14 @@ def ramen_narrow():
     for k in range(14):                                                  # patched render
         d.point((9 + (k * 17) % 44, 32 + (k * 29) % 40), fill=wall_lo)
     # upstairs: a lit window, a unit on brackets
-    lit_window(d, 28, 36, 47, 52, frame=WHITE, lit=True, curtain=rgb('c9d6ea'))
+    lit_window(d, 28, 36, 47, 52, frame=WHITE, lit=True, curtain=rgb('e78d7b'))
     d.rectangle([30, 58, 44, 67], fill=STONE); d.rectangle([30, 58, 44, 59], fill=WHITE)
     d.ellipse([32, 60, 38, 66], fill=STONE_LO); d.point((35, 63), fill=STONE_DK)
     d.line([(40, 61), (43, 61)], fill=STONE_LO); d.line([(40, 63), (43, 63)], fill=STONE_LO)
     d.line([(30, 56), (44, 56)], fill=SNOW); d.line([(30, 57), (44, 57)], fill=SNOW_LO)
     # the upright sign: yellow, ramen in red, hung off the wall
-    d.rectangle([8, 32, 22, 73], fill=AMBER)
-    d.line([(8, 32), (8, 73)], fill=rgb('fde38a')); d.rectangle([20, 33, 22, 73], fill=rgb('d49a1c'))
+    d.rectangle([8, 32, 22, 73], fill=LAMP)
+    d.line([(8, 32), (8, 73)], fill=LAMP_HI); d.rectangle([20, 33, 22, 73], fill=LAMP_LO)
     d.rectangle([8, 32, 22, 73], outline=RED_DK)
     kana(d, ('ra', 'bar', 'me', 'n'), 11, 36, RED_DK, vertical=True)
     d.line([(8, 30), (22, 30)], fill=SNOW); d.line([(9, 31), (22, 31)], fill=SNOW_LO)
@@ -1052,15 +1083,15 @@ def ramen_narrow():
     scan = [(y, 3 - (y - 76) // 2, 60 + (y - 76) // 2) for y in range(76, 82)]
     seam_roof(d, scan, ROOF_B, ROOF_B_HI, ROOF_B_LO, step=6)
     snow_slab(d, 2, 61, 73, 76, seed=3, shade_from=54)
-    # the shop front: a lit window with a bowl in it, a white noren on the door (cell 1,3)
+    # the shop front: a window with a bowl in it, a white noren on the door (cell 1,3)
     d.rectangle([5, 83, 58, 85], fill=wall_lo)
     d.rectangle([8, 88, 27, 104], fill=WOOD_DK)
-    d.rectangle([9, 89, 26, 103], fill=WARM); d.line([(9, 89), (26, 89)], fill=WHITE)
+    d.rectangle([9, 89, 26, 103], fill=GLASS); d.line([(9, 89), (26, 89)], fill=GLASS_HI)
     bowl(d, 12, 98, fill=WHITE, band=NAVY)
     d.rectangle([9, 101, 26, 103], fill=WOOD_LO)
     boards_v(d, 8, 106, 27, 123, WOOD_LO, WOOD_DK, None, step=4)
     d.rectangle([33, 86, 54, 123], fill=WOOD_DK)
-    d.rectangle([35, 88, 52, 123], fill=mix(WARM, WOOD_HI, 0.35))
+    d.rectangle([35, 88, 52, 123], fill=GLASS)
     for x in range(37, 52, 3):
         d.line([(x, 102), (x, 123)], fill=WOOD_LO)
     d.line([(35, 112), (52, 112)], fill=WOOD_LO)
@@ -1106,7 +1137,7 @@ def ramen_gate():
         d.rectangle([x - 2, 88, x + 7, 93], fill=STONE_DK); d.line([(x - 2, 88), (x + 7, 88)], fill=STONE_LO)
         d.line([(x + 6 if x < 40 else x - 1, 34), (x + 14 if x < 40 else x - 9, 27)], fill=WOOD_DK, width=2)   # a knee brace
     scan = [(y, 3 - (y - 8), 92 + (y - 8)) for y in range(8, 13)]
-    tiles(d, scan, rgb('6b4a3a'), rgb('4a3228'), step=3)
+    tiles(d, scan, rgb('7f513b'), rgb('493938'), step=3)
     d.rectangle([0, 13, 95, 14], fill=INK)
     d.rectangle([2, 15, 93, 21], fill=WOOD_LO)
     d.line([(2, 15), (93, 15)], fill=WOOD); d.line([(2, 21), (93, 21)], fill=WOOD_DK)
@@ -1150,7 +1181,7 @@ def ramen_miso():
     ramen in kana), an indigo noren, a yellow nobori, a red lantern."""
     im, d = canvas(3, 4)                 # 96 x 128
     ax, ay, ey = 47, 14, 52
-    tin, tin_hi, tin_lo = rgb('7a4a3a'), rgb('9a6450'), rgb('573428')
+    tin, tin_hi, tin_lo = rgb('7f513b'), rgb('aa775f'), rgb('594b45')
     d.rectangle([72, 14, 76, 40], fill=STONE)                            # a stovepipe through the roof
     d.line([(72, 14), (72, 40)], fill=WHITE); d.line([(76, 14), (76, 40)], fill=STONE_LO)
     d.rectangle([70, 11, 78, 13], fill=STONE_LO); d.line([(70, 11), (78, 11)], fill=STONE)
@@ -1163,9 +1194,9 @@ def ramen_miso():
     for sx in (-14, 14):
         d.rectangle([ax + sx - 1, ey - 22, ax + sx, ey - 1], fill=WOOD_LO)
     d.ellipse([ax - 7, 27, ax + 7, 41], fill=WOOD_DK)                    # the round window
-    d.ellipse([ax - 5, 29, ax + 5, 39], fill=WARM)
+    d.ellipse([ax - 5, 29, ax + 5, 39], fill=GLASS)
     d.line([(ax, 29), (ax, 39)], fill=WOOD_DK); d.line([(ax - 5, 34), (ax + 5, 34)], fill=WOOD_DK)
-    d.arc([ax - 5, 29, ax + 5, 39], 180, 280, fill=WHITE)
+    d.arc([ax - 5, 29, ax + 5, 39], 180, 280, fill=GLASS_HI)
     for i in range(0, 46):                                               # the roof's two slopes, snow on both
         t = i / 45
         y = ay + t * (ey - ay)
@@ -1182,11 +1213,11 @@ def ramen_miso():
     d.arc([ax - 5, ay - 5, ax + 5, ay + 4], 180, 300, fill=WHITE)
     # the board: indigo, cream kana
     d.rectangle([6, 55, 89, 72], fill=NAVY)
-    d.line([(6, 55), (89, 55)], fill=rgb('4a5fa8')); d.rectangle([6, 71, 89, 72], fill=INK)
-    d.rectangle([85, 56, 89, 72], fill=rgb('1c2850'))
+    d.line([(6, 55), (89, 55)], fill=rgb('425faa')); d.rectangle([6, 71, 89, 72], fill=INK)
+    d.rectangle([85, 56, 89, 72], fill=rgb('172459'))
     d.rectangle([8, 57, 86, 69], outline=CREAM_LO)
     bowl(d, 12, 65, fill=CREAM, band=RED)
-    kana(d, ('mi', 'so'), 27, 60, AMBER)
+    kana(d, ('mi', 'so'), 27, 60, LAMP)
     kana(d, ('ra', 'bar', 'me', 'n'), 48, 60, CREAM)
     icicles(d, 6, 89, 73, seed=7)
     # the front: plaster between timber posts over a boarded dado
@@ -1197,24 +1228,24 @@ def ramen_miso():
     d.line([(6, 105), (89, 105)], fill=WOOD)
     for x in (6, 87):
         d.rectangle([x, 73, x + 2, 123], fill=WOOD_LO); d.line([(x, 73), (x, 123)], fill=WOOD)
-    d.rectangle([11, 79, 31, 101], fill=WOOD_DK)                         # a latticed window, lamplit
-    d.rectangle([12, 80, 30, 100], fill=WARM)
+    d.rectangle([11, 79, 31, 101], fill=WOOD_DK)                         # a latticed window
+    d.rectangle([12, 80, 30, 100], fill=GLASS)
     for x in range(15, 30, 3):
         d.line([(x, 80), (x, 100)], fill=WOOD_LO)
     d.line([(12, 90), (30, 90)], fill=WOOD_LO)
     d.rectangle([36, 76, 59, 123], fill=WOOD_DK)                         # the door (cell 1,3)
-    d.rectangle([38, 78, 57, 123], fill=mix(WARM, WOOD_HI, 0.35))
+    d.rectangle([38, 78, 57, 123], fill=GLASS)
     for x in range(40, 57, 3):
         d.line([(x, 96), (x, 123)], fill=WOOD_LO)
     d.line([(38, 110), (57, 110)], fill=WOOD_LO)
     d.rectangle([47, 78, 48, 123], fill=WOOD_DK)
     for x in (38, 45, 52):                                               # an indigo noren
         d.rectangle([x, 78, x + 5, 94], fill=NAVY)
-        d.line([(x, 78), (x, 94)], fill=rgb('4a5fa8')); d.line([(x, 94), (x + 5, 94)], fill=INK)
+        d.line([(x, 78), (x, 94)], fill=rgb('425faa')); d.line([(x, 94), (x + 5, 94)], fill=INK)
         d.ellipse([x + 1, 83, x + 4, 86], fill=CREAM)
     lantern(d, 62, 77, 9, 14)
     d.rectangle([65, 82, 66, 86], fill=WHITE)
-    nobori(d, 72, 80, 108, names=('mi', 'so'), body=AMBER, ink=RED_DK)
+    nobori(d, 72, 80, 108, names=('mi', 'so'), body=LAMP, ink=RED_DK)
     d.rectangle([3, 123, 92, 125], fill=STONE_LO); d.line([(3, 123), (92, 123)], fill=STONE)
     drift(d, 0, 36, 127, 5, seed=5); drift(d, 60, 95, 127, 4, seed=1)
     outline(im)
@@ -1233,16 +1264,16 @@ def crate(d, x, y, body, lo, hi):
 
 def ramen_crates():
     im, d = canvas(1, 2)                 # 32 x 64
-    yl, yl_lo, yl_hi = AMBER, rgb('c8941c'), rgb('fde38a')
+    yl, yl_lo, yl_hi = LAMP, LAMP_LO, LAMP_HI
     rd = (RED, RED_DK, RED_HI)
-    bl = (rgb('3a5fb0'), NAVY, rgb('6a8fd8'))
+    bl = (rgb('425faa'), NAVY, rgb('5a86de'))
     crate(d, 2, 61, yl, yl_lo, yl_hi); crate(d, 16, 61, *rd)
     crate(d, 2, 52, *rd); crate(d, 16, 52, yl, yl_lo, yl_hi)
     crate(d, 2, 43, *bl); crate(d, 16, 43, *rd)
     crate(d, 9, 34, yl, yl_lo, yl_hi)
     for x in range(11, 22, 3):                                           # empties in the top one
-        d.rectangle([x, 20, x + 1, 25], fill=rgb('5b3a22')); d.point((x, 19), fill=GOLD)
-        d.point((x, 21), fill=rgb('8a5a34'))
+        d.rectangle([x, 20, x + 1, 25], fill=rgb('493938')); d.point((x, 19), fill=GOLD)
+        d.point((x, 21), fill=rgb('7f513b'))
     for x in (3, 26):
         d.rectangle([x, 31, x + 2, 34], fill=SNOW); d.point((x + 1, 30), fill=WHITE)
     d.line([(2, 34), (8, 34)], fill=SNOW); d.line([(23, 34), (29, 34)], fill=SNOW)
@@ -1254,26 +1285,26 @@ def ramen_crates():
 
 def ramen_stockpot():
     im, d = canvas(1, 2)                 # 32 x 64
-    al, al_hi, al_lo, al_dk = rgb('c9d0d8'), rgb('f4f7fa'), rgb('9099a6'), rgb('646c7a')
+    al, al_hi, al_lo, al_dk = rgb('bcc7cc'), rgb('fafcfd'), rgb('94a2a8'), rgb('5b6c79')
     # the burner: an iron ring on three legs, a blue flame
     for x in (6, 14, 22):
         d.rectangle([x, 50, x + 1, 60], fill=CHAR_LO)
     d.rectangle([4, 48, 25, 50], fill=CHAR); d.line([(4, 48), (25, 48)], fill=CHAR_HI)
     for x in range(8, 22, 3):
-        d.point((x, 47), fill=rgb('6fb6ff')); d.point((x + 1, 46), fill=rgb('bfe3ff'))
+        d.point((x, 47), fill=rgb('8ec2fa')); d.point((x + 1, 46), fill=rgb('bbe9ff'))
     # the pot
     d.rectangle([4, 26, 25, 45], fill=al)
     d.rectangle([4, 26, 7, 45], fill=al_hi); d.rectangle([20, 26, 25, 45], fill=al_lo)
     d.line([(4, 45), (25, 45)], fill=al_dk); d.line([(4, 30), (25, 30)], fill=al_lo)
     d.ellipse([3, 22, 26, 29], fill=al_hi)
-    d.ellipse([5, 23, 24, 28], fill=rgb('c58b4a'))                       # the broth
-    d.ellipse([8, 24, 14, 26], fill=rgb('e3b66c')); d.point((19, 26), fill=rgb('e3b66c'))
+    d.ellipse([5, 23, 24, 28], fill=rgb('a7843b'))                       # the broth
+    d.ellipse([8, 24, 14, 26], fill=rgb('c6aa71')); d.point((19, 26), fill=rgb('c6aa71'))
     for x in (1, 26):                                                    # the handles
         d.rectangle([x, 32, x + 2, 35], fill=al_dk)
     d.line([(17, 25), (27, 12)], fill=al_dk, width=2)                    # a ladle left in it
     d.line([(17, 24), (26, 12)], fill=al_hi)
     # a gas bottle beside it
-    d.rectangle([26, 49, 31, 60], fill=rgb('8a93a0')); d.line([(26, 49), (26, 60)], fill=al)
+    d.rectangle([26, 49, 31, 60], fill=rgb('94a2a8')); d.line([(26, 49), (26, 60)], fill=al)
     d.rectangle([28, 46, 29, 48], fill=al_dk); d.line([(27, 53), (30, 53)], fill=RED)
     d.line([(25, 49), (27, 47)], fill=INK)
     drift(d, 0, 31, 63, 2, seed=1)
@@ -1298,7 +1329,7 @@ def green_rail(d, x0, y0, y1, posts):
         d.line([(x0 - 1, y), (x0 + 6, y)], fill=WHITE); d.line([(x0 - 1, y + 4), (x0 + 6, y + 4)], fill=SNOW_LO)
 
 
-DECK, DECK_LO, DECK_HI = rgb('878d9d'), rgb('787e90'), rgb('969cab')
+DECK, DECK_LO, DECK_HI = rgb('848295'), rgb('78768a'), rgb('94a2a8')
 BRIDGE_ROWS = 5                          # the deck's length in cells: one on each bank, the rest over the river
 PIER_LAMP_Y = (2, (BRIDGE_ROWS * 32 - 17) * 2)   # the two pier lamps of a rib, in file pixels from its top
 
@@ -1317,14 +1348,14 @@ def asahibashi_deck(n=BRIDGE_ROWS):
             px[x, y] = DECK_HI if h == 0 else (DECK_LO if h in (4, 11) else DECK)
     for y in range(8, L - 8):                                            # a worn centre line; packed snow in the wheel ruts
         if (y // 8) % 2 == 0:
-            px[31, y] = px[32, y] = rgb('bcc1cc') if (y * 5) % 7 else DECK_HI
+            px[31, y] = px[32, y] = rgb('bcc7cc') if (y * 5) % 7 else DECK_HI
         for x in (21, 42):
             if (y * 3 + x) % 11 < 4:
-                px[x, y] = rgb('a9afbd')
+                px[x, y] = rgb('a4b0b5')
     for kx, sx in ((12, 14), (50, 49)):                                  # the kerbs
         d.rectangle([kx, 3, kx + 1, L - 4], fill=STONE)
         d.line([(kx, 3), (kx, L - 4)], fill=WHITE)
-        d.line([(sx, 3), (sx, L - 4)], fill=rgb('666c7e'))
+        d.line([(sx, 3), (sx, L - 4)], fill=rgb('575f79'))
         for y in range(10, L - 4, 12):
             d.line([(kx, y), (kx + 1, y)], fill=STONE_LO)
     for y in range(3, L - 3):                                            # snow blown against the parapets
@@ -1398,7 +1429,7 @@ def asahibashi_arch(side, n=BRIDGE_ROWS, H=26.0, depth=7.0):
         d.rectangle([x0 - 1, y0 + 2, x0 + 12, y0 + 4], fill=SNOW)
         d.line([(x0 - 1, y0 + 2), (x0 + 12, y0 + 2)], fill=WHITE); d.line([(x0 - 1, y0 + 4), (x0 + 12, y0 + 4)], fill=SNOW_LO)
         d.rectangle([x0 + 5, y0 - 1, x0 + 6, y0 + 1], fill=BG_DK)
-        d.rectangle([x0 + 4, y0 - 2, x0 + 7, y0 - 1], fill=WARM)
+        d.rectangle([x0 + 4, y0 - 2, x0 + 7, y0 - 1], fill=LAMP)
     outline(im)
     hd = ImageDraw.Draw(im)                                              # hangers: thin, uninked, a few
     edge = 31 if side == 'w' else 0
@@ -1442,9 +1473,9 @@ def asahibashi_brace():
 def oil_tank(d, x, y):
     """The heating-oil tank every Hokkaido house has: 20 wide, feet on y."""
     d.rectangle([x + 2, y - 4, x + 3, y], fill=STONE_DK); d.rectangle([x + 16, y - 4, x + 17, y], fill=STONE_DK)
-    d.rectangle([x, y - 17, x + 19, y - 4], fill=rgb('dfe4e8'))
+    d.rectangle([x, y - 17, x + 19, y - 4], fill=rgb('dae2e4'))
     d.line([(x, y - 17), (x + 19, y - 17)], fill=WHITE); d.line([(x, y - 17), (x, y - 4)], fill=WHITE)
-    d.rectangle([x + 16, y - 16, x + 19, y - 4], fill=rgb('b5bec8'))
+    d.rectangle([x + 16, y - 16, x + 19, y - 4], fill=rgb('bcc7cc'))
     d.line([(x, y - 4), (x + 19, y - 4)], fill=STONE_LO)
     d.rectangle([x + 4, y - 13, x + 8, y - 8], fill=WHITE); d.line([(x + 5, y - 10), (x + 7, y - 10)], fill=RED)
     d.rectangle([x + 11, y - 20, x + 13, y - 18], fill=RED)
@@ -1457,7 +1488,7 @@ def house_red():
     with the snow half slid off it, a dormer, a block chimney, a glazed
     porch against the wind, the oil tank by the wall."""
     im, d = canvas(3, 4)                 # 96 x 128
-    siding, siding_lo, siding_hi = rgb('ead9b4'), rgb('c9b588'), rgb('f7ecd2')
+    siding, siding_lo, siding_hi = rgb('e4cecc'), rgb('be9e8c'), rgb('fafcfd')
     d.rectangle([72, 6, 81, 30], fill=STONE)                             # the chimney
     d.line([(72, 6), (72, 30)], fill=WHITE); d.rectangle([79, 6, 81, 30], fill=STONE_LO)
     for y in range(11, 30, 5):
@@ -1494,13 +1525,13 @@ def house_red():
     boards_h(d, 6, 65, 89, 121, siding, siding_lo, None, step=4)
     d.rectangle([6, 65, 89, 67], fill=siding_lo)
     d.line([(6, 68), (6, 121)], fill=siding_hi); d.rectangle([85, 68, 89, 121], fill=siding_lo)
-    lit_window(d, 10, 76, 28, 94, frame=WHITE, lit=True, curtain=rgb('d98a7a'))
+    lit_window(d, 10, 76, 28, 94, frame=WHITE, lit=True, curtain=rgb('e78d7b'))
     lit_window(d, 68, 76, 86, 94, frame=WHITE, lit=False)
     # the glazed porch (cell 1,3) with its own bit of roof
     d.rectangle([34, 80, 61, 121], fill=STONE)
     d.rectangle([36, 82, 59, 121], fill=GLASS)
-    d.rectangle([40, 86, 55, 121], fill=mix(WARM, WOOD, 0.4))            # the inner door, lit
-    d.rectangle([43, 90, 52, 102], fill=WARM)
+    d.rectangle([40, 86, 55, 121], fill=WOOD_LO)                         # the inner door through the glass
+    d.rectangle([43, 90, 52, 102], fill=GLASS)
     d.rectangle([53, 104, 54, 108], fill=GOLD)
     for x in (36, 47, 59):
         d.line([(x, 82), (x, 121)], fill=STONE)
@@ -1525,7 +1556,7 @@ def house_red():
     d.polygon([(13, 112), (20, 114), (18, 121), (11, 119)], fill=RED)
     drift(d, 60, 94, 127, 3, seed=6)
     outline(im)
-    puffs(im, 77, -2 + 2, n=1, seed=2, colour=(206, 214, 228), a0=215)
+    puffs(im, 77, -2 + 2, n=1, seed=2, colour=rgb('d1e2eb')[:3], a0=215)
     return im
 
 
@@ -1534,8 +1565,8 @@ def house_blue():
     street, the gable boarded dark, a stainless stovepipe up the wall, the
     winter's firewood stacked under the window."""
     im, d = canvas(3, 4)                 # 96 x 128
-    wall, wall_lo, wall_hi = rgb('dfe6e2'), rgb('b9c5c2'), rgb('f3f7f5')
-    gab, gab_lo, gab_hi = rgb('56677f'), rgb('3f4d63'), rgb('7386a0')
+    wall, wall_lo, wall_hi = rgb('dae2e4'), rgb('a4b0b5'), rgb('fafcfd')
+    gab, gab_lo, gab_hi = rgb('575f79'), rgb('47485d'), rgb('848295')
     ax, ay, ey = 46, 12, 62                                              # apex, eave height
     # the gable wall
     for y in range(ay + 6, ey):
@@ -1568,16 +1599,16 @@ def house_blue():
     boards_h(d, 8, ey + 3, 84, 121, wall, wall_lo, None, step=4)
     d.line([(8, ey + 3), (8, 121)], fill=wall_hi); d.rectangle([80, ey + 3, 84, 121], fill=wall_lo)
     lit_window(d, 11, 76, 29, 92, frame=WHITE, lit=False)
-    lit_window(d, 63, 76, 79, 92, frame=WHITE, lit=True, curtain=rgb('8fb0d8'))
+    lit_window(d, 63, 76, 79, 92, frame=WHITE, lit=True, curtain=rgb('8ec2fa'))
     # the front door (cell 1,3) under a little flat canopy, a porch light
     d.rectangle([36, 82, 57, 121], fill=WHITE)
     d.rectangle([38, 84, 55, 121], fill=ROOF_B)
     d.line([(38, 84), (38, 121)], fill=ROOF_B_HI); d.rectangle([53, 84, 55, 121], fill=ROOF_B_LO)
-    d.rectangle([41, 87, 46, 100], fill=WARM); d.line([(41, 87), (46, 87)], fill=WHITE)
+    d.rectangle([41, 87, 46, 100], fill=GLASS); d.line([(41, 87), (46, 87)], fill=GLASS_HI)
     d.rectangle([51, 102, 52, 106], fill=GOLD)
     d.rectangle([33, 77, 60, 80], fill=STONE); d.line([(33, 80), (60, 80)], fill=STONE_LO)
     snow_slab(d, 33, 60, 73, 76, seed=5, shade_from=54)
-    d.rectangle([59, 84, 61, 87], fill=WARM); d.point((60, 83), fill=CHAR_LO)
+    d.rectangle([59, 84, 61, 87], fill=LAMP); d.point((60, 86), fill=LAMP_HI); d.point((60, 83), fill=CHAR_LO)
     d.rectangle([34, 121, 59, 124], fill=STONE); d.line([(34, 124), (59, 124)], fill=STONE_LO)
     d.rectangle([6, 121, 86, 123], fill=STONE_LO)
     d.rectangle([34, 121, 59, 124], fill=STONE); d.line([(34, 121), (59, 121)], fill=WHITE)
@@ -1585,9 +1616,9 @@ def house_blue():
     for j in range(4):
         for i in range(5):
             cx, cy = 12 + i * 5 + (j % 2) * 2, 118 - j * 5
-            d.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=rgb('b98a5c'))
-            d.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], outline=rgb('6f4a30'))
-            d.point((cx, cy), fill=rgb('e3bb8a'))
+            d.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=rgb('bb8971'))
+            d.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], outline=rgb('7f513b'))
+            d.point((cx, cy), fill=rgb('e3c587'))
     d.rectangle([9, 97, 36, 99], fill=SNOW); d.line([(10, 96), (35, 96)], fill=WHITE)
     d.line([(9, 100), (36, 100)], fill=SNOW_LO)
     # the stovepipe
@@ -1599,7 +1630,7 @@ def house_blue():
     d.rectangle([86, 41, 93, 43], fill=STONE_LO); d.line([(86, 41), (93, 41)], fill=STONE)
     drift(d, 0, 34, 127, 3, seed=1); drift(d, 60, 95, 127, 5, seed=7)
     outline(im)
-    puffs(im, 89, 37, n=7, seed=5, lean=1, colour=(206, 214, 228), a0=215)
+    puffs(im, 89, 37, n=7, seed=5, lean=1, colour=rgb('d1e2eb')[:3], a0=215)
     return im
 
 
@@ -1610,7 +1641,7 @@ def snow_fence():
     middle cut out, so the slats join)."""
     big = Image.new('RGBA', (96, 64), CLEAR)
     d = ImageDraw.Draw(big)
-    st, st_hi, st_lo, st_dk = rgb('aab2bf'), rgb('e3e8ee'), rgb('7d8696'), rgb('4b5565')
+    st, st_hi, st_lo, st_dk = rgb('adb2c2'), rgb('dae2e4'), rgb('848295'), rgb('504e65')
     for c in range(3):                                                   # the back stays, behind the slats
         x = c * 32 + 16
         d.line([(x + 2, 40), (x + 9, 58)], fill=st_dk, width=2)
@@ -1659,7 +1690,7 @@ def zoo_fence(kind='h'):
         for y in range(19, 56):
             for x in range(96):
                 on = (x + y) % 6 == 0 or (x - y) % 6 == 0
-                d.point((x, y), fill=ROOF_G if on else (47, 86, 70, 70))
+                d.point((x, y), fill=ROOF_G if on else rgb('395050', 70))
         for y, c, hi in ((17, ROOF_G, ROOF_G_HI), (55, ROOF_G_LO, ROOF_G)):
             d.rectangle([0, y, 95, y + 2], fill=c); d.line([(0, y), (95, y)], fill=hi)
         for x in range(96):
@@ -1688,17 +1719,18 @@ def fishing_tent():
     """An ice-fishing tent on the frozen river: an orange dome with a dark
     door, snow on its crown, a red sled and a bucket beside it."""
     im, d = canvas(2, 2)                 # 64 x 64
-    o, o_hi, o_lo, o_dk = ORANGE, rgb('f8b070'), rgb('c8642a'), rgb('8f431c')
+    o, o_hi, o_lo, o_dk = ORANGE, rgb('f6a583'), rgb('aa4d31'), rgb('904a37')
     d.pieslice([6, 20, 50, 94], 180, 360, fill=o)
     d.rectangle([6, 57, 50, 60], fill=o)
     d.pieslice([24, 20, 50, 94], 270, 360, fill=o_lo)
     d.rectangle([37, 57, 50, 60], fill=o_lo)
+    d.rectangle([6, 55, 23, 60], fill=o_lo)                             # its lit side's foot, in the snow's shade
     d.arc([8, 22, 48, 92], 195, 255, fill=o_hi)
     d.arc([17, 20, 39, 94], 180, 360, fill=o_dk)                         # the pole sleeves
     d.line([(6, 60), (50, 60)], fill=o_dk)
-    d.polygon([(21, 60), (28, 36), (35, 60)], fill=rgb('3a2a2a'))        # the door, a lamp inside
-    d.polygon([(25, 60), (28, 48), (31, 60)], fill=rgb('5a3c2c'))
-    d.rectangle([27, 52, 29, 55], fill=WARM)
+    d.polygon([(21, 60), (28, 36), (35, 60)], fill=rgb('2a2636'))        # the door, a lamp inside
+    d.polygon([(25, 60), (28, 48), (31, 60)], fill=rgb('493938'))
+    d.rectangle([27, 52, 29, 55], fill=LAMP); d.point((28, 54), fill=LAMP_HI)
     d.polygon([(35, 60), (28, 36), (31, 36), (40, 52)], fill=o_hi)       # the flap tied back
     d.line([(35, 60), (40, 52)], fill=o_dk)
     d.chord([15, 18, 41, 30], 180, 360, fill=SNOW)                       # snow on its crown
@@ -1713,7 +1745,7 @@ def fishing_tent():
     return under(im, [(2, 56, 62, 63)])
 
 
-CRACK_HI, CRACK_LO = (244, 251, 255, 255), (150, 186, 212, 255)
+CRACK_HI, CRACK_LO = rgb('fafcfd'), rgb('8ec2fa')
 
 
 def ice_crack(variant):
@@ -1734,8 +1766,8 @@ def ice_crack(variant):
         d.line([(x, y + 1) for x, y in run], fill=CRACK_LO)
     for run in runs:
         d.line(run, fill=CRACK_HI)
-    d.ellipse(snow, fill=(240, 246, 252, 255))
-    d.line([(snow[0] + 1, snow[3]), (snow[2] - 1, snow[3])], fill=(203, 222, 236, 255))
+    d.ellipse(snow, fill=rgb('ecfaff'))
+    d.line([(snow[0] + 1, snow[3]), (snow[2] - 1, snow[3])], fill=rgb('d1e2eb'))
     return im
 
 
@@ -1743,12 +1775,12 @@ def ice_fishing_hole():
     """A hole cut for smelt fishing: dark water in a ring of chipped ice, a
     folding stool, a short rod on a rest, a bucket."""
     im, d = canvas(1, 1)                 # 32 x 32
-    d.ellipse([7, 17, 17, 24], fill=rgb('2c5280'))                       # the hole
-    d.arc([7, 17, 17, 24], 180, 360, fill=rgb('17304f'))
+    d.ellipse([7, 17, 17, 24], fill=rgb('314b8e'))                       # the hole
+    d.arc([7, 17, 17, 24], 180, 360, fill=rgb('2a3151'))
     d.arc([6, 16, 18, 25], 0, 180, fill=WHITE)                           # its lit lower lip
-    d.line([(10, 22), (13, 22)], fill=rgb('5f8fc0'))
+    d.line([(10, 22), (13, 22)], fill=rgb('588cc6'))
     for x, y, w in ((1, 20, 4), (2, 23, 5), (4, 26, 3), (0, 17, 2)):     # the ice chipped out of it, heaped
-        d.rectangle([x, y, x + w, y + 2], fill=WHITE); d.line([(x, y + 2), (x + w, y + 2)], fill=(203, 222, 236, 255))
+        d.rectangle([x, y, x + w, y + 2], fill=WHITE); d.line([(x, y + 2), (x + w, y + 2)], fill=rgb('d1e2eb'))
     d.line([(12, 15), (22, 9)], fill=WOOD_DK)                            # the rod, its line into the hole
     d.line([(12, 15), (12, 20)], fill=WHITE)
     d.rectangle([20, 9, 23, 10], fill=RED)
@@ -1775,15 +1807,15 @@ def penguin(d, x, y, step=0, chick=False):
     """A king penguin walking left, its feet on y: 11 wide, 18 tall. `step`
     0 / 1 puts the other foot forward and swings the flipper."""
     if chick:
-        fur, fur_hi, fur_lo = rgb('8b6b54'), rgb('ab8a70'), rgb('654a3a')
+        fur, fur_hi, fur_lo = rgb('86624f'), rgb('bb8971'), rgb('594b45')
         d.ellipse([x + 1, y - 11, x + 9, y - 1], fill=fur)
         d.ellipse([x + 2, y - 15, x + 8, y - 9], fill=fur)
         d.arc([x + 1, y - 11, x + 9, y - 1], 150, 260, fill=fur_hi)
         d.chord([x + 1, y - 11, x + 9, y - 1], 320, 80, fill=fur_lo)
         d.line([(x, y - 12), (x + 2, y - 12)], fill=INK)
         d.point((x + 4, y - 13), fill=INK)
-        d.rectangle([x + 2 + step, y - 1, x + 4 + step, y], fill=rgb('3a3a44'))
-        d.rectangle([x + 6 - step, y - 1, x + 8 - step, y], fill=rgb('3a3a44'))
+        d.rectangle([x + 2 + step, y - 1, x + 4 + step, y], fill=rgb('39374c'))
+        d.rectangle([x + 6 - step, y - 1, x + 8 - step, y], fill=rgb('39374c'))
         return
     d.ellipse([x + 1, y - 13, x + 10, y - 1], fill=PEN)                  # the back
     d.ellipse([x + 1, y - 12, x + 7, y - 1], fill=WHITE)                 # the belly, to the front
@@ -1792,16 +1824,16 @@ def penguin(d, x, y, step=0, chick=False):
     d.line([(x - 1, y - 16 + step), (x + 2, y - 15)], fill=PEN)          # the bill, a streak of orange
     d.point((x + 1, y - 15 + step), fill=ORANGE)
     d.rectangle([x + 6, y - 15, x + 7, y - 13], fill=ORANGE)             # the ear patch
-    d.point((x + 6, y - 12), fill=AMBER)
-    d.line([(x + 2, y - 11), (x + 4, y - 11)], fill=AMBER)               # the gold bib
-    d.point((x + 2, y - 10), fill=rgb('fde38a')); d.point((x + 3, y - 10), fill=rgb('fde38a'))
+    d.point((x + 6, y - 12), fill=LAMP)
+    d.line([(x + 2, y - 11), (x + 4, y - 11)], fill=LAMP)               # the gold bib
+    d.point((x + 2, y - 10), fill=LAMP_HI); d.point((x + 3, y - 10), fill=LAMP_HI)
     d.point((x + 4, y - 16), fill=PEN_HI)
     fx = x + 8 + (2 if step else 0)                                      # the flipper swings
     d.line([(x + 7, y - 10), (fx, y - 4)], fill=PEN_HI, width=2)
     if step:
-        d.rectangle([x + 1, y - 1, x + 4, y], fill=ORANGE); d.rectangle([x + 6, y - 2, x + 8, y - 1], fill=rgb('c0682a'))
+        d.rectangle([x + 1, y - 1, x + 4, y], fill=ORANGE); d.rectangle([x + 6, y - 2, x + 8, y - 1], fill=rgb('ce6a42'))
     else:
-        d.rectangle([x + 2, y - 2, x + 4, y - 1], fill=rgb('c0682a')); d.rectangle([x + 5, y - 1, x + 8, y], fill=ORANGE)
+        d.rectangle([x + 2, y - 2, x + 4, y - 1], fill=rgb('ce6a42')); d.rectangle([x + 5, y - 1, x + 8, y], fill=ORANGE)
 
 
 def penguin_walk(variant):
@@ -1817,7 +1849,7 @@ def penguin_walk(variant):
 
 
 def bunting(d, x0, x1, y, sag=5):
-    cols = (RED, AMBER, ROOF_G, rgb('3a8fd8'), WHITE, ORANGE)
+    cols = (RED, LAMP, ROOF_G, rgb('5a86de'), WHITE, ORANGE)
     n = (x1 - x0) // 8
     for i in range(n + 1):
         t = i / max(1, n)
@@ -1861,29 +1893,29 @@ def zoo_gate():
         d.line([(x0 - 2, 114), (x0 + 27, 114)], fill=WHITE); d.rectangle([x0 + 23, 115, x0 + 27, 124], fill=STONE_LO)
         d.line([(x0 - 2, 119), (x0 + 27, 119)], fill=STONE_LO)
         d.rectangle([x0 + 4, 68, x0 + 20, 98], fill=WHITE)               # a poster panel on each
-    d.rectangle([9, 70, 21, 96], fill=rgb('3a8fd8'))                     # a seal, nose up
+    d.rectangle([9, 70, 21, 96], fill=rgb('5a86de'))                     # a seal, nose up
     d.ellipse([11, 80, 20, 93], fill=STONE_LO); d.ellipse([11, 74, 17, 83], fill=STONE_LO)
-    d.point((12, 77), fill=INK); d.ellipse([12, 71, 15, 74], fill=AMBER)
+    d.point((12, 77), fill=INK); d.ellipse([12, 71, 15, 74], fill=LAMP)
     d.rectangle([137, 70, 149, 96], fill=ROOF_G)                         # a red-crowned crane
     d.ellipse([139, 82, 148, 90], fill=WHITE); d.line([(141, 82), (140, 74)], fill=WHITE, width=2)
     d.point((140, 73), fill=RED); d.line([(137, 75), (139, 75)], fill=INK)
     d.line([(143, 90), (143, 95)], fill=INK); d.line([(146, 90), (146, 95)], fill=INK)
     d.rectangle([146, 84, 148, 88], fill=INK)
     # the board across the top of both
-    blue, blue_hi, blue_lo = rgb('3a8fd8'), rgb('7dbdf2'), rgb('2565a8')
+    blue, blue_hi, blue_lo = rgb('5a86de'), rgb('8ec2fa'), rgb('425faa')
     d.rectangle([1, 23, 158, 49], fill=blue)
     d.rectangle([1, 23, 158, 24], fill=blue_hi); d.rectangle([1, 48, 158, 49], fill=blue_lo)
     d.rectangle([153, 25, 158, 49], fill=blue_lo)
     d.rectangle([4, 26, 155, 46], outline=WHITE)
     text(d, 'ASAHI', 14, 29, WHITE, scale=2)
-    text(d, 'ZOO', 110, 29, AMBER, scale=2)
+    text(d, 'ZOO', 110, 29, LAMP, scale=2)
     d.ellipse([82, 26, 100, 46], fill=WHITE)                             # the penguin badge
     d.ellipse([86, 28, 96, 45], fill=PEN); d.ellipse([88, 33, 94, 45], fill=WHITE)
     d.rectangle([89, 31, 90, 32], fill=WHITE); d.rectangle([93, 31, 94, 32], fill=WHITE)
     d.polygon([(90, 34), (93, 34), (91, 37)], fill=ORANGE)
     snow_slab(d, 0, 159, 19, 22, seed=6, shade_from=150)
     # the figures standing in the snow on top of it
-    small_bear(d, 14, 20, body=rgb('f4ead0'), lo=rgb('cdbf9c'))
+    small_bear(d, 14, 20, body=rgb('e4cecc'), lo=rgb('be9e8c'))
     penguin(d, 122, 20, 0); penguin(d, 136, 20, 1)
     for x0, x1 in ((12, 40), (120, 149)):                                # their feet sunk in it
         d.line([(x0, 20), (x1, 20)], fill=SNOW); d.line([(x0, 19), (x1, 19)], fill=WHITE)
@@ -1907,8 +1939,8 @@ def ticket_booth():
     d.rectangle([5, 31, 58, 33], fill=CREAM_DK)
     for x in (5, 55):
         d.rectangle([x, 31, x + 3, 90], fill=TIMBER_LO); d.line([(x, 31), (x, 90)], fill=TIMBER)
-    d.rectangle([10, 35, 53, 45], fill=AMBER)                            # the board
-    d.line([(10, 35), (53, 35)], fill=rgb('fde38a')); d.line([(10, 45), (53, 45)], fill=rgb('c8941c'))
+    d.rectangle([10, 35, 53, 45], fill=LAMP)                            # the board
+    d.line([(10, 35), (53, 35)], fill=LAMP_HI); d.line([(10, 45), (53, 45)], fill=LAMP_LO)
     text(d, 'TICKET', 32 - text_w('TICKET') // 2, 37, DARK)
     for x in range(8, 56):                                               # a red and white awning
         c = RED if (x // 5) % 2 == 0 else WHITE
@@ -1917,14 +1949,14 @@ def ticket_booth():
     d.line([(8, 47), (55, 47)], fill=SNOW)
     # the window: the clerk, a slot, the counter
     d.rectangle([12, 56, 51, 76], fill=WOOD_DK)
-    d.rectangle([13, 57, 50, 75], fill=WARM); d.line([(13, 57), (50, 57)], fill=WHITE)
-    d.ellipse([27, 60, 35, 69], fill=rgb('e9b796')); d.rectangle([26, 59, 36, 62], fill=ROOF_G)
+    d.rectangle([13, 57, 50, 75], fill=GLASS); d.line([(13, 57), (50, 57)], fill=GLASS_HI)
+    d.ellipse([27, 60, 35, 69], fill=rgb('e4cecc')); d.rectangle([26, 59, 36, 62], fill=ROOF_G)
     d.rectangle([24, 69, 38, 75], fill=ROOF_G); d.point((29, 65), fill=INK); d.point((33, 65), fill=INK)
     d.line([(31, 57), (31, 59)], fill=WOOD_DK)
     d.rectangle([40, 60, 48, 70], fill=WHITE); d.line([(42, 63), (46, 63)], fill=RED); d.line([(42, 66), (46, 66)], fill=INK)
     d.rectangle([10, 76, 53, 79], fill=TIMBER); d.line([(10, 76), (53, 76)], fill=TIMBER_HI)
     d.line([(10, 79), (53, 79)], fill=TIMBER_DK)
-    d.rectangle([24, 82, 39, 88], fill=rgb('3a8fd8'))                    # a poster under the counter
+    d.rectangle([24, 82, 39, 88], fill=rgb('5a86de'))                    # a poster under the counter
     d.ellipse([28, 83, 34, 88], fill=WHITE); d.point((30, 85), fill=INK)
     d.rectangle([3, 90, 60, 92], fill=STONE_LO); d.line([(3, 90), (60, 90)], fill=STONE)
     drift(d, 0, 22, 95, 5, seed=5); drift(d, 42, 63, 95, 4, seed=2)
@@ -1936,13 +1968,13 @@ def seal_statue():
     """A spotted seal rearing on a boulder: grey stone, pale belly, dark
     spots, whiskers, snow along its back, a plaque."""
     im, d = canvas(2, 2)                 # 64 x 64
-    s, s_hi, s_lo, s_dk = rgb('8e99a8'), rgb('c3ccd6'), rgb('6a7586'), rgb('4b5565')
+    s, s_hi, s_lo, s_dk = rgb('94a2a8'), rgb('bcc7cc'), rgb('726f86'), rgb('504e65')
     d.polygon([(5, 60), (8, 47), (20, 42), (46, 42), (57, 48), (60, 60)], fill=STONE_LO)   # the boulder
     d.polygon([(8, 47), (20, 42), (46, 42), (50, 45), (22, 46), (11, 50)], fill=STONE)
     d.line([(24, 52), (30, 59)], fill=STONE_DK); d.line([(44, 49), (41, 58)], fill=STONE_DK)
     d.polygon([(46, 44), (57, 48), (60, 60), (50, 60)], fill=STONE_DK)
     d.rectangle([14, 52, 23, 57], fill=GOLD); d.line([(16, 54), (21, 54)], fill=WOOD_DK)
-    d.line([(14, 52), (23, 52)], fill=rgb('e6cf94'))
+    d.line([(14, 52), (23, 52)], fill=rgb('f3d890'))
     d.ellipse([22, 27, 58, 45], fill=s)                                  # the hind body
     d.chord([22, 27, 58, 45], 10, 170, fill=s_lo)
     d.polygon([(54, 33), (63, 24), (62, 33), (63, 40), (55, 40)], fill=s_lo)             # the tail flippers
@@ -2184,6 +2216,7 @@ for _fam, _fn, _double, *_ in FAMILIES:
     for _r in ROLES:
         SPRITES[f'{_fam}_{_r}'] = ((lambda r=_r, fn=_fn: fn(r)), _double)
 
+PIECE_KEYS = {key for key, *_ in PIECES}
 DISTRICTS = ('station', 'ramen', 'bridge', 'zoo')
 FLAT = {key for key, _fn, _size, _district, m, _desc in PIECES if m.get('layer') == 'flat'}   # walked ON
 
@@ -2203,10 +2236,62 @@ def glow_spots():
     return out
 
 
+# ---- the house look: one finisher for every piece -------------------------------
+A_SNOW = [rgb(c) for c in ('fafcfd', 'ecfaff', 'd1e2eb', 'b7c3e3', '99a1ca', '8085b1')]   # the pack's snow, lit to deep shade
+A_SNOW_OLD = {SNOW: 1, SNOW_LO: 3, SNOW_SH: 4, SNOW_DK: 5}           # where the shared snow tones start on it
+A_SWAP = {rgb(a): rgb(b) for a, b in (                               # what the imported helpers and constants paint
+    ('ffffff', 'fafcfd'), ('f6dc8c', 'c6a663'), ('f9c22e', 'c6a663'), ('2a2330', '2a2636'),
+    ('d2a58c', 'be9e8c'), ('89af78', '93c297'), ('2b373c', '39374c'))}   # 2b373c: flat_roof's, until #375
+A_PACK = [rgb(c)[:3] for c in '''
+    8a3a22 aa4d31 d16b56 e78d7b ffe2e0 904a37 ce6a42 f6a583 86624f a7843b c6a663 f3d890 fafcfd
+    2e4040 395050 506b6b 6c8e7f 93c297 172459 314b8e 425faa 5a86de 7db9fa bbe9ff 2a233b 3c396d
+    444679 8f72b6 bfabd7 c9cbff 83374f bb6479 ff9b92 2a2636 47485d 575f79 848295 a4b0b5 dae2e4
+    8e7366 be9e8c e4cecc 080d16 0a1627 191c2a 2c2d51 ecfaff d1e2eb b7c3e3 99a1ca 8085b1 8ec2fa
+    588cc6 bcc7cc 94a2a8 bb8971 d7b6ab aa775f 7f513b 594b45 493938 6d574e 53596d 39374c 78768a
+    c6aa71 e3c587 508582 8fb2b0 b1dfdc 2a3151 4b6396 5b6c79 698592 444f5e 4a6262 434857 d2bab0
+    b3aaa0 bebaba ac9f96 c2ac9e c69f96 9e9e9e 5f6177 726f86 504e65 413f53 adb2c2'''.split()]   # every one a sheet colour
+
+
+def form(im, ramp, old):
+    """Snow as a lit form: one tone lighter on a rim facing up or left, one darker facing down or right."""
+    px = im.load(); W, H = im.size
+    idx = {(x, y): old[px[x, y]] for y in range(H) for x in range(W) if px[x, y] in old}
+    bare = lambda x, y: not (0 <= x < W and 0 <= y < H) or px[x, y][3] == 0 or px[x, y] == INK
+    for (x, y), i in idx.items():
+        if bare(x - 1, y) or bare(x, y - 1):
+            i = max(0, i - 1)
+        elif bare(x + 1, y) or bare(x, y + 1):
+            i = min(len(ramp) - 1, i + 1)
+        px[x, y] = ramp[i]
+
+
+def nearest(r, g, b):
+    """The A_PACK colour nearest (r, g, b), weighted for the eye; the first listed wins a tie."""
+    return min(A_PACK, key=lambda c: 2 * (c[0] - r) ** 2 + 4 * (c[1] - g) ** 2 + 3 * (c[2] - b) ** 2)
+
+
+def settle(im):
+    """Any pixel not in A_PACK takes its nearest A_PACK colour; alpha is kept."""
+    px = im.load(); near = {c: c for c in A_PACK}
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a:
+                if (r, g, b) not in near:
+                    near[(r, g, b)] = nearest(r, g, b)
+                px[x, y] = near[(r, g, b)] + (a,)
+
+
+def finish(im):
+    """A drawn piece into the house look: shaded snow, the pack's glass, the helpers' colours, sheet colours only."""
+    form(im, A_SNOW, A_SNOW_OLD); glaze(im); repaint(im, A_SWAP); settle(im)
+    return im
+
+
 def build():
     built = {}
     for key, (fn, double) in SPRITES.items():
-        im = fn()
+        im = finish(fn()) if key in PIECE_KEYS else fn()
         if double:
             im = im.resize((im.width * 2, im.height * 2), Image.NEAREST)
         built[key] = im

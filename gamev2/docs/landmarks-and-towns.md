@@ -840,6 +840,11 @@ pipeline has placed someone there.
     (`tools/art_register.py`: `spriteMetadata`, `tileNames`, the `glow` spots of what is lit at night,
     `depthBias: -200` for a flat sprite) and is in `check_generators.ART_TOOLS`. `tools/tests/asahikawa.test.js`
     holds the town to all of the above.
+  - **The house look** (#310): one finisher in the tool's `build()` puts every piece in the GuttyKreum look:
+    sheet colours only, the pack's dark glass on every window and door (lit at night only by its glow spot),
+    lamps the pack's dim gold, snow shaded in the pack's blues, and flat roofs seen from above on the bookshop
+    and the woodcraft shop. The ground edge tiles copy the snow tile's pixels as they are, so rerun the tool
+    (and the world map) when `snow-autotile` changes. `tools/tests/asahikawa-art.test.js` holds it.
 - **Art**: `tools/generate_hokkaido.py` (needs Pillow) draws the Clock Tower, TV Tower, bridge, banner and
   `road-plain` - at half size, pixel-doubled, in the GuttyKreum palette with a 1px ink outline, so they sit
   at the 2x scale of the building crops. They are not line-art placeholders. The LimeZu `Tileset_53_MV`
