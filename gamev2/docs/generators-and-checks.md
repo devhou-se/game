@@ -57,7 +57,8 @@ so a map change that moves a landmark across a district's edge shows as `DRIFT d
 ## check_distinct.py: is each city still its own?
 
 `python3 tools/check_distinct.py` prints, per city (a stitched city's districts as one; stations and
-interiors left out), the measure from the city audit (issues #210, #219):
+interiors left out), the measure from the city audit (issues #210, #219), over the tiles of its rooms' layers
+and the cars on their `tramways`:
 
 | Number | What it is | Target |
 |---|---|---|
@@ -69,14 +70,24 @@ A sprite is a tile family (`grass-autotile_edge-n` -> `grass-autotile`, `torii-r
 `torii-red`, `building-roof-blue` -> `house-blue`); the shared kit (7-Eleven, vending machines, roads,
 crossings, traffic lights, track) counts neither for nor against a city.
 
-- **It does not fail on the targets.** Today only Tokyo passes them; the others miss by design until each is
-  rebuilt (issue #219). It exits 1 only when a city is **worse than the baseline**, `tools/distinct_baseline.json`:
+- **A car that runs a street counts as the tile it was** (issue #264). A room's `tramways` sprites (Toyama's
+  tram, San Franbourne's cable car and tram: `ambient-traffic.md`) are drawn by `AmbientTrams` and are on no
+  layer, and they are the city's art all the same: `sprite_sets` adds them. When #245 took the three parked
+  cars off the maps and put them on their rails, the measure stopped seeing them, and Hokuriku and San
+  Franbourne (and Asahikawa and Sendai, whose worst pair is Hokuriku) read as worse than the baseline with no
+  art lost. Art that moves off the layers some other way needs the same: count it there, do not `--update`.
+- **It does not fail on the targets.** Today Tokyo, Sapporo and San Franbourne pass them; the others miss by
+  design until each is rebuilt (issue #219). It exits 1 only when a city is **worse than the baseline**, `tools/distinct_baseline.json`:
   a higher overlap or a lower own share than recorded. A city that is not in the baseline (a new town) is
   printed against the targets and does not fail.
-- **The baseline** (27 Nov 2026, buildings / sprites / own): Tokyo 0.16 / 0.32 / 55%, Hokuriku 0.27 / 0.54 / 40%,
-  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.25 / 0.45 / 26%, Sapporo 0.07 / 0.19 / 77% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Osaka 0.20 / 0.45 / 11%,
-  Asahikawa 0.27 / 0.20 / 10%, San Franbourne 0.20 / 0.32 / 69%. `--update` records today's numbers: do it when a rebuild made a city better or
+- **The baseline** (28 Nov 2026, buildings / sprites / own): Tokyo 0.15 / 0.32 / 56%, Hokuriku 0.27 / 0.54 / 40%,
+  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.25 / 0.44 / 26%, Sapporo 0.06 / 0.18 / 78% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Osaka 0.18 / 0.44 / 17%,
+  Asahikawa 0.27 / 0.20 / 10%, San Franbourne 0.18 / 0.32 / 69%. `--update` records today's numbers: do it when a rebuild made a city better or
   a new town landed, and say so in the commit. Never to hide a city getting worse.
+- The 28 Nov baseline records only gains since the 27 Nov one (issue #264; no number is worse): Osaka was
+  0.20 / 0.45 / 11% before its Devhouse (`devhouse-osaka`) and the wheel's boarding platform (`wheel-boarding`)
+  stood on Dotonbori, which also took a little off the overlaps of Fukuoka, Sapporo and San Franbourne, each
+  most like Osaka by one measure or the other; Tokyo (0.16 / 0.32 / 55%) gained its Devhouse and the corners of its east road.
 - Every town is judged: the made-up towns (Machi, Inaka, Yukimura), which were compared against and not judged,
   are deleted (issue #68). Several cities' worst pair was one of them, which is why the building overlaps of
   Asahikawa, Osaka, Sapporo, Fukuoka and Tokyo fell in the 27 Nov baseline with no map of theirs changing.

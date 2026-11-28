@@ -1405,6 +1405,19 @@ def test_distinct():
     lines, failed = cd.check(borrowed, base)
     assert failed == ['B', 'C'], (failed, lines)
     assert any(line.startswith('C ') and 'WORSE than the baseline: building overlap 0.33, was 0.00; own art 0%, was 50%' in line for line in lines), lines
+    # a car on a room's `tramways` is drawn by AmbientTrams and not as a tile, and is the town's art all the
+    # same: taking it off the map and onto its rails changes no number (issue #264: #245 did that to Toyama's
+    # tram and San Franbourne's cable car and tram, and four cities read as worse)
+    parked = copy.deepcopy(world)
+    parked['rooms']['B']['layers'][1]['tiles']['9,1'] = 'toyama-tram_0_0'
+    running = copy.deepcopy(world)
+    running['rooms']['B']['tramways'] = [{'row': 1, 'from': 0, 'to': 9, 'sprite': 'toyama-tram_0_0', 'shuttle': True}]
+    assert cd.measure(running) == cd.measure(parked) != got
+    assert cd.sprite_sets(running, ['B']) == cd.sprite_sets(parked, ['B'])
+    assert 'toyama-tram' in cd.sprite_sets(running, ['B'])[1], 'a landmark car is a building sprite, as its tile was'
+    assert cd.measure(running)['B']['own'] == 0.5 and cd.check(running, base)[1] == [], 'B has art of its own now'
+    lines, failed = cd.check(world, cd.measure(running))        # and a town that loses its car altogether is worse
+    assert 'B' in failed and any(line.startswith('B ') and 'own art 33%, was 50%' in line for line in lines), (failed, lines)
     # a town the baseline has not heard of is reported, never failed; one that is gone is named
     lines, failed = cd.check(world, {'Ab': base['Ab'], 'B': base['B'], 'Gone': base['B']})
     assert failed == [] and any('NOT in the baseline' in line for line in lines if line.startswith('C '))
@@ -1414,6 +1427,10 @@ def test_distinct():
     cfg = b.load_config()
     assert sorted(real) == sorted(cd.measure(cfg)), (sorted(real), sorted(cd.measure(cfg)))
     assert all(sorted(v) == ['buildings', 'own', 'sprites'] for v in real.values())
+    # every car declared in the committed world is counted for its city
+    cars = {(city, cd.family(line['sprite'])) for city, rooms in cd.towns(cfg).items() for key in rooms
+            for line in cfg['rooms'][key].get('tramways') or []}
+    assert cars and all(car in cd.sprite_sets(cfg, cd.towns(cfg)[city])[2] for city, car in cars), cars
     assert cd.TARGETS == {'buildings': 0.25, 'sprites': 0.40, 'own': 1 / 3}
 
 

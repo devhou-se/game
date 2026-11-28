@@ -4,7 +4,10 @@
 The measure from the city audit (issues #210, #219): how much of a city's art
 it shares with another city, and how much is used nowhere else. Three numbers
 per city, over its outdoor rooms (a stitched city's districts count as one
-city; stations and interiors are left out):
+city; stations and interiors are left out): the tiles of their layers, and the
+cars that run their streets (a room's `tramways`: a tram or a cable car is
+drawn by src/AmbientTrams.js and not as a tile, and is the city's art all the
+same, issue #264):
 
   buildings   the highest Jaccard overlap of its BUILDING sprites with any
               other city's (shared / all of the pair; 7-Eleven excluded)
@@ -99,10 +102,14 @@ def towns(cfg):
 
 
 def sprite_sets(cfg, rooms):
-    """(all sprites, building sprites, buildings + scenery) of some rooms."""
+    """(all sprites, building sprites, buildings + scenery) of some rooms:
+    what their layers hold and the cars on their `tramways`."""
     pal = cfg.get('tilePalette') or []
     sprites, ground = set(), set()
     for key in rooms:
+        for line in cfg['rooms'][key].get('tramways') or []:
+            if line.get('sprite'):
+                sprites.add(family(line['sprite']))
         for layer in cfg['rooms'][key].get('layers', []):
             if layer.get('collision'):
                 continue
