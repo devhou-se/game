@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 89,
+ "nextobjectid": 95,
  "properties": [
   {
    "name": "gv2room",
@@ -238,12 +238,6 @@
     {
      "id": 32,
      "image": "../assets/sprites/flat-grey-brick-autotile_corner-se.png",
-     "imagewidth": 64,
-     "imageheight": 64
-    },
-    {
-     "id": 33,
-     "image": "../assets/sprites/flat-grey-brick-autotile_corner-sw.png",
      "imagewidth": 64,
      "imageheight": 64
     },
@@ -744,6 +738,12 @@
      "image": "../assets/sprites/wheel-boarding_0_0.png",
      "imagewidth": 128,
      "imageheight": 128
+    },
+    {
+     "id": 121,
+     "image": "../assets/sprites/kansai-fingerpost_0_0.png",
+     "imagewidth": 64,
+     "imageheight": 128
     }
    ],
    "wangsets": [
@@ -929,19 +929,6 @@
         0,
         1,
         1
-       ]
-      },
-      {
-       "tileid": 33,
-       "wangid": [
-        1,
-        1,
-        1,
-        0,
-        0,
-        0,
-        0,
-        0
        ]
       },
       {
@@ -2704,7 +2691,7 @@
     39,
     39,
     39,
-    32,
+    36,
     36,
     36,
     36,
@@ -2904,7 +2891,7 @@
     112,
     112,
     112,
-    34,
+    107,
     107,
     107,
     107,
@@ -10974,6 +10961,55 @@
     29,
     30,
     0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     99,
     0,
     0,
@@ -11023,58 +11059,9 @@
     0,
     0,
     0,
-    99,
-    99,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
     0,
     99,
-    99,
+    0,
     0,
     0,
     0,
@@ -13335,6 +13322,16 @@
     },
     {
      "id": 19,
+     "gid": 122,
+     "name": "kansai-fingerpost_0_0",
+     "x": 128,
+     "y": 1792,
+     "width": 64,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 20,
      "gid": 26,
      "name": "dotonbori-arch_0_0",
      "x": 1344,
@@ -13344,7 +13341,7 @@
      "visible": true
     },
     {
-     "id": 20,
+     "id": 21,
      "gid": 102,
      "name": "tsutenkaku_0_0",
      "x": 1344,
@@ -13354,7 +13351,7 @@
      "visible": true
     },
     {
-     "id": 21,
+     "id": 22,
      "gid": 100,
      "name": "traffic-light_0_0",
      "x": 1408,
@@ -13364,21 +13361,11 @@
      "visible": true
     },
     {
-     "id": 22,
-     "gid": 98,
-     "name": "shrub-large-circle_0_0",
-     "x": 1408,
-     "y": 1920,
-     "width": 128,
-     "height": 128,
-     "visible": true
-    },
-    {
      "id": 23,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 1408,
-     "y": 2048,
+     "y": 1920,
      "width": 128,
      "height": 128,
      "visible": true
@@ -13388,7 +13375,7 @@
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 1408,
-     "y": 2176,
+     "y": 2048,
      "width": 128,
      "height": 128,
      "visible": true
@@ -13398,13 +13385,23 @@
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 1408,
-     "y": 2304,
+     "y": 2176,
      "width": 128,
      "height": 128,
      "visible": true
     },
     {
      "id": 26,
+     "gid": 98,
+     "name": "shrub-large-circle_0_0",
+     "x": 1408,
+     "y": 2304,
+     "width": 128,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 27,
      "gid": 16,
      "name": "building-rafter-blue_0_0",
      "x": 1472,
@@ -13414,7 +13411,7 @@
      "visible": true
     },
     {
-     "id": 27,
+     "id": 28,
      "gid": 20,
      "name": "building-tier-blue_0_0",
      "x": 1472,
@@ -13424,7 +13421,7 @@
      "visible": true
     },
     {
-     "id": 28,
+     "id": 29,
      "gid": 13,
      "name": "building-entrance-1_0_0",
      "x": 1472,
@@ -13434,21 +13431,11 @@
      "visible": true
     },
     {
-     "id": 29,
-     "gid": 98,
-     "name": "shrub-large-circle_0_0",
-     "x": 1536,
-     "y": 1920,
-     "width": 128,
-     "height": 128,
-     "visible": true
-    },
-    {
      "id": 30,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 1536,
-     "y": 2048,
+     "y": 1920,
      "width": 128,
      "height": 128,
      "visible": true
@@ -13458,7 +13445,7 @@
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 1536,
-     "y": 2176,
+     "y": 2048,
      "width": 128,
      "height": 128,
      "visible": true
@@ -13468,7 +13455,7 @@
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 1536,
-     "y": 2304,
+     "y": 2176,
      "width": 128,
      "height": 128,
      "visible": true
@@ -13477,8 +13464,8 @@
      "id": 33,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
-     "x": 1664,
-     "y": 1920,
+     "x": 1536,
+     "y": 2304,
      "width": 128,
      "height": 128,
      "visible": true
@@ -13488,7 +13475,7 @@
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 1664,
-     "y": 2048,
+     "y": 1920,
      "width": 128,
      "height": 128,
      "visible": true
@@ -13498,7 +13485,7 @@
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 1664,
-     "y": 2176,
+     "y": 2048,
      "width": 128,
      "height": 128,
      "visible": true
@@ -13508,13 +13495,23 @@
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 1664,
-     "y": 2304,
+     "y": 2176,
      "width": 128,
      "height": 128,
      "visible": true
     },
     {
      "id": 37,
+     "gid": 98,
+     "name": "shrub-large-circle_0_0",
+     "x": 1664,
+     "y": 2304,
+     "width": 128,
+     "height": 128,
+     "visible": true
+    },
+    {
+     "id": 38,
      "gid": 100,
      "name": "traffic-light_0_0",
      "x": 1728,
@@ -13524,7 +13521,7 @@
      "visible": true
     },
     {
-     "id": 38,
+     "id": 39,
      "gid": 62,
      "name": "highrise-apartment_0_0",
      "x": 192,
@@ -13534,7 +13531,7 @@
      "visible": true
     },
     {
-     "id": 39,
+     "id": 40,
      "gid": 63,
      "name": "highrise-blue_0_0",
      "x": 192,
@@ -13544,7 +13541,7 @@
      "visible": true
     },
     {
-     "id": 40,
+     "id": 41,
      "gid": 121,
      "name": "wheel-boarding_0_0",
      "x": 2112,
@@ -13554,7 +13551,7 @@
      "visible": true
     },
     {
-     "id": 41,
+     "id": 42,
      "gid": 27,
      "name": "dotonbori-wheel_0_0",
      "x": 2112,
@@ -13564,7 +13561,7 @@
      "visible": true
     },
     {
-     "id": 42,
+     "id": 43,
      "gid": 16,
      "name": "building-rafter-blue_0_0",
      "x": 2368,
@@ -13574,7 +13571,7 @@
      "visible": true
     },
     {
-     "id": 43,
+     "id": 44,
      "gid": 20,
      "name": "building-tier-blue_0_0",
      "x": 2368,
@@ -13584,7 +13581,7 @@
      "visible": true
     },
     {
-     "id": 44,
+     "id": 45,
      "gid": 13,
      "name": "building-entrance-1_0_0",
      "x": 2368,
@@ -13594,7 +13591,7 @@
      "visible": true
     },
     {
-     "id": 45,
+     "id": 46,
      "gid": 64,
      "name": "highrise-glass_0_0",
      "x": 2688,
@@ -13604,7 +13601,7 @@
      "visible": true
     },
     {
-     "id": 46,
+     "id": 47,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13614,7 +13611,7 @@
      "visible": true
     },
     {
-     "id": 47,
+     "id": 48,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13624,7 +13621,7 @@
      "visible": true
     },
     {
-     "id": 48,
+     "id": 49,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13634,7 +13631,7 @@
      "visible": true
     },
     {
-     "id": 49,
+     "id": 50,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13644,7 +13641,7 @@
      "visible": true
     },
     {
-     "id": 50,
+     "id": 51,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13654,7 +13651,7 @@
      "visible": true
     },
     {
-     "id": 51,
+     "id": 52,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13664,7 +13661,7 @@
      "visible": true
     },
     {
-     "id": 52,
+     "id": 53,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13674,7 +13671,7 @@
      "visible": true
     },
     {
-     "id": 53,
+     "id": 54,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13684,7 +13681,7 @@
      "visible": true
     },
     {
-     "id": 54,
+     "id": 55,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13694,7 +13691,7 @@
      "visible": true
     },
     {
-     "id": 55,
+     "id": 56,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13704,7 +13701,7 @@
      "visible": true
     },
     {
-     "id": 56,
+     "id": 57,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13714,7 +13711,7 @@
      "visible": true
     },
     {
-     "id": 57,
+     "id": 58,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13724,7 +13721,7 @@
      "visible": true
     },
     {
-     "id": 58,
+     "id": 59,
      "gid": 98,
      "name": "shrub-large-circle_0_0",
      "x": 3072,
@@ -13734,7 +13731,7 @@
      "visible": true
     },
     {
-     "id": 59,
+     "id": 60,
      "gid": 120,
      "name": "devhouse-osaka_0_0",
      "x": 576,
@@ -18433,7 +18430,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 60,
+     "id": 61,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 640,
@@ -18443,7 +18440,7 @@
      "visible": true
     },
     {
-     "id": 61,
+     "id": 62,
      "gid": 17,
      "name": "building-roof-black_0_0",
      "x": 640,
@@ -18453,7 +18450,7 @@
      "visible": true
     },
     {
-     "id": 62,
+     "id": 63,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 960,
@@ -18463,7 +18460,7 @@
      "visible": true
     },
     {
-     "id": 63,
+     "id": 64,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 1024,
@@ -18473,7 +18470,7 @@
      "visible": true
     },
     {
-     "id": 64,
+     "id": 65,
      "gid": 94,
      "name": "sakura-large-top_0_0",
      "x": 1024,
@@ -18483,7 +18480,7 @@
      "visible": true
     },
     {
-     "id": 65,
+     "id": 66,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 128,
@@ -18493,7 +18490,7 @@
      "visible": true
     },
     {
-     "id": 66,
+     "id": 67,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 1408,
@@ -18503,7 +18500,7 @@
      "visible": true
     },
     {
-     "id": 67,
+     "id": 68,
      "gid": 18,
      "name": "building-roof-blue_0_0",
      "x": 1472,
@@ -18513,7 +18510,7 @@
      "visible": true
     },
     {
-     "id": 68,
+     "id": 69,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 1792,
@@ -18523,7 +18520,7 @@
      "visible": true
     },
     {
-     "id": 69,
+     "id": 70,
      "gid": 94,
      "name": "sakura-large-top_0_0",
      "x": 192,
@@ -18533,7 +18530,7 @@
      "visible": true
     },
     {
-     "id": 70,
+     "id": 71,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 1920,
@@ -18543,7 +18540,7 @@
      "visible": true
     },
     {
-     "id": 71,
+     "id": 72,
      "gid": 94,
      "name": "sakura-large-top_0_0",
      "x": 1984,
@@ -18553,7 +18550,7 @@
      "visible": true
     },
     {
-     "id": 72,
+     "id": 73,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 2176,
@@ -18563,7 +18560,7 @@
      "visible": true
     },
     {
-     "id": 73,
+     "id": 74,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 2176,
@@ -18573,7 +18570,7 @@
      "visible": true
     },
     {
-     "id": 74,
+     "id": 75,
      "gid": 18,
      "name": "building-roof-blue_0_0",
      "x": 2368,
@@ -18583,7 +18580,7 @@
      "visible": true
     },
     {
-     "id": 75,
+     "id": 76,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 256,
@@ -18593,7 +18590,7 @@
      "visible": true
     },
     {
-     "id": 76,
+     "id": 77,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 2560,
@@ -18603,7 +18600,7 @@
      "visible": true
     },
     {
-     "id": 77,
+     "id": 78,
      "gid": 94,
      "name": "sakura-large-top_0_0",
      "x": 2816,
@@ -18613,7 +18610,7 @@
      "visible": true
     },
     {
-     "id": 78,
+     "id": 79,
      "gid": 95,
      "name": "sakura-small_0_0",
      "x": 2944,
@@ -18802,7 +18799,6 @@
     38,
     38,
     0,
-    38,
     0,
     0,
     0,
@@ -18851,7 +18847,7 @@
     0,
     0,
     0,
-    38,
+    0,
     38,
     38,
     38,
@@ -18912,6 +18908,7 @@
     0,
     0,
     0,
+    0,
     38,
     38,
     38,
@@ -20104,7 +20101,7 @@
     0,
     38,
     38,
-    0,
+    38,
     0,
     0,
     0,
@@ -20982,7 +20979,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 79,
+     "id": 80,
      "name": "transporter",
      "point": true,
      "x": 1568.0,
@@ -21019,7 +21016,7 @@
      ]
     },
     {
-     "id": 80,
+     "id": 81,
      "name": "transporter",
      "point": true,
      "x": 992.0,
@@ -21056,7 +21053,7 @@
      ]
     },
     {
-     "id": 81,
+     "id": 82,
      "name": "transporter",
      "point": true,
      "x": 352.0,
@@ -21093,7 +21090,7 @@
      ]
     },
     {
-     "id": 82,
+     "id": 83,
      "name": "transporter",
      "point": true,
      "x": 352.0,
@@ -21130,7 +21127,7 @@
      ]
     },
     {
-     "id": 83,
+     "id": 84,
      "name": "transporter",
      "point": true,
      "x": 2784.0,
@@ -21167,7 +21164,7 @@
      ]
     },
     {
-     "id": 84,
+     "id": 85,
      "name": "transporter",
      "point": true,
      "x": 2848.0,
@@ -21204,7 +21201,7 @@
      ]
     },
     {
-     "id": 85,
+     "id": 86,
      "name": "transporter",
      "point": true,
      "x": 736.0,
@@ -21241,7 +21238,7 @@
      ]
     },
     {
-     "id": 86,
+     "id": 87,
      "name": "transporter",
      "point": true,
      "x": 2464.0,
@@ -21278,7 +21275,7 @@
      ]
     },
     {
-     "id": 87,
+     "id": 88,
      "name": "transporter",
      "point": true,
      "x": 672.0,
@@ -21315,7 +21312,192 @@
      ]
     },
     {
-     "id": 88,
+     "id": 89,
+     "name": "transporter",
+     "point": true,
+     "x": 32.0,
+     "y": 1568.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Himeji"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 40
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 18
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 90,
+     "name": "transporter",
+     "point": true,
+     "x": 32.0,
+     "y": 1632.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Himeji"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 40
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 19
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 91,
+     "name": "transporter",
+     "point": true,
+     "x": 32.0,
+     "y": 1696.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Himeji"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 40
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 20
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 92,
+     "name": "transporter",
+     "point": true,
+     "x": 32.0,
+     "y": 1760.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Himeji"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 40
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 21
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 93,
+     "name": "transporter",
+     "point": true,
+     "x": 32.0,
+     "y": 1824.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Himeji"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 40
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 22
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 94,
      "name": "boundary",
      "x": 0,
      "y": 0,

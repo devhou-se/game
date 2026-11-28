@@ -7,27 +7,27 @@
   "Fukuoka": {
     "buildings": 0.183,
     "own": 0.262,
-    "sprites": 0.44
+    "sprites": 0.388
   },
   "Hokuriku": {
     "buildings": 0.214,
     "own": 0.396,
     "sprites": 0.544
   },
-  "Osaka": {
-    "buildings": 0.182,
-    "own": 0.167,
-    "sprites": 0.44
+  "Kansai": {
+    "buildings": 0.119,
+    "own": 0.273,
+    "sprites": 0.409
   },
   "SanFranbourne": {
-    "buildings": 0.182,
+    "buildings": 0.13,
     "own": 0.688,
     "sprites": 0.321
   },
   "Sapporo": {
-    "buildings": 0.059,
+    "buildings": 0.04,
     "own": 0.81,
-    "sprites": 0.17
+    "sprites": 0.165
   },
   "Sendai": {
     "buildings": 0.214,

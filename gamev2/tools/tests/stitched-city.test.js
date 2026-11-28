@@ -206,7 +206,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         assert.ok(!RoomManager.indexFits(entry, room, false), '?cull=0');
         assert.ok(!RoomManager.indexFits(entry, Object.assign({}, room, { stitched: false }), true));
         assert.ok(!RoomManager.indexFits(undefined, room, true));
-        assert.ok(!RoomManager.keepsIndex(rm.rooms.Osaka, false) && !RoomManager.keepsIndex(rm.rooms.KonbiniMarket1, false));
+        assert.ok(!RoomManager.keepsIndex(rm.rooms.Sendai, false) && !RoomManager.keepsIndex(rm.rooms.KonbiniMarket1, false));
 
         // ?cull=0: stitched but every sprite made at once - nothing is kept, every entry rebuilds
         const all = sceneFor(world, run, '?cull=0').rm;

@@ -59,9 +59,15 @@ their route in the room's map data rather than in coordinates, have no collision
     so a few pixels of bank may differ and the joined band is the part they share). The joined run has
     both lists of `under`, and an end is open only on the room's edge: where two districts' canals meet
     the boat sails on instead of fading at the seam. They are joined before `clearWater` and `fit`, so
-    the water left in view and the hulls are those of the whole waterway. No two declared waterways meet
-    today (a unit test holds that). **Osaka's Dotonbori canal** is the one declared waterway
-    today (rows 20-22, the whole width of the map, `under` columns 21-28). Its deck is dressed as a
+    the water left in view and the hulls are those of the whole waterway. One pair of declared
+    waterways meets today, Osaka's canal and Himeji's moat (below; a unit test holds that it is the only
+    one). **Osaka's Dotonbori canal** is rows 20-22, the whole width of the map, `under` columns 21-28.
+    In the stitched `KansaiCity` it **runs on west as Himeji's castle moat** (issue #255: Himeji rows
+    14-16, the same city rows, `under` columns 32-33, the castle's bridge), so a boat sails from Osaka's
+    east edge to the moat's bank or back without fading at the seam, under both bridges. The moat's west
+    end is closed (a bank at column 6), and its run is declared `from` column 7, not 6: the band of open
+    water is measured on the run's first cell, and the bank column's corner tiles give none - a run with
+    no band is dropped, which would leave the canal ending at the seam again. Osaka's deck is dressed as a
     bridge (issue #180; `tools/make_bridge_tiles.py`, Pillow): `bridge-parapet-w|e` is a stone coping on
     the outer 14px of the deck's edge cells - not solid, so the two-cell pavement keeps its width - and
     `bridge-shade-w|e` is the deck's shadow on the water cell beside it. They lie flat on

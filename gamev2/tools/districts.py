@@ -139,6 +139,15 @@ DISTRICTS = {
           'Tsutenkaku Tower, retro arcades and game shops, kushikatsu, gacha machines, lantern streets',
           (2, 29, 47, 44), stand=(22, 40)),
     ],
+    # Himeji: walked to from Osaka, the stitched KansaiCity (issue #255)
+    'Himeji': [
+        d('castle', 'Himeji Castle',
+          'the white castle on its hill: the keep, the stone walls, the gate and the bridge over the moat',
+          (6, 2, 41, 13), stand=(22, 8)),
+        d('kokoen', 'Koko-en garden',
+          'the walled strolling garden beside the castle: its pond and bridge, lanterns, pines and maples',
+          (5, 26, 41, 35), stand=(22, 28)),
+    ],
     # --- Tohoku -----------------------------------------------------------
     'Sendai': [
         d('station-front', 'Sendai Station front',

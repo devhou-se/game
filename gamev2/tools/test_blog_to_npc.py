@@ -514,7 +514,7 @@ def test_city_reach(cfg):
     assert [d[0] for d in districts] == names
     assert min(d[1] for d in districts) == 0 and min(d[2] for d in districts) == 0
     assert dict((d[0], d[1:3]) for d in districts)['Tokyo'] == (48, 1), districts     # Karuizawa is the 48 columns west of it
-    assert b.city_districts(cfg, 'Osaka') is None and b.city_districts(cfg, 'KonbiniMarket1') is None
+    assert b.city_districts(cfg, 'Sendai') is None and b.city_districts(cfg, 'KonbiniMarket1') is None
     for name in names:
         assert b.city_districts(cfg, name) == districts
 

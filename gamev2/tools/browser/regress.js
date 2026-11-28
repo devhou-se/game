@@ -682,7 +682,7 @@ async function rideSpot(page) {
                             const at = rm.resolve(key, fx, fy);
                             __t.place(at.room, at.x, at.y);
                             if (!__t.open(at.x, at.y) || !__t.quiet(at.x, at.y, 1) || !rm.interactionAt(at.x + dx, at.y + dy, 'ride')) continue;
-                            return { room: at.room, x: at.x, y: at.y, dx, dy, kind: i.kind, ride: ViewRide.RIDES[i.kind], skipAfter: ViewRide.SKIP_AFTER, name: __t.roomName(at.room) };
+                            return { room: at.room, x: at.x, y: at.y, dx, dy, kind: i.kind, ride: ViewRide.RIDES[i.kind], skipAfter: ViewRide.SKIP_AFTER, name: __t.roomName(rm.currentDistrict()) };   // the HUD names the district: Osaka is played as KansaiCity (#255)
                         }
                     }
                 }

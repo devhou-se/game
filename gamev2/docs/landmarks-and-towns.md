@@ -36,6 +36,8 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Higashi Chaya teahouses, the whisky bar | Kanazawa | `kanazawa-chaya-a/-b_0_0`, `kanazawa-whisky-bar_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 | Gassho farmhouses, the suspension bridge, the viewpoint, the peaks | Shirakawago | `shirakawa-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 | Glass Art Museum, tram and stop, black-ramen shop, port observation tower | Toyama | `toyama-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
+| Himeji Castle: the keep, a corner turret, the gatehouse, the white wall, the moat bridge | Himeji | `himeji-keep_0_0`, `himeji-turret_0_0`, `himeji-gate_0_0`, `himeji-wall_0_0`, `himeji-bridge_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
+| Koko-en's roofed gate | Himeji | `himeji-kokoen-gate_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 
 The three placeholders (and the team's art, when it replaces them: a PNG of the same size needs no map or code
 change) have to fit a map that is not theirs to move, and `tools/tests/landmark-placeholders.test.js` holds them
@@ -56,7 +58,8 @@ Tsutenkaku's archway stay see-through.
   though the foot of it is paving: someone standing there would be drawn under the wall. A redrawn station keeps
   this ground line (#70) or moves the colliders with it: `map-data.test.js` fails on a solid bottom-row cell
   with nothing standing on it and on an open cell under the art.
-- **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reachable only by train:
+- **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reached by train, and the town of the
+  stitched city `KansaiCity` (see "Kansai": Himeji is walked to from its west edge):
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
   plaza, with the ferris wheel on the north bank (a gondola at its foot is boarded for one turn and the view:
   see "A turn on the Dotonbori wheel", issue #242). The Dotonbori canal (rows 20-22) runs the whole width of
@@ -65,7 +68,8 @@ Tsutenkaku's archway stay see-through.
   it and the street forks round at the avenue (otherwise the player walks hidden behind the sprite for ten cells); the
   platform-edge fence and the continuous border hedges keep the player off the ballast and out from behind
   the fences. `OsakaStation` is registered in `tools/generate_stations.py`
-  (`STATIONS` / `TOWN_DOORS`) and so in config `stations`; Osaka sits detached in `devhouse.world`.
+  (`STATIONS` / `TOWN_DOORS`) and so in config `stations`; in `devhouse.world` Osaka sits where
+  `tools/kansai.py` puts it, with Himeji against its west edge (see "Kansai").
 - **Adding a landmark**: put a cell-aligned PNG in `assets/sprites/` (register `spriteMetadata` with
   `anchorX = 32/width`, `anchorY = 32/height`, plus `tileNames`), add a prefab spec to
   `tools/make_prefabs.py` (colliders = the base cells only), stamp it from the room generator, and add it to
@@ -116,6 +120,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Sapporo | Sapporo Station front, Clock Tower block, Odori Park, Tanukikoji |
 | Asahikawa | Station front and Heiwa-dori, Ramen alley, Asahibashi and the riverbank |
 | Osaka | Dotonbori, Shinsekai |
+| Himeji | Himeji Castle, Koko-en garden |
 | Sendai | Sendai Station front, Aoba Castle ruins, Downtown, Zuihoden, Nikka distillery, Samurai quarter, Matsushima bay |
 | Fukuoka | Hakata Station, Momochi, Canal City, Old Hakata, Nakasu, Dazaifu |
 | Kanazawa | Station front, Higashi Chaya and the temple hill, Katamachi, Castle, Kenrokuen, Nagamachi |
@@ -270,6 +275,68 @@ station: the owner's rule is that small places are walked to from their town, no
   ramen shop` and `the port observation tower` (Toyama), each `rooms:`-scoped, besides the generic shrine /
   7-Eleven / vending / pond spots. Fourteen devhouse 2 placements were re-homed there with `--rehome`
   (see `blog-pipeline.md`).
+
+### Kansai: Osaka, with Himeji on foot (issue #255; #68, run 2)
+
+Osaka and the new **Himeji** are two generated rooms the game stitches into ONE walkable room,
+**`KansaiCity`** - the third stitched city, built as Hokuriku is (above; `stitched-city.md`). Osaka is the
+town and has the region's one station. Himeji is a small place with NO station: you walk to it from Osaka,
+west along Canal-side Avenue. Devhouse 2's Damian was there on 13 November 2025 (post 754).
+
+- **Layout** (`tools/kansai.py`, the one place the generators agree on it; city cells, the union's top-left
+  is 0,0). Kansai is planned as FIVE districts, one ticket each, and `AT` / `SIZE` hold all five so that a
+  later ticket moves nothing: Okayama 44x40 at (0,36), **Himeji** 44x40 at (44,36), **Osaka** 50x46 at
+  (88,30), Nara 52x40 at (138,36), LakeBiwa 46x36 at (152,0). **`BUILT`** names the ones that exist
+  (`('Himeji', 'Osaka')` today); config `cities.KansaiCity.rooms` is exactly those. A join (`JOINS`) is open
+  only when both its districts are built: a generator asks `ks.is_open(district, side)` and closes its edge
+  otherwise, so **Himeji's west edge is solid wood until Okayama is built**, and Osaka's west rail caps and
+  seam pieces are there only because Himeji is. The city today is 94x46 (`depthScale` 1): Himeji's top row
+  is six rows below Osaka's, and that gap is the stitcher's woodland (`cities.KansaiCity.backdrop`, a copy
+  of Hokuriku's), which also carries Osaka's railway on west - the track runs two rows above the keep's roof.
+- **The seam**: Osaka's west edge meets Himeji's east edge. **Canal-side Avenue** (Osaka rows 24-28: a
+  pavement, three rows of road, a pavement) is Himeji rows 18-22, and **Osaka's canal** (rows 20-22) runs on
+  as the **castle moat** (Himeji rows 14-16): the same Floor and Water tiles either side of the edge, with
+  `edge-n` / `edge-s` pavement pieces at the seam instead of the autotile's rounded corner. The five avenue
+  cells each carry a hidden transporter landing three cells inside the neighbour (`kansai.seams`), which is
+  what `?stitch=0` plays; they are the only open cells on the shared edge. A **fingerpost**
+  (`kansai-fingerpost`, 1x2) stands beside the pavement on each side of the seam, and a bump reads it (one
+  `flavour` row in `Interactions.js`).
+- **Osaka** changed only at its west edge: no bushes cap the rail corridor on (0, 3..5) - the line carries
+  on west - the pavement's seam pieces on (0,24) and (0,28), the fingerpost at (2,28), and the five seam
+  transporters. A later Osaka must keep the avenue on rows 24-28 and the canal on rows 20-22 at that edge.
+- **Himeji** (`tools/generate_himeji.py`): north, **Himeji Castle** on its hill - the white **keep**
+  (`himeji-keep`, 10x8 at (8,0), on the district's top row, so its art is exactly its footprint: nothing may
+  overhang into the row above, which is not Himeji's; `game.lookUp.sprites` has it, so the camera looks up
+  from the terrace in front of it), a corner **turret**, and a gravel terrace with pines and stone lanterns.
+  Two wall tiers hold the hill up (rows 10-13: the castle's own white plaster wall, `himeji-wall`, over a
+  stone base) and the only way up is the **gatehouse** (`himeji-gate`, 6x4 at (30,10); the gateway is its
+  columns 2-3): over the timber **bridge** across the moat (`himeji-bridge`, 2x4, flat with
+  `depthBias: -200`), through the gateway, up the steps. The **moat** ends at a bank at column 6 and is
+  Himeji's `waterways` entry, declared from column 7 (see "Boats" in `ambient-traffic.md`), so the canal's
+  boats sail it; it is `pond-autotile`, so it can be fished. The avenue ends at the woods at column 5. South
+  of it, **Koko-en**: a garden behind an earthen wall (Sendai's wall and pine sprites), entered through its
+  roofed gate (`himeji-kokoen-gate`, 4x3 at (20,23); the gateway is its columns 1-2) - a gravel loop round a
+  pond, crossed by the same timber bridge, with lanterns, pines and maples. There is no building with a
+  door: the keep and the turret are solid over their whole footprint, and the keep is looked at, not entered.
+- **The Map** has a dot for Himeji (`config.places.Himeji`, `"minor": true`: a small place, whose label
+  gives way to the towns' - `hud-input-touch.md`). Debug map-click travel lands on Himeji (40,18), on the
+  avenue three cells in from Osaka (`Places.arrival`).
+- **Districts and the blog pipeline**: `districts.py` has `castle` and `kokoen`; `LANDMARKS` has `Himeji
+  Castle` (the visitor stands at (12,8), on the terrace in front of the keep's middle, where the camera
+  looks up) and `Koko-en garden`, both `rooms:`-scoped. "the pond" is a spot of Koko-en, not of the castle:
+  the moat's bank tile is the same `pond-autotile_corner-nw` the pond's label looks for, and the garden's is
+  found first (`kansai.test.js` holds it there). Damian's 13 November placement was re-homed from Osaka with
+  `blog_to_npc.py --rehome Damian 2025-11-13 "Himeji · Himeji Castle"` (see `blog-pipeline.md`).
+- **Build order** (art tools with a Pillow python): `generate_kansai_art.py`, `make_prefabs.py`,
+  `generate_himeji.py`, `generate_osaka.py`, the maps in `../devhouse.world` (as `kansai.AT` places them:
+  the city's (0,0) is world cell (-258,31)) and `config cities.KansaiCity`, `sync_cities.py`,
+  `districts.py`, `config_to_tiled.py Osaka Himeji`, `play.js lint` for `Osaka`, `Himeji` and `KansaiCity`,
+  `make_worldmap.py`, `check_distinct.py` (its row is `Kansai`). A ticket that builds the next district
+  adds its generator, adds the district to `BUILT` and to `cities.KansaiCity.rooms`, re-runs the neighbours'
+  generators (their edge opens) and drops its stub from `japan-map.test.js`. In `devhouse.world` the five
+  rectangles are x -258..-60, y 31..107 in world cells: south-west of Hokuriku, with Fukuoka moved west and
+  south to (-330,90) to stay clear and stay the westernmost map. `kansai.test.js` checks that nothing else
+  stands in any of the five.
 
 ### Karuizawa: out of Tokyo's west gate, on foot (issues #68, #256; part 1 is #260)
 

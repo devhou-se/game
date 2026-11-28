@@ -6,8 +6,12 @@ port: the Osaka scene of the legacy Godot project turned out to be
 an older copy of the Tokyo overworld (same garden / market / park, even the
 Tokyo Station placeholder) with no Osaka content, so there was nothing to port.
 
-Reachable ONLY by train: the station house door on the north
-side leads into the OsakaStation interior (built by generate_stations.py).
+Reached by train: the station house door on the north side leads into the
+OsakaStation interior (built by generate_stations.py). It is also the town of
+the stitched `KansaiCity` (issue #255; tools/kansai.py has the layout): its
+west edge meets Himeji's east edge, so you walk out along Canal-side Avenue
+(rows 24-28) to the castle, and the canal (rows 20-22) runs on as the castle
+moat. A later Osaka must keep those rows at the west edge.
 From the station you walk south down the main street:
 
   north   the rail line, the platform and the station house
@@ -68,6 +72,7 @@ import random
 import roomgen as rg
 from roomgen import rect
 import generate_discount_stores as don
+import kansai as ks
 
 cfg = rg.load_config()
 
@@ -95,7 +100,9 @@ for x in range(1, W - 1):
 for x in list(range(1, 10)) + list(range(27, W - 1)):
     b.fence(x, 6, x)                                  # south fence, gap at the platform
 for y in (3, 4, 5):                                   # caps at the corridor ends
-    b.stamp('shrub-small', 0, y); b.stamp('shrub-small', W - 1, y)
+    if not ks.is_open('Osaka', 'w'):                  # not where the line carries on west across
+        b.stamp('shrub-small', 0, y)                  # the stitched city: bushes on the track there
+    b.stamp('shrub-small', W - 1, y)
 for x in range(4, W - 3, 6):                          # blossom beyond the tracks
     b.stamp('sakura-small', x, 0)
 
@@ -285,8 +292,17 @@ for x in range(10, 27):
     if f'{x},5' not in b.L['Colliders']:
         b.fence(x, 5, x)
 
-# isolated: the ONLY way out is the station house door into OsakaStation (the
-# discount store's door leads to its own interior and back).
+# ---- the seam with Himeji (tools/kansai.py): the avenue's pavement runs on west,
+#      so its end tiles are straight edges, not the rounded corners of a town's
+#      end; a fingerpost beside it says what is each way ---------------------------
+if ks.is_open('Osaka', 'w'):
+    b.put('Floor', 0, ks.O_AVENUE[0], 'flat-grey-brick-autotile_edge-n')
+    b.put('Floor', 0, ks.O_AVENUE[-1], 'flat-grey-brick-autotile_edge-s')
+    b.stamp('kansai-fingerpost', 2, ks.O_AVENUE[-1])  # feet on (2, 29), beside the pavement
+
+# The ways out: the station house door into OsakaStation, and the avenue west
+# into Himeji (the seam cells carry hidden transporters for ?stitch=0; stitched,
+# you just walk). The discount store's door leads to its own interior and back.
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) — keep them.
 prev = cfg['rooms'].get('Osaka', {})
 b.finish()      # picket fences + solid tracks: the room is complete without a post-pass
@@ -295,7 +311,7 @@ cfg['rooms']['Osaka'] = b.room('Osaka', npcs=prev.get('npcs', []), transporters=
     rg.transporter(station_door[0], station_door[1], 'OsakaStation',
                    *cfg.get('stations', {}).get('OsakaStation', {}).get('entry', [11, 11]), hidden=True),
     don.door_transporter('Osaka', store_door),
-])
+] + ks.seams('Osaka'))
 # the canal is navigable (src/AmbientBoats.js): cells, inclusive. `under` is the
 # bridge deck - a boat is not drawn there, so it passes beneath the street.
 cfg['rooms']['Osaka']['waterways'] = [

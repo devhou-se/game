@@ -174,6 +174,13 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   pipeline is Tokyo-specific - every one of them loops over config `cities` - so the second city needed no
   code change; `tools/tests/kanazawa.test.js` walks it stitched and with `--stitch=0`. A city's key sorts
   into config order (`HokurikuCity` before `TokyoCity`): do not read "the city" as the first entry.
+- **The third city** (issue #255): `KansaiCity` stitches Osaka and Himeji (see "Kansai" in
+  `landmarks-and-towns.md`), again with no code change. It is the first city planned to GROW: its layout
+  module (`tools/kansai.py`) places five districts and names the ones built, a generator closes an edge
+  whose neighbour is not built yet, and `cities.KansaiCity.rooms` lists only the built ones.
+  `tools/tests/kansai.test.js` walks it stitched and with `--stitch=0`. A town that used to be a room of its
+  own becomes a district this way: the room the game plays in Osaka is `KansaiCity` now, and code or a test
+  that wants "a town that is not stitched" must not use Osaka (Sendai is one).
 - **Adding a district / a second city**: place the map in `devhouse.world` so the shared road lines up,
   add it to `cities.<City>.rooms`, run `tools/sync_cities.py` and `tools/make_worldmap.py`. Keep the hidden
   seam transporters in the maps — `?stitch=0` (and `play.js --stitch=0`, which `play.js check` runs too) still use them.

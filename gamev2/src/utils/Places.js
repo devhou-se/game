@@ -28,7 +28,8 @@
  * It has a dot and a label like any town, and nothing is ever left out; its
  * label is only laid out after the towns', so a town keeps the spot beside
  * its dot and the small place takes what is left (see layout()). Karuizawa
- * is the first: a district of the stitched Tokyo that is a place of its own.
+ * is the first: a district of the stitched Tokyo that is a place of its own;
+ * Himeji is the second, a room walked to from Osaka.
  *
  * Pure functions of the config (and the map's metadata, assets/map/japan.json,
  * written by tools/make_japan_map.py): tools/tests/japan-map.test.js runs the

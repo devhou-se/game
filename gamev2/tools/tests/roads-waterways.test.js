@@ -225,8 +225,8 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         assert.deepStrictEqual(plain(bare), [{ axis: 'v', from: 0, to: 640, band0: 0, band1: 64, open: [false, false], under: [] }]);
     });
 
-    test('no two waterways declared today meet end to end, in a room or across a city\'s districts: every boat sails the run it sailed (#68)', () => {
-        // what "joining changes nothing today" rests on: cells, each district's moved by its place in its city
+    test('the only waterways declared today that meet end to end are Himeji\'s moat and Osaka\'s canal, which sail as one run; every other boat sails the run it sailed (#68, #255)', () => {
+        // what "joining changes nothing else today" rests on: cells, each district's moved by its place in its city
         if (game('typeof AmbientBoats') === 'undefined') load('AmbientBoats.js');
         const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
         const inCity = {};
@@ -241,15 +241,25 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
                 declared++;
             }
         }
-        assert.ok(declared >= 4, 'the canals of Osaka and Fukuoka, the bay at Sendai and the sea at Toyama are declared');
+        assert.ok(declared >= 5, 'the canals of Osaka and Fukuoka, the moat at Himeji, the bay at Sendai and the sea at Toyama are declared');
+        const meet = [];
         for (const [group, runs] of Object.entries(groups)) {
+            let met = 0;
             for (const a of runs) for (const b of runs) {
                 if (a === b || a.axis !== b.axis || a.to !== b.from) continue;
-                assert.ok(Math.min(a.band1, b.band1) <= Math.max(a.band0, b.band0), `${group}: ${a.key}'s waterway is carried on by ${b.key}'s`);
+                if (Math.min(a.band1, b.band1) <= Math.max(a.band0, b.band0)) continue;
+                meet.push(`${group}: ${a.key}'s waterway is carried on by ${b.key}'s`);
+                met++;
             }
             // ...which is what joinRuns makes of them (here in cells: one cell in common would join them)
-            assert.strictEqual(game('AmbientBoats').joinRuns(runs, 1).length, runs.length, group);
+            assert.strictEqual(game('AmbientBoats').joinRuns(runs, 1).length, runs.length - met, group);
         }
+        // Osaka's canal runs on west as the castle moat (#255): the same three rows either side of the seam
+        assert.deepStrictEqual(meet, ["KansaiCity: Himeji's waterway is carried on by Osaka's"]);
+        const [moat, canal] = groups.KansaiCity;
+        assert.deepStrictEqual([moat.key, canal.key, moat.band0, moat.band1], ['Himeji', 'Osaka', canal.band0, canal.band1]);
+        const [one] = game('AmbientBoats').joinRuns(groups.KansaiCity, 1);
+        assert.deepStrictEqual([one.from, one.to, one.band0, one.band1], [moat.from, canal.to, canal.band0, canal.band1]);
     });
 
     test("Tokyo's west gate leads to Karuizawa: the fence e3cb4d0d ran across it is open again, two cells wide (#68, #260)", () => {

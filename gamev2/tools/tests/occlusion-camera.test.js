@@ -4,7 +4,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         const Interactions = run('Interactions'), Shop = run('Shop');
         const opts = { sizeOf: (key) => world.cells(key), venues: Shop.VENUES };
         let cells = 0, hits = 0;
-        for (const key of ['TokyoCity', 'KonbiniMarket1', 'Izakaya', 'Osaka']) {
+        for (const key of ['TokyoCity', 'KonbiniMarket1', 'Izakaya', 'KansaiCity', 'Sendai']) {
             const room = world.roomManager.rooms[key], roomConfig = world.config.rooms[key] || {};
             const index = Interactions.index(room, roomConfig, opts);
             // find() scans every tile of the room per call: use it as written for the small rooms and
@@ -66,7 +66,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
             add: { sprite: (x, y, key) => sprite(key) },
             cache: { json: { get: () => null } },
         };
-        for (const key of ['Tokyo', 'KonbiniMarket1', 'Osaka']) {
+        for (const key of ['Tokyo', 'KonbiniMarket1', 'Sendai']) {
             const rm = new RoomManager(scene);
             rm.rooms = world.roomManager.rooms;
             rm.currentRoom = key;

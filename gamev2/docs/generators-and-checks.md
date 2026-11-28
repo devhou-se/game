@@ -81,8 +81,8 @@ crossings, traffic lights, track) counts neither for nor against a city.
   a higher overlap or a lower own share than recorded. A city that is not in the baseline (a new town) is
   printed against the targets and does not fail.
 - **The baseline** (28 Nov 2026, buildings / sprites / own): Tokyo 0.18 / 0.33 / 54% (0.15 / 0.32 / 56% before Shinjuku, issue #94: its nine towers are the city kit's, which Osaka and Fukuoka use too, and the street of high-rises was the point; Fukuoka, whose towers are the same kit, reads Tokyo as its most-alike town at 0.18 where it was 0.17 / Hokuriku; both entries were re-recorded after it with `--update`, nothing else moved), Hokuriku 0.27 / 0.54 / 40%,
-  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.18 / 0.44 / 26%, Sapporo 0.06 / 0.18 / 78% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Osaka 0.18 / 0.44 / 17%,
-  Asahikawa 0.00 / 0.11 / 87% (rebuilt from its own art, #219 stage B: it was 0.27 / 0.20 / 10%; Fukuoka, Hokuriku and Sendai, whose most-alike town it was, fell on buildings with no map of theirs changing), San Franbourne 0.18 / 0.32 / 69%. `--update` records today's numbers: do it when a rebuild made a city better or
+  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.18 / 0.39 / 26%, Sapporo 0.04 / 0.17 / 81% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Kansai 0.12 / 0.41 / 27% (Osaka and Himeji as one city, issue #255; Osaka alone was 0.18 / 0.44 / 17%),
+  Asahikawa 0.00 / 0.11 / 87% (rebuilt from its own art, #219 stage B: it was 0.27 / 0.20 / 10%; Fukuoka, Hokuriku and Sendai, whose most-alike town it was, fell on buildings with no map of theirs changing), San Franbourne 0.13 / 0.32 / 69%. `--update` records today's numbers: do it when a rebuild made a city better or
   a new town landed, and say so in the commit. Never to hide a city getting worse.
 - The 28 Nov baseline records only gains since the 27 Nov one (issue #264; no number is worse): Osaka was
   0.20 / 0.45 / 11% before its Devhouse (`devhouse-osaka`) and the wheel's boarding platform (`wheel-boarding`)
@@ -92,6 +92,8 @@ crossings, traffic lights, track) counts neither for nor against a city.
   are deleted (issue #68). Several cities' worst pair was one of them, which is why the building overlaps of
   Asahikawa, Osaka, Sapporo, Fukuoka and Tokyo fell in the 27 Nov baseline with no map of theirs changing.
 - A new town's own landmark art counts as building sprites once its sprite prefix is in `LANDMARK_ART`.
+- A town that becomes a district of a stitched city is measured as that city from then on: the baseline's
+  key changes with it (`Osaka` became `Kansai`), which only `--update` writes.
 - It is not one of the five gates: run it after a town's map or generator changes. Unit test: `test_distinct`
   in `tools/test_blog_to_npc.py`.
 

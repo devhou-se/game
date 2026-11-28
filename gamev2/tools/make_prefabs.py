@@ -457,6 +457,28 @@ PREFABS = {
     'toyama-port-tower':      dict(w=3, h=7, sprites=[('Collidables', 0, 0, 'toyama-port-tower_0_0')],
                                    colliders=[(x, y) for x in range(3) for y in (5, 6)]
                                              + [(1, y) for y in (2, 3, 4)], doors=[(1, 6)]),
+    # ---- Kansai (issue #255; art drawn by tools/generate_kansai_art.py) -------------
+    # Himeji Castle's keep: solid from the third row down; generate_himeji.py closes
+    # the two roof rows above as well (it stands on the district's top row).
+    'himeji-keep':            dict(w=10, h=8, sprites=[('Collidables', 0, 0, 'himeji-keep_0_0')],
+                                   colliders=[(x, y) for x in range(10) for y in range(2, 8)], doors=[]),
+    'himeji-turret':          dict(w=3, h=4, sprites=[('Collidables', 0, 0, 'himeji-turret_0_0')],
+                                   colliders=[(x, y) for x in range(3) for y in (1, 2, 3)], doors=[]),
+    # the gatehouse at the bridgehead: the piers (columns 0-1, 4-5) are solid, the
+    # gateway (columns 2-3) is open all the way through, under the storey above
+    'himeji-gate':            dict(w=6, h=4, sprites=[('Collidables', 0, 0, 'himeji-gate_0_0')],
+                                   colliders=[(x, y) for x in (0, 1, 4, 5) for y in range(4)], doors=[]),
+    # a flat deck you walk ON (Non-Collidables + depthBias, the asahikawa-bridge recipe)
+    'himeji-bridge':          dict(w=2, h=4, sprites=[('Non-Collidables', 0, 0, 'himeji-bridge_0_0')],
+                                   colliders=[], doors=[]),
+    # Koko-en's gate: the wing walls collide, the gateway (columns 1-2) is open
+    'himeji-kokoen-gate':     dict(w=4, h=3, sprites=[('Collidables', 0, 0, 'himeji-kokoen-gate_0_0')],
+                                   colliders=[(x, y) for x in (0, 3) for y in (1, 2)], doors=[]),
+    # one column of the castle's white wall: stamp side by side for a run
+    'himeji-wall':            dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'himeji-wall_0_0')],
+                                   colliders=[(0, 0), (0, 1)], doors=[]),
+    'kansai-fingerpost':      dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'kansai-fingerpost_0_0')],
+                                   colliders=[(0, 1)], doors=[]),
     # ---- street accessories (issue #19; art from tools/extract_street.py) --------
     # One sprite on Collidables each, so it Y-sorts by its feet: the bottom cell
     # is solid, the pole / head above it is walk-behind. Maps place the green

@@ -109,6 +109,8 @@ const Interactions = {
         { kind: 'snow-tanuki', group: 'flavour', pattern: /^snow-sculpture-tanuki/, footprint: true, say: 'a snow tanuki in a straw hat. his sake flask has frozen solid' },
         { kind: 'snow-bear', group: 'flavour', pattern: /^snow-sculpture-bear/, footprint: true, say: 'a snow bear with a salmon. he will not finish it before april' },
         { kind: 'fountain', group: 'flavour', pattern: /^odori-fountain/, footprint: true, say: 'the fountain is off for the winter. the lights under the ice are not' },
+        // Kansai (issue #255): the fingerposts either side of the seam where Osaka's avenue walks on to Himeji
+        { kind: 'fingerpost', group: 'flavour', pattern: /^kansai-fingerpost/, footprint: true, say: 'west: himeji castle and koko-en. east: osaka, dotonbori' },
         // ...and the people folded double at the waist on its pavements: one line each
         // an underground arcade's other fronts and furniture
         { kind: 'bookshop', group: 'flavour', pattern: /^chika-shop-books/, footprint: true, say: 'this week\'s manga, tied shut with string. everyone is reading them standing up anyway' },

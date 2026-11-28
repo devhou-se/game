@@ -112,7 +112,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
                 assert.strictEqual(world.here().city, 'HokurikuCity', 'Kanazawa is entered as the city room');
                 assert.deepStrictEqual([rm.rooms.HokurikuCity.worldWidth / 64, rm.rooms.HokurikuCity.worldHeight / 64], [110, 66]);
                 assert.strictEqual(rm.rooms.HokurikuCity.depthScale, 1, 'the city is short enough that Y-sorted depths need no squeeze');
-                assert.strictEqual(Object.keys(rm.cities).length, 2, 'both cities are stitched');
+                assert.strictEqual(Object.keys(rm.cities).length, 3, 'all three cities are stitched');
             } else {
                 assert.strictEqual(world.here().city, null);
             }

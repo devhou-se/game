@@ -63,6 +63,7 @@ GENERATORS = [
     'generate_pub', 'generate_distillery', 'generate_mall', 'generate_tower_deck', 'generate_flinders',
 ]
 GENERATORS += ['generate_kanazawa', 'generate_shirakawago', 'generate_toyama']     # Hokuriku (issue #68)
+GENERATORS += ['generate_himeji']            # Kansai: Himeji, stitched to Osaka (issue #255; generate_osaka is above)
 GENERATORS += ['generate_karuizawa']         # Karuizawa, and Tokyo's west gate into it (issue #260)
 GENERATORS += ['generate_shinjuku']          # Tokyo's street of high-rises (issue #94)
 # config `districts` from tools/districts.py: last, it reads where the landmarks of every room stand (issue #219)
@@ -84,6 +85,7 @@ ART_TOOLS = [
     'generate_sanfranbourne_art',
 ]
 ART_TOOLS += ['generate_hokuriku_art']
+ART_TOOLS += ['generate_kansai_art']         # Himeji's castle and garden, the Kansai fingerpost (issue #255)
 ART_TOOLS += ['generate_sapporo_art']        # Sapporo's own art (issue #219)
 ART_TOOLS += ['generate_chikagai_art']       # the underground arcades and their street entrances
 ART_TOOLS += ['generate_konbini_art']        # the 7-Eleven interiors' kit (issue #221)
