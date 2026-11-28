@@ -111,6 +111,7 @@ ART_TOOLS += ['generate_karuizawa_art']      # Karuizawa's own art: the fingerpo
 ART_TOOLS += ['generate_asahikawa_art']      # Asahikawa's own art (issue #219, stage B)
 ART_TOOLS += ['generate_izakaya_art']        # the Izakaya's interior in Tokyo, in the house look (issue #286)
 ART_TOOLS += ['generate_fukuoka_town_art']   # Fukuoka's own town pieces and ground families (issues #219, #362)
+ART_TOOLS += ['generate_sendai_town_art']    # Sendai's own town pieces and ground families (issue #394)
 # make_worldmap.py: assets/map/world-map.png and .json, the overworld drawn from the committed maps and
 # sprites. Last: it makes no art of its own, it shows what the tools above made (issue #270)
 WORLDMAP = 'make_worldmap'
