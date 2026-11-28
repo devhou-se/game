@@ -152,14 +152,15 @@ DISTRICTS = {
     # Okayama: walked to from Himeji, the west end of KansaiCity (issue #267)
     'Okayama': [
         d('castle', 'Okayama Castle',
-          'the black "crow" castle on its stone wall above the river: the keep, the gravel terrace, pines and lanterns',
-          (13, 2, 40, 14), stand=(22, 10)),
+          'the black "crow" castle at the water: the keep on the north bank of the river and the gravel court beside it',
+          (22, 14, 33, 18), stand=(27, 16)),
         d('momotaro', 'Momotaro Avenue',
-          'the avenue in from Himeji and the plaza it ends in: the Momotaro statue and a stall of Bizen ware',
-          (5, 15, 40, 23), stand=(14, 22)),
+          'the avenue in from Himeji and the plaza it ends in on the east bank: the Momotaro statue and a stall of Bizen ware',
+          (34, 14, 43, 23), stand=(36, 20)),
         d('korakuen', 'Korakuen garden',
-          'the strolling garden on its island in the river, over the Tsukimi bridge: lawns, a pond, red-crowned cranes',
-          (7, 27, 38, 35), stand=(22, 28)),
+          'the strolling garden inside the bend of the river, over the Tsukimi bridge: open lawn, a hill, a pond, '
+          'red-crowned cranes, the castle across the water',
+          (3, 22, 28, 37), stand=(18, 30)),
     ],
     # Nara: walked to from Osaka, the east end of KansaiCity (issue #268)
     'Nara': [

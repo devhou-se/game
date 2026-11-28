@@ -142,7 +142,7 @@ python3 tools/test_blog_to_npc.py                                   # unit check
   hall; Himeji's 754 stood in at Osaka's sakura trees too, until Himeji was built - issue #255
   moved it to `Himeji · Himeji Castle`, in front of the keep; Okayama's 745 waited on Hakata's platform,
   `FukuokaStation · the platform`, where the day's train left from, until Okayama was built - issue #267
-  moved it to `Okayama · Korakuen garden`, on the island's lawn); the four October test / bug-report posts (382, 391, 396,
+  moved it to `Okayama · Korakuen garden`, on the garden's lawn); the four October test / bug-report posts (382, 391, 396,
   406) left the vending machines of Machi, a made-up town, for Tokyo's. Stage 2 (issue #67) moved Fukuoka's eight to Fukuoka: 693 and
   750 to the yatai stalls, 719 and 746 to Hakata Station (both off the Tokyo platform or Market), 712 to Kushida
   shrine, 727 to Canal City, 731 to Fukuoka Tower and 740 to Dazaifu Tenmangu. Stage 3 (Hokuriku) moved

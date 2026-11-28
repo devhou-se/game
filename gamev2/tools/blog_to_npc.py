@@ -265,10 +265,10 @@ LANDMARKS = [
     # Kansai (issue #255): Himeji, walked to from Osaka
     ('himeji-keep_', 'Himeji Castle', (4, 8), {'rooms': ('Himeji',)}),   # the terrace in front of the keep's middle, where the camera looks up at it
     ('himeji-kokoen-gate_', 'Koko-en garden', (1, 5), {'rooms': ('Himeji',)}),   # the garden's path, inside the gate
-    ('okayama-keep_', 'Okayama Castle', (2, 7), {'rooms': ('Okayama',)}),         # (20, 9): in front of the keep, off the steps' columns
-    ('okayama-crane_', 'Korakuen garden', (-1, 1), {'rooms': ('Okayama',)}),      # (27, 31): the lawn beside the first crane
-    ('okayama-momotaro_', 'the Momotaro statue', (0, 3), {'rooms': ('Okayama',)}),    # (8, 20): the plaza in front of him
-    ('okayama-bizen-stall_', 'the Bizen-ware stall', (1, 3), {'rooms': ('Okayama',)}),  # (16, 18): the pavement at its counter
+    ('okayama-keep_', 'Okayama Castle', (10, 4), {'rooms': ('Okayama',)}),        # (24, 16): the court beside the keep, off the bridge's columns
+    ('okayama-crane_', 'Korakuen garden', (-1, 1), {'rooms': ('Okayama',)}),      # (13, 27): the lawn beside the first crane
+    ('okayama-momotaro_', 'the Momotaro statue', (0, 3), {'rooms': ('Okayama',)}),    # (35, 19): the plaza in front of him
+    ('okayama-bizen-stall_', 'the Bizen-ware stall', (1, 3), {'rooms': ('Okayama',)}),  # (38, 17): the plaza at its counter
     ('nara-daibutsuden_', 'the Great Buddha Hall', (4, 8), {'rooms': ('Nara',)}),   # (35, 10): the court in front of the hall, off the axis
     ('nara-nandaimon_', 'the Nandaimon gate', (1, 4), {'rooms': ('Nara',)}),       # (35, 16): the plaza below its west post, off the gateway
     ('nara-senbei-stall_', 'the deer cracker stall', (0, 2), {'rooms': ('Nara',)}),   # (41, 18): the plaza at its counter

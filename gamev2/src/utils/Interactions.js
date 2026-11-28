@@ -123,6 +123,7 @@ const Interactions = {
         { kind: 'momotaro', group: 'flavour', pattern: /^okayama-momotaro/, footprint: true, say: 'momotaro the peach boy, with his dog, monkey and pheasant. the ogres never stood a chance' },
         { kind: 'bizen-stall', group: 'flavour', pattern: /^okayama-bizen-stall/, footprint: true, say: 'bizen ware: no glaze, two weeks in the kiln, no two alike. beer tastes better from it, they say' },
         { kind: 'crane', group: 'flavour', pattern: /^okayama-crane/, footprint: true, say: 'a red-crowned crane. it looks at you, then at the pond, and chooses the pond' },
+        { kind: 'mound', group: 'flavour', pattern: /^okayama-mound/, footprint: true, say: 'yuishinzan: six metres of hill, heaped up so a lord could look down on his own garden' },
         // ...the ones either side of the seam where Osaka's avenue walks on to Nara (issue #268), and what stands in Nara
         { kind: 'fingerpost', group: 'flavour', pattern: /^nara-fingerpost/, footprint: true, say: 'west: osaka, dotonbori. east: nara, the great buddha and the deer' },
         { kind: 'deer', group: 'flavour', pattern: /^nara-deer-(doe|stag)/, footprint: true, say: 'a deer, resting. it has seen ten thousand visitors today and you are not the interesting one' },

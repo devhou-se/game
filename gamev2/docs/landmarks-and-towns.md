@@ -39,7 +39,7 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Himeji Castle: the keep, a corner turret, the gatehouse, the white wall, the moat bridge | Himeji | `himeji-keep_0_0`, `himeji-turret_0_0`, `himeji-gate_0_0`, `himeji-wall_0_0`, `himeji-bridge_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
 | Koko-en's roofed gate and its north-south walls | Himeji | `himeji-kokoen-gate_0_0`, `himeji-kokoen-wall-v_0_0`, `-v-top_0_0`, `-v-end_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 | Okayama Castle: the black "crow" keep | Okayama | `okayama-keep_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
-| Korakuen: the Tsukimi bridge, the red-crowned cranes, the stones at the island's corners | Okayama | `okayama-bridge_0_0`, `okayama-crane_0_0`, `okayama-bank-rock_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| Korakuen: the Tsukimi bridge, the red-crowned cranes, Yuishinzan (the hill), the stones at the bend's inner corner | Okayama | `okayama-bridge_0_0`, `okayama-crane_0_0`, `okayama-mound_0_0`, `okayama-bank-rock_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 | The Momotaro statue, the Bizen-ware stall | Okayama | `okayama-momotaro_0_0`, `okayama-bizen-stall_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 | Todaiji: the Great Buddha Hall, the Nandaimon gate | Nara | `nara-daibutsuden_0_0`, `nara-nandaimon_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
 | Kasuga Taisha: the torii, the stone lanterns (the hall is the stock `shrine-red`) | Nara | `nara-kasuga-torii_0_0`, `nara-stone-lantern_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
@@ -370,23 +370,41 @@ Himeji and Okayama" below.
   so the walk is a zigzag. Its paths are one cell of stepping stones (`b.paver`), not gravel. The border
   woods are pine and cedar; maples grow only in room C. There is no building with a door: the keep and
   the turret are solid over their whole footprint, and the keep is looked at, not entered.
-- **Okayama** (`tools/generate_okayama.py`, issue #267) is laid out on one north-south axis, columns
-  21-22: the keep, the steps down the stone wall, across the avenue, the bridge, the island. North,
-  **Okayama Castle**, the black "crow castle" (`okayama-keep`, 8x7 at (18,2): black boarded walls with a
-  white band under each eave, gold shachi on the ridge, a low stone base; solid over its whole
-  footprint, roof rows too; `game.lookUp.sprites` has it), on a gravel terrace with pines and stone lanterns
-  above a **stone wall** (rows 13-14) whose only way up is the steps on the axis. The avenue (rows 18-22)
-  ends west in a paved **plaza** with the bronze **Momotaro** and his dog, monkey and pheasant
-  (`okayama-momotaro`, 2x3 at (8,17)); a **stall of Bizen ware** (`okayama-bizen-stall`, 3x3 at (15,15))
-  stands beside the pavement. South, **Korakuen** is an island (7..38, 27..35) in a **river**: a ring of
-  solid `pond-autotile` (5..40, 24..37; it can be fished), crossed only by the steel **Tsukimi bridge**
-  (`okayama-bridge`, 2x4 at (21,24), flat with `depthBias: -200`). The pond set has no inner-corner piece,
-  so a heap of the rim's own stones (`okayama-bank-rock`, 2x2, flat) lies over each corner of the island,
-  under a pine. On the island: a gravel loop round the lawns, a pond, maples and pines, lanterns and two
-  red-crowned **cranes** (`okayama-crane`, 1x2). The statue, the stall and a crane each answer a bump
-  (`flavour` rows). The river is NOT a `waterways` run: no arm of the ring leads anywhere, so a boat would
-  fade in and out in full view. There is no building with a door and no ordinary sealed building: the keep
-  is looked at, not entered, and the stall is an open counter. The west, north and south edges are wood.
+- **Okayama** (`tools/generate_okayama.py`, issues #267, #276) is a stroll: the garden is the district, the
+  keep is scenery, and the road ends. The avenue comes in from Himeji (34..43, 18..22; road
+  `k.road_h(38, 43, 19, cap_w=True)`, six cells, capped west) and stops in a paved **plaza** on the river's
+  east bank (34..40, 14..22; row 23 is the grass verge the fingerpost's feet stand on, (39,23)): the bronze
+  **Momotaro** and his dog, monkey and pheasant (`okayama-momotaro`, 2x3 at (35,16)) and a **stall of Bizen
+  ware** (`okayama-bizen-stall`, 3x3 at (37,14), bumped from row 17; its top row (37..39, 14) is solid too, so
+  nobody stands behind the awning). The **river** is one bend of solid `pond-autotile` written by hand on
+  `Water`: an east-west reach (0..32, 19..21) in at the west edge, turning south as a reach (29..32,
+  22..39) out of the bottom edge (row 19 `edge-n`, (32,19) `corner-ne`, column 32 below it `edge-e`, row 21
+  west of 29 `edge-s`, column 29 from row 22 `edge-w`, the rest `center`). It can be fished; it is not a
+  `waterways` run, and it has no `corner-nw`: keep it so. The pond set has no inner-corner piece, so a heap
+  of the rim's own stones (`okayama-bank-rock`, 2x2, flat) is stamped at (28,21), over the bend's one inner
+  corner at the garden's tip. North of it, **Okayama Castle**, the black "crow castle" (`okayama-keep`, 8x7
+  at (14,12): black boarded walls with a white band under each eave, gold shachi on the ridge, a low stone
+  base; solid over its whole footprint, roof rows too; `game.lookUp.sprites` has it), stands low at the
+  water, its foot on row 18 and the river under it, beside a small gravel **court** (22..33, 14..18) that
+  opens onto the plaza on all five rows, with one pine (trunk (31,15)). No terrace, wall or steps. Beside
+  the keep, the steel **Tsukimi bridge** (`okayama-bridge`, 2x4 at (22,19), flat with `depthBias: -200`;
+  open cells (22..23, 19..21)) lands on row 22 and is the only way into **Korakuen**, the inside of the bend
+  (3..28, 22..37; one column wider than the plan's 3..27, so column 28 is lawn on the bank and not wood):
+  open lawn, one cranked two-cell gravel path ((22..23, 22..25), (10..23, 24..25), (10..11, 24..31): one
+  gravel region with the court and the bridge's deck), the hill **Yuishinzan** (`okayama-mound`, 5x4 at
+  (4,25), solid over all of it), the pond (6..13, 32..35, solid, corners and edges by position), two
+  red-crowned **cranes** (`okayama-crane`, 1x2, feet (14,27) and (16,28)), three maples, two cedars, the
+  pond's pine and one stone lantern (feet (12,31), where the path meets the pond). The woods round it all
+  are solid maple and cedar (`AUTUMN`, no pine), and the only open edge cells are the five seam cells.
+  **The look-up**, measured: from the garden's bank, row 22 under the keep's columns (x 14..21), four
+  cells south of its foot, the weight is 0.83 and a desktop (1280x960, offset 207px) and a portrait phone
+  (390x844, 228px) see the whole keep across the water (on desktop about 25px of its top row is behind the
+  40px bar). A **landscape phone** (844x390, 101px, capped by `foot`) sees only its stone base and the foot
+  of the first storey: its view is 7.5 cells tall and the keep's top is 10 rows north of the bank, the same
+  limit Himeji's keep has. Row 23 gives 0.5, the bridge 0.75, the court beside the keep 0. Rows 22-23 west
+  of the bridge stay clear: no tree or prop there. The statue, the stall, a crane and the hill each answer a
+  bump (`flavour` rows; the hill's kind is `mound`). There is no building with a door and no ordinary
+  sealed building: the keep is looked at, not entered, and the stall is an open counter.
 - **Nara** (`tools/generate_nara.py`, issue #268, 52x40). **Todaiji** stands on one north-south axis,
   columns 36-37: the **Great Buddha Hall** (`nara-daibutsuden`, 12x8 at (31,2): two broad hipped roofs, the
   gold horns on the ridge, white plaster between dark posts, the curved gable over the middle doors; solid
@@ -423,12 +441,12 @@ Himeji and Okayama" below.
   found first (`kansai.test.js` holds it there). Damian's 13 November placement was re-homed from Osaka with
   `blog_to_npc.py --rehome Damian 2025-11-13 "Himeji · Himeji Castle"` (see `blog-pipeline.md`).
   Okayama has `castle`, `momotaro` (the avenue and the plaza) and `korakuen`, and four `rooms:`-scoped
-  `LANDMARKS` rows: `Okayama Castle` (the visitor stands at (20,9), in front of the keep and off the steps'
-  columns), `Korakuen garden` (anchored on the first crane: (27,31), the lawn beside it), `the Momotaro
-  statue` (8,20) and `the Bizen-ware stall` (16,18). "the pond" is a spot of Korakuen for the same reason
-  it is Koko-en's: the label's tile is found in `"x,y"` string order, and the garden pond's `"14,31"` sorts
-  before the river's corner `"5,24"` - keep the garden pond's first column between 10 and 43. Damian's 12
-  November placement was re-homed from Hakata's platform with
+  `LANDMARKS` rows: `Okayama Castle` (the visitor stands at (24,16), on the court beside the keep and off
+  the bridge's columns; there is no look-up there, so a castle post gets the court and the view is from the
+  garden), `Korakuen garden` (anchored on the first crane: (13,27), the lawn beside it), `the Momotaro
+  statue` (35,19) and `the Bizen-ware stall` (38,17). "the pond" is a spot of Korakuen because the garden
+  pond's `pond-autotile_corner-nw` (6,32) is the room's only one: the river has no `corner-nw`: keep it
+  so. Damian's 12 November placement was re-homed from Hakata's platform with
   `blog_to_npc.py --rehome Damian 2025-11-12 "Okayama · Korakuen garden"`.
   Nara has `todaiji` (the hall, the court and the plaza), `nara-park` (the lawn, the river and the towpath)
   and `kasuga`, and five `rooms:`-scoped `LANDMARKS` rows: `the Great Buddha Hall` (35,10), in front of the
@@ -457,8 +475,8 @@ tickets rebuilds one room to this plan, rewrites that room's bullet above, and d
 **Fixed** means a ticket may not move it. A **target** is the cell the plan was drawn with: the ticket's own
 design may shift it by blockout, but not change what it is or which side of what it stands on.
 
-- **What repeated.** Himeji and Okayama were the same room twice (as #274 found them; since #275 Himeji
-  no longer is, and the list below is Okayama's, and what #276 changes):
+- **What repeated.** Himeji and Okayama were the same room twice as #274 found them. Neither is that room
+  now (#275, #276): the list is history, kept so that a later district does not bring it back:
   1. *The same three bands on the same rows of a 44x40 room*: castle north (Himeji rows 0-13, Okayama
      3-14), the avenue straight through on rows 18-22, a garden south (rows 24-37).
   2. *The same castle*: a salmon `gravel-autotile` terrace as wide as the room (Himeji 6..41, Okayama
@@ -512,29 +530,6 @@ design may shift it by blockout, but not change what it is or which side of what
   - `check_distinct.py`: no ticket leaves Kansai worse than `tools/distinct_baseline.json`. It is "most
     like Sendai" through the `sendai-*` trees, lantern and wall: no ticket adds another `sendai-*` kind.
 
-- **Okayama (#276): a stroll.** The garden is the district; the keep is scenery, and the road ends.
-  - *Fixed*: the avenue's cells at the seam; Momotaro, the Bizen-ware stall and two cranes stay in the
-    room; Damian's post of 12 November stays in Korakuen beside the first crane (cells under "Posts").
-  - *The river* (targets) is a bend of `pond-autotile`, solid: an east-west reach on rows 19-21 from the
-    west edge to x=32 - the avenue's three road rows carried on as water - turning south as a reach on
-    columns 29-32 to the bottom edge. It leaves by the city's own west and south edges only. The pond set
-    has no inner-corner piece, so a heap of `okayama-bank-rock` covers the one inner corner, at the
-    garden's north-east tip (28,22). It is not a `waterways` run.
-  - *East bank* (targets): the avenue (34..43, 18..22; road from x=38, capped west) ends in the **plaza**
-    (34..40, 14..23) on the outside of the bend, water ahead and to the south-west: Momotaro 2x3 at
-    (35,16), the stall 3x3 at (37,14).
-  - *North bank* (targets): west from the plaza along a small gravel **court** (22..33, 14..18) to the
-    **keep** `okayama-keep` 8x7 at (14,12), its stone base on the bank (foot row 18) with no terrace in
-    front and no wall across the room. The `Okayama Castle` visitor stands on the court beside it.
-  - *The Tsukimi bridge* (`okayama-bridge`, 2x4 as drawn) at (22,19), beside the keep, is the only way
-    into the garden, as it is in Okayama: plaza, court, keep, bridge, garden.
-  - *Korakuen* (targets) is the inside of the bend (3..27, 22..37): open lawn to walk on, one cranked
-    gravel path from the bridge's landing to the pond, the pond (6..13, 32..35), a mound (Yuishinzan, new
-    art, about 5x4 at (4,25)), the cranes' feet on (14,27) and (16,28). From its north bank (row 22, x
-    14..21) the keep is four cells north across the water, inside the look-up's fade (`lookUp.cells` 3,
-    `fade` 3): the garden borrows the castle. #276 measures that in a browser at desktop and phone size.
-  - *On arrival* the road runs through wood for a few cells and stops at a small plaza on the water: the
-    statue, the stall, the river ahead, the keep low on the far side of the court, the lawn over the bend.
 - **Osaka (#277): a browse.** `docs/workshop/219-city-redesign-plan-from-the-210-audit-ne.md`, "Stage E -
   Osaka", with its fixed cells, row bands for rows 0-22, interiors, labels and tests, and three amendments:
   1. **The avenue stays**: rows 24-28 from edge to edge (pavement, three road rows, pavement), open at
@@ -561,7 +556,7 @@ design may shift it by blockout, but not change what it is or which side of what
   | Post | Today | After |
   |---|---|---|
   | Himeji: Damian 13 Nov (754), `Himeji Castle` | (12,8) | unchanged (fixed) |
-  | Okayama: Damian 12 Nov (745), `Korakuen garden` | (27,31), beside the first crane (28,31) | **(13,27)**, beside the first crane (14,27): #276 re-runs `blog_to_npc.py --rehome Damian 2025-11-12 "Okayama · Korakuen garden"` and moves the pins in `test_blog_to_npc.py` and `kansai.test.js` |
+  | Okayama: Damian 12 Nov (745), `Korakuen garden` | (13,27), beside the first crane (14,27) | unchanged (fixed) |
   | Osaka: 568, 615 (Dylan) and 764 (Damian) at the wheel (39,19); 768 (Damian) at the arch (21,18); 769 (Bailey) at Tsutenkaku (26,43); 636 (Dylan) at the platform's vending machines (14,6) | | unchanged (Stage E's fixed cells) |
   | Osaka: 590 (Dylan) (17,35); 681 (Dylan) (30,17) | under a sakura; the crab house's door front | re-homed by #277 as Stage E says: `Osaka · the Dotonbori boat pier`, `Osaka · Dotonbori (area)` |
 
@@ -569,7 +564,7 @@ design may shift it by blockout, but not change what it is or which side of what
 - **Build order and rooms.** One at a time, because map data is serial; each leaves the city walkable end
   to end and the checks green.
   1. **#275 Himeji** - room `Himeji` only. **Built**: see the Himeji bullet in the section above.
-  2. **#276 Okayama**, after #275 is merged - room `Okayama` only.
+  2. **#276 Okayama** - room `Okayama` only. **Built**: see the Okayama bullet in the section above.
   3. **#277 Osaka**, after both - room `Osaka` and its interiors (`LobbyOsaka1` kept, `LobbyOsaka2`,
      `LobbyOsaka3`, `HouseOsaka1`, `HouseOsaka2` pruned, the shop rooms Stage E adds; the doors of
      `OsakaStation`, `DonTakoteOsaka` and `DevhouseOsaka1F` keep their cells). **Not while #268 (Nara) is

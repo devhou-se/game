@@ -43,8 +43,11 @@ Okayama
   okayama-bank-rock_0_0    2x2   a heap of the pond rim's white stones, centred
                                  where its four cells meet (flat): the rim has
                                  no inner-corner piece, and this covers the
-                                 notch at each corner of Korakuen's island
+                                 notch at the inner corner of a river's bend
   okayama-crane_0_0        1x2   a red-crowned crane
+  okayama-mound_0_0        5x4   Yuishinzan, Korakuen's hill: a bell of turf,
+                                 clipped azaleas and rocks, stone steps up the
+                                 south face to a stone on top
   okayama-momotaro_0_0     2x3   the bronze Momotaro on a stone plinth, the
                                  pheasant on his hand, the dog and the monkey
                                  at his feet
@@ -84,6 +87,7 @@ Run from gamev2/ BEFORE make_prefabs.py and the generators:
     python3 tools/generate_kansai_art.py [--preview out.png]
 """
 import json
+import math
 import sys
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
@@ -560,6 +564,76 @@ def bank_rock():
     return im
 
 
+def mound():
+    """Yuishinzan, the hill heaped up in Korakuen: a bell of turf lit from the upper left,
+    clipped azaleas and rocks on its slope, and stone steps up the south face to the stone on top."""
+    im, d = canvas(5, 4)                 # 160 x 128
+    TURF, TURF_HI, TURF_LO, TURF_DK = rgb('83af6f'), rgb('93c297'), rgb('6c8e7f'), rgb('506b6b')
+    top, base, cx, half = 20, 122, 80, 77
+    span = {}
+    for y in range(top, base + 1):
+        t = (base - y) / (base - top)                             # 0 at the foot, 1 at the top
+        w = half * (0.55 * math.acos(2 * t - 1) / math.pi + 0.45 * (1 - t ** 2) ** 0.5)
+        span[y] = (cx - round(w), cx + round(w))
+    for y, (x0, x1) in span.items():
+        wide = x1 - x0
+        for x in range(x0, x1 + 1):
+            f = (x - x0) / max(1, wide)
+            c = TURF
+            if f > 0.72 + ((x + y) % 2) * 0.03:
+                c = TURF_LO                                       # the flank turned from the light
+            if f > 0.93 or y >= base - 2:
+                c = TURF_DK
+            elif y >= base - 5 and (x + y) % 2:
+                c = TURF_DK if f > 0.72 else TURF_LO              # the foot, dithered into its shade
+            d.point((x, y), fill=c)
+        for x in range(x0, x0 + 2 + (y < top + 12) * 4):
+            d.point((x, y), fill=TURF_HI)                         # the lit rim
+    for i in range(110):                                          # tufts: short dashes, staggered
+        y = top + 6 + (i * 37) % (base - top - 12)
+        x0, x1 = span[y]
+        x = x0 + 5 + (i * 53) % max(1, x1 - x0 - 12)
+        f = (x - x0) / (x1 - x0)
+        d.rectangle([x, y, x + 2, y], fill=TURF_DK if f > 0.72 else TURF_HI if i % 3 == 0 else TURF_LO)
+
+    def azalea(x, y, w, h):
+        """A clipped azalea: a low dome, lit on top, dark under, its shadow on the turf."""
+        for j in range(h):
+            inset = (3, 1, 0)[j] if j < 3 else (1 if j == h - 1 else 0)
+            d.rectangle([x + inset, y + j, x + w - 1 - inset, y + j],
+                        fill=rgb('395050') if j >= h - 2 else rgb('506b6b') if j >= h - 5 or j == 0 else rgb('6c8e7f'))
+        d.rectangle([x + w - 3, y + 2, x + w - 1, y + h - 3], fill=rgb('395050'))
+        d.rectangle([x + 4, y + 1, x + w // 2 + 1, y + 1], fill=rgb('93c297'))
+        d.rectangle([x + 2, y + 2, x + 4, y + 2], fill=rgb('93c297'))
+        d.rectangle([x + 1, y + h, x + w, y + h], fill=rgb('506b6b'))
+
+    def rock(x, y, w, h):
+        d.rectangle([x + 1, y, x + w - 2, y], fill=rgb('dae2e4'))
+        d.rectangle([x, y + 1, x + w - 1, y + h - 1], fill=rgb('a4b0b5'))
+        d.rectangle([x, y + 1, x + w * 2 // 3, y + 2], fill=rgb('dae2e4'))
+        d.rectangle([x + w - 3, y + 2, x + w - 1, y + h - 1], fill=rgb('848295'))
+        d.rectangle([x, y + h - 2, x + w - 1, y + h - 1], fill=rgb('575f79'))
+        d.rectangle([x, y + h, x + w, y + h], fill=rgb('506b6b'))
+
+    for x, y, w, h in ((14, 104, 16, 9), (34, 108, 20, 10), (30, 84, 15, 8), (48, 66, 14, 8), (58, 92, 13, 7),
+                       (60, 44, 12, 7), (100, 58, 14, 8), (104, 84, 16, 9), (122, 104, 18, 9), (100, 108, 15, 8),
+                       (134, 110, 12, 7)):
+        azalea(x, y, w, h)
+    for x, y, w, h in ((22, 96, 8, 6), (118, 94, 9, 6), (92, 40, 7, 5)):
+        rock(x, y, w, h)
+    # the steps: slabs up the south face, turning once
+    for i, (x, y) in enumerate(((75, 113), (76, 105), (78, 97), (81, 89), (84, 81), (86, 73), (85, 65), (82, 57),
+                                (79, 49), (77, 41), (76, 34))):
+        w = 10 - i // 3
+        d.rectangle([x, y, x + w, y + 2], fill=rgb('dae2e4'))
+        d.rectangle([x, y + 3, x + w, y + 3], fill=rgb('a4b0b5'))
+        d.rectangle([x + w, y + 1, x + w, y + 3], fill=rgb('848295'))
+        d.rectangle([x, y + 4, x + w, y + 4], fill=rgb('506b6b'))
+    rock(72, 21, 16, 10)                                          # the stone on top
+    outline(im)
+    return im
+
+
 def crane():
     im, d = canvas(1, 2)                 # 32 x 64: a red-crowned crane, facing east
     d.ellipse([7, 58, 25, 62], fill=rgb('3a5f66', 150))           # ground shadow
@@ -967,6 +1041,7 @@ SPRITES = {      # key: (builder, scale, tileNames label)
     'okayama-crane_0_0': (crane, 2, 'okayama-crane'),
     'okayama-momotaro_0_0': (momotaro, 2, 'okayama-momotaro'),
     'okayama-bizen-stall_0_0': (bizen_stall, 2, 'okayama-bizen-stall'),
+    'okayama-mound_0_0': (mound, 2, 'okayama-mound'),
     'okayama-fingerpost_0_0': (fingerpost, 2, 'okayama-fingerpost'),
     'nara-daibutsuden_0_0': (daibutsuden, 2, 'nara-daibutsuden'),
     'nara-nandaimon_0_0': (nandaimon, 2, 'nara-nandaimon'),

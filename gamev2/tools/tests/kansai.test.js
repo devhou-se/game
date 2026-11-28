@@ -154,7 +154,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
             return { axis: 'h', from: w.from + AT[r][0], to: w.to + 1 + AT[r][0], band0: w.row + AT[r][1], band1: w.row + AT[r][1] + w.rows,
                 under: (w.under || []).map(([a, b]) => [a + AT[r][0], b + 1 + AT[r][0]]) };
         }));
-        assert.strictEqual(runs.length, 3, 'one waterway in Himeji, in Osaka and in Nara, none in Okayama: no arm of its river leads anywhere');
+        assert.strictEqual(runs.length, 3, 'one waterway in Himeji, in Osaka and in Nara, none in Okayama: its river is not sailed');
         const [moat, river, canal] = runs;                // in DISTRICTS order: Himeji, Nara, Osaka
         assert.deepStrictEqual([moat.to, moat.band0, moat.band1], [canal.from, canal.band0, canal.band1], 'the moat ends where the canal starts, on its rows');
         assert.deepStrictEqual([river.from, river.band0, river.band1], [canal.to, canal.band0, canal.band1], 'Nara\'s river starts where the canal ends, on its rows');
@@ -186,13 +186,13 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.deepStrictEqual(cfg.rooms.Himeji.waterways[0].under, [[bx, bx + 1]]);
     });
 
-    test('Kansai is one walkable room: Osaka -> Himeji\'s keep terrace -> Koko-en -> Okayama\'s keep -> Korakuen -> the Great Buddha Hall -> Kasuga Taisha -> the towpath -> Nara Park -> Osaka on foot, stitched and with ?stitch=0 (#255, #267, #268)', () => {
+    test('Kansai is one walkable room: Osaka -> Himeji\'s keep terrace -> Koko-en -> Okayama\'s court -> Korakuen -> the Great Buddha Hall -> Kasuga Taisha -> the towpath -> Nara Park -> Osaka on foot, stitched and with ?stitch=0 (#255, #267, #268)', () => {
         const [kx, ky] = at('Himeji', 'himeji-keep_0_0'), [gx, gy] = at('Himeji', 'himeji-kokoen-gate_0_0');
         const stops = [['Osaka', 3, 26],                                // on the avenue, by the fingerpost
             ['Himeji', kx + 4, ky + 9],                                  // the terrace in front of the keep: over the bridge, up the steps
             ['Himeji', gx + 2, gy + 5],                                  // inside Koko-en, through its gate
-            ['Okayama', 20, 9],                                          // in front of the black keep: along the avenue, up the steps
-            ['Okayama', 27, 32],                                         // on Korakuen's lawn: over the Tsukimi bridge
+            ['Okayama', 24, 16],                                         // the court beside the black keep: along the avenue, across the plaza
+            ['Okayama', 18, 30],                                         // on Korakuen's lawn: over the Tsukimi bridge
             ['Nara', 34, 10],                                            // in front of the hall: through the Nandaimon
             ['Nara', 44, 31],                                            // in front of Kasuga Taisha: through the torii, up the approach
             ['Nara', 23, 2],                                             // the towpath's end, by the river's head
@@ -430,105 +430,130 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.ok(!('KansaiCity' in cfg.places), 'the stitched city has no dot of its own: its towns do');
     });
 
-    test('Okayama: the black keep stands on its terrace above the stone wall, is looked up at from in front, and nobody walks behind it (#267)', () => {
+    test('Okayama: the black keep stands at the water on the north bank, its court beside it and no wall across the room; nobody walks behind it, and it is looked up at from the garden across the river (#267, #276)', () => {
         const { world } = worldWith(true);
         const rm = world.roomManager;
         world.enter('Osaka', 3, 26);
         const seen = world.reachable();
         const walkable = (x, y) => { const c = rm.resolve('Okayama', x, y); return seen.has(`${c.x},${c.y}`); };
-        // the keep: eight cells by seven, two rows of wood behind it, its art exactly its footprint, and solid
-        // over all of it, roof rows too
+        // the keep: eight cells by seven, its art exactly its footprint, solid over all of it, roof rows too,
+        // and its stone base on the river's north bank
         const [kx, ky] = at('Okayama', 'okayama-keep_0_0');
-        assert.deepStrictEqual([kx, ky], [18, 2]);
+        assert.deepStrictEqual([kx, ky], [14, 12]);
         const png = fs.readFileSync(path.join(GV2, 'assets', 'sprites', 'okayama-keep_0_0.png'));
         assert.deepStrictEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [512, 448]);
         for (let x = kx; x < kx + 8; x++) for (let y = ky; y < ky + 7; y++) assert.ok(!walkable(x, y), `the keep can be walked onto at ${x},${y}`);
-        for (let x = 0; x < SIZE.Okayama[0]; x++) for (const y of [0, 1]) assert.ok(!walkable(x, y), `the wood behind the keep can be walked into at ${x},${y}`);
-        // the terrace's stone wall runs its whole south side: the steps on the axis (two cells) are the only way up
-        for (let x = 13; x <= 40; x++) {
-            const way = x === 21 || x === 22;
-            for (const y of [13, 14]) assert.strictEqual(walkable(x, y), way, `the terrace's wall at ${x},${y}`);
-            if (!way) assert.strictEqual(name(layer('Okayama', 'Collidables')[`${x},13`]), 'castle-wall-siding_0_0', `no wall at column ${x}`);
+        for (let x = kx; x < kx + 8; x++) assert.ok(/^pond-autotile_/.test(name(layer('Okayama', 'Water')[`${x},${ky + 7}`])), `the keep is not at the water at ${x}`);
+        // nobody gets behind it or west of it: the wood is solid down to the river
+        for (let x = 0; x < SIZE.Okayama[0]; x++) for (let y = 0; y < ky; y++) assert.ok(!walkable(x, y), `the wood behind the keep can be walked into at ${x},${y}`);
+        for (let x = 0; x < kx; x++) for (let y = ky; y <= 18; y++) assert.ok(!walkable(x, y), `the wood west of the keep can be walked into at ${x},${y}`);
+        // the court beside it: gravel, open to the plaza on all five rows; no terrace, wall or steps
+        for (let x = 22; x <= 33; x++) for (let y = 14; y <= 18; y++) {
+            assert.strictEqual(name(layer('Okayama', 'Floor')[`${x},${y}`]).split('_')[0], 'gravel-autotile', `the court is not gravel at ${x},${y}`);
         }
-        for (let y = 9; y <= 23; y++) assert.ok(walkable(21, y) && walkable(22, y), `the axis from the keep to the bridge is shut at row ${y}`);
-        // the camera looks up at all of it from the cell the blog pipeline stands a visitor on, and from beside it
+        for (let y = 14; y <= 18; y++) for (const x of [22, 33, 34]) assert.ok(walkable(x, y), `the court is shut at ${x},${y}`);
+        assert.deepStrictEqual(Object.keys(sprites.Okayama).filter((k) => /^(castle-wall|stairs|sendai-earthen-wall|himeji-)/.test(k)), [], 'Okayama has a wall or steps');
+        // the camera looks up at it from the garden's bank across the river, rows 22-23 under its columns,
+        // and nothing stands on that bank to block the view
         if (!game('typeof LandmarkView !== "undefined"')) load('systems/LandmarkView.js');
         const LandmarkView = game('LandmarkView'), look = realConfig().game.lookUp, G = 64;
         assert.strictEqual(look.sprites['okayama-keep'], 0, 'the keep is not a landmark the camera looks up at');
         const [mark] = LandmarkView.index([{ key: 'okayama-keep_0_0', left: kx * G, top: ky * G, width: 512, height: 448 }], look.sprites, G);
-        const [vx, vy] = [kx + 2, ky + 7];
-        assert.deepStrictEqual([vx, vy], [20, 9]);
-        const beside = [[0, 0], [-1, 0], [1, 0], [0, 1]].map(([dx, dy]) => [vx + dx, vy + dy]).filter(([x, y]) => walkable(x, y));
-        assert.strictEqual(beside.length, 4, 'there is no room to stand in front of the keep');
-        for (const [x, y] of beside) {
-            for (const view of [{ viewH: 960, bar: 40, deadzone: 256, foot: 128 }, { viewH: 480, bar: 46, deadzone: 128, foot: 188 }]) {
-                const a = LandmarkView.aim(Object.assign({ x: x * G + 32, y: y * G + 32, landmarks: [mark], grid: G, cells: look.cells, fade: look.fade, side: look.side }, view));
-                assert.ok(a.weight === 1 && a.offset > 0, `the camera does not look up from ${x},${y}`);
+        const aim = (x, y, view) => LandmarkView.aim(Object.assign({ x: x * G + 32, y: y * G + 32, landmarks: [mark], grid: G, cells: look.cells, fade: look.fade, side: look.side }, view));
+        const DESK = { viewH: 960, bar: 40, deadzone: 256, foot: 128 }, PHONE = { viewH: 480, bar: 46, deadzone: 128, foot: 188 };
+        for (let x = kx; x < kx + 8; x++) {
+            for (const y of [22, 23]) {
+                assert.ok(walkable(x, y), `the garden's bank is shut at ${x},${y}`);
+                for (const l of ['Collidables', 'Tops', 'Other']) assert.ok(!(`${x},${y}` in layer('Okayama', l)), `something stands on the bank at ${x},${y} (${l})`);
             }
+            for (const view of [DESK, PHONE]) {
+                const a = aim(x, 22, view);
+                assert.ok(a.weight > 0.8 && a.offset > 0, `the camera does not look up from ${x},22`);
+            }
+            // on desktop the whole keep shows: its top row is no further up than the top of the view
+            const top = 22 * G + 32 - aim(x, 22, DESK).offset - 960 / 2;
+            assert.ok(top <= ky * G && top + 40 < (ky + 1) * G, `the top of the keep is cut off on desktop from ${x},22`);
         }
-        // the desktop view holds the whole keep from that cell: its top is under the bar
-        const desk = LandmarkView.aim({ x: vx * G + 32, y: vy * G + 32, landmarks: [mark], grid: G, cells: look.cells, fade: look.fade, side: look.side,
-            viewH: 960, bar: 40, deadzone: 256, foot: 128 });
-        assert.ok(vy * G + 32 - desk.offset - 960 / 2 + 40 <= ky * G, 'the top of the keep is cut off on desktop');
+        assert.strictEqual(aim(24, 16, DESK).weight, 0, 'the camera looks up from beside the keep');
         // the blog pipeline's labels for the keep, the garden, the statue and the stall
         const tool = fs.readFileSync(path.join(GV2, 'tools', 'blog_to_npc.py'), 'utf8');
-        for (const [key, label, dx, dy] of [['okayama-keep_', 'Okayama Castle', 2, 7], ['okayama-crane_', 'Korakuen garden', -1, 1],
+        const cells = {};
+        for (const [key, label, dx, dy] of [['okayama-keep_', 'Okayama Castle', 10, 4], ['okayama-crane_', 'Korakuen garden', -1, 1],
             ['okayama-momotaro_', 'the Momotaro statue', 0, 3], ['okayama-bizen-stall_', 'the Bizen-ware stall', 1, 3]]) {
             assert.ok(tool.includes(`('${key}', '${label}', (${dx}, ${dy}), {'rooms': ('Okayama',)})`), `LANDMARKS has no row for ${label}`);
             const [sx, sy] = Object.entries(sprites.Okayama).find(([k]) => k.startsWith(key))[1].slice().sort((a, b) => `${a}` < `${b}` ? -1 : 1)[0];
             assert.ok(walkable(sx + dx, sy + dy), `${label}: nobody can walk to its visitor's cell ${sx + dx},${sy + dy}`);
+            cells[label] = [sx + dx, sy + dy];
         }
+        assert.deepStrictEqual(cells, { 'Okayama Castle': [24, 16], 'Korakuen garden': [13, 27], 'the Momotaro statue': [35, 19], 'the Bizen-ware stall': [38, 17] });
     });
 
-    test('Okayama: Korakuen is an island in a river crossed by the Tsukimi bridge alone, with a pond that is the garden\'s and not the river (#267)', () => {
+    test('Okayama: Korakuen is the inside of a bend of the river, reached by the Tsukimi bridge alone, with a pond that is the garden\'s and not the river (#267, #276)', () => {
         const { world } = worldWith(true);
         const rm = world.roomManager;
         world.enter('Osaka', 3, 26);
         const seen = world.reachable();
         const walkable = (x, y) => { const c = rm.resolve('Okayama', x, y); return seen.has(`${c.x},${c.y}`); };
-        // the river: a ring of water round the island, three rows wide on the north side and two elsewhere
-        const RIVER = [5, 24, 40, 37], ISLAND = [7, 27, 38, 35];
-        const onIsland = (x, y) => x >= ISLAND[0] && x <= ISLAND[2] && y >= ISLAND[1] && y <= ISLAND[3];
-        const open = [];
-        for (let x = RIVER[0]; x <= RIVER[2]; x++) for (let y = RIVER[1]; y <= RIVER[3]; y++) {
-            if (onIsland(x, y)) continue;
-            assert.ok(/^pond-autotile_/.test(name(layer('Okayama', 'Water')[`${x},${y}`])), `no water at Okayama ${x},${y}`);
-            if (!solid('Okayama', x, y)) open.push(`${x},${y}`);
-        }
-        assert.strictEqual(open.sort().join(' '), '21,24 21,25 21,26 22,24 22,25 22,26', 'the river is crossed by its bridge alone');
-        assert.deepStrictEqual(at('Okayama', 'okayama-bridge_0_0'), [21, 24]);
+        const floor = (x, y) => name(layer('Okayama', 'Floor')[`${x},${y}`]).split('_')[0];
+        // the river: in at the west edge on rows 19-21, east to columns 29-32, and south out of the bottom edge
+        const REACH = [0, 19, 32, 21], BEND = [29, 22, 32, 39], GARDEN = [3, 22, 28, 37], POND = [6, 32, 13, 35];
+        const inside = ([x0, y0, x1, y1], x, y) => x >= x0 && x <= x1 && y >= y0 && y <= y1;
+        const water = Object.entries(layer('Okayama', 'Water')).map(([xy, t]) => [xy.split(',').map(Number), name(t)]);
+        const river = water.filter(([[x, y]]) => !inside(POND, x, y));
+        assert.strictEqual(river.length, 33 * 3 + 4 * 18, 'the river is not the two reaches');
+        assert.ok(river.every(([[x, y], t]) => /^pond-autotile_/.test(t) && (inside(REACH, x, y) || inside(BEND, x, y))), 'water outside the river\'s reaches');
+        const open = river.filter(([[x, y]]) => !solid('Okayama', x, y)).map(([xy]) => xy.join());
+        assert.strictEqual(open.sort().join(' '), '22,19 22,20 22,21 23,19 23,20 23,21', 'the river is crossed by its bridge alone');
+        const role = (x, y) => name(layer('Okayama', 'Water')[`${x},${y}`]);
+        assert.deepStrictEqual([[0, 19], [32, 19], [32, 30], [10, 21], [29, 30], [30, 21], [29, 21]].map(([x, y]) => role(x, y)),
+            ['edge-n', 'corner-ne', 'edge-e', 'edge-s', 'edge-w', 'center', 'center'].map((r) => `pond-autotile_${r}`));
+        assert.deepStrictEqual(at('Okayama', 'okayama-bridge_0_0'), [22, 19]);
         assert.deepStrictEqual(sprites.Okayama['okayama-bridge_0_0'].length, 1);
         // a steel footbridge, not Himeji's timber one; and it is walked on, not behind: drawn flat like the ground
         assert.ok(!sprites.Okayama['himeji-bridge_0_0'], 'the Tsukimi bridge is Himeji\'s timber bridge');
         assert.ok(cfg.spriteMetadata['okayama-bridge_0_0'].depthBias < 0 && cfg.spriteMetadata['okayama-bank-rock_0_0'].depthBias < 0);
-        // the pond set has no inner corner: a heap of the rim's stones lies over each corner of the island
-        assert.deepStrictEqual(sprites.Okayama['okayama-bank-rock_0_0'].map((c) => c.join()).sort(), ['38,26', '38,35', '6,26', '6,35']);
-        // the island: in over the bridge, round the loop, and nowhere off it but back over the bridge
-        for (const [x, y] of [[22, 27], [9, 28], [36, 28], [9, 34], [36, 34], [22, 30], [27, 32]]) assert.ok(walkable(x, y), `Korakuen: nobody can walk to ${x},${y}`);
-        const garden = Object.entries(layer('Okayama', 'Water')).map(([xy, t]) => [xy.split(',').map(Number), name(t)]).filter(([[x, y]]) => onIsland(x, y));
-        assert.strictEqual(garden.length, 12, 'the garden has no pond');
-        assert.ok(garden.every(([[x, y], t]) => /^pond-autotile_/.test(t) && solid('Okayama', x, y)));
-        // two cranes on the lawn, pines and maples, lanterns
-        assert.strictEqual(sprites.Okayama['okayama-crane_0_0'].length, 2);
-        for (const [x, y] of sprites.Okayama['okayama-crane_0_0']) assert.ok(onIsland(x, y + 1) && solid('Okayama', x, y + 1) && !solid('Okayama', x, y), `the crane at ${x},${y}`);
-        // "the pond" is a spot of the garden, not of the castle or the avenue: the label's tile (a pond's
-        // north-west corner) is also the river's, and must be found in the garden first
+        // the pond set has no inner corner: a heap of the rim's stones lies over the bend's, at the garden's tip
+        assert.deepStrictEqual(sprites.Okayama['okayama-bank-rock_0_0'], [[28, 21]]);
+        // the garden: in over the bridge, along the path, and nowhere off it but back over the bridge
+        for (const [x, y] of [[22, 22], [23, 25], [10, 24], [11, 31], [3, 22], [28, 22], [3, 37], [28, 37], [18, 30]]) assert.ok(walkable(x, y), `Korakuen: nobody can walk to ${x},${y}`);
+        for (const [x, y] of [[22, 22], [22, 25], [10, 25], [10, 31]]) assert.strictEqual(floor(x, y), 'gravel-autotile', `the path is not at ${x},${y}`);
+        for (let x = 0; x < 29; x++) for (let y = 22; y < SIZE.Okayama[1]; y++) {
+            if (!inside(GARDEN, x, y)) assert.ok(!walkable(x, y), `the garden leaks at ${x},${y}`);
+        }
+        let gravel = 0;
+        for (let x = GARDEN[0]; x <= GARDEN[2]; x++) for (let y = GARDEN[1]; y <= GARDEN[3]; y++) gravel += floor(x, y) === 'gravel-autotile';
+        assert.ok(gravel <= 60, `the garden is mostly gravel (${gravel} cells): it is a lawn with one path`);
+        // the pond is the garden's: solid, and the room's only north-west corner
+        const pond = water.filter(([[x, y]]) => inside(POND, x, y));
+        assert.strictEqual(pond.length, 32, 'the garden has no pond');
+        assert.ok(pond.every(([[x, y], t]) => /^pond-autotile_/.test(t) && solid('Okayama', x, y)));
+        assert.deepStrictEqual(water.filter(([, t]) => t === 'pond-autotile_corner-nw').map(([xy]) => xy), [[6, 32]]);
+        // the hill: five cells by four, solid over all of it
+        assert.deepStrictEqual(at('Okayama', 'okayama-mound_0_0'), [4, 25]);
+        assert.deepStrictEqual(worldWith(false).world.cells('okayama-mound_0_0'), [5, 4]);
+        for (let x = 4; x < 9; x++) for (let y = 25; y < 29; y++) assert.ok(solid('Okayama', x, y), `the hill can be walked onto at ${x},${y}`);
+        // two cranes on the lawn, two pines (the court's and the pond's), one lantern
+        assert.deepStrictEqual(sprites.Okayama['okayama-crane_0_0'].map(([x, y]) => [x, y + 1]).sort(), [[14, 27], [16, 28]]);
+        for (const [x, y] of sprites.Okayama['okayama-crane_0_0']) assert.ok(solid('Okayama', x, y + 1) && !solid('Okayama', x, y), `the crane at ${x},${y}`);
+        assert.strictEqual(sprites.Okayama['sendai-pine_0_0'].length, 2);
+        assert.ok((sprites.Okayama['sendai-stone-lantern_0_0'] || []).length <= 1);
+        // "the pond" is a spot of the garden, not of the castle or the avenue
         const d = Object.fromEntries(cfg.districts.Okayama.map((x) => [x.key, x]));
         assert.deepStrictEqual(Object.keys(d).sort(), ['castle', 'korakuen', 'momotaro']);
         assert.deepStrictEqual(d.korakuen.spots.slice().sort(), ['Korakuen garden', 'the pond']);
         assert.deepStrictEqual(d.castle.spots, ['Okayama Castle']);
         assert.deepStrictEqual(d.momotaro.spots.slice().sort(), ['the Bizen-ware stall', 'the Momotaro statue']);
-        assert.deepStrictEqual(d.korakuen.bounds, ISLAND);
-        // no boat sails the river: no arm of it leads anywhere
+        assert.deepStrictEqual([d.castle.bounds, d.momotaro.bounds, d.korakuen.bounds], [[22, 14, 33, 18], [34, 14, 43, 23], GARDEN]);
+        // no boat sails the river
         assert.ok(!('waterways' in cfg.rooms.Okayama), 'Okayama declares a waterway');
         // ...but it is fished from its bank, like the moat
         if (game('typeof Interactions') === 'undefined') load('utils/Interactions.js');
         const { world: apart, config } = worldWith(false);
-        const fish = game('Interactions').find(config.rooms.Okayama, config.rooms.Okayama, 15, 24, { sizeOf: (key) => apart.cells(key) });
+        const fish = game('Interactions').find(config.rooms.Okayama, config.rooms.Okayama, 10, 21, { sizeOf: (key) => apart.cells(key) });
         assert.strictEqual(fish && fish.kind, 'pond', 'the river is not fished');
     });
 
-    test('Okayama: Damian\'s post of 12 November 2025 stands in Korakuen, not on Hakata\'s platform (#267)', () => {
+    test('Okayama: Damian\'s post of 12 November 2025 stands in Korakuen beside the first crane, not on Hakata\'s platform (#267, #276)', () => {
         const { world } = worldWith(true);
         const rm = world.roomManager;
         world.enter('Osaka', 3, 26);
@@ -539,9 +564,10 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.ok(day && day.present === true, 'Damian is not in Okayama on 2025-11-12');
         assert.deepStrictEqual([day.photo, day.posts.map((p) => p.id).join()], ['745', '745']);
         assert.ok(day.dialogue.length === 4 && /Korakuen/.test(day.dialogue.join(' ')) && /Bizen/.test(day.dialogue.join(' ')), 'the lines went along');
-        // on the island's lawn, beside the first crane; somebody can walk up to him, and he is not on a seam
-        assert.deepStrictEqual([day.gridX, day.gridY], [27, 31]);
-        assert.ok(day.gridX >= 7 && day.gridX <= 38 && day.gridY >= 27 && day.gridY <= 35, 'he is not on the island');
+        // on the garden's lawn, beside the first crane; somebody can walk up to him, and he is not on a seam
+        assert.deepStrictEqual([day.gridX, day.gridY], [13, 27]);
+        assert.strictEqual(sprites.Okayama['okayama-crane_0_0'].map((c) => `${c}`).sort()[0], '14,26', 'the first crane has moved');
+        assert.ok(day.gridX >= 3 && day.gridX <= 28 && day.gridY >= 22 && day.gridY <= 37, 'he is not in the garden');
         assert.ok(walkable(day.gridX, day.gridY) && !cfg.rooms.Okayama.interior, 'nobody can walk to him');
         assert.ok([[-1, 0], [1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => walkable(day.gridX + dx, day.gridY + dy)).length >= 2, 'there is no room to stand beside him');
         assert.ok(!cfg.rooms.Okayama.transporters.some((t) => t.gridX === day.gridX && t.gridY === day.gridY), 'he stands on a seam');
@@ -558,24 +584,36 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.ok(damian.states['2025-11-13'] && damian.states['2025-11-13'].present === false, 'he is still in Okayama the day after');
     });
 
-    test('Okayama: Momotaro, the Bizen-ware stall and the cranes answer a bump; it is walked to, with no station, and is its own small place on the Map (#267)', () => {
+    test('Okayama: the road ends in a plaza on the east bank; Momotaro, the Bizen-ware stall, the cranes and the hill answer a bump; it is walked to, with no station, and is its own small place on the Map (#267, #276)', () => {
         if (game('typeof Interactions') === 'undefined') load('utils/Interactions.js');
         const I = game('Interactions');
         const { world, config } = worldWith(false);
         const sizeOf = (key) => world.cells(key);
         const says = (x, y) => { const hit = I.find(config.rooms.Okayama, config.rooms.Okayama, x, y, { sizeOf, group: 'flavour' }); return hit && [hit.kind, hit.say]; };
-        // the statue on the plaza where the avenue ends: bumped on its plinth, from the paving all round it
+        // the avenue runs in from Himeji and stops at a plaza on the river's east bank: six cells of road, capped
+        const floor = (x, y) => name(layer('Okayama', 'Floor')[`${x},${y}`]);
+        const paved = (x, y) => /^(flat-grey-brick-autotile|road-)/.test(floor(x, y));
+        for (let x = 34; x <= 43; x++) for (let y = 18; y <= 22; y++) assert.ok(paved(x, y), `the avenue is not paved at ${x},${y}`);
+        for (let x = 34; x <= 40; x++) for (let y = 14; y <= 22; y++) assert.ok(paved(x, y), `the plaza is not paved at ${x},${y}`);
+        const road = Object.entries(layer('Okayama', 'Floor')).filter(([, t]) => /^road-/.test(name(t))).map(([xy]) => xy.split(',').map(Number));
+        assert.strictEqual(road.length, 18, 'the road is not six cells of three rows');
+        assert.strictEqual(Math.min(...road.map(([x]) => x)), 38, 'the road does not stop at the plaza');
+        assert.ok(road.every(([, y]) => y >= 19 && y <= 21), 'the road leaves its rows');
+        assert.strictEqual(floor(38, 20), 'road-edge-left_0_0', 'the road is not capped');
+        for (let x = 0; x < 33; x++) for (let y = 18; y <= 22; y++) assert.ok(!paved(x, y), `the avenue runs on west of the river at ${x},${y}`);
+        // the statue on the plaza where the avenue ends: bumped on its plinth, from the paving in front of it
         const [mx, my] = at('Okayama', 'okayama-momotaro_0_0');
-        assert.deepStrictEqual([mx, my, ...sizeOf('okayama-momotaro_0_0')], [8, 17, 2, 3]);
+        assert.deepStrictEqual([mx, my, ...sizeOf('okayama-momotaro_0_0')], [35, 16, 2, 3]);
         const momotaro = ['momotaro', 'momotaro the peach boy, with his dog, monkey and pheasant. the ogres never stood a chance'];
         for (const x of [mx, mx + 1]) {
             assert.ok(solid('Okayama', x, my + 2) && !solid('Okayama', x, my + 3) && !solid('Okayama', x, my + 1), `the statue's plinth at ${x}`);
             assert.deepStrictEqual(says(x, my + 2), momotaro);
             assert.strictEqual(name(layer('Okayama', 'Floor')[`${x},${my + 3}`]).split('_')[0], 'flat-grey-brick-autotile', 'the statue is not on the plaza');
         }
-        // the stall beside the pavement: an open counter, bumped from the avenue's north pavement
+        // the stall on the plaza: an open counter, bumped from the plaza, and nobody gets in behind its awning
         const [sx, sy] = at('Okayama', 'okayama-bizen-stall_0_0');
-        assert.deepStrictEqual([sx, sy, ...sizeOf('okayama-bizen-stall_0_0')], [15, 15, 3, 3]);
+        assert.deepStrictEqual([sx, sy, ...sizeOf('okayama-bizen-stall_0_0')], [37, 14, 3, 3]);
+        for (let x = sx; x < sx + 3; x++) assert.ok(solid('Okayama', x, sy), `someone can stand behind the stall at ${x},${sy}`);
         const stall = ['bizen-stall', 'bizen ware: no glaze, two weeks in the kiln, no two alike. beer tastes better from it, they say'];
         for (let x = sx; x < sx + 3; x++) {
             assert.ok(solid('Okayama', x, sy + 2) && !solid('Okayama', x, sy + 3), `the stall's counter at ${x}`);
@@ -584,6 +622,9 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         // a crane on the lawn
         const crane = ['crane', 'a red-crowned crane. it looks at you, then at the pond, and chooses the pond'];
         for (const [x, y] of sprites.Okayama['okayama-crane_0_0']) assert.deepStrictEqual(says(x, y + 1), crane);
+        // the hill, bumped anywhere round its foot
+        const mound = ['mound', 'yuishinzan: six metres of hill, heaped up so a lord could look down on his own garden'];
+        for (const [x, y] of [[4, 28], [8, 28], [6, 25], [8, 26]]) assert.deepStrictEqual(says(x, y), mound, `the hill at ${x},${y}`);
         // you walk to Okayama: no station, no railway (the train's row is Osaka's), no door but the seam into
         // Himeji, nothing borrowed from Hokuriku's own art, no ordinary sealed building, no bin
         assert.deepStrictEqual(Object.values(cfg.stations).filter((s) => s.town === 'Okayama'), [], 'you walk to Okayama');
@@ -593,7 +634,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.deepStrictEqual(Object.keys(sprites.Okayama).filter((k) => /^(hokuriku|kanazawa|shirakawa|toyama)-/.test(k)), [], 'Okayama wears another town\'s art');
         assert.deepStrictEqual(Object.keys(sprites.Okayama).filter((k) => /rubbish-bin/.test(k)), []);
         assert.deepStrictEqual(Object.keys(sprites.Okayama).filter((k) => /^(house-|building-|machiya|highrise|seven-eleven|himeji-)/.test(k)), [], 'Okayama has a building that is not one of its own places');
-        for (const k of ['okayama-keep', 'okayama-bridge', 'okayama-bank-rock', 'okayama-crane', 'okayama-momotaro', 'okayama-bizen-stall', 'okayama-fingerpost']) {
+        for (const k of ['okayama-keep', 'okayama-bridge', 'okayama-bank-rock', 'okayama-crane', 'okayama-mound', 'okayama-momotaro', 'okayama-bizen-stall', 'okayama-fingerpost']) {
             assert.ok(sprites.Okayama[`${k}_0_0`] && `${k}_0_0` in cfg.spriteMetadata, `Okayama has no ${k}`);
         }
         // on the Map it is a small place of its own, where it is in Japan: west of Himeji, on Honshu
