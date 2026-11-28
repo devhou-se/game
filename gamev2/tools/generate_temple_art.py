@@ -3,7 +3,11 @@
 the first one is Senso-ji's, tools/generate_temple.py). The GuttyKreum temple
 packs are exteriors only, so the interior is drawn here, in the manner of
 tools/generate_shrine_art.py and generate_palace_art.py: shaded pixel art with
-a 1px ink outline, drawn at half size (32px a cell) and pixel-doubled. Nothing
+a 1px outline in the pack's temple navy, drawn at half size (32px a cell) and
+pixel-doubled. Every colour is one the GuttyKreum sheets use (PACK; settle()
+moves anything else, a ramp or a blended edge, to the nearest one), and a lamp
+or flame is the pack's dim gold with a small pale core, never lit yellow: the
+glow at night is src/utils/Glows.js's (#326). Nothing
 is line art, nothing is random between runs (every scatter is seeded), and the
 only text is set in the game's own font, so a re-run is byte-identical on any
 machine. All lettering is invented or generic (no sponsor's name is on the
@@ -52,27 +56,49 @@ from PIL import Image, ImageDraw, ImageFont
 
 C = 32      # canvas px per cell (doubled on save)
 
-INK = (30, 26, 44)
-VOID = (16, 18, 30)
-WHITE, PAPER, PAPER_SH = (250, 246, 232), (232, 222, 196), (190, 180, 168)
-GLOW, GLOW_HI = (255, 206, 120), (255, 240, 196)
-FLAME, FLAME_HI = (255, 170, 60), (255, 244, 190)
-LQ, LQ_HI, LQ_DK = (40, 32, 46), (86, 70, 90), (24, 18, 30)                    # black lacquer
-RED, RED_HI, RED_DK = (132, 38, 44), (184, 68, 58), (84, 26, 40)               # old dark red lacquer
-VERM, VERM_HI, VERM_DK = (206, 52, 44), (240, 104, 70), (150, 32, 44)          # the lantern's paper
-GOLD, GOLD_HI, GOLD_DK = (214, 164, 70), (250, 220, 130), (150, 104, 52)       # gilt
-LEAF_A, LEAF_B, LEAF_C = (170, 128, 62), (182, 140, 70), (156, 116, 58)        # old gold leaf, in shadow
-STONE, STONE_ALT, STONE_HI, STONE_DK = (68, 62, 78), (73, 67, 83), (96, 88, 104), (56, 51, 67)
-WOOD, WOOD_HI, WOOD_DK = (96, 62, 50), (140, 96, 68), (62, 40, 42)
-BRONZE, BRONZE_HI, BRONZE_DK = (92, 104, 92), (150, 164, 132), (54, 62, 64)    # patinated
-BRASS, BRASS_HI, BRASS_DK = (190, 150, 74), (240, 210, 130), (126, 92, 52)
-PURPLE, PURPLE_HI, PURPLE_DK = (98, 58, 120), (140, 96, 160), (62, 36, 84)
-TATAMI, TATAMI_HI, TATAMI_DK = (112, 108, 80), (134, 130, 94), (88, 86, 70)
-SKIN, SKIN_SH = (240, 204, 170), (206, 160, 136)
-TEAL, TEAL_HI = (60, 130, 130), (120, 186, 170)
-PINK, PINK_HI = (214, 120, 140), (244, 176, 184)
-LOTUS_G, LOTUS_G_HI = (74, 122, 86), (124, 168, 104)
-SMOKE = (226, 222, 232)
+def rgb(h):
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+# Every colour is one the GuttyKreum sheets use (art-source/GuttyKreum; temple.test.js checks it).
+INK = rgb('1f1f3b')                      # the temple sheets' outline navy
+VOID = rgb('080d16')
+SHADE = rgb('080d16')                    # shadows and the lattice veil, with alpha
+DAY = rgb('e4cecc')                      # daylight: slats' sun, the doorway, with alpha
+WHITE, PAPER, PAPER_SH = rgb('fafcfd'), rgb('e4cecc'), rgb('be9e8c')
+LAMP, LAMP_SH, LAMP_HI = rgb('c6a663'), rgb('a7843b'), rgb('f3d890')   # a pane; its core
+FLAME, FLAME_HI = rgb('c6a663'), rgb('f3d890')
+LQ, LQ_HI, LQ_DK = rgb('2a2636'), rgb('524b59'), rgb('171831')                    # black lacquer
+RED, RED_HI, RED_DK = rgb('8a3a22'), rgb('aa4d31'), rgb('5b283b')                 # old dark red lacquer
+VERM, VERM_HI, VERM_DK = rgb('d16b56'), rgb('e78d7b'), rgb('aa4d31')              # the lantern's paper
+GOLD, GOLD_HI, GOLD_DK = rgb('c6a663'), rgb('e3c587'), rgb('a7843b')              # gilt
+LEAF_A, LEAF_B, LEAF_C = rgb('a7843b'), rgb('b2a168'), rgb('a7843b')              # old gold leaf, in shadow
+STONE, STONE_ALT, STONE_HI, STONE_DK = rgb('443d4a'), rgb('4c4754'), rgb('655d6d'), rgb('322b38')
+STONE_GLINT = rgb('826f60')
+WOOD, WOOD_HI, WOOD_DK = rgb('6d483b'), rgb('85553e'), rgb('4d3326')
+BRONZE, BRONZE_HI, BRONZE_DK = rgb('506b6b'), rgb('6c8e7f'), rgb('2e4040')        # patinated
+BRASS, BRASS_HI, BRASS_DK = rgb('c6aa71'), rgb('e3c587'), rgb('86624c')
+PURPLE, PURPLE_HI, PURPLE_DK = rgb('5c527d'), rgb('8f72b6'), rgb('3f3651')
+TATAMI, TATAMI_HI, TATAMI_DK = rgb('716555'), rgb('928372'), rgb('584a43')
+SKIN, SKIN_SH = rgb('ebbca2'), rgb('c69f96')
+TEAL, TEAL_HI = rgb('3f827f'), rgb('6c8e7f')
+PINK, PINK_HI = rgb('bb6479'), rgb('d78bc1')
+LOTUS_G, LOTUS_G_HI = rgb('506d33'), rgb('83af6f')
+SMOKE = rgb('d0ccdc')
+# the rest of what settle() may leave in a sprite: frieze grounds, steel, ash, fruit, the bowl bell, charms
+PACK_MORE = [rgb(h) for h in (
+    '514542 232446 2d4051 35444a c66347 d7d0ba 20212a 413130 6b5241 3a5252 b0c276 e77f6a db785c 6b7d9a '
+    '949494 949bb2 6d574e 433830 1b1e2a aaaaaa adb2c2 4a6262 dedede 7f513b 3a5792 dfdfdf f27e66 95402c '
+    'e6d6cd d7af9e efefef 3a3b54 726f86 dae2e4 747e93 e75d42 8fb2b0 9599bb ebebe9 201c2d 76cae3').split()]
+# the closed list settle() moves every pixel onto: the constants above, in order, then PACK_MORE
+PACK = list(dict.fromkeys([
+    INK, VOID, SHADE, DAY, WHITE, PAPER, PAPER_SH, LAMP, LAMP_SH, LAMP_HI, FLAME, FLAME_HI,
+    LQ, LQ_HI, LQ_DK, RED, RED_HI, RED_DK, VERM, VERM_HI, VERM_DK, GOLD, GOLD_HI, GOLD_DK,
+    LEAF_A, LEAF_B, LEAF_C, STONE, STONE_ALT, STONE_HI, STONE_DK, STONE_GLINT, WOOD, WOOD_HI, WOOD_DK,
+    BRONZE, BRONZE_HI, BRONZE_DK, BRASS, BRASS_HI, BRASS_DK, PURPLE, PURPLE_HI, PURPLE_DK,
+    TATAMI, TATAMI_HI, TATAMI_DK, SKIN, SKIN_SH, TEAL, TEAL_HI, PINK, PINK_HI, LOTUS_G, LOTUS_G_HI, SMOKE,
+] + PACK_MORE))
+PACK_SET = set(PACK)
 
 _FONTS = {}
 
@@ -128,7 +154,7 @@ def post(d, x0, y0, x1, y1, base, hi, dk, outline=True):
 
 
 def shadow(d, x0, y0, x1, y1, a=90):
-    d.ellipse([x0, y0, x1, y1], fill=(0, 0, 0, a))
+    d.ellipse([x0, y0, x1, y1], fill=SHADE + (a,))
 
 
 def stud(d, x, y):
@@ -192,7 +218,7 @@ def slab(seed):
                 d.point((x0 + 2 + rnd.randrange(13), y0 + 3 + rnd.randrange(12)), fill=STONE_DK)
             if rnd.random() < 0.6:                                                             # lamplight
                 gx, gy = x0 + 4 + rnd.randrange(8), y0 + 5 + rnd.randrange(8)
-                d.line([gx, gy, gx + 2, gy], fill=mix(STONE_HI, GLOW, 0.35))
+                d.line([gx, gy, gx + 2, gy], fill=STONE_GLINT)
         return im
     return draw
 
@@ -208,7 +234,7 @@ def wall_side(side):
         d.rectangle([22, 0, 29, 31], fill=RED_DK)               # the wall below it
         d.line([22, 0, 22, 31], fill=INK)
         for y in range(1, 31, 3):                               # the slats, foreshortened
-            d.line([24, y, 28, y], fill=mix(GLOW_HI, RED_DK, 0.35))
+            d.line([24, y, 28, y], fill=PAPER_SH)
         d.rectangle([30, 0, 31, 31], fill=WOOD_DK)              # the sill
         d.line([30, 0, 30, 31], fill=INK)
         d.rectangle([22, 14, 31, 17], fill=RED)                 # a post
@@ -230,7 +256,7 @@ def sun(side):
             for x in range(0, reach):
                 a = round(64 * (1 - x / 60) ** 1.6)
                 if a > 3:
-                    im.putpixel((x, y), (255, 226, 170, a))
+                    im.putpixel((x, y), DAY + (a,))
         return im if side == 'w' else im.transpose(Image.FLIP_LEFT_RIGHT)
     return draw
 
@@ -252,7 +278,7 @@ def threshold(side):
     def draw():
         im, d = new(C, C)
         for y in range(0, 32):
-            d.line([0, y, 31, y], fill=mix((255, 232, 190), WHITE, y / 31))   # the day outside
+            d.line([0, y, 31, y], fill=DAY if y in (0, 1, 2, 3, 5, 8) else WHITE)   # the day outside
         d.line([0, 10, 31, 10], fill=PAPER_SH)                   # the stone steps
         d.line([0, 22, 31, 22], fill=PAPER_SH)
         x0 = 0 if side == 'w' else 26                            # the door post
@@ -273,7 +299,7 @@ def doorlight():
         inset = round((1 - t) * 14)
         a = round(110 * t * t)
         if a:
-            d.line([inset, y, 63 - inset, y], fill=(255, 228, 170, a))
+            d.line([inset, y, 63 - inset, y], fill=DAY + (a,))
     return im
 
 
@@ -287,7 +313,7 @@ _frieze = None
 def _dragon(d, x0, x1, y, facing):
     """A dragon along a frieze from its tail at x0 to its head at x1 (`facing`
     1: head to the right). Dull gold-green on the dark ground, a hint, not a poster."""
-    body, hi, dk = (120, 150, 110), (190, 200, 130), (64, 92, 84)
+    body, hi, dk = rgb('6c8e7f'), rgb('b0c276'), rgb('3a5252')
     n = abs(x1 - x0)
     pts = []
     for i in range(n + 1):
@@ -313,7 +339,7 @@ def _dragon(d, x0, x1, y, facing):
     d.rectangle([min(hx, hx + facing * 7), hy - 3, max(hx, hx + facing * 7), hy + 2], fill=body)
     d.line([hx + facing * 2, hy - 3, hx + facing * 7, hy - 3], fill=hi)
     d.line([hx + facing * 4, hy + 1, hx + facing * 9, hy + 1], fill=body)
-    d.line([hx + facing * 5, hy + 2, hx + facing * 8, hy + 2], fill=(170, 60, 50))
+    d.line([hx + facing * 5, hy + 2, hx + facing * 8, hy + 2], fill=rgb('95402c'))
     d.line([hx + facing * 1, hy - 4, hx - facing * 3, hy - 7], fill=GOLD)
     d.line([hx + facing * 3, hy - 4, hx, hy - 6], fill=GOLD_DK)
     d.point((hx + facing * 5, hy - 2), fill=WHITE)
@@ -341,8 +367,8 @@ def frieze():
     im, d = new(BACK_W, HEAD)
     rnd = random.Random(213)
     d.rectangle([0, 0, BACK_W - 1, HEAD - 1], fill=LQ_DK)
-    grounds = ((44, 62, 88), (96, 40, 48), (44, 78, 70))
-    flowers = (PINK, GOLD, (226, 226, 214))
+    grounds = (rgb('2d4051'), rgb('5b283b'), rgb('35444a'))
+    flowers = (PINK, GOLD, rgb('dedede'))
     for i, x in enumerate(range(0, BACK_W, 8)):                 # the coffers: 8px, ribbed in lacquer
         d.rectangle([x + 1, 1, x + 7, 7], fill=grounds[i % 3])
         col = flowers[(i * 2 + 1) % 3]
@@ -358,11 +384,11 @@ def frieze():
     d.line([0, 8, BACK_W - 1, 8], fill=LQ_HI)
     d.line([0, 9, BACK_W - 1, 9], fill=INK)
     # the frieze: a night-blue ground
-    d.rectangle([0, 10, BACK_W - 1, 23], fill=(34, 40, 66))
+    d.rectangle([0, 10, BACK_W - 1, 23], fill=rgb('232446'))
     for x in range(0, BACK_W):
         if rnd.random() < 0.05:
-            d.point((x, 11 + rnd.randrange(12)), fill=(52, 60, 92))
-    cloud, cloud_hi = (112, 116, 150), (176, 176, 196)
+            d.point((x, 11 + rnd.randrange(12)), fill=rgb('3a3b54'))
+    cloud, cloud_hi = rgb('6b7d9a'), rgb('adb2c2')
     for x in range(6, BACK_W - 20, 34):
         _cloud(d, x + rnd.randrange(8), 12 + rnd.randrange(8), 12 + rnd.randrange(8), cloud, cloud_hi)
     mid = BACK_W // 2
@@ -401,7 +427,9 @@ def _toro(d, x, y, lit=True):
     d.line([x, y, x, y + 2], fill=BRASS_DK)
     d.polygon([(x, y + 2), (x + 4, y + 5), (x - 4, y + 5)], fill=LQ)
     d.line([x - 4, y + 5, x + 4, y + 5], fill=BRASS)
-    d.rectangle([x - 3, y + 6, x + 3, y + 11], fill=GLOW_HI if lit else BRASS_DK)
+    d.rectangle([x - 3, y + 6, x + 3, y + 11], fill=LAMP if lit else BRASS_DK)
+    if lit:
+        d.rectangle([x - 1, y + 8, x + 1, y + 9], fill=LAMP_HI)
     d.line([x - 3, y + 6, x - 3, y + 11], fill=BRASS_DK)
     d.line([x + 3, y + 6, x + 3, y + 11], fill=BRASS_DK)
     d.line([x, y + 6, x, y + 11], fill=BRASS)
@@ -426,7 +454,7 @@ def _banner(d, x, y0, y1, cols):
 def _tennin(d, x, y, flip=False):
     """A heavenly maiden flying, her scarves trailing behind her; (x, y) is her head."""
     s = -1 if flip else 1
-    scarf, scarf_hi = (224, 214, 196), (250, 244, 226)
+    scarf, scarf_hi = rgb('e6d6cd'), rgb('efefef')
     for i in range(30):                                          # the long scarf behind her
         px = x - s * (4 + i)
         py = y + 5 + round(math.sin(i / 4.0) * 3) - i // 6
@@ -459,7 +487,7 @@ def wall_tennin(side):
         w = 5 * C
         old_gold(d, 2, HEAD + 2, w - 3, 86, 31 + fx)
         rnd = random.Random(7 + fx)
-        cloud, cloud_hi = (196, 152, 84), (224, 184, 110)
+        cloud, cloud_hi = rgb('c6a663'), rgb('c6aa71')
         for _ in range(7):                                       # gold cloud bands
             _cloud(d, 6 + rnd.randrange(w - 40), HEAD + 8 + rnd.randrange(46), 16 + rnd.randrange(14), cloud, cloud_hi)
         for x in range(8, w - 8, 9):                             # a lotus pond along the foot
@@ -499,10 +527,10 @@ def kuden():
         for x in range(cx - 30, cx + 31):
             t = max(0.0, 1 - math.hypot((x - cx) / 30.0, (y - 62) / 30.0))
             if t > 0.05:
-                im.putpixel((x, y), mix(LQ_DK, (150, 104, 52), min(1.0, t * 1.1)) + (255,))
+                im.putpixel((x, y), mix(LQ_DK, rgb('85553e'), min(1.0, t * 1.1)) + (255,))
     # the image: a halo, the seated figure, the lotus she sits on
     d.ellipse([cx - 13, 40, cx + 13, 66], fill=GOLD_DK, outline=GOLD)
-    d.ellipse([cx - 9, 44, cx + 9, 62], fill=(120, 84, 48))
+    d.ellipse([cx - 9, 44, cx + 9, 62], fill=rgb('7f513b'))
     for a in range(0, 360, 30):
         d.point((cx + round(11 * math.cos(math.radians(a))), 53 + round(11 * math.sin(math.radians(a)))), fill=GOLD_HI)
     d.rectangle([cx - 3, 46, cx + 3, 53], fill=GOLD)                             # head
@@ -559,7 +587,7 @@ def kuden():
         n = 20 if edge else (5 if i % 2 else 3)
         for k in range(n):
             d.point((x, 44 + k), fill=GOLD_HI if k % 3 == 0 else GOLD_DK)
-        d.point((x, 44 + n), fill=(110, 200, 190) if i % 3 == 0 else VERM_HI)
+        d.point((x, 44 + n), fill=rgb('76cae3') if i % 3 == 0 else VERM_HI)
     # its gilt posts, and a guardian in a niche either side
     for x in (22, w - 29):
         post(d, x, HEAD, x + 6, 88, GOLD, GOLD_HI, GOLD_DK)
@@ -609,10 +637,10 @@ def omikuji():
     d.line([3, 83, w - 4, 83], fill=LQ_HI)
     d.line([3, 86, w - 4, 86], fill=GOLD_DK)
     # the cylinder: six-sided, steel, a hole in its end for the stick; one stick is out
-    d.polygon([(28, 62), (36, 60), (44, 62), (44, 82), (36, 84), (28, 82)], fill=(150, 156, 172), outline=INK)
-    d.line([30, 63, 30, 81], fill=(214, 218, 230))
-    d.line([36, 61, 36, 83], fill=(108, 112, 134))
-    d.line([40, 63, 40, 81], fill=(120, 124, 146))
+    d.polygon([(28, 62), (36, 60), (44, 62), (44, 82), (36, 84), (28, 82)], fill=rgb('949bb2'), outline=INK)
+    d.line([30, 63, 30, 81], fill=rgb('dae2e4'))
+    d.line([36, 61, 36, 83], fill=rgb('726f86'))
+    d.line([40, 63, 40, 81], fill=rgb('747e93'))
     d.ellipse([33, 59, 39, 62], fill=INK)
     d.line([37, 60, 45, 52], fill=PAPER)
     d.line([38, 60, 46, 52], fill=WOOD_HI)
@@ -639,7 +667,7 @@ def wall_charms():
     for x in (22, 106):
         _toro(d, x, HEAD + 1)
     rnd = random.Random(88)
-    cols = (VERM, PURPLE, TEAL, GOLD, (232, 228, 214), PINK, (60, 84, 150))
+    cols = (VERM, PURPLE, TEAL, GOLD, rgb('dfdfdf'), PINK, rgb('3a5792'))
     for r, y in enumerate((HEAD + 20, HEAD + 33)):                             # two shelves of charms
         d.rectangle([8, y + 10, w - 9, y + 11], fill=WOOD_HI)
         d.line([8, y + 12, w - 9, y + 12], fill=INK)
@@ -726,7 +754,7 @@ def naijin():
     cx = W // 2
     _tatami(d, 0, 0, W - 1, 110)
     for y in range(0, 12):                                      # the cabinet's shadow along the back
-        d.line([0, y, W - 1, y], fill=(0, 0, 0, 150 - y * 12))
+        d.line([0, y, W - 1, y], fill=SHADE + (150 - y * 12,))
     # the altar table: black lacquer, a brocade cloth down its front
     shadow(d, cx - 54, 34, cx + 54, 46, 80)
     box(d, cx - 50, 8, cx + 50, 14, LQ)
@@ -747,7 +775,7 @@ def naijin():
         for i in range(3):                                      # rice cakes, stacked
             d.ellipse([cx + s * 30 - 5 + i, 5 - i * 3 + 1, cx + s * 30 + 5 - i, 9 - i * 3 + 1], fill=WHITE, outline=PAPER_SH)
         d.polygon([(cx + s * 43 - 4, 9), (cx + s * 43 + 4, 9), (cx + s * 43 + 2, 5), (cx + s * 43 - 2, 5)], fill=BRASS)   # fruit on a stand
-        for fx_, fy_, col in ((-2, 3, (240, 150, 60)), (2, 3, (240, 150, 60)), (0, 0, (230, 90, 60))):
+        for fx_, fy_, col in ((-2, 3, rgb('db785c')), (2, 3, rgb('db785c')), (0, 0, rgb('e75d42'))):
             d.rectangle([cx + s * 43 + fx_ - 1, fy_, cx + s * 43 + fx_ + 1, fy_ + 2], fill=col)
     # gilt lotus either side of the table, banked candles beyond them
     for s in (-1, 1):
@@ -766,7 +794,8 @@ def naijin():
         lx = cx + s * 160                                        # a gilt standing lantern
         d.rectangle([lx - 1, 28, lx + 1, 50], fill=BRASS_DK)
         d.rectangle([lx - 5, 49, lx + 5, 52], fill=BRASS_DK, outline=INK)
-        box(d, lx - 5, 12, lx + 5, 28, GLOW_HI)
+        box(d, lx - 5, 12, lx + 5, 28, LAMP)
+        d.rectangle([lx - 2, 17, lx + 2, 23], fill=LAMP_HI)
         d.line([lx, 13, lx, 27], fill=BRASS)
         d.line([lx - 4, 20, lx + 4, 20], fill=BRASS)
         d.polygon([(lx, 5), (lx + 8, 12), (lx - 8, 12)], fill=BRASS, outline=INK)
@@ -775,8 +804,8 @@ def naijin():
             box(d, x - 7, 50, x + 7, 53, WOOD_HI)
             d.rectangle([x - 4, 54, x + 4, 60], fill=WOOD, outline=INK)
             for k in range(3):
-                d.ellipse([x - 5 + k, 46 - k * 3, x + 5 - k, 50 - k * 3], fill=(236, 150, 70) if i == 1 else WHITE,
-                          outline=(180, 100, 50) if i == 1 else PAPER_SH)
+                d.ellipse([x - 5 + k, 46 - k * 3, x + 5 - k, 50 - k * 3], fill=rgb('f27e66') if i == 1 else WHITE,
+                          outline=rgb('c66347') if i == 1 else PAPER_SH)
     # the monk's seat (raiban): a low square stand and cushion, the sutra desk, the wooden fish, a bowl bell
     shadow(d, cx - 30, 66, cx + 30, 80, 70)
     box(d, cx - 24, 56, cx + 24, 74, LQ)
@@ -802,8 +831,8 @@ def naijin():
     gap = (cx - 2 * C, cx + 2 * C)                               # open in the middle: four cells
     veil = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     vd = ImageDraw.Draw(veil)
-    vd.rectangle([0, top, gap[0] - 1, H - 1], fill=(14, 10, 22, 96))
-    vd.rectangle([gap[1], top, W - 1, H - 1], fill=(14, 10, 22, 96))
+    vd.rectangle([0, top, gap[0] - 1, H - 1], fill=SHADE + (96,))
+    vd.rectangle([gap[1], top, W - 1, H - 1], fill=SHADE + (96,))
     im.alpha_composite(veil)
     d = ImageDraw.Draw(im)
     for y in range(top + 6, foot):
@@ -963,19 +992,19 @@ def jokoro():
         d.arc([cx + s * 40 - 5, 41, cx + s * 40 + 5, 59], 0, 360, fill=BRONZE_HI)
     d.ellipse([cx - 46, 42, cx + 46, 60], fill=BRONZE, outline=INK)          # the rim
     d.arc([cx - 45, 43, cx + 45, 59], 180, 300, fill=BRONZE_HI)
-    d.ellipse([cx - 39, 44, cx + 39, 56], fill=(150, 146, 150), outline=BRONZE_DK)   # the ash
-    d.ellipse([cx - 30, 45, cx + 24, 52], fill=(178, 174, 176))
+    d.ellipse([cx - 39, 44, cx + 39, 56], fill=rgb('949494'), outline=BRONZE_DK)   # the ash
+    d.ellipse([cx - 30, 45, cx + 24, 52], fill=rgb('aaaaaa'))
     rnd = random.Random(1300)
     tips = []
     for _ in range(26):                                          # the sticks, in bundles, their ends alight
         x = cx - 30 + rnd.randrange(61)
         y = 47 + rnd.randrange(7)
         lean = rnd.randrange(-2, 3)
-        d.line([x, y, x + lean, y - 7], fill=(74, 110, 84))
-        d.point((x + lean, y - 8), fill=(255, 120, 60))
+        d.line([x, y, x + lean, y - 7], fill=rgb('4a6262'))
+        d.point((x + lean, y - 8), fill=VERM)
         tips.append((x + lean, y - 9))
-    d.ellipse([cx - 6, 46, cx + 6, 53], fill=(255, 150, 70))     # the embers in the middle
-    d.ellipse([cx - 3, 47, cx + 3, 51], fill=FLAME_HI)
+    d.ellipse([cx - 6, 46, cx + 6, 53], fill=VERM)     # the embers in the middle
+    d.ellipse([cx - 3, 47, cx + 3, 51], fill=GOLD)
     for i, (x, y) in enumerate(tips):
         if i % 2 == 0:
             _wisp(im, x, y, 2 + rnd.randrange(10), rnd.random() * 6, 5 + rnd.randrange(6), 120)
@@ -1031,10 +1060,10 @@ def toro_hang():
         d.point((x, 21), fill=BRASS_HI)
         d.point((x, 20), fill=BRASS)
     d.rectangle([14, 9, 17, 11], fill=BRASS, outline=INK)
-    box(d, 8, 23, 23, 41, GLOW_HI)
-    for y in range(24, 41):
-        t = abs(y - 32) / 9
-        d.line([9, y, 22, y], fill=mix(GLOW_HI, GLOW, min(1, t)))
+    box(d, 8, 23, 23, 41, LAMP)
+    for y in (24, 25, 26, 38, 39, 40):
+        d.line([9, y, 22, y], fill=LAMP_SH)
+    d.rectangle([13, 29, 18, 35], fill=LAMP_HI)
     for x in (12, 19):
         d.line([x, 24, x, 40], fill=BRASS_DK)
     for x, y in ((10, 27), (15, 30), (21, 27), (10, 36), (16, 35), (21, 37)):          # pierced work
@@ -1079,7 +1108,7 @@ def candles():
     for x in (6, 55):
         d.rectangle([x, 14, x + 2, 60], fill=LQ)
         d.line([x, 14, x, 60], fill=LQ_HI)
-    d.rectangle([8, 18, 55, 56], fill=(40, 28, 36))               # the dark behind the flames
+    d.rectangle([8, 18, 55, 56], fill=rgb('20212a'))               # the dark behind the flames
     d.polygon([(1, 14), (62, 14), (56, 5), (7, 5)], fill=BRONZE_DK, outline=INK)        # the roof
     d.line([8, 6, 55, 6], fill=BRONZE_HI)
     for x in range(10, 56, 6):
@@ -1108,7 +1137,7 @@ def drum():
     box(d, 6, 57, 57, 60, LQ)
     d.line([7, 58, 56, 58], fill=GOLD_DK)
     d.ellipse([8, 2, 55, 49], fill=WOOD_DK, outline=INK)          # the body
-    d.ellipse([11, 5, 52, 46], fill=(226, 208, 170), outline=WOOD)   # the skin
+    d.ellipse([11, 5, 52, 46], fill=rgb('d7d0ba'), outline=WOOD)   # the skin
     d.arc([12, 6, 51, 45], 150, 280, fill=WHITE)
     for a in range(0, 360, 20):                                   # the tacks round it
         x, y = 31.5 + 22 * math.cos(math.radians(a)), 25.5 + 22 * math.sin(math.radians(a))
@@ -1136,7 +1165,7 @@ def keisu():
     d.arc([9, 37, 54, 49], 180, 300, fill=PURPLE_HI)
     for x in range(14, 52, 6):
         d.point((x, 47), fill=GOLD)
-    bowl, bowl_hi, bowl_dk = (104, 86, 62), (176, 146, 92), (66, 54, 50)
+    bowl, bowl_hi, bowl_dk = rgb('6b5241'), rgb('b2a168'), rgb('433830')
     d.ellipse([6, 8, 57, 46], fill=bowl, outline=INK)             # the bowl: wide, round-bellied
     for y in range(18, 44):
         half = round(25 * math.sqrt(max(0.0, 1 - ((y - 27) / 19.0) ** 2)))
@@ -1148,7 +1177,7 @@ def keisu():
     d.line([14, 32, 49, 32], fill=BRASS_HI)                       # an engraved band
     d.line([14, 34, 49, 34], fill=bowl_dk)
     d.line([56, 30, 62, 58], fill=VERM_DK, width=2)               # the striker, leaning
-    d.rectangle([54, 24, 59, 32], fill=(226, 208, 170), outline=INK)
+    d.rectangle([54, 24, 59, 32], fill=rgb('d7d0ba'), outline=INK)
     return im
 
 
@@ -1256,10 +1285,25 @@ def sprites():
 DEPTH_BIAS = {'temple-in-toro-hang': 10, 'temple-in-chochin': 10, 'temple-in-haze': 10, 'temple-in-doorlight': -40}
 
 
+def settle(im):
+    """Move every pixel that is not a PACK colour to the nearest one that is; alpha is kept."""
+    px, memo = im.load(), {}
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a == 0 or (r, g, b) in PACK_SET:
+                continue
+            k = (r, g, b)
+            if k not in memo:
+                memo[k] = min(PACK, key=lambda c: 2 * (c[0] - r) ** 2 + 4 * (c[1] - g) ** 2 + 3 * (c[2] - b) ** 2)
+            px[x, y] = memo[k] + (a,)
+    return im
+
+
 def main():
     built = {}
     for name, fn in sprites().items():
-        im = fn()
+        im = settle(fn())
         built[name] = im.resize((im.width * 2, im.height * 2), Image.NEAREST)
     cfg = json.load(open('config.json'))
     for name, im in built.items():

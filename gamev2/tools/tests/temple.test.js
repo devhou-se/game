@@ -358,4 +358,42 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
             fs.rmSync(tmp, { recursive: true, force: true });
         }
     });
+
+    test('the hall is drawn in the GuttyKreum pack\'s colours, with dim lamps (#326)', () => {
+        const c = cfg(), png = require(path.join(GV2, 'tools', 'png'));
+        // every colour of a fully opaque pixel on any of the pack's sheets, but pure black and white
+        const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory()
+            ? walk(path.join(d, e.name)) : /\.png$/i.test(e.name) ? [path.join(d, e.name)] : []);
+        const hex = (d, i) => ((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]).toString(16).padStart(6, '0');
+        const pack = new Set();
+        for (const f of walk(path.join(GV2, '..', 'art-source', 'GuttyKreum'))) {
+            const { data } = png.decode(fs.readFileSync(f));
+            for (let i = 0; i < data.length; i += 4) if (data[i + 3] === 255) pack.add(hex(data, i));
+        }
+        pack.delete('000000');
+        pack.delete('ffffff');
+        const keys = Object.keys(c.spriteMetadata).filter((k) => k.startsWith('temple-in-'));
+        assert.strictEqual(keys.length, 29);
+        let outlined = 0;
+        for (const k of keys) {
+            const { data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', k + '.png')));
+            const n = {};
+            let shown = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                if (!data[i + 3]) continue;
+                const h = hex(data, i);
+                assert.ok(pack.has(h), `${k}: #${h} is not a colour of the pack's sheets`);
+                // no lit yellow: nothing brighter than the lamp's small core
+                if (data[i] >= 0xf3 && data[i + 1] >= 0xd0 && data[i + 2] < 0xc8) assert.strictEqual(h, 'f3d890', `${k}: lit yellow #${h}`);
+                n[h] = (n[h] || 0) + 1;
+                shown++;
+            }
+            assert.ok((n.f3d890 || 0) <= 0.08 * shown, `${k}: the lamp core is ${n.f3d890} of ${shown} pixels`);
+            if (['temple-in-toro-hang_0_0', 'temple-in-shokudai_0_0', 'temple-in-candles_0_0'].includes(k)) {
+                assert.ok((n.c6a663 || 0) > (n.f3d890 || 0), `${k}: more core than the pack's dim gold`);
+            }
+            if (n['1f1f3b']) outlined++;
+        }
+        assert.ok(outlined >= 20, `the navy outline is in ${outlined} sprites`);
+    });
 };

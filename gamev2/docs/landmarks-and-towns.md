@@ -1400,8 +1400,12 @@ be redone. `tools/generate_temple.py` is written for one hall; a second one is a
   per bump by the offering box's rule (`ShrineVisit.fresh` / `.held`). A toast is one line, so every line is
   96 characters or fewer.
 - **Art**: `tools/generate_temple_art.py` (needs Pillow; `--preview out.png`) draws all 29 sprites
-  (`temple-in-<piece>`) as shaded pixel art at the shrine kit's scale; every scatter is seeded, so a re-run is
-  byte-identical. It and the generator are in `check_generators.py`.
+  (`temple-in-<piece>`) as shaded pixel art at the shrine kit's scale, in the GuttyKreum pack's colours only
+  (the tool's closed list `PACK`; `settle()` moves any other pixel to its nearest, and `temple.test.js` checks
+  every pixel against the sheets in `art-source/GuttyKreum`), outlined in the pack's temple navy `1f1f3b`. Its
+  lamps and candle flames are the pack's dim gold `c6a663` with a small `f3d890` core, never lit yellow: their
+  night glow is left to `Glows.js` (#326). Every scatter is seeded, so a re-run is byte-identical. It and the
+  generator are in `check_generators.py`.
 - **Doors and blog NPCs**: no dated position or district stand cell is on a door leaf or the step in front of
   it (`temple.test.js` holds it for every date). The `Senso-ji temple` LANDMARK stands its visitor one cell
   below the WEST end of the steps (26,17: Bailey on 1 November 2025), beside the way up, not on it. He
