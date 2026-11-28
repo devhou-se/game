@@ -308,8 +308,11 @@ The game always renders 1280x960; everything below is about showing that on anyt
     hint (83 characters) was 9.77. `Shop.toast` therefore asks `scene.uiScale.floatWidth(font, y)` for the
     widest a line can be and still reach the floor, and breaks a longer message at its spaces into the
     fewest, most even lines (`Shop.toastLines`) before it is drawn: the hint is two lines at 18 CSS px
-    there. `floatWidth` is `Infinity` where the floor asks nothing (the canvas is shown at half size or
-    more: a desktop, a tablet) or is not kept (the cropped portrait view), so a toast is one line there
+    there. In the cropped portrait view the floor is not kept, but a long line was shrunk to the slice's
+    width instead (a 107-character flavour line was about 3.5 CSS px a character at 390x844, #388), so
+    there `floatWidth` is the room itself: a line wider than the slice is broken, and every line is shown
+    at its own size (20px, 12.75 CSS px at 390x844). `floatWidth` is `Infinity` where the floor asks
+    nothing (the canvas is shown at half size or more: a desktop, a tablet), so a toast is one line there
     as it always was, and 844x390, where the hint
     already measured 11.9 CSS px on one line, is unchanged too. A float of several lines is not
     magnified past the view's bottom margin. A new float Text with long lines should do as the toast does.

@@ -828,7 +828,8 @@ class Shop {
         o.said = msg;
         // UIScale magnifies a toast to the text floor but cannot re-flow it: a line too long to
         // be shown that big between a phone's touch controls (the energy hint at 667x375, #220)
-        // is broken here, before it is drawn. Never on a desktop-sized window.
+        // is broken here, before it is drawn, and so is one wider than a portrait phone's slice of
+        // the canvas, which would otherwise be shrunk to fit it (#388). Never on a desktop-sized window.
         const ui = this.scene.uiScale, widest = ui ? ui.floatWidth(T.font, y) : Infinity;
         if (o.width > widest) o.setText(Shop.toastLines(msg, o.width, widest, 2 * T.padX));
         o.setOrigin(0.5, 0.5); o.setResolution(1);
