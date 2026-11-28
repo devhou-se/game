@@ -489,4 +489,45 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
             assert.ok(mine.x >= m.x + m.width + 1024 && mine.y >= m.y + m.height + 1024, `${path.basename(m.fileName)} is not north-west of the home city`);
         }
     });
+
+    test('San Franbourne: the transport, sports, terrain and creature sprites are in the house look (#328)', () => {
+        const png = require(path.join(GV2, 'tools', 'png'));
+        const SIZES = {
+            'sfb-cable-car': [192, 128], 'sfb-tram': [256, 128], 'sfb-rail-h': [64, 64], 'sfb-oval': [768, 448],
+            'sfb-goalposts': [128, 192], 'sfb-oval-lamp-post': [64, 320], 'sfb-fog-a': [320, 128], 'sfb-fog-b': [320, 128],
+            'sfb-terminal': [576, 320], 'sfb-pier': [256, 576], 'sfb-sea-lions': [192, 128], 'sfb-palm': [192, 256],
+            'sfb-rock': [320, 192], 'sfb-lean-a': [64, 64], 'sfb-lean-b': [64, 64], 'sfb-lean-c': [64, 64], 'sfb-lean-d': [64, 64],
+        };
+        // every one of these is a colour of the art-source/GuttyKreum sheets
+        const SHEET = new Set(('0a1627 172459 fafcfd dae2e4 a4b0b5 848295 575f79 47485d 2a2636 bcc7cc 191c2a e4cecc be9e8c '
+            + '8e7366 d16b56 aa4d31 904a37 8a3a22 e78d7b f3d890 c6a663 a7843b 86624f 93c297 83af6f 678e57 508582 395050 '
+            + 'b1dfdc 425faa 3c396d bb8971 a68777 594b45 7f513b 2c2d51 2a3151 4b6396 314b8e 413f53 ffe2e0 d7b6ab').split(' '));
+        const meta = realConfig().spriteMetadata;
+        for (const [name, [w, h]] of Object.entries(SIZES)) {
+            const key = `${name}_0_0`;
+            const im = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png')));
+            assert.deepStrictEqual([im.width, im.height], [w, h], `${key} changed size`);
+            assert.ok(meta[key], `${key} has no spriteMetadata`);
+            const fog = name.startsWith('sfb-fog');
+            const opaque = new Map();
+            for (let i = 0; i < im.data.length; i += 4) {
+                const a = im.data[i + 3];
+                if (!a) continue;
+                const c = [0, 1, 2].map((k) => im.data[i + k].toString(16).padStart(2, '0')).join('');
+                assert.ok(SHEET.has(c), `${key}: ${c} is not a sheet colour`);
+                if (fog) assert.ok((c === 'dae2e4' && (a === 70 || a === 110)) || (c === 'fafcfd' && a === 150), `${key}: ${c} at ${a}`);
+                else if (a !== 255) assert.ok(c === '2a3151' && a === 90, `${key}: ${c} at alpha ${a}`);
+                else opaque.set(c, (opaque.get(c) || 0) + 1);
+            }
+            assert.ok(opaque.size <= 24, `${key} has ${opaque.size} colours`);
+            SIZES[name] = opaque;
+        }
+        for (const key of ['sfb-oval_0_0', 'sfb-pier_0_0']) assert.strictEqual(meta[key].depthBias, -200, `${key} is not flat`);
+        // the glass is dark, with a glare; the lamps are the pack's dim gold, unlit
+        assert.ok(SIZES['sfb-terminal'].get('2c2d51') >= 20000 && SIZES['sfb-terminal'].get('4b6396') >= 1000, 'the terminal is not dark glass');
+        for (const name of ['sfb-tram', 'sfb-cable-car', 'sfb-rock']) {
+            assert.ok(SIZES[name].get('2c2d51') && SIZES[name].get('4b6396'), `${name} has no dark glass`);
+        }
+        assert.ok(SIZES['sfb-oval-lamp-post'].get('c6a663'), 'the light tower has no dim gold lamps');
+    });
 };
