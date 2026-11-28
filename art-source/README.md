@@ -23,7 +23,7 @@ Only the 14 sheets a tool reads are kept, with each pack's `Readme.txt`:
 | `JapaneseCity_Complete_v7_1/RPGMakerVXAce/GK_JC_B_2.png` | `extract_street.py`, `extract_house_interior.py` |
 | `TemplesandShrinesv2/RPGMakerVXAce/GK_TS_A5.png` | `extract_street.py` |
 | `TemplesandShrinesv2/MainTileMap/MainTileMap.png` | `extract_shrine.py` (the shrine roof) |
-| `TemplesShrines_v2/Non-RPGMaker_Tilemap/Main_Tilemap.png` | `extract_shrine.py` (the garland rope) |
+| `TemplesShrines_v2/Non-RPGMaker_Tilemap/Main_Tilemap.png` | `extract_shrine.py` (the garland rope), `generate_sendai_art.py` (the roof of Zuihoden) |
 | `UrbanAccessoriesv2/Tilemap.png` | `extract_street.py` |
 | `Train_Stationv8/Tilemaps/Non-RPGMaker/Maintilemap.png` | `extract_train.py`, `extract_station.py` |
 | `TrainInteriors_v1/preview1.png`, `preview2.png`, `preview3.png` | `extract_train_interior.py` |

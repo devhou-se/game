@@ -237,39 +237,22 @@ def zuihoden():
         d.point((x, 86), fill=WHITE)
     d.line([(16, 84), (207, 84)], fill=GOLD); d.line([(16, 95), (207, 95)], fill=GOLD_LO)
 
-    # ---- the roof, seen from above as the pack's are: a hipped roof whose ridge
-    # sits a third of the way down, the back slope above it, the front slope
-    # below, a lit hip to the west and a shaded one to the east ----------------
-    px = im.load()
-    ridge, top, eave, rx0, rx1 = 26, 4, 80, 62, 161
-    for y in range(top, eave + 1):
-        if y >= ridge:
-            xl, xr = rx0 - (y - ridge) * 60 // (eave - ridge), rx1 + (y - ridge) * 60 // (eave - ridge)
-        else:
-            xl, xr = rx0 - (ridge - y) * 60 // (ridge - top), rx1 + (ridge - y) * 60 // (ridge - top)
-        for x in range(2, 222):
-            if xl <= x <= xr:
-                px[x, y] = roof_tile(x, y, ROOF_TILE if y >= ridge else ROOF_SHADE)
-            else:
-                px[x, y] = roof_tile(y, x, ROOF_LIT if x < cx else ROOF_SHADE)
-            if abs(x - xl) <= 1 or abs(x - xr) <= 1:              # the hip ridges
-                px[x, y] = ROOF_TILE[2] if abs(x - xl) == 0 or abs(x - xr) == 0 else ROOF_TILE[0]
-    d.rectangle([2, top, 221, top], fill=P_INK)
-    d.rectangle([0, 80, 223, 83], fill=SLATE_LO)                  # eaves
-    d.line([(0, 83), (223, 83)], fill=RED_LO)                     # the red rafter ends
-    for x in range(3, 222, 5):
-        d.point((x, 83), fill=GOLD)
-    for x in (0, 221):                                            # gold tips on the front corners
-        d.rectangle([x, 76, x + 2, 80], fill=GOLD)
-    d.rectangle([rx0 - 4, ridge - 4, rx1 + 4, ridge + 2], fill=SLATE_LO)      # the ridge
-    d.rectangle([rx0 - 4, ridge - 4, rx1 + 4, ridge - 4], fill=SLATE_HI)
-    for x in range(rx0 + 2, rx1 - 2, 12):
-        d.rectangle([x, ridge - 2, x + 3, ridge], fill=GOLD)
-    for x0 in (rx0 - 12, rx1 + 2):                                # gold ridge-end ornaments
-        d.rectangle([x0, ridge - 10, x0 + 10, ridge + 2], fill=GOLD)
-        d.rectangle([x0 + 2, ridge - 14, x0 + 7, ridge - 10], fill=GOLD)
-        d.rectangle([x0 + 1, ridge - 10, x0 + 1, ridge + 1], fill=GOLD_HI)
-        d.rectangle([x0 + 9, ridge - 10, x0 + 9, ridge + 1], fill=GOLD_LO)
+    # ---- the roof: the pack's own wide temple roof, cut from its atlas and
+    # laid to this hall's width - the courses of tile under a ridge beam with
+    # its three round caps and horned ends - in a dark slate, the beam gilded --
+    atlas = Image.open(PACK_ROOF_ATLAS).convert('RGBA')
+    piece = atlas.crop((360, 196, 504, 256))
+    repaint(piece, PACK_ROOF_SLATE)
+    for x in (16, 112):                                           # two tiers of twelve courses, 96 wide
+        im.alpha_composite(piece.crop((24, 23, 120, 52)), (x, 23))
+        im.alpha_composite(piece.crop((24, 23, 120, 55)), (x, 52))
+    im.alpha_composite(piece.crop((40, 23, 56, 52)), (104, 23))    # a whole course over the join
+    im.alpha_composite(piece.crop((40, 23, 56, 55)), (104, 52))
+    for x in range(26, 198, 8):                                   # the ridge beam, a tile at a time
+        im.alpha_composite(piece.crop((31, 6, 39, 23)), (x, 6))
+    im.alpha_composite(piece.crop((5, 6, 31, 23)), (0, 6))
+    im.alpha_composite(piece.crop((114, 6, 140, 23)), (198, 6))
+    im.alpha_composite(piece.crop((61, 6, 84, 23)), (cx - 12, 6))
     # the front gable over the doors, with the crest of the Date
     for y in range(44, 81):
         w = (y - 44) * 34 // 36
@@ -393,6 +376,12 @@ def speck(x, y, seed=0):
     return (n ^ (n >> 13)) * 1274126177 % 100 if n >= 0 else (-n ^ (-n >> 13)) * 1274126177 % 100
 
 
+PACK_ROOF_ATLAS = '../art-source/GuttyKreum/TemplesShrines_v2/Non-RPGMaker_Tilemap/Main_Tilemap.png'
+PACK_ROOF_SLATE = {rgb(a): rgb(b) for a, b in (
+    ('1f1f3b', '0a1627'), ('2e2f54', '21272d'), ('3f3651', '293038'), ('3c3a4c', '293038'), ('3c396d', '293038'),
+    ('3c3f79', '2e4040'), ('47485d', '2e4040'), ('314b8e', '2e4040'), ('50577a', '395050'), ('585575', '395050'),
+    ('425faa', '434857'), ('4b6396', '434857'), ('556a96', '53596d'), ('656e92', '646e86'), ('539ad7', '646e86'),
+    ('8ec2fa', '848295'), ('7db9fa', 'c6a663'), ('bbe9ff', 'f3d890'))}
 ROOF_TILE = [rgb(c) for c in ('0a1627', '172459', '434857', '2e4040', '395050')]
 
 
