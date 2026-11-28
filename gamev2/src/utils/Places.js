@@ -21,12 +21,21 @@
  * An airport room belongs to the place of the room it serves (config
  * `airports.<key>.serves`): Haneda is in Tokyo's dot.
  *
+ * A small place walked to from a town is `"minor": true` (issue #68):
+ *
+ *   "places": { "Himeji": { "geo": [134.69, 34.82], "label": "Himeji", "minor": true }, ... }
+ *
+ * It has a dot and a label like any town, and nothing is ever left out; its
+ * label is only laid out after the towns', so a town keeps the spot beside
+ * its dot and the small place takes what is left (see layout()). No place
+ * sets it yet.
+ *
  * Pure functions of the config (and the map's metadata, assets/map/japan.json,
  * written by tools/make_japan_map.py): tools/tests/japan-map.test.js runs the
  * same code. GameScene.showMap draws what these decide.
  */
 class Places {
-    /** Every place that has a dot: [{ key, label, lon, lat, rooms, overseas }], in config order. */
+    /** Every place that has a dot: [{ key, label, lon, lat, rooms, overseas, minor }], in config order. */
     static list(config) {
         const out = [];
         const rooms = (config && config.rooms) || {}, cities = (config && config.cities) || {};
@@ -40,6 +49,7 @@ class Places {
                 label: p.label || (city ? city.name : rooms[key].name) || key,
                 rooms: city ? (city.rooms || []).map(m => m.room) : [key],
                 overseas: !!p.overseas,
+                minor: !!p.minor,
             });
         }
         return out;
@@ -207,9 +217,10 @@ class Places {
     }
 
     /**
-     * Where each dot's label goes. `dots` are [{ key, x, y, r, w, h }]: the
-     * dot's centre and radius and its label's size, in the px of `bounds`
-     * ({ x, y, w, h }, the map on screen). Returns { key: { x, y, leader } }
+     * Where each dot's label goes. `dots` are [{ key, x, y, r, w, h, minor }]:
+     * the dot's centre and radius and its label's size, in the px of `bounds`
+     * ({ x, y, w, h }, the map on screen), and whether it is a small place
+     * whose label gives way (below). Returns { key: { x, y, leader } }
      * — the label's centre, and whether it stands off far enough to want a
      * line back to its dot.
      *
@@ -223,15 +234,22 @@ class Places {
      * caller leaves out what one then stands on (Places.uncovered: the
      * dashes start clear of the label), so nothing is drawn under a label. Each tries beside its dot first (right, left, above, below,
      * then the diagonals) and then the same eight further out; the most
-     * hemmed-in dots choose first. `fits` is false on a label for which no
-     * such spot exists (it is then put beside its dot regardless).
+     * hemmed-in dots choose first, and every `minor` dot after the others
+     * (issue #68: a town keeps the spot beside its dot; the caller does not
+     * mark a small place `minor` while the player or friends are there, the
+     * label then being the one looked for). That order is a guess: when it
+     * leaves a label with no spot, that label goes first and the rest are
+     * laid out again, as often as there are dots at most, and the layout
+     * that left the fewest labels without a spot is the one kept. `fits` is
+     * false on a label for which no such spot exists in it (it is then put
+     * beside its dot regardless).
      */
     static layout(dots, bounds, avoid = []) {
         const hit = (a, b) => a.x1 > b.x0 && a.x0 < b.x1 && a.y1 > b.y0 && a.y0 < b.y1;
         const dotBox = (d) => ({ x0: d.x - d.r - 1, y0: d.y - d.r - 1, x1: d.x + d.r + 1, y1: d.y + d.r + 1 });
         const crowd = (d) => Math.min(...dots.filter(o => o !== d).map(o => Math.hypot(o.x - d.x, o.y - d.y)), Infinity);
-        const order = dots.slice().sort((a, b) => crowd(a) - crowd(b) || (a.key < b.key ? -1 : 1));
-        const place = (shun) => {
+        const sorted = dots.slice().sort((a, b) => (!!a.minor - !!b.minor) || crowd(a) - crowd(b) || (a.key < b.key ? -1 : 1));
+        const once = (shun, order) => {
             const taken = [], out = {};
             for (const d of order) {
                 const others = dots.filter(o => o !== d).map(dotBox);
@@ -259,6 +277,20 @@ class Places {
                 out[d.key] = chosen;
             }
             return out;
+        };
+        // the order is a guess: a label left with no spot goes first and the rest are laid out again
+        // (as often as there are dots, at most); the layout that leaves the fewest without a spot is kept
+        const place = (shun) => {
+            const stuck = (out) => Object.values(out).filter(at => !at.fits).length;
+            let order = sorted, out = once(shun, order), best = out;
+            for (let n = 0; n < dots.length && stuck(best); n++) {
+                const d = order.find(o => !out[o.key].fits);
+                if (!d || d === order[0]) break;          // first already: no order gives it a spot
+                order = [d].concat(order.filter(o => o !== d));
+                out = once(shun, order);
+                if (stuck(out) < stuck(best)) best = out;
+            }
+            return best;
         };
         // a label keeps as clear of them as it does of its own dot: beside, never touching
         const out = place(avoid.map(a => ({ x0: a.x0 - Places.LABEL_GAP, y0: a.y0 - Places.LABEL_GAP, x1: a.x1 + Places.LABEL_GAP, y1: a.y1 + Places.LABEL_GAP })));

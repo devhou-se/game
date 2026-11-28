@@ -102,10 +102,20 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
     `Places.RING_STEP` px with a leader line back to the dot; never over another label or anybody's dot
     (the reach of a ringed / haloed dot counts, `Places.reach`), never off the picture, and never within
     `Places.LABEL_GAP` of the dashes of the overseas place's course (`Places.course`, the boxes `showMap`
-    draws, passed as `avoid`; issue #220). Only where that would leave some label no spot at all (the
-    narrowest portrait view) are the labels laid out without it, and the dashes one stands on are left
-    out (`Places.uncovered`), so nothing is drawn under a label. The most
-    hemmed-in dots choose first.
+    draws, passed as `avoid`; issue #220). The most hemmed-in dots choose first. That order is a guess:
+    **a label left with no spot is laid out first and the rest again** (as often as there are dots, at
+    most; the layout that leaves the fewest without a spot is kept; issue #68). With the label widths
+    the unit test allows (wider than the game draws) that is what keeps every label off the course in
+    the narrowest portrait view; with the widths the game draws today no label is left stuck there and
+    nothing moves. Only where no order tried gives every label a spot are the labels laid out without
+    `avoid`, and the dashes one stands on are left out (`Places.uncovered`), so nothing is drawn under a
+    label.
+    **A small place** (a `places` entry with `"minor": true`: somewhere walked to from a town, issue #68;
+    no place is one yet) has its label laid out after the towns', so a town's label keeps the spot beside
+    its dot and the small place's stands off on a leader line. Its label is never left out, and it
+    chooses with the towns while the player or friends are there (`showMap` drops `minor` from that dot).
+    The label test lays out the five small places to come from stub entries, in the nine combinations
+    their tickets pass through, in the views phones really get (`viewOf`).
   - **Size**: `UIScale.mapFit(W, H, w, h, cropped, UIScale.MAP_MAX_SCALE)` — the same fit the old
     overworld picture used, now allowed past 1:1 and stepped in halves from 2x so the pixel art stays
     even: 3x at 1280x960 and on a landscape phone, 2.5x in the portrait view. Labels are 16px through

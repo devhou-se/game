@@ -112,7 +112,7 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
 
     test('a boat is picked to fit the water left in view, and is cut off at a bridge deck', () => {
         // #62: the north moat shows a 32px lane above the palace wall - skiff only; #61: `under` spans hide the boat
-        load('AmbientBoats.js');
+        if (game('typeof AmbientBoats') === 'undefined') load('AmbientBoats.js');   // once: the tests below use it too
         const boats = game('Object.create(AmbientBoats.prototype)');
         const run = (width, length) => boats.fit({ axis: 'h', from: 0, to: length, band0: 100, band1: 100 + width });
         assert.deepStrictEqual(Array.from(run(50, 400).hulls), ['punt', 'skiff']);
@@ -133,6 +133,71 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         assert.strictEqual(boat.visible, false, 'wholly under the deck: not drawn');
         boats.hideUnder(boat, deck, 1520, 116);
         assert.deepStrictEqual([boat.visible, boat.crop], [true, [38, 0, 78, 44]], 'stern still under the deck');
+    });
+
+    test('declared waterways that meet end to end are one run: a canal carried on by the next district sails as one (#68)', () => {
+        if (game('typeof AmbientBoats') === 'undefined') load('AmbientBoats.js');
+        const A = game('AmbientBoats'), plain = (v) => JSON.parse(JSON.stringify(v));
+        const across = Math.min(...Object.keys(A.HULLS).map((h) => A.size(h).across));
+        assert.strictEqual(across, A.size('skiff').across, 'the narrowest hull is the skiff');
+        const run = (from, to, more) => Object.assign({ axis: 'h', from, to, band0: 1300, band1: 1360, under: [], open: [false, false] }, more);
+        // two that abut: the first's start, the second's end, both lists of bridges, and one end open each
+        const west = run(0, 640, { open: [true, false], under: [[128, 256]] }), east = run(640, 1920, { open: [false, true], under: [[1280, 1408]] });
+        const before = plain([west, east]);
+        assert.deepStrictEqual(plain(A.joinRuns([west, east])),
+            [{ axis: 'h', from: 0, to: 1920, band0: 1300, band1: 1360, under: [[128, 256], [1280, 1408]], open: [true, true] }]);
+        assert.deepStrictEqual(plain([west, east]), before, 'the runs given are left as they were');
+        // ...in whichever order the districts list them, and the joined run stands where its first part stood
+        const moat = run(0, 640, { axis: 'v', band0: 64, band1: 128 });
+        assert.deepStrictEqual(plain(A.joinRuns([east, moat, west])),
+            [plain(moat), { axis: 'h', from: 0, to: 1920, band0: 1300, band1: 1360, under: [[128, 256], [1280, 1408]], open: [true, true] }]);
+        // three in a row are one, and the ends that met in the middle are not open
+        const three = A.joinRuns([run(640, 1280, { open: [true, true] }), run(1280, 1920), run(0, 640, { open: [true, false] })]);
+        assert.deepStrictEqual(plain(three.map((r) => [r.from, r.to, r.open])), [[0, 1920, [true, false]]]);
+        // each district measures its own band, so a few pixels of bank may differ: the joined band is the water both have
+        const banks = A.joinRuns([run(0, 640, { band0: 1296, band1: 1356 }), run(640, 1280, { band0: 1300, band1: 1364 })]);
+        assert.deepStrictEqual(plain(banks.map((r) => [r.from, r.to, r.band0, r.band1])), [[0, 1280, 1300, 1356]]);
+        // the narrowest boat must fit the water they share: exactly its width joins, a pixel less does not
+        const offset = (by) => [run(0, 640), run(640, 1280, { band0: 1360 - by, band1: 1420 - by })];
+        assert.strictEqual(A.joinRuns(offset(across)).length, 1);
+        assert.deepStrictEqual(plain(A.joinRuns(offset(across - 1))), plain(offset(across - 1)), 'too little water in common');
+        assert.strictEqual(A.joinRuns(offset(across - 1), across - 1).length, 1, 'the width asked for is the one given');
+        // nothing else joins, and a list where nothing joins comes back as it was
+        for (const [why, apart] of [['a gap between them', [run(0, 640), run(704, 1280)]], ['they overlap', [run(0, 704), run(640, 1280)]],
+            ['one is across the other', [run(0, 640), run(640, 1280, { axis: 'v' })]],
+            ['side by side', [run(0, 640), run(0, 640, { band0: 1400, band1: 1460 })]], ['one run', [run(0, 640)]], ['none', []]]) {
+            assert.deepStrictEqual(plain(A.joinRuns(apart)), plain(apart), why);
+        }
+        // a run with no `under` or `open` of its own (as fit() is given in the test above) joins too
+        const bare = A.joinRuns([{ axis: 'v', from: 0, to: 320, band0: 0, band1: 64 }, { axis: 'v', from: 320, to: 640, band0: 0, band1: 64 }]);
+        assert.deepStrictEqual(plain(bare), [{ axis: 'v', from: 0, to: 640, band0: 0, band1: 64, open: [false, false], under: [] }]);
+    });
+
+    test('no two waterways declared today meet end to end, in a room or across a city\'s districts: every boat sails the run it sailed (#68)', () => {
+        // what "joining changes nothing today" rests on: cells, each district's moved by its place in its city
+        if (game('typeof AmbientBoats') === 'undefined') load('AmbientBoats.js');
+        const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const inCity = {};
+        for (const city of Object.values(cfg.cities)) for (const m of city.rooms) inCity[m.room] = m;
+        const groups = {};
+        let declared = 0;
+        for (const [key, room] of Object.entries(cfg.rooms)) {
+            const m = inCity[key] || { x: 0, y: 0 }, group = Object.keys(cfg.cities).find((c) => cfg.cities[c].rooms.includes(inCity[key])) || key;
+            for (const w of room.waterways || []) {
+                const h = w.axis !== 'v', off = h ? m.x : m.y, cross = h ? w.row + m.y : w.col + m.x;
+                (groups[group] = groups[group] || []).push({ key, axis: h ? 'h' : 'v', from: w.from + off, to: w.to + 1 + off, band0: cross, band1: cross + ((h ? w.rows : w.cols) || 1) });
+                declared++;
+            }
+        }
+        assert.ok(declared >= 4, 'the canals of Osaka and Fukuoka, the bay at Sendai and the sea at Toyama are declared');
+        for (const [group, runs] of Object.entries(groups)) {
+            for (const a of runs) for (const b of runs) {
+                if (a === b || a.axis !== b.axis || a.to !== b.from) continue;
+                assert.ok(Math.min(a.band1, b.band1) <= Math.max(a.band0, b.band0), `${group}: ${a.key}'s waterway is carried on by ${b.key}'s`);
+            }
+            // ...which is what joinRuns makes of them (here in cells: one cell in common would join them)
+            assert.strictEqual(game('AmbientBoats').joinRuns(runs, 1).length, runs.length, group);
+        }
     });
 
     test("Tokyo's west gate is closed: Machi is deleted, the fence runs across where its lane came in (#68)", () => {

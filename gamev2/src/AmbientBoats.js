@@ -20,6 +20,9 @@
  *     beneath and is not drawn there (cropped at the deck's edge), so it goes
  *     under the bridge and under whoever stands on it. An end on the room's
  *     edge is open - the boat comes in from off the map, as a train does.
+ *     Declared runs that meet end to end are one run (joinRuns, issue #68):
+ *     in a stitched city a canal that carries on into the next district is
+ *     one waterway, and a boat sails across the seam instead of fading at it.
  *     Frozen water simply declares no waterway.
  * The strip of open water is measured from the tiles' own pixels (waterBand /
  * stackBand), so the boat sits in the water whatever the bank art looks like,
@@ -127,6 +130,9 @@ class AmbientBoats {
      * moved to the district's place. A run gets `under` (pixel spans along it
      * where a bridge hides the boat) and `open` ([start, end]: that end is on
      * the room's edge, so the boat sails in / out there instead of fading).
+     * Runs that meet end to end are joined (joinRuns) before the water left
+     * in view is measured and the hulls are fitted, so those are of the whole
+     * waterway.
      */
     declaredRuns(roomKey) {
         const scene = this.scene;
@@ -150,15 +156,47 @@ class AmbientBoats {
                 if (!band) continue;
                 const from = (w.from + off) * GS, to = (w.to + 1 + off) * GS;
                 const length = h ? room.worldWidth : room.worldHeight;
-                const run = this.fit(this.clearWater({
+                runs.push({
                     axis: h ? 'h' : 'v', from, to, under,
                     open: [from <= 0, to >= length],
                     band0: cross0 * GS + band[0], band1: cross0 * GS + band[1],
-                }));
-                if (run) runs.push(run);
+                });
             }
         }
-        return runs;
+        return AmbientBoats.joinRuns(runs).map(r => this.fit(this.clearWater(r))).filter(Boolean);
+    }
+
+    /**
+     * Runs that meet end to end, as one run each (issue #68: a district's
+     * canal carried on by its neighbour's). Two runs join when they lie on
+     * the same axis, one's `to` is the other's `from`, and the water they
+     * share across the channel (the overlap of their bands) is at least
+     * `across` px wide: the narrowest hull's width unless given. The bands
+     * are not compared for equality, since each district measures its own
+     * and a few pixels of bank art may differ. The joined run keeps the
+     * first's `from` and `open[0]`, the second's `to` and `open[1]`, the band
+     * they share and both `under` lists, and stands where its first part
+     * stood; this repeats until nothing joins, so three in a row become one.
+     * Runs that do not join come back as they were, in their order. Pure:
+     * `runs` is not changed.
+     */
+    static joinRuns(runs, across = Math.min(...Object.keys(AmbientBoats.HULLS).map(h => AmbientBoats.size(h).across))) {
+        const out = runs.slice();
+        const shared = (a, b) => [Math.max(a.band0, b.band0), Math.min(a.band1, b.band1)];
+        for (let i = 0; i < out.length; i++) {
+            const a = out[i];
+            const j = out.findIndex(b => b !== a && b.axis === a.axis && b.from === a.to && shared(a, b)[1] - shared(a, b)[0] >= across);
+            if (j < 0) continue;
+            const b = out[j], [band0, band1] = shared(a, b);
+            out[i] = Object.assign({}, a, {
+                to: b.to, band0, band1,
+                open: [!!(a.open || [])[0], !!(b.open || [])[1]],
+                under: (a.under || []).concat(b.under || []),
+            });
+            out.splice(j, 1);
+            i = -1;                                       // from the top: the joined run may meet another
+        }
+        return out;
     }
 
     /** The topmost flat (ground / water) tile drawn on a cell: its texture key, or null. */

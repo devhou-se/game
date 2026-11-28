@@ -1085,8 +1085,10 @@ class GameScene extends Phaser.Scene {
             const isHere = p.key === here, isPresent = present.has(p.key);
             const label = text(0, 0, p.label, '16px', true, isHere ? '#ffd700' : '#ffffff', 'rgba(10,22,39,0.72)');
             label.setPadding(3, 1, 3, 1);
+            // (a small place's label is laid out after the towns', unless it is the one being looked for)
             return { key: p.key, label: p.label, here: isHere, present: isPresent, overseas: p.overseas,
                 x: Math.round(px + ix * s), y: Math.round(py + iy * s), r: Places.reach(isHere, isPresent) * k,
+                minor: p.minor && !isHere && !isPresent,
                 w: label.width, h: label.height, text: label };
         });
         // an overseas place's plane flies a dashed course to the corner of the map (unless friends

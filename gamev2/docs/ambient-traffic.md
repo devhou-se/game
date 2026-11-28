@@ -53,7 +53,14 @@ their route in the room's map data rather than in coordinates, have no collision
     An end on the room's edge is **open**: the boat sails in from off the map and out again, as a train
     does; any other end is closed and the boat fades in / out there. On a waterway longer than the screen
     the boat sets off just out of view rather than from the far end. In a stitched city a district's
-    waterways are moved to the district's place. **Osaka's Dotonbori canal** is the one declared waterway
+    waterways are moved to the district's place, and **declared runs that meet end to end are one run**
+    (`AmbientBoats.joinRuns`, issue #68: same axis, one's end the other's start, and at least the
+    narrowest hull's width of water in common across the channel - each district measures its own band,
+    so a few pixels of bank may differ and the joined band is the part they share). The joined run has
+    both lists of `under`, and an end is open only on the room's edge: where two districts' canals meet
+    the boat sails on instead of fading at the seam. They are joined before `clearWater` and `fit`, so
+    the water left in view and the hulls are those of the whole waterway. No two declared waterways meet
+    today (a unit test holds that). **Osaka's Dotonbori canal** is the one declared waterway
     today (rows 20-22, the whole width of the map, `under` columns 21-28). Its deck is dressed as a
     bridge (issue #180; `tools/make_bridge_tiles.py`, Pillow): `bridge-parapet-w|e` is a stone coping on
     the outer 14px of the deck's edge cells - not solid, so the two-cell pavement keeps its width - and

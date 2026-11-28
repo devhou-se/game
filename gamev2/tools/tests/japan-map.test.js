@@ -21,6 +21,26 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         for (const k of HOKURIKU) delete rooms[k];
         return Object.assign({}, c, { rooms });
     };
+    // the five small places walked to from a town (#68), before any is built: the room is a stub, the geo and
+    // label are the ones its ticket will put in config `places`. A ticket that builds one drops it from here
+    const SMALL = { Himeji: [[134.69, 34.82], 'Himeji'], Okayama: [[133.92, 34.66], 'Okayama'], Nara: [[135.84, 34.69], 'Nara'],
+        LakeBiwa: [[136.10, 35.30], 'Lake Biwa'], Karuizawa: [[138.63, 36.35], 'Karuizawa'] };
+    const small = (keys) => {
+        const c = realConfig();
+        const rooms = Object.assign({}, c.rooms), places = Object.assign({}, c.places);
+        for (const k of keys) {
+            rooms[k] = { name: SMALL[k][1] };
+            places[k] = { geo: SMALL[k][0], label: SMALL[k][1], minor: true };
+        }
+        return Object.assign({}, c, { rooms, places });
+    };
+    // the Map as the tickets land: Himeji, then Okayama, Nara and Lake Biwa in that order, each with and
+    // without Karuizawa (which waits on none of them), and Karuizawa alone
+    const KANSAI = ['Himeji', 'Okayama', 'Nara', 'LakeBiwa'];
+    const STAGES = KANSAI.map((_, i) => KANSAI.slice(0, i + 1));
+    const LANDING = STAGES.concat(STAGES.map(keys => keys.concat('Karuizawa')), [['Karuizawa']]);
+    // dots that may touch but never hide one another: the three Hokuriku towns (35 km apart), and Nara beside Osaka
+    const MAY_TOUCH = [['Kanazawa', 'Toyama'], ['Kanazawa', 'Shirakawago'], ['Shirakawago', 'Toyama'], ['Nara', 'Osaka']];
     const inside = (pts, lon, lat) => {
         let hit = false;
         for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
@@ -179,15 +199,34 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         const fit = game('UIScale.mapFit'), MAX = game('UIScale.MAP_MAX_SCALE');
         const hit = (a, b) => a.x1 > b.x0 && a.x0 < b.x1 && a.y1 > b.y0 && a.y0 < b.y1;
         // [name, canvas width in view, cropped, text growth, the picture's scale]
+        // (these four are the extremes: the widest and the narrowest view, the least and the most text growth)
         const views = [['desktop 1280x960', 1280, false, 1, 3], ['landscape phone 844x390', 1280, false, 1.6, 3],
             ['portrait phone, narrowest view', game('Viewport.MIN_VISIBLE'), true, 1.6, 2], ['portrait phone 390x844', 612, true, 1.3, 2.5]];
+        // the view a portrait touch window really gets (#68): canvas width in view, text growth, the picture's
+        // scale, worked out with the game's own functions as UIScale.textSize and showMap do
+        const viewOf = (name, winW, winH) => {
+            const l = game('Viewport').layout(winW, winH, true), U = game('UIScale');
+            const W = 1280 - l.crop.left - l.crop.right, down = 1 / l.scale;
+            const k = Math.round(100 * Math.min(U.MAX_TEXT_GROWTH, down > 1.02 ? Math.min(U.MAX_ZOOM, down) : 1)) / 100;
+            return [name, W, W < 1280, k, fit(W, 960, meta.width, meta.height, W < 1280, MAX)];
+        };
+        // ...each as read from the running game at that size (the 390x844 phone grows its text 1.57, not the
+        // 1.3 of the row above, and a tall phone gets the narrowest width with less growth)
+        for (const [winW, winH, W, k, scale] of [[320, 780, 560, 1.6, 2], [360, 840, 560, 1.56, 2], [360, 800, 597, 1.6, 2.5],
+            [390, 844, 612, 1.57, 2.5], [412, 915, 579, 1.41, 2.5]]) {
+            const view = viewOf(`a ${winW}x${winH} phone`, winW, winH);
+            assert.deepStrictEqual(view.slice(1), [W, true, k, scale], `${view[0]}: the view the game draws`);
+            views.push(view);
+        }
+        const configs = [['today', realConfig()], ['before Hokuriku', before()]]
+            .concat(LANDING.map(keys => [`with ${keys.join(', ')}`, small(keys)]));
         let coursesSeen = 0, coursesCut = 0;
         for (const [name, W, cropped, k, scale] of views) {
             const s = fit(W, 960, meta.width, meta.height, cropped, MAX);
             assert.strictEqual(s, scale, `${name}: the picture is drawn in half steps`);
             const bounds = { x: (W - meta.width * s) / 2, y: (960 - meta.height * s) / 2 + 4, w: meta.width * s, h: meta.height * s };
             assert.ok(bounds.x >= 12 && bounds.y >= 60 && bounds.y + bounds.h <= 960 - 70, `${name}: room for the title and the two footer lines`);
-            for (const config of [realConfig(), before()]) {
+            for (const [stage, config] of configs) {
                 const places = P.list(config);
                 // wherever the player is, and whoever is where: nobody, everybody, each town alone
                 for (const here of [null].concat(places.map(p => p.key))) {
@@ -196,25 +235,31 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
                         const dots = places.map(p => {
                             const [x, y] = P.project(meta, p.lon, p.lat);
                             // the bold pixel face is 0.5 em a glyph; allow more, and the label's padding
+                            // (a small place's label gives way to the towns', unless you or friends are there: as showMap's)
                             return { key: p.key, x: Math.round(bounds.x + x * s), y: Math.round(bounds.y + y * s),
                                 r: P.reach(p.key === here, present.includes(p.key)) * k,
+                                minor: p.minor && p.key !== here && !present.includes(p.key),
                                 w: Math.ceil(p.label.length * font * 0.62) + 6, h: Math.ceil(font * 1.2) + 2 };
                         });
                         // an overseas place with nobody in it is a plane with a dashed course to the corner
                         // of the map (GameScene.showMap draws these same boxes): labels keep off the dashes (#220)
                         const course = places.flatMap((p, i) => (p.overseas && !present.includes(p.key) ? P.course(dots[i], bounds, k) : []));
                         const spots = P.layout(dots, bounds, course);
-                        const why = `${name}, at ${here}, friends in ${present}`;
-                        // ...everywhere but the narrowest portrait view, where keeping off them can leave a
-                        // label no spot at all: there the dashes under a label are not drawn (the course
-                        // starts clear of it), and most of the course still is
+                        const why = `${name}, ${stage}, at ${here}, friends in ${present}`;
+                        // ...in every view of today's Map: where one order of the labels left some label no
+                        // spot clear of them (the narrowest portrait view, in Tokyo), the stuck label is laid
+                        // out first and they all keep clear (#68). The Maps that are not today's (before
+                        // Hokuriku, with the small places to come) are still let off in the narrowest view,
+                        // where keeping off them could leave a label no spot at all: there the dashes under a
+                        // label are not drawn (the course starts clear of it), and most of the course still is
+                        const strict = config === realConfig() || !cropped || W > game('Viewport.MIN_VISIBLE');
                         const drawn = P.uncovered(course, spots);
                         places.forEach((p, i) => {
                             const d = dots[i], on = course.filter((dash) => hit(spots[d.key].box, dash)).length;
                             assert.ok(!drawn.some((dash) => hit(spots[d.key].box, dash)), `${why}: a dash is drawn under ${d.key}'s label`);
                             const near = (dash) => hit(spots[d.key].box, { x0: dash.x0 - P.LABEL_GAP, y0: dash.y0 - P.LABEL_GAP, x1: dash.x1 + P.LABEL_GAP, y1: dash.y1 + P.LABEL_GAP });
-                            if (!cropped || W > game('Viewport.MIN_VISIBLE')) assert.strictEqual(course.filter(near).length, 0, `${why}: ${d.key}'s label touches the flight's course`);
-                            if (!cropped || W > game('Viewport.MIN_VISIBLE')) assert.strictEqual(on, 0, `${why}: ${d.key}'s label is on the flight's course`);
+                            if (strict) assert.strictEqual(course.filter(near).length, 0, `${why}: ${d.key}'s label touches the flight's course`);
+                            if (strict) assert.strictEqual(on, 0, `${why}: ${d.key}'s label is on the flight's course`);
                         });
                         assert.ok(drawn.length >= course.length / 2 && (!course.length || drawn.length >= 5), `${why}: ${drawn.length} of ${course.length} dashes are left`);
                         if (course.length) coursesSeen++;
@@ -236,11 +281,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
                             const gap = Math.max(at.box.x0 - d.x, d.x - at.box.x1, at.box.y0 - d.y, d.y - at.box.y1);
                             assert.strictEqual(at.leader, gap > d.r + P.LABEL_GAP + 1, `${why}: ${d.key} leader`);
                         }
-                        // the dots themselves are told apart: towns stand clear of each other, and the three
-                        // Hokuriku towns (35 km apart) may touch but never hide one another
+                        // the dots themselves are told apart: towns stand clear of each other, and the pairs of
+                        // MAY_TOUCH may touch but never hide one another
                         for (const a of dots) for (const b of dots) {
                             if (a.key >= b.key) continue;
-                            const near = HOKURIKU.includes(a.key) && HOKURIKU.includes(b.key);
+                            const near = MAY_TOUCH.some(([m, n]) => m === a.key && n === b.key);
                             assert.ok(Math.hypot(a.x - b.x, a.y - b.y) >= (near ? 1 : 2) * P.DOT * k + (near ? 0 : 2), `${why}: ${a.key} and ${b.key} dots merge`);
                         }
                     }
@@ -275,9 +320,68 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         const only = P.layout([{ key: 'a', x: 6, y: 6, r: 4, w: 40, h: 12 }], cramped, mark);
         assert.ok(only.a.fits && hit(only.a.box, mark[0]));
         assert.deepStrictEqual(plain(P.uncovered(mark, only)), [mark[1]]);
-        // a label with nowhere to go says so
+        // a label with nowhere to go says so, and is put beside its dot regardless (no order can help it)
         const tight = P.layout([{ key: 'a', x: 10, y: 10, r: 5, w: 80, h: 20 }], { x: 0, y: 0, w: 40, h: 20 });
         assert.strictEqual(tight.a.fits, false);
+        assert.deepStrictEqual(plain([tight.a.x, tight.a.y, tight.a.leader, tight.a.box]), [59, 10, false, { x0: 19, y0: 0, x1: 99, y1: 20 }]);
+    });
+
+    test('the Map\'s labels: a small place\'s label gives way to a town\'s, and a label left with no spot is laid out first (#68)', () => {
+        const hit = (a, b) => a.x1 > b.x0 && a.x0 < b.x1 && a.y1 > b.y0 && a.y0 < b.y1;
+        // a place is small where config says so: none today, the stubs of the places to come
+        assert.ok(P.list(realConfig()).every(p => p.minor === false), 'no place is minor yet');
+        assert.ok(!Object.values(realConfig().places).some(p => 'minor' in p));
+        const all = P.list(small(Object.keys(SMALL)));
+        assert.deepStrictEqual(plain(all.filter(p => p.minor).map(p => p.key)).sort(), Object.keys(SMALL).sort());
+        assert.strictEqual(all.length, P.list(realConfig()).length + 5, 'each has a dot of its own');
+        assert.deepStrictEqual(plain(LANDING.map(keys => keys.length)), [1, 2, 3, 4, 2, 3, 4, 5, 1], 'the nine Maps the tickets pass through');
+
+        // two dots that want the same spot (the first choice of each, to its right): the one that is not minor
+        // has it, whichever key sorts first, and the minor one stands off on a leader line and still fits
+        const beside = { x0: 18, x1: 68 };
+        const pair = (a, b) => [Object.assign({ key: 'a', x: 10, y: 10, r: 4, w: 50, h: 14 }, a), Object.assign({ key: 'b', x: 10, y: 22, r: 4, w: 50, h: 14 }, b)];
+        for (const [dots, town, other] of [[pair({}, {}), 'a', 'b'], [pair({}, { minor: true }), 'a', 'b'], [pair({ minor: true }, {}), 'b', 'a']]) {
+            const wide = P.layout(dots, { x: 0, y: 0, w: 200, h: 40 });
+            assert.deepStrictEqual(plain([wide[town].box.x0, wide[town].box.x1, wide[town].leader, wide[town].fits]), [beside.x0, beside.x1, false, true], `${town} keeps the spot beside its dot`);
+            assert.ok(wide[other].fits && wide[other].leader && !hit(wide[other].box, wide[town].box), `${other} takes what is left`);
+            // ...and with room for one label only, it is the town's: no order gives both a spot, so the first is kept
+            const narrow = P.layout(dots, { x: 0, y: 0, w: 70, h: 40 });
+            assert.deepStrictEqual([narrow[town].fits, narrow[other].fits], [true, false], `room for one: ${town}'s`);
+        }
+        // a small place with the player or friends in it is not `minor` to the layout: its label is the one looked for
+        const src = fs.readFileSync(path.join(GV2, 'src', 'GameScene.js'), 'utf8');
+        assert.ok(src.includes('minor: p.minor && !isHere && !isPresent,'));
+
+        // the order is a guess. Three dots along the top edge: `b` and `c`, the closest pair, choose first; `b`
+        // takes the spot under itself and `c` the next one down, which between them leave `a` nowhere to go.
+        // `a` is then laid out first, under and to the right of its dot, and there is a spot for all three
+        const three = [{ key: 'a', x: 10, y: 10, r: 4, w: 40, h: 12 }, { key: 'b', x: 60, y: 10, r: 4, w: 40, h: 12 }, { key: 'c', x: 80, y: 10, r: 4, w: 40, h: 12 }];
+        const again = P.layout(three, { x: 0, y: 0, w: 100, h: 50 });
+        assert.deepStrictEqual(plain(three.map(d => [again[d.key].box.x0, again[d.key].box.y0, again[d.key].leader, again[d.key].fits])),
+            [[12, 18, false, true], [40, 32, true, true], [60, 18, false, true]]);
+        for (const d of three) {
+            for (const o of three) {
+                if (o === d) continue;
+                assert.ok(!hit(again[d.key].box, again[o.key].box), `${d.key} and ${o.key} labels overlap`);
+                assert.ok(!hit(again[d.key].box, { x0: o.x - o.r, y0: o.y - o.r, x1: o.x + o.r, y1: o.y + o.r }), `${d.key}'s label covers ${o.key}'s dot`);
+            }
+        }
+        // the case it is for: Himeji's dot alone, in the narrowest portrait view, standing in Tokyo with friends
+        // in Fukuoka. One order leaves Fukuoka's label no room; laid out again, all eleven have a spot
+        const config = small(['Himeji']), places = P.list(config);
+        const W = game('Viewport.MIN_VISIBLE'), k = 1.6, s = 2, font = Math.round(16 * k);
+        const bounds = { x: (W - meta.width * s) / 2, y: (960 - meta.height * s) / 2 + 4, w: meta.width * s, h: meta.height * s };
+        const dots = places.map(p => {
+            const [x, y] = P.project(meta, p.lon, p.lat);
+            return { key: p.key, x: Math.round(bounds.x + x * s), y: Math.round(bounds.y + y * s),
+                r: P.reach(p.key === 'TokyoCity', p.key === 'Fukuoka') * k, minor: p.minor,
+                w: Math.ceil(p.label.length * font * 0.62) + 6, h: Math.ceil(font * 1.2) + 2 };
+        });
+        const course = P.course(dots.find(d => d.key === 'SanFranbourne'), bounds, k);
+        const spots = P.layout(dots, bounds, course);
+        assert.strictEqual(dots.length, 11);
+        for (const d of dots) assert.ok(spots[d.key].fits, `no room for ${d.key}'s label`);
+        assert.strictEqual(P.uncovered(course, spots).length, course.length, 'and none stands on the flight\'s course');
     });
 
     test('debug map-click travel: the dot nearest the click, and the cell outside that town\'s station or on its road in (#211)', () => {
