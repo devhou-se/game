@@ -397,3 +397,8 @@ drawn with rectangles and points only (no Pillow ellipse, polygon or slanted lin
 between Pillow versions), so a re-run draws the same pixels on any Pillow; it writes each sprite's
 `spriteMetadata` and `tileNames`, and `generate_devhouses.py` appends the keys to the palette as it places
 them. Sizes are whole cells and are what the floor grids assume. Needs Pillow.
+The two buildings that stand on a street are in the house look (#319): sheet colours only (their own `S_*`
+block), a navy `172459` outline, the pack's dark glass with its slanted glare, ragged foliage and tiled
+roof, from `generate_sendai_art.py` (`pane`, `foliage`, `roof_tile`, `speck`, `LEAF`); Tokyo has a flat roof
+seen from above, Osaka its roof garden seen from above inside a kawara eave. The 35 interior sprites are
+still in the older look (#325).

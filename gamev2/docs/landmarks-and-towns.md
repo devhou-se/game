@@ -1848,7 +1848,7 @@ plus `tools/generate_devhouse_art.py`.
 | | Tokyo | Osaka |
 |---|---|---|
 | Where | Minato: the paved square under Tokyo Tower's feet, in the district `Park` | Dotonbori, beside Don Takote, on the lot the black townhouse had |
-| Outside | `devhouse-tokyo` (5x8, six storeys), stamped at `Park` 10,9 | `devhouse-osaka` (3x7, four storeys), `b.stamp('devhouse-osaka', 9, 10)` in `generate_osaka.py` |
+| Outside | `devhouse-tokyo` (5x8, six storeys under a flat roof seen from above), stamped at `Park` 10,9 | `devhouse-osaka` (3x7, four storeys, the roof garden seen from above inside a tiled eave), `b.stamp('devhouse-osaka', 9, 10)` in `generate_osaka.py` |
 | Street door | `Park` 13,16; you leave onto 13,17 | `Osaka` 10,16; you leave onto 10,17 |
 | Rooms | `DevhouseTokyo1F..6F` | `DevhouseOsaka1F..4F` |
 | Floors | 1F and 2F are not ours: a locked door and the stairs. 3F the kitchen, the long table and the sofa; 4F beds and a bunk; 5F the tatami room, the bath and the "Staff Only" door; 6F two beds, the small table, the washer | 1F the kitchen and the tall table; 2F two tatami bedrooms and the armchairs; 3F bedrooms and the washer; 4F a tatami room that opens onto a zen garden on the roof |
