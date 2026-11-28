@@ -77,6 +77,8 @@ from generate_sendai_art import blob, BRONZE, BRONZE_HI, BRONZE_LO              
 from generate_sapporo_art import glyphs, glazing, glass_door, lantern, star                 # noqa: E402
 from generate_kanazawa_art import FONT as _FONT, KANA as _KANA, h3, curve_rows, night, roof, shade   # noqa: E402
 from generate_sendai_town_art import bar, glyph, puff, grounded, family                     # noqa: E402
+from generate_sendai_art import foliage                                                     # noqa: E402
+from house_look import tone                                                                 # noqa: E402
 
 SPR = 'assets/sprites'
 ROLES = ('center', 'edge-n', 'edge-s', 'edge-e', 'edge-w',
@@ -2425,78 +2427,135 @@ def hedge(conn):
 # ==============================================================================
 # The second pass: what the kit still lacked
 # ==============================================================================
-COPPER_P = (rgb('62a090'), rgb('457f76'), rgb('a2d6c2'), rgb('2c5c5a'))         # Kushida's verdigris copper roof
-HINOKI, HINOKI_HI, HINOKI_LO, HINOKI_DK = rgb('d8b888'), rgb('f0d8ac'), rgb('b08e62'), rgb('7c5e40')   # bare cypress
-STRAW, STRAW_HI, STRAW_LO = rgb('d9c078'), rgb('f0e0a0'), rgb('a88c4c')
+# Kushida's hall and the autumn plum are in the house look (#350): every colour a tone of
+# house_look.RAMPS or of the pack's trees, a navy outline, light from the upper left.
+COPPER = [tone('green', i) for i in range(5)]          # verdigris copper, 2e4040 .. 93c297
+HINOKI, HINOKI_HI, HINOKI_LO, HINOKI_DK = tone('cream', 1), tone('cream', 2), tone('cream', 0), rgb('7c5d56')   # bare cypress
+STRAW, STRAW_HI, STRAW_LO = tone('gold', 2), tone('gold', 3), tone('gold', 1)
+H_LAMP, H_LAMP_HI, H_LAMP_LO, H_LAMP_DK = tone('gold', 2), tone('gold', 3), tone('gold', 1), tone('gold', 0)
+H_PANE, H_PANE_LO, H_GLARE = rgb('2c2d51'), rgb('2a3151'), rgb('4b6396')         # the pack's dark glass
+H_RED, H_RED_HI, H_RED_LO = tone('red', 1), tone('red', 2), tone('red', 0)
+H_STONE, H_STONE_HI, H_STONE_LO, H_STONE_DK = tone('steel', 4), tone('steel', 5), tone('steel', 3), tone('steel', 2)
+H_WHITE, H_PAPER, H_DARK = tone('cream', 3), tone('cream', 2), tone('night', 3)
+H_SHADE = rgb('2a3151', 90)
 KANA['shi'] = ['.......', '#......', '.#....#', '#....#.', '.#..#..', '...#...', '.##....']
 
 
 def kushida_hall():
-    """Kushida shrine's own hall: bare cypress under a verdigris copper roof,
-    a cusped gable (karahafu) over the steps, the great straw rope, two big
-    white lanterns. Not the stock vermilion shrine, not Tochoji's tile."""
+    """Kushida shrine's own hall: bare cypress under a verdigris copper hip roof
+    seen from above, tiled in courses, a cusped gable (karahafu) over the steps,
+    the great straw rope, two big paper lanterns lit dim gold, latticed windows
+    of dark glass. Not the stock vermilion shrine, not Tochoji's tile."""
     im, d = canvas(5, 4)                 # 160 x 128
-    light, dark, hi, deep = COPPER_P
-    roof(d, 14, 50, (38, 121), (2, 157), pal=COPPER_P, p=1.5)
-    for x0 in (31, 123):                                          # gilt ridge ends in place of the tile caps
-        d.rectangle([x0, 6, x0 + 5, 14], fill=rgb('e8b84a')); d.line([(x0, 6), (x0, 14)], fill=rgb('fff0a8'))
-        d.line([(x0 + 5, 7), (x0 + 5, 14)], fill=rgb('a8762c'))
-    # the eave's shadow and the rafter ends
-    d.rectangle([8, 54, 151, 58], fill=HINOKI_DK)
+    px = im.load()
+    # ---- the roof from above: a ridge at the back, the front slope between two
+    # hips, the hip ends either side (the west one lit, the east in shade) ------
+    top, eave = 6, 49
+    for y in range(top, eave + 1):
+        hip = (y - top) * 37 / (eave - top)                       # the hips run out to the eave's corners
+        side = min(37, (y - top) * 37 / 14)                       # the hip ends' outer edges, steeper
+        hl, hr, ol, orr = round(41 - hip), round(118 + hip), round(41 - side), round(118 + side)
+        course = (y - top) % 4
+        for x in range(ol, orr + 1):
+            if x < hl - 1 or x > hr + 1:                          # a hip end: tiles running down it
+                west = x < hl
+                c = (COPPER[4] if course == 1 else COPPER[3]) if west else (COPPER[2] if course == 1 else COPPER[1])
+                if course == 0:
+                    c = COPPER[2] if west else COPPER[0]
+            elif x in (hl - 1, hl, hl + 1, hr - 1, hr, hr + 1):  # the hip ridges, capped
+                c = COPPER[4] if x <= hl else (COPPER[0] if x == hr + 1 else COPPER[2])
+            else:                                                 # the front slope: courses, staggered seams
+                c = COPPER[3] if course in (1, 2) else COPPER[2]
+                if course == 0:
+                    c = COPPER[1] if (x + (y - top) // 4 * 3) % 6 else COPPER[0]
+                elif course == 1 and x < hl + 10:
+                    c = COPPER[4]                                 # the west of each course catches the light
+                elif x > hr - 8 and course != 1:
+                    c = COPPER[1]                                 # the east end turns away
+            px[x, y] = c
+    for y in (eave + 1, eave + 2):                                # the eave's lip, lit along its top
+        d.line([(4, y), (155, y)], fill=COPPER[4] if y == eave + 1 else COPPER[1])
+    d.line([(4, eave + 3), (155, eave + 3)], fill=COPPER[0])
+    d.rectangle([40, top - 3, 119, top], fill=COPPER[1])          # the ridge, its top lit
+    d.line([(40, top - 3), (119, top - 3)], fill=COPPER[4]); d.line([(40, top - 2), (119, top - 2)], fill=COPPER[3])
+    for x0 in (34, 120):                                          # gilt ridge ends in place of the tile caps
+        d.rectangle([x0, top - 5, x0 + 5, top + 1], fill=H_LAMP)
+        d.line([(x0, top - 5), (x0, top + 1)], fill=H_LAMP_HI); d.line([(x0 + 5, top - 4), (x0 + 5, top + 1)], fill=H_LAMP_DK)
+    # the eave's shadow on the rafter ends
+    d.rectangle([8, 53, 151, 58], fill=HINOKI_DK)
     for x in range(10, 151, 5):
-        d.rectangle([x, 55, x + 2, 57], fill=HINOKI_HI); d.point((x + 2, 57), fill=HINOKI_LO)
+        d.rectangle([x, 55, x + 2, 57], fill=HINOKI); d.point((x, 55), fill=HINOKI_HI); d.point((x + 2, 57), fill=HINOKI_LO)
     d.rectangle([8, 59, 151, 61], fill=HINOKI); d.line([(8, 59), (151, 59)], fill=HINOKI_HI)
-    # the wall: cypress boards, latticed shutters, vermilion only on the rail
-    planks(d, 10, 62, 149, 108, (HINOKI, HINOKI_HI, HINOKI_LO, HINOKI_DK), w=7, seed=1)
-    d.rectangle([124, 62, 149, 108], fill=HINOKI_LO)
+    # ---- the wall: cypress boards, latticed windows of dark glass, vermilion only on the rail ----
+    for y in range(62, 109):
+        for x in range(10, 150):
+            k = (x - 10) % 7
+            c = HINOKI_HI if k == 0 else (HINOKI_LO if k == 6 else HINOKI)
+            if x >= 124:
+                c = HINOKI_LO if k else HINOKI_DK                 # the east bay in the roof's shade
+            px[x, y] = c
+    for y in range(62, 65):                                       # the eave's shadow along the top of the wall
+        for x in range(10, 150):
+            if y < 64 or (x + y) % 2:
+                px[x, y] = HINOKI_DK
     for x0, x1 in ((14, 46), (112, 144)):
         d.rectangle([x0, 66, x1, 94], fill=HINOKI_DK)
         for y in range(67, 94):
             for x in range(x0 + 1, x1):
-                d.point((x, y), fill=rgb('40302a') if ((x - x0) % 4 and (y - 66) % 4) else HINOKI)
-        d.line([(x0, 80), (x1, 80)], fill=HINOKI_DK)
+                u = (x - x0) + (y - 66)                           # the glare slants up to the right
+                c = H_PANE_LO if y < 69 else H_PANE
+                if u % 24 in (9, 10, 11) or u % 24 == 14:
+                    c = H_GLARE
+                px[x, y] = c
+        for x in range(x0 + 8, x1, 8):                            # the lattice: mullions and a transom
+            d.line([(x, 67), (x, 93)], fill=HINOKI_LO)
+        d.line([(x0 + 1, 80), (x1 - 1, 80)], fill=HINOKI_LO); d.line([(x0 + 1, 81), (x1 - 1, 81)], fill=HINOKI_DK)
+        d.line([(x0, 95), (x1, 95)], fill=HINOKI_HI)              # the sill, lit
     timber_posts(d, (8, 48, 108, 148), 62, 110, (HINOKI, HINOKI_HI, HINOKI_LO, HINOKI_DK))
-    d.rectangle([10, 98, 149, 100], fill=VERM); d.line([(10, 98), (149, 98)], fill=VERM_HI)       # the veranda rail
+    d.rectangle([10, 98, 149, 100], fill=H_RED); d.line([(10, 98), (149, 98)], fill=H_RED_HI)    # the veranda rail
+    d.line([(10, 101), (149, 101)], fill=H_RED_LO)
     for x in range(12, 149, 6):
-        d.line([(x, 101), (x, 108)], fill=VERM_LO)
-    # the open centre: the dark hall, a mirror on its stand, the bell rope, the offering box
-    d.rectangle([52, 62, 107, 110], fill=rgb('2a1c1e'))
+        d.line([(x, 102), (x, 108)], fill=H_RED_LO)
+    # the open centre: the dark hall, a mirror on its stand in lamplight, the bell rope, the offering box
+    d.rectangle([52, 62, 107, 110], fill=H_DARK)
     for y in range(64, 110):
         for x in range(54, 106):
             q = math.hypot((x - 80) / 26, (y - 84) / 28)
             if q < 1:
-                d.point((x, y), fill=(rgb('f6dc8c'), rgb('d9aa5c'), rgb('8a5e3c'), rgb('4a2e2a'))[min(3, int(q * 4))])
-    d.ellipse([74, 74, 86, 86], fill=rgb('e9f2f6')); d.ellipse([74, 74, 86, 86], outline=rgb('e8b84a'))
-    d.arc([76, 76, 84, 84], 180, 300, fill=WHITE); d.rectangle([77, 87, 83, 90], fill=rgb('a8762c'))
-    d.rectangle([70, 91, 90, 93], fill=rgb('8a3a34'))
+                px[x, y] = (H_LAMP_HI, H_LAMP, H_LAMP_LO, H_LAMP_DK)[min(3, int(q * 4))]
+    d.ellipse([74, 74, 86, 86], fill=H_WHITE); d.ellipse([74, 74, 86, 86], outline=H_LAMP_DK)
+    d.arc([76, 76, 84, 84], 180, 300, fill=H_STONE_HI); d.rectangle([77, 87, 83, 90], fill=H_LAMP_DK)
+    d.rectangle([70, 91, 90, 93], fill=H_RED_LO)
     for y in range(64, 96):                                       # the bell rope: red and white twist
-        d.point((66, y), fill=XRED if (y // 2) % 2 else WHITE); d.point((67, y), fill=WHITE if (y // 2) % 2 else XRED)
-    d.ellipse([63, 60, 70, 66], fill=rgb('e8b84a')); d.point((65, 62), fill=rgb('fff0a8'))
+        d.point((66, y), fill=H_RED if (y // 2) % 2 else H_WHITE); d.point((67, y), fill=H_WHITE if (y // 2) % 2 else H_RED)
+    d.ellipse([63, 60, 70, 66], fill=H_LAMP); d.point((65, 62), fill=H_LAMP_HI)
     bar(d, 66, 99, 94, 109, HINOKI_LO, HINOKI, HINOKI_DK)         # the offering box, slatted
     for x in range(69, 93, 4):
-        d.line([(x, 99), (x, 102)], fill=rgb('2a1c1e'))
+        d.line([(x, 99), (x, 102)], fill=H_DARK)
     d.line([(66, 103), (94, 103)], fill=HINOKI_HI)
-    # ---- the cusped gable over the steps: a copper bow with upturned ends ---------------------
+    # ---- the cusped gable over the steps: a copper bow with upturned ends, tiled ---------------
     def bow(x):
         t = (x - 80) / 34
         return 44 - 14 * math.cos(t * math.pi / 2) ** 0.8 + 5 * max(0.0, abs(t) - 0.6) ** 1.0 * -2.0
     for x in range(46, 115):
         y = round(bow(x))
         for k in range(6):
-            c = hi if k == 0 else (light if k < 3 else (dark if k < 5 else deep))
+            c = COPPER[4] if k == 0 else (COPPER[3] if k < 3 else (COPPER[2] if k < 5 else COPPER[0]))
             if x > 96 and 0 < k < 3:
-                c = dark
-            d.point((x, y + k), fill=c)
-        if (x - 46) % 4 == 0:
-            d.point((x, y + 2), fill=dark)
-        for yy in range(y + 6, 58):                               # the gable's face: white plaster
-            d.point((x, yy), fill=PLASTER if x < 96 else PLASTER_LO)
+                c = COPPER[2]
+            if (x - 46) % 4 == 0 and 0 < k < 5:
+                c = COPPER[1]                                     # the joints of its tiles
+            px[x, y + k] = c
+        for yy in range(y + 6, 58):                               # the gable's face: white plaster, its foot shaded
+            px[x, yy] = (H_WHITE if x < 96 else H_PAPER) if yy < 55 else H_PAPER
     for x in (46, 114):
-        d.rectangle([x - 1, round(bow(x)) - 2, x + 1, round(bow(x)) + 1], fill=rgb('e8b84a'))
+        d.rectangle([x - 1, round(bow(x)) - 2, x + 1, round(bow(x)) + 1], fill=H_LAMP)
+        d.point((x - 1, round(bow(x)) - 2), fill=H_LAMP_HI)
     # in the gable: a dark plaque, ku-shi-da in gold, a gilt boss over it
-    bar(d, 65, 40, 95, 52, rgb('1c1a1f'), None, None); d.rectangle([65, 40, 95, 52], outline=rgb('e8b84a'))
-    kana(d, ['ku', 'shi', 'da'], 69, 43, rgb('fff0a8'))
-    d.ellipse([77, 33, 83, 38], fill=rgb('e8b84a')); d.point((79, 34), fill=rgb('fff0a8'))
+    d.rectangle([65, 40, 95, 52], fill=H_DARK); d.rectangle([65, 40, 95, 52], outline=H_LAMP)
+    d.line([(66, 51), (94, 51)], fill=H_PANE_LO)
+    kana(d, ['ku', 'shi', 'da'], 69, 43, H_LAMP_HI)
+    d.ellipse([77, 33, 83, 38], fill=H_LAMP); d.point((79, 34), fill=H_LAMP_HI)
     d.rectangle([48, 56, 111, 58], fill=HINOKI_DK); d.line([(48, 56), (111, 56)], fill=HINOKI_HI)
     timber_posts(d, (50, 106), 58, 110, (HINOKI, HINOKI_HI, HINOKI_LO, HINOKI_DK))
     # the great straw rope between the porch posts, its paper streamers and tassels
@@ -2505,58 +2564,77 @@ def kushida_hall():
         y = 61 + round(5 * math.sin(t * math.pi))
         th = 2 + round(1.6 * math.sin(t * math.pi))
         for k in range(th + 1):
-            d.point((x, y + k), fill=STRAW_HI if k == 0 else (STRAW_LO if k == th or (x + k) % 4 == 0 else STRAW))
+            px[x, y + k] = STRAW_HI if k == 0 else (STRAW_LO if k == th or (x + k) % 4 == 0 else STRAW)
     for x in (64, 80, 96):
         y = 61 + round(5 * math.sin((x - 53) / 53 * math.pi)) + 4
         d.line([(x - 4, y), (x - 4, y + 5)], fill=STRAW_LO); d.line([(x - 3, y), (x - 3, y + 4)], fill=STRAW)
         for k in range(4):                                        # a shide: a zigzag of white paper
-            d.rectangle([x + (k % 2) * 2, y + k * 2, x + 2 + (k % 2) * 2, y + k * 2 + 1], fill=WHITE)
-    # two big paper lanterns on the porch posts
+            d.rectangle([x + (k % 2) * 2, y + k * 2, x + 2 + (k % 2) * 2, y + k * 2 + 1], fill=H_WHITE)
+    # two big paper lanterns on the porch posts, lit: dim gold paper, the glow at their hearts
     for x in (39, 111):
-        d.line([(x + 5, 60), (x + 5, 64)], fill=SOOT)
-        d.rectangle([x + 2, 64, x + 8, 65], fill=SOOT)
-        d.ellipse([x, 65, x + 10, 85], fill=rgb('fbf6ea')); d.ellipse([x + 6, 67, x + 10, 83], fill=PAPER_LO)
+        d.line([(x + 5, 60), (x + 5, 64)], fill=H_DARK)
+        d.rectangle([x + 2, 64, x + 8, 65], fill=H_DARK)
+        d.ellipse([x, 65, x + 10, 85], fill=H_LAMP)
+        d.ellipse([x + 1, 67, x + 7, 83], fill=H_LAMP_HI)
+        d.ellipse([x + 7, 68, x + 10, 82], fill=H_LAMP_LO)
         for y in range(69, 84, 3):
-            d.line([(x + 1, y), (x + 9, y)], fill=PAPER_LO)
-        plum_crest(d, x + 5, 75, XRED, 2)
-        d.rectangle([x + 2, 85, x + 8, 86], fill=SOOT)
+            d.line([(x + 1, y), (x + 9, y)], fill=H_LAMP_LO)
+        plum_crest(d, x + 5, 75, H_RED, 2)
+        d.rectangle([x + 2, 85, x + 8, 86], fill=H_DARK)
     # ---- the stone base and steps -----------------------------------------------------------
-    d.rectangle([4, 110, 155, 122], fill=GRAN); d.line([(4, 110), (155, 110)], fill=GRAN_HI)
-    d.rectangle([4, 119, 155, 122], fill=GRAN_LO)
+    d.rectangle([4, 110, 155, 122], fill=H_STONE); d.line([(4, 110), (155, 110)], fill=H_STONE_HI)
+    d.rectangle([4, 119, 155, 122], fill=H_STONE_LO); d.line([(4, 122), (155, 122)], fill=H_STONE_DK)
     for x in range(4, 156, 19):
-        d.line([(x, 111), (x, 118)], fill=GRAN_LO)
+        d.line([(x, 111), (x, 118)], fill=H_STONE_LO)
     for k in range(4):
         y = 110 + k * 4
-        d.rectangle([54 - k * 2, y, 105 + k * 2, y + 3], fill=GRAN_HI if k % 2 == 0 else GRAN)
-        d.line([(54 - k * 2, y + 3), (105 + k * 2, y + 3)], fill=GRAN_LO)
-    outline(im)
+        d.rectangle([54 - k * 2, y, 105 + k * 2, y + 3], fill=H_STONE_HI if k % 2 == 0 else H_STONE)
+        d.line([(54 - k * 2, y + 3), (105 + k * 2, y + 3)], fill=H_STONE_LO)
+    outline(im, NAVY)
+    for y, inset in zip(range(124, 128), (0, 1, 3, 6)):           # its shadow on the ground
+        for x in range(3 + inset, 157 - inset):
+            if px[x, y][3] == 0:
+                px[x, y] = H_SHADE
     return im
+
+
+# the autumn plum's leaves, shaded the way the pack's trees are: lit in autumn colours,
+# turning through pale green and teal to blue and purple in the shade
+PLUM_GOLD = [rgb(c) for c in ('f3d890', 'f3d890', 'c6a663', 'c6a663', 'a7843b', '93c297', '508582', '425faa', '3c396d')]
+PLUM_RUSSET = [rgb(c) for c in ('f6a583', 'ce6a42', 'ce6a42', 'aa4d31', 'aa4d31', '6c8e7f', '508582', '314b8e', '3c396d')]
 
 
 def plum_autumn():
     """The flying plum in mid November: a gnarled trunk, bare twigs and the
-    last yellow leaves, inside its low shrine fence with a name board."""
+    last yellow and russet leaves in ragged clumps, inside its low shrine fence
+    with a name board."""
     im, d = canvas(3, 3)                 # 96 x 96
-    bark, bark_hi, bark_lo = rgb('5a4640'), rgb('806a5c'), rgb('3a2c2c')
+    bark, bark_hi, bark_lo = rgb('7f513b'), rgb('a68777'), rgb('594b45')   # the pack's bark
 
     def limb(pts, w):
         for (xa, ya), (xb, yb) in zip(pts, pts[1:]):
-            d.line([(xa, ya), (xb, yb)], fill=bark, width=w)
-            d.line([(xa - (w // 2), ya), (xb - (w // 2), yb)], fill=bark_hi)
-            if w > 2:
-                d.line([(xa + w // 2, ya), (xb + w // 2, yb)], fill=bark_lo)
+            steps = max(abs(xb - xa), abs(yb - ya))
+            for n in range(steps + 1):
+                x, y = xa + (xb - xa) * n // steps, ya + (yb - ya) * n // steps
+                d.rectangle([x - w // 2, y, x - w // 2 + w - 1, y], fill=bark)
+                d.point((x - w // 2, y), fill=bark_hi)
+                if w > 2:
+                    d.point((x - w // 2 + w - 1, y), fill=bark_lo)
 
     # the fence's back rail first, so the trunk stands inside it
-    d.line([(16, 70), (80, 70)], fill=VERM_LO)
+    d.line([(16, 70), (80, 70)], fill=H_RED_LO)
     for x in (16, 32, 48, 64, 80):
-        d.rectangle([x - 1, 64, x, 72], fill=VERM_LO)
-    # the trunk: thick, leaning west, forking low
-    d.polygon([(42, 86), (39, 70), (41, 58), (47, 50), (53, 50), (54, 60), (55, 72), (58, 86)], fill=bark)
-    d.polygon([(42, 86), (39, 70), (41, 58), (47, 50), (49, 50), (45, 60), (44, 72), (46, 86)], fill=bark_hi)
-    d.polygon([(54, 60), (55, 72), (58, 86), (54, 86), (52, 70)], fill=bark_lo)
+        d.rectangle([x - 1, 64, x, 72], fill=H_RED_LO)
+    # the trunk: thick, leaning west, forking low; lit on the west, dark on the east
+    for y in range(50, 87):
+        t = (y - 50) / 36
+        x0, x1 = round(47 - 7 * math.sin(t * math.pi * 0.8)), round(53 + 4 * t * t)
+        for x in range(x0, x1 + 1):
+            px_c = bark_hi if x < x0 + 2 else (bark_lo if x > x1 - 3 else bark)
+            d.point((x, y), fill=px_c)
     for x, y in ((47, 62), (50, 74), (45, 80), (51, 56)):
         d.point((x, y), fill=bark_lo); d.point((x + 1, y + 1), fill=bark_lo)
-    d.ellipse([47, 66, 51, 70], fill=bark_lo); d.point((48, 67), fill=bark)      # a knot hole
+    d.rectangle([47, 66, 50, 69], fill=bark_lo); d.point((48, 67), fill=H_DARK)      # a knot hole
     limbs = (
         ([(45, 54), (36, 44), (24, 38), (12, 36)], 4), ([(36, 44), (30, 30), (22, 20)], 3),
         ([(48, 52), (46, 36), (40, 22), (42, 10)], 4), ([(46, 36), (54, 24), (56, 12)], 3),
@@ -2568,34 +2646,30 @@ def plum_autumn():
     )
     for pts, w in limbs:
         limb(pts, w)
-    # the last leaves: small yellow and russet clusters at the twig ends, more gaps than leaves
-    leaf = (rgb('e2bc48'), rgb('d09a3a'), rgb('b8683a'), rgb('f0d870'), rgb('9c8a3c'))
-    tips = [pts[-1] for pts, w in limbs if w == 2] + [(22, 20), (56, 12), (78, 18), (30, 30), (68, 28), (40, 22)]
-    for i, (x, y) in enumerate(tips):
-        for k in range(5 + i % 4):
-            dx, dy = (h3(i, k, 3) % 9) - 4, (h3(i, k, 7) % 7) - 3
-            c = leaf[(i + k) % 5]
-            d.rectangle([x + dx, y + dy, x + dx + 1, y + dy + 1], fill=c)
-            d.point((x + dx, y + dy), fill=leaf[3] if (i + k) % 3 == 0 else c)
+    # the last leaves: ragged clumps along the outer twigs, yellow and russet by turns, with
+    # gaps between them where the bare twigs show
+    foliage(im, [(13, 32, 8, 6), (37, 19, 7, 6), (62, 16, 8, 6), (86, 33, 7, 6), (71, 26, 6, 5)], PLUM_RUSSET, 11)
+    foliage(im, [(22, 19, 9, 7), (48, 8, 9, 6), (80, 15, 9, 7), (8, 40, 5, 4), (91, 41, 5, 4)], PLUM_GOLD, 3)
     # a straw rope with paper streamers round the trunk
     d.rectangle([40, 60, 54, 62], fill=STRAW); d.line([(40, 60), (54, 60)], fill=STRAW_HI); d.line([(40, 62), (54, 62)], fill=STRAW_LO)
     for x in (43, 48, 52):
-        d.rectangle([x, 63, x + 1, 66], fill=WHITE)
+        d.rectangle([x, 63, x + 1, 66], fill=H_WHITE)
     # the fence's front and sides: low vermilion posts and two rails, on a stone kerb
-    d.rectangle([10, 86, 86, 90], fill=GRAN); d.line([(10, 86), (86, 86)], fill=GRAN_HI); d.line([(10, 90), (86, 90)], fill=GRAN_DK)
+    d.rectangle([10, 86, 86, 90], fill=H_STONE); d.line([(10, 86), (86, 86)], fill=H_STONE_HI)
+    d.line([(10, 90), (86, 90)], fill=H_STONE_DK)
     for x in range(10, 87, 13):
-        d.line([(x, 87), (x, 89)], fill=GRAN_LO)
+        d.line([(x, 87), (x, 89)], fill=H_STONE_LO)
     for y in (76, 81):
-        d.rectangle([12, y, 84, y + 1], fill=VERM); d.line([(12, y), (84, y)], fill=VERM_HI)
+        d.rectangle([12, y, 84, y + 1], fill=H_RED); d.line([(12, y), (84, y)], fill=H_RED_HI)
     for x in (12, 26, 40, 56, 70, 83):
-        bar(d, x, 72, x + 2, 86, VERM, VERM_HI, VERM_LO); d.rectangle([x - 1, 70, x + 3, 71], fill=SOOT)
-    d.line([(13, 73), (16, 70)], fill=VERM_LO); d.line([(84, 73), (80, 70)], fill=VERM_LO)
+        bar(d, x, 72, x + 2, 86, H_RED, H_RED_HI, H_RED_LO); d.rectangle([x - 1, 70, x + 3, 71], fill=H_DARK)
+    d.line([(13, 73), (16, 70)], fill=H_RED_LO); d.line([(84, 73), (80, 70)], fill=H_RED_LO)
     # the name board
-    bar(d, 62, 73, 80, 84, rgb('fbf6ea'), WHITE, PAPER_LO); d.rectangle([62, 73, 80, 84], outline=DWOOD)
-    kana(d, ['u', 'me'], 64, 75, rgb('3a2c2a'))
-    outline(im)
+    bar(d, 62, 73, 80, 84, H_PAPER, H_WHITE, tone('cream', 1)); d.rectangle([62, 73, 80, 84], outline=bark_lo)
+    kana(d, ['u', 'me'], 64, 75, H_DARK)
+    outline(im, NAVY)
     return grounded(im, ellipses=[(8, 84, 88, 95)], a=50,
-                    leaves=(6, 90, 88, 95, ((226, 188, 72), (208, 154, 58), (184, 104, 58)), 22, 5))
+                    leaves=(6, 90, 88, 95, (PLUM_GOLD[1][:3], PLUM_RUSSET[1][:3], PLUM_RUSSET[2][:3]), 22, 5))
 
 
 def mannequin(d, x, y, coat, hi):
@@ -2916,11 +2990,12 @@ PIECES = [
         lit=[[2.5, 2.65, GOLD_C, 1.4, 0.7], [1.4, 2.35, 0xfff0d8, 0.7, 0.7], [3.6, 2.35, 0xfff0d8, 0.7, 0.7],
              [2.5, 1.45, GOLD_C, 0.7, 0.4]]),
      "Kushida shrine's own hall, in place of the stock vermilion shrine: bare cypress boards and latticed "
-     'shutters under a verdigris copper roof with gilt ridge ends, a cusped copper gable (karahafu) over the '
-     'steps with a black plaque lettered ku-shi-da in gold, the great straw rope with paper streamers '
-     'between the porch posts, two big white paper lanterns with red plum crests, and in the open centre a '
-     'mirror on its stand in lamplight, a red-and-white bell rope and the slatted offering box. Vermilion '
-     'only on the veranda rail. Stone base and steps; the door is the middle cell.'),
+     'windows of dark glass with a slanted glare under a verdigris copper hip roof seen from above, tiled '
+     'in courses, with gilt ridge ends; a cusped copper gable (karahafu) over the steps with a dark plaque '
+     'lettered ku-shi-da in gold, the great straw rope with paper streamers between the porch posts, two '
+     'big paper lanterns lit dim gold with red plum crests, and in the open centre a mirror on its stand '
+     'in lamplight, a red-and-white bell rope and the slatted offering box. Vermilion only on the veranda '
+     'rail. Stone base and steps; the door is the middle cell.'),
     ('fukuoka-hakata-ori-shop_0_0', ori_shop, (4, 4), OH, dict(
         door=[[2, 3]], solid=rows(4, 2, 3),
         lit=[[1.05, 3.0, WARM_C, 1.1, 0.8], [2.4, 3.4, WARM_C, 0.7, 0.75], [3.4, 3.2, WARM_C, 0.6, 0.5]]),
