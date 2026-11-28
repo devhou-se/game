@@ -4,6 +4,8 @@
 // is not in check_generators.ART_TOOLS yet, so the last test is the guard that it rebuilds them.
 // Issue #385 (part 1 of #312): the castle's gate, turret, storehouse and five wall pieces and the Tsuzumi-mon
 // are held to the same recipe, their wall pieces to their joins, and castle_wall() leaves nagamachi-wall* alone.
+// Issue #386 (part 2 of #312): Kenrokuen's lanterns, pines, tea house, bridge, moss and nine path tiles are held
+// to the recipe too, with 2a3151 at alpha 90 their one translucent colour, and the path tiles to their joins.
 module.exports = ({ test, assert, fs, path, GV2 }) => {
     const { spawnSync } = require('child_process');
     const png = require(path.join(GV2, 'tools', 'png'));
@@ -184,6 +186,119 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         }
     });
 
+    const GARDEN = {                        // key -> size in cells
+        'kenrokuen-kotoji_0_0': [2, 3], 'kenrokuen-kotoji-water_0_0': [2, 3],
+        'kenrokuen-yukitsuri_0_0': [3, 4], 'kenrokuen-yukitsuri-small_0_0': [2, 3],
+        'kenrokuen-teahouse_0_0': [4, 3], 'kenrokuen-bridge_0_0': [3, 1], 'garden-moss_0_0': [1, 1],
+    };
+    const PATH_ROLES = ['center', 'edge-n', 'edge-s', 'edge-e', 'edge-w', 'corner-nw', 'corner-ne', 'corner-sw', 'corner-se'];
+    for (const r of PATH_ROLES) GARDEN[`garden-path-autotile_${r}`] = [1, 1];
+    const STANDING = ['kenrokuen-kotoji_0_0', 'kenrokuen-kotoji-water_0_0', 'kenrokuen-yukitsuri_0_0',
+        'kenrokuen-yukitsuri-small_0_0', 'kenrokuen-teahouse_0_0'];
+    const FLAT = Object.keys(GARDEN).filter((k) => !STANDING.includes(k));   // the bridge and the ten ground tiles
+    const GARDEN_BUILDERS = ['kotoji', 'g_rope', 'yukitsuri', 'teahouse', 'stone_bridge', 'moss_px', 'garden_moss',
+        '_path_part', 'garden_path', 'spans', 'lerp_rows', 'cast', 'dots'];
+
+    test('kanazawa art: the garden pieces keep their sizes and are pixel-doubled, clear, opaque or the shade (#386)', () => {
+        for (const [key, [cw, ch]] of Object.entries(GARDEN)) {
+            const { width: w, height: h, data } = load(key);
+            assert.deepStrictEqual([w, h], [cw * 64, ch * 64], key);
+            const at = (x, y) => (y * w + x) * 4;
+            for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
+                const c = data.readUInt32BE(at(x, y)), a = data[at(x, y) + 3];
+                assert.ok([[1, 0], [0, 1], [1, 1]].every(([dx, dy]) => data.readUInt32BE(at(x + dx, y + dy)) === c), `${key}: (${x},${y}) is not a 2x2 block`);
+                assert.ok(a === 0 || a === 255 || (a === 90 && hex(data, at(x, y)) === '2a3151'), `${key}: (${x},${y}) alpha ${a}`);
+                if (FLAT.includes(key)) assert.strictEqual(a, 255, `${key}: (${x},${y}) is not opaque`);
+            }
+        }
+    });
+
+    test('kanazawa art: the garden pieces use sheet colours only, 24 the tea house and 16 else, no lit yellow (#386)', () => {
+        const known = sheets();
+        for (const key of Object.keys(GARDEN)) {
+            const { data } = load(key);
+            const counts = new Map();
+            let opaque = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i + 3] !== 255) continue;
+                opaque++;
+                counts.set(hex(data, i), (counts.get(hex(data, i)) || 0) + 1);
+            }
+            assert.ok(counts.size <= (key === 'kenrokuen-teahouse_0_0' ? 24 : 16), `${key}: ${counts.size} colours`);
+            for (const [c, n] of counts) {
+                assert.ok(known.has(c), `${key}: ${c} is in no GuttyKreum sheet`);
+                // the ground tiles are one floor colour, as the pack's grass is
+                if (STANDING.includes(key) || key === 'kenrokuen-bridge_0_0') assert.ok(n * 2 <= opaque, `${key}: ${c} covers ${n} of ${opaque} pixels`);
+            }
+            for (const bad of ['f6dc8c', 'f2c66a', 'f9c22e', '2b373c', '000000']) assert.ok(!counts.has(bad), `${key}: ${bad}`);
+            assert.ok((counts.get('f3d890') || 0) < opaque * 0.03, `${key}: f3d890 on ${counts.get('f3d890')} of ${opaque}`);
+        }
+    });
+
+    test('kanazawa art: the standing garden pieces are edged in ink or a water mark, the bridge inked along its sides (#386)', () => {
+        for (const key of STANDING) {
+            const { width: w, height: h, data } = load(key);
+            const notOpaque = (x, y) => x >= 0 && y >= 0 && x < w && y < h && data[(y * w + x) * 4 + 3] !== 255;
+            for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+                if (data[(y * w + x) * 4 + 3] !== 255 || ![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => notOpaque(x + dx, y + dy))) continue;
+                const c = hex(data, (y * w + x) * 4);
+                assert.ok(['0a1627', '8ec2fa'].includes(c), `${key}: (${x},${y}) is on the silhouette and ${c}`);
+            }
+        }
+        const { width: w, data } = load('kenrokuen-bridge_0_0');
+        for (const y of [0, 1, 62, 63]) for (let x = 0; x < w; x++) {
+            assert.strictEqual(hex(data, (y * w + x) * 4), '0a1627', `kenrokuen-bridge: (${x},${y})`);
+        }
+    });
+
+    test('kanazawa art: the garden path tiles join the moss and each other (#386)', () => {
+        const moss = load('garden-moss_0_0');
+        const tile = (role) => load(`garden-path-autotile_${role}`);
+        const at = (img, x, y) => img.data.readUInt32BE((y * img.width + x) * 4);
+        const MOSS = ['357570', '488582', '6c8e7f', '2e4040'], GRAVEL = ['d7d0ba', 'eae9e8', 'cdc8c5', 'b3aaa0'];
+        const kind = (img, x, y) => {
+            const c = hex(img.data, (y * img.width + x) * 4);
+            return MOSS.includes(c) ? 'moss' : (GRAVEL.includes(c) ? 'gravel' : 'stone');
+        };
+        for (const role of PATH_ROLES) {
+            const t = tile(role), sides = role === 'center' ? '' : role.split('-')[1];
+            for (let i = 0; i < 6; i++) for (let j = 0; j < 64; j++) {
+                const pts = { n: [j, i], s: [j, 63 - i], w: [i, j], e: [63 - i, j] };
+                for (const s of sides) {
+                    const [x, y] = pts[s];
+                    assert.strictEqual(at(t, x, y), at(moss, x, y), `${role}: (${x},${y}) on its ${s} side is not garden-moss's`);
+                }
+            }
+        }
+        const across = [['corner-nw', 'edge-n'], ['edge-n', 'edge-n'], ['edge-n', 'corner-ne'], ['corner-sw', 'edge-s'],
+            ['edge-s', 'edge-s'], ['edge-s', 'corner-se'], ['edge-w', 'center'], ['center', 'edge-e']];
+        for (const [a, b] of across) {
+            const A = tile(a), B = tile(b);
+            for (let y = 0; y < 64; y++) assert.strictEqual(kind(A, 63, y), kind(B, 0, y), `${a}|${b}: row ${y}`);
+        }
+        const down = [['corner-nw', 'edge-w'], ['edge-w', 'edge-w'], ['edge-w', 'corner-sw'], ['corner-ne', 'edge-e'],
+            ['edge-e', 'edge-e'], ['edge-e', 'corner-se'], ['edge-n', 'center'], ['center', 'edge-s']];
+        for (const [a, b] of down) {
+            const A = tile(a), B = tile(b);
+            for (let x = 0; x < 64; x++) assert.strictEqual(kind(A, x, 63), kind(B, x, 0), `${a}/${b}: column ${x}`);
+        }
+    });
+
+    test('kanazawa art: the garden builders draw with rectangles and pixels only (#386)', () => {
+        const src = fs.readFileSync(TOOL, 'utf8').split('\n');
+        for (const name of GARDEN_BUILDERS) {
+            const start = src.findIndex((l) => l.startsWith(`def ${name}(`));
+            assert.ok(start >= 0, `def ${name}`);
+            let end = src.findIndex((l, i) => i > start && /^(def |[A-Z_]+ = |# ==)/.test(l));
+            const body = src.slice(start, end < 0 ? undefined : end).join('\n');
+            for (const call of ['.polygon(', '.ellipse(', '.arc(', '.pieslice(', '.chord(', '.line(', 'shade(im',
+                'blob(', 'math.sin', 'math.cos']) {
+                assert.ok(!body.includes(call), `${name} calls ${call}`);
+            }
+            assert.ok(!/\broof\(/.test(body), `${name} calls roof()`);
+        }
+    });
+
     const rebuild = (keys) => {             // the keys the tool draws differently from the committed PNGs, or null without Pillow
         const snippet = [
             'import json, sys',
@@ -216,6 +331,11 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
 
     test('kanazawa art: generate_kanazawa_art.py rebuilds the castle pieces and leaves nagamachi-wall* alone (#385)', () => {
         const differ = rebuild([...Object.keys(CASTLE), ...NAGA]);
+        if (differ) assert.deepStrictEqual(differ, [], 'the committed PNGs are what the tool draws');
+    });
+
+    test('kanazawa art: generate_kanazawa_art.py rebuilds the committed garden pieces (#386)', () => {
+        const differ = rebuild(Object.keys(GARDEN));
         if (differ) assert.deepStrictEqual(differ, [], 'the committed PNGs are what the tool draws');
     });
 

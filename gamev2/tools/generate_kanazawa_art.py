@@ -99,7 +99,7 @@ of tools/generate_hokkaido.py, generate_sendai_art.py,
 generate_sapporo_art.py, generate_hokuriku_art.py and house_look.py
 (importing them draws nothing). The ten building fronts of Higashi Chaya,
 Katamachi and Nagamachi are drawn in the house look (#290; see "the house
-look" below). Plain python3 here has no Pillow;
+look" below), and so are Kenrokuen's garden pieces (#386). Plain python3 here has no Pillow;
 /Library/Developer/CommandLineTools/usr/bin/python3 does. Run from gamev2/:
     python3 tools/generate_kanazawa_art.py [--sheet sheet.png] [--scenes dir] [--manifest out.json]
 --scenes also writes each scene as <name>_night.png: the night grade and the
@@ -116,8 +116,8 @@ from generate_hokkaido import (rgb, canvas, outline, tiles, CLEAR, INK, NAVY,
                                WHITE, GLASS, GLASS_HI, GLASS_DK,
                                WOOD, WOOD_LO, WOOD_DK, STONE, STONE_LO, STONE_DK,
                                GREEN, GREEN_LO, GREEN_HI, GOLD, AMBER)
-from generate_sendai_art import (blob, roof_tile, pane, SLATE, SLATE_HI, SLATE_LO, PINE, PINE_HI, PINE_LO, PINE_DK,
-                                 BARK, BARK_LO, MAPLE, MAPLE_OR, LACQUER, LACQUER_HI, LACQUER_LO)
+from generate_sendai_art import (roof_tile, pane, speck, foliage, SLATE, SLATE_HI, SLATE_LO, NEEDLE, P_SHADE,
+                                 P_BARK, P_BARK_HI, P_BARK_LO, MAPLE, MAPLE_OR, LACQUER, LACQUER_HI, LACQUER_LO)
 from generate_sapporo_art import FONT as _FONT, KANA as _KANA, glyphs
 from generate_hokuriku_art import kawara, bars
 import house_look as hl
@@ -239,6 +239,7 @@ C_LEAD = [rgb(c) for c in ('575f79', '848295', 'd1e2eb', '949bb2', 'a4b0b5')]
 C_LEAD_LIT = [rgb(c) for c in ('646e86', '949bb2', 'fafcfd', 'a4b0b5', 'bcc7cc')]      # a fall facing west
 C_LEAD_SH = [rgb(c) for c in ('47485d', '575f79', '949bb2', '646e86', '848295')]       # a fall facing east
 C_RIDGE, C_RIDGE_HI, C_EAVE, C_EAVE_DK = rgb('a4b0b5'), rgb('dae2e4'), rgb('646e86'), rgb('47485d')
+LEAD_PAL = (C_LEAD, C_LEAD_LIT, C_LEAD_SH, C_RIDGE, C_RIDGE_HI, C_EAVE, C_EAVE_DK)
 C_PL, C_PL_LO, C_PL_SH = rgb('fafcfd'), rgb('e4cecc'), rgb('be9e8c')    # white plaster, its shade, an eave's shadow on it
 C_NK, C_NK_LO = rgb('47485d'), rgb('2a2636')                            # namako slate
 C_DARK, C_DARK_LO = rgb('2c2d51'), rgb('2a3151')                        # an opening: never lit
@@ -266,12 +267,14 @@ def lead_band(im, x0, y0, x1, y1, ridge=3):
     rect(im, x0, y1, x1, y1, C_EAVE_DK)
 
 
-def lead_hip(im, x0, x1, top, eave, run, side_rows, caps=True):
+def lead_hip(im, x0, x1, top, eave, run, side_rows, caps=True, pal=None):
     """A hipped lead roof seen from above. The ridge bar is the 4 rows above `top`,
     `run` in from either end; the front slope falls from `top` to `eave` between two
     hips that reach the eave's corners; outside them the hip ends (the west lit, the
     east in shade, their tiles running down them) widen to the full width in
-    `side_rows` rows; an eave lip of 3 rows lies under `eave`."""
+    `side_rows` rows; an eave lip of 3 rows lies under `eave`. `pal` is another
+    roof's tones in LEAD_PAL's order (Kenrokuen's tea house is shingled, #386)."""
+    C_LEAD, C_LEAD_LIT, C_LEAD_SH, C_RIDGE, C_RIDGE_HI, C_EAVE, C_EAVE_DK = pal or LEAD_PAL
     px = im.load()
     n = eave - top
     for y in range(top, eave + 1):
@@ -1041,246 +1044,330 @@ def wall(style, kind):
 # ==============================================================================
 # Kenrokuen
 # ==============================================================================
+# ---- the garden's colours: every one a GuttyKreum sheet colour -------------------------------
+G_ST_HI, G_ST_LT, G_ST, G_ST_MD = rgb('fafcfd'), rgb('dae2e4'), rgb('bcc7cc'), rgb('a4b0b5')   # granite
+G_ST_LO, G_ST_DK, G_ST_DEEP = rgb('848295'), rgb('646e86'), rgb('47485d')
+G_LICHEN, G_LICHEN_LO, G_LICHEN_DK = rgb('83af6f'), rgb('678e57'), rgb('506b6b')
+G_ROPE, G_ROPE_HI, G_ROPE_LO, G_ROPE_DK = rgb('c6a663'), rgb('f3d890'), rgb('a7843b'), rgb('86624f')
+G_RING = rgb('8ec2fa')                                           # pond-autotile's own highlight
+# cedar-bark shingles in roof_tile's order (course line, joint, lit lip, shade, base), then a
+# fall facing west and one facing east; ridge, its lit row, the eave and its dark row
+G_SHINGLE = ([rgb(c) for c in ('594b45', '7c5d56', 'be9e8c', '8e7366', 'a68777')],
+             [rgb(c) for c in ('6d574e', '8e7366', 'e4cecc', 'a68777', 'be9e8c')],
+             [rgb(c) for c in ('3c3029', '594b45', '8e7366', '6d574e', '7c5d56')],
+             rgb('8e7366'), rgb('be9e8c'), rgb('594b45'), rgb('3c3029'))
+G_PAPER, G_PAPER_HI, G_PAPER_LO = rgb('e4cecc'), rgb('fafcfd'), rgb('be9e8c')
+G_MOSS = [rgb(c) for c in ('357570', '488582', '6c8e7f', '2e4040')]     # floor, cushion, lit rim, shade
+G_GRAVEL, G_GRAVEL_HI, G_GRAVEL_LO, G_GRAVEL_SH = rgb('d7d0ba'), rgb('eae9e8'), rgb('cdc8c5'), rgb('b3aaa0')
+
+
+def spans(im, y0, rows, tones):
+    """A stepped shape: one (x0, x1) a row from y0 down, each row `tones` =
+    (lit left edge, base, shaded right edge) with the edge 1px and the shade 2."""
+    lit, base, lo = tones
+    for n, (x0, x1) in enumerate(rows):
+        rect(im, x0, y0 + n, x1, y0 + n, base)
+        rect(im, x0, y0 + n, x0, y0 + n, lit)
+        rect(im, max(x0 + 1, x1 - 1), y0 + n, x1, y0 + n, lo)
+
+
+def lerp_rows(knots):
+    """(y, x) for every row of a stepped line through (x, y) knots, whole numbers only."""
+    out = []
+    for (xa, ya), (xb, yb) in zip(knots, knots[1:]):
+        for y in range(ya, yb + (1 if (xb, yb) == knots[-1] else 0)):
+            out.append((y, xa + (xb - xa) * (y - ya) // (yb - ya)))
+    return out
+
+
+def cast(im, y0, rows):
+    """The shadow on the ground or the water: P_SHADE on the pixels still clear
+    (so it goes on after the outline, and is not inked)."""
+    px = im.load()
+    for n, (x0, x1) in enumerate(rows):
+        for x in range(max(0, x0), min(im.width - 1, x1) + 1):
+            if px[x, y0 + n][3] == 0:
+                px[x, y0 + n] = P_SHADE
+
+
+def dots(im, pts, c):
+    px = im.load()
+    for x, y in pts:
+        px[x, y] = c
+
+
+KOTOJI_ROOF = ((30, 34), (28, 36), (26, 38), (24, 40), (22, 42), (20, 44), (18, 46), (16, 48),      # y 10 on
+               (14, 50), (13, 51), (12, 52), (9, 55), (9, 55), (9, 55))
+KOTOJI_JEWEL = ((32, 32), (30, 34), (29, 35), (28, 36), (28, 36), (28, 36), (29, 35), (30, 34))     # y 1 on
+STEP_STONE = ((8, 21), (5, 24), (4, 25), (3, 26), (3, 26), (3, 26), (4, 25), (5, 24), (8, 21))      # y 84 on
+RING = ((9, 19), (5, 23), (3, 25), (2, 26), (2, 26), (2, 26), (2, 26), (2, 26), (3, 25), (5, 23), (9, 19))   # y 84 on
+
+
 def kotoji(water=False):
     im, d = canvas(2, 3)                 # 64 x 96
-    # ---- what it stands on: a low stone in the shallows (or, `water`, the pond itself), a rock on the bank
+    px = im.load()
+    # ---- the rock on the bank the short leg stands on: three facets, moss up its foot
+    left = dict(lerp_rows([(47, 66), (41, 70), (36, 80), (34, 94)]))
+    right = dict(lerp_rows([(54, 66), (60, 74), (63, 84), (63, 94)]))
+    for y in range(66, 94):
+        l, r = left[y], right[y]
+        for x in range(l, r + 1):
+            t = (x - l) * 100 // (r - l + 1) + (y - 66)
+            c = G_ST_LT if t < 30 else (G_ST_MD if t < 64 else G_ST_LO)
+            top = 91 - speck(x // 2, 0, 2) % 4                    # moss up its foot, its upper edge ragged
+            if y >= top:
+                c = G_LICHEN if y == top else (G_LICHEN_DK if x > r - 6 or speck(x, y, 5) < 12 else G_LICHEN_LO)
+            px[x, y] = c
+        px[l, y] = G_ST_HI if y < 80 else px[l, y]
+    for y, x in lerp_rows([(45, 76), (49, 85), (47, 93)]):        # a crack down it
+        px[x, y] = G_ST_DK
+    dots(im, ((42, 72), (45, 69), (50, 68), (38, 81), (58, 76)), G_LICHEN)
+    dots(im, ((43, 72), (46, 69), (51, 68), (39, 81), (59, 76)), G_LICHEN_LO)
+    # ---- what the long leg stands on: a low stone in the shallows (dry) or the pond itself
     if not water:
-        d.ellipse([3, 84, 26, 93], fill=GRAN_LO)
-        d.ellipse([4, 84, 24, 90], fill=GRAN)
-        d.line([(8, 85), (19, 85)], fill=GRAN_HI)
-    rk, rk_hi, rk_lo = rgb('7f8388'), rgb('a4a8aa'), rgb('5a5e68')
-    d.polygon([(34, 93), (36, 80), (41, 70), (47, 66), (54, 67), (60, 74), (63, 84), (63, 93)], fill=rk)
-    d.polygon([(36, 80), (41, 70), (47, 66), (54, 67), (51, 71), (44, 73), (40, 82)], fill=rk_hi)
-    d.polygon([(54, 67), (60, 74), (63, 84), (63, 93), (55, 93), (57, 80), (53, 72)], fill=rk_lo)
-    d.line([(44, 78), (48, 86), (46, 92)], fill=rk_lo)
-    d.line([(47, 66), (54, 67)], fill=GRAN_HI)
-    for x in range(34, 64):                                       # moss up its foot and in its hollows
-        for y in range(84, 94):
-            if h3(x, y, 2) < 40 + (y - 84) * 16:
-                d.point((x, y), fill=MOSS if h3(x, y, 5) < 150 else MOSS_HI)
-    for x, y in ((42, 72), (45, 69), (50, 68), (38, 81), (58, 76)):
-        d.point((x, y), fill=MOSS_HI); d.point((x + 1, y), fill=MOSS)
+        spans(im, 84, STEP_STONE, (G_ST_LT, G_ST, G_ST_LO))
+        rect(im, 8, 84, 21, 84, G_ST_HI)
+        for n, (x0, x1) in enumerate(STEP_STONE[5:]):             # its side, in shade
+            rect(im, x0, 89 + n, x1, 89 + n, G_ST_LO)
+            rect(im, x0, 89 + n, x0 + 1, 89 + n, G_ST_MD)
+        rect(im, 8, 92, 21, 92, G_ST_DK)
+        spans(im, 88, ((25, 37), (23, 39), (22, 40), (22, 40), (23, 39), (26, 36)), (G_ST, G_ST_MD, G_ST_LO))
+        rect(im, 23, 92, 39, 92, G_ST_LO); rect(im, 26, 93, 36, 93, G_ST_DK)
+    # ---- the two legs, bowed: the long one to the stone, the short one to the rock
+    for knots in ([(25, 46), (22, 58), (18, 71), (14, 89 if water else 87)], [(39, 46), (43, 54), (47, 61), (50, 68)]):
+        for y, x in lerp_rows(knots):
+            rect(im, x - 3, y, x + 2, y, G_ST)
+            rect(im, x - 3, y, x - 3, y, G_ST_HI); rect(im, x - 2, y, x - 2, y, G_ST_LT)
+            rect(im, x + 1, y, x + 2, y, G_ST_LO)
     if not water:
-        d.ellipse([22, 87, 40, 94], fill=GRAN_LO); d.line([(26, 88), (36, 88)], fill=GRAN)
-    # ---- the two legs: the long one in the water, the short one on the rock
-    def leg(pts):
-        d.line(pts, fill=GRAN, width=6)
-        d.line([(x - 3, y) for x, y in pts], fill=GRAN_HI, width=1)
-        d.line([(x + 2, y) for x, y in pts], fill=GRAN_LO, width=2)
-    leg([(25, 46), (22, 58), (18, 71), (14, 88 if water else 86)])
-    leg([(39, 46), (43, 54), (47, 61), (50, 67)])
-    if not water:
-        d.rectangle([10, 84, 18, 87], fill=GRAN); d.line([(10, 84), (18, 84)], fill=GRAN_HI)
-    # ---- the platform, the light box, the roof, the jewel
-    d.rectangle([18, 41, 46, 46], fill=GRAN)
-    d.line([(18, 41), (46, 41)], fill=GRAN_HI); d.rectangle([18, 45, 46, 46], fill=GRAN_LO)
-    d.rectangle([42, 42, 46, 46], fill=GRAN_LO)
-    d.rectangle([21, 38, 43, 40], fill=GRAN_LO); d.line([(21, 38), (43, 38)], fill=GRAN)
-    d.rectangle([24, 26, 40, 37], fill=GRAN)
-    d.line([(24, 26), (24, 37)], fill=GRAN_HI); d.rectangle([37, 26, 40, 37], fill=GRAN_LO)
-    d.rectangle([27, 28, 35, 36], fill=GRAN_DK)
-    d.rectangle([28, 29, 34, 35], fill=PAPER)
-    d.line([(31, 29), (31, 35)], fill=GRAN_DK); d.line([(28, 32), (34, 32)], fill=GRAN_DK)
-    d.polygon([(32, 10), (22, 17), (11, 23), (9, 21), (9, 26), (55, 26), (55, 21), (53, 23), (42, 17)], fill=GRAN)
-    d.polygon([(32, 10), (22, 17), (11, 23), (9, 21), (9, 24), (24, 21), (31, 14)], fill=GRAN_HI)
-    d.polygon([(34, 12), (42, 17), (53, 23), (55, 21), (55, 26), (44, 26)], fill=GRAN_LO)
-    d.rectangle([10, 25, 54, 26], fill=GRAN_DK)
-    for x, y in ((18, 20), (26, 16), (38, 17), (46, 21), (30, 13)):       # lichen on the roof
-        d.point((x, y), fill=MOSS_HI); d.point((x + 1, y + 1), fill=MOSS)
-    d.rectangle([30, 7, 34, 10], fill=GRAN_LO)
-    d.ellipse([28, 1, 36, 8], fill=GRAN); d.point((30, 3), fill=WHITE); d.point((31, 3), fill=GRAN_HI)
-    d.arc([28, 1, 36, 8], -60, 100, fill=GRAN_LO)
-    if not water:
-        d.point((7, 91), fill=MAPLE); d.point((8, 91), fill=MAPLE_OR)    # a maple leaf on the stone
-    outline(im)
-    if water:                            # the long leg goes down into the pond: rings round it, its shadow
-        ov = Image.new('RGBA', im.size, CLEAR)
-        od = ImageDraw.Draw(ov)
-        od.ellipse([1, 83, 27, 95], fill=(16, 28, 66, 90))
-        od.arc([2, 84, 26, 94], 0, 360, fill=(142, 194, 250, 220))
-        od.arc([6, 86, 22, 92], 200, 340, fill=(142, 194, 250, 160))
-        od.line([(26, 93), (31, 93)], fill=(142, 194, 250, 200))
-        px = im.load()
-        for y in range(89, 96):          # the leg is cut at the waterline
+        rect(im, 9, 84, 19, 87, G_ST); rect(im, 9, 84, 19, 84, G_ST_HI); rect(im, 18, 85, 19, 87, G_ST_LO)   # its foot
+    # ---- the platform, the light box (a window in dim gold: never lit), the roof, the jewel
+    rect(im, 21, 38, 43, 40, G_ST_LO); rect(im, 21, 38, 43, 38, G_ST_MD); rect(im, 40, 38, 43, 40, G_ST_DK)
+    rect(im, 18, 41, 46, 46, G_ST)
+    rect(im, 18, 41, 46, 41, G_ST_HI); rect(im, 18, 42, 18, 46, G_ST_LT)
+    rect(im, 42, 42, 46, 46, G_ST_MD); rect(im, 18, 45, 46, 46, G_ST_LO); rect(im, 42, 45, 46, 46, G_ST_DK)
+    rect(im, 24, 27, 40, 37, G_ST)
+    rect(im, 24, 27, 24, 37, G_ST_LT); rect(im, 37, 27, 40, 37, G_ST_MD); rect(im, 24, 27, 40, 27, G_ST_LO)
+    rect(im, 27, 29, 35, 36, G_ST_DK)
+    rect(im, 28, 30, 34, 35, G_ROPE); rect(im, 28, 30, 29, 31, G_ROPE_HI)
+    rect(im, 31, 30, 31, 35, G_ST_DK); rect(im, 28, 33, 34, 33, G_ST_DK)
+    for n, (x0, x1) in enumerate(KOTOJI_ROOF):                    # six-sided: a lit fall, the front, a shaded fall
+        y = 10 + n
+        a, b = 32 - n * 2 // 3 - 1, 32 + n * 2 // 3 + 1
+        rect(im, x0, y, x1, y, G_ST)
+        rect(im, x0, y, a, y, G_ST_LT); rect(im, b, y, x1, y, G_ST_MD)
+        rect(im, a, y, a, y, G_ST_HI); rect(im, b, y, b, y, G_ST_LO)
+        rect(im, x0, y, x0, y, G_ST_HI); rect(im, x1 - 1, y, x1, y, G_ST_LO)
+    rect(im, 9, 24, 55, 24, G_ST_LO); rect(im, 9, 24, 22, 24, G_ST_MD)          # the eave's face
+    rect(im, 11, 25, 53, 26, G_ST_DK); rect(im, 14, 26, 50, 26, G_ST_DEEP)      # under it
+    dots(im, ((9, 20), (10, 20), (9, 19), (54, 20), (55, 20), (55, 19)), G_ST_MD)    # the corners turn up
+    dots(im, ((9, 19), (9, 20)), G_ST_HI)
+    dots(im, ((18, 20), (26, 16), (38, 17), (46, 21), (30, 13)), G_LICHEN)      # lichen on the roof
+    dots(im, ((19, 21), (27, 17), (39, 18), (47, 22), (31, 14)), G_LICHEN_LO)
+    spans(im, 1, KOTOJI_JEWEL, (G_ST_LT, G_ST, G_ST_LO))
+    rect(im, 30, 9, 34, 9, G_ST_DK)
+    dots(im, ((30, 3), (31, 3), (30, 4)), G_ST_HI)
+    rect(im, 30, 7, 34, 8, G_ST_MD); rect(im, 33, 7, 34, 8, G_ST_LO)
+    hl.outline(im)
+    if water:                            # the leg goes down into the pond: cut at the waterline, its shadow, a ring
+        for y in range(89, 96):
             for x in range(0, 30):
                 px[x, y] = CLEAR
-        under = Image.new('RGBA', im.size, CLEAR)
-        under.alpha_composite(ov)
-        under.alpha_composite(im)
-        return under
+        rect(im, 10, 89, 17, 89, G_RING)                              # the water against the leg
+        cast(im, 84, RING)
+        for n, (x0, x1) in enumerate(RING):
+            y = 84 + n
+            ring = range(x0, x1 + 1) if n in (0, len(RING) - 1) else (
+                [x for x in range(x0, x1 + 1) if x < RING[n - 1][0] or x > RING[n - 1][1]
+                 or x < RING[n + 1][0] or x > RING[n + 1][1]])
+            for x in ring:
+                if px[x, y][3] != 255:
+                    px[x, y] = G_RING
+    else:
+        cast(im, 93, ((6, 23), (9, 24)))
     return im
+
+
+def g_rope(im, x0, y0, x1, y1, c, glint=None):
+    """A rope from the pole's top to the rim, a pixel a step; `glint` lights two points on it."""
+    px = im.load()
+    steps = max(abs(x1 - x0), abs(y1 - y0))
+    for n in range(steps + 1):
+        x, y = x0 + (x1 - x0) * n // steps, y0 + (y1 - y0) * n // steps
+        px[x, y] = glint if glint and n in (steps // 6, steps // 3) else c
 
 
 def yukitsuri(cw, ch, pads, n):
     def build():
         im, d = canvas(cw, ch)
+        px = im.load()
         W, H = cw * 32, ch * 32
         cx = W // 2
         rim_y, rx, ry = H - 20, W // 2 - 3, 7 + cw
-        apex = (cx, 5)
-        ends = []
-        for k in range(n):
-            a = 2 * math.pi * (k + 0.5) / n
-            ends.append((a, round(cx + rx * math.cos(a)), round(rim_y + ry * math.sin(a))))
-        d.ellipse([cx - rx + 6, H - 13, cx + rx - 6, H - 3], fill=MOSS_DK)          # its shadow on the moss
-        for a, x, y in ends:                                      # the ropes round the back
-            if math.sin(a) < 0:
-                d.line([apex, (x, y)], fill=STRAW_LO)
-        # the trunk and its boughs
-        d.line([(cx - 3, H - 6), (cx - 5, H - 30), (cx + 2, H * 0.5), (cx + 6, H * 0.38)], fill=BARK, width=4)
-        d.line([(cx - 5, H - 8), (cx - 7, H - 30), (cx, H * 0.5)], fill=rgb('9a7460'))
-        d.line([(cx - 1, H - 6), (cx - 2, H - 28)], fill=BARK_LO)
-        d.line([(cx - 5, H - 30), (cx - rx + 12, H - 40)], fill=BARK_LO, width=2)
-        d.line([(cx, H - 34), (cx + rx - 12, H - 44)], fill=BARK_LO, width=2)
-        d.rectangle([cx - 6, H - 8, cx + 1, H - 5], fill=BARK_LO)
-        # the pole the ropes hang from
-        d.line([(cx + 2, H - 6), (cx + 1, 6)], fill=rgb('b9a05e'), width=2)
-        d.line([(cx + 3, H - 6), (cx + 2, 8)], fill=rgb('8a7440'))
+        ends = []                                                 # n rope ends round the rim: (x, y, in front)
+        for k in range(n // 2):
+            dx = -rx + (2 * k + 1) * rx * 2 // n
+            dy = math.isqrt(ry * ry * (rx * rx - dx * dx)) // rx
+            ends += [(cx + dx, rim_y - dy, False), (cx + dx, rim_y + dy, True)]
+        for x, y, front in ends:                                  # the ropes round the back
+            if not front:
+                g_rope(im, cx, 5, x, y, G_ROPE_LO)
+        # the trunk, leaning, and two boughs
+        for knots, w in (([(cx - 3, H - 6), (cx - 5, H - 30), (cx + 2, H // 2), (cx + 5, min(p[1] for p in pads))], 5),):
+            for y, x in lerp_rows(knots[::-1]):
+                rect(im, x - 2, y, x + w - 3, y, P_BARK)
+                rect(im, x - 2, y, x - 2, y, P_BARK_HI); rect(im, x + w - 4, y, x + w - 3, y, P_BARK_LO)
+        for x0, y0, x1, y1 in ((cx - 5, H - 30, cx - rx + 12, H - 40), (cx, H - 34, cx + rx - 12, H - 44)):
+            steps = abs(x1 - x0)
+            for s in range(steps + 1):
+                x, y = x0 + (x1 - x0) * s // steps, y0 + (y1 - y0) * s // steps
+                rect(im, x, y, x, y + 1, P_BARK); rect(im, x, y + 2, x, y + 2, P_BARK_LO)
+        rect(im, cx - 7, H - 8, cx + 1, H - 5, P_BARK_LO); rect(im, cx - 7, H - 8, cx - 4, H - 7, P_BARK)   # the root
+        # the bamboo pole the ropes hang from
+        rect(im, cx + 1, 6, cx + 2, H - 6, G_ROPE); rect(im, cx + 2, 6, cx + 2, H - 6, G_ROPE_LO)
         for y in range(18, H - 10, 14):
-            d.line([(cx + 1, y), (cx + 3, y)], fill=rgb('8a7440'))
-        for i, (ox, y, prx, pry) in enumerate(pads):              # the pads of needles, back to front
-            blob(d, cx + ox, y, prx, pry, PINE, PINE_HI, PINE_LO, seed=i * 3 + cw)
-            d.arc([cx + ox - prx, y - pry, cx + ox + prx, y + pry], 30, 150, fill=PINE_DK)
-        for a, x, y in ends:                                      # the ropes in front
-            if math.sin(a) >= 0:
-                d.line([apex, (x, y)], fill=STRAW)
-                d.point((x, y), fill=ROPE); d.point((x, y + 1), fill=ROPE)
-        for a, x, y in ends:
-            if math.sin(a) >= 0 and abs(math.cos(a)) < 0.75:
-                mx, my = (apex[0] + x) // 2, (apex[1] + y) // 2
-                d.point((mx, my), fill=STRAW_HI); d.point(((apex[0] * 3 + x) // 4, (apex[1] * 3 + y) // 4), fill=STRAW_HI)
-        d.rectangle([cx - 2, 1, cx + 3, 7], fill=STRAW)           # the straw knot at the top
-        d.line([(cx - 2, 1), (cx - 2, 7)], fill=STRAW_HI); d.line([(cx + 3, 2), (cx + 3, 7)], fill=STRAW_LO)
-        d.line([(cx - 2, 5), (cx + 3, 5)], fill=ROPE)
-        d.point((cx, 0), fill=STRAW_HI); d.point((cx + 1, 0), fill=STRAW)
-        outline(im)
+            rect(im, cx + 1, y, cx + 2, y, G_ROPE_DK)
+        foliage(im, [(cx + ox, y, prx, pry) for ox, y, prx, pry in pads], NEEDLE, cw)   # the pads, back to front
+        for x, y, front in ends:                                  # the ropes in front, a knot where each is pegged
+            if front:
+                g_rope(im, cx, 5, x, y, G_ROPE, G_ROPE_HI if abs(x - cx) * 4 < rx * 3 else None)
+                px[x, y] = G_ROPE_DK
+                px[x, y + 1] = G_ROPE_DK
+        rect(im, cx - 2, 1, cx + 3, 7, G_ROPE)                    # the straw knot at the top
+        rect(im, cx - 2, 1, cx - 2, 7, G_ROPE_HI); rect(im, cx + 3, 2, cx + 3, 7, G_ROPE_LO)
+        rect(im, cx - 2, 5, cx + 3, 5, G_ROPE_DK)
+        rect(im, cx, 0, cx + 1, 0, G_ROPE)
+        hl.outline(im)
+        cast(im, H - 13, [(cx - rx + 6 + i, cx + rx - 6 - i) for i in (6, 3, 1, 0, 0, 0, 0, 0, 1, 3, 6)])
         return im
     return build
 
 
 def teahouse():
     im, d = canvas(4, 3)                 # 128 x 96; it stands on posts in the bottom row
-    # ---- the posts in the water
+    px = im.load()
+    # ---- the posts in the water, each on a stone
     for x in (14, 46, 79, 111):
-        d.rectangle([x, 76, x + 3, 90], fill=WOOD_LO)
-        d.line([(x, 76), (x, 90)], fill=WOOD); d.line([(x + 3, 76), (x + 3, 90)], fill=WOOD_DK)
-        d.rectangle([x - 2, 89, x + 5, 93], fill=GRAN); d.line([(x - 2, 89), (x + 5, 89)], fill=GRAN_HI)
-        d.line([(x - 2, 93), (x + 5, 93)], fill=GRAN_DK)
-    for x in range(18, 110, 4):                                   # cross ties under the floor
-        d.point((x, 79), fill=WOOD_DK)
-    d.line([(18, 80), (110, 80)], fill=WOOD_DK)
-    # ---- the veranda and its low rail
-    d.rectangle([6, 69, 121, 73], fill=WOOD)
-    d.line([(6, 69), (121, 69)], fill=rgb('d2a58c')); d.rectangle([6, 73, 121, 75], fill=WOOD_DK)
-    for x in range(8, 120, 6):
-        d.point((x, 71), fill=WOOD_LO)
-    # ---- the room: paper screens either side, the middle slid open
-    d.rectangle([12, 40, 115, 68], fill=WOOD_DK)
-    d.rectangle([12, 40, 115, 44], fill=WOOD_LO); d.line([(12, 40), (115, 40)], fill=WOOD)
+        rect(im, x, 76, x + 3, 90, C_TB)
+        rect(im, x, 76, x, 90, C_TB_HI); rect(im, x + 3, 76, x + 3, 90, C_TB_DK)
+        rect(im, x - 2, 89, x + 5, 93, G_ST_MD); rect(im, x - 2, 89, x + 5, 89, G_ST_LT)
+        rect(im, x - 2, 93, x + 5, 93, G_ST_DK); rect(im, x + 4, 90, x + 5, 92, G_ST_LO)
+    rect(im, 18, 79, 110, 80, C_TB_DK)                            # the tie under the floor
+    for x in (14, 46, 79, 111):
+        rect(im, x, 79, x, 80, C_TB_LO)
+    # ---- the veranda: its boards from above, its edge, the shade under it
+    rect(im, 6, 69, 121, 75, C_TB)
+    rect(im, 6, 69, 121, 70, C_TB_HI); rect(im, 6, 69, 121, 69, G_PAPER_LO)
+    rect(im, 6, 74, 121, 75, C_TB_DK); rect(im, 6, 73, 121, 73, C_TB_LO)
+    for x in range(11, 120, 8):
+        rect(im, x, 70, x, 72, C_TB_LO)
+    # ---- the room: paper screens either side, the middle slid open on a dark room
+    rect(im, 12, 37, 115, 68, C_TB)
+    rect(im, 12, 37, 115, 39, C_TB_DK)                            # the eave's shadow
+    rect(im, 12, 40, 115, 44, C_TB); rect(im, 12, 40, 115, 40, C_TB_LO); rect(im, 12, 44, 115, 44, C_TB_LO)
     for x0, x1 in ((15, 43), (84, 112)):
-        d.rectangle([x0, 46, x1, 67], fill=PAPER)
-        d.line([(x0, 46), (x1, 46)], fill=WHITE)
-        d.rectangle([x1 - 5, 47, x1, 67], fill=PAPER_LO)
+        rect(im, x0, 46, x1, 67, G_PAPER)
+        for y in range(48, 68):                                   # the light falls across it on a slant
+            rect(im, x0, y, x0 + 11 - (y - 48) // 2, y, G_PAPER_HI)
+            rect(im, x1 - 3 - (y - 48) // 3, y, x1, y, G_PAPER_LO)
+        rect(im, x0, 46, x1, 47, G_PAPER_LO)                      # the lintel's shade
         for x in range(x0 + 7, x1, 7):
-            d.line([(x, 46), (x, 67)], fill=WOOD)
-        for y in (53, 60):
-            d.line([(x0, y), (x1, y)], fill=WOOD)
-    d.rectangle([47, 46, 80, 67], fill=SOOT)
-    d.rectangle([47, 60, 80, 67], fill=rgb('b9a878'))             # tatami
-    d.line([(47, 60), (80, 60)], fill=rgb('d6c79a')); d.line([(63, 60), (63, 67)], fill=rgb('8f8055'))
-    d.rectangle([68, 47, 76, 58], fill=PAPER)                     # a hanging scroll
-    d.rectangle([70, 49, 74, 56], fill=PAPER_LO); d.line([(72, 50), (72, 55)], fill=SOOT)
-    d.rectangle([52, 55, 60, 59], fill=KIM)                       # a low table, a tea bowl, the kettle
-    d.line([(52, 55), (60, 55)], fill=KIM_HI)
-    d.rectangle([55, 52, 57, 54], fill=MOSS_HI); d.rectangle([49, 56, 51, 59], fill=SOOT_LO)
-    d.rectangle([45, 45, 46, 68], fill=WOOD_LO); d.rectangle([81, 45, 82, 68], fill=WOOD_LO)
-    for x in (12, 114):
-        d.rectangle([x, 40, x + 1, 68], fill=WOOD_LO)
-    d.line([(8, 62), (119, 62)], fill=WOOD_LO)                    # the rail
+            rect(im, x, 46, x, 67, C_TB_HI)
+        for y in (54, 61):
+            rect(im, x0, y, x1, y, C_TB_HI)
+    rect(im, 47, 46, 80, 67, C_DARK)
+    rect(im, 47, 46, 80, 48, C_DARK_LO)
+    rect(im, 47, 60, 80, 67, G_PAPER_LO)                          # tatami
+    rect(im, 47, 60, 80, 60, G_PAPER); rect(im, 63, 61, 63, 67, H_EARTH); rect(im, 47, 66, 80, 67, H_EARTH)
+    rect(im, 68, 48, 76, 58, G_PAPER); rect(im, 70, 50, 74, 56, G_PAPER_LO)      # a hanging scroll
+    rect(im, 72, 51, 72, 55, C_TB_DK)
+    rect(im, 52, 55, 60, 59, C_TB_LO); rect(im, 52, 55, 60, 55, C_TB_HI)         # a low table, a tea bowl
+    rect(im, 55, 52, 57, 54, G_LICHEN_DK); rect(im, 55, 52, 57, 52, G_LICHEN_LO)
+    for x in (12, 45, 81, 114):                                   # the posts of the frame
+        rect(im, x, 40, x + 1, 68, C_TB_LO)
+    rect(im, 12, 40, 12, 68, C_TB_HI)
+    rect(im, 8, 62, 119, 62, C_TB_LO)                             # the rail
     for x in (8, 26, 44, 83, 101, 119):
-        d.line([(x, 62), (x, 68)], fill=WOOD_LO)
-    # ---- the shingled roof, moss in its valleys
-    roof(d, 13, 35, (30, 97), (1, 126), SHINGLE_P, step=3)
-    for x, y in ((20, 30), (34, 22), (58, 28), (86, 18), (100, 31), (70, 33), (44, 33)):
-        d.point((x, y), fill=MOSS_HI); d.point((x + 1, y), fill=MOSS); d.point((x, y + 1), fill=MOSS)
-    outline(im)
-    ov = Image.new('RGBA', im.size, CLEAR)                        # the floor's shadow on the water, ripples
-    od = ImageDraw.Draw(ov)
-    for x in range(8, 120):
-        if im.getpixel((x, 82))[3] == 0:
-            od.line([(x, 77), (x, 85)], fill=(16, 28, 66, 130))
-            od.point((x, 86 + (x % 3 == 0)), fill=(16, 28, 66, 70))
+        rect(im, x, 62, x, 68, C_TB_LO)
+    # ---- the shingled roof, hipped, seen from above; moss in its courses
+    lead_hip(im, 1, 126, 11, 32, 22, 9, pal=G_SHINGLE)
+    for x, y in ((20, 29), (40, 21), (58, 27), (86, 17), (97, 30), (70, 31), (47, 15)):
+        dots(im, ((x, y), (x + 1, y)), G_LICHEN_LO)
+        dots(im, ((x, y + 1),), G_LICHEN_DK)
+    hl.outline(im)
+    cast(im, 77, [(8, 119)] * 9 + [(9, 118)])                     # the floor's shadow on the water
     for x0, x1, y in ((22, 34, 91), (56, 70, 93), (90, 100, 91), (36, 42, 94)):
-        od.line([(x0, y), (x1, y)], fill=(142, 194, 250, 200))
-    under = Image.new('RGBA', im.size, CLEAR)
-    under.alpha_composite(ov)
-    under.alpha_composite(im)
-    return under
+        for x in range(x0, x1 + 1):
+            if px[x, y][3] == 0:
+                px[x, y] = G_RING                                 # ripples
+    return im
+
+
+BRIDGE_DECK = (G_ST_MD, G_ST, G_ST_LT, G_ST_LT, G_ST, G_ST_MD)    # a slab each: the crown of the arch catches the light
 
 
 def stone_bridge():
     """The garden's arched stone bridge from straight above, as
     kanazawa-canal-bridge is drawn: kerbs along its two sides, the slabs of the
     deck between, lighter over the crown of the arch and darker where it comes
-    down to the banks."""
+    down to the banks. Inked along the two sides over the water, open at the
+    two ends that meet the path."""
     im, d = canvas(3, 1)                 # 96 x 32, flat: walked ON, east-west
-    deck = (rgb('9da2a8'), GRAN, rgb('b9bec2'), rgb('c9cdd0'), rgb('d6dadc'))
-    for x in range(96):
-        t = math.sin(math.pi * (x + 0.5) / 96)                    # 0 at the banks, 1 at the crown
-        lvl = t * 4
-        for y in range(32):
-            if y <= 4 or y >= 27:                                 # the kerbs
-                v = y if y <= 4 else y - 27
-                joint = (x + (0 if y <= 4 else 6)) % 12 == 0
-                c = (GRAN_DK, WHITE, rgb('c2c6ca'), GRAN, GRAN_DK)[v]
-                if joint and v in (1, 2, 3):
-                    c = GRAN_LO
-            else:
-                i = int(lvl)
-                if lvl - i > 0.5 and (x + y) % 2 == 0:
-                    i += 1                                        # dithered, so the swell is smooth
-                c = deck[min(4, i)]
-                if x % 16 == 7:
-                    c = GRAN_LO                                   # the joints between slabs
-                elif x % 16 == 8:
-                    c = GRAN_HI
-                elif y == 15 and (x // 16) % 2 == 0:
-                    c = GRAN_LO
-                elif h3(x, y, 5) < 7:
-                    c = GRAN_LO
-                if y == 5:
-                    c = GRAN_LO                                   # the far kerb's shadow on the deck
-            d.point((x, y), fill=c)
-    for x0 in (0, 91):                                            # a post at each corner
-        for y0 in (0, 26):
-            d.rectangle([x0, y0, x0 + 4, y0 + 5], fill=GRAN)
-            d.rectangle([x0, y0, x0 + 4, y0], fill=WHITE); d.line([(x0, y0), (x0, y0 + 5)], fill=WHITE)
-            d.line([(x0 + 4, y0 + 1), (x0 + 4, y0 + 5)], fill=GRAN_DK)
-            d.line([(x0, y0 + 5), (x0 + 4, y0 + 5)], fill=GRAN_DK)
+    px = im.load()
+    for y in range(6, 26):
+        for x in range(96):
+            base = BRIDGE_DECK[x // 16]
+            lit = G_ST_HI if base == G_ST_LT else (G_ST_LT if base == G_ST else G_ST)
+            lo = G_ST_LO if base == G_ST_MD else G_ST_MD
+            c = base
+            if x % 16 == 15:
+                c = G_ST_LO if base != G_ST_MD else G_ST_DK       # the joint between two slabs
+            elif x % 16 == 0 or y == 7:
+                c = lit                                           # a slab's lit edges
+            elif y == 25 or x % 16 == 14:
+                c = lo
+            elif y == 16 and x // 16 % 2 == 0:
+                c = lo                                            # a slab cut in two
+            elif speck(x, y, 5) < 3:
+                c = lo
+            if y == 6:
+                c = G_ST_LO if x % 16 != 15 else G_ST_DK          # the north kerb's shadow on the deck
+            px[x, y] = c
+    for y0 in (1, 26):                                            # the kerbs: a lit top, joints, a dark foot
+        rect(im, 0, y0, 95, y0 + 4, G_ST)
+        rect(im, 0, y0, 95, y0, G_ST_HI); rect(im, 0, y0 + 1, 95, y0 + 1, G_ST_LT)
+        rect(im, 0, y0 + 4, 95, y0 + 4, G_ST_DK)
+        for x in range(11 if y0 == 1 else 5, 96, 12):
+            rect(im, x, y0 + 1, x, y0 + 3, G_ST_LO)
+    for x0 in (0, 90):                                            # a post at each corner
+        for y0 in (1, 25):
+            rect(im, x0, y0, x0 + 5, y0 + 5, G_ST_MD)
+            rect(im, x0, y0, x0 + 5, y0, G_ST_HI); rect(im, x0, y0, x0, y0 + 5, G_ST_HI)
+            rect(im, x0 + 1, y0 + 1, x0 + 4, y0 + 1, G_ST_LT)
+            rect(im, x0 + 5, y0 + 1, x0 + 5, y0 + 5, G_ST_DK); rect(im, x0, y0 + 5, x0 + 5, y0 + 5, G_ST_DK)
+    rect(im, 0, 0, 95, 0, hl.INK); rect(im, 0, 31, 95, 31, hl.INK)
     return im
 
 
-MOSS_B, MOSS_M, MOSS_H, MOSS_S = rgb('3a6c58'), rgb('457b5e'), rgb('5f9668'), rgb('30604f')
 MOUNDS = ((6, 5, 5, 3), (20, 3, 6, 3), (13, 12, 6, 4), (28, 14, 5, 3),          # cx, cy, rx, ry
           (4, 20, 5, 3), (21, 22, 7, 4), (11, 28, 5, 3), (30, 28, 4, 3))
 
 
 def moss_px(x, y):
-    """Kenrokuen's moss at drawn pixel (x, y) of a 32px tile: a deep blue-green
-    floor heaped into cushions, each lit from the upper left and dark under its
-    lower right edge. Periodic at 32 both ways."""
-    for cx, cy, rx, ry in MOUNDS:
+    """Kenrokuen's moss at drawn pixel (x, y) of a 32px tile: a deep floor
+    heaped into ragged cushions, each with a lit rim to the upper left and a
+    dark one under its lower right edge. Periodic at 32 both ways; whole
+    numbers only."""
+    floor, cushion, lit, lo = G_MOSS
+    x, y = x % 32, y % 32
+    for n, (cx, cy, rx, ry) in enumerate(MOUNDS):
         dx = (x - cx + 16) % 32 - 16
         dy = (y - cy + 16) % 32 - 16
-        q = (dx / rx) ** 2 + (dy / ry) ** 2
-        if q <= 1.0:
-            s = dx / rx + dy / ry
-            if s > 0.75:
-                return MOSS_S
-            if s < -0.55:
-                return MOSS_H
-            return MOSS_M
-    return MOSS_S if h3(x % 32, y % 32, 2) < 10 else MOSS_B
+        q = (dx * dx * ry * ry + dy * dy * rx * rx) * 100 // (rx * rx * ry * ry)
+        if q <= 80 + speck(x // 2, y, n) // 5:
+            s = (dx * ry + dy * rx) * 100 // (rx * ry)
+            return lo if s > 72 else (lit if s < -50 and q > 30 else cushion)
+    return floor
 
 
 def garden_moss():
@@ -1303,30 +1390,48 @@ def _edge_dist(role, x, y, r=9):
     return min(a, b)
 
 
+PATH_JOINTS = (4, 10, 15, 21, 26, 31)                             # where one edging stone ends, along a side
+
+
+def _path_part(role, x, y):
+    """0 moss, 1 an edging stone, 2 gravel. Good past the tile's edge too: the next tile's part."""
+    dist = _edge_dist(role, x, y)
+    return 0 if dist < 3.2 else (1 if dist < 6.2 else 2)
+
+
 def garden_path(role):
     """Kenrokuen's paths: pale raked gravel between lines of edging stones,
-    moss beyond them."""
+    moss beyond them. The stones are lit on their north and west sides and
+    throw a shade south and east, whichever side of the path they edge."""
     im = Image.new('RGBA', (32, 32), CLEAR)
     px = im.load()
-    grav = (rgb('ddd2ba'), rgb('cdc1a6'), rgb('ece4d0'), rgb('b9ad92'))
+    tail = '' if role == 'center' else role.split('-')[-1]
     for y in range(32):
         for x in range(32):
-            dist = _edge_dist(role, x, y)
-            if dist < 3.2:
+            part = _path_part(role, x, y)
+            above, left = _path_part(role, x, y - 1), _path_part(role, x - 1, y)
+            if part == 0:
                 c = moss_px(x, y)
-            elif dist < 6.2:                                      # an edging stone, low and pale
-                c = (GRAN, GRAN_HI, rgb('b9bec2'))[(x // 5 + y // 5 * 3) % 3]
-                if x % 5 == 4 and y % 5 == 4:
-                    c = GRAN_LO
-                elif dist < 3.9:
-                    c = GRAN_LO                                   # its foot in the moss
-                elif dist > 5.5:
-                    c = grav[3]                                   # its shadow on the gravel
+                if 1 in (above, left):
+                    c = G_MOSS[3]                                 # the stone's shade on the moss
+            elif part == 1:
+                a = min(y if 'n' in tail else 99, 31 - y if 's' in tail else 99)
+                b = min(x if 'w' in tail else 99, 31 - x if 'e' in tail else 99)
+                if (x if a <= b else y) in PATH_JOINTS:
+                    c = G_ST_LO
+                elif above != 1 or left != 1:
+                    c = G_ST_HI if (above != 1 and left != 1) else G_ST_LT
+                elif _path_part(role, x, y + 1) != 1 or _path_part(role, x + 1, y) != 1:
+                    c = G_ST_MD
+                else:
+                    c = G_ST
             else:
-                k = h3(x, y, 7)
-                c = grav[2] if k < 20 else (grav[1] if k < 60 else (grav[3] if k < 68 else grav[0]))
-                if y % 6 == 2 and (x + y // 6 * 3) % 5 < 3 and dist > 8:
-                    c = grav[1]                                   # the rake's lines
+                k = speck(x, y, 7)
+                c = G_GRAVEL_HI if k < 5 else (G_GRAVEL_LO if k < 12 else (G_GRAVEL_SH if k < 14 else G_GRAVEL))
+                if y % 6 == 2 and (x + y // 6 * 3) % 5 < 3 and _edge_dist(role, x, y) > 8:
+                    c = G_GRAVEL_LO                               # the rake's lines
+                if 1 in (above, left):
+                    c = G_GRAVEL_SH                               # the stone's shade on the gravel
             px[x, y] = c
     return im
 
@@ -2578,10 +2683,10 @@ PIECES = [
         solid=rows(2, 2, 2), lit=[[1.0, 1.0, WARM_HEX]]),
      'The Kotoji lantern, the garden\'s emblem, at twice the old sprite\'s height: a granite lantern on two '
      'bowed legs, the long one on a stone in the shallows and the short one on a rock on the bank, lichen on '
-     'its roof. Stand it on the pond\'s edge with its left column over the water\'s rim.'),
+     'its roof, its light box unlit, dim gold. Stand it on the pond\'s edge with its left column over the water\'s rim.'),
     ('kenrokuen-kotoji-water_0_0', lambda: kotoji(True), (2, 3), 'Kenrokuen', dict(
         solid=rows(2, 2, 2), lit=[[1.0, 1.0, WARM_HEX]]),
-     'The same lantern with its long leg going down into the pond (rings on the water round it, no stepping '
+     'The same lantern with its long leg going down into the pond (a ring on the water round it, no stepping '
      'stone): its bottom-left cell must be a pond cell and its bottom-right cell the bank.'),
     ('kenrokuen-yukitsuri_0_0', yukitsuri(3, 4, ((-25, 88, 18, 9), (25, 84, 18, 9), (-6, 70, 21, 10),
                                                (12, 97, 20, 9), (-15, 101, 16, 7), (3, 54, 15, 8)), 20),
@@ -2595,7 +2700,8 @@ PIECES = [
      'A smaller pine under its ropes; use several along a path.'),
     ('kenrokuen-teahouse_0_0', teahouse, (4, 3), 'Kenrokuen', dict(
         solid=rows(4, 1, 2), lit=[[2.0, 1.7, WARM_HEX]]),
-     'The tea house on the pond (Uchihashi-tei): a mossy shingled roof, paper screens either side of an open '
+     'The tea house on the pond (Uchihashi-tei): a hipped cedar-shingle roof seen from above, moss in its '
+     'courses, paper screens either side of an open '
      'room with tatami, a scroll and a low table, a railed veranda, and posts on stones standing in the '
      'water. Its bottom row belongs ON water cells (the posts, a shadow and ripples; transparent between); '
      'row 1 is the room. No door: it is looked at from the bank.'),

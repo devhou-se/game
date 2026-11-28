@@ -327,7 +327,9 @@ Kanazawa's ten building fronts in `tools/generate_kanazawa_art.py` (the three `c
 shop, the phonograph museum, Katamachi's four bars and the samurai house; #307, part of #290) are drawn by it
 and held to it by `tools/tests/kanazawa-art.test.js`. The castle's gate, turret, storehouse and five wall
 pieces and the Tsuzumi-mon (#385, part of #312) are drawn the same way, their roofs hipped and seen from
-above in the pack's tile, and held by the same test file.
+above in the pack's tile, and held by the same test file. Kenrokuen's lanterns, pines, tea house, bridge, moss
+and path tiles (#386) are drawn the same way; the ground tiles and the bridge are flat, and `2a3151` at alpha 90
+is their only translucent colour.
 
 ## Asset Generation
 
