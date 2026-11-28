@@ -138,6 +138,12 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.strictEqual(meta.custom, false, 'a hand-made map ("custom": true) is not one make_worldmap rebuilds: take it out of ART_TOOLS');
     });
 
+    test('check_generators: Fukuoka\'s town art is checked, before the world map that shows it (#362)', () => {
+        const out = python('out["at"] = cg.ART_TOOLS.index("generate_fukuoka_town_art") if "generate_fukuoka_town_art" in cg.ART_TOOLS else -1\nout["map"] = cg.ART_TOOLS.index(cg.WORLDMAP)');
+        assert.ok(out.at >= 0, 'generate_fukuoka_town_art is not in ART_TOOLS');
+        assert.ok(out.at < out.map, 'generate_fukuoka_town_art runs after make_worldmap');
+    });
+
     test('check_generators: a world map that is not what make_worldmap draws is drift, and only the picture is named (#270)', () => {
         // a project like the committed one (devhouse.world beside it), but for a patch painted on its map
         const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'check-generators-worldmap-'));

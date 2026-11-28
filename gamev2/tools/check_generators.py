@@ -112,6 +112,7 @@ ART_TOOLS += ['generate_wheel_art']          # Osaka: the gondola you board and 
 ART_TOOLS += ['generate_tokyo_art']          # Tokyo Tower and Tokyo Station, placeholders until the real art (issue #70)
 ART_TOOLS += ['generate_karuizawa_art']      # Karuizawa's own art: the fingerpost, the Ginza's three shopfronts, the larches, Shiraito Falls and the corn stall (issues #260, #261, #262)
 ART_TOOLS += ['generate_asahikawa_art']      # Asahikawa's own art (issue #219, stage B)
+ART_TOOLS += ['generate_fukuoka_town_art']   # Fukuoka's own town pieces and ground families (issues #219, #362)
 # make_worldmap.py: assets/map/world-map.png and .json, the overworld drawn from the committed maps and
 # sprites. Last: it makes no art of its own, it shows what the tools above made (issue #270)
 WORLDMAP = 'make_worldmap'
