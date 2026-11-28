@@ -27,6 +27,11 @@ Himeji
                                  coping, loopholes, a stone footing. Tiles side
                                  by side into a run of any length and fills
                                  both its cells
+  himeji-kokoen-wall-v_0_0       1x1  Koko-en's earthen wall running north-south,
+  himeji-kokoen-wall-v-top_0_0   1x1  seen from above: its tiled coping down the
+  himeji-kokoen-wall-v-end_0_0   1x2  middle of the cell. 'v' tiles into a run,
+                                      'top' is a run's north end, 'end' its south
+                                      end, where the wall's end face shows
 Okayama
   okayama-keep_0_0         8x7   the "crow castle": black weatherboards under a
                                  band of white plaster at each storey, darker
@@ -85,7 +90,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 from generate_hokkaido import (CLEAR, rgb, canvas, outline, INK, CREAM, CREAM_LO, WHITE, SNOW_LO, WOOD, WOOD_LO,
                                WOOD_DK, STONE, STONE_LO, STONE_DK, GOLD)
 from generate_sendai_art import (roof_rows, coping, plaster, footing, LACQUER_LO, GOLD_HI, GOLD_LO,
-                                 SLATE_LO)
+                                 SLATE, SLATE_HI, SLATE_LO)
 from generate_hokuriku_art import (masonry, PLASTER, PLASTER_LO, BOARD, BOARD_LO, SOOT, SOOT_HI, SOOT_LO,
                                    INDIGO, INDIGO_HI)
 
@@ -422,6 +427,30 @@ def wall():
         d.line([(x, y0), (x, y1)], fill=STONE_LO)
     d.line([(0, 57), (23, 57)], fill=STONE_LO)
     d.point((5, 55), fill=WHITE); d.point((28, 56), fill=WHITE); d.point((20, 59), fill=STONE_DK)
+    outline(im)
+    return im
+
+
+def kokoen_wall_v(part):
+    """Koko-en's earthen wall running north-south, seen from above: its tiled
+    coping, 16px wide down the middle of the cell. 'v' tiles into a run, 'top'
+    is a run's north end, 'end' (1x2) its south end, where the wall's end face shows."""
+    im, d = canvas(1, 2 if part == 'end' else 1)
+    x0, x1 = 8, 23
+    y0, y1 = (1 if part == 'top' else 0), (13 if part == 'end' else 31)
+    d.rectangle([x0, y0, x1, y1], fill=SLATE)
+    for y in range(y0, y1 + 1):
+        if y % 4 == 3:
+            d.line([(x0, y), (x1, y)], fill=SLATE_LO)             # the courses of tiles, falling east and west
+    d.line([(x0, y0), (x0, y1)], fill=SLATE_LO); d.line([(x1, y0), (x1, y1)], fill=SLATE_LO)
+    d.line([(x0 + 1, y0), (x0 + 1, y1)], fill=SLATE_HI)
+    d.rectangle([15, y0, 16, y1], fill=SLATE_LO); d.line([(15, y0), (15, y1)], fill=SLATE_HI)   # the ridge
+    if part == 'top':
+        d.line([(x0, 1), (x1, 1)], fill=SLATE_LO)
+    if part == 'end':
+        coping(d, x0, x1, 12)
+        plaster(d, x0, x1, 26, 55)
+        footing(d, x0, x1, 56, 63)
     outline(im)
     return im
 
@@ -928,6 +957,9 @@ SPRITES = {      # key: (builder, scale, tileNames label)
     'himeji-bridge_0_0': (bridge, 2, 'himeji-bridge'),
     'himeji-kokoen-gate_0_0': (kokoen_gate, 2, 'himeji-kokoen-gate'),
     'himeji-wall_0_0': (wall, 2, 'himeji-wall'),
+    'himeji-kokoen-wall-v_0_0': (lambda: kokoen_wall_v('v'), 2, 'himeji-kokoen-wall-v'),
+    'himeji-kokoen-wall-v-top_0_0': (lambda: kokoen_wall_v('top'), 2, 'himeji-kokoen-wall-v-top'),
+    'himeji-kokoen-wall-v-end_0_0': (lambda: kokoen_wall_v('end'), 2, 'himeji-kokoen-wall-v-end'),
     'kansai-fingerpost_0_0': (fingerpost, 2, 'kansai-fingerpost'),
     'okayama-keep_0_0': (crow_keep, 2, 'okayama-keep'),
     'okayama-bridge_0_0': (tsukimi_bridge, 2, 'okayama-bridge'),

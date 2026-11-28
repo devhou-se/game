@@ -143,11 +143,11 @@ DISTRICTS = {
     # Himeji: walked to from Osaka, the stitched KansaiCity (issue #255)
     'Himeji': [
         d('castle', 'Himeji Castle',
-          'the white castle on its hill: the keep, the stone walls, the gate and the bridge over the moat',
-          (6, 2, 41, 13), stand=(22, 8)),
+          'the white castle on its hill: over the moat by the bridge and the gate, then three courts climbed as a hairpin to the keep',
+          (6, 2, 41, 13), stand=(30, 8)),
         d('kokoen', 'Koko-en garden',
-          'the walled strolling garden beside the castle: its pond and bridge, lanterns, pines and maples',
-          (5, 26, 41, 35), stand=(22, 28)),
+          'the walled garden beside the castle, three rooms in a row: pines and lanterns, the koi pond and its bridge, maples',
+          (6, 26, 40, 37), stand=(27, 28)),
     ],
     # Okayama: walked to from Himeji, the west end of KansaiCity (issue #267)
     'Okayama': [

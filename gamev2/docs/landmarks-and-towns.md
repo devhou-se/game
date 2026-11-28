@@ -37,7 +37,7 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Gassho farmhouses, the suspension bridge, the viewpoint, the peaks | Shirakawago | `shirakawa-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 | Glass Art Museum, tram and stop, black-ramen shop, port observation tower | Toyama | `toyama-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 | Himeji Castle: the keep, a corner turret, the gatehouse, the white wall, the moat bridge | Himeji | `himeji-keep_0_0`, `himeji-turret_0_0`, `himeji-gate_0_0`, `himeji-wall_0_0`, `himeji-bridge_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
-| Koko-en's roofed gate | Himeji | `himeji-kokoen-gate_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| Koko-en's roofed gate and its north-south walls | Himeji | `himeji-kokoen-gate_0_0`, `himeji-kokoen-wall-v_0_0`, `-v-top_0_0`, `-v-end_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 | Okayama Castle: the black "crow" keep | Okayama | `okayama-keep_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
 | Korakuen: the Tsukimi bridge, the red-crowned cranes, the stones at the island's corners | Okayama | `okayama-bridge_0_0`, `okayama-crane_0_0`, `okayama-bank-rock_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 | The Momotaro statue, the Bizen-ware stall | Okayama | `okayama-momotaro_0_0`, `okayama-bizen-stall_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
@@ -301,7 +301,8 @@ the town and has the region's one station. Himeji, Okayama and Nara are small pl
 walk to Himeji from Osaka, west along Canal-side Avenue, and on along the same avenue to Okayama, where it
 ends; and east along it the other way to Nara, where it ends below the Nandaimon. Devhouse 2's Damian was in
 Okayama on 12 November 2025 (post 745), in Himeji on the 13th (post 754) and in Nara on the 14th (post 764).
-All four are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji and Okayama" below.
+All four are to be rebuilt to one plan, one at a time (Himeji is, by #275): see "Kansai: one plan for Osaka,
+Himeji and Okayama" below.
 
 - **Layout** (`tools/kansai.py`, the one place the generators agree on it; city cells, the union's top-left
   is 0,0). Kansai is planned as FIVE districts, one ticket each, and `AT` / `SIZE` hold all five so that a
@@ -342,22 +343,33 @@ All four are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji 
 - **Osaka** changed only at its two edges: no bushes cap the rail corridor on (0, 3..5) or (49, 3..5) - the
   line carries on west and east - the pavement's seam pieces on (0,24), (0,28), (49,24) and (49,28), the
   fingerposts at (2,28) and (47,28), and the ten seam transporters. A later Osaka must keep the avenue on
-  rows 24-28 and the canal on rows 20-22 at both edges.
-- **Himeji** (`tools/generate_himeji.py`): north, **Himeji Castle** on its hill - the white **keep**
-  (`himeji-keep`, 10x8 at (8,0), on the district's top row, so its art is exactly its footprint: nothing may
-  overhang into the row above, which is not Himeji's; `game.lookUp.sprites` has it, so the camera looks up
-  from the terrace in front of it), a corner **turret**, and a gravel terrace with pines and stone lanterns.
-  Two wall tiers hold the hill up (rows 10-13: the castle's own white plaster wall, `himeji-wall`, over a
-  stone base) and the only way up is the **gatehouse** (`himeji-gate`, 6x4 at (30,10); the gateway is its
-  columns 2-3): over the timber **bridge** across the moat (`himeji-bridge`, 2x4, flat with
-  `depthBias: -200`), through the gateway, up the steps. The **moat** ends at a bank at column 6 and is
-  Himeji's `waterways` entry, declared from column 7 (see "Boats" in `ambient-traffic.md`), so the canal's
-  boats sail it; it is `pond-autotile`, so it can be fished. The avenue runs on out of the west edge to
-  Okayama (it ended at the woods at column 5 until #267). South
-  of it, **Koko-en**: a garden behind an earthen wall (Sendai's wall and pine sprites), entered through its
-  roofed gate (`himeji-kokoen-gate`, 4x3 at (20,23); the gateway is its columns 1-2) - a gravel loop round a
-  pond, crossed by the same timber bridge, with lanterns, pines and maples. There is no building with a
-  door: the keep and the turret are solid over their whole footprint, and the keep is looked at, not entered.
+- **Himeji** (`tools/generate_himeji.py`; rebuilt to the plan below by #275): a climb. North,
+  **Himeji Castle** on its hill - the white **keep** (`himeji-keep`, 10x8 at (8,0), on the district's top
+  row, so its art is exactly its footprint: nothing may overhang into the row above, which is not Himeji's;
+  `game.lookUp.sprites` has it, so the camera looks up from the court in front of it) - reached by a
+  **hairpin through three courts** of swept `sand-autotile` (Fukuoka's beach; no `gravel-autotile` in
+  Himeji). Over the timber **bridge** across the moat (`himeji-bridge`, 2x4 at (32,14), flat with
+  `depthBias: -200`) and through the **gatehouse** (`himeji-gate`, 6x4 at (30,10); the gateway is its
+  columns 2-3, with steps) in the white wall (rows 10-13: `himeji-wall` over a stone base, x 6..41) into
+  **Sannomaru** (23..41, 6..9); east to the **steps** (38-39) in an inner stone wall (rows 4-5, x 20..41);
+  back west along the **upper walk** (18..41, 2..3); down the **lane** on the keep's east flank (18..19,
+  2..7) into **Honmaru** (6..19, 8..9), in front of the keep. The corner **turret** (`himeji-turret`, 3x4
+  at (20,6), solid) stands against the inner wall down to the white wall and closes Honmaru from Sannomaru,
+  so the hairpin is the only way: 51 steps from the bridge's landing to the keep's visitor at (12,8). Pines
+  and stone lanterns stand in the courts, never on (9..16, 8..9). The **moat** ends at a bank at column 6
+  and is Himeji's `waterways` entry, declared from column 7 (see "Boats" in `ambient-traffic.md`), so the
+  canal's boats sail it; it is `pond-autotile`, so it can be fished. The avenue runs on out of the west
+  edge to Okayama. South of it, **Koko-en**: behind an earthen wall on rows 24-25 (Sendai's wall sprite),
+  entered through its roofed gate at the Okayama end (`himeji-kokoen-gate`, 4x3 at (8,23); the gateway is
+  its columns 1-2, paved), it is **three walled rooms in a row** on rows 26-37 - A (x 6..17) pines and
+  lanterns, B (19..30) the koi pond (`pond-autotile`, 8x3 at (21..28, 30..32), written by hand: `b.pond`
+  makes two rows) under the same timber bridge at (24,30), C (32..40) maples. A north-south earthen wall
+  one cell thick (`himeji-kokoen-wall-v` in a run, `-v-top` at a run's north end below an opening, `-v-end`
+  1x2 at its south end, where the end face shows; each `b.prop`, solid) closes the west and east sides
+  (columns 5 and 41, unbroken) and parts the rooms (column 18 open on rows 28-29, column 31 on rows 34-35),
+  so the walk is a zigzag. Its paths are one cell of stepping stones (`b.paver`), not gravel. The border
+  woods are pine and cedar; maples grow only in room C. There is no building with a door: the keep and
+  the turret are solid over their whole footprint, and the keep is looked at, not entered.
 - **Okayama** (`tools/generate_okayama.py`, issue #267) is laid out on one north-south axis, columns
   21-22: the keep, the steps down the stone wall, across the avenue, the bridge, the island. North,
   **Okayama Castle**, the black "crow castle" (`okayama-keep`, 8x7 at (18,2): black boarded walls with a
@@ -445,7 +457,8 @@ tickets rebuilds one room to this plan, rewrites that room's bullet above, and d
 **Fixed** means a ticket may not move it. A **target** is the cell the plan was drawn with: the ticket's own
 design may shift it by blockout, but not change what it is or which side of what it stands on.
 
-- **What repeats today.** Himeji and Okayama are the same room twice:
+- **What repeated.** Himeji and Okayama were the same room twice (as #274 found them; since #275 Himeji
+  no longer is, and the list below is Okayama's, and what #276 changes):
   1. *The same three bands on the same rows of a 44x40 room*: castle north (Himeji rows 0-13, Okayama
      3-14), the avenue straight through on rows 18-22, a garden south (rows 24-37).
   2. *The same castle*: a salmon `gravel-autotile` terrace as wide as the room (Himeji 6..41, Okayama
@@ -499,30 +512,6 @@ design may shift it by blockout, but not change what it is or which side of what
   - `check_distinct.py`: no ticket leaves Kansai worse than `tools/distinct_baseline.json`. It is "most
     like Sendai" through the `sendai-*` trees, lantern and wall: no ticket adds another `sendai-*` kind.
 
-- **Himeji (#275): a climb.** The castle is the district, and you earn the keep.
-  - *Fixed*: the keep `himeji-keep` 10x8 at (8,0) and its visitor's cell (12,8); the moat on rows 14-16
-    from its bank at x=6 to x=43 with its `waterways` entry from 7; the avenue on rows 18-22 across the
-    whole room.
-  - *North of the moat, three courts walked as a hairpin* (targets): over the bridge (columns 32-33) and
-    through the gatehouse (6x4 at (30,10)) in the white wall on its stone base (rows 10-13, x 6..41) into
-    **Sannomaru** (23..41, 6..9); east to steps (38-39) up an inner stone wall (rows 4-5, x 20..41); back
-    west along the **upper walk** (18..41, 2..3); down the lane by the keep's east flank (18..19, 2..7)
-    into **Honmaru** (6..19, 8..9), in front of the keep. The turret (3x4, solid) stands on (20,6) and
-    closes Honmaru from Sannomaru, so the hairpin is the only way. About 50 cells from the bridge to the
-    visitor, where it is 28 today.
-  - *South of the avenue, Koko-en as three walled rooms in a row* (targets), not a loop: the earthen wall
-    on row 24; the roofed gate 4x3 at (8,23), gateway columns 9-10, at the Okayama end; rooms A (7..16), B
-    (19..30) and C (33..40) on rows 26-37, parted by solid tree lines two cells thick with one opening
-    each, staggered (A-B on rows 28-29, B-C on rows 34-35) so the walk is a zigzag. B is the lord's garden
-    with the koi pond (21..28, 30..32) under the timber bridge; A is pines and lanterns; C is maples.
-    Paths are one cell of `k.paved`, not gravel.
-  - *Ground and trees*: `sand-autotile` for all three courts; no `gravel-autotile` in Himeji. (The sand
-    is Fukuoka's beach, from `generate_fukuoka_art.py`. If `check_distinct.py` counts that against
-    Kansai, #275 recolours a court family of its own in `generate_kansai_art.py`.) Pines north of the
-    avenue and in the border woods (pine and cedar); maples only in Koko-en.
-  - *On arrival from Osaka* the canal becomes the moat beside the road and the white wall rises behind it;
-    the bridge and gate are eight cells in, and the keep is not seen until the upper walk. *From Okayama*
-    the Koko-en gate comes first, and the keep is overhead behind a wall with no way in until the far end.
 - **Okayama (#276): a stroll.** The garden is the district; the keep is scenery, and the road ends.
   - *Fixed*: the avenue's cells at the seam; Momotaro, the Bizen-ware stall and two cranes stay in the
     room; Damian's post of 12 November stays in Korakuen beside the first crane (cells under "Posts").
@@ -579,7 +568,7 @@ design may shift it by blockout, but not change what it is or which side of what
   A stand-in that #268 or #269 has moved out of Osaka by then is no longer Osaka's.
 - **Build order and rooms.** One at a time, because map data is serial; each leaves the city walkable end
   to end and the checks green.
-  1. **#275 Himeji** - room `Himeji` only. Okayama is still the old room beside it.
+  1. **#275 Himeji** - room `Himeji` only. **Built**: see the Himeji bullet in the section above.
   2. **#276 Okayama**, after #275 is merged - room `Okayama` only.
   3. **#277 Osaka**, after both - room `Osaka` and its interiors (`LobbyOsaka1` kept, `LobbyOsaka2`,
      `LobbyOsaka3`, `HouseOsaka1`, `HouseOsaka2` pruned, the shop rooms Stage E adds; the doors of

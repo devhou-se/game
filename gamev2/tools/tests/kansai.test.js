@@ -309,25 +309,36 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.ok(walkable(kx + 4, ky + 8), 'the keep\'s visitor cell');
     });
 
-    test('Himeji: Koko-en is a walled garden through its gate, with a pond that is the garden\'s and not the moat (#255)', () => {
+    test('Himeji: Koko-en is a walled garden through its gate, three rooms in a row, with a pond that is the garden\'s and not the moat (#255, #275)', () => {
         const { world } = worldWith(true);
         const rm = world.roomManager;
         world.enter('Osaka', 3, 26);
         const seen = world.reachable();
         const walkable = (x, y) => { const c = rm.resolve('Himeji', x, y); return seen.has(`${c.x},${c.y}`); };
         const [gx, gy] = at('Himeji', 'himeji-kokoen-gate_0_0');
-        assert.deepStrictEqual([gx, gy], [20, 23]);
+        assert.deepStrictEqual([gx, gy], [8, 23]);
         // the wall runs the garden's whole north side; the gateway (two cells) is the only way in
         for (let x = 5; x <= 41; x++) {
             const way = x === gx + 1 || x === gx + 2;
             assert.strictEqual(walkable(x, 24) || walkable(x, 25), way, `Koko-en's wall at column ${x}`);
         }
         assert.ok(walkable(gx + 1, gy + 5), 'LANDMARKS stands Koko-en\'s visitor here');
-        // the loop round the pond, and over it by the bridge
-        for (const [x, y] of [[8, 27], [38, 27], [8, 35], [38, 35], [22, 29], [22, 31], [23, 32], [22, 34]]) assert.ok(walkable(x, y), `Koko-en: nobody can walk to ${x},${y}`);
+        // three rooms, parted by north-south walls whose openings are staggered: in at the west, out of A on
+        // rows 28-29, out of B on rows 34-35; the garden's west and east sides are the same wall, unbroken
+        for (const [x, gap] of [[5, []], [18, [28, 29]], [31, [34, 35]], [41, []]]) {
+            for (let y = 26; y <= 37; y++) assert.strictEqual(walkable(x, y), gap.includes(y), `Koko-en's wall on column ${x}, row ${y}`);
+        }
+        for (const [x, y] of [[6, 26], [17, 37], [19, 26], [30, 37], [32, 26], [40, 37], [24, 29], [25, 33]]) assert.ok(walkable(x, y), `Koko-en: nobody can walk to ${x},${y}`);
+        const walls = Object.entries(sprites.Himeji).filter(([k]) => /^himeji-kokoen-wall-v/.test(k));
+        assert.deepStrictEqual(walls.map(([k]) => k).sort(), ['himeji-kokoen-wall-v-end_0_0', 'himeji-kokoen-wall-v-top_0_0', 'himeji-kokoen-wall-v_0_0']);
+        assert.ok(walls.every(([, cells]) => cells.every(([x]) => [5, 18, 31, 41].includes(x))), 'a garden wall off its columns');
+        // its paths are stepping stones, not gravel; the maples are room C's
+        assert.ok(!Object.values(layer('Himeji', 'Floor')).some((t) => /^gravel-autotile_/.test(name(t))), 'gravel on Himeji\'s floor');
+        const maples = sprites.Himeji['sendai-maple_0_0'] || [];
+        assert.ok(maples.length >= 4 && maples.every(([x, y]) => x >= 32 && x <= 40 && y >= 24), `the maples: ${maples.join(' ')}`);
         const pond = Object.entries(layer('Himeji', 'Water')).filter(([xy]) => Number(xy.split(',')[1]) > 22);
-        assert.ok(pond.length >= 40 && pond.every(([, t]) => /^pond-autotile_/.test(name(t))), 'the garden has no pond');
-        assert.ok(pond.filter(([xy]) => !solid('Himeji', ...xy.split(',').map(Number))).map(([xy]) => xy).sort().join(' ') === '22,31 22,32 23,31 23,32', 'the pond is crossed by its bridge alone');
+        assert.ok(pond.length === 24 && pond.every(([, t]) => /^pond-autotile_/.test(name(t))), 'the garden has no koi pond');
+        assert.ok(pond.filter(([xy]) => !solid('Himeji', ...xy.split(',').map(Number))).map(([xy]) => xy).sort().join(' ') === '24,30 24,31 24,32 25,30 25,31 25,32', 'the pond is crossed by its bridge alone');
         // "the pond" is a spot of the garden, not of the castle: the label's tile (the pond's north-west corner) is
         // also the moat's bank, and must be found in the garden first
         const d = Object.fromEntries(cfg.districts.Himeji.map((x) => [x.key, x]));
@@ -342,6 +353,26 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         const fish = I.find(config.rooms.Himeji, config.rooms.Himeji, 20, 16, { sizeOf });
         const canal = I.find(config.rooms.Osaka, config.rooms.Osaka, 5, 22, { sizeOf });
         assert.deepStrictEqual([fish && fish.kind, canal && canal.kind], ['pond', 'pond'], 'the moat is not fished');
+    });
+
+    test('Himeji: the keep is reached by a hairpin through three courts, on sand (#275)', () => {
+        const { world } = worldWith(false);
+        world.enter('Himeji', 32, 17);
+        const seen = world.reachable();
+        const open = (x, y) => seen.has(`${x},${y}`);
+        // over the bridge, through the gate into Sannomaru, east to the steps, west along the upper walk,
+        // down the lane into Honmaru: the long way round to the keep's visitor cell
+        const route = world.path(12, 8);
+        assert.ok(route && route.length >= 45, `the keep is ${route && route.length} steps from the bridge`);
+        // the inner stone wall, rows 4-5, is climbed by its steps alone
+        for (let x = 20; x <= 41; x++) for (const y of [4, 5]) assert.strictEqual(open(x, y), x === 38 || x === 39, `the inner wall at ${x},${y}`);
+        // the turret stands against it and closes Honmaru from Sannomaru
+        assert.deepStrictEqual(at('Himeji', 'himeji-turret_0_0'), [20, 6]);
+        for (let x = 18; x <= 19; x++) for (let y = 2; y <= 7; y++) assert.ok(open(x, y), `the lane at ${x},${y}`);
+        for (const [x, y] of [[12, 8], [19, 5], [30, 3], [30, 8]]) {
+            assert.ok(/^sand-autotile_/.test(name(layer('Himeji', 'Floor')[`${x},${y}`])), `the court at ${x},${y} is not sand`);
+        }
+        assert.ok(!(sprites.Himeji['sendai-maple_0_0'] || []).some(([, y]) => y <= 22), 'a maple in the castle');
     });
 
     test('Kansai: a fingerpost stands by each seam on each side and says where the avenue goes; Himeji is its own place (#255, #267, #268)', () => {
