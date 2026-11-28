@@ -953,7 +953,11 @@ and the blog pipeline never offers it (`"blog": false` on the room, see `blog-pi
   palette - no brand marks but the 7-Eleven the game already has. The oval and the pier are flat
   (`Non-Collidables` with a `depthBias`, the `asahibashi-deck` recipe); the river is `pond-autotile`
   recoloured (`sfb-river_*`, so it is not a fishing spot); the light towers are named `...lamp-post` so
-  `DayNight` lights them. The transport, sports, terrain and creature sprites (cable car, tram, rail, oval,
+  `DayNight` lights them. The bridge, the station, the painted ladies, the lane and the two towers are in the
+  house look (#322: sheet colours only, `generate_sendai_art`'s `pane` for dark glass with a glare, roofs seen
+  from above, gold only as the unlit `c6a663`, integer drawing only); the cable rails and the lane wall are
+  drawn flat on purpose (a rail tiled down the deck, a wall face the murals are painted on).
+  The transport, sports, terrain and creature sprites (cable car, tram, rail, oval,
   goalposts, light towers, fog, terminal, pier, sea lions, palm, rock and the leaners) are in the house look
   (#328: `generate_sendai_art`'s `foliage` and `pane`; roofs from above, dark glass, unlit gold lamps), and
   the oval, pier, rail and fog are drawn flat on purpose.

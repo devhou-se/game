@@ -490,6 +490,43 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         }
     });
 
+    test("San Franbourne's bridge, station, ladies, lane and towers are drawn in the house look: sheet colours, dark glass, unlit gold (#322)", () => {
+        const png = require(path.join(GV2, 'tools', 'png.js'));
+        const SHEET = new Set(('0a1627 172459 fafcfd dae2e4 a4b0b5 848295 575f79 47485d 2a2636 f3d890 e3c587 c6a663 a7843b 86624f '
+            + 'aa4d31 904a37 5b283b b1dfdc 93c297 508582 4a6262 395050 698592 5b6c79 444f5e 78768a 5f6177 db785c c66347 8a3a22 '
+            + 'be9e8c bb8971 7f513b 594b45 e4cecc 8e7366 2c2d51 2a3151 4b6396 bbe9ff 8ec2fa 7db9fa 588cc6 425faa 314b8e '
+            + 'ffe2e0 ff9b92 e78d7b bb6479 d7b6ab d16b56 8f72b6 3c396d 3f827f 6c8e7f 506b6b').split(' '));
+        const SIZES = {
+            'sfb-clocks-station': [768, 448], 'sfb-bridge-tower': [384, 448], 'sfb-bridge-cable-w': [64, 64],
+            'sfb-bridge-cable-e': [64, 64], 'sfb-rowers': [256, 64], 'sfb-lady-a': [192, 320], 'sfb-lady-b': [192, 320],
+            'sfb-lady-c': [192, 320], 'sfb-lady-d': [192, 320], 'sfb-mural-a': [192, 128], 'sfb-mural-b': [192, 128],
+            'sfb-mural-c': [192, 128], 'sfb-coffee': [192, 128], 'sfb-crates': [64, 64], 'sfb-pyramid': [256, 768],
+            'sfb-spire': [256, 704],
+        };
+        // [glass, glare] at least: the windows are the pack's dark pane, not lit
+        const GLASS = { 'sfb-clocks-station': [20000, 3000], 'sfb-pyramid': [15000, 1000], 'sfb-spire': [6000, 1000] };
+        for (const k of ['a', 'b', 'c', 'd']) GLASS[`sfb-lady-${k}`] = [4000, 600];
+        for (const [key, [w, h]] of Object.entries(SIZES)) {
+            const im = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '_0_0.png')));
+            assert.deepStrictEqual([im.width, im.height], [w, h], `${key}: size`);
+            const count = new Map();
+            for (let i = 0; i < im.width * im.height; i++) {
+                const a = im.data[i * 4 + 3];
+                if (!a) continue;
+                const hex = [0, 1, 2].map((j) => im.data[i * 4 + j].toString(16).padStart(2, '0')).join('');
+                assert.ok(SHEET.has(hex), `${key}: ${hex} is not a GuttyKreum sheet colour`);
+                assert.ok(a === 255 || (hex === '2a3151' && a === 90), `${key}: ${hex} at alpha ${a}`);
+                if (a === 255) count.set(hex, (count.get(hex) || 0) + 1);
+            }
+            assert.ok(count.size <= 24, `${key}: ${count.size} colours`);
+            if (GLASS[key]) {
+                assert.ok((count.get('2c2d51') || 0) >= GLASS[key][0], `${key}: dark glass`);
+                assert.ok((count.get('4b6396') || 0) >= GLASS[key][1], `${key}: the glare on it`);
+            }
+            if (key === 'sfb-clocks-station' || key === 'sfb-spire') assert.ok(count.get('c6a663') > 0, `${key}: the pack's unlit gold`);
+        }
+    });
+
     test('San Franbourne: the transport, sports, terrain and creature sprites are in the house look (#328)', () => {
         const png = require(path.join(GV2, 'tools', 'png'));
         const SIZES = {

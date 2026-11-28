@@ -7,6 +7,12 @@ and tools/generate_fukuoka_art.py draw theirs: shaded pixel art in the
 GuttyKreum palette, at half size (one drawn pixel = one pixel of a 32px tile)
 and pixel-doubled, with a 1px ink outline. No brand marks.
 
+The bridge, the station, the painted ladies, the lane and the two towers (#322)
+are in the house look: only colours the GuttyKreum sheets use (the T_ palette),
+roofs seen from above, the pack's dark glass with a slanted glare
+(generate_sendai_art.pane), gold only as the pack's unlit c6a663, and integer
+drawing only, so they come out the same on any Pillow.
+
 The transport, sports, terrain and creature sprites (the cable car to the rock,
 and the leaners) are in the house look (docs/generators-and-checks.md, "House
 look: GuttyKreum", #328): sheet colours only, roofs seen from above, dark glass
@@ -69,22 +75,21 @@ import math
 import sys
 from PIL import Image, ImageDraw, ImageFont
 
-from generate_hokkaido import (rgb, canvas, outline, window, CLEAR, INK, NAVY,
+from generate_hokkaido import (rgb, canvas, outline, CLEAR, INK, NAVY,
                                RED, RED_HI, RED_LO, RED_DK, CREAM, CREAM_LO, CREAM_DK, WHITE,
                                GLASS, GLASS_HI, GLASS_DK, WOOD, WOOD_LO, WOOD_DK,
                                STONE, STONE_LO, STONE_DK, GREEN, GREEN_LO, GREEN_HI, GOLD, AMBER)
 from generate_sendai_art import foliage, pane, speck, ground_shade, P_SHADE, LEAF as P_LEAF
 
 C = 32
-ORANGE, ORANGE_HI, ORANGE_LO = rgb('c8452c'), rgb('e8674a'), rgb('8e2d20')      # the bridge
-MUSTARD, MUSTARD_HI, MUSTARD_LO = rgb('e0b040'), rgb('f2d070'), rgb('b07c2c')   # the station
+MUSTARD = rgb('e0b040')
 MAROON = rgb('8a3a34')
+LEAF, LEAF_HI, LEAF_LO = rgb('678e57'), rgb('89af78'), rgb('395050')
+TURF, TURF_HI = rgb('6f9a55'), rgb('82ad63')
 COPPER, COPPER_HI, COPPER_LO = rgb('5fa58a'), rgb('8fd0b0'), rgb('3c7462')
 TRAM, TRAM_LO = rgb('3f7a4c'), rgb('2a5637')
-BLUESTONE, BLUESTONE_LO, BLUESTONE_HI = rgb('5c6272'), rgb('444959'), rgb('777e8e')
 BROWN, BROWN_HI, BROWN_LO = rgb('8a6a48'), rgb('a88560'), rgb('64492f')
 SKIN = rgb('e8b898')
-PINK, MINT, SKYBLUE, LEMON = rgb('e8a0b0'), rgb('9cd0b4'), rgb('8cb8e0'), rgb('f0d888')
 CARPET, CARPET_LO = rgb('46587e'), rgb('3c4c70')
 LED = rgb('ffaa28')
 
@@ -114,134 +119,307 @@ def box(d, x0, y0, x1, y1, fill, hi=None, lo=None):
         d.line([(x0, y1), (x1, y1)], fill=lo); d.line([(x1, y0), (x1, y1)], fill=lo)
 
 
-def clock(d, cx, cy, r, hands=(2, -3)):
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=WHITE, outline=INK)
-    d.line([(cx, cy), (cx, cy - r + 2)], fill=INK)
-    d.line([(cx, cy), (cx + hands[0], cy + hands[1])], fill=INK)
-
-
 # ------------------------------------------------------------------------------ the city
+# The bridge, the station, the painted ladies, the lane and the two towers (#322), in the house look:
+# only colours the GuttyKreum sheets use, an ink silhouette, light from the upper left, roofs seen
+# from above, the pack's dark glass (generate_sendai_art.pane) and its gold only unlit. Integer
+# drawing only (rectangles and points), so the output is the same on any Pillow.
+T_STEEL = [rgb(c) for c in ('fafcfd', 'dae2e4', 'a4b0b5', '848295', '575f79', '47485d', '2a2636')]
+T_MUSTARD = [rgb(c) for c in ('f3d890', 'e3c587', 'c6a663', 'a7843b', '86624f')]
+T_MAROON = [rgb(c) for c in ('aa4d31', '904a37', '5b283b')]
+T_COPPER = [rgb(c) for c in ('b1dfdc', '93c297', '508582', '4a6262', '395050')]
+T_SLATE = [rgb(c) for c in ('698592', '5b6c79', '444f5e')]
+T_STONE = [rgb(c) for c in ('78768a', '5f6177', '47485d')]
+T_ORANGE = [rgb(c) for c in ('db785c', 'c66347', 'aa4d31', '8a3a22')]
+T_WOOD = [rgb(c) for c in ('be9e8c', 'bb8971', '86624f', '7f513b', '594b45')]
+T_CREAM = [rgb(c) for c in ('e4cecc', 'be9e8c', '8e7366')]
+T_GLASS, T_GLASS_LO, T_GLARE = rgb('2c2d51'), rgb('2a3151'), rgb('4b6396')
+T_BLUE = [rgb(c) for c in ('bbe9ff', '8ec2fa', '7db9fa', '588cc6', '425faa', '314b8e')]
+T_PINK = [rgb(c) for c in ('ffe2e0', 'ff9b92', 'e78d7b', 'bb6479')]
+T_SKIN, T_SKIN_LO = rgb('ffe2e0'), rgb('d7b6ab')
+T_RED = [rgb(c) for c in ('e78d7b', 'd16b56', 'aa4d31')]
+T_PURPLE = [rgb(c) for c in ('8f72b6', '3c396d')]
+T_TEAL = [rgb(c) for c in ('508582', '3f827f', '395050')]
+T_SAGE = [rgb(c) for c in ('6c8e7f', '506b6b')]
+T_SHADE = rgb('2a3151', 90)
+
+
+def R(d, x0, y0, x1, y1, c):
+    if x0 <= x1 and y0 <= y1:            # an empty span draws nothing
+        d.rectangle([x0, y0, x1, y1], fill=c)
+
+
+def seg(d, x0, y0, x1, y1, c, w=1):
+    """A slanted line a point at a time, w px wide along x."""
+    n = max(abs(x1 - x0), abs(y1 - y0), 1)
+    for i in range(n + 1):
+        x = x0 + ((x1 - x0) * i * 2 + n) // (2 * n) if x1 >= x0 else x0 - ((x0 - x1) * i * 2 + n) // (2 * n)
+        y = y0 + ((y1 - y0) * i * 2 + n) // (2 * n) if y1 >= y0 else y0 - ((y0 - y1) * i * 2 + n) // (2 * n)
+        d.rectangle([x, y, x + w - 1, y], fill=c)
+
+
+def arc_w(rx, ry, t):
+    """The half-width of an ellipse t rows from its centre line."""
+    t = min(abs(t), ry)
+    return math.isqrt(rx * rx * (ry * ry - t * t)) // ry
+
+
+def orb(d, cx, cy, r, c):
+    """A disc, row by row."""
+    for t in range(-r, r + 1):
+        w = min(r, math.isqrt(r * r - t * t + r))
+        R(d, cx - w, cy + t, cx + w, cy + t, c)
+
+
+def cast(im, boxes):
+    """The ground shade, on the pixels of each box still clear (after the outline)."""
+    px = im.load()
+    for x0, y0, x1, y1 in boxes:
+        for y in range(max(0, y0), min(im.height - 1, y1) + 1):
+            for x in range(max(0, x0), min(im.width - 1, x1) + 1):
+                if px[x, y][3] == 0:
+                    px[x, y] = T_SHADE
+
+
+def pixmap(d, x0, y0, rows, colours):
+    for j, row in enumerate(rows):
+        for i, ch in enumerate(row):
+            if ch in colours:
+                d.point((x0 + i, y0 + j), fill=colours[ch])
+
+
+def courses(d, x0, y0, x1, y1, base, joint, hi=None, ch=6, cw=12):
+    """Coursed brick or stone: a joint row at the foot of each full course, perpends every cw,
+    shifted half a block on odd courses; with `hi`, a lit point right of each perpend on top."""
+    R(d, x0, y0, x1, y1, base)
+    for k, top in enumerate(range(y0, y1 + 1, ch)):
+        foot = top + ch - 1
+        if foot <= y1:
+            R(d, x0, foot, x1, foot, joint)
+        for x in range(x0 + cw - 1 - (cw // 2 if k % 2 else 0), x1 + 1, cw):
+            R(d, x, top, x, min(foot - 1, y1), joint)
+            if hi and x + 1 <= x1:
+                d.point((x + 1, top), fill=hi)
+
+
+def arch_pane(d, x0, y0, x1, y1, surround, step=7):
+    """The pack's window with a round head."""
+    pane(d, x0, y0, x1, y1, step)
+    for k, n in enumerate((3, 2, 1)):
+        R(d, x0, y0 + k, x0 + n - 1, y0 + k, surround)
+        R(d, x1 - n + 1, y0 + k, x1, y0 + k, surround)
+
+
+def band(d, x0, x1, y, shade):
+    """A maroon string course and the row of shadow it casts."""
+    for k, c in enumerate((T_MAROON[0], T_MAROON[1], T_MAROON[1], T_MAROON[2], shade)):
+        R(d, x0, y + k, x1, y + k, c)
+
+
 def clocks_station():
     im, d = canvas(12, 7)                # 384 x 224
-    # the wings: mustard walls banded in maroon, a row of arched windows, a slate roof
-    box(d, 4, 104, 379, 221, MUSTARD, MUSTARD_HI, MUSTARD_LO)
-    d.polygon([(4, 104), (14, 88), (369, 88), (379, 104)], fill=STONE_DK)
-    for x in range(8, 376, 6):
-        d.line([(x, 90), (x - 3, 103)], fill=STONE_LO)
-    d.line([(14, 88), (369, 88)], fill=STONE)
+    S, M, MA, CO, SL = T_STEEL, T_MUSTARD, T_MAROON, T_COPPER, T_SLATE
+    # ---- the wings: a slate roof seen from above, hipped at the ends, ribbed, a steel ridge cap
+    for y in range(80, 101):
+        inset = max(0, (91 - y) * 10 // 12)
+        R(d, 4 + inset, y, 379 - inset, y, SL[1])
+        if y >= 84:
+            for x in range(8 + inset - inset % 6, 376 - inset, 6):
+                if 4 + inset < x < 379 - inset:
+                    d.point((x, y), fill=CO[3])
+                    if y < 100:
+                        d.point((x + 1, y), fill=SL[0])
+    R(d, 14, 80, 369, 80, S[2]); R(d, 14, 81, 369, 82, S[3])
+    R(d, 4, 101, 379, 103, CO[3])
+    # the wall: coursed brick, banded in maroon, the eave's shadow along its top
+    courses(d, 4, 104, 379, 213, M[1], M[2])
+    R(d, 4, 104, 379, 105, M[3])
+    R(d, 4, 106, 5, 213, M[0]); R(d, 377, 106, 379, 213, M[3])
     for y in (126, 168, 206):
-        d.rectangle([5, y, 378, y + 3], fill=MAROON)
-        d.line([(5, y), (378, y)], fill=RED_HI)
-    for x in range(14, 372, 22):
-        if 138 <= x <= 232:
-            continue
+        band(d, 4, 379, y, M[3])
+    for x in (14, 36, 58, 80, 102, 124, 256, 278, 300):
         for y0 in (134, 176):
-            d.rectangle([x, y0 + 5, x + 11, y0 + 26], fill=GLASS_DK)
-            d.pieslice([x, y0, x + 11, y0 + 11], 180, 360, fill=GLASS_DK)
-            d.rectangle([x + 1, y0 + 6, x + 10, y0 + 25], fill=GLASS)
-            d.line([(x + 1, y0 + 6), (x + 10, y0 + 6)], fill=GLASS_HI)
-            d.line([(x + 6, y0 + 2), (x + 6, y0 + 25)], fill=GLASS_DK)
-            d.rectangle([x - 1, y0 + 27, x + 12, y0 + 28], fill=CREAM)
-    d.rectangle([4, 214, 379, 221], fill=STONE_LO)
-    # the corner pavilion: taller, the great arch, the clocks over the door
-    box(d, 142, 62, 241, 221, MUSTARD, MUSTARD_HI, MUSTARD_LO)
+            R(d, x - 1, y0 - 1, x + 12, y0 + 26, S[0])
+            for k, n in enumerate((3, 2, 1)):          # the frame's round head
+                R(d, x - 1, y0 - 1 + k, x - 2 + n, y0 - 1 + k, M[1])
+                R(d, x + 13 - n, y0 - 1 + k, x + 12, y0 - 1 + k, M[1])
+            arch_pane(d, x, y0, x + 11, y0 + 26, S[0])
+            R(d, x + 5, y0 + 2, x + 6, y0 + 26, S[1])
+            R(d, x + 12, y0 + 2, x + 12, y0 + 26, S[1])
+            R(d, x - 2, y0 + 27, x + 13, y0 + 27, S[0]); R(d, x - 2, y0 + 28, x + 13, y0 + 28, S[1])
+            R(d, x - 2, y0 + 29, x + 13, y0 + 29, M[3])
+    R(d, 4, 214, 379, 221, S[3]); R(d, 4, 214, 379, 214, S[2]); R(d, 4, 220, 379, 221, S[4])
+    # ---- the corner pavilion: a flat roof seen from above, a white cornice, piers, the great arch
+    R(d, 144, 53, 239, 61, SL[1]); R(d, 144, 53, 239, 53, SL[0]); R(d, 144, 60, 239, 61, CO[3])
+    R(d, 140, 62, 243, 65, S[0]); R(d, 140, 65, 243, 65, S[1])
+    courses(d, 142, 66, 241, 213, M[1], M[2])
+    R(d, 142, 66, 241, 67, M[3])
     for y in (84, 126, 206):
-        d.rectangle([143, y, 240, y + 3], fill=MAROON); d.line([(143, y), (240, y)], fill=RED_HI)
-    for x in (146, 232):                 # corner piers
-        box(d, x - 4, 62, x + 4, 221, MUSTARD_HI, WHITE, MUSTARD_LO)
-    d.pieslice([158, 96, 225, 190], 180, 360, fill=MAROON)
-    d.rectangle([158, 143, 225, 213], fill=MAROON)
-    d.pieslice([163, 102, 220, 184], 180, 360, fill=rgb('3a2c34'))
-    d.rectangle([163, 143, 220, 213], fill=rgb('3a2c34'))
-    for i in range(7):                   # the fan of the arch window
-        a = math.radians(180 + 15 + i * 25)
-        d.line([(191, 143), (191 + int(27 * math.cos(a)), 143 + int(39 * math.sin(a)))], fill=MUSTARD_LO)
-    d.rectangle([163, 143, 220, 146], fill=MUSTARD)
-    # THE CLOCKS: a board of nine little dials above the doors
-    box(d, 160, 148, 223, 166, rgb('2c3a30'), COPPER, INK)
+        band(d, 142, 241, y, M[3])
+    for x0 in (142, 232):
+        R(d, x0, 66, x0 + 9, 213, M[0])
+        for y in range(73, 206, 8):
+            R(d, x0, y, x0 + 8, y, M[2])
+        R(d, x0 + 9, 66, x0 + 9, 213, M[3])
+    R(d, 242, 80, 244, 103, CO[3]); R(d, 242, 104, 244, 213, M[3])     # its shade on the east wing
+    for y in range(97, 214):             # the archivolt and its jambs
+        w = arc_w(34, 47, 143 - y) if y < 143 else 34
+        if w == 0:
+            continue
+        R(d, 192 - w, y, 191 + w, y, MA[1])
+        d.point((192 - w, y), fill=MA[0]); d.point((191 + w, y), fill=MA[2])
+        if y == 97 or (y < 143 and arc_w(34, 47, 144 - y) < w - 1):
+            R(d, 192 - w, y, 191, y, MA[0])
+    glass = set()
+    for y in range(103, 144):            # the fanlight
+        w = arc_w(29, 41, 143 - y)
+        if w == 0:
+            continue
+        for x in range(192 - w, 192 + w):
+            c = T_GLARE if (x + y) % 9 == 0 else T_GLASS
+            if (x, y - 1) not in glass:
+                c = T_GLASS_LO
+            d.point((x, y), fill=c); glass.add((x, y))
+    for dx, dy in ((-26, -10), (-21, -25), (-11, -35), (0, -40), (11, -35), (21, -25), (26, -10)):
+        x0 = 191 if dx <= 0 else 192
+        seg(d, x0, 143, x0 + dx, 143 + dy, M[2])
+    seg(d, 192, 143, 192, 103, M[2])
+    for t in range(0, 7):                # the hub
+        w = math.isqrt(49 - t * t)
+        R(d, 192 - w, 143 - t, 191 + w, 143 - t, M[2])
+    R(d, 163, 144, 220, 146, M[1]); R(d, 163, 146, 220, 146, M[2])
+    R(d, 163, 147, 220, 213, MA[2])
+    # THE CLOCKS: a board of nine dials over the doors
+    R(d, 160, 148, 223, 166, CO[4])
+    R(d, 160, 148, 223, 148, CO[2]); R(d, 160, 148, 160, 166, CO[2])
+    R(d, 160, 166, 223, 166, INK); R(d, 223, 148, 223, 166, INK)
     for i in range(9):
-        clock(d, 165 + i * 6 + (i // 3), 157, 2, hands=((1, 0), (0, 1), (-1, 0))[i % 3])
-    for i in range(9):
-        d.point((165 + i * 6 + (i // 3), 163), fill=LED)
-    # the doors and the steps
-    for x in (166, 184, 202):
-        d.rectangle([x, 172, x + 14, 213], fill=WOOD_DK)
-        d.rectangle([x + 1, 173, x + 13, 190], fill=GLASS); d.line([(x + 1, 173), (x + 13, 173)], fill=GLASS_HI)
-        d.line([(x + 7, 173), (x + 7, 213)], fill=INK)
-    d.rectangle([154, 214, 229, 217], fill=STONE); d.rectangle([150, 218, 233, 221], fill=STONE_LO)
-    # the copper dome on its drum
-    box(d, 160, 50, 223, 62, CREAM, WHITE, CREAM_DK)
+        cx = 165 + i * 6 + (i // 3) * 2
+        orb(d, cx, 156, 2, S[0])
+        d.point((cx, 156), fill=INK)
+        d.point(((cx + 1, 156), (cx, 155), (cx - 1, 156))[i % 3], fill=INK)
+        R(d, cx - 1, 162, cx + 1, 162, M[2])
+    for x in (166, 184, 202):            # three doors
+        R(d, x, 170, x + 14, 213, T_WOOD[4])
+        R(d, x + 1, 171, x + 13, 213, T_WOOD[3])
+        pane(d, x + 1, 172, x + 13, 190, 7)
+        R(d, x + 7, 170, x + 7, 213, T_WOOD[4])
+        for px0 in (x + 2, x + 9):
+            R(d, px0, 194, px0 + 3, 210, T_WOOD[4]); R(d, px0 + 1, 195, px0 + 3, 210, T_WOOD[3])
+        d.point((x + 6, 200), fill=M[2]); d.point((x + 8, 200), fill=M[2])
+    R(d, 154, 214, 229, 217, S[2]); R(d, 154, 214, 229, 214, S[1]); R(d, 154, 217, 229, 217, S[3])
+    R(d, 150, 218, 233, 221, S[2]); R(d, 150, 218, 233, 218, S[1]); R(d, 150, 221, 233, 221, S[3])
+    # ---- the dome: a white drum with dark windows, eight copper gores lit from the west
+    R(d, 160, 48, 223, 58, S[0]); R(d, 160, 58, 223, 58, S[1]); R(d, 222, 48, 223, 58, S[1])
     for x in range(164, 222, 8):
-        d.rectangle([x, 53, x + 3, 60], fill=GLASS_DK)
-    d.pieslice([158, 12, 225, 90], 180, 360, fill=COPPER)
-    for i in range(-3, 4):               # the ribs of the dome
-        pts = [(191 + int(i * 11 * math.sin(math.acos(max(-1.0, min(1.0, (50 - y) / 38.0 - 0.0))))), y) for y in range(13, 50, 3)]
-        d.line(pts, fill=COPPER_LO)
-    d.pieslice([164, 16, 200, 70], 180, 270, fill=COPPER_HI)
-    d.rectangle([158, 49, 225, 51], fill=COPPER_LO)
-    box(d, 187, 4, 196, 13, COPPER, COPPER_HI, COPPER_LO)
-    d.line([(191, 0), (191, 4)], fill=GOLD)
-    # the clock tower at the east end
-    box(d, 330, 40, 368, 221, MUSTARD, MUSTARD_HI, MUSTARD_LO)
+        R(d, x, 50, x + 3, 56, T_GLASS); R(d, x, 50, x + 3, 50, T_GLASS_LO); d.point((x, 53), fill=T_GLARE)
+    R(d, 157, 45, 226, 47, S[2]); R(d, 157, 45, 226, 45, S[1]); R(d, 157, 47, 226, 47, S[3])
+    for y in range(11, 45):
+        w = arc_w(34, 34, 44 - y)
+        for x in range(192 - w, 192 + w):
+            r = (2 * x - 383) * 50 // w
+            c = CO[2] if r < -90 else CO[1] if r < -34 else CO[2] if r < 34 else CO[3] if r < 90 else CO[4]
+            d.point((x, y), fill=c)
+        for f in (-90, -67, -34, 0, 34, 67, 90):
+            d.point((191 + (f > 0) + (w * abs(f) // 100) * (1 if f > 0 else -1), y), fill=CO[4])
+    R(d, 187, 3, 196, 11, CO[2]); R(d, 187, 3, 196, 3, CO[1]); R(d, 187, 3, 187, 11, CO[1])
+    R(d, 195, 3, 196, 11, CO[4]); R(d, 190, 5, 193, 9, T_GLASS); R(d, 190, 5, 193, 5, T_GLASS_LO)
+    R(d, 191, 0, 192, 2, M[2]); d.point((191, 0), fill=M[0])
+    # ---- the clock tower at the east end
+    courses(d, 330, 44, 368, 213, M[1], M[2])
+    R(d, 330, 44, 331, 213, M[0]); R(d, 366, 44, 368, 213, M[3])
     for y in (84, 126, 168, 206):
-        d.rectangle([331, y, 367, y + 3], fill=MAROON)
-    clock(d, 349, 62, 12, hands=(6, 3))
-    for a in range(0, 360, 30):
-        d.point((349 + int(10 * math.cos(math.radians(a))), 62 + int(10 * math.sin(math.radians(a)))), fill=INK)
-    d.polygon([(326, 40), (349, 14), (372, 40)], fill=COPPER)
-    d.polygon([(326, 40), (349, 14), (349, 40)], fill=COPPER_HI)
-    d.line([(349, 6), (349, 14)], fill=GOLD)
+        band(d, 330, 368, y, M[3])
+    R(d, 369, 80, 371, 103, CO[3]); R(d, 369, 104, 371, 213, M[3])
+    orb(d, 349, 63, 13, M[3]); orb(d, 349, 63, 12, INK); orb(d, 349, 63, 11, S[0])
+    for t in range(-11, 12):
+        for s in range(-11, 12):
+            if s + t > 9 and s * s + t * t <= 121 + 11:
+                d.point((349 + s, 63 + t), fill=S[1])
+    for dx, dy in ((0, -9), (4, -8), (8, -4), (9, 0), (8, 4), (4, 8), (0, 9), (-4, 8), (-8, 4), (-9, 0),
+                   (-8, -4), (-4, -8)):
+        d.point((349 + dx, 63 + dy), fill=INK)
+    seg(d, 349, 63, 349, 55, INK); seg(d, 349, 63, 355, 66, INK)
+    for y in range(16, 42):
+        w = (y - 16) * 23 // 25
+        dark = (y - 16) % 4 == 3
+        R(d, 349 - w, y, 349, y, CO[2] if dark else CO[1])
+        R(d, 350, y, 350 + w, y, CO[3] if dark else CO[2])
+    R(d, 325, 42, 374, 43, CO[2]); R(d, 325, 43, 374, 43, CO[4])
+    R(d, 349, 6, 350, 15, M[2]); R(d, 348, 9, 351, 11, M[2]); d.point((348, 9), fill=M[0])
     for y0 in (96, 138, 178):
-        window(d, 342, y0, 356, y0 + 20, frame=MAROON)
+        R(d, 342, y0, 356, y0 + 20, MA[1])
+        pane(d, 343, y0 + 1, 355, y0 + 19, 7)
+        R(d, 349, y0 + 1, 349, y0 + 19, MA[1]); R(d, 343, y0 + 10, 355, y0 + 10, MA[1])
     outline(im)
+    cast(im, [(3, 223, 380, 223)])
     return im
 
 
 def bridge_tower():
     im, d = canvas(6, 7)                 # 192 x 224: legs in the outer cells, the deck between
+    O, S = T_ORANGE, T_STEEL
+    tiers = ((6, 6), (30, 4), (84, 2), (150, 0))
+
+    def inset_at(y):
+        return [i for y0, i in tiers if y0 <= y][-1]
+
     for x0 in (5, 167):
-        # a leg, stepping in as it rises (art deco)
-        for y0, inset in ((150, 0), (84, 2), (30, 4), (6, 6)):
-            d.rectangle([x0 + inset, y0, x0 + 19 - inset, 221], fill=ORANGE)
-            d.line([(x0 + inset, y0), (x0 + inset, 221)], fill=ORANGE_HI)
-            d.line([(x0 + 19 - inset, y0), (x0 + 19 - inset, 221)], fill=ORANGE_LO)
-            d.line([(x0 + inset, y0), (x0 + 19 - inset, y0)], fill=ORANGE_HI)
-        for y in range(40, 216, 12):     # rivet courses
-            d.line([(x0 + 7, y), (x0 + 12, y)], fill=ORANGE_LO)
-        d.rectangle([x0 - 2, 214, x0 + 21, 221], fill=STONE_LO)
-        d.line([(x0 - 2, 214), (x0 + 21, 214)], fill=STONE)
+        # a leg, stepping in as it rises (art deco), lit from the west
+        for y0, inset in tiers:
+            a, b = x0 + inset, x0 + 19 - inset
+            R(d, a, y0, b, 213, O[1])
+            R(d, a, y0, a, 213, O[0]); R(d, a, y0, b, y0, O[0])
+            R(d, b - 2, y0 + 1, b, 213, O[2])
+        R(d, x0 + 8, 34, x0 + 11, 209, O[2]); R(d, x0 + 8, 34, x0 + 8, 209, O[3])
+        for y in range(40, 210, 12):
+            d.point((x0 + 10, y), fill=O[0])
+            j = y + 6
+            if j >= 84 and j <= 209:
+                i = inset_at(j)
+                R(d, x0 + i + 1, j, x0 + 7, j, O[2]); R(d, x0 + 12, j, x0 + 16 - i, j, O[3])
+        R(d, x0 + 6, 3, x0 + 13, 5, O[1]); R(d, x0 + 6, 3, x0 + 13, 3, O[0])
+        R(d, x0 - 3, 214, x0 + 22, 221, S[2]); R(d, x0 - 3, 214, x0 + 22, 214, S[1])
+        R(d, x0 - 3, 220, x0 + 22, 221, S[3])
     # the portal beams: three, the lowest well clear of a walker's head
     for y0, h in ((14, 12), (56, 10), (98, 12)):
-        d.rectangle([17, y0, 174, y0 + h], fill=ORANGE)
-        d.line([(17, y0), (174, y0)], fill=ORANGE_HI)
-        d.line([(17, y0 + h), (174, y0 + h)], fill=ORANGE_LO)
-        for x in range(30, 170, 16):     # the chevrons pressed into each beam
-            d.line([(x, y0 + h - 3), (x + 4, y0 + 3)], fill=ORANGE_LO)
-            d.line([(x + 4, y0 + 3), (x + 8, y0 + h - 3)], fill=ORANGE_LO)
+        R(d, 17, y0, 174, y0 + h, O[1]); R(d, 17, y0, 174, y0, O[0])
+        R(d, 17, y0 + h - 1, 174, y0 + h, O[2])
+        for x in range(26, 160, 16):
+            R(d, x, y0 + 2, x + 11, y0 + h - 3, O[2])
+            R(d, x, y0 + 2, x + 11, y0 + 2, O[3]); R(d, x, y0 + 2, x, y0 + h - 3, O[3])
+            R(d, x + 2, y0 + 4, x + 10, y0 + h - 4, O[1]); R(d, x + 2, y0 + h - 4, x + 10, y0 + h - 4, O[0])
+        for x0 in (5, 167):
+            i = inset_at(y0 + h + 1)
+            R(d, x0 + i, y0 + h + 1, x0 + 19 - i, y0 + h + 1, O[3])
     # the main cables, sweeping down and away from the tower tops
-    for x0, dx in ((8, -1), (183, 1)):
+    for x0, dx in ((10, -1), (181, 1)):
         for i in range(2):
-            pts = [(x0 + dx * t, 8 + i * 3 + int((t / 8.0) ** 2 * 26)) for t in range(0, 9)]
-            d.line(pts, fill=ORANGE_LO if i else ORANGE)
+            pts = [(x0 + dx * t, 6 + i * 3 + t * t * 26 // 81) for t in range(11)]
+            for (xa, ya), (xb, yb) in zip(pts, pts[1:]):
+                seg(d, xa, ya, xb, yb, O[1] if i == 0 else O[2])
+                seg(d, xa, ya + 1, xb, yb + 1, O[2] if i == 0 else O[3])
     outline(im)
+    cast(im, [(2, 223, 27, 223), (164, 223, 189, 223)])
     return im
 
 
 def bridge_cable(side):
     """One cell of the deck's edge: a red rail on the outer side, with the
-    suspender cables rising from it."""
+    suspender cables rising from it. Flat by function: it tiles down the deck."""
     im, d = canvas(1, 1)
+    O, S = T_ORANGE, T_STEEL
     x = 2 if side == 'w' else 27
-    d.rectangle([x, 0, x + 2, 31], fill=ORANGE)
-    d.line([(x, 0), (x, 31)], fill=ORANGE_HI)
-    d.line([(x + 2, 0), (x + 2, 31)], fill=ORANGE_LO)
+    R(d, x - 1, 0, x - 1, 31, INK); R(d, x + 3, 0, x + 3, 31, INK)
+    R(d, x, 0, x, 31, O[0]); R(d, x + 1, 0, x + 1, 31, O[1]); R(d, x + 2, 0, x + 2, 31, O[2])
     for y in (4, 20):
-        d.rectangle([x - 1, y, x + 3, y + 3], fill=ORANGE_LO)
-        d.point((x + 1, y + 1), fill=ORANGE_HI)
-    shade = (10, 22, 39, 70)
-    for i in range(1, 6):                # the rail's shadow on the deck
-        d.line([(x + (3 + i if side == 'w' else -i), 0), (x + (3 + i if side == 'w' else -i), 31)],
-               fill=shade if i < 4 else (10, 22, 39, 35))
+        R(d, x - 1, y - 1, x + 3, y - 1, INK); R(d, x - 1, y + 4, x + 3, y + 4, INK)
+        R(d, x - 1, y, x + 3, y + 3, O[1]); R(d, x - 1, y, x + 3, y, O[0]); R(d, x - 1, y + 3, x + 3, y + 3, O[3])
+        d.point((x, y + 1), fill=S[1]); d.point((x + 2, y + 2), fill=S[1])
+    for k in range(4):                   # the rail's shadow on the deck, east of it
+        for y in range(32):
+            if x + 4 + k <= 31 and (k < 3 or y % 2 == 0):
+                d.point((x + 4 + k, y), fill=T_SHADE)
     return im
 
 
@@ -263,119 +441,229 @@ def river_tiles():
 
 def rowers():
     im, d = canvas(4, 1)                 # 128 x 32
-    d.polygon([(6, 17), (16, 14), (112, 14), (124, 17), (112, 20), (16, 20)], fill=WHITE)
-    d.line([(16, 20), (112, 20)], fill=STONE)
-    d.line([(18, 17), (110, 17)], fill=rgb('2c6a8c'))
-    for i, x in enumerate(range(30, 106, 20)):
-        d.rectangle([x, 9, x + 5, 15], fill=(MUSTARD, NAVY)[i % 2])       # a rowing singlet
-        d.rectangle([x + 1, 5, x + 4, 9], fill=SKIN)
-        d.line([(x + 1, 5), (x + 4, 5)], fill=WOOD_DK)
-        d.line([(x + 3, 13), (x - 8, 2 if i % 2 else 28)], fill=WOOD)     # the oar
-        d.rectangle([x - 10, (1 if i % 2 else 27), x - 7, (3 if i % 2 else 29)], fill=RED)
-    for x in range(0, 8, 3):             # the wake
-        d.point((x, 17), fill=WHITE)
+    S = T_STEEL
+    for y, (x0, x1) in zip(range(14, 21), ((18, 110), (12, 116), (8, 120), (6, 123), (8, 120), (12, 116), (18, 110))):
+        R(d, x0, y, x1, y, S[0] if y < 16 else S[1] if y < 19 else S[2])
+    R(d, 20, 16, 108, 16, S[3]); R(d, 20, 17, 108, 17, S[4])
+    for i, x in enumerate((30, 50, 70, 90)):
+        up = i % 2
+        ey = 2 if up else 28
+        seg(d, x + 3, 13, x - 8, ey, T_WOOD[1]); seg(d, x + 4, 13, x - 7, ey, T_WOOD[4])
+        by = 0 if up else 27
+        R(d, x - 12, by, x - 8, by + 2, T_RED[1]); R(d, x - 12, by, x - 8, by, T_RED[0])
+        R(d, x - 12, by + 2, x - 8, by + 2, T_RED[2])
+        hi, base, lo = (T_MUSTARD[0], T_MUSTARD[2], T_MUSTARD[3]) if i % 2 == 0 else (T_BLUE[4], T_BLUE[5], NAVY)
+        R(d, x, 9, x + 5, 15, base); R(d, x, 9, x, 15, hi); R(d, x, 9, x + 5, 9, hi); R(d, x + 5, 10, x + 5, 15, lo)
+        R(d, x + 1, 5, x + 4, 8, T_SKIN); R(d, x + 4, 5, x + 4, 8, T_SKIN_LO); R(d, x + 1, 5, x + 4, 5, T_WOOD[4])
+    d.point((1, 17), fill=S[0]); d.point((3, 16), fill=S[1])
     outline(im)
     return im
 
 
-LADIES = {      # body, shade, trim accent, door
-    'a': (SKYBLUE, rgb('6a94bc'), NAVY, RED),
-    'b': (LEMON, rgb('c8ac5c'), MAROON, TRAM),
-    'c': (PINK, rgb('c07888'), rgb('6b4a8c'), NAVY),
-    'd': (MINT, rgb('74a88c'), TRAM_LO, MAROON),
+LADIES = {      # body hi, body, board line, deep shade, trim, trim lit, door, door shade
+    'a': ('bbe9ff', '8ec2fa', '588cc6', '425faa', '172459', '314b8e', 'aa4d31', '8a3a22'),
+    'b': ('fafcfd', 'f3d890', 'e3c587', 'c6a663', '904a37', 'aa4d31', '508582', '395050'),
+    'c': ('ffe2e0', 'ff9b92', 'e78d7b', 'bb6479', '3c396d', '8f72b6', '172459', '0a1627'),
+    'd': ('b1dfdc', '93c297', '6c8e7f', '508582', '395050', '506b6b', '904a37', '5b283b'),
 }
 
 
 def lady(kind, step):
     """A painted lady. `step` px of brick footing lift it: the row climbs the hill."""
-    body, shade, accent, door = LADIES[kind]
+    hi, body, board, deep, trim, trim_hi, door, door_lo = (rgb(c) for c in LADIES[kind])
+    S, SL, MA = T_STEEL, T_SLATE, T_MAROON
     im, d = canvas(3, 5)                 # 96 x 160
     base = 157 - step
-    d.rectangle([4, base, 91, 157], fill=BROWN_LO)                       # the footing
-    for y in range(base + 2, 157, 4):
-        d.line([(4, y), (91, y)], fill=BROWN)
-    box(d, 6, 62, 89, base, body, WHITE, shade)
-    for y in range(68, base, 5):         # weatherboards
-        d.line([(7, y), (88, y)], fill=shade)
-    # the gable: steep, with fish-scale shingles and a sunburst
-    d.polygon([(2, 64), (48, 12 - 0), (93, 64)], fill=accent)
-    d.polygon([(8, 62), (48, 20), (87, 62)], fill=body)
-    for y in range(28, 62, 5):
-        half = int((y - 20) * 40 / 42)
-        for x in range(48 - half + 2, 48 + half - 1, 6):
-            d.arc([x, y, x + 5, y + 5], 0, 180, fill=shade)
-    d.pieslice([38, 44, 58, 64], 180, 360, fill=WHITE)
-    for a in range(200, 350, 25):
-        d.line([(48, 54), (48 + int(9 * math.cos(math.radians(a))), 54 + int(9 * math.sin(math.radians(a))))], fill=accent)
-    d.line([(2, 64), (48, 12)], fill=WHITE); d.line([(48, 12), (93, 64)], fill=WHITE)
-    d.line([(48, 4), (48, 12)], fill=GOLD)
-    d.rectangle([4, 62, 91, 65], fill=WHITE); d.line([(4, 66), (91, 66)], fill=accent)
-    # the bay window, two storeys of it
-    box(d, 10, 72, 46, base - 6, WHITE, WHITE, CREAM_LO)
+    courses(d, 4, base, 91, 157, MA[1], MA[2], None, 4, 8)
+    if step:
+        R(d, 4, base, 91, base, MA[0])
+    # the wall: weatherboards, lit on the west, the eave's shadow under the cornice
+    R(d, 6, 62, 89, base - 1, body)
+    for y in range(72, base, 5):
+        R(d, 6, y, 89, y, board)
+    R(d, 6, 67, 89, 68, deep)
+    R(d, 6, 69, 7, base - 1, hi); R(d, 87, 69, 89, base - 1, board); R(d, 89, 69, 89, base - 1, deep)
+    # the roof seen from above: two shingled planes behind a gable
+    for x in range(2, 94):
+        west = x <= 47
+        dx = 47 - x if west else x - 48
+        yg = 20 + dx
+        lit, dark = (SL[0], SL[1]) if west else (SL[1], SL[2])
+        for y in range(yg - 12, yg):
+            k = y - (yg - 12)
+            joint = k % 4 == 3 or (x + (0 if (k // 4) % 2 else 2)) % 4 == 0
+            d.point((x, y), fill=dark if joint else lit)
+        d.point((x, yg - 12), fill=S[2] if west else SL[1])
+        for y in range(yg, 62):
+            k = y - 22
+            o = 2 if (k // 4) % 2 else 0
+            scale = (k % 4 == 3 and (x + o) % 4 != 1) or (k % 4 == 2 and (x + o) % 4 == 1)
+            d.point((x, y), fill=board if scale else body)
+        for k, c in enumerate((S[0], S[0], S[0], trim, deep)):
+            if yg + k < 62:
+                d.point((x, yg + k), fill=c)
+    R(d, 47, 8, 47, 22, S[0]); R(d, 48, 8, 48, 22, S[2])
+    R(d, 47, 3, 48, 7, T_MUSTARD[2]); d.point((47, 3), fill=T_MUSTARD[0])
+    courses(d, 66, 22, 73, 37, MA[1], MA[2], None, 4, 4)            # the stack
+    R(d, 66, 22, 66, 37, MA[0]); R(d, 73, 22, 73, 37, MA[2])
+    R(d, 65, 20, 74, 20, S[1]); R(d, 65, 21, 74, 21, S[2]); R(d, 65, 22, 74, 22, S[3])
+    # the sunburst in the gable
+    for y in range(51, 61):
+        w = arc_w(11, 10, 60 - y)
+        R(d, 48 - w, y, 47 + w, y, S[0])
+    for ox, dx, dy in ((47, -9, -2), (47, -7, -6), (47, -3, -8), (48, 3, -8), (48, 7, -6), (48, 9, -2)):
+        seg(d, ox, 60, ox + dx, 60 + dy, trim_hi)
+    R(d, 46, 58, 49, 60, trim)
+    # the cornice
+    R(d, 2, 61, 93, 62, S[0]); R(d, 2, 63, 93, 63, S[1]); R(d, 2, 64, 93, 66, trim)
+    R(d, 2, 64, 93, 64, trim_hi)
+    for x in range(4, 92, 6):
+        R(d, x, 65, x + 1, 66, S[0])
+    # the bay window, two storeys of it, under a slate cap
+    R(d, 10, 72, 46, base - 6, S[0]); R(d, 45, 72, 46, base - 6, S[1])
+    R(d, 9, 69, 47, 72, SL[1]); R(d, 9, 69, 47, 69, SL[0]); R(d, 9, 72, 47, 72, SL[2])
     for y0 in (76, 110):
         if y0 + 22 > base - 8:
             continue
         for x in (13, 24, 35):
-            d.rectangle([x, y0, x + 8, y0 + 22], fill=GLASS_DK)
-            d.rectangle([x + 1, y0 + 1, x + 7, y0 + 21], fill=GLASS)
-            d.line([(x + 1, y0 + 1), (x + 7, y0 + 1)], fill=GLASS_HI)
-            d.line([(x + 1, y0 + 11), (x + 7, y0 + 11)], fill=GLASS_DK)
-        d.rectangle([10, y0 + 24, 46, y0 + 26], fill=accent)
-    # the door up its own flight of steps, under a little porch
-    d.rectangle([56, 96, 84, 100], fill=WHITE); d.line([(56, 101), (84, 101)], fill=accent)
+            pane(d, x, y0, x + 8, y0 + 22, 7)
+            R(d, x, y0 + 11, x + 8, y0 + 11, S[0])
+        R(d, 10, y0 + 24, 46, min(y0 + 27, base - 6), trim); R(d, 10, y0 + 24, 46, y0 + 24, trim_hi)
+    for y in range(141, base - 5, 3):
+        R(d, 10, y, 46, y, S[1])
+    # the window over the door
+    R(d, 61, 73, 79, 93, S[0]); R(d, 79, 73, 79, 93, S[1])
+    pane(d, 63, 75, 77, 91, 7)
+    R(d, 70, 75, 70, 91, S[0]); R(d, 63, 83, 77, 83, S[0])
+    R(d, 60, 94, 80, 94, S[1])
+    # the porch: a roof seen from above on two posts, the door up its own flight of steps
+    R(d, 55, 97, 85, 102, SL[1]); R(d, 55, 97, 85, 97, SL[0]); R(d, 55, 101, 85, 102, S[0])
+    R(d, 55, 103, 85, 103, trim)
     for x in (57, 82):
-        d.rectangle([x, 100, x + 1, base - 10], fill=WHITE)
-    d.rectangle([62, 104, 78, base - 10], fill=door)
-    d.rectangle([64, 106, 76, 118], fill=GLASS); d.line([(64, 106), (76, 106)], fill=GLASS_HI)
-    d.point((76, 126), fill=GOLD)
+        R(d, x, 104, x + 1, base - 10, S[0]); R(d, x + 1, 104, x + 1, base - 10, S[1])
+    R(d, 62, 106, 78, base - 10, door); R(d, 77, 106, 78, base - 10, door_lo)
+    pane(d, 64, 108, 75, 120, 7)
+    R(d, 65, 125, 75, base - 14, door_lo); R(d, 66, 126, 74, base - 15, door)
+    d.point((76, 123), fill=T_MUSTARD[2])
     for i in range(3):
-        d.rectangle([56 - i * 2, base - 9 + i * 3, 84 + i * 2, base - 7 + i * 3], fill=STONE if i % 2 == 0 else STONE_LO)
-    window(d, 62, 72, 78, 92, frame=WHITE)
+        y0 = base - 9 + i * 3
+        R(d, 56 - i * 2, y0, 84 + i * 2, y0 + 2, S[2]); R(d, 56 - i * 2, y0, 84 + i * 2, y0, S[1])
+        R(d, 56 - i * 2, y0 + 2, 84 + i * 2, y0 + 2, S[3])
     outline(im)
     return im
 
 
 def lane_wall(d, w=96):
-    """Bluestone, 3x2: coursed blocks under a coping."""
-    d.rectangle([0, 0, w - 1, 63], fill=BLUESTONE)
-    for y in range(6, 64, 8):
-        d.line([(0, y), (w - 1, y)], fill=BLUESTONE_LO)
-        for x in range((y // 8 % 2) * 7, w, 14):
-            d.line([(x, y - 7), (x, y)], fill=BLUESTONE_LO)
-    d.rectangle([0, 0, w - 1, 3], fill=BLUESTONE_HI)
-    d.line([(0, 4), (w - 1, 4)], fill=BLUESTONE_LO)
-    d.rectangle([0, 60, w - 1, 63], fill=BLUESTONE_LO)
+    """Bluestone, 3x2: coursed blocks under a coping seen from above. A wall face, so flat."""
+    ST, S = T_STONE, T_STEEL
+    R(d, 0, 0, w - 1, 63, ST[1])
+    for k, top in enumerate(range(5, 61, 8)):
+        R(d, 0, top + 7, w - 1, top + 7, ST[2])
+        off = 7 if k % 2 else 0
+        for x in range(off - 14, w, 14):
+            if x >= 0:
+                R(d, x, top, x, top + 6, ST[2])
+            R(d, max(x + 1, 0), top, min(x + 13, w - 1), top, ST[0])
+            if x + 4 >= 0 and speck(x, top, 3) < 30:
+                R(d, max(x + 4, 0), top + 3, min(x + 6, w - 1), top + 3, ST[2])
+    R(d, 0, 0, w - 1, 3, S[3]); R(d, 0, 0, w - 1, 0, S[2])
+    for x in range(23, w, 24):
+        R(d, x, 0, x, 3, S[4])
+    R(d, 0, 4, w - 1, 4, S[6])
+    R(d, 0, 61, w - 1, 63, ST[2])
+
+
+def inked(d, x0, y0, x1, y1, fill):
+    """A piece painted or set into the wall, boxed in ink by hand (the wall fills its canvas)."""
+    R(d, x0, y0, x1, y1, INK); R(d, x0 + 1, y0 + 1, x1 - 1, y1 - 1, fill)
+
+
+BIRD = (
+    '..........WWW.....................', '.........WWWWW....................',
+    '........WWWWWWW...................', '........WWWWWWWW..................',
+    '.........WWWWWWWW.................', '..........WWWWWWWW......WWWW......',
+    '...........WWWWWWWW...WWWWWWW.....', 'W...........WWWWWWWWWWWWWWKWWW....',
+    'WWW..........WWWWWWWWWWWWWWWWWGG..', '.WWWW......WWWWWWWWWWWWWWWWWWW....',
+    '..WWWWWWWWWWWWWWWWWWWWWWWWWW......', '...WWWWWWWWWWWWWWWWWWWWWWW........',
+    '....WWWWWWWWSSSSSSSWWWWW..........', '..WWWWWW......SSSSSSSSW...........',
+    '.WWW............SSSSSSSS..........', 'W.................SSSSSSS.........',
+    '....................SSSSS.........', '......................SSS.........',
+)
 
 
 def mural(kind):
     im, d = canvas(3, 2)
     lane_wall(d)
+    S, P = T_STEEL, T_PINK
     if kind == 'a':                      # a face in profile, pink on teal, and a tag
-        d.rectangle([6, 10, 52, 56], fill=rgb('2f8c8c'))
-        d.ellipse([14, 14, 44, 50], fill=PINK)
-        d.polygon([(40, 28), (50, 34), (40, 38)], fill=PINK)
-        d.ellipse([30, 26, 36, 31], fill=WHITE); d.point((34, 28), fill=INK)
-        d.arc([28, 36, 42, 46], 20, 120, fill=RED)
-        d.polygon([(14, 30), (20, 12), (40, 12), (30, 20)], fill=NAVY)
-        for i, c in enumerate((AMBER, RED_HI, WHITE)):
-            d.line([(58, 20 + i * 9), (66, 14 + i * 9), (72, 24 + i * 9), (80, 12 + i * 9), (88, 22 + i * 9)], fill=c, width=2)
+        inked(d, 6, 10, 52, 56, T_TEAL[1])
+        for y in range(12, 56, 8):
+            R(d, 7, y, 51, y, T_TEAL[2])
+        R(d, 7, 11, 51, 11, T_TEAL[0])
+        for y in range(14, 51):
+            w = arc_w(15, 18, y - 32)
+            for x in range(30 - w, 30 + w):
+                s = (x - 29) * 30 + (y - 32) * 45
+                d.point((x, y), fill=P[0] if s < -560 else P[1] if s < 420 else P[2])
+        for (y0, y1, x1) in ((28, 29, 45), (30, 31, 47), (32, 33, 50), (34, 35, 48), (36, 37, 45)):
+            R(d, 42, y0, x1, y1, P[1])
+            R(d, x1, y0, x1, y1, P[2])
+        R(d, 42, 37, 45, 37, P[2])
+        R(d, 34, 24, 38, 24, INK)                                   # brow, eye, mouth
+        R(d, 35, 26, 37, 27, S[0]); d.point((37, 27), fill=INK)
+        R(d, 37, 42, 41, 42, T_RED[2]); d.point((41, 41), fill=T_RED[2])
+        for y in range(12, 22):                                     # a navy cap over the crown
+            w = arc_w(15, 18, y - 32) + 1 if y >= 14 else 8 + (y - 12) * 3
+            R(d, 30 - w, y, 29 + w, y, NAVY)
+            R(d, 30 - w, y, 30 - w + 3, y, T_BLUE[5])
+        R(d, 14, 21, 47, 22, NAVY); R(d, 14, 21, 47, 21, T_BLUE[5])
+        for y, (c, lo) in zip((20, 29, 38), ((T_MUSTARD[0], T_MUSTARD[2]), (P[2], T_RED[2]), (S[0], S[1]))):
+            pts = ((58, y), (66, y - 6), (72, y + 4), (80, y - 8), (88, y + 2))
+            for (xa, ya), (xb, yb) in zip(pts, pts[1:]):
+                seg(d, xa, ya + 1, xb, yb + 1, lo, 2); seg(d, xa, ya, xb, yb, c, 2)
     elif kind == 'b':                    # bubble letters and drips
-        for i, (c, lo) in enumerate(((AMBER, ORANGE), (rgb('58c0e0'), GLASS), (PINK, MAROON), (rgb('9ad06a'), TRAM))):
+        tones = ((T_MUSTARD[0], T_MUSTARD[2], T_MUSTARD[3]), (T_BLUE[2], T_BLUE[3], T_BLUE[4]),
+                 (P[1], P[2], P[3]), (T_COPPER[1], T_COPPER[2], T_COPPER[4]))
+        ins = (4, 2, 1, 1)
+        for i, (c, lo, dk) in enumerate(tones):
             x = 6 + i * 22
-            d.rounded_rectangle([x, 14, x + 18, 46], 6, fill=c, outline=INK)
-            d.rounded_rectangle([x + 5, 22, x + 12, 36], 2, fill=lo)
-            d.line([(x + 3, 17), (x + 9, 17)], fill=WHITE)
-            d.line([(x + 6 + i, 46), (x + 6 + i, 52 + i * 2)], fill=c)
+            dx = x + 6 + i
+            R(d, dx - 1, 46, dx + 1, 51 + i * 2, INK); R(d, dx, 46, dx, 50 + i * 2, lo)
+            for y in range(13, 48):
+                k = min(y - 13, 47 - y)
+                n = ins[k] if k < 4 else 0
+                R(d, x - 1 + n, y, x + 19 - n, y, INK)
+            for y in range(14, 47):
+                k = min(y - 14, 46 - y)
+                n = ins[k] if k < 4 else 0
+                for xx in range(x + n, x + 19 - n):
+                    col = c if y < 38 else lo if y > 38 else (c if xx % 2 else lo)
+                    if xx >= x + 16:
+                        col = dk
+                    d.point((xx, y), fill=col)
+            R(d, x + 6, 22, x + 12, 34, INK); R(d, x + 7, 23, x + 11, 33, T_STONE[1])
+            R(d, x + 7, 23, x + 11, 23, T_STONE[2])
+            R(d, x + 4, 16, x + 9, 16, S[0]); d.point((x + 3, 18), fill=S[0])
         for x in (10, 40, 70, 84):
-            d.point((x, 10), fill=WHITE); d.point((x + 3, 54), fill=AMBER)
+            d.point((x, 9), fill=S[1])
     else:                                # a stencilled bird, a paste-up, a rainbow stripe
-        for i, c in enumerate((RED, AMBER, rgb('9ad06a'), rgb('58c0e0'), rgb('8a6ac8'))):
-            d.line([(0, 44 + i * 2), (95, 30 + i * 2)], fill=c, width=2)
-        d.polygon([(18, 28), (30, 14), (44, 18), (58, 10), (50, 24), (62, 30), (44, 32), (36, 42), (32, 30)], fill=WHITE)
-        d.point((34, 20), fill=INK)
-        d.rectangle([68, 12, 88, 38], fill=CREAM); d.rectangle([70, 14, 86, 26], fill=NAVY)
-        for y in (29, 32, 35):
-            d.line([(70, y), (84, y)], fill=CREAM_DK)
+        bands = (T_RED[1], T_MUSTARD[0], T_COPPER[1], T_BLUE[2], T_PURPLE[0])
+        for x in range(96):
+            y0 = 45 - x * 14 // 95
+            for i, c in enumerate(bands):
+                R(d, x, y0 + i * 3, x, y0 + i * 3 + 2, c)
+            d.point((x, y0 + 15), fill=T_STONE[2])
+        pixmap(d, 14, 14, BIRD, {'W': S[0], 'S': S[1], 'K': INK, 'G': T_MUSTARD[2]})
+        inked(d, 68, 12, 88, 38, T_CREAM[0])
+        R(d, 87, 13, 87, 37, T_CREAM[1]); R(d, 69, 37, 87, 37, T_CREAM[1])
+        R(d, 70, 14, 86, 26, NAVY); R(d, 70, 14, 86, 14, T_BLUE[5])
+        R(d, 74, 18, 80, 24, T_BLUE[4]); R(d, 74, 18, 80, 18, T_BLUE[3]); d.point((82, 17), fill=T_MUSTARD[0])
+        for y, w in ((29, 14), (32, 11), (35, 13)):
+            R(d, 70, y, 70 + w, y, T_CREAM[2])
+        for k in range(4):               # the corner peeling off
+            R(d, 88 - 3 + k, 12 + k, 88, 12 + k, T_STONE[1])
+            d.point((88 - 4 + k, 12 + k), fill=INK)
+        R(d, 85, 13, 86, 14, T_CREAM[1])
     outline(im)
     return im
 
@@ -383,121 +671,183 @@ def mural(kind):
 def coffee():
     im, d = canvas(3, 2)
     lane_wall(d)
-    # the hatch: lit, a machine and cups inside, a shelf to lean on
-    d.rectangle([30, 14, 66, 44], fill=rgb('3a2c34'))
-    d.rectangle([31, 26, 65, 43], fill=rgb('6a4a3a'))
-    box(d, 34, 28, 48, 42, STONE, WHITE, STONE_LO)                       # the espresso machine
-    d.rectangle([36, 31, 46, 33], fill=INK); d.point((38, 36), fill=RED); d.point((44, 36), fill=AMBER)
+    S, W = T_STEEL, T_WOOD
+    # the hatch: dark inside, not lit; a machine and cups on the counter, a shelf to lean on
+    inked(d, 30, 16, 66, 44, S[6])
+    R(d, 31, 34, 65, 43, S[5]); R(d, 31, 34, 65, 34, S[4])
+    R(d, 34, 24, 48, 40, S[2]); R(d, 34, 24, 48, 24, S[1]); R(d, 34, 24, 34, 40, S[1])
+    R(d, 48, 25, 48, 40, S[3]); R(d, 34, 40, 48, 40, S[3])
+    R(d, 36, 27, 46, 29, T_GLASS); d.point((38, 32), fill=T_MAROON[0]); d.point((44, 32), fill=T_MUSTARD[2])
+    R(d, 40, 33, 42, 36, S[4])
     for x in (52, 57, 62):
-        d.rectangle([x, 36, x + 3, 42], fill=WHITE); d.line([(x, 38), (x + 3, 38)], fill=BROWN)
-    d.rectangle([26, 44, 70, 47], fill=WOOD); d.line([(26, 44), (70, 44)], fill=WOOD_LO)
-    # the awning: striped canvas
-    for x in range(24, 73):
-        c = TRAM if ((x - 24) // 6) % 2 == 0 else CREAM
-        d.line([(x, 6), (x, 13)], fill=c)
-        d.point((x, 14), fill=c if (x // 3) % 2 else CLEAR)
-    d.line([(24, 6), (72, 6)], fill=WHITE)
+        R(d, x, 30, x + 2, 33, S[0]); R(d, x + 2, 30, x + 2, 33, S[1])
+    R(d, 26, 44, 70, 47, W[1]); R(d, 26, 44, 70, 44, W[0]); R(d, 26, 46, 70, 46, W[2])
+    R(d, 26, 47, 70, 47, W[3])
+    # the awning, seen from above: striped canvas with a scalloped edge
+    R(d, 22, 4, 74, 4, INK)
+    for x in range(23, 74):
+        dark = ((x - 23) // 6) % 2 == 0
+        R(d, x, 5, x, 9, T_COPPER[2] if dark else S[0])
+        R(d, x, 10, x, 13, T_COPPER[4] if dark else S[1])
+        if (x - 23) % 3 != 2:
+            d.point((x, 14), fill=T_COPPER[4] if dark else S[1]); d.point((x, 15), fill=INK)
+        else:
+            d.point((x, 14), fill=INK)
+    R(d, 22, 5, 22, 14, INK); R(d, 74, 5, 74, 14, INK)
     # the chalk board and a hanging cup sign
-    box(d, 6, 16, 24, 50, rgb('2c3a30'), WOOD, WOOD_LO)
-    for i, wdt in enumerate((12, 9, 13, 8, 11)):
-        d.line([(9, 22 + i * 5), (9 + wdt, 22 + i * 5)], fill=WHITE if i else AMBER)
-    d.ellipse([76, 16, 90, 30], fill=CREAM, outline=INK)
-    d.rectangle([80, 21, 85, 26], fill=BROWN); d.arc([84, 21, 89, 26], 270, 90, fill=BROWN)
-    d.line([(83, 10), (83, 16)], fill=INK)
-    d.rectangle([74, 40, 92, 56], fill=rgb('c06a3a'))                    # a stack of milk crates
-    for y in (44, 48, 52):
-        d.line([(75, y), (91, y)], fill=ORANGE_LO)
+    R(d, 5, 17, 25, 51, INK)
+    R(d, 6, 18, 24, 50, W[3]); R(d, 6, 18, 24, 18, W[0]); R(d, 6, 18, 6, 50, W[0])
+    R(d, 8, 20, 22, 48, T_COPPER[4])
+    for i, wdt in enumerate((12, 9, 12, 8, 11)):
+        R(d, 9, 23 + i * 5, min(9 + wdt, 21), 23 + i * 5, T_MUSTARD[0] if i == 0 else S[1])
+    R(d, 83, 10, 83, 14, INK)
+    orb(d, 83, 23, 8, INK); orb(d, 83, 23, 7, T_CREAM[0])
+    for t in range(-7, 8):
+        for s in range(-7, 8):
+            if s + t > 3 and s * s + t * t <= 49 + 7:
+                d.point((83 + s, 23 + t), fill=T_CREAM[1])
+    R(d, 79, 20, 85, 27, W[2]); R(d, 79, 20, 85, 20, W[1]); R(d, 86, 22, 87, 22, W[2])
+    R(d, 87, 22, 87, 25, W[2]); R(d, 86, 25, 87, 25, W[2])
+    # two milk crates stacked by the hatch, in the bridge's orange
+    R(d, 74, 38, 92, 57, INK)
+    for y0 in (39, 48):
+        R(d, 75, y0, 91, y0 + 7, T_ORANGE[1]); R(d, 75, y0, 91, y0, T_ORANGE[0])
+        R(d, 75, y0 + 3, 91, y0 + 3, T_ORANGE[2]); R(d, 75, y0 + 7, 91, y0 + 7, T_ORANGE[3])
+        R(d, 81, y0 + 5, 85, y0 + 5, INK); R(d, 89, y0 + 1, 91, y0 + 6, T_ORANGE[2])
     outline(im)
     return im
 
 
 def crates():
     im, d = canvas(1, 1)
-    for x, c, lo in ((2, rgb('c06a3a'), ORANGE_LO), (22, rgb('4a78b8'), GLASS)):
-        d.rectangle([x, 16, x + 8, 28], fill=c)
-        for y in (19, 23):
-            d.line([(x + 1, y), (x + 7, y)], fill=lo)
-    d.rectangle([11, 10, 21, 13], fill=WOOD); d.rectangle([15, 13, 17, 28], fill=WOOD_DK)
-    d.rectangle([13, 6, 15, 9], fill=WHITE); d.rectangle([18, 6, 20, 9], fill=WHITE)
+    for x, (hi, c, lo, dk) in ((1, T_ORANGE), (21, (T_BLUE[2], T_BLUE[4], T_BLUE[5], NAVY))):
+        R(d, x, 15, x + 9, 18, dk); R(d, x, 15, x + 9, 15, hi); R(d, x, 15, x, 18, hi)
+        R(d, x + 9, 15, x + 9, 18, c)
+        R(d, x, 19, x + 9, 28, c); R(d, x, 19, x, 28, hi); R(d, x + 8, 19, x + 9, 28, lo)
+        R(d, x, 28, x + 9, 28, lo)
+        R(d, x + 2, 22, x + 3, 22, dk); R(d, x + 6, 22, x + 7, 22, dk)
+        R(d, x + 1, 25, x + 7, 25, lo)
+    W = T_WOOD
+    R(d, 15, 12, 16, 27, W[4]); R(d, 13, 27, 18, 28, W[4])
+    R(d, 12, 7, 20, 7, W[1]); R(d, 10, 8, 22, 10, W[1]); R(d, 12, 11, 20, 11, W[2])
+    R(d, 12, 7, 16, 7, W[0]); R(d, 10, 8, 11, 9, W[0]); R(d, 21, 9, 22, 10, W[2])
+    for cx, cy in ((12, 8), (18, 8)):
+        R(d, cx, cy - 2, cx + 2, cy, T_STEEL[0]); R(d, cx + 2, cy - 2, cx + 2, cy, T_STEEL[1])
     outline(im)
+    cast(im, [(0, 30, 31, 31)])
     return im
 
 
 def pyramid():
     im, d = canvas(4, 12)                # 128 x 384
+    S = T_STEEL
     cx = 64
     px = im.load()
 
     def half(y):
-        return 1 + (y - 40) * 43 / 280.0
+        return 1 + (y - 40) * 43 // 280
 
-    d.line([(cx, 4), (cx, 40)], fill=STONE)                             # the spire
-    d.line([(cx - 1, 22), (cx - 1, 40)], fill=WHITE)
+    R(d, cx, 4, cx, 40, S[1]); R(d, cx - 1, 22, cx - 1, 40, S[0])     # the spire
+    d.point((cx, 3), fill=T_RED[1])
     for y in range(40, 322):
-        w = int(half(y))
+        w = half(y)
+        floor = (y - 40) % 6
         for x in range(cx - w, cx + w + 1):
             lit = x < cx
-            win = (y % 6 in (2, 3)) and ((x - cx) % 5 != 0) and y > 70
-            c = (GLASS if lit else GLASS_DK) if win else (WHITE if lit else CREAM)
+            win = floor in (2, 3) and (x - cx) % 5 != 0 and y > 70
+            if win:
+                c = T_GLASS_LO if floor == 2 else T_GLARE if lit and (x + y // 6 * 2) % 11 == 0 else T_GLASS
+            elif lit:
+                c = S[1] if floor == 4 else S[0]
+            else:
+                c = S[3] if floor == 4 else S[2]
             px[x, y] = c
-        px[cx + w, y] = CREAM_DK
-        px[cx, y] = CREAM_LO
+        px[cx - w, y] = S[0]
+        px[cx + w, y] = S[4]
+        px[cx, y] = S[3]
     # the two wings high on the tower (the lift shaft and the stair)
-    for side in (-1, 1):
-        for y in range(120, 250):
-            w = int(half(y))
-            for i in range(1, 6):
-                px[cx + side * (w + i), y] = CREAM_LO if side > 0 else CREAM
-        d.line([(cx + side * (int(half(120)) + 1), 119), (cx + side * (int(half(120)) + 5), 119)], fill=WHITE)
-    # the base: the lattice of leaning columns, glass behind, a canopy and doors
-    d.rectangle([14, 322, 113, 379], fill=GLASS_DK)
-    for x in range(14, 110, 16):
-        d.polygon([(x, 379), (x + 3, 379), (x + 11, 322), (x + 8, 322)], fill=WHITE)
-        d.polygon([(x + 16, 379), (x + 13, 379), (x + 5, 322), (x + 8, 322)], fill=CREAM)
-    d.rectangle([12, 318, 115, 323], fill=WHITE); d.line([(12, 324), (115, 324)], fill=CREAM_DK)
-    d.rectangle([50, 352, 77, 379], fill=STONE_DK)
-    d.rectangle([52, 356, 63, 379], fill=GLASS); d.rectangle([65, 356, 75, 379], fill=GLASS)
-    d.line([(52, 356), (75, 356)], fill=GLASS_HI)
+    for y in range(118, 250):
+        w = half(y)
+        joint = y >= 120 and (y - 120) % 12 == 11
+        cap = y < 120
+        for i in range(1, 6):
+            west = (S[2], S[1], S[1], S[1], S[0])[i - 1]
+            east = (S[2], S[3], S[3], S[3], S[4])[i - 1]
+            if cap:
+                west = east = S[0] if y == 118 else S[1]
+            elif joint:
+                west, east = S[2], S[4]
+            px[cx - w - i, y] = west
+            px[cx + w + i, y] = east
+    # the base: leaning columns, dark glass behind, a canopy and doors
+    pane(d, 14, 325, 113, 379, 13)
+    for y in range(325, 380):
+        o = (379 - y) * 8 // 55
+        for x in range(14, 110, 16):
+            R(d, x + o, y, x + o + 3, y, S[0])
+            R(d, x + 13 - o, y, min(x + 15 - o, 113), y, S[2])
+    R(d, 12, 318, 115, 324, S[0]); R(d, 12, 323, 115, 323, S[1]); R(d, 12, 324, 115, 324, S[2])
+    R(d, 48, 350, 79, 379, S[4])
+    pane(d, 50, 352, 63, 379, 7); pane(d, 65, 352, 77, 379, 7)
+    d.point((62, 366), fill=T_MUSTARD[2]); d.point((66, 366), fill=T_MUSTARD[2])
+    R(d, 12, 380, 115, 380, S[3]); R(d, 12, 381, 115, 381, S[4])
     outline(im)
+    cast(im, [(10, 383, 117, 383)])
     return im
 
 
 def spire():
     im, d = canvas(4, 11)                # 128 x 352
+    S, SL, ST, M = T_STEEL, T_SLATE, T_STONE, T_MUSTARD
     cx = 64
-    # the mast and the lattice skirt: open work, so the sky shows through
-    d.line([(cx, 4), (cx, 150)], fill=WHITE)
-    d.line([(cx + 1, 60), (cx + 1, 150)], fill=STONE)
-    d.point((cx, 2), fill=RED)
-
-    def half(y):                         # a tutu: thin, then flaring out to the roof
-        t = (y - 90) / 190.0
-        return 2 + 50 * t ** 2.4
-
-    for i in range(-6, 7):               # the ribs
-        pts = [(cx + int(half(y) * i / 6.0), y) for y in range(90, 281, 6)]
-        d.line(pts, fill=WHITE if i <= 0 else CREAM)
-    for y in range(110, 281, 14):        # the hoops
-        w = int(half(y))
-        d.arc([cx - w, y - 3, cx + w, y + 3], 0, 180, fill=GOLD)
-        d.arc([cx - w, y - 3, cx + w, y + 3], 180, 360, fill=CREAM_DK)
-    for y in range(150, 280, 20):        # lights along the ribs
-        for i in (-4, -1, 2, 5):
-            d.point((cx + int(half(y) * i / 6.0), y), fill=AMBER)
-    # the hall it stands on: a low drum of bluestone and glass
-    box(d, 10, 284, 117, 347, BLUESTONE, BLUESTONE_HI, BLUESTONE_LO)
-    d.rectangle([6, 280, 121, 286], fill=STONE); d.line([(6, 287), (121, 287)], fill=STONE_DK)
-    for x in range(16, 112, 12):
+    # the hall it stands on: a flat roof seen from above over coursed bluestone and dark glass
+    R(d, 6, 268, 121, 287, SL[1]); R(d, 6, 268, 121, 268, SL[0])
+    for x in range(17, 121, 12):
+        R(d, x, 269, x, 285, SL[2]); R(d, x + 1, 269, x + 1, 285, SL[0])
+    R(d, 6, 286, 121, 287, SL[2])
+    courses(d, 10, 288, 117, 347, ST[1], ST[2], ST[0], 8, 14)
+    R(d, 10, 288, 117, 289, ST[2])
+    R(d, 10, 290, 10, 340, ST[0]); R(d, 115, 290, 117, 347, ST[2]); R(d, 10, 341, 117, 347, ST[2])
+    for x in range(16, 101, 12):
         if 50 <= x <= 68:
             continue
-        d.rectangle([x, 296, x + 7, 330], fill=GLASS_DK)
-        d.rectangle([x + 1, 297, x + 6, 329], fill=GLASS); d.line([(x + 1, 297), (x + 6, 297)], fill=GLASS_HI)
-    d.rectangle([50, 304, 77, 347], fill=STONE_DK)
-    d.rectangle([52, 308, 63, 347], fill=AMBER); d.rectangle([65, 308, 75, 347], fill=AMBER)
-    d.line([(52, 308), (75, 308)], fill=WHITE)
-    d.rectangle([46, 300, 81, 304], fill=GOLD)
-    d.rectangle([10, 340, 117, 347], fill=BLUESTONE_LO)
+        R(d, x - 1, 295, x + 8, 331, S[2]); R(d, x - 1, 295, x + 8, 295, S[1])
+        pane(d, x, 296, x + 7, 330, 7)
+    R(d, 49, 304, 78, 347, S[4])
+    pane(d, 51, 306, 63, 347, 7); pane(d, 65, 306, 76, 347, 7)
+    d.point((62, 326), fill=M[2]); d.point((66, 326), fill=M[2])
+    R(d, 45, 299, 82, 303, M[2]); R(d, 45, 299, 82, 299, M[0]); R(d, 45, 303, 82, 303, M[3])
+    # the mast and the lattice skirt: open work, so the sky shows through
+    R(d, cx, 4, cx, 150, S[0]); R(d, cx + 1, 60, cx + 1, 150, S[2])
+    d.point((cx, 3), fill=T_RED[1])
+
+    def half(y):                         # thin, then flaring out to the roof
+        u = y - 90
+        return 2 + 50 * u * u * math.isqrt(u * 190) // (190 * 190 * 190)
+
+    hoops = range(110, 281, 14)
+
+    def hoop(y, near):
+        w = half(y)
+        for x in range(-w, w + 2):
+            sag = 3 * math.isqrt(max(0, w * w - x * x)) // w
+            if near:
+                c = M[0] if x < -w // 3 else M[2] if x < w // 2 else M[3]
+                d.point((cx + x, y + sag), fill=c)
+            else:
+                d.point((cx + x, y - sag), fill=S[3])
+
+    for y in hoops:
+        hoop(y, False)
+    for y in range(90, 281):
+        h = half(y)
+        for i in range(-6, 7):
+            x = cx + (h * abs(i) // 6) * (1 if i > 0 else -1) + (1 if i > 0 else 0)
+            d.point((x, y), fill=S[0] if i <= 0 else S[1] if i < 4 else S[2])
+    for y in hoops:
+        hoop(y, True)
     outline(im)
+    cast(im, [(9, 349, 118, 350)])
     return im
 
 
@@ -524,10 +874,6 @@ P_SKIN, P_SKIN_LO = rgb('ffe2e0'), rgb('d7b6ab')
 P_FOG = (rgb('dae2e4', 70), rgb('dae2e4', 110), rgb('fafcfd', 150))
 
 
-def R(d, x0, y0, x1, y1, c):
-    d.rectangle([x0, y0, x1, y1], fill=c)
-
-
 def disc(d, x, y, n, c):
     """An n x n round, by rows (n is 6 or 8)."""
     for row, inset in enumerate((2, 1, 0, 0, 1, 2) if n == 6 else (2, 1, 0, 0, 0, 0, 1, 2)):
@@ -546,16 +892,6 @@ def lump(im, cx, cy, rx, ry, base, hi, lo):
                 continue
             t = dy * 55 // 100 + dx * 30 // 100
             px[x, y] = hi if t < -330 else lo if t > 300 else base
-
-
-def cast(im, boxes):
-    """The shadow on the ground, only where nothing is drawn (after the outline)."""
-    px = im.load()
-    for x0, y0, x1, y1 in boxes:
-        for y in range(max(0, y0), min(im.height - 1, y1) + 1):
-            for x in range(max(0, x0), min(im.width - 1, x1) + 1):
-                if px[x, y][3] == 0:
-                    px[x, y] = P_SHADE
 
 
 def edge_cols(im, x, swap):
