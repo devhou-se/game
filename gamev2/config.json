@@ -247,7 +247,7 @@
           2,
           16,
           39,
-          27
+          29
         ],
         "description": "the green arch bridge over the frozen river, ice fishing, the snowy banks, three Hokkaido houses and the Asahiyama Zoo gate on the south side",
         "key": "riverbank",
@@ -523,6 +523,25 @@
         "stand": [
           18,
           39
+        ]
+      },
+      {
+        "bounds": [
+          35,
+          34,
+          57,
+          50
+        ],
+        "description": "the wood of shrines south of the avenue: a blue-roofed shrine in a clearing among cedars, its stone foxes",
+        "key": "teramachi",
+        "name": "Teramachi",
+        "spots": [
+          "the fox statues",
+          "the shrine"
+        ],
+        "stand": [
+          46,
+          45
         ]
       }
     ],
@@ -1095,7 +1114,7 @@
           6,
           5,
           54,
-          39
+          44
         ],
         "description": "the moat, stone walls and blue-tiled gate of the palace, its gardens, pond and cherry trees",
         "key": "imperial-palace",
@@ -3825,7 +3844,7 @@
           "gridOffsetX": 0,
           "gridOffsetY": 0,
           "gridX": 34,
-          "gridY": 13,
+          "gridY": 12,
           "name": "Damian",
           "sprite": "damian_front",
           "states": {
@@ -3908,7 +3927,7 @@
           "gridOffsetX": 0,
           "gridOffsetY": 0,
           "gridX": 24,
-          "gridY": 14,
+          "gridY": 12,
           "name": "Dylan",
           "sprite": "dylan_front",
           "states": {

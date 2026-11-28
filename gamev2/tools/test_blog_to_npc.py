@@ -351,6 +351,59 @@ def test_shipped_whereabouts(cfg):
         assert 'Karuizawa' not in rooms_on(cfg, name, nxt), (name, nxt)
 
 
+def test_shipped_coverage(cfg):
+    """Everyone the game shows on a trip day stands inside a district of
+    their room or on a station's platform (districts.coverage, #383), and
+    districts.UNCOVERED lists exactly the stands that do not."""
+    def npc(name, x, y, **kw):
+        return dict({'name': name, 'gridX': x, 'gridY': y}, **kw)
+    made = {
+        'trips': [{'id': 't1', 'start': '2025-01-10', 'end': '2025-01-20', 'lead': 3, 'members': ['a', 'b']},
+                  {'id': 't2', 'start': '2025-03-01', 'end': '2025-03-05', 'lead': 2, 'members': ['c']}],
+        'stations': {'TownStation': {}},
+        'districts': {'Town': [{'key': 'square', 'name': 'Square', 'bounds': [0, 0, 4, 4]}]},
+        'rooms': {
+            'Town': {'npcs': [
+                npc('A', 2, 2, trip='t1', states={'2025-01-12': {'gridX': 2, 'gridY': 2, 'posts': [{'id': '5'}]},
+                                                  '2025-01-15': {'gridX': 2, 'gridY': 2, 'posts': [{'id': '6'}]}}),
+                npc('B', 5, 2, trip='t1'),
+                npc('C', 1, 1, trip='t2')]},
+            'TownStation': {'npcs': [npc('S', 1, 1, trip='t1')]},
+            'Shop': {'interior': True, 'npcs': [npc('I', 1, 1, trip='t1'),
+                                                npc('O', 2, 1, trip='t1', drinkingGameOpponent=True)]},
+        },
+    }
+    rows = districts.coverage(made)
+    by = lambda name: [r for r in rows if r['name'] == name]
+    assert [(r['first'], r['last'], r['days'], r['posts']) for r in by('A')] == [
+        ('2025-01-07', '2025-01-11', 5, []), ('2025-01-12', '2025-01-14', 3, ['5']), ('2025-01-15', '2025-01-20', 6, ['6'])]
+    assert all(r['zone'] == 'Square' and r['trip'] == 't1' and r['cell'] == (2, 2) for r in by('A'))
+    assert [(r['zone'], r['first']) for r in by('B')] == [(None, '2025-01-07')]
+    assert [(r['zone'], r['room']) for r in by('S')] == [('the platform', 'TownStation')]
+    assert [(r['zone'], r['room']) for r in by('I')] == [(None, 'Shop')]
+    assert by('O') == []
+    assert [(r['first'], r['last'], r['trip'], r['zone']) for r in by('C')] == [('2025-03-01', '2025-03-05', 't2', 'Square')]
+    assert [r['first'] for r in rows] == sorted(r['first'] for r in rows)
+    kept = districts.UNCOVERED
+    try:
+        districts.UNCOVERED = {('B', '2025-01-07'): 'waits for a district', ('A', '2025-01-07'): 'stale'}
+        problems = districts.coverage_problems(made)
+        assert len(problems) == 2, problems
+        assert problems[0].startswith('I stands in no district at Shop (1,1) from 2025-01-07 to 2025-01-20:'), problems
+        assert problems[1] == 'A from 2025-01-07 is listed in UNCOVERED and is covered now: delete the line', problems
+    finally:
+        districts.UNCOVERED = kept
+
+    # the shipped world
+    rows = districts.coverage(cfg)
+    problems = districts.coverage_problems(cfg, rows)
+    assert problems == [], '\n'.join(problems)
+    for trip in cfg['trips']:
+        seen = {r['name'].lower() for r in rows if r['trip'] == trip['id']}
+        assert set(trip['members']) <= seen, (trip['id'], set(trip['members']) - seen)
+    assert not any(cfg['rooms'][r['room']].get('interior') for r in rows), [r for r in rows if cfg['rooms'][r['room']].get('interior')]
+
+
 def test_merge_same_day():
     p10, p11 = {'id': '10', 'lines': 2}, {'id': '11', 'lines': 1}
     earlier = {'dialogue': ['a', 'b'], 'photo': '10', 'posts': [p10], 'drunk': True}
@@ -1499,6 +1552,7 @@ if __name__ == '__main__':
     test_same_day_posts(config)
     test_rehome(config)
     test_shipped_whereabouts(config)
+    test_shipped_coverage(config)
     test_landmark_rules()
     test_spots(config)
     test_city_reach(config)

@@ -112,12 +112,15 @@ Every town is made of named areas, and the data says so: config `districts`, key
 - **One authored list**: `DISTRICTS` in `tools/districts.py`. `python3 tools/districts.py` writes config
   `districts` from it (and works out each district's `spots`: the `LANDMARKS` labels whose standing cell is
   inside its bounds); `--report` prints every district with its spots and where seven authors would stand,
-  and what is in no district. It is a generator in `check_generators.py`: re-run it after an edit to the list
+  and what is in no district; `--coverage` prints where everyone the game shows stands on every trip day,
+  and who is in no district (exit 1 on a stand `UNCOVERED` does not list, or a stale line there). It is a generator in `check_generators.py`: re-run it after an edit to the list
   or a map change that moves a landmark. Never edit config `districts` by hand.
 - **Fields**: `bounds` is `[x0, y0, x1, y1]`, inclusive, in the room's OWN cells (district-local in Tokyo,
   like everything authored); `stand` the cell a visitor to "the district" stands nearest to; `description`
   one line of what is there, written for the blog placement model. Districts of one room never overlap; a
-  room need not be covered edge to edge.
+  room need not be covered edge to edge, but everyone the game shows on a trip day stands inside a district
+  or on a station's platform (`test_shipped_coverage`, #383); `UNCOVERED` in `districts.py` lists the
+  exceptions, each with the ticket that ends it.
 - **What it is for today**: the blog pipeline (`blog-pipeline.md`, "Districts"). The game does not read
   `districts`; the HUD names the ROOM (`hudRoomName`), which for Tokyo's five rooms is the district.
 - **Names are the redesign plan's, bounds are today's map.** A district the plan names that is not built yet
@@ -132,7 +135,8 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Palace | Marunouchi |
 | Park | Park |
 | Shinjuku | Shinjuku |
-| Sapporo | Sapporo Station front, Clock Tower block, Odori Park, Tanukikoji |
+| Karuizawa | Larch road |
+| Sapporo | Sapporo Station front, Clock Tower block, Odori Park, Tanukikoji, Susukino |
 | Asahikawa | Station front and Heiwa-dori, Ramen alley, Asahibashi and the riverbank |
 | Osaka | Dotonbori, Shinsekai |
 | Himeji | Himeji Castle, Koko-en garden |
@@ -140,7 +144,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Nara | Todaiji, Nara Park, Kasuga Taisha |
 | Sendai | Sendai Station front, Aoba Castle ruins, Downtown, Zuihoden, Nikka distillery, Samurai quarter, Matsushima bay |
 | Fukuoka | Hakata Station, Momochi, Canal City, Old Hakata, Nakasu, Dazaifu |
-| Kanazawa | Station front, Higashi Chaya and the temple hill, Katamachi, Castle, Kenrokuen, Nagamachi |
+| Kanazawa | Station front, Higashi Chaya and the temple hill, Katamachi, Castle, Kenrokuen, Nagamachi, Teramachi |
 | Shirakawago | Far bank and bridge, Village, Viewpoint |
 | Toyama | Iwase port, Tram street |
 
@@ -252,7 +256,7 @@ station: the owner's rule is that small places are walked to from their town, no
   cones). Between the gate and the avenue, **Kenrokuen**: the pond with the two-legged **Kotoji lantern** on
   its bank. South-west, **Nagamachi**: an earth lane between earthen walls (Sendai's wall, gate and pine
   sprites), the canal along it, a flat stone bridge (`kanazawa-canal-bridge`, `depthBias: -200`) to a samurai
-  gate and a house in its court. South-east, a shrine in a cedar wood (Teramachi, post 707). Four of its
+  gate and a house in its court. South-east, a shrine in a cedar wood, the Teramachi district (post 707). Four of its
   houses can be walked into (`HouseKanazawa1..4`, `generate_houses.py Kanazawa`, see House interiors): the
   two machiya on Higashi Chaya's lane, the machiya downtown and the samurai's house; the town generator
   knows nothing of them (`roomgen.save_config` keeps their doors through a rebuild).

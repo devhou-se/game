@@ -191,7 +191,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.ok(!py.includes("'asahikawa-bridge_'") && !py.includes("('ramen-banner_'"), 'the rows of what is gone');
         const d = cfg.districts.Asahikawa;
         assert.deepStrictEqual(d.map((x) => [x.key, x.bounds, x.stand]), [['station-front', [11, 5, 39, 12], [28, 11]],
-            ['ramen-alley', [2, 13, 16, 15], [8, 15]], ['riverbank', [2, 16, 39, 27], [23, 21]]]);
+            ['ramen-alley', [2, 13, 16, 15], [8, 15]], ['riverbank', [2, 16, 39, 29], [23, 21]]]);
         for (const x of d) assert.ok(reach.has(x.stand.join(',')) && !doorFront(...x.stand), `${x.key}: its stand`);
         // they do not overlap
         for (const a of d) {

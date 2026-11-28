@@ -922,6 +922,14 @@ def npc_in_room(room, name):
 TRIP_LEAD = 14   # days before its start a trip opens (Trips.LEAD in the game)
 
 
+def trip_opens(trip):
+    """The ISO day a trip opens: its `start` less `lead` days (TRIP_LEAD when
+    `lead` is not a non-negative int)."""
+    lead = trip.get('lead')
+    lead = lead if isinstance(lead, int) and not isinstance(lead, bool) and lead >= 0 else TRIP_LEAD
+    return (datetime.date.fromisoformat(trip['start']) - datetime.timedelta(days=lead)).isoformat()
+
+
 def trip_window(cfg, date):
     """What `date` can see — {'trip', 'stay', 'from'} or None with no trips
     (mirrors Trips.windowFor in the game): its trip is the latest one opened
@@ -937,16 +945,12 @@ def trip_window(cfg, date):
                     and t['start'] <= t['end']), key=lambda t: t['start'])
     if not trips:
         return None
-    def opens(t):
-        lead = t.get('lead')
-        lead = lead if isinstance(lead, int) and not isinstance(lead, bool) and lead >= 0 else TRIP_LEAD
-        return (datetime.date.fromisoformat(t['start']) - datetime.timedelta(days=lead)).isoformat()
-    trip = ([t for t in trips if opens(t) <= date] or trips[:1])[-1]
+    trip = ([t for t in trips if trip_opens(t) <= date] or trips[:1])[-1]
     stays = sorted((s for s in trip.get('stays') or [] if s.get('room') and iso.match(s.get('from') or '')),
                    key=lambda s: s['from'])
     stay = ([s for s in stays if s['from'] <= date] or stays[:1] or [None])[-1]
     if date < trip['start'] and trip is not trips[0]:
-        return {'trip': trip, 'stay': stay, 'early': True, 'from': opens(trip)}
+        return {'trip': trip, 'stay': stay, 'early': True, 'from': trip_opens(trip)}
     return {'trip': trip, 'stay': stay, 'early': False,
             'from': stay['from'] if stay and stay['from'] > trip['start'] else trip['start']}
 

@@ -98,6 +98,12 @@ python3 tools/test_blog_to_npc.py                                   # unit check
     inside its room, no overlap, seven authors each given a cell that is none of the above) and places a post
     whose text names "Asakusa" and nothing else. The rehearsal places one post that only names a district and
     one steered to a district, and its last lines say how many districts were offered.
+  - Everyone the game shows on a trip day, lead-in included, stands inside a district of their room or on a
+    station's platform: `test_shipped_coverage` checks it with `districts.coverage` (`python3
+    tools/districts.py --coverage` prints the same, stand by stand), and `districts.UNCOVERED` lists the
+    exceptions, each with the ticket that ends it (#383). If it fails after a post lands, the message says
+    who and where: grow or add a district in `districts.py`, move the placement with `--rehome`, or list the
+    stand in `UNCOVERED`.
 - **The blog rehearsal** (issue #119): `python3 tools/rehearse_blog.py [--keep DIR] [-v]` (`--keep` takes a new or empty
   directory, or one an earlier rehearsal kept — it refuses anything else, and anything in or around `gamev2/`) runs
   `blog_to_npc.py` end to end the way the www-jp `game-npc-pipeline` workflow does (one `--payload … --mock
