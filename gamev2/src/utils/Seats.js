@@ -10,12 +10,15 @@
  * chair seen from behind - a piece of the furniture's own sprite (`cover`) is
  * drawn again over them (src/systems/Seating.js).
  *
- * A rule is { kind, pattern, pose, open? }:
+ * A rule is { kind, pattern, pose, open?, at? }:
  *  - `pattern` is matched against the sprite key, first rule wins;
  *  - the seat's cells are the BLOCKED cells of the sprite's footprint. With
  *    `open: true` they are its walkable cells instead (a bench drawn behind
  *    the cell you stand on): those take the pose when you stop there, and
  *    nothing about stepping, sorting or covering changes;
+ *  - `at` is [[col, row], ...]: only those cells of the footprint (from its
+ *    top left) are the seat, the rest are not (a stall's middle stool, painted
+ *    on a sprite that is a wall everywhere else);
  *  - `pose` is { face?, dy?, cover? }, or an array of them, one per footprint
  *    row from the top. `face` is 'up' | 'down' | 'left' | 'right' (none: keep
  *    the way you came), `dy` the pixels the player is drawn below (+) or
@@ -26,6 +29,8 @@
  */
 const Seats = {
     RULES: [
+        // a ramen counter's middle stool (issue #367): its outer stools are drawn too far off their cells to sit on
+        { kind: 'stool', pattern: /^(susukino-ramen-stall-[ab]|yatai-ramen)_/, at: [[1, 2]], pose: { face: 'up', dy: -6 } },
         { kind: 'stool', pattern: /^(izakaya-stool|devhouse-stool|devhouse-garden-seat)_/, pose: { dy: -14 } },
         // a dining chair is named for the side of the table it stands on, and faces the table
         { kind: 'chair', pattern: /^devhouse-chair-n_/, pose: { face: 'down', dy: -10 } },
@@ -83,6 +88,7 @@ const Seats = {
                 for (let row = 0; row < h; row++) {
                     const pose = (Array.isArray(rule.pose) ? rule.pose[row] : rule.pose) || {};
                     for (let cx = x; cx < x + w; cx++) {
+                        if (rule.at && !rule.at.some(([c, r]) => c === cx - x && r === row)) continue;
                         const at = cx + ',' + (y + row);
                         const blocked = !!(isBlocked && isBlocked(cx, y + row));
                         if (blocked === !!rule.open || cells.has(at)) continue;

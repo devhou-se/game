@@ -21,6 +21,8 @@ const Interactions = {
         { kind: 'tasting', group: 'shop', pattern: /^distillery-in-counter/, footprint: true },
         // Susukino's ramen alley (issue #219, stage 4): a counter under a noren, eaten at as a yatai is
         { kind: 'ramen', group: 'shop', pattern: /^susukino-ramen-stall/, footprint: true },
+        // Fukuoka's ramen yatai (issue #367): the same, with its own bowl (the yakitori and oden carts sell nothing)
+        { kind: 'yatai', group: 'shop', pattern: /^yatai-ramen/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^(office-(shelf-drinks|shelf-glass|fridge|freezer)|konbini-coffee)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^(office-shelf-snacks|konbini-(chiller|gondola-(snacks|noodles|bread)))/, footprint: true, room: 'konbini' },
         { kind: 'venue', group: 'shop', pattern: /^(office-counter2|izakaya-in-bar)/, footprint: true, room: 'venue' },

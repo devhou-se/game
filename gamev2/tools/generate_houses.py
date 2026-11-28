@@ -62,10 +62,13 @@ or on a lift says one line. Nobody works there yet.
 A THIRD KIND, THE SHOP (issue #219, `--shops`): a shopfront in
 roomgen.SHOP_DOORS (Tanukikoji's souvenir shop, crab shop and drugstore, Susukino's
 karaoke bar, four in Asahikawa, Kyu-Karuizawa Ginza's three) gets a
-door into a `Shop<Town><n>` room, by the same rules. THE SHOP FLOOR is one
-layout (SHOP): a white back wall with posters, shelves against it, seven by
-five cells of floor, a counter with a till, a plant in each front corner and
-the mat below the middle. It reuses the konbini's furniture. The room is named
+door into a `Shop<Town><n>` room, by the same rules. THE SHOP FLOOR is
+one of two layouts. SHOP, for most: a white back wall with posters, shelves
+against it, seven by five cells of floor, a counter with a till, a plant in
+each front corner and the mat below the middle. RAMEN, for a ramen shop
+(SHOP_LAYOUTS, issue #367): shelves wall to wall, a counter the width of the
+room and a row of stools in front of it, so you order sitting down. Both reuse
+the konbini's furniture (and the Izakaya's stools). The room is named
 by what the front sells (SHOP_TYPES: 'Souvenirs · Sapporo'), its shelves are
 that type's, and a bump on the counter opens the shop list of that type
 (`shopMenu`, a row of Shop.VENUES: two or three things from the existing
@@ -183,10 +186,10 @@ LOBBY_FURNITURE = {'P': ('lobby-plant_0_0', 1), 'R': ('lobby-desk_0_0', 3), 'S':
                    'B': ('lobby-sofa-back_0_0', 2), 'T': ('lobby-table_0_0', 2)}
 LOBBY_FLAVOUR = ('lobby-directory', 'lobby-lift')
 
-# The shop floor behind a shopfront (issue #219): one layout, on a floor SW x SH cells:
+# The shop floor behind a shopfront (issue #219): a layout, on a floor SW x SH cells:
 #   wall:  w white wall   p a poster on it
 #   floor: . free   S a shelf (the type's own, against the wall)   Cc the counter (2x1, the till on its
-#          right half)   P a plant
+#          right half)   Bb a length of counter (2x1, no till)   T a stool (a seat: src/utils/Seats.js)   P a plant
 SW, SH = 7, 5
 SX, SY = (ROOM_W - SW) // 2, 5
 SHOP = dict(wall='wpwwwpw',
@@ -196,6 +199,15 @@ SHOP = dict(wall='wpwwwpw',
                    '.......',
                    'P.....P'],
             door=3)
+# a ramen shop (issue #367): the counter can only be reached from a stool
+RAMEN = dict(wall='wpwwwpw',
+             floor=['SSSSSSS',     # the back shelves, wall to wall
+                    'BbBbCcP',     # the counter: three lengths, the till on the last, closed by a plant
+                    'TTTTTT.',     # a stool at every place
+                    '.......',
+                    'P.....P'],
+             door=3)
+SHOP_LAYOUTS = {'ramenya': RAMEN}      # Shop.VENUES id -> layout; every other shop floor is SHOP
 # what a shopfront sells: the sprite family -> (room label, Shop.VENUES id, its shelves)
 SHOP_TYPES = {
     'tanukikoji-shop-souvenir': ('Souvenirs', 'souvenirs', 'office-shelf-snacks_0_0'),
@@ -206,7 +218,7 @@ SHOP_TYPES = {
     'heiwa-shop-sake': ('Sake bar', 'standbar', 'office-shelf-drinks_0_0'),
     'heiwa-shop-bakery': ('Bakery', 'bakery', 'office-shelf-snacks_0_0'),
     'heiwa-shop-woodcraft': ('Woodcraft', 'souvenirs', 'office-shelf-glass_0_0'),
-    'ramen-shoyu-front': ('Ramen', 'ramen', 'office-shelf-drinks_0_0'),
+    'ramen-shoyu-front': ('Ramen', 'ramenya', 'office-shelf-drinks_0_0'),
     # Karuizawa (issue #261): Kyu-Karuizawa Ginza's bakery, jam and souvenir shop and cocktail lounge
     'karuizawa-shop-bakery': ('Bakery', 'bakery', 'office-shelf-snacks_0_0'),
     'karuizawa-shop-jam': ('Souvenirs', 'souvenirs', 'office-shelf-glass_0_0'),
@@ -327,17 +339,18 @@ def build_lobby(name, host, front):
 
 
 def build_shop(name, host, front, family):
-    """(room, arrival cell) for the shop floor behind a shopfront of `family`: the one layout, SHOP."""
+    """(room, arrival cell) for the shop floor behind a shopfront of `family`: its venue's layout (SHOP_LAYOUTS), else SHOP."""
     _, menu, shelf = SHOP_TYPES[family]
+    layout = SHOP_LAYOUTS.get(menu, SHOP)
     it = Interior(SW, SH, ox=SX, oy=SY, w=ROOM_W, h=ROOM_H)
     it.floor(lambda c, r: 'office-warm-autotile_center')
-    assert len(SHOP['wall']) == SW and len(SHOP['floor']) == SH, 'the shop does not fit its floor'
+    assert len(layout['wall']) == SW and len(layout['floor']) == SH, 'the shop does not fit its floor'
     posters = ['office-poster-menu_0_0', 'office-poster-photo_0_0']
     it.back_wall([(c, 'office-wall-white_0_0', 1) for c in range(SW)], 1)      # one row of it, as a konbini's
-    for c, ch in enumerate(SHOP['wall']):
+    for c, ch in enumerate(layout['wall']):
         if ch == 'p':
             it.put('Other', c, -1, posters.pop(0))
-    for r, row in enumerate(SHOP['floor']):
+    for r, row in enumerate(layout['floor']):
         assert len(row) == SW, row
         for c, ch in enumerate(row):
             if ch == 'S':
@@ -347,10 +360,14 @@ def build_shop(name, host, front, family):
             elif ch == 'C':
                 it.prop('office-counter2_0_0', c, r, 2)
                 it.put('Tops', c + 1, r, 'office-register_0_0')
+            elif ch == 'B':
+                it.prop('office-counter2_0_0', c, r, 2)
+            elif ch == 'T':
+                it.prop('izakaya-stool_0_0', c, r)
 
     # the way out: one cell below the floor, the mat on it
-    (arrive,) = it.doorway(SHOP['door'], host, front, n=1, mat='office-warm-autotile_center')
-    it.put('Over Floor', SHOP['door'], SH, 'lobby-mat_0_0')
+    (arrive,) = it.doorway(layout['door'], host, front, n=1, mat='office-warm-autotile_center')
+    it.put('Over Floor', layout['door'], SH, 'lobby-mat_0_0')
     room = it.room(name,
                    shopEnabled=False,                # not a store: no stamp, and the shelves are only to look at...
                    shopMenu=menu)                    # ...but the counter sells this type's short list (Shop.VENUES)
@@ -360,15 +377,19 @@ def build_shop(name, host, front, family):
 
 def check_interior(name, it, flavour=FLAVOUR, wide=('home-kotatsu', 'home-irori')):
     """Every flavour object of a finished home (lobby, shop) can be bumped from the
-    cell in front of it. (That every free cell can be walked to from the way in is
+    cell in front of it, or from a stool there that is got on from a cell in front of
+    it (a ramen counter). (That every free cell can be walked to from the way in is
     Interior.room's own check; `it.reached` is what it found.)"""
+    things = it.b.L['Collidables']
+    stool = lambda x, y: f'{x},{y}' in things and rg._pal[things[f'{x},{y}']].startswith('izakaya-stool')
+    front = lambda x, y: (x, y) in it.reached or (stool(x, y) and (x, y + 1) in it.reached)
     bumps = 0
-    for xy, idx in it.b.L['Collidables'].items():
+    for xy, idx in things.items():
         key = rg._pal[idx]
         if key.startswith(flavour):
             x, y = map(int, xy.split(','))
             w, h = (2, 2) if key.startswith(wide) else (1, 2) if y < it.oy else (1, 1)
-            assert all((x + dx, y + h) in it.reached for dx in range(w)), f'{name}: {key} at {xy} has no cell in front'
+            assert all(front(x + dx, y + h) for dx in range(w)), f'{name}: {key} at {xy} has no cell in front'
             bumps += 1
     assert bumps, f'{name}: nothing to bump'
 

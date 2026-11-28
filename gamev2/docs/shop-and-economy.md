@@ -21,7 +21,9 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 | the tasting counter of the Nikka distillery in Sendai (`distillery-in-counter*`, any cell of it, bumped from the stools' side; `tools/generate_distillery.py`, issue #217) | `tasting` — TASTING BAR: a Highball and nothing else; buys no fish, no stamp |
 | the hot-drinks tent in Sapporo's Odori Park (`snowfest-stall-drinks*`, any cell of the tent, issue #219) | `stall` — Canned Coffee and Green Tea, titled HOT DRINKS; no stamp |
 | the counter (`office-counter2*`) of a shop floor (`Shop<Town><n>`, `"shopMenu": "souvenirs"` / `"crab"` / `"drugstore"` / `"bar"`, issue #219; `"lounge"`, issue #261) | that list — OMIYAGE: Green Tea, Ramune, Melon Pan; CRAB SHOP: Onigiri, Nikuman; DRUGSTORE: Zone Energy, Green Tea, Canned Coffee; KARAOKE BAR (Susukino's karaoke bar): Highball, Nama Beer, Edamame; LOUNGE (Kyu-Karuizawa Ginza's cocktail lounge): Highball, Vodka Redbull, Nama Beer; no stamp, buys no fish |
-| a counter of Susukino's ramen alley in Sapporo (`susukino-ramen-stall-a*` / `-b*`, any cell of the counter, bumped from the alley, issue #219) | `ramen` — RAMEN ALLEY: Karaage, Edamame, Nama Beer; no stamp, buys no fish |
+| a counter of Susukino's ramen alley in Sapporo (`susukino-ramen-stall-a*` / `-b*`, any cell of the counter, bumped from the alley or from its middle stool, issue #219, #367) | `ramen` — RAMEN ALLEY: Miso Ramen (eaten there), Nama Beer, Edamame, Karaage; no stamp, buys no fish |
+| the counter of Asahikawa's ramen shop (`ShopAsahikawa4`, `"shopMenu": "ramenya"`, reached from one of its stools, issue #367) | `ramenya` — RAMEN SHOP: Shoyu Ramen (eaten there), Nama Beer, Karaage; no stamp, buys no fish |
+| a ramen yatai on Fukuoka's river street (`yatai-ramen*`, any cell of it, bumped from the promenade or from its middle stool, issue #367; the yakitori and oden carts sell nothing) | `yatai` — YATAI: Tonkotsu Ramen (eaten there), Nama Beer, Edamame; no stamp, buys no fish |
 | three shopfronts of an underground arcade (`chika-shop-bakery*` / `-kissa*` / `-bar*`, any cell of the front, `tools/generate_chikagai.py`) | `bakery` — BAKERY: Melon Pan, Nikuman, Canned Coffee; `kissa` — KISSATEN: Canned Coffee, Green Tea, Melon Pan; `standbar` — STAND BAR: Highball, Nama Beer, Edamame, Karaage; no stamp, buys no fish |
 | a 7-Eleven's drinks coolers (`office-fridge`) and coffee machine (`konbini-coffee`); `office-shelf-drinks` / `-shelf-glass` / `office-freezer` in Don Takote | `drinks` — the drinks only |
 | a 7-Eleven's open chillers (`konbini-chiller-a` / `-b`) and its snack, noodle and bread shelf blocks (`konbini-gondola-snacks` / `-noodles` / `-bread`); `office-shelf-snacks` in Don Takote | `snacks` — the food only |
@@ -113,9 +115,27 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 - **Catalogue**: `Shop.DEFAULT_ITEMS` (or `config.json` `shop.items`, which replaces
   it wholesale). Each item: `id` (a save-file key — don't rename), `name`, `price`,
   `where`, `category` (`drink` | `food` | `gear`), `desc`, `icon`, and `effect` or
-  `permanent`. Keep `desc` truthful — the use toast is generated from the `effect`
+  `permanent`, and optionally `eatIn: true` (below). Keep `desc` truthful (and at most 66
+  characters, the width of the panel: `career.test.js` holds it) — the use toast is generated from the `effect`
   numbers by `effectSummary()`, so the two are read side by side. The fish
   (`category: 'fish'`, see below) are appended to whichever catalogue is in use.
+- **Eaten where it is sold** (`eatIn: true`, issue #367): an item served at the counter, never
+  carried. Its row reads `×1` and `[ order & eat ]` (no `[ buy ]`, the hint `ENTER order & eat`:
+  `Shop.buyLabels`), `maxQty` is 1, and ENTER, SHIFT+ENTER or a click buys one and eats it there
+  through the same `use()` path as "buy & use now" (`Shop.eatsIn`): money, toast, energy, effect,
+  achievements, the gulp. It never rests in `items`, so the Items screen never shows it. Any venue
+  that lists one serves it. The three bowls of ramen are the first; each is the first row of its
+  list and sold at one venue only:
+
+  | id | where | price | effect (5 min) |
+  |---|---|---|---|
+  | `miso-ramen` | `ramen` (Susukino's stalls) | ¥950 | speed +20% |
+  | `shoyu-ramen` | `ramenya` (Asahikawa's ramen shop) | ¥900 | speed +15%, work clock +8s |
+  | `tonkotsu-ramen` | `yatai` (Fukuoka's ramen yatai) | ¥850 | steady, showdown winnings +50% |
+
+  All three are food with `energy: 100` and the `bowl` icon shape. A new eat-in item (#376, #377)
+  needs only the flag, a venue that lists it and, if it is eaten sitting, seats in front of what
+  opens the venue (a `Seats` row with `at`, or a `SHOP_LAYOUTS` entry for a generated shop floor).
 - **Icons** (`src/ItemIcons.js`, issue #82): every item has a 16x16 pixel icon, shown
   at 2x on a small slot square in the buy / sell lists, the Items screen and the HUD
   effect chips. They are drawn in code, data-first: `icon: { shape, colors }` names
@@ -145,7 +165,7 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   under the right end of the HUD bar with the time left, and in the Items screen.
 - **Buying**: ↑/↓ pick, ←/→ quantity (1-9, capped by the wallet), ENTER/SPACE buy,
   SHIFT+ENTER/SPACE "buy & use now" (touch: hold the sprint pill and tap A; mouse:
-  the `‹ ›`, `[ buy ]` and `[ buy & use now ]` buttons). Buy-list rows do NOT select on
+  the `‹ ›`, `[ buy ]` and `[ buy & use now ]` buttons; an eat-in row has one way, `[ order & eat ]`). Buy-list rows do NOT select on
   hover (the stepper sits under them, so a mouse heading for it would drag the
   selection down): a click/tap picks a row, clicking the picked row buys it. Rows
   show `have ×N` and dim the price you cannot afford. Hint lines switch to A / B /
@@ -194,7 +214,7 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   — the wallet is never changed by loading.
   `used` counts consumption and feeds two achievements in
   `AchievementManager.consumptionProgress()`: **Taste Tester** (use every
-  consumable) and **Regular Customer** (25 uses), both listed in the Achievements
+  consumable: 15 of them since the bowls of ramen, issue #367, which need Sapporo, Asahikawa and Fukuoka) and **Regular Customer** (25 uses), both listed in the Achievements
   overlay.
 - Test hook: `scene.shop.clockOffset` (ms) fast-forwards the shop's clock so a
   test can expire a buff without waiting.
@@ -339,6 +359,7 @@ draws the meter and pays the rewards; tests are `tools/tests/energy.test.js`.
 
   | Item | energy | | Item | energy |
   |---|---|---|---|---|
+  | a bowl of ramen (all three) | 100 | | | |
   | Nikuman, Karaage | 60 | | Zone Energy | 30 |
   | a grilled fish | 50 | | Canned Coffee, Ramune | 20 |
   | Onigiri | 45 | | Green Tea | 15 |

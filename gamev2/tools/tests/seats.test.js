@@ -88,6 +88,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
                 for (const pose of poses) {
                     assert.ok(pose.face === undefined || ['up', 'down', 'left', 'right'].includes(pose.face), `${key}: face ${pose.face}`);
                     assert.ok(pose.dy === undefined || (Number.isInteger(pose.dy) && Math.abs(pose.dy) < 64), `${key}: dy ${pose.dy}`);
+                    if (rule.at) for (const [c, r] of rule.at) assert.ok(c >= 0 && r >= 0 && c < w / 64 && r < h / 64, `${key}: the seat cell ${c},${r} is outside the sprite`);
                     if (!pose.cover) continue;
                     const [cx, cy, cw, ch] = pose.cover;
                     assert.ok(cx >= 0 && cy >= 0 && cw > 0 && ch > 0 && cx + cw <= w && cy + ch <= h, `${key}: cover ${pose.cover} is outside the ${w}x${h} sprite`);
@@ -261,5 +262,33 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         assert.strictEqual(S.canStepOn(pillow, 5, 6, 5, 6), false);
         assert.strictEqual(S.canStepOn(seat(6, { solid: false }), 6, 6, 5, 6), false);
         assert.strictEqual(S.canStepOn(null, 6, 6, 5, 6), false);
+    });
+
+    test('seats: `at` keeps only the listed cells, and a ramen counter\'s middle stool is the seat (#367)', () => {
+        const S = Seats();
+        // a made-up room: a 3x3 stall with every cell blocked, and the rule keeps the one cell it lists
+        const rule = { kind: 'stool', pattern: /^yatai-ramen_/, at: [[1, 2]], pose: { face: 'up' } };
+        S.RULES.unshift(rule);
+        try {
+            const room = { layers: [{ tiles: { '2,3': 'yatai-ramen_0_0' } }] };
+            const index = S.index(room, { sizeOf: () => [3, 3], isBlocked: () => true });
+            assert.strictEqual([...index.keys()].join(' '), '3,5');
+        } finally { S.RULES.splice(S.RULES.indexOf(rule), 1); }
+
+        const check = (room, stalls, label) => {
+            const world = worldIn(room, stalls[0][0] + 1, stalls[0][1] + 4);
+            for (const [x, y] of stalls) {
+                for (let dx = 0; dx < 3; dx++) for (let dy = 0; dy < 3; dy++) {
+                    const seat = world.seatAt(x + dx, y + dy);
+                    if (dx === 1 && dy === 2) {
+                        assert.ok(seat && seat.kind === 'stool' && seat.solid && seat.pose.face === 'up', `${label} ${x},${y}: the middle stool`);
+                    } else assert.strictEqual(seat, null, `${label} ${x},${y}: ${x + dx},${y + dy} is no seat`);
+                }
+                assert.strictEqual(world.canSit(x + 1, y + 3, x + 1, y + 2), true, `${label} ${x},${y}: got onto from below`);
+                assert.strictEqual(world.canStep(x + 1, y + 3, x + 1, y + 2), false, `${label} ${x},${y}: and still a wall to everything else`);
+            }
+        };
+        check('Sapporo', [[18, 42], [21, 42], [24, 42]], 'the Susukino stall at');
+        check('Fukuoka', [[10, 34], [22, 34], [38, 34], [50, 34]], 'the ramen yatai at');
     });
 };

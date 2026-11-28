@@ -585,11 +585,14 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         const catalogue = new Set([...src.matchAll(/\{ id: '([a-z-]+)',\s+name:/g)].map((m) => m[1]));
         const I = vmWith('utils/Interactions.js', 'Interactions');
         const list = (menu) => {
-            const row = new RegExp(`\\b${menu}:\\s*\\{ title: '([A-Z ]+)',\\s*sells: i => \\[([^\\]]+)\\]\\.includes\\(i\\.id\\) \\}`).exec(src);
+            // a short list off the catalogue, and (issue #367) maybe the items of its own (`where: '<menu>'`) first
+            const row = new RegExp(`\\b${menu}:\\s*\\{ title: '([A-Z ]+)',\\s*sells: i => (i\\.where === '${menu}' \\|\\| )?\\[([^\\]]+)\\]\\.includes\\(i\\.id\\) \\}`).exec(src);
             assert.ok(row, `Shop.VENUES.${menu}`);
-            const ids = row[2].split(',').map((x) => x.trim().replace(/'/g, ''));
+            const ids = row[3].split(',').map((x) => x.trim().replace(/'/g, ''));
             assert.ok(ids.length >= 2 && ids.length <= 3 && ids.every((id) => catalogue.has(id)), `${menu}: ${ids}`);
-            return ids;
+            const own = row[2] ? [...src.matchAll(new RegExp(`\\{ id: '([a-z-]+)',[^\\n]*where: '${menu}'`, 'g'))].map((m) => m[1]) : [];
+            assert.ok(!row[2] || own.length, `${menu}: sells its own items, and there are none`);
+            return own.concat(ids);
         };
         // the neon corner: a tower's lobby, by the rules every lobby keeps
         const lobby = cfg.rooms.LobbySapporo3;
@@ -613,6 +616,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         // every one has the alley in front of it
         for (const v of 'ab') assert.deepStrictEqual({ ...I.match(`susukino-ramen-stall-${v}_0_0`, room, {}) }, { kind: 'ramen', group: 'shop', footprint: true });
         assert.ok(list('ramen').some((id) => new RegExp(`\\{ id: '${id}',[^\\n]*category: 'food'`).test(src)), 'something to eat');
+        assert.strictEqual(list('ramen')[0], 'miso-ramen', 'and a bowl of ramen first (#367)');
         for (const [x, y] of [...at('susukino-ramen-stall-a_0_0'), ...at('susukino-ramen-stall-b_0_0')]) {
             for (let dx = 0; dx < 3; dx++) assert.ok(solid(x + dx, y + 2) && reach.has(`${x + dx},${y + 3}`), `${x + dx},${y + 3}`);
         }

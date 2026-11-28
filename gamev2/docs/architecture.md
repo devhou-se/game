@@ -110,6 +110,10 @@ were on it. Which furniture, and how, is one table, `Seats.RULES` in `src/utils/
 - **A seat's cells** are the blocked cells of the sprite's footprint (`Seats.index`). A rule with `open: true`
   is the other case - a bench drawn with its back to you over floor you walk on (`station-bench-back`): its
   walkable cells take the pose when you stop there, and nothing about stepping or sorting changes.
+  A rule with `at: [[col, row], ...]` keeps only those cells of the footprint (issue #367): the street ramen
+  counters (`susukino-ramen-stall-a` / `-b`, `yatai-ramen`) are walls with their stools painted on, and only
+  the middle stool, `[1, 2]`, sits on its cell's centre, so it is the seat; the outer stools are paint. From
+  the stool, up again bumps the counter and opens its list (a bump on an outer column still does, standing).
 - **The pose** is `{ face, dy, cover }`, or one per footprint row for furniture you lie in. `dy` is the lift:
   `Character.setLift` moves the sprite's origin, so the sprite's `x`/`y` (and with them the camera, Occlusion's
   samples and the grid) stay on the cell; it slides from the old cell's lift to the new one's during the step

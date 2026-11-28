@@ -621,13 +621,20 @@ class WorldModel {
                 }
             }
         }
+        // a till may also be ordered at from a seat in front of it (a ramen counter's stools, issue #367):
+        // a solid seat cell the player can step onto from a cell walked to from the door
+        const seats = fixtures.length ? Seats.index(room, { sizeOf: (key) => this.cells(key), isBlocked: (x, y) => colliders.has(K(x, y)) }) : null;
+        const seated = (x, y) => {
+            const seat = seats && Seats.lookup(seats, x, y);
+            return !!(seat && seat.solid) && [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]].some(([nx, ny]) => fromDoor.has(K(nx, ny)));
+        };
         for (const f of fixtures) {
             const till = f.kind !== 'drinks' && f.kind !== 'snacks';   // the konbini counter, a venue's bar
             const sides = [];
             for (let a = 0; a < f.w; a++) sides.push([f.x + a, f.y + f.h], [f.x + a, f.y - 1]);
             for (let b = 0; b < f.h; b++) sides.push([f.x - 1, f.y + b], [f.x + f.w, f.y + b]);
             if (till) {
-                if (!sides.some(([sx, sy]) => fromDoor.has(K(sx, sy)))) push(errors, 'shop-no-front', `${nm(f.key)} @${K(f.x, f.y)} (no reachable side)`);
+                if (!sides.some(([sx, sy]) => fromDoor.has(K(sx, sy)) || seated(sx, sy))) push(errors, 'shop-no-front', `${nm(f.key)} @${K(f.x, f.y)} (no reachable side)`);
                 continue;
             }
             for (let a = 0; a < f.w; a++) {

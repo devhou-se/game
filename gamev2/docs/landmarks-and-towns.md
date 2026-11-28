@@ -741,7 +741,9 @@ pipeline has placed someone there.
   counters under noren (`susukino-ramen-stall-a` / `-b` at columns 18, 21 and 24, feet on row 44) against the
   arcade's back wall, the alley itself one row (45) behind a ploughed bank with lantern posts
   (`ramen-alley-lanterns`), entered under the ramen gate (`susukino-ramen-gate` at (27,44)) from the street. A
-  bump on a counter opens its list (RAMEN ALLEY, `Shop.VENUES.ramen`); nothing in Susukino is sealed. The
+  bump on a counter opens its list (RAMEN ALLEY, `Shop.VENUES.ramen`, with a bowl of Miso Ramen eaten there,
+  issue #367), and each counter's middle stool, (19 | 22 | 25, 44), is a seat to order from (`Seats`' `at`);
+  nothing in Susukino is sealed. The
   **streetcar** is declared, not placed (`rooms.Sapporo.tramways`, run by `src/AmbientTrams.js`, see Ambient
   Traffic): in from off the map along row 48, a stop at column 23 outside the alley (a strip of platform, a
   bench and the stop sign on the south kerb), out the other side, and back mirrored; overhead-wire poles
@@ -768,7 +770,7 @@ pipeline has placed someone there.
     sculptures, benches and the street's own lamps (`heiwa-lamp-post`) stand on the setts; a door front and a
     stand cell are never under one.
   - **Ramen alley** is two cells wide on `ramen-alley-autotile` (rows 14-15): `ramen-shoyu-front` (a shop
-    floor, `ShopAsahikawa4`, list `ramen`), `ramen-narrow-front` and `ramen-miso-front` (sealed), feet on row
+    floor, `ShopAsahikawa4`, list `ramenya`: a counter with stools and Shoyu Ramen, issue #367), `ramen-narrow-front` and `ramen-miso-front` (sealed), feet on row
     13, behind `asahikawa-ramen-gate` (11,11) - through its middle cell (12,13) off Heiwa-dori, or round the
     alley's open east end. Somebody stood on row 15 is walked round along row 14 or along the bank (row 16), so
     **no prop's foot on row 14 stands within two columns of a bank shrub of row 16, and no single free cell is
@@ -899,7 +901,9 @@ after the existing stations in `tools/generate_stations.py`); it sits detached, 
 - **The ramen river street**: ten **yatai** (rows 34-36: `yatai-ramen|yakitori|oden`, 3x3, solid all over)
   face a two-row promenade and the bank; a hedge runs behind the row and behind every gap in it, so the stalls
   are only ever seen from the front. Between them stand `yatai-lanterns` posts: the key holds `-lanterns`, so
-  `DayNight` lights them at night with the lanterns and lamp posts (no code change).
+  `DayNight` lights them at night with the lanterns and lamp posts (no code change). A bump on a ramen yatai
+  opens YATAI (`Shop.VENUES.yatai`: Tonkotsu Ramen, eaten there; issue #367) and its middle stool, (x+1, 36),
+  is a seat to order from; the yakitori and oden carts sell nothing.
 - **The Naka river** (rows 40-42, from the first column east of the waterline to the east edge of the map) is
   the room's one `waterways` entry, built exactly like Osaka's canal (`pond-autotile` edge-n / center / edge-s,
   parapet and shade tiles on the four-cell deck, `under` columns 29-32), so it carries the ambient boats and
@@ -1074,19 +1078,22 @@ re-run and kept through a town rebuild exactly as a house or a lobby is. **Appli
 souvenir shop, crab shop and drugstore are `ShopSapporo1..3`, and Susukino's karaoke bar is `ShopSapporo4`.
 **And to Asahikawa** (stage B): Heiwa-dori's sake shop (`Sake bar · Asahikawa`, list `standbar`), bakery
 (`bakery`) and woodcraft shop (`Woodcraft · Asahikawa`, list `souvenirs`) are `ShopAsahikawa1..3`, and ramen
-alley's shoyu counter (`Ramen · Asahikawa`, list `ramen`) is `ShopAsahikawa4`.
+alley's shoyu counter (`Ramen · Asahikawa`, list `ramenya`) is `ShopAsahikawa4`.
 **And to Karuizawa** (issue #261): Kyu-Karuizawa Ginza's bakery (`Bakery · Karuizawa`, list `bakery`), jam
 shop (`Souvenirs · Karuizawa`, list `souvenirs`) and cocktail lounge (`Lounge · Karuizawa`, list `lounge`)
 are `ShopKaruizawa1..3` (see Karuizawa).
 
-- **One layout** (`SHOP`): a white back wall with two posters, two shelves either side against it, seven by five
-  cells of floor, a counter with a till, a plant in each front corner, the mat below the middle. All of it is the
-  konbini's furniture (`office-*`) and the lobby's mat; no new art.
+- **Two layouts**. `SHOP`, for most: a white back wall with two posters, two shelves either side against it, seven
+  by five cells of floor, a counter with a till, a plant in each front corner, the mat below the middle. `RAMEN`,
+  for a list in `SHOP_LAYOUTS` (`ramenya`, issue #367): shelves wall to wall, a counter the width of the room (three
+  lengths of `office-counter2`, the till on the last, closed by a plant) and a row of six `izakaya-stool` seats in
+  front of it, so the counter is only reached from a stool (`check_interior` and `play.js lint` allow that). All of
+  it is the konbini's furniture (`office-*`), the Izakaya's stools and the lobby's mat; no new art.
 - **Named by what the front sells** (`SHOP_TYPES`: sprite family -> label, list, shelves): `Souvenirs · Sapporo`,
   `Crab shop · Sapporo`, `Drugstore · Sapporo`, `Karaoke bar · Sapporo` (numbered only where a town has several
   of one type).
 - **It sells**: the room is `interior`, `shopEnabled: false` (not a store: no stamp, no Konbini Pilgrim, the
-  shelves are only to look at) and `shopMenu: souvenirs | crab | drugstore | bar | standbar | bakery | ramen | lounge`, so a bump on the counter opens that
+  shelves are only to look at) and `shopMenu: souvenirs | crab | drugstore | bar | standbar | bakery | ramenya | lounge`, so a bump on the counter opens that
   row of `Shop.VENUES` - two or three things off the existing catalogue (see Shop). The room's `shop` marker is
   `{host, door, type}`.
 - A new shopfront elsewhere is a row in `roomgen.SHOP_DOORS` and one in `SHOP_TYPES` (and a `Shop.VENUES` row

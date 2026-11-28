@@ -394,6 +394,25 @@ ItemIcons.SHAPES = {
         '.....oooooooo...',
         '................',
     ],
+    // a bowl of ramen (issue #367): a broth, c noodles, d the topping, b the bowl with e its lit rim, k chopsticks
+    bowl: [
+        '...............k',
+        '..............k.',
+        '.............k.k',
+        '............k.k.',
+        '...ooooooookok..',
+        '..oeaacccdkako..',
+        '.oeacccaddckaeo.',
+        '.oeaaacccaaaaeo.',
+        '.ooeeeeeeeeeeoo.',
+        '.obbbbbbbbbbbbo.',
+        '..obbbbbbbbbbo..',
+        '..obbbbbbbbbbo..',
+        '...obbbbbbbbo...',
+        '....oobbbboo....',
+        '.....oeeeeo.....',
+        '.....oooooo.....',
+    ],
     // a crate, for gear with no icon of its own
     box: [
         '................',
