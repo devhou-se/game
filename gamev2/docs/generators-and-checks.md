@@ -325,7 +325,9 @@ the bottom.
 
 Kanazawa's ten building fronts in `tools/generate_kanazawa_art.py` (the three `chaya-front`s, the gold-leaf
 shop, the phonograph museum, Katamachi's four bars and the samurai house; #307, part of #290) are drawn by it
-and held to it by `tools/tests/kanazawa-art.test.js`.
+and held to it by `tools/tests/kanazawa-art.test.js`. The castle's gate, turret, storehouse and five wall
+pieces and the Tsuzumi-mon (#385, part of #312) are drawn the same way, their roofs hipped and seen from
+above in the pack's tile, and held by the same test file.
 
 ## Asset Generation
 

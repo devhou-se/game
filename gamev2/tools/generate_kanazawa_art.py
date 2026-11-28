@@ -127,7 +127,6 @@ ROLES = ('center', 'edge-n', 'edge-s', 'edge-e', 'edge-w',
          'corner-ne', 'corner-nw', 'corner-se', 'corner-sw')
 
 # ---- Kanazawa's colours ---------------------------------------------------------
-LEAD_P = (rgb('b9c3ca'), rgb('8c97a3'), rgb('e3e9ed'), rgb('687382'))       # lead tiles: light, joint, lit, deep
 KAWARA_P = (rgb('3b3f4e'), rgb('282b38'), rgb('666c80'), rgb('1a1c26'))     # Hokuriku's black glazed tiles
 SHINGLE_P = (rgb('7f6a5b'), rgb('5e4d46'), rgb('a38b76'), rgb('403634'))    # cedar-bark shingles
 PLASTER, PLASTER_LO, PLASTER_SH = rgb('f4f1ea'), rgb('d3cdc2'), rgb('b4aea6')
@@ -234,31 +233,157 @@ def roof(d, y0, y1, top, bottom, pal=KAWARA_P, ridge=True, p=1.5, step=4, caps=T
                 d.line([(x0 + 5, y0 - 7), (x0 + 5, y0)], fill=dark)
 
 
-STONES = (STONE, rgb('cdd3d7'), rgb('c5bbba'), rgb('b0b9c5'), STONE, rgb('d8dcdf'), rgb('b5b2b9'))
+# ---- the castle's colours: every one a GuttyKreum sheet colour ---------------------------
+# lead tiles in roof_tile's order: course line, joint, lit lip, shade, base
+C_LEAD = [rgb(c) for c in ('575f79', '848295', 'd1e2eb', '949bb2', 'a4b0b5')]
+C_LEAD_LIT = [rgb(c) for c in ('646e86', '949bb2', 'fafcfd', 'a4b0b5', 'bcc7cc')]      # a fall facing west
+C_LEAD_SH = [rgb(c) for c in ('47485d', '575f79', '949bb2', '646e86', '848295')]       # a fall facing east
+C_RIDGE, C_RIDGE_HI, C_EAVE, C_EAVE_DK = rgb('a4b0b5'), rgb('dae2e4'), rgb('646e86'), rgb('47485d')
+C_PL, C_PL_LO, C_PL_SH = rgb('fafcfd'), rgb('e4cecc'), rgb('be9e8c')    # white plaster, its shade, an eave's shadow on it
+C_NK, C_NK_LO = rgb('47485d'), rgb('2a2636')                            # namako slate
+C_DARK, C_DARK_LO = rgb('2c2d51'), rgb('2a3151')                        # an opening: never lit
+C_ST = [rgb(c) for c in ('bcc7cc', 'a4b0b5', 'd1e2eb', 'bcc7cc', 'e4cecc', 'a4b0b5', '949bb2')]   # Tomuro stone, the odd red and blue block
+C_ST_HI, C_ST_LO, C_ST_JOINT, C_ST_DK = rgb('fafcfd'), rgb('949bb2'), rgb('848295'), rgb('646e86')
+C_TB, C_TB_HI, C_TB_LO, C_TB_DK = rgb('71412a'), rgb('aa775f'), rgb('5a3827'), rgb('3f210f')
+C_IRON, C_IRON_HI, C_SOFFIT = rgb('2a2636'), rgb('848295'), rgb('191c2a')
+C_GILT, C_GILT_HI = rgb('c6a663'), rgb('f3d890')
 
 
-def stonework(d, x0, y0, x1, y1, seed=0, ch=8):
-    """Kanazawa Castle's fitted Tomuro stone: grey with the odd red and blue
-    block. Periodic in x at 32, so a run of wall tiles joins."""
-    cuts = (0, 11, 21)
+def rect(im, x0, y0, x1, y1, c):
+    hl.fill(im, (x0, y0, x1, y1), c)
+
+
+def lead_band(im, x0, y0, x1, y1, ridge=3):
+    """A straight band of lead tiles: a ridge course of `ridge` rows, the tiles, a dark eave of two."""
+    px = im.load()
     for y in range(y0, y1 + 1):
-        j = (y - y0) // ch
-        yy = (y - y0) % ch
+        for x in range(x0, x1 + 1):
+            px[x, y] = roof_tile(x, y - y0 - ridge, C_LEAD)
+    rect(im, x0, y0, x1, y0 + ridge - 1, C_RIDGE)
+    rect(im, x0, y0, x1, y0, C_RIDGE_HI)
+    rect(im, x0, y0 + ridge - 1, x1, y0 + ridge - 1, C_EAVE)
+    rect(im, x0, y1 - 1, x1, y1 - 1, C_EAVE)
+    rect(im, x0, y1, x1, y1, C_EAVE_DK)
+
+
+def lead_hip(im, x0, x1, top, eave, run, side_rows, caps=True):
+    """A hipped lead roof seen from above. The ridge bar is the 4 rows above `top`,
+    `run` in from either end; the front slope falls from `top` to `eave` between two
+    hips that reach the eave's corners; outside them the hip ends (the west lit, the
+    east in shade, their tiles running down them) widen to the full width in
+    `side_rows` rows; an eave lip of 3 rows lies under `eave`."""
+    px = im.load()
+    n = eave - top
+    for y in range(top, eave + 1):
+        hip = (y - top) * run // n
+        side = min(run, (y - top) * run // side_rows)
+        hw, he, ow, oe = x0 + run - hip, x1 - run + hip, x0 + run - side, x1 - run + side
+        for x in range(ow, oe + 1):
+            if x < hw - 1:
+                c = roof_tile(y - top, x - ow, C_LEAD_LIT)
+            elif x > he + 1:
+                c = roof_tile(y - top, oe - x, C_LEAD_SH)
+            elif x <= hw + 1:
+                c = C_LEAD_LIT[2] if x <= hw else C_LEAD[0]            # the west hip's cap, lit
+            elif x >= he - 1:
+                c = C_LEAD[2] if x == he - 1 else (C_LEAD_SH[0] if x == he + 1 else C_LEAD_SH[1])
+            else:
+                c = roof_tile(x, y - top, C_LEAD)
+                if x > he - 9 and c == C_LEAD[4]:
+                    c = C_LEAD[3]                                      # the slope's east end turns from the light
+            px[x, y] = c
+    rect(im, x0, eave + 1, x1, eave + 1, C_LEAD[2])
+    rect(im, x0, eave + 2, x1, eave + 2, C_EAVE)
+    rect(im, x0, eave + 3, x1, eave + 3, C_EAVE_DK)
+    a, b = x0 + run - 2, x1 - run + 2
+    rect(im, a, top - 4, b, top - 1, C_RIDGE)
+    rect(im, a, top - 4, b, top - 4, C_RIDGE_HI)
+    rect(im, a, top - 1, b, top - 1, C_LEAD[0])
+    for x in range(a + 3, b - 1, 6):
+        rect(im, x, top - 3, x, top - 2, C_LEAD[1])
+    if caps:                                                           # an end tile either end of the ridge
+        for cx in (a - 4, b - 1):
+            rect(im, cx, top - 6, cx + 5, top, C_LEAD[4])
+            rect(im, cx, top - 6, cx, top, C_LEAD_LIT[2])
+            rect(im, cx + 1, top - 6, cx + 5, top - 6, C_LEAD_LIT[2])
+            rect(im, cx + 5, top - 5, cx + 5, top, C_EAVE)
+
+
+def plaster(im, x0, y0, x1, y1, east=6):
+    """White plaster: the eave's shadow along its top (one row, a lighter row, a dithered
+    row), its `east` end columns turned from the light."""
+    rect(im, x0, y0, x1, y1, C_PL)
+    rect(im, x1 - east + 1, y0, x1, y1, C_PL_LO)
+    rect(im, x0, y0, x1, y0, C_PL_SH)
+    rect(im, x0, y0 + 1, x1, y0 + 1, C_PL_LO)
+    px = im.load()
+    for x in range(x0, x1 - east + 1):
+        if (x + y0) % 2:
+            px[x, y0 + 2] = C_PL_LO
+
+
+def musha(im, x0, y0, x1, y1):
+    """A musha-mado: a dark opening behind stout plaster bars. No glass, so no glare, and never lit."""
+    rect(im, x0 - 1, y0 - 1, x1 + 1, y1 + 1, C_PL_SH)
+    rect(im, x0, y0, x1, y1, C_DARK)
+    rect(im, x0, y0, x1, y0, C_DARK_LO)
+    for x in range(x0 + 2, x1, 4):
+        rect(im, x, y0, x, y1, C_PL)
+        rect(im, x, y0, x, y0, C_PL_LO)
+    rect(im, x0 - 1, y1 + 1, x1 + 1, y1 + 1, C_PL)                     # the sill, lit
+
+
+def namako(im, x0, y0, x1, y1, shade_from=None):
+    """Namako-kabe: slate tiles set on the diagonal, their joints raised in white
+    plaster (period 8 in x), each joint's shadow on the tile below and east of it."""
+    px = im.load()
+    for y in range(y0, y1 + 1):
+        v = y - y0
+        for x in range(x0, x1 + 1):
+            a, b = (x + v) % 8, (x - v) % 8
+            if v == 0 or y == y1 or a == 0 or b == 0:
+                c = C_PL_LO if y == y1 or (shade_from is not None and x >= shade_from) else C_PL
+            else:
+                c = C_NK_LO if a == 7 or b == 1 else C_NK
+            px[x, y] = c
+
+
+def stonework(im, x0, y0, x1, y1, seed=0, ch=8):
+    """Kanazawa Castle's fitted Tomuro stone in courses of `ch`: pale grey with the odd
+    red and blue block, each block lit along its top, its joints below and to the east.
+    Period 32 in x, so runs of wall tile."""
+    px = im.load()
+    for y in range(y0, y1 + 1):
+        j, yy = (y - y0) // ch, (y - y0) % ch
         off = (j * 13 + seed * 7) % 32
         for x in range(x0, x1 + 1):
             u = (x - off) % 32
             seg = 2 if u >= 21 else (1 if u >= 11 else 0)
-            first = u in cuts
-            tone = STONES[(seg * 3 + j * 5 + ((x - off) // 32) * 2 + seed) % 7]
-            if first or yy == ch - 1:
-                c = STONE_LO
+            if u in (0, 11, 21) or yy == ch - 1:
+                c = C_ST_JOINT
             elif yy == 0:
-                c = WHITE if tone != STONES[2] else rgb('e6d6d3')
-            elif u in (10, 20, 31) and yy > 1:
-                c = rgb('9da3ad')
+                c = C_ST_HI
+            elif u in (10, 20, 31):
+                c = C_ST_LO
             else:
-                c = tone
-            d.point((x, y), fill=c)
+                c = C_ST[(seg * 3 + j * 5 + ((x - off) // 32) * 2 + seed) % 7]
+            px[x, y] = c
+
+
+def sill_beam(im, x0, y0, x1, y1):
+    rect(im, x0, y0, x1, y1, C_TB_LO)
+    rect(im, x0, y0, x1, y0, C_TB_HI)
+    rect(im, x0, y1, x1, y1, C_TB_DK)
+
+
+def iron_post(im, x0, y0, x1, y1, bands):
+    rect(im, x0, y0, x1, y1, C_TB)
+    rect(im, x0, y0, x0, y1, C_TB_HI)
+    rect(im, x1 - 1, y0, x1, y1, C_TB_LO)
+    for y in bands:
+        rect(im, x0, y, x1, y + 2, C_IRON)
+        rect(im, x0 + 2, y + 1, x0 + 2, y + 1, C_IRON_HI)
+        rect(im, x1 - 2, y + 1, x1 - 2, y + 1, C_IRON_HI)
 
 
 COBBLES = (rgb('b3a48c'), rgb('9c9486'), rgb('c4baa6'), rgb('8f8a86'), rgb('a89c90'))
@@ -284,18 +409,6 @@ def cobbles(d, x0, y0, x1, y1, seed=0):
             else:
                 c = tone
             d.point((x, y), fill=c)
-
-
-def namako(d, x0, y0, x1, y1):
-    """Namako-kabe: square slate tiles set on the diagonal, their joints raised
-    in white plaster, so the band is a white lattice on dark (period 8 in x:
-    a run of wall tiles joins)."""
-    for y in range(y0, y1 + 1):
-        v = y - y0
-        for x in range(x0, x1 + 1):
-            lattice = v == 0 or y == y1 or (x + v) % 8 == 0 or (x - v) % 8 == 0
-            d.point((x, y), fill=PLASTER if lattice else SLATE)
-    d.line([(x0, y1 + 1), (x1, y1 + 1)], fill=PLASTER_SH)
 
 
 def barred(d, x0, y0, x1, y1, frame=PLASTER_LO):
@@ -417,9 +530,15 @@ def station_dome():
     return im
 
 
-def drum_pillar(d, cx, y0, y1):
+# ---- the Tsuzumi-mon's timber: sheet colours ----------------------------------------------
+TS, TS_HI, TS_LO, TS_DK = rgb('ab7656'), rgb('c18e75'), rgb('904a37'), rgb('5a3827')
+TS_COFFER, TS_COFFER_DK = rgb('4d3326'), rgb('312522')
+
+
+def drum_pillar(im, cx, y0, y1):
     """One drum of the Tsuzumi-mon: two families of leaning timbers that cross,
     narrow at the waist, as the cords of a hand drum do."""
+    px = im.load()
     mid, half = (y0 + y1) / 2, (y1 - y0) / 2
 
     def hw(y):
@@ -427,75 +546,63 @@ def drum_pillar(d, cx, y0, y1):
 
     for y in range(y0, y1 + 1):
         w = round(hw(y))
-        d.line([(cx - w, y), (cx + w, y)], fill=TIMBER_DK)
-    n = 9
+        rect(im, cx - w, y, cx + w, y, TS_DK)
+        rect(im, cx - w, y, cx - w, y, TS_HI)
+        rect(im, cx + w, y, cx + w, y, TS_COFFER)
     for dirn in (1, -1):
-        for k in range(n):
-            th0 = 2 * math.pi * k / n + (0.2 if dirn < 0 else 0)
+        for k in range(9):
+            th0 = 2 * math.pi * k / 9 + (0.2 if dirn < 0 else 0)
             for y in range(y0, y1 + 1):
-                t = (y - y0) / (y1 - y0)
-                th = th0 + dirn * t * math.pi * 0.95
+                th = th0 + dirn * (y - y0) / (y1 - y0) * math.pi * 0.95
                 if math.cos(th) <= 0.08:
-                    continue                                      # round the back
+                    continue                                       # round the back
                 s = math.sin(th)
                 x = round(cx + (hw(y) - 0.5) * s)
-                col = TIMBER_HI if s < -0.35 else (TIMBER if s < 0.45 else TIMBER_LO)
-                d.point((x, y), fill=col)
+                px[x, y] = TS_HI if s < -0.35 else (TS if s < 0.45 else TS_LO)
                 if abs(s) < 0.8:
-                    d.point((x + (1 if dirn > 0 else -1), y), fill=TIMBER_LO if s > 0.2 else TIMBER)
-    d.rectangle([cx - 17, y0 - 4, cx + 17, y0 - 1], fill=TIMBER_LO)        # the collar under the roof
-    d.line([(cx - 17, y0 - 4), (cx + 17, y0 - 4)], fill=TIMBER_HI)
-    d.rectangle([cx - 18, y1 + 1, cx + 18, y1 + 5], fill=STONE)            # the stone plinth
-    d.line([(cx - 18, y1 + 1), (cx + 18, y1 + 1)], fill=WHITE)
-    d.rectangle([cx - 18, y1 + 4, cx + 18, y1 + 5], fill=STONE_LO)
-    d.rectangle([cx + 12, y1 + 1, cx + 18, y1 + 5], fill=STONE_LO)
+                    px[x + dirn, y] = TS_LO if s > 0.2 else TS
+    rect(im, cx - 17, y0 - 4, cx + 17, y0 - 1, TS_LO)              # the collar under the roof
+    rect(im, cx - 17, y0 - 4, cx + 17, y0 - 4, TS_DK)
+    rect(im, cx - 17, y0 - 3, cx + 10, y0 - 3, TS)
+    rect(im, cx - 18, y1 + 1, cx + 18, y1 + 5, C_ST[1])            # the stone plinth
+    rect(im, cx - 18, y1 + 1, cx + 18, y1 + 1, C_ST_HI)
+    rect(im, cx - 18, y1 + 2, cx - 18, y1 + 5, C_ST[2])
+    rect(im, cx - 18, y1 + 4, cx + 18, y1 + 5, C_ST_JOINT)
+    rect(im, cx + 13, y1 + 2, cx + 18, y1 + 5, C_ST_JOINT)
 
 
 def tsuzumi_gate():
     im, d = canvas(6, 5)                 # 192 x 160; pillars stand in columns 1 and 4
-    # ---- the roof: one deep, flat slab of crossed timbers, seen from in front
-    # and a little above, so the coffers show; no upturn, no plaque
-    yb, yf, n = 5, 47, 22
-    longs = (5, 10, 16, 23, 31, 40)                               # the long beams, wider apart toward the front
-    coffer, coffer_dk = rgb('46282a'), rgb('2e1a1f')
-    for y in range(yb, yf + 1):
-        t = (y - yb) / (yf - yb)
-        xa, xb = round(14 - 11 * t), round(177 + 11 * t)
-        prev, run = None, 0
-        for x in range(xa, xb + 1):
-            k = min(n - 1, int((x - xa) * n / (xb - xa + 1)))
-            run = 0 if k != prev else run + 1
-            prev = k
-            if x - xa < 2:
-                c = TIMBER_HI
-            elif xb - x < 2:
-                c = TIMBER_LO
-            elif y in longs or y == yf - 1:
-                c = TIMBER_HI
-            elif y - 1 in longs or y == yf:
-                c = TIMBER
-            elif run == 0:
-                c = TIMBER
-            elif run == 1:
-                c = TIMBER_LO
-            elif y - 2 in longs:
-                c = coffer_dk                                     # the beam's shadow in the coffer
+    px = im.load()
+    # ---- the roof, seen from above: one flat slab of crossed timbers over dark coffers, 8px a bay
+    x0, x1, y0, y1 = 3, 188, 4, 47
+    rect(im, x0, y0, x1, y1, TS)
+    for y in range(y0 + 2, y1 - 1):
+        for x in range(x0 + 2, x1 - 1):
+            u, v = (x - x0 - 2) % 8, (y - y0 - 2) % 8
+            if u < 6 and v < 6:                                    # a coffer: the beams' shadow on its top row and west column
+                c = TS_COFFER_DK if u == 0 or v == 0 else TS_COFFER
+            elif (u == 6 and v < 6) or (v == 6 and u < 6):
+                c = TS_HI                                          # a beam's lit edge
+            elif (u == 7 and v < 6) or (v == 7 and u < 6):
+                c = TS_LO                                          # and its far one
             else:
-                c = coffer
-            d.point((x, y), fill=c)
-    # ---- its front edge: the fascia, a beam end at every bay
-    d.rectangle([3, 48, 188, 56], fill=TIMBER)
-    d.line([(3, 48), (188, 48)], fill=TIMBER_HI)
-    d.line([(3, 56), (188, 56)], fill=TIMBER_LO)
-    d.rectangle([184, 49, 188, 56], fill=TIMBER_LO)
-    for k in range(1, n):
-        x = round(3 + k * 185 / n)
-        d.rectangle([x - 1, 50, x + 1, 54], fill=TIMBER_LO)
-        d.line([(x - 1, 50), (x + 1, 50)], fill=TIMBER_DK)
-    d.rectangle([8, 57, 183, 58], fill=TIMBER_DK)                 # the underside, in shade
-    drum_pillar(d, 48, 63, 150)
-    drum_pillar(d, 144, 63, 150)
-    outline(im)
+                c = TS
+            px[x, y] = c
+    rect(im, x0, y0, x1, y0, TS_HI); rect(im, x0, y0, x0, y1, TS_HI)
+    rect(im, x1 - 1, y0 + 1, x1, y1, TS_LO)
+    # ---- its front edge: the fascia, a beam end at every bay; the underside in shade
+    rect(im, x0, 48, x1, 56, TS)
+    rect(im, x0, 48, x1, 48, TS_DK); rect(im, x0, 49, x1, 49, TS_HI)
+    rect(im, x0, 55, x1, 56, TS_LO)
+    rect(im, 184, 49, 188, 56, TS_LO)
+    for x in range(x0 + 8, x1 - 4, 8):
+        rect(im, x, 51, x + 1, 54, TS_LO)
+        rect(im, x, 51, x + 1, 51, TS_DK)
+    rect(im, 8, 57, 183, 58, TS_DK)
+    drum_pillar(im, 48, 63, 150)
+    drum_pillar(im, 144, 63, 150)
+    hl.outline(im)
     return im
 
 
@@ -546,158 +653,212 @@ def bus_stop():
 # ==============================================================================
 def castle_gate():
     im, d = canvas(4, 4)                 # 128 x 128; the gateway is columns 1-2 (x 32-95)
-    # ---- the stone piers
-    stonework(d, 0, 78, 33, 127, 1)
-    stonework(d, 94, 78, 127, 127, 4)
-    d.rectangle([28, 78, 33, 127], fill=STONE_LO)                 # the pier's reveal, in shade
-    d.rectangle([94, 78, 96, 127], fill=WHITE)
-    # ---- the gatehouse over them: white plaster, barred windows, a namako dado
-    d.rectangle([3, 46, 124, 77], fill=PLASTER)
-    d.rectangle([117, 46, 124, 77], fill=PLASTER_LO)
-    d.line([(3, 46), (124, 46)], fill=PLASTER_SH)
-    d.line([(3, 47), (124, 47)], fill=PLASTER_LO)
-    barred(d, 12, 51, 31, 59); barred(d, 46, 51, 81, 59); barred(d, 96, 51, 115, 59)
-    namako(d, 3, 63, 124, 73)
-    d.rectangle([2, 74, 125, 77], fill=WOOD_DK)                   # the sill beam on the stone
-    d.line([(2, 74), (125, 74)], fill=WOOD_LO)
-    # ---- the lead roof
-    roof(d, 15, 40, (24, 103), (0, 127), LEAD_P)
-    d.rectangle([4, 44, 123, 45], fill=LEAD_P[3])
-    # ---- the gateway: iron-bound posts, a lintel, the leaves folded back
-    d.rectangle([34, 78, 93, 87], fill=WOOD_LO)
-    d.line([(34, 78), (93, 78)], fill=WOOD); d.line([(34, 87), (93, 87)], fill=WOOD_DK)
+    # ---- the stone piers, flush to the canvas so the wall joins them
+    stonework(im, 0, 78, 33, 127, 1)
+    stonework(im, 94, 78, 127, 127, 4)
+    rect(im, 29, 78, 33, 127, C_ST_JOINT); rect(im, 29, 78, 29, 127, C_ST_LO)      # the west pier's reveal, in shade
+    rect(im, 94, 78, 95, 127, C_ST_HI)                                             # the east pier's, lit
+    rect(im, 0, 78, 33, 78, C_ST_DK); rect(im, 94, 78, 127, 78, C_ST_DK)           # the gatehouse's shadow
+    # ---- the gatehouse: white plaster, barred openings, a namako dado, the sill beam on the stone
+    plaster(im, 3, 44, 124, 62, east=8)
+    musha(im, 12, 50, 31, 58); musha(im, 46, 50, 81, 58); musha(im, 96, 50, 115, 58)
+    namako(im, 3, 63, 124, 73, shade_from=117)
+    sill_beam(im, 2, 74, 125, 77)
+    lead_hip(im, 1, 126, 12, 39, 24, 9)
+    # ---- the gateway: a lintel with the plum crest, iron-bound posts, the leaves folded back
+    rect(im, 34, 78, 93, 87, C_TB)
+    rect(im, 34, 78, 93, 78, C_TB_DK); rect(im, 34, 79, 93, 79, C_TB_HI); rect(im, 34, 86, 93, 87, C_TB_LO)
     for x in range(40, 90, 8):
-        d.rectangle([x, 81, x + 1, 84], fill=LACQUER_LO)
-    for x0 in (34, 86):
-        d.rectangle([x0, 88, x0 + 7, 127], fill=WOOD_LO)
-        d.line([(x0, 88), (x0, 127)], fill=WOOD); d.line([(x0 + 7, 88), (x0 + 7, 127)], fill=WOOD_DK)
-        for y in (94, 108, 121):
-            d.rectangle([x0, y, x0 + 7, y + 2], fill=LACQUER_LO)
-            d.point((x0 + 2, y + 1), fill=STONE); d.point((x0 + 5, y + 1), fill=STONE)
-    for x0, x1 in ((42, 47), (80, 85)):
-        d.rectangle([x0, 88, x1, 126], fill=WOOD_DK)
-        d.line([(x0 + 2, 90), (x0 + 2, 125)], fill=WOOD_LO)
+        if x != 64:
+            rect(im, x, 82, x + 1, 84, C_IRON); rect(im, x, 82, x, 82, C_IRON_HI)
+    for x, y in ((64, 80), (62, 82), (66, 82), (63, 84), (65, 84)):
+        rect(im, x, y, x, y, C_GILT)
+    rect(im, 64, 82, 64, 82, C_GILT_HI)
+    iron_post(im, 34, 88, 41, 127, (94, 108, 121))
+    iron_post(im, 86, 88, 93, 127, (94, 108, 121))
+    for x0 in (42, 80):
+        rect(im, x0, 88, x0 + 5, 126, C_TB_DK)
+        rect(im, x0 + 2, 90, x0 + 2, 125, C_TB_LO)
         for y in range(92, 124, 6):
-            d.point((x0 + 4, y), fill=STONE_LO)
-    for k in range(5):                                            # the plum crest on the lintel
-        a = math.radians(-90 + k * 72)
-        d.point((round(64 + 2.6 * math.cos(a)), round(83 + 2.6 * math.sin(a))), fill=LEAF)
-    d.point((64, 83), fill=LEAF_HI)
-    outline(im)
-    shade(im, [48, 88, 79, 93], (10, 22, 39, 150))               # the passage's shadow
-    shade(im, [48, 94, 79, 98], (10, 22, 39, 70))
+            rect(im, x0 + 4, y, x0 + 4, y, C_IRON_HI)
+    rect(im, 48, 88, 79, 92, C_SOFFIT)                                             # the passage's ceiling: opaque
+    rect(im, 48, 88, 79, 88, C_IRON)
+    hl.outline(im)
     return im
 
 
 def castle_turret():
     im, d = canvas(4, 5)                 # 128 x 160
-    # ---- the battered stone base
-    stonework(d, 2, 118, 125, 157, 2)
     px = im.load()
+    # ---- the battered stone base
+    stonework(im, 2, 118, 125, 157, 2)
     for y in range(118, 158):
-        inset = round(9 * (157 - y) / 39)
+        inset = 9 * (157 - y) // 39
         for x in list(range(2, 2 + inset)) + list(range(126 - inset, 126)):
             px[x, y] = CLEAR
-        px[2 + inset, y] = WHITE
-        for x in range(120 - inset, 126 - inset):
-            if px[x, y][3]:
-                r, g, b, a = px[x, y]
-                px[x, y] = (r - 34, g - 34, b - 28, a)
-    d.rectangle([2, 158, 125, 159], fill=STONE_LO)
-    # ---- the first storey
-    d.rectangle([13, 82, 114, 117], fill=PLASTER)
-    d.rectangle([106, 82, 114, 117], fill=PLASTER_LO)
-    d.line([(13, 82), (114, 82)], fill=PLASTER_SH); d.line([(13, 83), (114, 83)], fill=PLASTER_LO)
-    barred(d, 20, 88, 39, 96); barred(d, 88, 88, 107, 96)
-    namako(d, 13, 102, 114, 112)
-    d.rectangle([12, 114, 115, 117], fill=WOOD_DK); d.line([(12, 114), (115, 114)], fill=WOOD_LO)
-    # the bay window under its bowed lead hood
-    d.rectangle([46, 88, 81, 112], fill=PLASTER)
-    d.line([(46, 88), (46, 112)], fill=WHITE); d.rectangle([79, 88, 81, 112], fill=PLASTER_LO)
-    barred(d, 51, 93, 76, 104)
-    d.rectangle([46, 109, 81, 112], fill=PLASTER_SH)
-    d.chord([42, 74, 85, 100], 180, 360, fill=LEAD_P[0])
-    d.arc([42, 74, 85, 100], 180, 360, fill=LEAD_P[2])
-    d.arc([43, 76, 84, 100], 180, 360, fill=LEAD_P[1])
-    d.rectangle([42, 86, 85, 88], fill=LEAD_P[1]); d.line([(42, 88), (85, 88)], fill=LEAD_P[3])
-    for x in range(48, 82, 6):
-        d.line([(x, 80), (x, 85)], fill=LEAD_P[1])
-    # ---- the lower roof
-    roof(d, 66, 77, (20, 107), (2, 125), LEAD_P, ridge=False)
-    d.chord([42, 74, 85, 100], 180, 360, fill=LEAD_P[0])          # the hood breaks through the eave
-    d.arc([42, 74, 85, 100], 180, 360, fill=LEAD_P[2])
-    d.arc([43, 76, 84, 102], 200, 340, fill=LEAD_P[1])
-    for x in range(50, 80, 6):
-        d.line([(x, 78), (x, 86)], fill=LEAD_P[1])
-    d.rectangle([43, 87, 84, 88], fill=LEAD_P[3])
+        px[2 + inset, y] = C_ST_HI
+        for x in range(119 - inset, 126 - inset):                                  # the east arris, turned from the light
+            if px[x, y] != C_ST_JOINT:
+                px[x, y] = C_ST[1] if px[x, y] == C_ST_HI else C_ST_LO
+    rect(im, 2, 158, 125, 159, C_ST_JOINT)
+    rect(im, 11, 118, 116, 118, C_ST_DK)
+    # ---- the first storey, its bay window
+    plaster(im, 13, 79, 114, 101, east=8)
+    musha(im, 20, 88, 39, 96); musha(im, 88, 88, 107, 96)
+    namako(im, 13, 102, 114, 112, shade_from=107)
+    sill_beam(im, 12, 113, 115, 117)
+    rect(im, 46, 89, 81, 112, C_PL); rect(im, 79, 89, 81, 112, C_PL_LO)
+    rect(im, 46, 89, 81, 89, C_PL_SH); rect(im, 46, 90, 81, 90, C_PL_LO)
+    musha(im, 51, 94, 76, 104)
+    rect(im, 46, 109, 81, 112, C_PL_LO); rect(im, 46, 112, 81, 112, C_PL_SH)
+    rect(im, 82, 90, 83, 112, C_PL_SH)                                             # the bay's shadow on the wall
+    # ---- the lower roof, a skirt round the second storey; the bay's bowed hood breaks through its eave
+    lead_hip(im, 2, 125, 66, 74, 18, 4, caps=False)
+    for i, (xa, xb) in enumerate(((57, 70), (51, 76), (47, 80), (44, 83)) + ((43, 84),) * 6):
+        for x in range(xa, xb + 1):
+            lit = i == 0 or (i < 4 and x <= xa + 1)
+            px[x, 79 + i] = C_LEAD_LIT[2] if lit else (
+                C_LEAD[1] if (x - 43) % 6 == 3 else (C_LEAD[3] if x > 76 else C_LEAD[4]))
+    rect(im, 43, 87, 84, 87, C_EAVE); rect(im, 43, 88, 84, 88, C_EAVE_DK)
     # ---- the second storey
-    d.rectangle([27, 44, 100, 65], fill=PLASTER)
-    d.rectangle([93, 44, 100, 65], fill=PLASTER_LO)
-    d.line([(27, 44), (100, 44)], fill=PLASTER_SH); d.line([(27, 45), (100, 45)], fill=PLASTER_LO)
-    barred(d, 35, 50, 50, 58); barred(d, 56, 50, 71, 58); barred(d, 77, 50, 92, 58)
-    d.rectangle([27, 62, 100, 65], fill=PLASTER_LO)
-    # ---- the top roof: lead, a plastered gable in its front slope
-    roof(d, 17, 39, (42, 85), (12, 115), LEAD_P)
-    d.rectangle([16, 43, 111, 43], fill=LEAD_P[3])
-    d.polygon([(64, 20), (48, 38), (80, 38)], fill=LEAD_P[1])
-    d.polygon([(64, 24), (53, 38), (75, 38)], fill=PLASTER)
-    d.line([(64, 20), (48, 38)], fill=LEAD_P[2]); d.line([(64, 20), (80, 38)], fill=LEAD_P[3])
-    d.line([(64, 25), (54, 38)], fill=PLASTER_SH)
-    d.rectangle([62, 31, 66, 36], fill=SOOT); d.line([(64, 31), (64, 36)], fill=PLASTER)
-    outline(im)
+    plaster(im, 27, 42, 100, 65, east=7)
+    musha(im, 35, 49, 50, 57); musha(im, 56, 49, 71, 57); musha(im, 77, 49, 92, 57)
+    rect(im, 27, 62, 93, 65, C_PL_LO); rect(im, 94, 62, 100, 65, C_PL_SH)
+    # ---- the top roof, a plastered gable in its front slope: stepped rows
+    lead_hip(im, 11, 116, 13, 37, 30, 9)
+    for i in range(15):
+        y, w = 22 + i, i + 2
+        rect(im, 64 - w, y, 63 + w, y, C_LEAD[0] if i < 2 else C_PL)
+        rect(im, 64 - w, y, 65 - w, y, C_LEAD_LIT[2])
+        rect(im, 62 + w, y, 63 + w, y, C_LEAD_SH[0])
+        if i >= 2:
+            rect(im, 66 - w, y, 66 - w, y, C_PL_SH)
+    rect(im, 47, 37, 80, 37, C_LEAD[0])
+    rect(im, 62, 30, 65, 35, C_DARK); rect(im, 62, 30, 65, 30, C_DARK_LO)
+    hl.outline(im)
     return im
 
 
 def castle_storehouse():
-    """A nagaya, the long storehouse of the castle terrace (the Gojikken
-    Nagaya's kind): one low storey the length of a wall, in the castle's own
-    plaster, namako and lead."""
     im, d = canvas(6, 3)                 # 192 x 96; the door is column 2 (x 64-95)
-    stonework(d, 2, 78, 189, 95, 5)
-    d.rectangle([4, 40, 187, 77], fill=PLASTER)
-    d.rectangle([180, 40, 187, 77], fill=PLASTER_LO)
-    d.line([(4, 40), (187, 40)], fill=PLASTER_SH); d.line([(4, 41), (187, 41)], fill=PLASTER_LO)
+    stonework(im, 2, 78, 189, 95, 5)
+    rect(im, 182, 78, 189, 95, C_ST_LO)
+    rect(im, 182, 86, 189, 86, C_ST_JOINT)
+    rect(im, 2, 78, 189, 78, C_ST_DK)
+    plaster(im, 4, 36, 187, 59, east=8)
     for x0 in (12, 38, 106, 132, 158):
-        barred(d, x0, 46, x0 + 19, 54)
-    namako(d, 4, 60, 187, 70)
-    d.rectangle([3, 74, 188, 77], fill=WOOD_DK); d.line([(3, 74), (188, 74)], fill=WOOD_LO)
+        musha(im, x0, 46, x0 + 19, 54)
+    namako(im, 4, 60, 187, 70, shade_from=180)
+    rect(im, 4, 71, 187, 73, C_PL_LO)
+    sill_beam(im, 3, 74, 188, 77)
     # ---- the door: iron-bound leaves under a little lead hood
-    d.rectangle([65, 52, 94, 95], fill=WOOD_DK)
-    d.rectangle([67, 55, 92, 95], fill=WOOD_LO)
-    d.line([(67, 55), (67, 95)], fill=WOOD); d.line([(79, 55), (79, 95)], fill=WOOD_DK)
-    d.line([(80, 55), (80, 95)], fill=WOOD)
+    rect(im, 65, 52, 94, 95, C_TB_DK)
+    rect(im, 67, 55, 92, 95, C_TB)
+    rect(im, 67, 55, 67, 95, C_TB_HI); rect(im, 79, 55, 79, 95, C_TB_DK); rect(im, 80, 55, 80, 95, C_TB_HI)
+    rect(im, 91, 55, 92, 95, C_TB_LO)
     for y in (61, 75, 88):
-        d.rectangle([67, y, 92, y + 2], fill=LACQUER_LO)
+        rect(im, 67, y, 92, y + 2, C_IRON)
         for x in (70, 76, 83, 89):
-            d.point((x, y + 1), fill=STONE)
-    d.rectangle([61, 45, 98, 51], fill=LEAD_P[0])
-    d.line([(61, 45), (98, 45)], fill=LEAD_P[2]); d.rectangle([61, 50, 98, 51], fill=LEAD_P[3])
-    for x in range(64, 98, 5):
-        d.line([(x, 46), (x, 49)], fill=LEAD_P[1])
-    # ---- the long lead roof
-    roof(d, 14, 34, (16, 175), (0, 191), LEAD_P)
-    d.rectangle([4, 38, 187, 39], fill=LEAD_P[3])
-    outline(im)
-    shade(im, [182, 78, 189, 95], (10, 22, 39, 60))
+            rect(im, x, y + 1, x, y + 1, C_IRON_HI)
+    lead_band(im, 61, 44, 98, 51, ridge=2)
+    rect(im, 62, 52, 97, 52, C_PL_SH)
+    lead_hip(im, 1, 190, 9, 31, 18, 8)
+    hl.outline(im)
     return im
 
 
 # ---- walls: the castle's white one and Nagamachi's ochre one, as one family each ----
-def _castle_coping(d, x0, x1):
-    light, dark, hi, deep = LEAD_P
-    d.rectangle([x0, 12, x1, 14], fill=dark); d.line([(x0, 12), (x1, 12)], fill=hi)
-    tiles(d, [(y, x0, x1) for y in range(15, 23)], light, dark, step=4)
-    d.rectangle([x0, 23, x1, 24], fill=dark)
-    for x in range(x0 + 1, x1 + 1, 4):
-        d.point((x, 24), fill=hi)
-    d.line([(x0, 25), (x1, 25)], fill=PLASTER_SH)
+def _lead_fall(im, x0, x1, y0, y1, tones, lit, clip=None):
+    """One fall of a north-south coping: lead tiles whose courses run down the map."""
+    px = im.load()
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            if clip is None or clip(x):
+                px[x, y] = roof_tile(y, (x1 - x) if lit else (x - x0), tones)
 
 
-def _castle_face(d, x0, x1, seed=0):
-    d.rectangle([x0, 26, x1, 35], fill=PLASTER)
-    d.line([(x0, 26), (x1, 26)], fill=PLASTER_LO)
-    namako(d, x0, 36, x1, 47)
-    stonework(d, x0, 49, x1, 63, seed)
+def _lead_v_coping(im, y0, y1):
+    _lead_fall(im, 3, 14, y0, y1, C_LEAD_LIT, True)
+    _lead_fall(im, 17, 28, y0, y1, C_LEAD_SH, False)
+    rect(im, 2, y0, 2, y1, C_LEAD_LIT[2])
+    rect(im, 29, y0, 29, y1, C_EAVE_DK)
+    rect(im, 15, y0, 15, y1, C_LEAD_LIT[2])
+    rect(im, 16, y0, 16, y1, C_EAVE)
+
+
+def castle_wall(kind):
+    """One piece of the castle's wall, 1x2 cells: wall()'s kinds h, v, end, corner-e
+    and corner-w, on its rows, in lead, white plaster, namako and Tomuro stone."""
+    im, d = canvas(1, 2)
+    px = im.load()
+
+    def coping(x0, x1):
+        lead_band(im, x0, 12, x1, 24)
+        rect(im, x0, 25, x1, 25, C_PL_SH)
+
+    def face(x0, x1):
+        rect(im, x0, 26, x1, 35, C_PL)
+        rect(im, x0, 26, x1, 26, C_PL_LO)
+        namako(im, x0, 36, x1, 47)
+        rect(im, x0, 48, x1, 48, C_ST_DK)
+        stonework(im, x0, 49, x1, 63)
+
+    def end_face():
+        rect(im, 5, 32, 26, 39, C_PL)
+        rect(im, 24, 32, 26, 39, C_PL_LO)
+        rect(im, 5, 32, 26, 32, C_PL_SH); rect(im, 5, 33, 26, 33, C_PL_LO)
+        namako(im, 5, 40, 26, 49, shade_from=24)
+        rect(im, 5, 50, 26, 50, C_ST_DK)
+        stonework(im, 5, 51, 26, 63, 3)
+        rect(im, 5, 51, 5, 63, C_ST_HI); rect(im, 26, 51, 26, 63, C_ST_JOINT)
+
+    if kind == 'h':
+        coping(0, 31); face(0, 31)
+    elif kind in ('v', 'end'):
+        _lead_v_coping(im, 0, 31)
+        if kind == 'end':                                          # the coping's hipped south end
+            for y in range(18, 30):
+                t = y - 18
+                for x in range(max(3, 15 - t), min(28, 16 + t) + 1):
+                    px[x, y] = roof_tile(x, t, C_LEAD)
+                if 15 - t >= 3:
+                    px[15 - t, y] = C_LEAD_LIT[2]; px[16 + t, y] = C_EAVE
+            rect(im, 2, 30, 29, 30, C_EAVE); rect(im, 2, 31, 29, 31, C_EAVE_DK)
+        end_face()
+    else:
+        east = kind == 'corner-e'
+        fx0, fx1 = (0, 27) if east else (4, 31)
+        coping(0 if east else 2, 29 if east else 31)
+        face(fx0, fx1)
+        _lead_v_coping(im, 0, 11)
+        rect(im, 15, 12, 15, 14, C_LEAD_LIT[2]); rect(im, 16, 12, 16, 14, C_EAVE)
+        for y in range(12, 26):                                    # the hip between the two roofs
+            reach = y - 12
+            if east:
+                _lead_fall(im, 17, 28, y, y, C_LEAD_SH, False, clip=lambda x, r=reach: x > 16 + r)
+                px[29, y] = C_EAVE_DK
+                if reach:
+                    px[16 + reach, y] = C_LEAD_LIT[2]
+            else:
+                _lead_fall(im, 3, 14, y, y, C_LEAD_LIT, True, clip=lambda x, r=reach: x < 15 - r)
+                px[2, y] = C_LEAD_LIT[2]
+                if reach:
+                    px[15 - reach, y] = C_EAVE
+        for i, y in enumerate(range(26, 62, 6)):                   # the corner's long-and-short stones
+            w = 7 if i % 2 else 4
+            xa, xb = (fx1 - w, fx1) if east else (fx0, fx0 + w)
+            rect(im, xa, y, xb, y + 5, C_ST[(i * 2 + (0 if east else 3)) % 7])
+            rect(im, xa, y, xb, y, C_ST_HI)
+            rect(im, xa, y + 5, xb, y + 5, C_ST_JOINT)
+            if east:
+                rect(im, xb - 1, y + 1, xb, y + 5, C_ST_JOINT)
+                rect(im, xa, y + 1, xa, y + 4, C_ST_LO)
+            else:
+                rect(im, xa, y, xa, y + 5, C_ST_HI)
+                rect(im, xb, y + 1, xb, y + 4, C_ST_LO)
+        rect(im, fx1 - 6 if east else fx0, 62, fx1 if east else fx0 + 6, 63, C_ST_JOINT)
+    hl.outline(im)
+    return im
 
 
 def _naga_coping(d, x0, x1):
@@ -792,44 +953,29 @@ def wall(style, kind):
     """One piece of a wall family, 1x2 cells. `h` runs east-west: coping over
     the face. `v` is the wall running north-south: its top cell is the coping
     seen from above (both falls and the ridge, 28px wide), its bottom cell the
-    wall's south end (plaster, namako and stone; or earth between posts on
-    river stones). Stacked down the map each piece's coping covers the end of
+    wall's south end (earth between posts on river stones). Stacked down the map each piece's coping covers the end of
     the one north of it, so a run is one roof with a wall face and foot under
     its last piece. `end` is the same with the coping hipped, to finish a run.
     `corner-e` / `corner-w` are the ends of an east-west run where the wall
     turns north: the face stops at corner stones (a post), the coping turns up
     the map over a hip, and `v` goes in the cells above. Each corner is drawn
     for its own side: light comes from the west."""
-    castle = style == 'castle'
-    coping = _castle_coping if castle else _naga_coping
-    pal = LEAD_P if castle else SHINGLE_P
+    coping = _naga_coping
+    pal = SHINGLE_P
     light, dark, hi, deep = pal
-    top = 12 if castle else 15
+    top = 15
 
     def face(d, x0, x1):
-        if castle:
-            _castle_face(d, x0, x1)
-        else:
-            _naga_face(d, x0, x1, komo=(style == 'komo'))
+        _naga_face(d, x0, x1, komo=(style == 'komo'))
 
     def end_face(d):                                             # the south end of a north-south wall
-        if castle:
-            d.rectangle([5, 32, 26, 39], fill=PLASTER)
-            d.rectangle([24, 32, 26, 39], fill=PLASTER_LO)
-            d.line([(5, 32), (26, 32)], fill=PLASTER_SH)
-            d.line([(5, 33), (26, 33)], fill=PLASTER_LO)
-            namako(d, 5, 40, 26, 49)
-            stonework(d, 5, 51, 26, 63, 3)
-            d.line([(5, 51), (5, 63)], fill=WHITE)
-            d.line([(26, 51), (26, 63)], fill=STONE_LO)
-        else:
-            _naga_face(d, 5, 26, komo=False, y0=32)
-            d.line([(5, 32), (26, 32)], fill=OCHRE_DK)
-            d.line([(5, 33), (26, 33)], fill=OCHRE_LO)
-            d.rectangle([5, 32, 7, 51], fill=WOOD)
-            d.line([(5, 32), (5, 51)], fill=rgb('d2a58c')); d.line([(7, 32), (7, 51)], fill=WOOD_LO)
-            d.rectangle([24, 32, 26, 51], fill=WOOD_LO)
-            d.line([(26, 32), (26, 51)], fill=WOOD_DK)
+        _naga_face(d, 5, 26, komo=False, y0=32)
+        d.line([(5, 32), (26, 32)], fill=OCHRE_DK)
+        d.line([(5, 33), (26, 33)], fill=OCHRE_LO)
+        d.rectangle([5, 32, 7, 51], fill=WOOD)
+        d.line([(5, 32), (5, 51)], fill=rgb('d2a58c')); d.line([(7, 32), (7, 51)], fill=WOOD_LO)
+        d.rectangle([24, 32, 26, 51], fill=WOOD_LO)
+        d.line([(26, 32), (26, 51)], fill=WOOD_DK)
 
     im, d = canvas(1, 2)
     if kind == 'h':
@@ -871,19 +1017,7 @@ def wall(style, kind):
                 d.point((2, y), fill=hi)
                 if reach:
                     d.point((15 - reach, y), fill=dark)
-        if castle:                                               # the corner's long-and-short stones
-            for i, y in enumerate(range(26, 62, 6)):
-                w = 7 if i % 2 else 4
-                xa, xb = (fx1 - w, fx1) if east else (fx0, fx0 + w)
-                d.rectangle([xa, y, xb, y + 5], fill=STONES[(i * 2 + (0 if east else 3)) % 7])
-                d.line([(xa, y), (xb, y)], fill=WHITE)
-                d.line([(xa, y + 5), (xb, y + 5)], fill=STONE_LO)
-                if east:
-                    d.rectangle([xb - 1, y + 1, xb, y + 5], fill=STONE_LO)      # the corner, turned from the light
-                else:
-                    d.line([(xa, y), (xa, y + 5)], fill=WHITE)
-            d.rectangle([fx0 if not east else fx1 - 6, 62, fx1 if east else fx0 + 6, 63], fill=STONE_LO)
-        elif east:                                               # a corner post, in shade
+        if east:                                                 # a corner post, in shade
             d.rectangle([fx1 - 3, 26, fx1, 51], fill=WOOD_LO)
             d.line([(fx1 - 3, 26), (fx1 - 3, 51)], fill=WOOD); d.line([(fx1, 26), (fx1, 51)], fill=WOOD_DK)
         else:                                                    # a corner post, lit
@@ -2403,40 +2537,41 @@ PIECES = [
     ('kanazawa-castle-gate_0_0', castle_gate, (4, 4), 'Kanazawa Castle', dict(
         solid=[[0, 3], [3, 3]], walk=[[1, 3], [2, 3]]),
      "The Ishikawa gate as a gatehouse (NOT Sendai's dark gate): fitted grey stone piers with the odd red "
-     'and blue block, a white-plaster storey with barred windows and a namako dado, a pale lead-tile roof; '
+     'and blue block, a white-plaster storey with barred windows and a namako dado, a hipped lead-tile roof seen from above; '
      'iron-bound posts, the leaves folded back, a plum crest on the lintel. Walk through the middle two '
      'cells. The castle wall joins it flush on either side.'),
     ('kanazawa-castle-turret_0_0', castle_turret, (4, 5), 'Kanazawa Castle', dict(
         solid=rows(4, 3, 4)),
      'A yagura: battered stone base, a white first storey with a namako dado and a bay window under a bowed '
-     'lead hood, a lead pent roof, a smaller white second storey, a lead roof with a plastered gable. No door.'),
+     'lead hood, a lead pent roof seen from above, a smaller white second storey, a hipped lead roof seen from '
+     'above with a plastered gable. No door.'),
     ('kanazawa-castle-storehouse_0_0', castle_storehouse, (6, 3), 'Kanazawa Castle', dict(
         door=[[2, 2]], solid=rows(6, 1, 2)),
      'A nagaya for the castle terrace, so it is not an empty lawn: one long low storey on a stone foot, '
-     'white plaster with barred windows and a namako band, a long lead roof, iron-bound doors under a small '
+     'white plaster with barred windows and a namako band, a long hipped lead roof seen from above, iron-bound doors under a small '
      'lead hood (column 2; leave it sealed or open it).'),
-    ('kanazawa-castle-wall_0_0', lambda: wall('castle', 'h'), (1, 2), 'Kanazawa Castle', dict(
+    ('kanazawa-castle-wall_0_0', lambda: castle_wall('h'), (1, 2), 'Kanazawa Castle', dict(
         solid=[[0, 1]]),
      "The long white wall running east-west, to replace sendai-earthen-wall: lead coping, white plaster, a "
      'band of namako (a white diagonal lattice on slate), a fitted stone base. Tiles left-right; the bottom '
      'cell is solid.'),
-    ('kanazawa-castle-wall-corner-e_0_0', lambda: wall('castle', 'corner-e'), (1, 2), 'Kanazawa Castle', dict(
+    ('kanazawa-castle-wall-corner-e_0_0', lambda: castle_wall('corner-e'), (1, 2), 'Kanazawa Castle', dict(
         solid=[[0, 1]]),
      'The east end of an east-west run where the wall turns north: the face stops at long-and-short corner '
      'stones (in shade) and the lead coping turns up the map over a hip. Put kanazawa-castle-wall-v in the '
      'cells above it (north).'),
-    ('kanazawa-castle-wall-corner-w_0_0', lambda: wall('castle', 'corner-w'), (1, 2), 'Kanazawa Castle', dict(
+    ('kanazawa-castle-wall-corner-w_0_0', lambda: castle_wall('corner-w'), (1, 2), 'Kanazawa Castle', dict(
         solid=[[0, 1]]),
      'The west end where the wall turns north, drawn for its own side (lit corner stones, the lit fall of '
      'the coping), not a mirror of -corner-e.'),
-    ('kanazawa-castle-wall-v_0_0', lambda: wall('castle', 'v'), (1, 2), 'Kanazawa Castle', dict(
+    ('kanazawa-castle-wall-v_0_0', lambda: castle_wall('v'), (1, 2), 'Kanazawa Castle', dict(
         solid=[[0, 1]]),
      'The wall running north-south. Top cell: its lead coping seen from above (the lit west fall, the '
      'ridge, the east fall in shade, 28px wide). Bottom cell: the wall\'s south end (plaster, namako band, '
      'stone foot). Stacked down the map, each piece\'s coping covers the end of the piece north of it, so a '
      'run is one roof with a wall face and foot under its last piece. It joins the coping of a corner piece '
      'south of it; running south from an east-west wall it comes forward over that wall\'s face.'),
-    ('kanazawa-castle-wall-end_0_0', lambda: wall('castle', 'end'), (1, 2), 'Kanazawa Castle', dict(
+    ('kanazawa-castle-wall-end_0_0', lambda: castle_wall('end'), (1, 2), 'Kanazawa Castle', dict(
         solid=[[0, 1]]),
      "The same as -v with the coping hipped at its south end: the last piece of a north-south run."),
     ('kenrokuen-kotoji_0_0', kotoji, (2, 3), 'Kenrokuen', dict(
