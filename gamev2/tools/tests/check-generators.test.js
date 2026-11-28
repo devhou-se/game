@@ -196,7 +196,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.deepStrictEqual(code.slice(0, 2), ['ARG WORKSHOP_BASE', 'FROM ${WORKSHOP_BASE}']);
         assert.deepStrictEqual(code.filter((l) => l.startsWith('USER ')), ['USER root', 'USER agent']);
         assert.ok(!code.some((l) => /^(ENTRYPOINT|WORKDIR|CMD)\b|CLAUDE_CONFIG_DIR/.test(l)), 'ENTRYPOINT, WORKDIR and CLAUDE_CONFIG_DIR stay the base image\'s');
-        // no Japanese font: with one the two font tools are run and report DRIFT (check_generators.py, FONT_TOOLS)
+        // no Japanese font: with one the font tool (extract_city) is run and reports DRIFT (check_generators.py, FONT_TOOLS)
         assert.ok(!code.some((l) => /fonts-|noto/i.test(l)), 'the image installs no font');
     });
 };

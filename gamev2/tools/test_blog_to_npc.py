@@ -1181,9 +1181,11 @@ def test_tiled_maps_in_sync():
 def test_generator_check_skips():
     """check_generators covers generate_ads and generate_cast, and lists a tool
     it cannot run here as skipped rather than failed: every art tool without
-    Pillow, the two that draw Japanese text without a readable font (#193)."""
+    Pillow, the one that draws Japanese text in a system font without a
+    readable one (#193). The ads are set in PixelMplus12 and always run (#279)."""
     cg = check_generators
     assert {'generate_ads', 'generate_cast'} < set(cg.ART_TOOLS) and set(cg.FONT_TOOLS) < set(cg.ART_TOOLS)
+    assert 'generate_ads' not in cg.FONT_TOOLS and cg.FONT_TOOLS == ['extract_city']
     assert 'assets/ads' in cg.OUTPUTS and 'src' in cg.INPUTS    # generate_cast reads src/CharacterCreator.js
     assert cg.skips(cg.CHECKS, True, True) == {}
     assert cg.skips(cg.CHECKS, True, False) == {n: 'needs a Japanese system font' for n in cg.FONT_TOOLS}

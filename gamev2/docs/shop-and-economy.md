@@ -44,7 +44,7 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   (collider off, hidden transporter, replaced in place) and the two lanterns, the way
   `generate_konbinis.py` owns a 7-Eleven's door; Market is otherwise a ported map.
   The house's two ad boards are its sign: their `signage` spots carry `"ad"` — `ad-wide-03`
-  (のみほうだい, all you can drink) at `(6,36)` and `ad-square-01` (酒) at `(8,36)` — and a spot
+  (飲み放題, all you can drink) at `(6,36)` and `ad-square-01` (酒) at `(8,36)` — and a spot
   with an `ad` always shows that one, where every other board draws a random ad of its shape
   on each visit (`RoomManager.adFor`). The generator's `SIGNS` owns the pins; the keys are the
   pool's own (`assets/ads/manifest.json`, numbered in `generate_ads.py` `SPECS` order: a unit

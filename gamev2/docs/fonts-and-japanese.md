@@ -45,5 +45,6 @@ and post titles are sometimes Japanese.
   untouched and a vertically centred Text does not move; a bottom-anchored Text in a PixelOperator face
   (the descent holds the glyphs, bar the lowest row of a full-width bracket) passes `{ below: false }` so its baseline does not lift. The HUD
   room name, the Character screen rows and the created player's name label (top only) use it (#155); the other overlay `text()` helpers show Latin only today.
-- Signage is not text: the ad pool and the Don Takote sign are pre-rendered sprites
-  (`tools/generate_ads.py`, `tools/extract_city.py`), so they do not use this font.
+- Signage is not text: the ad pool and the Don Takote sign are pre-rendered sprites. The ads are set in
+  PixelMplus12 at 12px by `tools/generate_ads.py` (#279); only the Don Takote sign (`tools/extract_city.py`)
+  still uses a system font.

@@ -17,8 +17,9 @@ change (issues #186, #193). Last it runs `make_worldmap.py --pil` and fails if `
 `world-map.json` would change (issue #270, see "The world map"). Run it after any edit to a
 generated room, a map or a generator. The room and map checks take a few seconds and need no Pillow; the
 art tools are listed as `skip` without it, so use `/Library/Developer/CommandLineTools/usr/bin/python3
-tools/check_generators.py` to cover them (ten seconds; `generate_ads` and `extract_city` also need a Japanese system font,
-see `generate_ads.find_font`, and are listed as `skip`, not checked, where none is readable — a sandboxed shell).
+tools/check_generators.py` to cover them (ten seconds; `extract_city` alone also needs a Japanese system font,
+for the Don Takote sign, see `generate_ads.find_font`, and is listed as `skip`, not checked, where none is readable — a
+sandboxed shell; `generate_ads` sets the ads in the game's own PixelMplus12 and is checked wherever Pillow is, #279).
 
 The `extract_*.py` tools cut their sprites from the source sheets in `../art-source/GuttyKreum` (the
 repository's `art-source/`, beside `gamev2/`; its `README.md` lists the sheets and how to bring back another
@@ -37,10 +38,11 @@ with a Pillow that draws the same pixels will do, not only the macOS one:
   move the pin only together with the art it changes.
 - Workshop's agent image (`.workshop/Dockerfile` at the repository root) installs the same release, so plain
   `python3 tools/check_generators.py` covers the art tools there. The image has no Japanese font, so
-  `generate_ads` and `extract_city` stay `skip` as they do in the workflow. The pin is written out in the
+  `extract_city` stays `skip` as it does in the workflow. The pin is written out in the
   Dockerfile (the build cannot read `requirements-art.txt`): move the two together.
 - **Pillow 11.2 to 13.0 rebuild the committed art** (11.2.1, 11.3.0, 12.0.0, 12.1.1, 12.3.0 and 13.0.0 were
-  run on Linux on 27 Nov 2026, every art tool but the two that need a Japanese font).
+  run on Linux on 27 Nov 2026, every art tool but the two that then needed a Japanese font; `generate_ads`,
+  checked since #279, has been run on 11.3.0: its text is 1-bit PixelMplus12 as `generate_station_art`'s is).
 - **Pillow 11.1 and older do not**: they draw some curves and slanted lines a pixel off, and the check reports
   `DRIFT` for 8 to 15 sprites (`sendai-cedar`, `palace-in-fusuma-tiger`, ...). That is Pillow, not the tool:
   use a newer one. When an art tool drifts the check prints the Pillow version it ran on.
@@ -276,6 +278,51 @@ stores, houses and shrines takes any door or seed), keep their digests, and comp
   otherwise (or with `--pil`, which is how the committed map is made) draws the rooms itself via `node tools/play.js render`, which is also the
   "look at the render" step for a new room: `node tools/play.js render <Room> out.png [--scale .5] [--colliders]`.
 
+## House look: GuttyKreum
+
+The look every generated sprite is drawn in, so that it sits beside the purchased GuttyKreum art it hangs on
+(issue #279, the pilot of #278: the ad pool; #280 to #284 redraw the rest). Every number here was measured
+from the 11 sheets in `../art-source/GuttyKreum`. **Compare a redraw against the sheets, on a contact sheet
+(`python3 tools/house_look.py --sheet OUT.png [--scale N] PNG...`), not from memory**; keep a crop of the
+sheets outside the repository and outside anything published (the packs may not be redistributed).
+
+- **Grid**: draw at half size, 32px a cell, and double (`Image.NEAREST`). Never mix pixel sizes in one sprite.
+- **Palette**: only colours of the sheets (516 between them; 55 to 189 a sheet), taken as ramps of 4 to 6
+  tones (`house_look.RAMPS`). A shadow is not the base mixed with black: it moves in hue toward red-brown,
+  indigo or navy (gold `c6a663` h41 -> `86624f` h21; green `6c8e7f` h154 -> `506b6b` h180; blue `5a86de`
+  h220 -> `172459` h228), and a highlight toward cream, pink or cyan (red `d16b56` -> `ffe2e0`; blue ->
+  `bbe9ff` h199). The darkest tones are `2a2636`, `2c2d51`, `0a1627`; pure black is not used.
+- **Outline**: the silhouette is 1px of ink, `0a1627` (or `080d16`): 100% of UrbanAccessories' silhouette
+  pixels, 81 to 90% of `GK_JC_B` and `GK_DB_B`'s (the rest, and half of `GK_DB_F`'s, is `2a2636`). Never
+  black. Lines inside the silhouette take the darkest tone of the family they cross (`8a3a22` in red,
+  `172459` in blue, `2c2d51` in glass, browns in wood), ink only between two families (`line_art`'s rule 6).
+- **Light**: from the upper left. Top and left edges take the `hi` tone, bottom and right the `lo`; a lip
+  casts one row of shadow on what is under it.
+- **Colours per sprite**: 8 to 16 for a sprite of one or two cells (the sheets' signs use 10 to 12), up to
+  24 for a larger one (the sheets' objects: median 17, quartiles 12 and 25). Two or three ramps and ink.
+- **Flat areas**: a face is never one colour from edge to edge, and no colour covers half a sprite. Either
+  texture it with alternating rows of two neighbouring tones (scanlines, courses, planks), or shade it: a
+  lighter row along the lit edge and a darker part on the far side, joined by a single dithered row. Dither
+  is an edge, never a gradient (at most 1.6% of a sheet's 2x2 blocks are checkered).
+- **Text**: PixelMplus12 at 12px, 1-bit, one pixel thick, lighter than its ground with a (+1, +1) shadow in
+  the ground's `line` tone, or darker with none.
+
+`tools/house_look.py` holds the helpers, and is a leaf: it imports only the standard library and Pillow, so
+any generator can import it (it must not import `line_art` or a generator, which would make a cycle). A
+material is `line_art`'s `(base, hi, lo, line)` tuple (`material(ramp, i)`: tones i, i+1, i-1, i-2), so
+`line_art.paint` takes it as it is. `canvas`, `double`, `fill`; `outline` (ink on the clear pixels
+4-adjacent to drawn ones, the rule of `generate_hokkaido.outline`); `bevel` (light from the upper left);
+`scanlines`; `shade` (a painted face: a lit top row, the lowest third darker, one dithered row between);
+`pixmap` (a hand-set picture, one character a pixel) and `stamp`; `text` / `text_size` (PixelMplus12,
+horizontal or vertical, ー upright and small kana in the upper right when vertical); `sheet`. Rectangles,
+pixel access and 1-bit text only, so every Pillow paints the same pixels. `tools/tests/house-look.test.js`
+holds the ramps to the sheets and the ad pool to the recipe.
+
+A sign board (`generate_ads.py`), as the sheets' own boards are built: an ink outline with the corner pixels
+clear; a steel housing, its lip `dae2e4` lightest, the bottom and right darkest, and the lip's one-row
+shadow on the face; a lit face in scanlines or a painted one shaded, the text on it, the sub on a band along
+the bottom.
+
 ## Asset Generation
 
 Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/`:
@@ -286,6 +333,18 @@ Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/
 - `generate_grid.py` - Background grid → `assets/background-grid.png`
 
 Run with: `python3 tools/generate_<type>.py`
+
+`tools/generate_ads.py [--sheet out.png]` draws the ad pool, `assets/ads/` and its `manifest.json`, that
+`RoomManager.placeSignage` hangs on the `signage` spots (issues #26, #279): 12 square, 12 tall, 14 wide and 6
+big boards from `SPECS`, in the house look above (`--sheet` also writes a contact sheet of the pool, in
+manifest order). The text is the game's `fonts/PixelMplus12-Grid.ttf` at 12px, so the tool runs, and is
+checked, on any machine with Pillow. A 12px glyph holds less than scaled text did, so each shape has a fixed
+budget and a spec that does not fit raises, naming itself: a square 1 or 2 glyphs, a tall 2 to 4 set
+vertically (a sub only under 3 or fewer), a wide or big 60px of title (5 full-width glyphs), a sub 24px on a
+square or tall and 60px on a wide or big (a half-width glyph is 6px). A big has a picture panel, the
+hand-set `PICTURES` its spec names in `motif`. `--claude N` asks for more specs and skips the ones that do
+not fit. The file names are numbered per shape in `SPECS` order, which `generate_izakaya.py`'s pinned
+boards depend on: append, do not reorder.
 
 `tools/generate_cooler_art.py [--preview out.png]` draws `office-fridge_0_0`, the konbini's upright
 glass-door drinks cooler (issue #140): 1x2 cells, fully procedural (no source image or font, so a re-run is

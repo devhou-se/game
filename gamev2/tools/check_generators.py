@@ -44,9 +44,10 @@ Run from gamev2/:  python3 tools/check_generators.py [generator ...]
 Exit 0 when every generator reproduces the committed world, 1 otherwise.
 The room generators and config_to_tiled need no Pillow. The art tools do:
 without it they are listed as skipped, not as ok — run the check with a
-python3 that has Pillow to cover them. The two that draw Japanese text
-(FONT_TOOLS) are skipped the same way where no Japanese system font is
-readable (a sandboxed shell, a machine without one): the glyphs decide the
+python3 that has Pillow to cover them. The one that draws Japanese text in a
+system font (FONT_TOOLS: extract_city's Don Takote sign; the ad pool is set in
+the game's own PixelMplus12) is skipped the same way where no Japanese system
+font is readable (a sandboxed shell, a machine without one): the glyphs decide the
 pixels, so no stand-in font would rebuild the committed art. A new room
 generator belongs in GENERATORS, a new art tool in ART_TOOLS.
 """
@@ -117,8 +118,9 @@ ART_TOOLS += [WORLDMAP]
 # what a tool is run with. --pil: the map as play.js draws it on any machine, the one that is committed;
 # without it the tool uses Tiled's tmxrasterizer where the app is installed, and that is another picture
 ARGS = {WORLDMAP: ['--pil']}
-# the art tools that also need a Japanese system font (generate_ads.find_font)
-FONT_TOOLS = ['generate_ads', 'extract_city']
+# the art tools that also need a Japanese system font (generate_ads.find_font, which extract_city
+# sets the Don Takote sign with; the ads themselves are in fonts/PixelMplus12 since #279)
+FONT_TOOLS = ['extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS
 # what a tool reads and may write, relative to gamev2/ — copied to the scratch
 # project once (plus config.json), compared and put back after every run
@@ -142,7 +144,8 @@ def have_pillow():
 
 
 def have_jp_font():
-    """Whether generate_ads.find_font finds a font it can read (needs Pillow)."""
+    """Whether generate_ads.find_font, which extract_city uses, finds a font it
+    can read (needs Pillow)."""
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import generate_ads
     try:

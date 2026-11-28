@@ -56,7 +56,7 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         // the pool's files are numbered in SPECS order, per shape
         const specs = [...fs.readFileSync(path.join(GV2, 'tools', 'generate_ads.py'), 'utf8').matchAll(/dict\(shape='(\w+)', text='([^']+)'/g)];
         const nth = (shape, n) => specs.filter((m) => m[1] === shape)[n - 1][2];
-        assert.strictEqual(nth('wide', 3), 'のみほうだい');
+        assert.strictEqual(nth('wide', 3), '飲み放題');
         assert.strictEqual(nth('square', 1), '酒');
         for (const spot of own) {
             const ad = ads.find((a) => a.key === spot.ad);

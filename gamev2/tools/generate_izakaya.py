@@ -36,7 +36,7 @@ DOOR = (7, 37)                      # the red townhouse's door (building-entranc
 LANTERNS = [(5, 36), (9, 36)]       # lantern-red prefab origins (head; the solid foot is one row down)
 
 # the house's ad boards, pinned: (cell, shape, key in assets/ads/manifest.json)
-SIGNS = [((6, 36), 'wide', 'ad-wide-03'),      # のみほうだい 90分 ¥980 (all you can drink), a mug
+SIGNS = [((6, 36), 'wide', 'ad-wide-03'),      # 飲み放題 90分 ¥980 (all you can drink), a mug
          ((8, 36), 'square', 'ad-square-01')]  # 酒 (sake) on red, a lantern
 
 cfg = rg.load_config()
