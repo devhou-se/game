@@ -352,57 +352,105 @@ def gate():
 
 
 # ------------------------------------------------------------------------------
+# The trees and the pub are drawn in the manner of the GuttyKreum pack: its own
+# colours (art-source/GuttyKreum), foliage that runs from a pale green through
+# teal and blue to a purple shade the way the pack's trees do, dark glass with
+# a slanted glare, and the pack's near-black navy for the outline. Rectangles
+# and points only, so any Pillow draws the same pixels.
+P_INK, P_EDGE = rgb('080d16'), rgb('172459')
+LEAF = [rgb(c) for c in ('b1dfdc', '93c297', '83af6f', '508582', '425faa', '3c396d')]
+NEEDLE = [rgb(c) for c in ('93c297', '83af6f', '508582', '4a6262', '3c396d', '2a3151')]
+AUTUMN = [rgb(c) for c in ('e4cecc', 'e78d7b', 'd16b56', 'aa4d31', '83374f', '5b283b')]
+P_BARK, P_BARK_HI, P_BARK_LO = rgb('7f513b'), rgb('a68777'), rgb('594b45')
+P_SHADE = rgb('2a3151', 90)
+P_ROOF, P_ROOF_HI, P_ROOF_RIB, P_ROOF_LO = rgb('5b6c79'), rgb('698592'), rgb('4a6262'), rgb('2b373c')
+P_STEEL, P_STEEL_HI = rgb('94a2a8'), rgb('d1e2eb')
+P_SIDING, P_SIDING_HI, P_SIDING_LO, P_SIDING_DK = rgb('a68777'), rgb('be9e8c'), rgb('8e7366'), rgb('7c5d56')
+P_PLASTER, P_WHITE, P_GREY = rgb('e4cecc'), rgb('fafcfd'), rgb('a4b0b5')
+P_GLASS, P_GLASS_LO, P_GLARE = rgb('2c2d51'), rgb('2a3151'), rgb('4b6396')
+P_RED, P_RED_HI, P_RED_LO = rgb('aa4d31'), rgb('d16b56'), rgb('8a3a22')
+P_JOIN, P_JOIN_HI, P_JOIN_LO = rgb('4a6262'), rgb('508582'), rgb('2b373c')
+P_WOOD, P_WOOD_LO = rgb('7f513b'), rgb('594b45')
+
+
+def speck(x, y, seed=0):
+    """0..99, the same for the same cell on any machine."""
+    n = (x * 73856093) ^ (y * 19349663) ^ (seed * 83492791)
+    return (n ^ (n >> 13)) * 1274126177 % 100 if n >= 0 else (-n ^ (-n >> 13)) * 1274126177 % 100
+
+
+def foliage(im, clumps, ramp, seed=0):
+    """Leafy clumps (cx, cy, rx, ry), each lit from the upper left and dark
+    underneath, a later one over an earlier one, their edges ragged."""
+    px = im.load()
+    for n, (cx, cy, rx, ry) in enumerate(clumps):
+        for y in range(cy - ry - 1, cy + ry + 2):
+            for x in range(cx - rx - 1, cx + rx + 2):
+                if not (0 <= x < im.width and 0 <= y < im.height):
+                    continue
+                dx, dy = (x - cx) * 1000 // rx, (y - cy) * 1000 // ry
+                rag = speck(x // 2, y // 2, seed + n)
+                if dx * dx + dy * dy > 1000 * (820 + rag * 3):
+                    continue
+                t = 500 + dy * 55 // 100 + dx * 30 // 100 + (speck(x, y // 2, seed + n + 7) - 50) * 3
+                px[x, y] = ramp[max(0, min(len(ramp) - 1, t * len(ramp) // 1000))]
+
+
+def ground_shade(d, cx, y, w):
+    for row, inset in enumerate((4, 1, 0, 0, 1, 4)):
+        d.rectangle([cx - w + inset, y + row, cx + w - inset, y + row], fill=P_SHADE)
+
+
 def trunk(d, pts, w=4):
     d.line(pts, fill=BARK, width=w)
     d.line([(x + w // 2, y) for x, y in pts], fill=BARK_LO)
 
 
+def stem(d, x, y0, y1, w=4):
+    """An upright trunk: bark, a lit left edge, a dark right one."""
+    d.rectangle([x, y0, x + w - 1, y1], fill=P_BARK)
+    d.rectangle([x, y0, x, y1], fill=P_BARK_HI)
+    d.rectangle([x + w - 1, y0, x + w - 1, y1], fill=P_BARK_LO)
+
+
+def limb(d, x0, y0, x1, y1, w=3):
+    """A slanted bough, a point at a time."""
+    steps = max(abs(x1 - x0), abs(y1 - y0))
+    for n in range(steps + 1):
+        x, y = x0 + (x1 - x0) * n // steps, y0 + (y1 - y0) * n // steps
+        d.rectangle([x, y, x + w - 1, y], fill=P_BARK)
+        d.point((x + w - 1, y), fill=P_BARK_LO)
+
+
 def pine():
     im, d = canvas(2, 3)                 # 64 x 96
-    d.ellipse([18, 86, 50, 94], fill=rgb('3a5f66', 150))         # ground shadow
-    trunk(d, [(32, 92), (30, 74), (36, 58), (30, 44), (33, 30)], 5)
-    trunk(d, [(34, 60), (46, 52)], 3)
-    trunk(d, [(31, 46), (18, 42)], 3)
-    for cx, cy, rx, ry, s in ((16, 40, 14, 7, 1), (48, 50, 13, 6, 2), (34, 28, 17, 8, 3),
-                              (22, 22, 12, 6, 4), (44, 16, 12, 6, 5), (32, 10, 11, 6, 6)):
-        blob(d, cx, cy, rx, ry, PINE, PINE_HI, PINE_LO, s)
-        d.line([(cx - rx + 3, cy + ry - 1), (cx + rx - 3, cy + ry - 1)], fill=PINE_DK)
-    outline(im)
+    ground_shade(d, 34, 88, 17)
+    limb(d, 31, 91, 29, 74, 5); limb(d, 29, 74, 35, 58, 5); limb(d, 35, 58, 30, 44, 4); limb(d, 30, 44, 33, 28, 4)
+    limb(d, 35, 60, 47, 53); limb(d, 30, 46, 17, 43)
+    foliage(im, [(16, 40, 14, 7), (48, 50, 13, 7), (34, 28, 17, 8), (22, 21, 12, 7), (45, 16, 12, 7), (32, 9, 11, 6)],
+            NEEDLE, 3)
+    outline(im, P_INK)
     return im
 
 
 def cedar():
     im, d = canvas(2, 4)                 # 64 x 128
-    d.ellipse([16, 118, 48, 126], fill=rgb('3a5f66', 150))
-    d.rectangle([29, 96, 35, 124], fill=BARK); d.line([(35, 96), (35, 124)], fill=BARK_LO)
-    d.line([(29, 96), (29, 124)], fill=rgb('9a7460'))
-    for i, y in enumerate(range(8, 104, 8)):                      # drooping tiers, widening downwards
-        w = 6 + i * 2 if i < 9 else 24 - (i - 9) * 3
-        d.polygon([(32, y - 6), (32 - w, y + 10), (32 + w, y + 10)], fill=CEDAR)
-        d.polygon([(32, y - 6), (32 - w, y + 10), (32 - w // 3, y + 10)], fill=CEDAR_HI)
-        d.polygon([(32 + w // 2, y + 4), (32 + w, y + 10), (32 + w // 3, y + 10)], fill=CEDAR_LO)
-        for x in range(32 - w + 2, 32 + w - 1, 4):
-            d.point((x, y + 10), fill=CEDAR_LO); d.point((x + 1, y + 11), fill=CEDAR)
-    d.polygon([(32, 0), (28, 8), (36, 8)], fill=CEDAR_HI)
-    outline(im)
+    ground_shade(d, 33, 120, 17)
+    stem(d, 29, 96, 124, 6)
+    tiers = [(32, 100 - n * 8, max(5, 23 - n * 3 // 2 - (4 - n if n < 2 else 0)), 8) for n in range(12)]
+    foliage(im, tiers + [(32, 6, 4, 6)], NEEDLE, 5)
+    outline(im, P_INK)
     return im
 
 
 def maple():
     im, d = canvas(2, 3)                 # 64 x 96
-    d.ellipse([16, 86, 50, 94], fill=rgb('3a5f66', 150))
-    trunk(d, [(32, 92), (32, 62)], 5)
-    trunk(d, [(32, 68), (22, 54)], 3); trunk(d, [(33, 66), (44, 52)], 3)
-    for cx, cy, rx, ry, s, (a, b, c) in (
-            (20, 46, 15, 12, 1, (MAPLE, MAPLE_HI, MAPLE_LO)), (45, 44, 15, 12, 2, (MAPLE_HI, MAPLE_OR, MAPLE)),
-            (32, 28, 19, 14, 3, (MAPLE, MAPLE_OR, MAPLE_LO)), (20, 20, 11, 9, 4, (MAPLE_HI, MAPLE_OR, MAPLE)),
-            (44, 18, 12, 9, 5, (MAPLE, MAPLE_HI, MAPLE_LO))):
-        blob(d, cx, cy, rx, ry, a, b, c, s)
-    for i in range(26):                                           # loose leaves of the other colours
-        x, y = 8 + (i * 13) % 48, 10 + (i * 29) % 46
-        if im.getpixel((x, y))[3]:
-            d.point((x, y), fill=(MAPLE_OR, MAPLE_LO, AMBER)[i % 3])
-    outline(im)
+    ground_shade(d, 34, 88, 17)
+    stem(d, 30, 60, 92, 5)
+    limb(d, 31, 68, 21, 52); limb(d, 33, 66, 44, 50)
+    foliage(im, [(20, 45, 15, 12), (45, 43, 15, 12), (32, 34, 14, 10), (19, 22, 12, 10), (44, 19, 13, 10),
+                 (32, 15, 13, 11)], AUTUMN, 9)
+    outline(im, P_INK)
     return im
 
 
@@ -432,56 +480,93 @@ def lit_window(d, x0, y0, x1, y1, frame):
     d.line([(x0 + 1, (y0 + y1) // 2), (x1 - 1, (y0 + y1) // 2)], fill=frame)
 
 
+def pane(d, x0, y0, x1, y1, step=9):
+    """The pack's window: dark glass, a slanted glare, a shaded head."""
+    d.rectangle([x0, y0, x1, y1], fill=P_GLASS)
+    for k in range(-(y1 - y0), x1 - x0, step):
+        for t in range(y1 - y0 + 1):
+            x, y = x0 + k + t, y1 - t
+            if x0 <= x <= x1:
+                d.point((x, y), fill=P_GLARE)
+    d.rectangle([x0, y0, x1, y0 + 1], fill=P_GLASS_LO)
+
+
 def pub():
     im, d = canvas(5, 5)                 # 160 x 160
-    # ---- the upper storey: cream render, sash windows, a parapet ---------------
-    d.rectangle([4, 20, 155, 84], fill=CREAM)
-    for y in range(26, 84, 6):
-        d.line([(4, y), (155, y)], fill=CREAM_LO)
-    d.line([(4, 20), (4, 84)], fill=WHITE); d.rectangle([150, 20, 155, 84], fill=CREAM_LO)
-    d.rectangle([2, 12, 157, 20], fill=CREAM_DK); d.line([(2, 12), (157, 12)], fill=CREAM)
-    d.rectangle([2, 18, 157, 20], fill=WOOD_DK)
-    for x in (16, 46, 98, 128):
-        window(d, x, 34, x + 15, 62, frame=PUB_GREEN_LO)
-        d.rectangle([x - 1, 64, x + 16, 71], fill=PUB_GREEN)      # a window box of flowers
-        for i in range(x, x + 16, 3):
-            d.point((i, 64), fill=(RED_HI, AMBER, WHITE)[(i // 3) % 3]); d.point((i + 1, 65), fill=GREEN_HI)
-    # the hanging sign on its bracket
-    d.line([(72, 30), (87, 30)], fill=LACQUER_LO); d.line([(79, 30), (79, 36)], fill=LACQUER_LO)
-    d.rectangle([70, 36, 89, 60], fill=RED_DK); d.rectangle([71, 37, 88, 59], fill=RED)
-    d.ellipse([75, 42, 84, 51], fill=GOLD); d.rectangle([78, 51, 81, 55], fill=GOLD)
-    d.rectangle([75, 55, 84, 56], fill=GOLD_HI)                   # a pint, on the board
-    # ---- the fascia: red, gold-lined, white capitals ---------------------------
-    d.rectangle([0, 84, 159, 104], fill=RED)
-    d.rectangle([0, 84, 159, 86], fill=RED_HI); d.rectangle([0, 102, 159, 104], fill=RED_DK)
-    d.line([(3, 88), (156, 88)], fill=GOLD); d.line([(3, 100), (156, 100)], fill=GOLD)
+    # ---- the roof, seen from above: ribbed sheet, a ridge cap, a brick stack ---
+    d.rectangle([0, 2, 159, 54], fill=P_EDGE)
+    d.rectangle([1, 3, 158, 53], fill=P_ROOF)
+    for x in range(1, 159, 6):
+        d.rectangle([x, 6, x, 53], fill=P_ROOF_RIB)
+        d.rectangle([x + 1, 6, x + 1, 49], fill=P_ROOF_HI)
+    d.rectangle([1, 3, 158, 5], fill=P_STEEL); d.rectangle([1, 3, 158, 3], fill=P_STEEL_HI)
+    d.rectangle([1, 50, 158, 53], fill=P_ROOF_LO)
+    d.rectangle([22, 10, 39, 30], fill=P_EDGE)                    # the stack
+    d.rectangle([23, 11, 38, 29], fill=P_RED)
+    for y in range(15, 30, 4):
+        d.rectangle([23, y, 38, y], fill=P_RED_LO)
+    d.rectangle([35, 11, 38, 29], fill=P_RED_LO)
+    d.rectangle([21, 9, 40, 12], fill=P_EDGE); d.rectangle([22, 10, 39, 11], fill=P_STEEL)
+    d.rectangle([24, 31, 41, 33], fill=P_ROOF_LO)
+    # ---- the upper storey: weatherboard, four sash windows, the hanging sign ---
+    d.rectangle([0, 55, 159, 97], fill=P_SIDING)
+    for y in range(61, 97, 6):
+        d.rectangle([1, y, 158, y], fill=P_SIDING_LO)
+    d.rectangle([1, 55, 158, 58], fill=P_SIDING_DK)               # the eave's shade
+    d.rectangle([1, 59, 2, 97], fill=P_SIDING_HI); d.rectangle([155, 59, 158, 97], fill=P_SIDING_LO)
+    d.rectangle([0, 55, 0, 97], fill=P_EDGE); d.rectangle([159, 55, 159, 97], fill=P_EDGE)
+    for x in (14, 44, 100, 130):
+        d.rectangle([x - 2, 63, x + 17, 89], fill=P_EDGE)
+        d.rectangle([x - 1, 64, x + 16, 88], fill=P_PLASTER)
+        pane(d, x + 1, 66, x + 14, 86)
+        d.rectangle([x + 7, 66, x + 8, 86], fill=P_PLASTER); d.rectangle([x + 1, 75, x + 14, 76], fill=P_PLASTER)
+        d.rectangle([x - 3, 89, x + 18, 94], fill=P_EDGE)         # a window box of flowers
+        d.rectangle([x - 2, 90, x + 17, 93], fill=P_JOIN)
+        for n in range(x - 1, x + 17, 3):
+            d.point((n, 90), fill=(P_RED_HI, P_PLASTER, P_WHITE)[(n // 3) % 3]); d.point((n + 1, 91), fill=P_JOIN_HI)
+    d.rectangle([72, 59, 87, 59], fill=P_INK); d.rectangle([79, 59, 80, 63], fill=P_INK)
+    d.rectangle([69, 63, 90, 90], fill=P_EDGE); d.rectangle([70, 64, 89, 89], fill=P_RED)
+    d.rectangle([70, 87, 89, 89], fill=P_RED_LO)
+    d.rectangle([75, 70, 83, 82], fill=P_PLASTER); d.rectangle([75, 70, 83, 72], fill=P_WHITE)   # a pint, on the board
+    d.rectangle([84, 73, 86, 79], fill=P_PLASTER); d.rectangle([84, 75, 84, 77], fill=P_RED)
+    d.rectangle([82, 73, 83, 82], fill=P_SIDING_HI)
+    # ---- the fascia: red, lined, white capitals --------------------------------
+    d.rectangle([0, 98, 159, 117], fill=P_EDGE)
+    d.rectangle([1, 99, 158, 116], fill=P_RED)
+    d.rectangle([1, 99, 158, 100], fill=P_RED_HI); d.rectangle([1, 114, 158, 116], fill=P_RED_LO)
+    d.rectangle([4, 102, 155, 102], fill=P_SIDING_HI); d.rectangle([4, 112, 155, 112], fill=P_SIDING_HI)
     label = 'PUB'
-    x = text(d, label, 80 - (text_width(label, 3)) // 2, 91, WHITE, gap=3)
-    for sx in (40, 114):                                          # a gold star either side
-        d.polygon([(sx, 90), (sx + 2, 93), (sx + 5, 94), (sx + 2, 96), (sx + 3, 99),
-                   (sx, 97), (sx - 3, 99), (sx - 2, 96), (sx - 5, 94), (sx - 2, 93)], fill=GOLD_HI)
-    # ---- the ground floor: dark green joinery, lit windows, the door -----------
-    d.rectangle([2, 105, 157, 157], fill=PUB_GREEN)
-    d.rectangle([2, 105, 157, 107], fill=PUB_GREEN_LO)
-    d.rectangle([2, 146, 157, 157], fill=PUB_GREEN_LO)
-    d.line([(2, 146), (157, 146)], fill=PUB_GREEN_HI)
-    for x in (2, 60, 96, 154):                                    # pilasters
-        d.rectangle([x, 105, x + 3, 157], fill=PUB_GREEN_HI); d.line([(x + 3, 105), (x + 3, 157)], fill=PUB_GREEN_LO)
-        d.rectangle([x, 108, x + 3, 110], fill=GOLD)
-    for x0 in (10, 102):
-        lit_window(d, x0, 112, x0 + 45, 142, PUB_GREEN_LO)
-        d.line([(x0 + 15, 113), (x0 + 15, 141)], fill=PUB_GREEN_LO)
-        d.line([(x0 + 30, 113), (x0 + 30, 141)], fill=PUB_GREEN_LO)
-    d.rectangle([28, 118, 39, 126], fill=GREEN_HI)                # the baseball, on the TV inside
-    d.rectangle([28, 118, 39, 119], fill=LACQUER_LO); d.point((34, 122), fill=WHITE)
-    d.rectangle([66, 110, 93, 157], fill=WOOD_DK)                 # the door
-    d.rectangle([68, 112, 79, 157], fill=WOOD_LO); d.rectangle([81, 112, 91, 157], fill=WOOD_LO)
-    d.rectangle([70, 115, 77, 132], fill=LIT); d.rectangle([83, 115, 89, 132], fill=LIT)
-    d.point((78, 138), fill=GOLD_HI); d.point((82, 138), fill=GOLD_HI)
+    text(d, label, 80 - (text_width(label, 3)) // 2, 104, P_WHITE, gap=3)
+    for sx in (42, 116):                                          # a star either side
+        d.rectangle([sx - 3, 106, sx + 3, 107], fill=P_PLASTER); d.rectangle([sx - 1, 104, sx, 109], fill=P_PLASTER)
+        d.point((sx - 2, 109), fill=P_PLASTER); d.point((sx + 2, 109), fill=P_PLASTER)
+    # ---- the ground floor: dark green joinery, two bays, the door --------------
+    d.rectangle([0, 118, 159, 156], fill=P_EDGE)
+    d.rectangle([1, 118, 158, 156], fill=P_JOIN)
+    d.rectangle([1, 118, 158, 120], fill=P_JOIN_LO)
+    d.rectangle([1, 148, 158, 156], fill=P_JOIN_LO); d.rectangle([1, 148, 158, 148], fill=P_JOIN_HI)
+    for x in (1, 60, 96, 155):                                    # pilasters
+        d.rectangle([x, 121, x + 3, 156], fill=P_JOIN_HI); d.rectangle([x + 3, 121, x + 3, 156], fill=P_JOIN_LO)
+        d.rectangle([x, 123, x + 3, 124], fill=P_SIDING_HI)
+    for x0 in (9, 103):
+        d.rectangle([x0, 123, x0 + 47, 146], fill=P_EDGE)
+        pane(d, x0 + 1, 124, x0 + 46, 145, 13)
+        d.rectangle([x0 + 1, 141, x0 + 46, 145], fill=P_WOOD_LO)  # the bar, through the glass
+        d.rectangle([x0 + 1, 141, x0 + 46, 141], fill=P_WOOD)
+        for x in (x0 + 16, x0 + 31):
+            d.rectangle([x, 124, x, 145], fill=P_JOIN_LO)
+    d.rectangle([65, 121, 94, 156], fill=P_EDGE)                  # the door
+    d.rectangle([66, 122, 93, 156], fill=P_WOOD_LO)
+    for x0 in (68, 81):
+        d.rectangle([x0, 124, x0 + 10, 156], fill=P_WOOD)
+        d.rectangle([x0, 124, x0, 156], fill=P_SIDING)
+        pane(d, x0 + 2, 127, x0 + 8, 142, 7)
+        d.rectangle([x0 + 2, 146, x0 + 8, 153], fill=P_WOOD_LO)
+    d.point((78, 144), fill=P_PLASTER); d.point((81, 144), fill=P_PLASTER)
     for x in (62, 97):                                            # carriage lamps by the door
-        d.rectangle([x - 2, 114, x + 1, 121], fill=LACQUER_LO); d.rectangle([x - 1, 115, x, 120], fill=LIT_HI)
-    d.rectangle([0, 157, 159, 159], fill=STONE_LO)
-    outline(im)
+        d.rectangle([x - 2, 124, x + 1, 131], fill=P_INK); d.rectangle([x - 1, 125, x, 130], fill=P_PLASTER)
+    d.rectangle([0, 157, 159, 157], fill=P_GREY); d.rectangle([0, 158, 159, 158], fill=P_ROOF_HI)
+    d.rectangle([0, 159, 159, 159], fill=P_INK)
     return im
 
 
