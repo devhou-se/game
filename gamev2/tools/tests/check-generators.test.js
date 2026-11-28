@@ -48,8 +48,12 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             '    open(os.path.join(base, "tiled", "room.tmj"), "w").write(text)',
             'read = lambda base, f: open(at(base, f), "rb").read()',
             'out["packed"] = read(root, "same.png") != read(work, "same.png")',
+            'before = os.stat(os.path.join(work, "tiled", "room.tmj"))',
             'out["first"] = cg.restore(root, work)',
             'out["putBack"] = all(read(root, f) == read(work, f) for f in ("same.png", "pixel.png", "size.png"))',
+            // the put-back room.tmj given the size and times it had before (#389): a comparison cached by them
+            // would still call it changed, as it did when both copies fell in the same clock tick
+            'os.utime(os.path.join(work, "tiled", "room.tmj"), ns=(before.st_atime_ns, before.st_mtime_ns))',
             'out["second"] = cg.restore(root, work)',
         ].join('\n'));
         assert.ok(out.packed, 'the two same.png files have the same bytes: the case tests nothing');

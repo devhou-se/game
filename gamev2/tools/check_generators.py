@@ -49,7 +49,6 @@ set Japanese text use the game's own fonts in fonts/ (#346), so the glyphs, whic
 decide the pixels, are the same on every machine. A new room
 generator belongs in GENERATORS, a new art tool in ART_TOOLS.
 """
-import filecmp
 import json
 import os
 import shutil
@@ -191,6 +190,14 @@ def same_picture(a, b):
         return False
 
 
+def same_bytes(a, b):
+    """Whether two files hold the same bytes. Read every time: filecmp caches a
+    comparison by size and mtime, so a file put back within the same clock tick
+    could still be reported changed (#389)."""
+    with open(a, 'rb') as fa, open(b, 'rb') as fb:
+        return fa.read() == fb.read()
+
+
 def restore(root, work):
     """Differences under OUTPUTS between the scratch project and the committed
     one, as ['tiled/x.tmj changed', ...] — and the scratch copy put back the
@@ -204,7 +211,7 @@ def restore(root, work):
             if f not in a:
                 out.append(f'{f} ADDED')
                 os.remove(dst)
-            elif f not in b or not filecmp.cmp(src, dst, shallow=False):
+            elif f not in b or not same_bytes(src, dst):
                 if f not in b:
                     out.append(f'{f} REMOVED')
                 elif not same_picture(src, dst):
