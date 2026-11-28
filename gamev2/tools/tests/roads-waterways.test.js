@@ -135,6 +135,58 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         assert.deepStrictEqual([boat.visible, boat.crop], [true, [38, 0, 78, 44]], 'stern still under the deck');
     });
 
+    test('the placeholder boat art: every livery is drawn whole in all four facings, at the size the runs are fitted to (#60)', () => {
+        if (game('typeof AmbientBoats') === 'undefined') load('AmbientBoats.js');
+        const A = game('AmbientBoats'), plain = (v) => JSON.parse(JSON.stringify(v));
+        // hand-drawn sprites are to drop in at these sizes, and fit() measures the water with them
+        assert.deepStrictEqual(plain([A.size('punt'), A.size('skiff')]), [{ along: 116, across: 44 }, { along: 80, across: 28 }]);
+        const PX = A.ART.PX, crew = 'cHhgfjnp';   // the boatman and his oar, in the hull pictures
+        for (const [name, hull] of Object.entries(plain(A.HULLS))) {
+            const { along, across } = A.size(name);
+            for (const view of ['side', 'down', 'up']) {
+                const [w, h] = view === 'side' ? [along, across] : [across, along];
+                assert.strictEqual(hull[view].length * PX, h, `${name} ${view}: height`);
+                hull[view].forEach((row, y) => assert.strictEqual(row.length * PX, w, `${name} ${view}: row ${y} is as wide as the rest`));
+                assert.ok(hull[view].some((row) => /[c]/.test(row)), `${name} ${view}: someone is sculling it`);
+            }
+        }
+        for (const [part, art] of Object.entries(plain(A.ABOARD))) {
+            for (const [view, rows] of Object.entries(art)) {
+                rows.forEach((row) => assert.strictEqual(row.length, rows[0].length, `${part} ${view}: rows of one width`));
+            }
+            assert.ok(art.side && art.down, `${part} is drawn from the side and from the front`);
+        }
+        for (const [livery, pal] of Object.entries(plain(A.LIVERIES))) {
+            const name = A.hullOf(livery), hull = plain(A.HULLS[name]), { along, across } = A.size(name);
+            for (const [part, station] of pal.aboard || []) {
+                assert.ok(A.ABOARD[part], `${livery} carries a known part (${part})`);
+                assert.ok(Number.isInteger(station), `${livery}: ${part} has a station`);
+            }
+            const bare = Object.assign({}, pal, { aboard: [] });
+            for (const facing of ['right', 'left', 'down', 'up']) {
+                const rows = plain(A.pixels(livery, facing)), view = facing === 'down' || facing === 'up' ? facing : 'side';
+                const [w, h] = view === 'side' ? [along, across] : [across, along];
+                assert.strictEqual(rows.length * PX, h, `${livery} ${facing}: height`);
+                rows.forEach((row) => {
+                    assert.strictEqual(row.length * PX, w, `${livery} ${facing}: width`);
+                    // a letter with no colour would be painted as its own name
+                    row.forEach((colour) => assert.ok(colour === null || /^(#[0-9a-f]{6}|rgba\([\d.,]+\))$/.test(colour), `${livery} ${facing}: ${colour} is a colour`));
+                });
+                // what is aboard is drawn on the hull, and never over the boatman
+                A.LIVERIES.__bare = bare;
+                let empty;
+                try { empty = plain(A.pixels('__bare', facing)); } finally { delete A.LIVERIES.__bare; }
+                const picture = facing === 'left' ? hull[view].map((row) => Array.from(row).reverse().join('')) : hull[view];
+                picture.forEach((row, y) => Array.from(row, (ch, x) => {
+                    if (crew.includes(ch)) assert.strictEqual(rows[y][x], empty[y][x], `${livery} ${facing}: the boatman is in view at ${x},${y}`);
+                }));
+                if ((pal.aboard || []).length) assert.notDeepStrictEqual(rows, empty, `${livery} ${facing}: what it carries is drawn`);
+            }
+            assert.deepStrictEqual(plain(A.pixels(livery, 'left')), plain(A.pixels(livery, 'right')).map((row) => row.reverse()),
+                `${livery}: sailing left is sailing right mirrored`);
+        }
+    });
+
     test('declared waterways that meet end to end are one run: a canal carried on by the next district sails as one (#68)', () => {
         if (game('typeof AmbientBoats') === 'undefined') load('AmbientBoats.js');
         const A = game('AmbientBoats'), plain = (v) => JSON.parse(JSON.stringify(v));

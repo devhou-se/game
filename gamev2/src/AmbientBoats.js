@@ -35,10 +35,12 @@
  * Boats are decoration only: no collision, no interaction. They draw one step
  * above the flat ground/water layers and below everything Y-sorted.
  *
- * Art: there is no hand-drawn boat yet, so the textures are drawn procedurally
- * (buildTexture) on the tile art's 4x pixel grid. To replace one with real
- * art, load a texture under the same key — `boat-<livery>-<right|left|down|up>`
- * — before the first boat appears; ensureTexture() only draws what is missing.
+ * Art: there is no hand-drawn boat yet (issue #60), so the textures are a
+ * placeholder drawn in code (pixels, buildTexture) on the tile art's 4x pixel
+ * grid: a hull seen as the world is, with its boatman, and what the livery
+ * carries stamped aboard. To replace one with real art, load a texture under
+ * the same key — `boat-<livery>-<right|left|down|up>` — before the first boat
+ * appears; ensureTexture() only draws what is missing.
  */
 class AmbientBoats {
     constructor(scene) {
@@ -515,8 +517,8 @@ class AmbientBoats {
 
     /** On-screen size of a boat sprite of one hull: `along` its heading, `across` it. */
     static size(hull = 'punt') {
-        const A = AmbientBoats.HULLS[hull], PX = AmbientBoats.ART.PX;
-        return { along: (A.WAKE + A.LENGTH + 2) * PX, across: (A.BEAM + 2) * PX };
+        const side = AmbientBoats.HULLS[hull].side, PX = AmbientBoats.ART.PX;
+        return { along: side[0].length * PX, across: side.length * PX };
     }
 
     /** The hull a livery is painted on. */
@@ -524,115 +526,60 @@ class AmbientBoats {
         return (AmbientBoats.LIVERIES[livery] || {}).hull || 'punt';
     }
 
-    /**
-     * Draw one boat, seen from above, as a canvas.
-     *
-     * The boat is laid out in hull space — u runs from the tail of the wake to
-     * the bow, v across the beam — then turned to its facing and shaded in
-     * screen space, so the shadow always falls on the screen-south side
-     * whichever way the boat points.
-     */
+    /** Draw one boat as a canvas: its art pixels (pixels), PX screen pixels each. */
     static buildTexture(livery, facing) {
-        const pal = AmbientBoats.LIVERIES[livery];
-        const A = Object.assign({ PX: AmbientBoats.ART.PX }, AmbientBoats.HULLS[AmbientBoats.hullOf(livery)]);
-        const U = A.WAKE + A.LENGTH + 2, V = A.BEAM + 2;       // 1px margin all round
-        const mid = (V - 1) / 2;
-        const grid = [];                                        // grid[u][v] = colour | undefined
-        for (let u = 0; u < U; u++) grid.push(new Array(V));
-        const hu = (u) => u - 1 - A.WAKE;                       // u -> position along the hull
-        const inHull = (u, v) => {
-            const h = hu(u);
-            return h >= 0 && h < A.LENGTH && Math.abs(v - mid) <= A.HALF_BEAM[h];
-        };
-        const edge = (u, v) => !inHull(u - 1, v) || !inHull(u + 1, v) || !inHull(u, v - 1) || !inHull(u, v + 1);
-        const put = (h, v, colour) => {
-            const u = h + 1 + A.WAKE;
-            if (u >= 0 && u < U && v >= 0 && v < V) grid[u][v] = colour;
-        };
-
-        // hull: dark outline, gunwale rim, plank deck
-        for (let u = 0; u < U; u++) {
-            for (let v = 0; v < V; v++) {
-                if (!inHull(u, v)) continue;
-                if (edge(u, v)) grid[u][v] = pal.outline;
-                else if (edge(u - 1, v) || edge(u + 1, v) || edge(u, v - 1) || edge(u, v + 1)) grid[u][v] = pal.rim;
-                else grid[u][v] = (hu(u) % 4 === 2) ? pal.deckDark : pal.deck;   // plank seams
-            }
-        }
-        // everything aboard is sized off the widest half-beam: 4 on the punt
-        // (the figures below are drawn for it), 2 on the skiff
-        const half = Math.max(...A.HALF_BEAM);
-        const inner = half - 2;                                 // deck half-width inside outline + rim
-        const deck0 = mid - inner, deck1 = mid + inner;         // deck rows inside the rim
-        const narrow = (dv) => Math.sign(dv) * Math.round(Math.abs(dv) * half / 4);
-
-        // wake: ripples spreading out behind the stern
-        for (const [h, dv, a] of [[-1, -3, 0.9], [-1, 3, 0.9], [-2, 0, 0.9], [-3, -2, 0.7], [-3, 2, 0.7],
-                                  [-4, 0, 0.5], [-5, -3, 0.4], [-5, 3, 0.4]]) {
-            if (h >= -A.WAKE) put(h, mid + narrow(dv), `rgba(142,194,250,${a})`);
-        }
-
-        // seat thwarts
-        for (const h of (pal.thwarts || [])) {
-            for (let v = deck0; v <= deck1; v++) put(h, v, pal.rim);
-        }
-
-        // seated passengers: shoulders across the beam, head in the middle
-        const shoulder = Math.max(1, inner);
-        (pal.passengers || []).forEach(([h, robe, hair]) => {
-            for (let v = mid - shoulder; v <= mid + shoulder; v++) { put(h, v, robe); put(h + 1, v, robe); }
-            for (let v = mid - shoulder + 1; v <= mid + shoulder - 1; v++) { put(h, v, hair); put(h + 1, v, hair); }
-        });
-
-        // roofed cabin (yakatabune): tiled roof with a ridge and corner lanterns
-        if (pal.cabin) {
-            const [h0, h1] = pal.cabin;
-            for (let h = h0; h <= h1; h++) {
-                for (let v = mid - 3; v <= mid + 3; v++) {
-                    const border = h === h0 || h === h1 || v === mid - 3 || v === mid + 3;
-                    put(h, v, border ? pal.roofDark : (v === mid ? pal.roofLight : pal.roof));
-                }
-            }
-            for (const h of [h0, h1]) for (const v of [mid - 3, mid + 3]) put(h, v, pal.lantern);
-        }
-
-        // boatman at the stern under a straw hat, sculling pole trailing in the wake
-        for (const [h, dv] of [[0, 2], [-1, 2], [-2, 3], [-3, 3], [-4, 4]]) {
-            if (h >= -A.WAKE) put(h, mid + Math.max(1, dv - (4 - half)), pal.pole);
-        }
-        const bh = A.HAT + 1, R = A.HAT;                        // hat radius: 2 on the punt, 1 on the skiff
-        for (let dh = -R; dh <= R; dh++) {
-            for (let dv = -R; dv <= R; dv++) {
-                if (R > 1 && Math.abs(dh) === R && Math.abs(dv) === R) continue;
-                const ring = Math.max(Math.abs(dh), Math.abs(dv));
-                put(bh + dh, mid + dv, ring === R ? pal.hatDark : (ring === 0 ? pal.hatLight : pal.hat));
-            }
-        }
-
-        // turn hull space into screen space for this facing
-        const horiz = facing === 'right' || facing === 'left';
-        const W = horiz ? U : V, H = horiz ? V : U;
-        const at = (x, y) => {
-            if (x < 0 || y < 0 || x >= W || y >= H) return undefined;
-            const u = horiz ? x : y, v = horiz ? y : x;
-            return grid[(facing === 'left' || facing === 'up') ? U - 1 - u : u][v];
-        };
-
+        const rows = AmbientBoats.pixels(livery, facing), PX = AmbientBoats.ART.PX;
         const canvas = document.createElement('canvas');
-        canvas.width = W * A.PX;
-        canvas.height = H * A.PX;
+        canvas.width = rows[0].length * PX;
+        canvas.height = rows.length * PX;
         const ctx = canvas.getContext('2d');
-        for (let y = 0; y < H; y++) {
-            for (let x = 0; x < W; x++) {
-                let colour = at(x, y);
-                // the hull's shadow on the water, one pixel to the screen-south
-                if (!colour && at(x, y - 1) === pal.outline) colour = 'rgba(31,31,59,0.45)';
-                if (!colour) continue;
-                ctx.fillStyle = colour;
-                ctx.fillRect(x * A.PX, y * A.PX, A.PX, A.PX);
-            }
-        }
+        rows.forEach((row, y) => row.forEach((colour, x) => {
+            if (!colour) return;
+            ctx.fillStyle = colour;
+            ctx.fillRect(x * PX, y * PX, PX, PX);
+        }));
         return canvas;
+    }
+
+    /**
+     * The art pixels of one boat: rows of colours, top to bottom (null where
+     * nothing is drawn).
+     *
+     * The boat is seen as the rest of the world is, from the south and a
+     * little above: sailing right or left it shows its near side and the
+     * people standing in it, sailing down its bow and their faces, sailing up
+     * its stern and their backs. So a hull is three pictures (HULLS.<hull>:
+     * `side`, `down`, `up`; left is `side` mirrored), each with its boatman,
+     * wake and shadow, drawn in the livery's colours (INK). What the livery
+     * carries (`aboard`: [part, station, colours]) is stamped on top from
+     * ABOARD, each part standing on the deck `station` art pixels from the
+     * stern, the far ones first so that a near one overlaps them.
+     */
+    static pixels(livery, facing) {
+        const pal = AmbientBoats.LIVERIES[livery];
+        const hull = AmbientBoats.HULLS[AmbientBoats.hullOf(livery)];
+        const view = (facing === 'right' || facing === 'left') ? 'side' : facing;
+        const ink = (ch, colours) => {
+            const name = AmbientBoats.INK[ch];
+            return name ? (colours[name] || name) : null;
+        };
+        const grid = hull[view].map(row => Array.from(row, ch => ink(ch, pal)));
+
+        const [ax, ay] = hull.deck[view];
+        const aboard = (pal.aboard || []).slice();
+        if (view === 'up') aboard.reverse();                    // listed stern to bow: the stern is nearest
+        for (const [part, station, colours] of aboard) {
+            const art = AmbientBoats.ABOARD[part], rows = art[view] || art.down;
+            const length = art.side[0].length;                  // how much of the hull it takes up
+            const left = view === 'side' ? ax + station : ax - Math.floor(rows[0].length / 2);
+            const bottom = view === 'side' ? ay : (view === 'down' ? ay + station + length - 1 : ay - station);
+            const own = Object.assign({}, pal, colours);
+            rows.forEach((row, i) => Array.from(row, (ch, j) => {
+                const colour = ink(ch, own), x = left + j, y = bottom - (rows.length - 1 - i);
+                if (colour && grid[y] && x >= 0 && x < grid[y].length) grid[y][x] = colour;
+            }));
+        }
+        return facing === 'left' ? grid.map(row => row.reverse()) : grid;
     }
 }
 
@@ -651,64 +598,253 @@ AmbientBoats.COVER_LIMIT = 0.25;  // a lane hidden by scenery for more than this
 AmbientBoats.ART = { PX: 4 };
 
 /**
- * Hull shapes, in art pixels. A run takes every hull that fits its open water
- * (AmbientBoats.fit), so a narrow lane still gets a boat.
+ * What each character of the pictures below is painted with: the name of a
+ * livery colour (LIVERIES, or the colours a part is given in `aboard`), or a
+ * colour every boat shares. Any other character ('.') is left clear.
+ */
+AmbientBoats.INK = {
+    o: 'outline', r: 'rim', d: 'deck', e: 'deckDark', s: 'side', t: 'sideDark',
+    c: 'coat', a: 'hair', b: 'robe', y: 'shade', Y: 'shadeLight',   // the boatman's coat; a passenger, a parasol
+    u: 'roof', U: 'roofLight', v: 'roofDark',
+    h: '#e2c275', H: '#f3d890', g: '#9c7a3c',                   // the boatman's straw hat
+    f: '#f0c8a0', j: '#2b2236', n: '#2b2f4a', p: '#d8c89a',     // skin, the boatman's hair and leggings, his oar
+    l: '#f08a4a', w: '#f6e7b8', k: '#5a3027',                   // lantern, paper screen, cabin post
+    m: '#c9a66b', M: '#e6cf96', q: '#9fc0d8',                   // basket, its rim, the catch
+    1: 'rgba(214,236,255,0.9)', 2: 'rgba(142,194,250,0.75)', 3: 'rgba(142,194,250,0.45)',   // wake
+    x: 'rgba(31,31,59,0.45)',                                   // the hull's shadow on the water
+};
+
+/**
+ * Hull pictures, an art pixel a character (INK), bow to the right in `side`,
+ * to the bottom in `down` and to the top in `up`. `side` is the sprite's size
+ * (AmbientBoats.size: `down` and `up` are the same picture's size turned), and
+ * a run takes every hull that fits its open water (AmbientBoats.fit), so a
+ * narrow lane still gets a boat. `deck` is where a part at station 0 stands
+ * in each picture: [x of its stern end, the deck's row] in `side`, [the
+ * middle column, the row of its stern end] in `down` and `up`.
  */
 AmbientBoats.HULLS = {
     // the pleasure punt: 116 x 44px on screen
     punt: {
-        WAKE: 5,          // wake drawn behind the stern
-        LENGTH: 22,       // stern to bow
-        BEAM: 9,          // widest point
-        HAT: 2,           // radius of the boatman's straw hat
-        // half-width of the hull at each step from stern (0) to bow (LENGTH-1)
-        HALF_BEAM: [3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 2, 2, 1, 0],
+        side: [
+            '........H....................',
+            '......ghhhg..................',
+            '........ff..............ooo..',
+            '......occcoooooooooooooorrro.',
+            '.....opccceeeeeeeeeeeerrssso.',
+            '.....pdnnddeddddedddrrsssso..',
+            '....porrrrrrrrrrrrrrssssto...',
+            '...p.osssssssssssssstttoo....',
+            '.3p...ottttttttttttttoo1.....',
+            '..2.1..oooooooooooooo1.2.....',
+            '3..2...xxxxxxxxxxxxxxx.......',
+        ],
+        down: [
+            '.3...2...3.',
+            '...2...2...',
+            '..1..3..1.p',
+            '....1.1..p.',
+            '.....H...p.',
+            '..oghhhgpo.',
+            '.orefffepo.',
+            '.ordcccpro.',
+            '.ordcccdro.',
+            '.ordndndro.',
+            '.ordddddro.',
+            '.oreeeeero.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.oreeeeero.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.oreeeeero.',
+            '.orrdddrro.',
+            '.osrrrrrso.',
+            '..ossotto..',
+            '...osoto...',
+            '..1.ooo.1..',
+            '.2.xxxxx.2.',
+            '3.........3',
+        ],
+        up: [
+            '...........',
+            '.....o.....',
+            '....oro....',
+            '...orero...',
+            '...orero...',
+            '..oreeero..',
+            '..oredero..',
+            '.oreeeeero.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.oreeeeero.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.ordddddro.',
+            '.orddHddro.',
+            '.orghhhgro.',
+            '.ordjjjdro.',
+            '.ordcccpro.',
+            '.ordcccpro.',
+            '.ordndndpo.',
+            '.orrrrrrpo.',
+            '.osssssspo.',
+            '.otttttttp.',
+            '..ooooooop.',
+            '.1xxxxxxx1.',
+            '..2.1.1.2..',
+            '3...2.2...3',
+        ],
+        deck: { side: [6, 5], down: [5, 6], up: [5, 21] },
     },
     // a one-man skiff for narrow water: 80 x 28px (Tokyo's north moat, issue #62)
     skiff: {
-        WAKE: 4,
-        LENGTH: 14,
-        BEAM: 5,
-        HAT: 1,
-        HALF_BEAM: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0],
+        side: [
+            '.....ghHhg..........',
+            '.......ff.......oo..',
+            '.....occcooooooorro.',
+            '....opcccdddddrrsso.',
+            '....prrrrrrrrrssto..',
+            '...p.tttttttttoo1...',
+            '.3p..xxxxxxxxxx.2...',
+        ],
+        down: [
+            '.3...3.',
+            '..2.2..',
+            '...H..p',
+            '.ghhhgp',
+            '.offfp.',
+            '.occco.',
+            '.occco.',
+            '.ordro.',
+            '.ordro.',
+            '.orero.',
+            '.ordro.',
+            '.ordro.',
+            '.ordro.',
+            '.orero.',
+            '.ordro.',
+            '.orrro.',
+            '.ossto.',
+            '.1oto1.',
+            '2.xxx.2',
+            '.......',
+        ],
+        up: [
+            '.......',
+            '...o...',
+            '..oro..',
+            '..oro..',
+            '.orero.',
+            '.ordro.',
+            '.ordro.',
+            '.orero.',
+            '.ordro.',
+            '.ordro.',
+            '.ordro.',
+            '.orero.',
+            '.orHro.',
+            '.ghhhg.',
+            '.ojjjo.',
+            '.occcp.',
+            '.orrrp.',
+            '.otttop',
+            '.1xxx1p',
+            '2.1.1.2',
+        ],
+        deck: { side: [5, 3], down: [3, 5], up: [3, 15] },
     },
 };
 
-/** Liveries: hull colours plus what is aboard. Colours sit in the tile art's palette range. */
+/**
+ * What a boat can carry, drawn as the hulls are. A part stands on the deck:
+ * the bottom row of its picture is at the deck, and its `side` picture's
+ * width is the length of hull it takes up. A part with no `up` picture looks
+ * the same from behind.
+ */
+AmbientBoats.ABOARD = {
+    // someone sitting, looking where the boat is going
+    passenger: {
+        side: ['aa.', 'af.', 'bbb', 'bbb'],
+        down: ['aaa', 'fff', 'bbb', 'bbb'],
+        up: ['aaa', 'aaa', 'bbb', 'bbb'],
+    },
+    // someone sitting under a paper parasol
+    parasol: {
+        side: ['.yyy.', 'yyYyy', '.aa..', '.af..', '.bbb.', '.bbb.'],
+        down: ['.yyy.', 'yyYyy', '.fff.', '.bbb.', '.bbb.'],
+        up: ['.yyy.', 'yyYyy', '.aaa.', '.bbb.', '.bbb.'],
+    },
+    // the yakatabune's roofed cabin: tiled roof, paper screens, a lantern at each corner
+    cabin: {
+        side: [
+            '.UUUUUUUU.',
+            'uuuuuuuuuu',
+            'vvvvvvvvvv',
+            'lwwkwwkwwl',
+            '.wwkwwkww.',
+        ],
+        down: [
+            '.vvvvvvv.',
+            'vuuuUuuuv',
+            'vuuuUuuuv',
+            'vuuuUuuuv',
+            'vuuuUuuuv',
+            'vuuuUuuuv',
+            'vuuuUuuuv',
+            'vuuuUuuuv',
+            'vuuuUuuuv',
+            'vvvvvvvvv',
+            'lkwwkwwkl',
+            '.kwwkwwk.',
+        ],
+    },
+    // a basket of the day's catch
+    basket: {
+        side: ['MqM', 'mmm'],
+        down: ['MqM', 'mmm'],
+    },
+};
+
+/** Liveries: the hull's colours, the boatman's coat and what is aboard. Colours sit in the tile art's palette range. */
 AmbientBoats.LIVERIES = {
     // plain wooden punt carrying two passengers
     wood: {
-        outline: '#3b2a26', rim: '#b9774a', deck: '#8f5c3c', deckDark: '#7a4c33',
-        hat: '#e2c275', hatLight: '#f3d890', hatDark: '#9c7a3c', pole: '#d8c89a',
-        thwarts: [8, 12],
-        passengers: [[9, '#b5535a', '#2b2236'], [13, '#4f7fb0', '#5a3a2a']],
+        outline: '#3b2a26', rim: '#c98a58', deck: '#8f5c3c', deckDark: '#6e4430', side: '#a8683f', sideDark: '#7a4c33',
+        coat: '#3d5a8c',
+        aboard: [['passenger', 7, { robe: '#b5535a', hair: '#2b2236' }], ['passenger', 12, { robe: '#4f8f7a', hair: '#5a3a2a' }]],
     },
     // red-lacquered pleasure boat with a tiled cabin roof and lanterns
     lacquer: {
-        outline: '#3a1c24', rim: '#d0524a', deck: '#a8623f', deckDark: '#8f5136',
-        hat: '#e2c275', hatLight: '#f3d890', hatDark: '#9c7a3c', pole: '#d8c89a',
-        cabin: [7, 15], roof: '#4c8c7a', roofLight: '#7fbf9f', roofDark: '#2f5d5a', lantern: '#f3d890',
+        outline: '#3a1c24', rim: '#e8735a', deck: '#a8623f', deckDark: '#7d4530', side: '#c8453f', sideDark: '#8f2a35',
+        coat: '#2f3f6a',
+        roof: '#4c8c7a', roofLight: '#7fbf9f', roofDark: '#2f5d5a',
+        aboard: [['cabin', 6]],
     },
-    // white hire boat with a blue stripe, one passenger up front
+    // white hire boat with a blue stripe: a passenger, and one under a red parasol up front
     white: {
-        outline: '#2d3350', rim: '#e9eef2', deck: '#5d86c2', deckDark: '#4a70a8',
-        hat: '#e2c275', hatLight: '#f3d890', hatDark: '#9c7a3c', pole: '#d8c89a',
-        thwarts: [8, 16],
-        passengers: [[11, '#e0b354', '#2b2236']],
+        outline: '#2d3350', rim: '#ffffff', deck: '#5d86c2', deckDark: '#4a70a8', side: '#e9eef2', sideDark: '#5d86c2',
+        coat: '#c8453f',
+        aboard: [['passenger', 6, { robe: '#4f8f7a', hair: '#5a3a2a' }],
+            ['parasol', 11, { robe: '#e0b354', hair: '#2b2236', shade: '#c8453f', shadeLight: '#f08a6a' }]],
     },
     // skiffs: a lone boatman, one with a basket of the day's catch amidships
     skiff: {
         hull: 'skiff',
-        outline: '#3b2a26', rim: '#b9774a', deck: '#8f5c3c', deckDark: '#7a4c33',
-        hat: '#e2c275', hatLight: '#f3d890', hatDark: '#9c7a3c', pole: '#d8c89a',
-        thwarts: [7],
-        passengers: [[8, '#c9b48a', '#7fa3c4']],
+        outline: '#3b2a26', rim: '#c98a58', deck: '#8f5c3c', deckDark: '#6e4430', side: '#a8683f', sideDark: '#7a4c33',
+        coat: '#3d5a8c',
+        aboard: [['basket', 5]],
     },
     skiffGreen: {
         hull: 'skiff',
-        outline: '#1f3330', rim: '#5f9c7c', deck: '#c9a66b', deckDark: '#a88650',
-        hat: '#e2c275', hatLight: '#f3d890', hatDark: '#9c7a3c', pole: '#d8c89a',
-        thwarts: [6, 10],
+        outline: '#1f3330', rim: '#7fb894', deck: '#c9a66b', deckDark: '#a88650', side: '#5f9c7c', sideDark: '#3f7560',
+        coat: '#b5535a',
     },
 };
 

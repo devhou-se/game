@@ -88,12 +88,25 @@ their route in the room's map data rather than in coordinates, have no collision
   hull. Tokyo's north moat shows only a 32px lane above the `blue-wall-short` palace wall (the wall hides
   the lower half of the channel), so its three runs carry skiffs only - a boat is never drawn half behind
   the wall; the south, east and west moat take both. A tree crown overhanging one end of a run is allowed.
-- **Boat art is procedural** (`AmbientBoats.buildTexture`): no boat sprite exists, so each livery
-  (`AmbientBoats.LIVERIES`: `wood`, `lacquer`, `white` on the punt; `skiff`, `skiffGreen` on the skiff) is
-  drawn to a canvas on the tile art's 4x pixel grid, once per facing, under the key
-  `boat-<livery>-<right|left|down|up>`. `ensureTexture()` only draws a key that is not already loaded, so
-  real art replaces it by loading a sprite under the same key (keep it within `AmbientBoats.size(hull)`, or
-  update `HULLS`, since run fitting uses that size).
+- **Boat art is a placeholder drawn in code** (`AmbientBoats.pixels` -> `buildTexture`): no hand-drawn boat
+  sprite exists yet (issue #60), so each livery (`AmbientBoats.LIVERIES`: `wood`, `lacquer`, `white` on the
+  punt; `skiff`, `skiffGreen` on the skiff) is drawn to a canvas on the tile art's 4x pixel grid, once per
+  facing, under the key `boat-<livery>-<right|left|down|up>`. The boat is seen as the rest of the world is,
+  from the south and a little above, not from straight overhead: sailing right or left it shows its near
+  side, its upswept bow and the people in it; sailing down, its bow and their faces; sailing up, its stern
+  and their backs. So a hull (`HULLS.<hull>`) is three pictures written as rows of characters, an art pixel
+  each - `side` (left is `side` mirrored), `down` and `up` - with the boatman in his straw hat, his oar, the
+  wake and the hull's shadow in the picture. `AmbientBoats.INK` says what each character is painted with: a
+  colour the livery names (`rim`, `side`, `coat`...) or one every boat shares (skin, straw, wake). What a
+  livery carries is its `aboard` list, `[part, station, colours]`: a part of `AmbientBoats.ABOARD`
+  (`passenger`, `parasol`, the yakatabune's `cabin`, a `basket`) stamped on the deck `station` art pixels
+  from the stern, in its own colours. The boatman is part of the hull picture, so keep a part's station
+  clear of him (the first six art pixels of the punt, five of the skiff). `side` is the sprite's size
+  (`AmbientBoats.size(hull)`: 116x44px and 80x28px, `down` / `up` the same turned), which run fitting uses;
+  the unit test holds every picture to it.
+  `ensureTexture()` only draws a key that is not already loaded, so real art replaces the placeholder by
+  loading a sprite under the same key (keep it within `AmbientBoats.size(hull)`, or resize the `HULLS`
+  pictures to match, since run fitting uses that size).
 - **Testing** - both expose `cross()` to send one immediately (a no-op in a room with no track / no water):
   `game.scene.keys.GameScene.ambientTrains.cross()` / `.ambientBoats.cross(run, dir, livery)` (all optional;
   `run` is an entry of `ambientBoats.runs`, `dir` is `1` or `-1`; a livery whose hull does not fit the run
