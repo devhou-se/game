@@ -237,28 +237,39 @@ def zuihoden():
         d.point((x, 86), fill=WHITE)
     d.line([(16, 84), (207, 84)], fill=GOLD); d.line([(16, 95), (207, 95)], fill=GOLD_LO)
 
-    # ---- the roof: a heavy hipped roof, eaves turned up at the corners ---------
-    rows = roof_rows(26, 80, (54, 169), (2, 221))
-    tiled_roof(d, rows)
-    for y, x0, x1 in rows:                                        # the ribs of the tiling
-        for x in range(x0 + 4, x1 - 2, 9):
-            if (y // 4) % 2 == 0:
-                d.point((x, y), fill=SLATE_HI)
+    # ---- the roof, seen from above as the pack's are: a hipped roof whose ridge
+    # sits a third of the way down, the back slope above it, the front slope
+    # below, a lit hip to the west and a shaded one to the east ----------------
+    px = im.load()
+    ridge, top, eave, rx0, rx1 = 26, 4, 80, 62, 161
+    for y in range(top, eave + 1):
+        if y >= ridge:
+            xl, xr = rx0 - (y - ridge) * 60 // (eave - ridge), rx1 + (y - ridge) * 60 // (eave - ridge)
+        else:
+            xl, xr = rx0 - (ridge - y) * 60 // (ridge - top), rx1 + (ridge - y) * 60 // (ridge - top)
+        for x in range(2, 222):
+            if xl <= x <= xr:
+                px[x, y] = roof_tile(x, y, ROOF_TILE if y >= ridge else ROOF_SHADE)
+            else:
+                px[x, y] = roof_tile(y, x, ROOF_LIT if x < cx else ROOF_SHADE)
+            if abs(x - xl) <= 1 or abs(x - xr) <= 1:              # the hip ridges
+                px[x, y] = ROOF_TILE[2] if abs(x - xl) == 0 or abs(x - xr) == 0 else ROOF_TILE[0]
+    d.rectangle([2, top, 221, top], fill=P_INK)
     d.rectangle([0, 80, 223, 83], fill=SLATE_LO)                  # eaves
     d.line([(0, 83), (223, 83)], fill=RED_LO)                     # the red rafter ends
     for x in range(3, 222, 5):
         d.point((x, 83), fill=GOLD)
-    for sx, x in ((1, 0), (-1, 223)):                             # upturned corners with gold tips
-        d.polygon([(x, 80), (x + sx * 8, 80), (x, 72)], fill=SLATE)
-        d.rectangle([x if sx > 0 else x - 2, 71, x + 2 if sx > 0 else x, 74], fill=GOLD)
-    d.rectangle([52, 20, 171, 26], fill=SLATE_LO)                 # the ridge
-    d.line([(52, 20), (171, 20)], fill=SLATE_HI)
-    for x in range(58, 168, 12):
-        d.rectangle([x, 22, x + 3, 24], fill=GOLD)
-    for x0 in (46, 166):                                          # gold ridge-end ornaments
-        d.polygon([(x0, 26), (x0 + 11, 26), (x0 + 11, 12), (x0 + 6, 8), (x0 + 3, 14)], fill=GOLD)
-        d.line([(x0 + 4, 14), (x0 + 4, 25)], fill=GOLD_HI)
-        d.line([(x0 + 10, 12), (x0 + 10, 25)], fill=GOLD_LO)
+    for x in (0, 221):                                            # gold tips on the front corners
+        d.rectangle([x, 76, x + 2, 80], fill=GOLD)
+    d.rectangle([rx0 - 4, ridge - 4, rx1 + 4, ridge + 2], fill=SLATE_LO)      # the ridge
+    d.rectangle([rx0 - 4, ridge - 4, rx1 + 4, ridge - 4], fill=SLATE_HI)
+    for x in range(rx0 + 2, rx1 - 2, 12):
+        d.rectangle([x, ridge - 2, x + 3, ridge], fill=GOLD)
+    for x0 in (rx0 - 12, rx1 + 2):                                # gold ridge-end ornaments
+        d.rectangle([x0, ridge - 10, x0 + 10, ridge + 2], fill=GOLD)
+        d.rectangle([x0 + 2, ridge - 14, x0 + 7, ridge - 10], fill=GOLD)
+        d.rectangle([x0 + 1, ridge - 10, x0 + 1, ridge + 1], fill=GOLD_HI)
+        d.rectangle([x0 + 9, ridge - 10, x0 + 9, ridge + 1], fill=GOLD_LO)
     # the front gable over the doors, with the crest of the Date
     for y in range(44, 81):
         w = (y - 44) * 34 // 36
@@ -273,8 +284,8 @@ def zuihoden():
     d.ellipse([cx - 3, 64, cx + 2, 69], fill=GOLD_HI)
     d.rectangle([cx - 2, 36, cx + 1, 44], fill=GOLD)              # finial
     repaint(im, {LACQUER: rgb('1b1e2a'), LACQUER_LO: rgb('080d16'), LACQUER_HI: rgb('413f53'), SLATE_HI: rgb('53596d'),
-                 GOLD_LO: rgb('a7843b'), GOLD_HI: rgb('f3d890'), rgb('ffffff'): P_WHITE, rgb('89af78'): rgb('83af6f')},
-            roof=(SLATE, SLATE_LO))
+                 SLATE_LO: rgb('191c2a'), SLATE: rgb('293038'),
+                 GOLD_LO: rgb('a7843b'), GOLD_HI: rgb('f3d890'), rgb('ffffff'): P_WHITE, rgb('89af78'): rgb('83af6f')})
     outline(im, P_INK)
     return im
 
@@ -385,8 +396,14 @@ def speck(x, y, seed=0):
 ROOF_TILE = [rgb(c) for c in ('0a1627', '172459', '434857', '2e4040', '395050')]
 
 
-def roof_tile(x, y):
+ROOF_LIT = [rgb(c) for c in ('0a1627', '172459', '53596d', '395050', '434857')]
+ROOF_SHADE = [rgb(c) for c in ('080d16', '0a1627', '2e4040', '21272d', '293038')]
+
+
+def roof_tile(x, y, tones=None):
     """The pack's kawara: small tiles in courses, a blue joint down each, every other course shifted."""
+    if tones:
+        return tones[ROOF_TILE.index(roof_tile(x, y))]
     row = y % 5
     col = (x + (2 if y // 5 % 2 else 0)) % 4
     if row == 4:
