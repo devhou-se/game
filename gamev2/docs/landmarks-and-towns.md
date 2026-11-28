@@ -1555,9 +1555,10 @@ rest of the building still bumps its line from the street. Like the pub's, the d
   high as it goes with two rows kept under you, and the name board and the windows are in view. From the
   second concourse row south of the gates it is the ordinary camera.
 - **Art**: `tools/generate_flinders_art.py` (needs Pillow; `--preview out.png`) draws the 14 sprites
-  (`flinders-in-<piece>`); the frame is the pub art tool's, in the building's colours. The track, the gates,
-  the railing, the benches, the pillars and the planters are the station kit's
-  (`tools/generate_station_art.py`). It and the generator are in `check_generators.py`.
+  (`flinders-in-<piece>`) and their frame itself, in the house look (#309): GuttyKreum colours only, the
+  pack's navy outline, dark glass with a slanted glare, unlit lamps in its dim gold; it imports only
+  plumbing from `generate_pub_art.py`. The track, the gates, the railing, the benches, the pillars and
+  the planters are the station kit's (`tools/generate_station_art.py`). It and the generator are in `check_generators.py`.
 - **Doors and blog NPCs**: no dated position or district stand cell is on a door or the cell in front of one,
   and a wanderer never steps there. The blog stands nobody at the station, and never places into an
   `interior` room.
