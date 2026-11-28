@@ -200,33 +200,39 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
         }
     });
 
-    test("Tokyo's west gate is closed: Machi is deleted, the fence runs across where its lane came in (#68)", () => {
-        // #147 paved a two-cell gate here for the lane from Machi; with the town gone the gap in the west
-        // fence is fenced like the cells above and below it, and nothing leads off the map
+    test("Tokyo's west gate leads to Karuizawa: the fence e3cb4d0d ran across it is open again, two cells wide (#68, #260)", () => {
+        // #147 paved a two-cell gate here for the lane from Machi; with that town gone #68 fenced the gap, and
+        // #260 opened it again for the road to Karuizawa (tools/generate_karuizawa.py owns the two cells)
         const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
         const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
         const tiles = (room, n) => (cfg.rooms[room].layers.find((l) => l.name === n) || {}).tiles || {};
         assert.ok(!('Machi' in cfg.rooms) && !cfg.cities.TokyoCity.rooms.some((m) => m.room === 'Machi'));
-        assert.deepStrictEqual(cfg.rooms.Tokyo.transporters.filter((t) => t.gridX === 0), [], 'no door in the west edge');
-        for (const y of [40, 41, 42, 43]) {
+        assert.deepStrictEqual(cfg.rooms.Tokyo.transporters.filter((t) => t.gridX === 0), [41, 42].map((y) => (
+            { gridX: 0, gridY: y, targetRoom: 'Karuizawa', targetX: 44, targetY: y - 7, hidden: true })), 'the only doors in the west edge');
+        for (const y of [40, 43]) {
             assert.strictEqual(name(tiles('Tokyo', 'Collidables')[`0,${y}`]), 'fence-barriers_0_2', `the fence at 0,${y}`);
             assert.ok(`0,${y}` in tiles('Tokyo', 'Colliders'), `0,${y} is solid`);
             assert.strictEqual(name(tiles('Tokyo', 'Floor')[`0,${y}`]), 'flat-grey-brick-autotile_edge-w');
         }
         for (const y of [41, 42]) {
+            assert.strictEqual(name(tiles('Tokyo', 'Floor')[`0,${y}`]), 'flat-grey-brick-autotile_center', `the gate at 0,${y} is plain brick`);
+            assert.ok(!(`0,${y}` in tiles('Tokyo', 'Collidables')) && !(`0,${y}` in tiles('Tokyo', 'Colliders')), `0,${y} is fenced`);
             assert.ok(!(`1,${y}` in tiles('Tokyo', 'Colliders')), 'the pavement inside the fence is still walked on');
             assert.ok(name(tiles('Tokyo', 'Floor')[`2,${y}`]).startsWith('road-edge-left'), 'the road keeps its kerb');
         }
         assert.strictEqual(name(tiles('Tokyo', 'Floor')['2,43']), 'road-corner-sw_0_0', 'the junction box has its corner');
-        // stitched or not, the whole west edge of the district is closed and the city starts at Tokyo's column 0
+        // stitched or not, the gate is the only way off the west edge of the district
         for (const stitch of [true, false]) {
             const { world } = worldWith(stitch);
             const rm = world.roomManager;
+            if (!stitch) world.enter('Tokyo', 1, 41);
+            const open = [];
             for (let y = 0; y < 46; y++) {
-                const at = stitch ? rm.resolve('Tokyo', 0, y) : { x: 0, y };
-                assert.strictEqual(world.canStep(at.x + 1, at.y, at.x - 1, at.y), false, `off the map at Tokyo 0,${y}`);
+                const at = stitch ? rm.resolve('Tokyo', 0, y) : { x: 1, y };   // stitched: off column 0; not: onto it, where the doors are
+                if (world.canStep(at.x, at.y, at.x - 1, at.y)) open.push(y);
             }
-            if (stitch) assert.strictEqual(rm.resolve('Tokyo', 0, 0).x, 0, 'Tokyo is the west edge of the city');
+            assert.deepStrictEqual(open, [41, 42], stitch ? 'stitched' : '?stitch=0');
+            if (stitch) assert.strictEqual(rm.resolve('Tokyo', 0, 0).x, 48, 'Karuizawa is west of Tokyo: the city starts 48 columns before it');
         }
     });
 

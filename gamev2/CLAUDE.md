@@ -83,8 +83,9 @@ by one agent per town at a time.
   `assets/map` with `tools/make_worldmap.py` (needs Pillow).
 - **Room generators are the source of truth for generated rooms.** Edit the generator and re-run it, or
   make a surgical edit and mirror it in the generator; never leave `check_generators.py` failing. Ported
-  rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth.
-- **Everything authored stays district-local.** The four Tokyo districts are stitched into one runtime
+  rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth (Tokyo's west gate
+  cells are written by `generate_karuizawa.py`).
+- **Everything authored stays district-local.** The five Tokyo districts are stitched into one runtime
   room; coordinates in config, tools and docs are the district's own.
 - **New JS files** go in the script list in `index.html`, between its `build:scripts` marks (the page loads
   them one by one; the deploy build joins the same list into one file).
@@ -117,7 +118,7 @@ be found here.
 | `architecture.md` | File Structure (what each `src/` file is), Core Constants, Grid-Based Movement, Collision Detection, Sitting on furniture (`Seats.js`, `Seating.js`), sprite positioning, Loading and the deploy build (`Assets.js`, `tools/build_dist.js`, `dist/`, cache headers) | your first change; adding a source file; touching movement or collision; adding furniture to sit on; adding anything the game loads; the deploy |
 | `maps-and-rooms.md` | Room System: room definition, NPC dated `states`, **Default game date**, transporters, room fade, Boundary System | editing room data, NPC states, `?date=` / default-date logic |
 | `../tiled/README.md` | Editing maps in Tiled, prefabs, `stamp_prefab.py`, layers | any map or world edit (with the `generate-room` / `adjust-game` skills) |
-| `stitched-city.md` | Stitched cities: `TokyoCity`, `CityStitcher`, district coordinates, woods, depth, chunk streaming / performance, seams, `?stitch=0`, adding a district | anything that reads the current room, cell coordinates, tiles on screen, or Tokyo / Market / Palace / Park |
+| `stitched-city.md` | Stitched cities: `TokyoCity`, `CityStitcher`, district coordinates, woods, depth, chunk streaming / performance, seams, `?stitch=0`, adding a district | anything that reads the current room, cell coordinates, tiles on screen, or Tokyo / Market / Palace / Park / Karuizawa |
 | `occlusion.md` | Walking behind things: `Occlusion.js`, fading scenery and name labels | adding tall sprites, depth changes, "player is hidden behind X" bugs |
 | `hud-input-touch.md` | HUD System, Input Handling (all key bindings, debug menu), Small Viewports and Touch: `Viewport`, `UIScale`, the three cameras and world zoom, camera bounds, overlay rules, `TouchControls`, `Hints` | any HUD, overlay, camera, zoom, key-binding, phone or touch change |
 | `fonts-and-japanese.md` | Fonts and Japanese Text | drawing any text, especially Japanese |
@@ -129,7 +130,7 @@ be found here.
 | `shop-and-economy.md` | Shop, Food and Drink: wallet, konbini counters, vending machines, Don Takote, items, icons, effects, fishing catches, selling, save blob, nomikai stake, Career (the job in the tower lobbies) | shops, items, money, fishing, the drinking game, the job |
 | `trains-and-stations.md` | Stations and the departures board, adding a station | rideable trains, `config.stations`, `generate_stations.py` |
 | `ambient-traffic.md` | Ambient Traffic: passing trains, boats, `waterways`, Streetcars (`tramways`) | decorative movers, canals / moats, track tiles, tram lines |
-| `landmarks-and-towns.md` | Featured locations / landmarks, Osaka, adding a landmark, Hokkaido (Sapporo, Asahikawa, snow, konbini interiors per host, build order), House interiors, Tower lobbies, the Devhouses of Tokyo and Osaka | adding a landmark, a town, a konbini or discount store to a town, opening a town's houses |
+| `landmarks-and-towns.md` | Featured locations / landmarks, Osaka, adding a landmark, Hokuriku, Karuizawa, Hokkaido (Sapporo, Asahikawa, snow, konbini interiors per host, build order), House interiors, Tower lobbies, the Devhouses of Tokyo and Osaka | adding a landmark, a town, a konbini or discount store to a town, opening a town's houses |
 | `buildings-and-street-props.md` | Generic city buildings (high-rises, discount store, machiya), Street accessories (traffic lights, crossings, kerbside props, Osaka's roads, no bins), Neon and lit fronts at night (`Glows.js`) | placing buildings or street furniture; `TrafficLights.js`; making a sprite glow at night |
 | `generators-and-checks.md` | `check_generators.py`, Generated rooms stay regenerable, the world map (`make_worldmap.py`), Asset Generation | editing a generated room, a generator, an art tool, or the world map |
 | `working-on-issues.md` | The two ways work lands (by hand on `master`, Workshop branches and pull requests), issues and labels, not colliding with other agents, running, the checks, verifying as a player, landing, fixing | starting any issue; before every push |

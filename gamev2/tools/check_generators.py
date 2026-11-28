@@ -63,6 +63,7 @@ GENERATORS = [
     'generate_pub', 'generate_distillery', 'generate_mall', 'generate_tower_deck', 'generate_flinders',
 ]
 GENERATORS += ['generate_kanazawa', 'generate_shirakawago', 'generate_toyama']     # Hokuriku (issue #68)
+GENERATORS += ['generate_karuizawa']         # Karuizawa, and Tokyo's west gate into it (issue #260)
 # config `districts` from tools/districts.py: last, it reads where the landmarks of every room stand (issue #219)
 GENERATORS += ['districts']
 # config_to_tiled.py, run over every room that has a committed tiled/*.tmj
@@ -93,6 +94,7 @@ ART_TOOLS += ['generate_flinders_art']       # the concourse of the station with
 ART_TOOLS += ['generate_devhouse_art']       # the two Devhouses and what stands in them (issue #69)
 ART_TOOLS += ['generate_tower_deck_art']     # Fukuoka Tower's observation deck and the lift's view (issue #242)
 ART_TOOLS += ['generate_wheel_art']          # Osaka: the gondola you board and the view from the wheel (issue #242)
+ART_TOOLS += ['generate_karuizawa_art']      # Karuizawa's own art: the fingerpost inside the gate (issue #260)
 ART_TOOLS += ['generate_asahikawa_art']      # Asahikawa's own art (issue #219, stage B)
 # the art tools that also need a Japanese system font (generate_ads.find_font)
 FONT_TOOLS = ['generate_ads', 'extract_city']

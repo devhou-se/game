@@ -21,10 +21,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         for (const k of HOKURIKU) delete rooms[k];
         return Object.assign({}, c, { rooms });
     };
-    // the five small places walked to from a town (#68), before any is built: the room is a stub, the geo and
+    // the small places walked to from a town (#68) that are not built yet: the room is a stub, the geo and
     // label are the ones its ticket will put in config `places`. A ticket that builds one drops it from here
+    // (Karuizawa is built, #260: it is in config, and so in every Map below)
     const SMALL = { Himeji: [[134.69, 34.82], 'Himeji'], Okayama: [[133.92, 34.66], 'Okayama'], Nara: [[135.84, 34.69], 'Nara'],
-        LakeBiwa: [[136.10, 35.30], 'Lake Biwa'], Karuizawa: [[138.63, 36.35], 'Karuizawa'] };
+        LakeBiwa: [[136.10, 35.30], 'Lake Biwa'] };
     const small = (keys) => {
         const c = realConfig();
         const rooms = Object.assign({}, c.rooms), places = Object.assign({}, c.places);
@@ -34,11 +35,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         }
         return Object.assign({}, c, { rooms, places });
     };
-    // the Map as the tickets land: Himeji, then Okayama, Nara and Lake Biwa in that order, each with and
-    // without Karuizawa (which waits on none of them), and Karuizawa alone
+    // the Map as the tickets land: Himeji, then Okayama, Nara and Lake Biwa in that order (Karuizawa, which
+    // waited on none of them, is there already)
     const KANSAI = ['Himeji', 'Okayama', 'Nara', 'LakeBiwa'];
     const STAGES = KANSAI.map((_, i) => KANSAI.slice(0, i + 1));
-    const LANDING = STAGES.concat(STAGES.map(keys => keys.concat('Karuizawa')), [['Karuizawa']]);
+    const LANDING = STAGES;
     // dots that may touch but never hide one another: the three Hokuriku towns (35 km apart), and Nara beside Osaka
     const MAY_TOUCH = [['Kanazawa', 'Toyama'], ['Kanazawa', 'Shirakawago'], ['Shirakawago', 'Toyama'], ['Nara', 'Osaka']];
     const inside = (pts, lon, lat) => {
@@ -103,7 +104,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         const list = P.list(config);
         // (the home city is the one place overseas, #218: its label is its room's name, written nowhere else)
         const home = config.rooms.SanFranbourne.name;
-        assert.deepStrictEqual(plain(list.map(p => p.label)).sort(), ['Asahikawa', 'Fukuoka', 'Kanazawa', 'Osaka', home, 'Sapporo', 'Sendai', 'Shirakawa-go', 'Tokyo', 'Toyama'].sort());
+        assert.deepStrictEqual(plain(list.map(p => p.label)).sort(), ['Asahikawa', 'Fukuoka', 'Kanazawa', 'Karuizawa', 'Osaka', home, 'Sapporo', 'Sendai', 'Shirakawa-go', 'Tokyo', 'Toyama'].sort());
         assert.deepStrictEqual(plain(list.filter(p => p.overseas).map(p => p.key)), ['SanFranbourne']);
         assert.ok(!('label' in config.places.SanFranbourne) && !JSON.stringify(config.airports).includes(home), 'the name is written once');
         // the stitched city is ONE dot, named after the city
@@ -328,13 +329,12 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
 
     test('the Map\'s labels: a small place\'s label gives way to a town\'s, and a label left with no spot is laid out first (#68)', () => {
         const hit = (a, b) => a.x1 > b.x0 && a.x0 < b.x1 && a.y1 > b.y0 && a.y0 < b.y1;
-        // a place is small where config says so: none today, the stubs of the places to come
-        assert.ok(P.list(realConfig()).every(p => p.minor === false), 'no place is minor yet');
-        assert.ok(!Object.values(realConfig().places).some(p => 'minor' in p));
+        // a place is small where config says so: Karuizawa today (#260), and the stubs of the places to come
+        assert.deepStrictEqual(plain(P.list(realConfig()).filter(p => p.minor).map(p => p.key)), ['Karuizawa'], 'the minor places');
         const all = P.list(small(Object.keys(SMALL)));
-        assert.deepStrictEqual(plain(all.filter(p => p.minor).map(p => p.key)).sort(), Object.keys(SMALL).sort());
-        assert.strictEqual(all.length, P.list(realConfig()).length + 5, 'each has a dot of its own');
-        assert.deepStrictEqual(plain(LANDING.map(keys => keys.length)), [1, 2, 3, 4, 2, 3, 4, 5, 1], 'the nine Maps the tickets pass through');
+        assert.deepStrictEqual(plain(all.filter(p => p.minor).map(p => p.key)).sort(), Object.keys(SMALL).concat('Karuizawa').sort());
+        assert.strictEqual(all.length, P.list(realConfig()).length + 4, 'each has a dot of its own');
+        assert.deepStrictEqual(plain(LANDING.map(keys => keys.length)), [1, 2, 3, 4], 'the four Maps the tickets still pass through');
 
         // two dots that want the same spot (the first choice of each, to its right): the one that is not minor
         // has it, whichever key sorts first, and the minor one stands off on a leader line and still fits
@@ -367,7 +367,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
             }
         }
         // the case it is for: Himeji's dot alone, in the narrowest portrait view, standing in Tokyo with friends
-        // in Fukuoka. One order leaves Fukuoka's label no room; laid out again, all eleven have a spot
+        // in Fukuoka. One order leaves Fukuoka's label no room; laid out again, all twelve have a spot
         const config = small(['Himeji']), places = P.list(config);
         const W = game('Viewport.MIN_VISIBLE'), k = 1.6, s = 2, font = Math.round(16 * k);
         const bounds = { x: (W - meta.width * s) / 2, y: (960 - meta.height * s) / 2 + 4, w: meta.width * s, h: meta.height * s };
@@ -379,7 +379,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         });
         const course = P.course(dots.find(d => d.key === 'SanFranbourne'), bounds, k);
         const spots = P.layout(dots, bounds, course);
-        assert.strictEqual(dots.length, 11);
+        assert.strictEqual(dots.length, 12);
         for (const d of dots) assert.ok(spots[d.key].fits, `no room for ${d.key}'s label`);
         assert.strictEqual(P.uncovered(course, spots).length, course.length, 'and none stands on the flight\'s course');
     });
@@ -398,11 +398,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
             const from = Object.keys(config.rooms).filter(k => (config.rooms[k].transporters || [])
                 .some(t => t.targetRoom === to.room && t.targetX === to.x && t.targetY === to.y));
             const served = Object.values(config.stations).some(st => p.rooms.includes(st.town));
-            // a town with a station: outside its door. Without one (Shirakawa-go, Toyama): no station cell.
+            // a town with a station: outside its door. Without one (Shirakawa-go, Toyama, Karuizawa): no station cell.
             // The overseas place has no station either: outside its airport's door (#218)
             if (served) assert.ok(from.some(k => config.stations[k]), `${p.key}: ${JSON.stringify(to)} is not outside a station door`);
             else if (p.overseas) assert.ok(from.some(k => config.airports[k] && config.airports[k].serves === to.room), `${p.key}: ${JSON.stringify(to)} is not outside its airport's door`);
-            else assert.ok(from.length && HOKURIKU.includes(p.key), `${p.key}: ${JSON.stringify(to)} is not inside a door into it`);
+            else assert.ok(from.length && (HOKURIKU.includes(p.key) || p.key === 'Karuizawa'), `${p.key}: ${JSON.stringify(to)} is not inside a door into it`);
         }
         // a town with no station is entered as a traveller from the railhead walks in: by the door or seam
         // from the room the fewest room changes from a station. Shirakawa-go by its west road from Kanazawa

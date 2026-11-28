@@ -262,6 +262,7 @@ LANDMARKS = [
     ('toyama-tram-stop_', 'the tram stop', (3, 1), {'rooms': ('Toyama',)}),   # beside the shelter
     ('toyama-ramen_', 'the black ramen shop', (2, 4), {'rooms': ('Toyama',)}),   # the old street, beside its door
     ('toyama-port-tower_', 'the port observation tower', (-1, 6), {'rooms': ('Toyama',)}),   # the quay at its foot, west of the entrance
+    ('karuizawa-fingerpost_', 'the road from Tokyo', (-1, 1), {'rooms': ('Karuizawa',)}),   # the verge beside its foot, clear of the road and the gate's landing cells
     # Inside a station (issue #73): the west end of the platform, by the
     # vending machine — clear of the train doors, the arrival cell and the exit
     ('white-vending-machine-top', 'the platform', {'indoors': True}),

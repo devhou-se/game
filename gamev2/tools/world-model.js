@@ -427,7 +427,8 @@ class WorldModel {
         const out = {};
         for (const k of keys) {
             const city = (config.cities || {})[k];
-            const towns = [...new Set((city ? (city.rooms || []).map((r) => r.room) : [k]).map((r) => Places.of(config, r)))].filter((t) => t);
+            // a city is at its own dot: a district that is a place of its own (Karuizawa) does not pull it
+            const towns = places[k] ? [k] : [...new Set((city ? (city.rooms || []).map((r) => r.room) : [k]).map((r) => Places.of(config, r)))].filter((t) => t);
             if (!towns.length) continue;
             const mean = (f) => towns.reduce((sum, t) => sum + f(places[t]), 0) / towns.length;
             out[k] = [mean((p) => p.lon) * Math.cos(38 * Math.PI / 180), -mean((p) => p.lat)];

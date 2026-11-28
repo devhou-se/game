@@ -43,8 +43,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         const { problems, reach } = world.survey(null, { npcs: false });
         assert.strictEqual(problems.length, 0, JSON.stringify(problems));
         const byRoom = world.reachByRoom(reach);
-        for (const k of ['Tokyo', 'Market', 'Palace', 'Park']) {
-            assert.ok(byRoom[k].length > 300, k);
+        for (const k of ['Tokyo', 'Market', 'Palace', 'Park', 'Karuizawa']) {
+            assert.ok(byRoom[k].length > (k === 'Karuizawa' ? 150 : 300), k);   // Karuizawa is a road through woods
             assert.strictEqual(JSON.stringify(world.lint(k).errors), '{}', k);
         }
         const city = world.lint('TokyoCity');
@@ -65,7 +65,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         assert.strictEqual(JSON.stringify(city.warns), '{}');
         assert.ok(world.drawOrder('TokyoCity').some(t => /^tree-3-top/.test(t.key)), 'the woods are part of the render');
         assert.ok(world.npcsIn('TokyoCity').every(n => n.homeRoom && rm.checkBoundary(n.gridX, n.gridY, 'TokyoCity')));
-        assert.strictEqual(world.npcsIn('TokyoCity').length, ['Tokyo', 'Market', 'Palace', 'Park'].reduce((n, k) => n + world.npcsIn(k).length, 0));
+        assert.strictEqual(world.npcsIn('TokyoCity').length, ['Tokyo', 'Market', 'Palace', 'Park', 'Karuizawa'].reduce((n, k) => n + world.npcsIn(k).length, 0));
 
         // --stitch=0: the five rooms, joined by seam teleports, as ?stitch=0 plays them
         const legacy = worldWith(false).world;

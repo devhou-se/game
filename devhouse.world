@@ -29,6 +29,13 @@
       "height": 2816
     },
     {
+      "fileName": "gamev2/tiled/karuizawa.tmj",
+      "x": -3072,
+      "y": 512,
+      "width": 3072,
+      "height": 2560
+    },
+    {
       "fileName": "gamev2/tiled/osaka.tmj",
       "x": -6528,
       "y": 3904,

@@ -101,6 +101,8 @@ const Interactions = {
         // the home city (issue #218)
         { kind: 'clocks', group: 'flavour', pattern: /^sfb-clocks-station/, footprint: true, say: 'everybody meets under the clocks. nobody has ever caught a train here' },
         { kind: 'sea-lions', group: 'flavour', pattern: /^sfb-sea-lions/, footprint: true, say: 'the sea lions bark at you. one of them is eating somebody\'s chips' },
+        // the fingerpost inside Karuizawa's gate, out of Tokyo's west gate (issue #260)
+        { kind: 'fingerpost', group: 'flavour', pattern: /^karuizawa-fingerpost/, footprint: true, say: 'east, through the gate: Tokyo. west, up the road through the larches: Karuizawa' },
         // Odori Park in the snow festival (issue #219): the corn tent, the sculptures, the frozen fountain
         { kind: 'corn', group: 'flavour', pattern: /^snowfest-stall-corn/, footprint: true, say: 'grilled corn, butter and soy sauce. the queue starts somewhere behind you' },
         { kind: 'snow-castle', group: 'flavour', pattern: /^snow-sculpture-castle/, footprint: true, say: 'a castle keep carved out of packed snow. the board says please do not climb it' },

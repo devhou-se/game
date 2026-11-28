@@ -229,6 +229,39 @@ station: the owner's rule is that small places are walked to from their town, no
   7-Eleven / vending / pond spots. Fourteen devhouse 2 placements were re-homed there with `--rehome`
   (see `blog-pipeline.md`).
 
+### Karuizawa: out of Tokyo's west gate, on foot (issues #68, #256; part 1 is #260)
+
+The mountain resort devhouse 2's Damian and Julia went to on 1-2 November 2025. A small place with NO
+station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth district of `TokyoCity`**, a
+48x40 generated room (`tools/generate_karuizawa.py`, art from `tools/generate_karuizawa_art.py`) at world cell
+`(-48, 8)`, west of the `Tokyo` room, entered through Tokyo's west gate (see The west gate in
+`stitched-city.md`: the same generator reopens it).
+
+- **What is there now** (part 1: the room and the gate; room cells): the gate on the east edge, `(47, 34..35)`,
+  on Tokyo's own brick; a two-cell packed-dirt road (`dirt-outside-autotile`) west from it along rows 34-35 to
+  column 14, then north up columns 14-15 to row 10; an open clearing at the head of it, `(10..21, 5..11)`;
+  solid woods everywhere else, so the gate cells are the only open cells on the room's edge. The woods are
+  `tree-green`, Tokyo's tree, until the next part draws the larches. The **fingerpost**
+  (`karuizawa-fingerpost_0_0`, 1x2) stands on the verge inside the gate, foot at `(44, 33)`, beside the cell
+  the gate lands you on with `?stitch=0`; bumping it reads which way is Tokyo and which Karuizawa
+  (`Interactions.js`, kind `fingerpost`). The falls, the larches, the corn stall and the shopfronts of
+  Kyu-Karuizawa Ginza are the later parts of #256: each adds its sprites to the art tool's `SPRITES` and its
+  pieces to the generator.
+- **No track.** The room has no `train-track*` tile and must not get one: the city's ambient train runs on
+  the topmost track row of the whole stitched room, and the Palace line's cutting passes under Karuizawa
+  three rows south of its last row.
+- **The Map**: `places.Karuizawa` (`geo [138.63, 36.35]`, `"minor": true`) is the first small place: a dot of
+  its own north-west of Tokyo's, its label laid out after the towns' (`Places.layout`). A room that is its
+  own place wins over the city it is stitched into, so the gold ring moves from Tokyo's dot to Karuizawa's
+  as you walk through the gate. Debug map-click travel lands inside the gate, Karuizawa `(44, 34)`
+  (`Places.arrival`). In the studio the city stays at Tokyo's own dot (`WorldModel.geoOf`).
+- **Blog pipeline**: one district, `larch-road` (`tools/districts.py`), and one named spot, `the road from
+  Tokyo` (beside the fingerpost; `LANDMARKS` in `tools/blog_to_npc.py`, `rooms:`-scoped). No placement has
+  been re-homed there yet.
+- **Build order**: `generate_karuizawa_art.py`, `generate_karuizawa.py`, `districts.py`,
+  `config_to_tiled.py Karuizawa Tokyo`, `sync_cities.py`, `make_worldmap.py`, then
+  `play.js lint Karuizawa Tokyo TokyoCity`. Both tools are in `check_generators.py`.
+
 ### Hokkaido: Sapporo and Asahikawa (issue #43)
 
 Two generated towns reachable only by train (`SapporoStation`, `AsahikawaStation` in

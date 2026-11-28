@@ -46,8 +46,8 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         const shrine = host.transporters.filter((t) => t.targetRoom === 'ShrineTokyo1');
         assert.deepStrictEqual(shrine.map((t) => [t.gridX, t.gridY]), [[30, 20]]);
         assert.strictEqual(c.rooms.ShrineTokyo1.name, 'Palace Shrine');
-        // and the host's other ways out are the seams it always had
-        assert.deepStrictEqual(host.transporters.map((t) => t.targetRoom), ['Market', 'Market', 'ShrineTokyo1', KEY, KEY]);
+        // and the host's other ways out are its seams: east into Market, and the west gate to Karuizawa (#260)
+        assert.deepStrictEqual(host.transporters.map((t) => t.targetRoom), ['Market', 'Market', 'Karuizawa', 'Karuizawa', 'ShrineTokyo1', KEY, KEY]);
     });
 
     test('nobody stands on a palace door or the cell in front of it on any date, and no blog spot stands a visitor there (#215)', () => {

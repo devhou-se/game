@@ -1,15 +1,15 @@
 # The stitched city (TokyoCity)
 
-How the four Tokyo districts are merged into one runtime room, and what every system and tool has to know about it.
+How the five Tokyo districts are merged into one runtime room, and what every system and tool has to know about it.
 
 A "see X" in the text names a section; if it is not in this file, the index in [`../CLAUDE.md`](../CLAUDE.md) says which file has it.
 
 ### Stitched cities: one continuous Tokyo (issues #40 / #41)
 
-Tokyo, Market, Palace and Park (room KEYS: the player reads their display names, "Imperial Palace",
-"Asakusa", "Marunouchi", "Park", issue #219 — see `name` in `maps-and-rooms.md`) are still four Tiled maps and four room keys in `config.json` — but at
+Tokyo, Market, Palace, Park and Karuizawa (room KEYS: the player reads their display names, "Imperial Palace",
+"Asakusa", "Marunouchi", "Park", "Karuizawa", issue #219 — see `name` in `maps-and-rooms.md`) are still five Tiled maps and five room keys in `config.json` — but at
 load they are merged into ONE runtime room, `TokyoCity`, so you walk between them with no fade, no input
-block and no reload, and the next district is on screen before you reach it. (There were five until issue #68 deleted Machi, a made-up town west of Tokyo.) Osaka, Sapporo and
+block and no reload, and the next district is on screen before you reach it. (Issue #68 deleted Machi, a made-up town west of Tokyo; issue #260 put Karuizawa, a real one, where it stood: see The west gate below.) Osaka, Sapporo and
 Asahikawa were always single maps; interiors and trains keep their fade.
 
 - **Data** — config `cities`: `{"TokyoCity": {"name", "rooms": [{"room", "x", "y"}...], "drop", "patch", "backdrop"}}`.
@@ -26,8 +26,8 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   district's own map instead: `findWalkableNear`, `?stitch=0`,
   `tools/play.js` and `tools/blog_to_npc.py` read the district data and never see a patch.
 - **Merge** — `src/systems/CityStitcher.js` (`build`): layers, objects, signage and door transporters are
-  translated into merged cells (the union's top-left is 0,0 — Tokyo is at 0,1, Market at
-  58,0); the 18 hidden seam transporters (target = a sibling district) are dropped; `RoomManager.rooms`
+  translated into merged cells (the union's top-left is 0,0 — Karuizawa is at 0,8, Tokyo at 48,1, Market at
+  106,0); the 22 hidden seam transporters (target = a sibling district) are dropped; `RoomManager.rooms`
   gets the city next to its districts, which stay as data and are never entered. **`config.rooms` is not
   touched** — it still has exactly the authored rooms, so `tools/blog_to_npc.py`, the world map, the
   generators and the seam transporters themselves are unchanged.
@@ -44,9 +44,9 @@ Asahikawa were always single maps; interiors and trains keep their fade.
 - **The woods** — the union is L-shaped and the camera is clamped to its bounding box, so every cell no
   district covers is filled by `CityStitcher.buildBackdrop` from config `backdrop`: grass, unevenly spaced
   trees, shrubs, the missing kerb of the road down Palace's west side (`edges`), and the Palace railway
-  carried on west through a cutting (`extend`: it runs off the city's west edge now that no district
-  stands there; a line that would run into another district stops `extendStop` cells short of it, so the wood
-  closes over its end). It is scenery: `RoomManager.checkBoundary` only admits
+  carried on west through a cutting (`extend`: it runs off the city's west edge, under Karuizawa, whose
+  last row is world row 47, three north of the track at row 50; a line that would run into another district
+  stops `extendStop` cells short of it, so the wood closes over its end). It is scenery: `RoomManager.checkBoundary` only admits
   district cells. Backdrop layers are named `Backdrop ...`, never `Floor`.
 - **Depth** — Y-sorted depth is 10 per row, and 109 rows would climb past the name labels (900) and the HUD
   (1000), so a city has a `depthScale` (0.77). Anything Y-sorted must go through **`roomManager.yDepth()`**
@@ -101,16 +101,25 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   colliders lost to an overlap, a `patch` gone wrong; `Backdrop ...` layers are scenery and are not linted
   as objects), `lint <District>` is unchanged, `render TokyoCity out.png` draws the city with its woods,
   and `reach` prints the walkable cells of every room as JSON. `--stitch=0` (play.js) / `?stitch=0`
-  (studio) give the four rooms joined by the 18 seam transporters, i.e. what the game's `?stitch=0` plays.
+  (studio) give the five rooms joined by the 22 seam transporters, i.e. what the game's `?stitch=0` plays.
   `tools/blog_to_npc.py` has no node at hand, so it carries a ten-line port of "who sits where, later room
   owns the overlap" (`city_districts` / `city_reachable`); `tools/test_blog_to_npc.py` pins it to
   `play.js reach` for every cell of every room.
-- **The west gate is closed** (issues #147, #68): Machi's dirt path used to come in through a two-cell gate
-  in Tokyo's west fence (Tokyo cells `(0, 41..42)`, a brick apron between a lantern pair). Machi is deleted,
-  so those two cells are fenced like the rest of that edge (`fence-barriers_0_2` + collider, brick `edge-w`
-  under it) and their seam transporters are gone; the lantern pair still stands inside the fence and Tokyo's
-  road corner beside it is still the square junction box #147 laid (kerb down column 2, `road-corner-sw` at
-  `(2,43)`, `road-plain` inside). Tokyo's column 0 is now the west edge of the city: there is no wood west of it.
+- **The west gate leads to Karuizawa** (issues #147, #68, #260): a two-cell gate in Tokyo's west fence
+  (Tokyo cells `(0, 41..42)`, a brick apron between a lantern pair). #147 paved it for the dirt path from
+  Machi; #68 deleted that town and fenced the gap; #260 opened it again for the road to `Karuizawa`, the
+  48x40 district west of Tokyo (world cell `(-48, 8)`: its rows 34-35 are Tokyo's rows 41-42). The two cells
+  are plain brick (`flat-grey-brick-autotile_center`, no fence, no collider) and carry hidden seam
+  transporters to Karuizawa `(44, 34..35)`; Karuizawa's gate cells `(47, 34..35)` are the same brick and
+  lead back to Tokyo `(3, 41..42)`. The fence, its collider and the `edge-w` brick stay at `(0,40)` and
+  `(0,43)`, the lantern pair still stands inside, and Tokyo's road corner beside it is still the square
+  junction box #147 laid (kerb down column 2, `road-corner-sw` at `(2,43)`, `road-plain` inside).
+  **`tools/generate_karuizawa.py` owns those two cells of the ported Tokyo map** as well as the whole of
+  Karuizawa (as `generate_palace.py` owns its doors there): re-run it, do not hand-edit them. The city is
+  now 165x109, Tokyo's column 0 is merged column 48, and Karuizawa's column 0 is the west edge of the
+  city. Karuizawa has no `train-track*` tile and must not get one above world row 50: the ambient train
+  runs on the topmost track row of the whole city room. It is a place of its own on the Map
+  (`places.Karuizawa`, `minor`; see Karuizawa in `landmarks-and-towns.md`).
 - **Road junctions are plain boxes** (issue #179): the port drew every three-cell road straight through
   each junction, so a joining road's mouth was closed by the other road's kerb and its centre line ran
   on into the junction. **`python3 tools/square_junctions.py`** lays each of the fourteen 3x3 boxes in

@@ -84,6 +84,11 @@ DISTRICTS = {
           'Ueno Park and for Shibuya and Meiji Jingu until those are built',
           (4, 3, 52, 37), stand=(30, 18)),
     ],
+    'Karuizawa': [
+        d('larch-road', 'Larch road',
+          "the packed-dirt road in from Tokyo's west gate, through the larch woods to a quiet clearing",
+          (10, 5, 46, 36), stand=(30, 33)),
+    ],
     # --- Hokkaido ---------------------------------------------------------
     'Sapporo': [
         d('station-front', 'Sapporo Station front',

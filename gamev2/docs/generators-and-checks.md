@@ -128,7 +128,9 @@ crossings, traffic lights, track) counts neither for nor against a city.
   the two have come apart. Never leave it failing: a generator that has drifted silently drops the hand
   edit the next time someone runs it. (That is what had happened to the generator of Machi, a town since deleted: it wiped the blog
   NPCs, the signage and the stitched city's gate colliders, and resurrected the legacy `Konbini` room.)
-  Ported rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth.
+  Ported rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth. A generator
+  may still own a few cells of one, and re-makes that edit every run: `generate_palace.py` its doors in Tokyo,
+  `generate_karuizawa.py` Tokyo's two west gate cells `(0, 41..42)` and their seam transporters (issue #260).
 - `tools/generate_stations.py` keeps an existing station room's NPCs (the blog pipeline parks dated NPC
   states there), and `tools/seal_tracks.py` takes room names; a track cell with a road under it (Palace's level
   crossing) is left open.
