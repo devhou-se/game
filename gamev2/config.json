@@ -3699,6 +3699,9 @@
             "2025-10-29": {
               "present": false
             },
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-02": {
               "present": false
             },
@@ -22293,6 +22296,9 @@
           "present": false,
           "sprite": "damian_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-02": {
               "present": false
             },
@@ -24084,6 +24090,9 @@
           "present": false,
           "sprite": "damian_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-12": {
               "dialogue": [
                 "Took the shinkansen from Hakata to Okayama today, said goodbye to Julia and everything.",
@@ -29599,6 +29608,9 @@
           "present": false,
           "sprite": "damian_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-13": {
               "dialogue": [
                 "Woke up early, took the shinkansen from Okayama to Himeji, Bailey scored a Hello Kitty ticket.",
@@ -46125,6 +46137,9 @@
           "present": false,
           "sprite": "damian_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-05": {
               "dialogue": [
                 "Started the day with ryokan breakfast, an onsen, and Shirakawa-go wrapped in morning fog. Gorgeous.",
@@ -52062,7 +52077,100 @@
         }
       ],
       "name": "Karuizawa",
-      "npcs": [],
+      "npcs": [
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "damian_front",
+            "left": "",
+            "right": "damian_side",
+            "up": "damian_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 13,
+          "gridY": 8,
+          "name": "Damian",
+          "present": false,
+          "sprite": "damian_front",
+          "states": {
+            "2025-11-01": {
+              "dialogue": [
+                "Slept in a bit, crammed the suitcase shut, and Julia and I hit Tokyo Station for the shinkansen to Karuizawa.",
+                "Ate a self-heating bento on the train, saw Shiraito Falls (pretty, but small!), did a little hiking.",
+                "Walked the old Karuizawa Ginza shopping street, ramen for dinner, then a bar with cigars and whiskey. Not bad!",
+                "Tomorrow: Toyama. Catch you on the rails!"
+              ],
+              "gridX": 13,
+              "gridY": 8,
+              "photo": "544",
+              "posts": [
+                {
+                  "id": "544",
+                  "lines": 4,
+                  "title": "\u300c\u30c7\u30a3\u30fc\u30e9\u30fc\u30ba\u30c1\u30e7\u30a4\u30b9\u300d\u3092\u59cb\u3081\u3066",
+                  "url": "https://blog.devhou.se/544/"
+                }
+              ],
+              "present": true,
+              "voice": null
+            },
+            "2025-11-02": {
+              "present": false
+            }
+          }
+        },
+        {
+          "autoFlip": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "dialogue": [],
+          "directionalSprites": {
+            "down": "julia_front",
+            "left": "",
+            "right": "julia_side",
+            "up": "julia_back"
+          },
+          "gridOffsetX": 0,
+          "gridOffsetY": 0,
+          "gridX": 21,
+          "gridY": 8,
+          "name": "Julia",
+          "present": false,
+          "sprite": "julia_front",
+          "states": {
+            "2025-11-02": {
+              "dialogue": [
+                "Karuizawa kicked off Dealers Choice week and Damian's plan was all vibes, all good ones.",
+                "Shiraito waterfall was smaller than I pictured but the water just shoots out of the hillside, so pretty.",
+                "We got shut out of four restaurants at 5pm before finding Banri for ramen, gyoza, and beer, then somehow ended up smoking cigars at a cocktail lounge.",
+                "Corn from a bus stop vendor, mystery pillow, asleep by eleven, absolutely no regrets."
+              ],
+              "gridX": 21,
+              "gridY": 8,
+              "photo": "572",
+              "posts": [
+                {
+                  "id": "572",
+                  "lines": 4,
+                  "title": "Karuizawa mountains",
+                  "url": "https://blog.devhou.se/572/"
+                }
+              ],
+              "present": true,
+              "voice": null
+            },
+            "2025-11-03": {
+              "present": false
+            }
+          }
+        }
+      ],
       "objects": [],
       "transporters": [
         {
@@ -76969,6 +77077,9 @@
             "2025-10-29": {
               "present": false
             },
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-02": {
               "present": false
             },
@@ -81089,6 +81200,9 @@
               "present": false
             },
             "2025-10-07": {
+              "present": false
+            },
+            "2025-11-01": {
               "present": false
             },
             "2025-11-02": {
@@ -88306,6 +88420,9 @@
               "present": false
             },
             "2025-10-29": {
+              "present": false
+            },
+            "2025-11-01": {
               "present": false
             },
             "2025-11-02": {
@@ -106120,6 +106237,9 @@
             "2025-10-29": {
               "present": false
             },
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-02": {
               "present": false
             },
@@ -114462,6 +114582,9 @@
             "2025-10-30": {
               "present": false
             },
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-02": {
               "present": false
             },
@@ -121141,6 +121264,9 @@
           "present": false,
           "sprite": "damian_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-03": {
               "dialogue": [
                 "Woke up early, rode the bus all the way to Shirakawa-go, McDonald's for breakfast like a true tourist.",
@@ -137452,24 +137578,7 @@
               "present": false
             },
             "2025-11-01": {
-              "dialogue": [
-                "Slept in a bit, crammed the suitcase shut, and Julia and I hit Tokyo Station for the shinkansen to Karuizawa.",
-                "Ate a self-heating bento on the train, saw Shiraito Falls (pretty, but small!), did a little hiking.",
-                "Walked the old Karuizawa Ginza shopping street, ramen for dinner, then a bar with cigars and whiskey. Not bad!",
-                "Tomorrow: Toyama. Catch you on the rails!"
-              ],
-              "gridX": 1,
-              "gridY": 7,
-              "photo": "544",
-              "posts": [
-                {
-                  "id": "544",
-                  "lines": 4,
-                  "title": "\u300c\u30c7\u30a3\u30fc\u30e9\u30fc\u30ba\u30c1\u30e7\u30a4\u30b9\u300d\u3092\u59cb\u3081\u3066",
-                  "url": "https://blog.devhou.se/544/"
-                }
-              ],
-              "present": true
+              "present": false
             },
             "2025-11-02": {
               "present": false
@@ -137751,25 +137860,7 @@
               "present": false
             },
             "2025-11-02": {
-              "dialogue": [
-                "Karuizawa kicked off Dealers Choice week and Damian's plan was all vibes, all good ones.",
-                "Shiraito waterfall was smaller than I pictured but the water just shoots out of the hillside, so pretty.",
-                "We got shut out of four restaurants at 5pm before finding Banri for ramen, gyoza, and beer, then somehow ended up smoking cigars at a cocktail lounge.",
-                "Corn from a bus stop vendor, mystery pillow, asleep by eleven, absolutely no regrets."
-              ],
-              "gridX": 1,
-              "gridY": 5,
-              "photo": "572",
-              "posts": [
-                {
-                  "id": "572",
-                  "lines": 4,
-                  "title": "Karuizawa mountains",
-                  "url": "https://blog.devhou.se/572/"
-                }
-              ],
-              "present": true,
-              "voice": null
+              "present": false
             },
             "2025-11-03": {
               "present": false
@@ -141207,6 +141298,9 @@
           "present": false,
           "sprite": "damian_front",
           "states": {
+            "2025-11-01": {
+              "present": false
+            },
             "2025-11-02": {
               "dialogue": [
                 "Checked out of Karuizawa, grabbed an apple pie from a tiny boulangerie, then shinkansen'd all the way to Toyama.",

@@ -3,6 +3,7 @@
 // Part 2 (#261) is Kyu-Karuizawa Ginza: three shopfronts where the road in turns north, each with a shop
 // floor behind its door (tools/generate_houses.py --shops Karuizawa).
 // #262 is part 3: Shiraito Falls over its pool, the bus stop, the corn stall and the larch woods.
+// #263 is part 4: the two posts about the place are told there, and Bailey starts 2 November beside Julia.
 module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWith }) => {
     const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
     const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
@@ -294,6 +295,74 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         }
     });
 
+    test('Karuizawa: Damian\'s day at Shiraito Falls (544) and Julia\'s at the corn stall (572) are told there, and Bailey starts 2 November beside her (#263)', () => {
+        const config = realConfig(), T = game('Trips');
+        // [who, the day, the post, the cell the pipeline's row gives (the test above), a line only that post has]
+        const told = [['Damian', '2025-11-01', '544', [FALLS.x0 + 1, FALLS.y0 + 5], /saw Shiraito Falls/],
+            ['Julia', '2025-11-02', '572', [STALL.x0 + 2, STALL.y0 + 2], /Corn from a bus stop vendor/]];
+        const seen = onFoot();
+        const state = (room, who, date) => (((cfg.rooms[room].npcs || []).find((n) => n.name === who) || {}).states || {})[date];
+        for (const [who, date, post, [x, y], says] of told) {
+            const st = state(KEY, who, date);
+            assert.ok(st, `${who} ${date} is not in ${KEY}`);
+            assert.deepStrictEqual([st.present, st.gridX, st.gridY, st.photo, st.posts.map((p) => p.id).join()], [true, x, y, post, post], `${who} ${date}`);
+            assert.ok(st.dialogue.length === 4 && says.test(st.dialogue.join(' ')), `${who} ${date}: the lines went along`);
+            assert.ok(fs.existsSync(path.join(GV2, 'assets', 'photos', `${post}.png`)), `${post}.png`);
+            // open grass walked to from the gate, off the road, and not a door or the cell in front of one
+            assert.ok(seen.has(`${x},${y}`) && name(layer(KEY, 'Floor')[`${x},${y}`]).startsWith('grass'), `${x},${y}`);
+            assert.ok(!cfg.rooms[KEY].transporters.some((t) => Math.abs(t.gridX - x) + Math.abs(t.gridY - y) <= 1), `${who} stands at a doorway`);
+            // nowhere else that day: Tokyo Station's platform, where both stood in, keeps a bare "absent"
+            assert.deepStrictEqual(state('TokyoStation', who, date), { present: false });
+            for (const key of Object.keys(cfg.rooms)) {
+                const other = key === KEY ? null : state(key, who, date);
+                assert.ok(!other || other.present === false, `${who} ${date} is also in ${key}`);
+            }
+            // as the game resolves the day: the one person in Karuizawa, and gone the day after (Toyama)
+            const here = (d) => T.membersByRoom(config, d, {}).filter((g) => g.room === KEY).flatMap((g) => g.members.map((m) => [m.name, m.x, m.y]));
+            assert.deepStrictEqual(plain(here(date)), [[who, x, y]]);
+            const next = T.addDays(date, 1);
+            assert.ok(!here(next).some(([n]) => n === who), `${who} is still in ${KEY} on ${next}`);
+            assert.ok(T.membersByRoom(config, next, {}).some((g) => g.room === 'Toyama' && g.members.some((m) => m.name === who)), `${who} is not in Toyama on ${next}`);
+            // walk up from the gate and bump them: the post's lines, its photo and its caption
+            for (const stitch of [true, false]) {
+                const { world } = worldWith(stitch);
+                world.date = date;
+                world.enter(KEY, W - 4, 34);
+                const to = world.roomManager.resolve(KEY, x, y + 1);
+                const route = world.path(to.x, to.y), tag = `${stitch ? 'stitched' : '?stitch=0'} ${who}`;
+                assert.ok(route, `${tag}: no way on foot to the cell below`);
+                for (const dir of route) assert.ok(world.step(dir).moved, tag);
+                const bump = world.step('n');
+                assert.ok(!bump.moved && bump.interaction && bump.interaction.kind === 'npc', `${tag}: nobody to bump`);
+                const npc = bump.interaction.npc;
+                assert.deepStrictEqual(plain([npc.name, npc.dialogue, npc.photo, npc.posts.map((p) => p.id)]), [who, st.dialogue, post, [post]], tag);
+            }
+        }
+        assert.ok(!T.membersByRoom(config, '2025-11-03', {}).some((g) => g.room === KEY), 'somebody stays on after the 2nd');
+
+        // 2 November, playing Bailey: Julia here, Dylan in Osaka and Damian in Toyama are one each, all outdoors,
+        // and Karuizawa is the nearest to home (one walk through the gate), so the day opens beside Julia.
+        // Until this ticket it opened in Osaka, beside Dylan. Measured over every devhouse 2 day and
+        // character: this is the only start that moved
+        const hops = T.hopsFrom(config, HOST);
+        assert.ok(hops[KEY] === 1 && hops[KEY] < hops.Osaka && hops[KEY] < hops.Toyama, JSON.stringify([hops[KEY], hops.Osaka, hops.Toyama]));
+        for (const newPlayer of [false, true]) {
+            const at = T.startFor(config, '2025-11-02', { played: 'bailey', newPlayer });
+            assert.deepStrictEqual({ ...at }, { room: KEY, x: 19, y: 10 });
+            const [, , , [jx, jy]] = told[1];
+            assert.ok(Math.max(Math.abs(at.x - jx), Math.abs(at.y - jy)) <= 2 && seen.has(`${at.x},${at.y}`), 'beside Julia, on a cell the gate reaches');
+            assert.ok(!cfg.rooms[KEY].transporters.some((t) => t.gridX === at.x && t.gridY === at.y) && !(at.x === jx && at.y === jy));
+        }
+        // nobody else's start moves: the four are one to a room that day and Bailey's is the home room, which
+        // wins the tie; and on the 1st Damian alone at the falls does not outvote the three in Asakusa
+        for (const played of [undefined, 'james', 'damian', 'dylan', 'julia']) {
+            assert.deepStrictEqual({ ...T.startFor(config, '2025-11-02', { played }) }, { room: HOST, x: 32, y: 21 }, `2 November as ${played}`);
+        }
+        for (const played of [undefined, 'james', 'bailey', 'damian', 'dylan', 'julia']) {
+            assert.strictEqual(T.startFor(config, '2025-11-01', { played }).room, 'Market', `1 November as ${played}`);
+        }
+    });
+
     test('Kyu-Karuizawa Ginza: a bakery, a souvenir shop and a lounge you can enter, each with its list (#261)', () => {
         // the fronts: three of the room's own, side by side on the north side of the road in, lit at night
         const fronts = [['karuizawa-shop-bakery_0_0', 17], ['karuizawa-shop-jam_0_0', 21], ['karuizawa-shop-lounge_0_0', 25]];
@@ -319,7 +388,9 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         const shops = { ShopKaruizawa1: [18, 'Bakery · Karuizawa', 'bakery'], ShopKaruizawa2: [22, 'Souvenirs · Karuizawa', 'souvenirs'],
             ShopKaruizawa3: [26, 'Lounge · Karuizawa', 'lounge'] };
         assert.deepStrictEqual(Object.keys(cfg.rooms).filter((k) => /^ShopKaruizawa/.test(k)).sort(), Object.keys(shops));
-        const stood = new Set(cfg.rooms[KEY].npcs.flatMap((n) => (n.states || [n]).map((st) => `${st.gridX},${st.gridY}`)));
+        // (everywhere anybody is put: the def's own cell and each dated state's)
+        const stood = new Set(cfg.rooms[KEY].npcs.flatMap((n) => [n, ...Object.values(n.states || {})].map((st) => `${st.gridX},${st.gridY}`)));
+        assert.ok(stood.has('13,8') && stood.has('21,8'), 'the two posts told here are counted');
         for (const [key, [x, title, menu]] of Object.entries(shops)) {
             const r = cfg.rooms[key], d = cfg.rooms[KEY].transporters.find((t) => t.gridX === x && t.gridY === 32);
             // the door is the one open cell of the front's 3x4 footprint

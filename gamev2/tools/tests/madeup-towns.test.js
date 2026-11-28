@@ -43,7 +43,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
             ['Osaka', 'Dylan', '2025-11-05', '636', /Nagahama/],
             ['Osaka', 'Dylan', '2025-11-07', '681', /Lake Biwa/],
             ['FukuokaStation', 'Dylan', '2025-11-08', '694', /Fukuoka/],   // off the train at Hakata, where the others are
-            ['TokyoStation', 'Julia', '2025-11-02', '572', /Karuizawa/],   // the morning train out of Tokyo
+            ['Karuizawa', 'Julia', '2025-11-02', '572', /Karuizawa/],      // at the corn stall, since Karuizawa was built (#263); Tokyo Station's platform until then
         ];
         for (const [room, name, date, post, says] of moved) {
             const st = state(room, name, date);

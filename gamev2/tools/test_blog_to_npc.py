@@ -9,6 +9,7 @@ config.json.
 """
 import contextlib
 import copy
+import datetime
 import io
 import json
 import os
@@ -277,6 +278,14 @@ OFF_THE_PLATFORM = [('Julia', '2025-11-03'), ('Damian', '2025-11-05'), ('Dylan',
                     ('Dylan', '2025-11-05'), ('Bailey', '2025-11-16'), ('Dylan', '2025-11-01'),
                     ('Julia', '2025-11-12')]
 
+# issue #263: the two posts about Karuizawa stand there, moved off Tokyo
+# Station's platform by --rehome once the place was built (#260, #262):
+# (NPC, date) -> (spot, cell, post)
+IN_KARUIZAWA = {
+    ('Damian', '2025-11-01'): ('Karuizawa · Shiraito Falls', (13, 8), '544'),
+    ('Julia', '2025-11-02'): ('Karuizawa · the corn stall', (21, 8), '572'),
+}
+
 
 def test_shipped_whereabouts(cfg):
     """config.json's history is consistent across rooms: on every dated day
@@ -318,6 +327,28 @@ def test_shipped_whereabouts(cfg):
         if room_key is not None:
             assert not b.is_indoors(cfg, room_key), f'{name} {date} ({room_key})'
             assert rooms_on(cfg, name, date) == [room_key], f'{name} {date} ({room_key})'
+
+    # the Karuizawa days (#263): at the spot the post is about, with what the
+    # post gave them, Tokyo Station saying absent; and --rehome to the same
+    # spot again would leave them on the same cell
+    spots = b.find_spots(cfg)
+    for (name, date), (spot, cell, post_id) in IN_KARUIZAWA.items():
+        assert spots[spot][0] == 'Karuizawa' and rooms_on(cfg, name, date) == ['Karuizawa'], (name, date, rooms_on(cfg, name, date))
+        state = b.npc_in_room(cfg['rooms']['Karuizawa'], name)['states'][date]
+        assert (state['gridX'], state['gridY']) == cell, (name, date, state['gridX'], state['gridY'])
+        assert [p['id'] for p in state['posts']] == [post_id] and state['photo'] == post_id and len(state['dialogue']) == 4
+        assert cell not in b.doorway_cells(cfg, 'Karuizawa'), f'{name} {date}: {cell} is a door or in front of one'
+        assert b.npc_in_room(cfg['rooms']['TokyoStation'], name)['states'][date] == {'present': False}
+        for station in cfg['stations']:
+            assert station not in rooms_on(cfg, name, date)
+        again = copy.deepcopy(cfg)
+        with contextlib.redirect_stdout(io.StringIO()):
+            b.rehome(again, name, date, spot, spots)
+        assert b.npc_in_room(again['rooms']['Karuizawa'], name)['states'][date] == state, f'{name} {date}: a second --rehome moved it'
+    # ... and the day after, each is with the others again and Karuizawa is empty
+    for (name, date) in IN_KARUIZAWA:
+        nxt = (datetime.date.fromisoformat(date) + datetime.timedelta(days=1)).isoformat()
+        assert 'Karuizawa' not in rooms_on(cfg, name, nxt), (name, nxt)
 
 
 def test_merge_same_day():

@@ -150,7 +150,10 @@ python3 tools/test_blog_to_npc.py                                   # unit check
   2025) from the palace pond to `Market · Senso-ji temple`, Julia's four Don Quijotes (545, 1 Nov) from the
   palace's vending machines to `Market · the Don Takote discount store`, Dylan's izakaya and karaoke night
   (549, 1 Nov) from a 7-Eleven to `Market · the izakaya`, and Damian's Hakata-to-Okayama shinkansen (745,
-  12 Nov) from Tokyo's Park to `FukuokaStation · the platform`. A district is a target too:
+  12 Nov) from Tokyo's Park to `FukuokaStation · the platform`. Karuizawa (issue #263), once it was built,
+  took the two posts about it off Tokyo Station's platform: Damian's day at the falls (544, 1 Nov) to
+  `Karuizawa · Shiraito Falls` and Julia's corn from the bus stop vendor (572, 2 Nov) to `Karuizawa · the
+  corn stall` (`IN_KARUIZAWA` in `test_blog_to_npc.py`). A district is a target too:
   `--rehome Bailey 2025-11-01 "Market · Asakusa (area)"`.
   The cell is free for the
   whole stay (`occupied_during`: from that date until the NPC's next placement, or until a later trip or

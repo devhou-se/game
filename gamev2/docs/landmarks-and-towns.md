@@ -338,7 +338,7 @@ west along Canal-side Avenue. Devhouse 2's Damian was there on 13 November 2025 
   south to (-330,90) to stay clear and stay the westernmost map. `kansai.test.js` checks that nothing else
   stands in any of the five.
 
-### Karuizawa: out of Tokyo's west gate, on foot (issues #68, #256; parts #260, #261, #262)
+### Karuizawa: out of Tokyo's west gate, on foot (issues #68, #256; parts #260, #261, #262, #263)
 
 The mountain resort devhouse 2's Damian and Julia went to on 1-2 November 2025. A small place with NO
 station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth district of `TokyoCity`**, a
@@ -401,7 +401,19 @@ station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth
 - **Blog pipeline**: one district, `larch-road` (`tools/districts.py`), and three named spots, each
   `rooms:`-scoped in `LANDMARKS` (`tools/blog_to_npc.py`): `Shiraito Falls` (`(13, 8)`, the bank at the
   pool's south-west corner), `the corn stall` (`(21, 8)`, the east end of its counter) and `the road from
-  Tokyo` (beside the fingerpost). No placement has been re-homed there yet.
+  Tokyo` (beside the fingerpost).
+- **The two posts told here** (part 4, issue #263; moved with `--rehome`, see Re-homing a placement in
+  `blog-pipeline.md`): Damian's day at the falls (post 544, 1 November 2025) stands at `Shiraito Falls`,
+  `(13, 8)`, and Julia's corn from the bus stop vendor (572, 2 November) at `the corn stall`, `(21, 8)`;
+  both had been on Tokyo Station's platform, which now says absent on those days. Each is there for the
+  one day (the next post puts Damian in Toyama on the 2nd and Julia there on the 3rd), so the room is empty
+  on every other date. On those two days Karuizawa's dot on the Map is the friends' dot and its label is laid
+  out with the towns' (not for the one being played); on a wide view it stands beside its dot, and on a
+  portrait phone it can still stand off on a leader line, as any label there (`japan-map.test.js`).
+  **Bailey starts 2 November here**, at `(19, 10)` in the bay two cells from Julia: the three friends are
+  one to a room that day (Julia here, Dylan in Osaka, Damian in Toyama) and Karuizawa is one room from home
+  (Where the player starts in `trips-and-dates.md`). `karuizawa.test.js` pins the placements, the walk
+  from the gate to each and that start.
 - **Build order**: `generate_karuizawa_art.py`, `make_prefabs.py` (the larches, the falls and the stall are
   stamped), `generate_karuizawa.py`,
   `generate_houses.py --shops Karuizawa`, `districts.py`,

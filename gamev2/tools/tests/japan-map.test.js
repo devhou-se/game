@@ -385,6 +385,75 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.strictEqual(P.uncovered(course, spots).length, course.length, 'and none stands on the flight\'s course');
     });
 
+    test('the Map on the two days told in Karuizawa: its dot is lit and every label still reads, in every view, whoever is played (#263)', () => {
+        const config = realConfig(), places = P.list(config), T = game('Trips');
+        const on = (date, played) => Array.from(P.present(config, date, { played })).sort();
+        // Damian's day at Shiraito Falls, then Julia's at the corn stall: the small place has friends in it
+        // beside Tokyo's, and on the second day Osaka's and Toyama's (a set the label test above never lays out)
+        assert.deepStrictEqual(on('2025-11-01'), ['Karuizawa', 'TokyoCity']);
+        assert.deepStrictEqual(on('2025-11-02'), ['Karuizawa', 'Osaka', 'TokyoCity', 'Toyama']);
+        // ...never for the one being played, and on no day either side
+        assert.deepStrictEqual(on('2025-11-01', 'damian'), ['TokyoCity']);
+        assert.deepStrictEqual(on('2025-11-02', 'julia'), ['Osaka', 'TokyoCity', 'Toyama']);
+        assert.deepStrictEqual(on('2025-11-02', 'bailey'), ['Karuizawa', 'Osaka', 'Toyama'], 'Bailey starts there, beside Julia');
+        for (const date of ['2025-10-31', '2025-11-03']) assert.ok(!on(date).includes('Karuizawa'), date);
+
+        const hit = (a, b) => a.x1 > b.x0 && a.x0 < b.x1 && a.y1 > b.y0 && a.y0 < b.y1;
+        const fit = game('UIScale.mapFit'), MAX = game('UIScale.MAP_MAX_SCALE');
+        // [name, canvas width in view, text growth, the picture's scale]: as the label test's views are worked out
+        const views = [['desktop 1280x960', 1280, 1, 3], ['landscape phone 844x390', 1280, 1.6, 3]];
+        for (const [winW, winH] of [[320, 780], [360, 840], [360, 800], [390, 844], [412, 915]]) {
+            const l = game('Viewport').layout(winW, winH, true), U = game('UIScale');
+            const W = 1280 - l.crop.left - l.crop.right, down = 1 / l.scale;
+            const k = Math.round(100 * Math.min(U.MAX_TEXT_GROWTH, down > 1.02 ? Math.min(U.MAX_ZOOM, down) : 1)) / 100;
+            views.push([`a ${winW}x${winH} phone`, W, k, fit(W, 960, meta.width, meta.height, true, MAX)]);
+        }
+        let laid = 0;
+        for (const [name, W, k, s] of views) {
+            const bounds = { x: (W - meta.width * s) / 2, y: (960 - meta.height * s) / 2 + 4, w: meta.width * s, h: meta.height * s };
+            const font = Math.round(16 * k);
+            for (const date of ['2025-11-01', '2025-11-02']) {
+                for (const played of [undefined].concat(Array.from(config.members))) {
+                    const present = on(date, played);
+                    // where that player starts the day, and standing in Karuizawa and in Tokyo
+                    const start = P.of(config, T.startFor(config, date, { played }).room);
+                    // (a label as wide as the bold pixel face draws it, 0.5 em a glyph, and with the label
+                    // test's allowance: the spots are not the same ones)
+                    for (const [here, em] of [start, 'Karuizawa', 'TokyoCity'].flatMap((h, i, all) => (all.indexOf(h) === i ? [[h, 0.5], [h, 0.62]] : []))) {
+                        const dots = places.map(p => {
+                            const [x, y] = P.project(meta, p.lon, p.lat);
+                            return { key: p.key, x: Math.round(bounds.x + x * s), y: Math.round(bounds.y + y * s),
+                                r: P.reach(p.key === here, present.includes(p.key)) * k,
+                                minor: p.minor && p.key !== here && !present.includes(p.key),
+                                w: Math.ceil(p.label.length * font * em) + 6, h: Math.ceil(font * 1.2) + 2 };
+                        });
+                        const course = places.flatMap((p, i) => (p.overseas && !present.includes(p.key) ? P.course(dots[i], bounds, k) : []));
+                        const spots = P.layout(dots, bounds, course);
+                        const why = `${name}, ${date} as ${played || 'james'}, at ${here}`;
+                        for (const d of dots) {
+                            const at = spots[d.key];
+                            assert.ok(at.fits, `${why}: no room for ${d.key}'s label`);
+                            assert.ok(at.box.x0 >= bounds.x && at.box.y0 >= bounds.y && at.box.x1 <= bounds.x + bounds.w &&
+                                at.box.y1 <= bounds.y + bounds.h, `${why}: ${d.key}'s label leaves the map`);
+                            assert.ok(!course.some((dash) => hit(at.box, dash)), `${why}: ${d.key}'s label is on the flight's course`);
+                            for (const o of dots) {
+                                if (o !== d) assert.ok(!hit(at.box, spots[o.key].box), `${why}: ${d.key} and ${o.key} labels overlap`);
+                                assert.ok(!hit(at.box, { x0: o.x - o.r, y0: o.y - o.r, x1: o.x + o.r, y1: o.y + o.r }), `${why}: ${d.key}'s label covers ${o.key}'s dot`);
+                            }
+                        }
+                        // with you or friends there Karuizawa's label is one of the towns': on a wide view it
+                        // stands beside its dot and Tokyo's beside Tokyo's, no leader line to either
+                        const kz = dots.find(d => d.key === 'Karuizawa');
+                        assert.strictEqual(kz.minor, !(here === 'Karuizawa' || present.includes('Karuizawa')), why);
+                        if (W === 1280 && !kz.minor) assert.ok(!spots.Karuizawa.leader && !spots.TokyoCity.leader, `${why}: a label stands off its dot`);
+                        laid++;
+                    }
+                }
+            }
+        }
+        assert.ok(laid >= views.length * 2 * 5 * 2 * 2, `${laid} Maps laid out`);
+    });
+
     test('debug map-click travel: the dot nearest the click, and the cell outside that town\'s station or on its road in (#211)', () => {
         const config = realConfig();
         const places = P.list(config);

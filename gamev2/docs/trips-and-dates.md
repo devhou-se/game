@@ -96,7 +96,12 @@ day the trip starts. Days before the FIRST trip are not a lead-in (they show its
   of one another, in a chain (`Trips.crowd`) — so with Bailey and Dylan on Sendai's bay promenade and
   Damian alone at Zuihoden the start is beside the two; and the cell is ordinary ground where there is
   any in sight of them (`Trips.plain`): not a stair tile, not a deck over water (a bridge, a pier). On every devhouse 2 post day, as any character, that is within 6
-  cells of someone (unit-tested). "Home" (`Trips.homeFor`) is the trip's own cell for the date — the
+  cells of someone (unit-tested). A post that moves room can move a start, and each such change is measured
+  and pinned where it is caused: re-homing Julia's 2 November 2025 post to Karuizawa (issue #263) moved
+  Bailey's start that day from Osaka `(37, 17)` to Karuizawa `(19, 10)`, beside her (one friend in each
+  of Karuizawa, Osaka and Toyama, and Karuizawa is one room from home; for every other character Bailey
+  is in Tokyo, the home room, which takes that tie), and no other start from 1 October to 19 November 2025,
+  as James or any of Bailey, Julia, Damian and Dylan (`karuizawa.test.js`). "Home" (`Trips.homeFor`) is the trip's own cell for the date — the
   stay's cell (the first stay's on a lead-in day), else `home`, else `config.player.startRoom/X/Y` — and
   is where a player lands when nobody is anywhere (a lead-in day with no posts) or no cell can be found.
   Why not the trip home for returning players, as it was until #166: there is no saved position to
