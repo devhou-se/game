@@ -124,6 +124,25 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         }
     });
 
+    test('the slate and steel roofs\' dark tone is the sheets\' 2e4040, not 2b373c (#375)', () => {
+        const known = sheets();
+        const colours = (key) => {
+            const { data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', `${key}_0_0.png`)));
+            const out = new Set();
+            for (let i = 0; i < data.length; i += 4) if (data[i + 3]) out.add(hex(data, i));
+            return out;
+        };
+        for (const key of ['canal-city', 'fukuoka-tower', 'sendai-pub', 'seven-eleven']) {
+            const c = colours(key);
+            assert.ok(!c.has('2b373c'), `${key} still paints 2b373c`);
+            assert.ok(c.has('2e4040'), `${key}: the roof's dark tone`);
+        }
+        // 2b373c was the only off-pack colour of these two
+        for (const key of ['sendai-pub', 'seven-eleven']) {
+            assert.deepStrictEqual([...colours(key)].filter((c) => !known.has(c)), [], `${key}: every colour is a sheet's`);
+        }
+    });
+
     test('extract_city: the Don Takote sign is drawn in the house look, its colours the sheets\' (#346)', () => {
         // the sign is the store's top two cells; the facade under it is cut from the sheets as it is
         const { width: w, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', 'discount-store_0_0.png')));

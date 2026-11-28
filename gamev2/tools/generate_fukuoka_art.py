@@ -66,7 +66,7 @@ PACK_SWAP = {rgb(a): rgb(b) for a, b in (
     ('f9c22e', 'c6a663'), ('d2a58c', 'be9e8c'), ('5a3b34', '5a3827'), ('2a2330', '1b1e2a'), ('40303a', '3c3a4c'),
     ('34343f', '3c3a4c'), ('2f3f7a', '314b8e'), ('6b4a8c', '585575'), ('d9553b', 'd16b56'), ('ee8468', 'e78d7b'),
     ('a13a2a', 'aa4d31'), ('6583bd', '588cc6'), ('a9d3fb', '8ec2fa'), ('5d7fc0', '588cc6'), ('89af78', '83af6f'))}
-P_SLATE, P_SLATE_HI, P_SLATE_JOINT, P_SLATE_LO = rgb('5b6c79'), rgb('698592'), rgb('444f5e'), rgb('2b373c')
+P_SLATE, P_SLATE_HI, P_SLATE_JOINT, P_SLATE_LO = rgb('5b6c79'), rgb('698592'), rgb('444f5e'), rgb('2e4040')
 P_COPING, P_COPING_HI, P_EDGE = rgb('94a2a8'), rgb('d1e2eb'), rgb('172459')
 P_PANE, P_PANE_LO, P_GLARE = rgb('2c2d51'), rgb('2a3151'), rgb('4b6396')
 
