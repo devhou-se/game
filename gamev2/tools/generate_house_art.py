@@ -6,9 +6,15 @@ None of the GuttyKreum packs has a home interior (they are all
 exteriors plus a train car; there is no Modern_Interiors), so everything the
 house interiors of tools/generate_houses.py stand on, apart from the two
 sprites tools/extract_house_interior.py does find, is drawn here the way
-tools/generate_hokkaido.py draws Hokkaido: shaded pixel art in the GuttyKreum
-palette, at half size and pixel-doubled, with a 1px ink outline on everything
-that stands. Nothing here is a white line-art placeholder.
+tools/generate_hokkaido.py draws Hokkaido, at half size and pixel-doubled, and
+then put in the house look (docs/generators-and-checks.md): each sprite is
+repainted to GuttyKreum sheet colours through SWAP as it is saved, everything
+that stands has a 1px navy outline, the windows are the pack's dark glass and
+nothing is lit yellow. Nothing here is a white line-art placeholder.
+
+The colour constants and box / speckle / wall_frame / plaster are also
+tools/generate_devhouse_art.py's, which draws its own sprites with them: change
+a colour of this file's sprites in SWAP, not in the constant.
 
   floors (1x1, Floor layer)
     home-tatami-green_w / _e    the two halves of a tatami mat, fresh rush
@@ -19,7 +25,7 @@ that stands. Nothing here is a white line-art placeholder.
     home-wall-sand_0_0 / home-wall-moss_0_0    plaster under a beam (two colours)
     home-wall-shoji_0_0         a shoji screen
     home-wall-fusuma_0_0        a painted sliding door (the closet)
-    home-wall-window-sand_0_0 / -moss_0_0      a frosted window in that plaster
+    home-wall-window-sand_0_0 / -moss_0_0      a window in that plaster
     home-tokonoma_0_0     2x2   the alcove: hanging scroll, a vase with a branch
   against the wall (1x2: the top half stands over the wall's lower half)
     home-tansu_0_0, home-bookshelf_0_0, home-tv_0_0, home-fridge_0_0
@@ -59,7 +65,11 @@ from PIL import Image, ImageDraw
 
 from generate_hokkaido import (C, rgb, canvas, outline, INK, RED, RED_HI, RED_LO, CREAM, CREAM_LO,
                                CREAM_DK, WHITE, GLASS, GLASS_HI, GLASS_DK, WOOD, WOOD_LO, WOOD_DK,
-                               STONE, STONE_LO, STONE_DK, GREEN, GREEN_LO, GREEN_HI, GOLD, AMBER)
+                               STONE, STONE_LO, STONE_DK, GREEN, GREEN_LO, GREEN_HI, GOLD, AMBER, NAVY)
+from generate_sendai_art import repaint, pane
+
+# These keep their values: generate_devhouse_art.py draws with them too. This
+# file's sprites reach the pack's colours through SWAP, at save.
 
 WOOD_HI = rgb('d7a98c')
 BEAM, BEAM_HI, BEAM_LO = rgb('5e4a42'), rgb('7c6455'), rgb('3d302e')
@@ -176,6 +186,8 @@ def shoji():
         for y in range(20, 57):                             # daylight through the paper
             if y > 46:
                 d.line([(x0, y), (x0 + 13, y)], fill=PAPER_LO)
+        for x in range(x0 + (46 + x0) % 2, x0 + 14, 2):      # the two bands dithered together
+            d.point((x, 46), fill=PAPER_LO)
         for x in (x0 + 4, x0 + 9):
             d.line([(x, 20), (x, 56)], fill=WOOD_LO)
         for y in (26, 32, 38, 44, 50):
@@ -212,11 +224,7 @@ def wall_window(colour):
         speckle(d, 0, 6, 31, 57, mid, 4, every=5)
         wall_frame(d)
         d.rectangle([3, 22, 28, 48], fill=BEAM)
-        d.rectangle([5, 24, 26, 46], fill=SKY_HI)
-        for y in range(24, 47):                                 # frosted glass, brighter at the top
-            if y > 36:
-                d.line([(5, y), (26, y)], fill=SKY)
-        d.line([(6, 25), (12, 25)], fill=WHITE); d.line([(6, 26), (8, 26)], fill=WHITE)
+        pane(d, 5, 24, 26, 46)                                  # the pack's dark glass
         d.line([(15, 24), (15, 46)], fill=BEAM); d.line([(16, 24), (16, 46)], fill=BEAM_HI)
         d.line([(5, 35), (26, 35)], fill=BEAM)
         d.rectangle([2, 49, 29, 50], fill=WOOD); d.line([(2, 51), (29, 51)], fill=lo)   # the sill
@@ -280,14 +288,14 @@ def tansu():
     d.rectangle([9, 14, 15, 20], fill=RED); d.rectangle([10, 12, 14, 14], fill=RED_HI)   # a daruma on top
     d.rectangle([11, 15, 13, 17], fill=CREAM); d.point((11, 16), fill=INK); d.point((13, 16), fill=INK)
     d.rectangle([19, 16, 25, 20], fill=PAPER); d.line([(19, 20), (25, 20)], fill=PAPER_DK)   # a folded cloth
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
 def bookshelf():
     im, d = canvas(1, 2)
     box(d, 2, 10, 29, 61, WOOD_HI, WOOD_LO, WOOD_DK, 4)
-    spines = (RED, INDIGO, GREEN_HI, GOLD, CREAM, SKY, ROSE, GREEN, INDIGO_HI, RED_LO, AMBER, STONE)
+    spines = (RED, INDIGO, GREEN_HI, GOLD, CREAM, SKY, ROSE, GREEN, RED_LO)
     for row, y0 in enumerate((16, 28, 40, 52)):
         d.rectangle([4, y0, 27, y0 + 9], fill=rgb('3d302e'))
         x, k = 5, row * 5
@@ -303,7 +311,7 @@ def bookshelf():
                 x += w + (1 if k % 4 == 0 else 0)
             k += 1
         d.line([(3, y0 + 10), (28, y0 + 10)], fill=WOOD)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -323,7 +331,7 @@ def tv():
     d.rectangle([6, 30, 16, 31], fill=WHITE); d.rectangle([6, 33, 12, 33], fill=SKY_HI)
     d.rectangle([20, 29, 25, 34], fill=AMBER); d.point((22, 31), fill=RED)
     d.point((28, 36), fill=RED)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -337,7 +345,7 @@ def fridge():
     d.line([(8, 21), (10, 21)], fill=STEEL_LO); d.point((9, 17), fill=RED)
     d.rectangle([15, 20, 19, 25], fill=SKY); d.rectangle([15, 23, 19, 25], fill=GREEN_HI)
     d.rectangle([8, 37, 10, 39], fill=ORANGE); d.rectangle([13, 39, 15, 41], fill=INDIGO_HI)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -376,7 +384,7 @@ def kitchen():
     for x0 in (3, 18, 33, 48):                              # the doors under the worktop
         d.rectangle([x0, 48, x0 + 12, 59], fill=rgb('c99a80')); d.line([(x0, 59), (x0 + 12, 59)], fill=WOOD_DK)
         d.line([(x0, 48), (x0 + 12, 48)], fill=WOOD_HI); d.point((x0 + 10, 53), fill=IRON)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -407,7 +415,7 @@ def kotatsu(base, hi, lo):
         d.rectangle([38, 27, 42, 32], fill=SKY_LO); d.rectangle([39, 27, 41, 28], fill=rgb('7a9a55'))   # a cup of tea
         d.rectangle([37, 19, 46, 24], fill=PAPER); d.line([(38, 21), (44, 21)], fill=STONE_LO)   # the paper, half read
         d.line([(38, 23), (42, 23)], fill=STONE_LO)
-        outline(im)
+        outline(im, NAVY)
         return im
     return draw
 
@@ -427,7 +435,7 @@ def low_table():
     for x in (14, 41):
         d.rectangle([x, 12, x + 4, 16], fill=PAPER); d.rectangle([x + 1, 12, x + 3, 13], fill=rgb('7a9a55'))
     d.rectangle([46, 10, 53, 15], fill=RED_LO); d.rectangle([47, 10, 52, 13], fill=ROSE_HI)   # a plate of sweets
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -452,7 +460,7 @@ def irori():
         d.point((x, y), fill=WHITE)
     for x in (16, 46):                                                                      # tongs stuck in the ash
         d.line([(x, 44), (x + 1, 50)], fill=IRON_HI)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -471,7 +479,7 @@ def futon(base, hi, lo):
                 if ox < 27:
                     d.rectangle([ox, y, ox + 1, y + 1], fill=hi); d.point((ox + 2, y + 1), fill=hi); d.point((ox - 1, y + 1), fill=hi)
         d.line([(3, 60), (28, 60)], fill=lo); d.line([(28, 28), (28, 59)], fill=lo)
-        outline(im)
+        outline(im, NAVY)
         return im
     return draw
 
@@ -487,7 +495,7 @@ def bed():
         d.line([(3, y), (28, y)], fill=GREEN_HI)
     d.line([(27, 31), (27, 55)], fill=GREEN_LO)
     box(d, 2, 55, 29, 61, WOOD_HI, WOOD, WOOD_LO, 2)                         # the foot board
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -502,21 +510,22 @@ def stove():
     d.ellipse([10, 3, 21, 13], fill=GOLD); d.ellipse([11, 3, 20, 9], fill=rgb('e2c98a'))   # a brass kettle on top
     d.arc([11, 0, 20, 9], 180, 360, fill=IRON); d.line([(21, 8), (24, 6)], fill=GOLD)
     d.point((25, 4), fill=WHITE); d.point((26, 2), fill=WHITE)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
 def andon():
     im, d = canvas(1, 1)
-    d.rectangle([9, 5, 22, 25], fill=LIT_HI)
-    d.rectangle([9, 15, 22, 25], fill=LIT)
+    d.rectangle([9, 5, 22, 25], fill=LAMP)                  # the paper, unlit
+    d.rectangle([9, 15, 22, 25], fill=LAMP_LO)
+    d.rectangle([10, 6, 14, 6], fill=LAMP_HI)
     for x in (9, 15, 16, 22):
         d.line([(x, 5), (x, 25)], fill=BEAM)
     for y in (5, 12, 19, 25):
         d.line([(9, y), (22, y)], fill=BEAM)
     d.rectangle([8, 3, 23, 4], fill=BEAM_LO); d.rectangle([8, 26, 23, 27], fill=BEAM_LO)
     d.rectangle([9, 28, 10, 30], fill=BEAM_LO); d.rectangle([21, 28, 22, 30], fill=BEAM_LO)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -530,7 +539,7 @@ def getabako():
     d.rectangle([6, 4, 11, 8], fill=SKY_LO); d.line([(8, 1), (8, 4)], fill=GREEN_LO)     # a bud vase, and the keys
     d.rectangle([7, 0, 9, 1], fill=ROSE_HI)
     d.rectangle([19, 7, 24, 9], fill=PAPER_DK); d.point((21, 8), fill=GOLD); d.point((22, 8), fill=STEEL_LO)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -546,7 +555,7 @@ def zabuton(base, hi, lo):
             d.point((x, y), fill=GOLD)
         for x, y in ((11, 12), (20, 12), (11, 20), (20, 20)):
             d.point((x, y), fill=hi)
-        outline(im)
+        outline(im, NAVY)
         return im
     return draw
 
@@ -565,7 +574,7 @@ def shoes(pairs):
                     d.rounded_rectangle([x + dx, y, x + dx + 4, y + 9], radius=2, fill=sole)
                     d.rectangle([x + dx + 1, y + 3, x + dx + 3, y + 8], fill=upper)
                     d.point((x + dx + 2, y + 4), fill=WHITE)
-        outline(im)
+        outline(im, NAVY)
         return im
     return draw
 
@@ -680,7 +689,7 @@ def lobby_desk():
     d.line([(13, 11), (22, 11)], fill=WOOD_DK)
     d.rectangle([27, 7, 35, 11], fill=PAPER); d.line([(31, 7), (31, 11)], fill=PAPER_DK)  # the visitors' book
     d.line([(36, 6), (33, 10)], fill=INDIGO)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -703,7 +712,7 @@ def lobby_sofa(back):
                 d.line([(x0 + 1, 12), (x0 + 4, 12)], fill=INDIGO_HI)
         for x in (6, 54):
             d.rectangle([x, 28, x + 3, 30], fill=WOOD_DK)
-        outline(im)
+        outline(im, NAVY)
         return im
     return draw
 
@@ -718,7 +727,7 @@ def lobby_table():
         d.rectangle([x, 24, x + 2, 28], fill=IRON)
     d.rectangle([16, 12, 26, 18], fill=RED); d.rectangle([17, 13, 25, 14], fill=WHITE)   # magazines
     d.rectangle([29, 11, 38, 17], fill=GREEN_HI); d.rectangle([30, 12, 34, 13], fill=CREAM)
-    outline(im)
+    outline(im, NAVY)
     return im
 
 
@@ -734,8 +743,32 @@ def lobby_plant():
         d.line([(x0, y0 - 1), (x1, y1 - 1)], fill=GREEN_HI)
     for x, y in ((4, 6), (27, 6), (3, 14), (28, 14)):
         d.line([(x, y), (x, y + 3)], fill=GREEN_LO)
-    outline(im)
+    outline(im, NAVY)
     return im
+
+
+LAMP, LAMP_HI, LAMP_LO = GOLD, rgb('f3d890'), rgb('a7843b')
+
+# this file's own colours, and the sheet colour each becomes as a sprite is saved
+SWAP = {rgb(a): rgb(b) for a, b in (pair.split('>') for pair in """
+    d7a98c>ebbca2 c99a80>c18e75 a87861>aa775f e6bfa3>ebbca2
+    5e4a42>594b45 7c6455>7c5d56 3d302e>493938
+    f7f1e3>fafcfd e6dcc6>e4cecc cbbfa6>d2bab0
+    c3c98c>b0c276 b2ba7d>b2ad73 98a26b>83af6f dccb8e>e3c587 cdb97c>c6aa71 b39d66>b2a168
+    2f4a44>2e4040 46695c>506b6b 6f7a52>718a45
+    e7d8b9>e4cecc d6c4a0>d2bab0 bfab86>be9e8c c3cbab>bec2c1 aeb894>97acaa 95a07c>6c8e7f
+    3c4f86>314b8e 6480bd>425faa 26335c>232449
+    d98f96>ff9b92 efb9b7>ffe2e0 b4686f>bb6479
+    7fa6d6>5a86de a9c8ec>7db9fa 5c80b4>425faa
+    b9c4cf>bcc7cc e2e9ef>dae2e4 7f8ea0>848295 e4ebf2>dae2e4 d9dfe5>dae2e4 a9b2bb>a4b0b5 9099a6>919ea4
+    aab6c2>a4b0b5 cfe2ee>d1e2eb
+    2c2d3a>2a2636 4b4f63>47485d a9a59c>b3aaa0 8a857d>8d8883
+    e6e3dc>dae2e4 d5d1c8>bcc7cc f4f2ee>fafcfd c9c6c1>bcc7cc b8b4ae>a4b0b5 dad7d2>dae2e4
+    d9d4c7>e4cecc bdb6a6>d2bab0 ece8de>fafcfd 3f4658>47485d 5c6680>575f79 2a2f3e>2a2636
+    eeeae2>dae2e4 a89674>a68777 7f6f58>826f60 8f7f64>8e7366 9c8a6a>967f79
+    7c8088>848295 5a5e68>575f79 7a9a55>83af6f e2c98a>f3d890
+    f2c66a>e78d7b e8623a>aa4d31 f0943a>ce6a42 f9c22e>c6a663
+""".split())}
 
 
 SPRITES = {      # key: (builder, tileNames label)
@@ -791,6 +824,7 @@ def main():
     built = {}
     for key, (fn, _) in SPRITES.items():
         im = fn()
+        repaint(im, SWAP)
         im = im.resize((im.width * 2, im.height * 2), Image.NEAREST)
         im.save(f'assets/sprites/{key}.png')
         built[key] = im

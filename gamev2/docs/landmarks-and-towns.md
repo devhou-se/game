@@ -1050,8 +1050,11 @@ A machiya's doorway is the one cell of its footprint you can step onto (`sendai.
 - **Art**: none of the GuttyKreum packs has a home interior (they are exteriors and a train car;
   there is no `Modern_Interiors`). `tools/extract_house_interior.py` takes what fits - floorboards from the
   Train Interiors car floor (`home-wood-floor`), a potted plant from the Japanese City pack (`home-plant`) -
-  and `tools/generate_house_art.py` draws the other 34 `home-*` sprites in the `generate_hokkaido.py` style
-  (half size, pixel-doubled, GuttyKreum palette, 1px ink outline; `--preview out.png` on both). The wall
+  and `tools/generate_house_art.py` draws the other 34 `home-*` sprites in the house look (#330): half size,
+  pixel-doubled, drawn with the file's own colours and repainted to GuttyKreum sheet colours by `SWAP` as each
+  is saved, a 1px navy outline on what stands, the pack's dark glass in the windows, nothing lit yellow
+  (`--preview out.png` on both). The colour constants and `box` / `speckle` / `wall_frame` / `plaster` are
+  shared with `generate_devhouse_art.py`, so change a colour of the home kit in `SWAP`, not in the constant. The wall
   pieces share one beam / rail / skirting (`wall_frame`) so they join side by side; shoji, fusuma and the
   tokonoma show no plaster, so they sit in a wall of either colour.
 - **Lint** (`play.js lint`, and so `play.js check`): a home with floor its furniture has sealed off is
