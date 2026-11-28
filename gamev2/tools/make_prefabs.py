@@ -534,6 +534,24 @@ PREFABS = {
     # the fingerpost again, under its own key: where Osaka and Nara meet it says another line
     'nara-fingerpost':        dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'nara-fingerpost_0_0')],
                                    colliders=[(0, 1)], doors=[]),
+    # Lake Biwa (issue #380; art from tools/generate_lakebiwa_art.py). Hikone's keep: solid from
+    # the third row down; generate_lakebiwa.py closes the two roof rows above as well
+    'biwa-hikone-keep':       dict(w=6, h=6, sprites=[('Collidables', 0, 0, 'biwa-hikone-keep_0_0')],
+                                   colliders=[(x, y) for x in range(6) for y in range(2, 6)], doors=[]),
+    # the torii standing in the lake: its posts' feet
+    'biwa-torii':             dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'biwa-torii_0_0')],
+                                   colliders=[(0, 2), (1, 2)], doors=[]),
+    'biwa-tunnel':            dict(w=4, h=3, sprites=[('Collidables', 0, 0, 'biwa-tunnel_0_0')],
+                                   colliders=[(x, y) for x in range(4) for y in range(3)], doors=[]),
+    'biwa-monkey':            dict(w=1, h=1, sprites=[('Collidables', 0, 0, 'biwa-monkey_0_0')],
+                                   colliders=[(0, 0)], doors=[]),
+    'biwa-cycle-sign':        dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'biwa-cycle-sign_0_0')],
+                                   colliders=[(0, 1)], doors=[]),
+    'biwa-station-sign':      dict(w=2, h=2, sprites=[('Collidables', 0, 0, 'biwa-station-sign_0_0')],
+                                   colliders=[(0, 1), (1, 1)], doors=[]),
+    # the fingerpost on either side of the seam with Nara: it says another line again
+    'biwa-fingerpost':        dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'biwa-fingerpost_0_0')],
+                                   colliders=[(0, 1)], doors=[]),
     # ---- street accessories (issue #19; art from tools/extract_street.py) --------
     # One sprite on Collidables each, so it Y-sorts by its feet: the bottom cell
     # is solid, the pole / head above it is walk-behind. Maps place the green

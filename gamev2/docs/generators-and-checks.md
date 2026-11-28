@@ -90,7 +90,7 @@ crossings, traffic lights, track) counts neither for nor against a city.
   a higher overlap or a lower own share than recorded. A city that is not in the baseline (a new town) is
   printed against the targets and does not fail.
 - **The baseline** (28 Nov 2026, buildings / sprites / own): Tokyo 0.18 / 0.33 / 54% (0.15 / 0.32 / 56% before Shinjuku, issue #94: its nine towers are the city kit's, which Osaka and Fukuoka use too, and the street of high-rises was the point; Fukuoka, whose towers are the same kit, reads Tokyo as its most-alike town at 0.18 where it was 0.17 / Hokuriku; both entries were re-recorded after it with `--update`, nothing else moved), Hokuriku 0.27 / 0.54 / 40%,
-  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.18 / 0.39 / 26%, Sapporo 0.04 / 0.17 / 81% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Kansai 0.12 / 0.41 / 27% (Osaka and Himeji as one city, issue #255; Osaka alone was 0.18 / 0.44 / 17%; with Okayama, issue #267, it measures 0.11 / 0.38 / 37% and passes all three targets - a gain, not recorded: the baseline was not re-run; with Nara, issue #268, 0.11 / 0.35 / 45%, passing, not recorded either - Nara's torii is its own drawing because the kit's `torii-red` beside `shrine-red` measured Kansai's building overlap at 0.14, worse than the baseline),
+  Sendai 0.23 / 0.54 / 29%, Fukuoka 0.18 / 0.39 / 26%, Sapporo 0.04 / 0.17 / 81% (after stages 1-3 of its rebuild: it passes all three targets; it was 0.50 / 0.49 / 12%), Kansai 0.12 / 0.41 / 27% (Osaka and Himeji as one city, issue #255; Osaka alone was 0.18 / 0.44 / 17%; with Okayama, issue #267, it measures 0.11 / 0.38 / 37% and passes all three targets - a gain, not recorded: the baseline was not re-run; with Nara, issue #268, 0.11 / 0.35 / 45%, passing, not recorded either - Nara's torii is its own drawing because the kit's `torii-red` beside `shrine-red` measured Kansai's building overlap at 0.14, worse than the baseline; with Lake Biwa, issue #380, 0.10 / 0.33 / 51%, passing, not recorded - its own `biwa-` art counts as Kansai's, the paddy aside (`biwa-(?!paddy)` in `LANDMARK_ART`), and `kansai.test.js` runs the check and fails if Kansai's line says `WORSE`),
   Asahikawa 0.00 / 0.11 / 87% (rebuilt from its own art, #219 stage B: it was 0.27 / 0.20 / 10%; Fukuoka, Hokuriku and Sendai, whose most-alike town it was, fell on buildings with no map of theirs changing), San Franbourne 0.13 / 0.32 / 69%. `--update` records today's numbers: do it when a rebuild made a city better or
   a new town landed, and say so in the commit. Never to hide a city getting worse.
 - The 28 Nov baseline records only gains since the 27 Nov one (issue #264; no number is worse): Osaka was
@@ -353,6 +353,14 @@ square or tall and 60px on a wide or big (a half-width glyph is 6px). A big has 
 hand-set `PICTURES` its spec names in `motif`. `--claude N` asks for more specs and skips the ones that do
 not fit. The file names are numbered per shape in `SPECS` order, which `generate_izakaya.py`'s pinned
 boards depend on: append, do not reorder.
+
+`tools/generate_lakebiwa_art.py [--preview out.png]` draws Lake Biwa's eight `biwa-*` sprites (issue #380:
+the keep, the torii, the tunnel, a monkey, the Biwaichi sign, the paddy, Takashima's nameboard, the fingerpost)
+with `house_look.py` alone: its ramps, an ink outline, rectangles and pixels, at half size and doubled. The one
+text, たかしま, is set in the game's own PixelMplus12, so it runs, and is checked, on any machine with Pillow.
+It registers the sprites (`art_register.register`) and puts `biwa-hikone-keep` in `game.lookUp.sprites`.
+`tools/tests/lakebiwa-art.test.js` holds every colour of the room, its own art and every other sprite it uses,
+to the GuttyKreum sheets; `biwa-paddy` is opaque ground and the one key `LANDMARK_ART` leaves out.
 
 `tools/generate_cooler_art.py [--preview out.png]` draws `office-fridge_0_0`, the konbini's upright
 glass-door drinks cooler (issue #140): 1x2 cells, fully procedural (no source image or font, so a re-run is

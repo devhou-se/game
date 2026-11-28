@@ -133,6 +133,13 @@ const Interactions = {
         { kind: 'nandaimon', group: 'flavour', pattern: /^nara-nandaimon/, footprint: true, say: 'the great south gate. two wooden guardians, eight metres tall, glare out of the dark either side' },
         { kind: 'great-buddha-hall', group: 'flavour', pattern: /^nara-daibutsuden/, footprint: true, say: 'the great buddha hall. fifteen metres of bronze sit inside, and a pillar with a hole the size of his nostril' },
         { kind: 'torii', group: 'flavour', pattern: /^nara-kasuga-torii/, footprint: true, say: 'the vermilion gate of kasuga taisha. the deer walk through without bowing' },
+        // Lake Biwa (issue #380). The torii stands in the lake: nothing beside it is stood on, so it has no line
+        { kind: 'fingerpost', group: 'flavour', pattern: /^biwa-fingerpost/, footprint: true, say: 'north: lake biwa, otsu and the cycle path round the lake. south: nara, the deer and the great buddha' },
+        { kind: 'hikone-keep', group: 'flavour', pattern: /^biwa-hikone-keep/, footprint: true, say: 'hikone castle. one of twelve keeps left from the age of castles, said to have come here in pieces from otsu' },
+        { kind: 'tunnel', group: 'flavour', pattern: /^biwa-tunnel/, footprint: true, say: 'a road tunnel through the hill. no pavement, no shoulder, and something is moving on the roof' },
+        { kind: 'monkey', group: 'flavour', pattern: /^biwa-monkey/, footprint: true, say: 'a monkey. it looks at your bag, then at you, then at your bag' },
+        { kind: 'cycle-sign', group: 'flavour', pattern: /^biwa-cycle-sign/, footprint: true, say: 'biwaichi: once round the lake, 200 kilometres. keep the water on your left' },
+        { kind: 'station-sign', group: 'flavour', pattern: /^biwa-station-sign/, footprint: true, say: 'omi-takashima. the next train is in fifty minutes. there is no bicycle shop' },
         // ...and the people folded double at the waist on its pavements: one line each
         // an underground arcade's other fronts and furniture
         { kind: 'bookshop', group: 'flavour', pattern: /^chika-shop-books/, footprint: true, say: 'this week\'s manga, tied shut with string. everyone is reading them standing up anyway' },

@@ -297,33 +297,41 @@ station: the owner's rule is that small places are walked to from their town, no
   7-Eleven / vending / pond spots. Fourteen devhouse 2 placements were re-homed there with `--rehome`
   (see `blog-pipeline.md`).
 
-### Kansai: Osaka, with Himeji, Okayama and Nara on foot (issues #255, #267, #268; #68, runs 2, 4 and 5)
+### Kansai: Osaka, with Himeji, Okayama, Nara and Lake Biwa on foot (issues #255, #267, #268, #380; #68, runs 2, 4 and 5)
 
-Osaka, **Himeji**, **Okayama** and **Nara** are four generated rooms the game stitches into ONE walkable
-room, **`KansaiCity`** - the third stitched city, built as Hokuriku is (above; `stitched-city.md`). Osaka is
-the town and has the region's one station. Himeji, Okayama and Nara are small places with NO station: you
+Osaka, **Himeji**, **Okayama**, **Nara** and **Lake Biwa** are five generated rooms the game stitches into
+ONE walkable room, **`KansaiCity`** - the third stitched city, built as Hokuriku is (above; `stitched-city.md`).
+Osaka is the town and has the region's one station. The other four are places with NO station: you
 walk to Himeji from Osaka, west along Canal-side Avenue, and on along the same avenue to Okayama, where it
-ends; and east along it the other way to Nara, where it ends below the Nandaimon. Devhouse 2's Damian was in
+ends; east along it the other way to Nara, where it ends below the Nandaimon; and from Nara north up the
+towpath to Lake Biwa. Devhouse 2's Damian was in
 Okayama on 12 November 2025 (post 745), in Himeji on the 13th (post 754) and in Nara on the 14th (post 764).
 All four are to be rebuilt to one plan, one at a time (Himeji is, by #275): see "Kansai: one plan for Osaka,
 Himeji and Okayama" below.
 
 - **Layout** (`tools/kansai.py`, the one place the generators agree on it; city cells, the union's top-left
-  is 0,0). Kansai is planned as FIVE districts, one ticket each, and `AT` / `SIZE` hold all five so that a
-  later ticket moves nothing: **Okayama** 44x40 at (0,36), **Himeji** 44x40 at (44,36), **Osaka** 50x46 at
-  (88,30), Nara 52x40 at (138,36), LakeBiwa 46x36 at (152,0). **`BUILT`** names the ones that exist
-  (`('Himeji', 'Nara', 'Okayama', 'Osaka')` today); config `cities.KansaiCity.rooms` is exactly those. A
-  join (`JOINS`, four rows today) is open only when both its districts are built: a generator asks
+  is 0,0). Kansai is FIVE districts, built one ticket each, and `AT` / `SIZE` hold all five so that no
+  ticket moved another: **Okayama** 44x40 at (0,36), **Himeji** 44x40 at (44,36), **Osaka** 50x46 at
+  (88,30), **Nara** 52x40 at (138,36), **LakeBiwa** 46x36 at (152,0). **`BUILT`** names the ones that exist
+  (all five: `('Himeji', 'LakeBiwa', 'Nara', 'Okayama', 'Osaka')`); config `cities.KansaiCity.rooms` is
+  exactly those. A join (`JOINS`, four rows) is open only when both its districts are built: a generator asks
   `ks.is_open(district, side)` and closes its edge otherwise, so Himeji's west edge opened when Okayama was
   built (`generate_himeji.py` keeps the closed branch), Osaka's west and east rail caps and seam pieces are
-  there only because Himeji and Nara are, and **Nara's north edge is wood until Lake Biwa is built** (its row
-  `('Nara', 'n', …, 'LakeBiwa', …)` is already in `JOINS`, inert until then; issue #269 opens it).
-  **Okayama's own west edge has no join**, nor Nara's east and south ones: nothing is planned beyond them.
-  The city today is 190x46 (`depthScale` 1): Himeji's, Okayama's and Nara's top row is six rows below
-  Osaka's, and that gap is the stitcher's woodland (`cities.KansaiCity.backdrop`, a copy of Hokuriku's),
-  which also carries Osaka's railway on west and east to the city's edges - the track runs two rows above
-  Himeji's keep's roof, and above Nara on the bare strip the backdrop keeps clear of trees
-  (`extendClear`), in view from the end of the towpath.
+  there only because Himeji and Nara are, and Nara's north edge opened when Lake Biwa was built (#380;
+  `generate_nara.py` keeps the closed branch). **Okayama's own west edge has no join**, nor Nara's east and
+  south ones, nor Lake Biwa's west, north and east ones: nothing is planned beyond them
+  (`generate_lakebiwa.py` asserts that `is_open` is false there, so a join added later fails loudly instead
+  of opening onto its woods).
+  The city is 198x76 (`depthScale` 1): Himeji's, Okayama's and Nara's top row is six rows below Osaka's, and
+  Lake Biwa stands on top of Nara, in the city's top rows; the gaps are the stitcher's woodland
+  (`cities.KansaiCity.backdrop`, a copy of Hokuriku's), which also carries Osaka's railway (city row 34) on
+  west to the city's edge, two rows above Himeji's keep's roof, and east above Nara on the bare strip the
+  backdrop keeps clear of trees (`extendClear`). Since Lake Biwa the city is wider than Nara, so the line no
+  longer runs off the city's east edge: it **stops in the wood at city (147,34) under a cap shrub**
+  (`backdrop.extendStop: 4`). Every reachable cell, with every camera offset, was searched: at 5 the cap
+  was half in view at the right edge from Osaka's north-east corner, at 2 it is seen from the towpath; at 4
+  (or 3) it is never in view (the margin is half a cell on Osaka's side; a change to the camera's deadzone,
+  `AT` or Osaka's north-east corner needs the search redone, and `kansai.test.js` holds the track's cells).
 - **The seam**: Osaka's west edge meets Himeji's east edge. **Canal-side Avenue** (Osaka rows 24-28: a
   pavement, three rows of road, a pavement) is Himeji rows 18-22, and **Osaka's canal** (rows 20-22) runs on
   as the **castle moat** (Himeji rows 14-16): the same Floor and Water tiles either side of the edge, with
@@ -418,9 +426,12 @@ Himeji and Okayama" below.
   columns 2-3, walked under like Koko-en's gate). The avenue in from Osaka ends below it in a paved **plaza**
   with a **deer cracker stall** (`nara-senbei-stall`, 2x2 at (41,16)). West, Osaka's canal runs on as a
   **river** (rows 14-16) that bends north up columns 20-22, with a gravel **towpath** (23-24) beside it; both
-  stop at row 2 until Lake Biwa joins there (the river's closed head is `edge-n` and a `corner-ne`, with an
-  `okayama-bank-rock` over its west corner and another over the inside of the bend: no `corner-nw`, which
-  the blog pipeline would read as "the pond"). The river is Nara's `waterways` entry as far as the bend
+  run on to the north edge and into Lake Biwa (#380), the towpath's seam cells `edge-w` / `edge-e` with no
+  rounded end, and a fingerpost (`biwa-fingerpost`) beside it at (25,2). An `okayama-bank-rock` lies over
+  the inside of the bend: no `corner-nw`, which the blog pipeline would read as "the pond" (built with the
+  north closed, the river's head is `edge-n` and a `corner-ne` with a heap over its west corner). Opening
+  the edge kept Nara's seeded scatter: the open branch makes the closed branch's `woods()` draws on a
+  throwaway builder, and the fingerpost is stamped after every wood, so Nara changed only in (19..25, 0..5). The river is Nara's `waterways` entry as far as the bend
   (columns 0-19), so the canal's boats sail on into it and fade out where it turns north. South, **Nara
   Park**'s lawn with maples and pines, and **deer** on the lawn, the court and the plaza: the two resting
   ones of the UrbanAccessoriesv2 sheet (`nara-deer-doe`, `nara-deer-stag`) and a drawn bowing one
@@ -432,7 +443,38 @@ Himeji and Okayama" below.
   lantern, at the plaza's south-east corner, closes the one cell behind the shrine's roof (42,24). The
   lanterns are unlit at night, like Sendai's (`DayNight.js` halos `-lanterns`, not `-lantern`: keep the key
   singular). Every Nara sprite answers a bump (`flavour` rows). No station, no railway, no bin, no building
-  with a door but the shrine. The east and south edges are wood, and the north edge until Lake Biwa.
+  with a door but the shrine. The east and south edges are wood; the north edge is wood but for the towpath.
+- **Lake Biwa** (`tools/generate_lakebiwa.py`, issue #380, part 1 of #269; art from
+  `tools/generate_lakebiwa_art.py`, in the house look), 46x36, `sentenceName` "Shiga, by Lake Biwa". The
+  river from Nara (columns 6-8) comes in at the south edge and widens into the **lake** (6..24, 7..22, and a
+  basin (6..13, 23..29) by the quay): `pond-autotile`, solid, so a bump from the shore is fishing. Its
+  north-west corner is `edge-n` under an `okayama-bank-rock`, and heaps lie over the two inside corners (no
+  `corner-nw`). The **towpath** (9-10) runs north to the **Otsu quay** (paving, (9..17, 30..31) and
+  (14..17, 23..29)) with the blue **Biwaichi** sign (`biwa-cycle-sign`, 1x2 at (18,26)) and a lawn of pines;
+  a fingerpost (`biwa-fingerpost`, 1x2 at (11,31)) stands beside the towpath by the seam. The **Biwaichi**,
+  gravel, runs east from the quay (rows 24-25) and up the **east shore** (columns 27-28) to the north
+  shore (rows 4-5), with two spurs inland:
+  - **Hikone Castle**: the white keep (`biwa-hikone-keep`, 6x6 at (33,6): a coursed stone base, three white
+    tiers under dark tiled roofs, gables on the middle tier, bell windows, gilt ridge ends; all 36 cells
+    solid; `game.lookUp.sprites` has it) on a **wooded knoll**, reached from the spur on rows 18-19 up ONE
+    flight of stone steps (35..36, 13..17) through the pines to a small paved apron (34..37, 12). No wall
+    sprite, no terrace, no moat (see "Later districts" below for how it differs from Himeji and Okayama).
+    From the apron the camera looks up and the whole keep is in view on desktop.
+  - **The hill viewpoint**: a grass hilltop (31..41, 22..24) with a picket rail on its brow (row 25,
+    33..41, Osaka's fence) over a solid slope, climbed by steps up its **west flank** (31..32, 25..27) from
+    the spur on rows 28-29; below it, walkable **paddies** of harvested stubble (`biwa-paddy`, a 1x1 Floor
+    tile, never Hokuriku's `shirakawa-paddy`), four plots parted by grass levees on column 37 and row 31.
+  - **Takashima**, the north shore: the path runs into a **tunnel** mouth (`biwa-tunnel`, 4x3 at (26,0), all
+    twelve cells solid), with **monkeys** on the verge (`biwa-monkey`, 1x1, three) and the station's
+    nameboard (`biwa-station-sign`, 2x2 at (21,2), たかしま set in the game's own font) - a sign, not a stop.
+    **Shirahige's torii** (`biwa-torii`, 2x3 at (9,8)) stands in the water a row off the shore.
+
+  The keep, the tunnel, the monkeys, the two signs and the fingerpost answer a bump (`flavour` rows in
+  `Interactions.js`); the torii has no line, because no cell beside it can be stood on. The only open edge
+  cells are the towpath's two, (9,35) and (10,35), each a hidden seam to Nara (23|24, 3); Nara's (23|24, 0)
+  land on (9|10, 32). No station, no railway, no door, no bin, no building: everything standing is `biwa-`
+  art, a tree, a shrub or the rail. Until #381 the room has no `config.places` dot, so the Map names it
+  "Lake Biwa (not on this map)".
 - **The Map** has a dot each for Himeji, Okayama and Nara (`config.places.Himeji` / `.Okayama` / `.Nara`,
   `"minor": true`: a small place, whose label gives way to the towns' - `hud-input-touch.md`). Nara's geo is
   Todaiji's, so its dot touches Osaka's (`Places.order`). Debug map-click travel lands on Himeji (40,18), on
@@ -459,15 +501,22 @@ Himeji and Okayama" below.
   beside it, (13,29)); and `Kasuga Taisha` (45,32), the approach east of the door's column (the generic
   `the shrine` is there too). Damian's 14 November placement was re-homed from Osaka's canal bank with
   `blog_to_npc.py --rehome Damian 2025-11-14 "Nara · the Great Buddha Hall"`. No start room changed.
+  Lake Biwa has `otsu` (the quay and its lawn), `hikone`, `viewpoint` (the hill and the paddies) and
+  `takashima`, and four `rooms:`-scoped `LANDMARKS` rows: `the Otsu lakefront` (17,27), the quay beside the
+  Biwaichi sign; `Hikone Castle` (34,12), the apron off the steps; `the lakeside tunnel` (25,3), beside the
+  mouth; `the Shirahige torii` (10,6), the shore above it. Dylan's five Shiga posts (568, 590, 615, 636,
+  681) still stand on Osaka's streets: #382 re-homes them to these spots.
 - **Build order** (art tools with a Pillow python): `extract_street.py` (the deer), `generate_kansai_art.py`,
-  `make_prefabs.py`, `generate_okayama.py`, `generate_himeji.py`, `generate_nara.py`, `generate_osaka.py`,
+  `generate_lakebiwa_art.py`, `make_prefabs.py`, `generate_okayama.py`, `generate_himeji.py`,
+  `generate_lakebiwa.py`, `generate_nara.py`, `generate_osaka.py`,
   `generate_shrines.py Nara`, the maps in `../devhouse.world` (as `kansai.AT` places them: the city's (0,0)
   is world cell (-258,31), which is Okayama's corner now) and `config cities.KansaiCity`, `sync_cities.py`,
-  `districts.py`, `config_to_tiled.py Osaka Himeji Okayama Nara ShrineNara1`, `play.js lint` for `Osaka`,
-  `Himeji`, `Okayama`, `Nara`, `ShrineNara1` and `KansaiCity`,
-  `make_worldmap.py`, `check_distinct.py` (its row is `Kansai`). A ticket that builds the next district
-  adds its generator, adds the district to `BUILT` and to `cities.KansaiCity.rooms`, re-runs the neighbours'
-  generators (their edge opens) and drops its stub from `japan-map.test.js`. In `devhouse.world` the five
+  `districts.py`, `config_to_tiled.py Osaka Himeji Okayama Nara LakeBiwa ShrineNara1`, `play.js lint` for
+  `Osaka`, `Himeji`, `Okayama`, `Nara`, `LakeBiwa`, `ShrineNara1` and `KansaiCity`,
+  `make_worldmap.py`, `check_distinct.py` (its row is `Kansai`). Every planned district is built; a new
+  one would add its generator, add the district to `AT`, `SIZE`, `JOINS`, `BUILT` and
+  `cities.KansaiCity.rooms`, re-run the neighbours' generators (their edge opens) and drop its stub from
+  `japan-map.test.js` (Lake Biwa's stub there goes with its `config.places` dot, #381). In `devhouse.world` the five
   rectangles are x -258..-60, y 31..107 in world cells: south-west of Hokuriku, with Fukuoka moved west and
   south to (-330,90) to stay clear and stay the westernmost map. `kansai.test.js` checks that nothing else
   stands in any of the five.
@@ -580,7 +629,13 @@ design may shift it by blockout, but not change what it is or which side of what
   `cities.KansaiCity` should not: `sync_cities.py --check` says.
 - **Later districts.** A castle added to the region later (Hikone, #269) says in its design how its
   ground, its approach and its water differ from Himeji's hairpin and Okayama's riverbank. The terrace
-  above a full-width wall with one stair is not used again.
+  above a full-width wall with one stair is not used again. Hikone (#380) is built so:
+
+  | | Himeji | Okayama | Hikone |
+  |---|---|---|---|
+  | Ground | walled `sand-autotile` courts | riverbank lawn, gravel only as paths | a wooded knoll: grass under pines, no court; the only paving is a stone apron 4 cells wide under the keep |
+  | Approach | a hairpin climb through the courts | a level stroll along the bank | one straight flight of stone steps, 2 wide and 5 rows long, up through the pines from a spur of the cycle path |
+  | Water | a moat under a white wall | the river, the keep's stone base on its bank | none of its own: the open lake, below and west of the cycle path; no moat, bridge or bank |
 
 ### Karuizawa: out of Tokyo's west gate, on foot (issues #68, #256; parts #260, #261, #262, #263)
 

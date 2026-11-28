@@ -194,6 +194,25 @@ DISTRICTS = {
           'the vermilion shrine in the cedar wood: the torii, the approach lined with stone lanterns, the hall',
           (30, 24, 46, 37), stand=(40, 35)),
     ],
+    # Lake Biwa: walked to from Nara up the towpath, the north-east of KansaiCity (issue #380)
+    'LakeBiwa': [
+        d('otsu', 'Otsu lakefront',
+          'the quay where the river from Nara widens into Lake Biwa: the start of the Biwaichi cycle path, '
+          'a lawn of pines',
+          (9, 23, 28, 33), stand=(15, 27)),
+        d('hikone', 'Hikone Castle',
+          'the white keep on its wooded knoll above the east shore: one flight of stone steps up through the '
+          'pines to the apron under it',
+          (29, 6, 43, 19), stand=(33, 18)),
+        d('viewpoint', 'Hill viewpoint',
+          'a hill inland of the lake, looking out over the plains of Shiga: a rail on the brow, harvested rice '
+          'paddies below, steps up its west flank',
+          (29, 20, 43, 33), stand=(37, 24)),
+        d('takashima', 'Takashima',
+          'the north shore: the cycle path into a tunnel mouth, monkeys on the verge, a station sign, a torii '
+          'standing in the lake',
+          (6, 2, 28, 6), stand=(15, 5)),
+    ],
     # --- Tohoku -----------------------------------------------------------
     'Sendai': [
         d('station-front', 'Sendai Station front',

@@ -200,7 +200,7 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
         assert.strictEqual(T.placeName({}, 'Market'), 'Market');
         assert.strictEqual(T.placeName(undefined, 'Gone'), 'Gone');
         assert.strictEqual(realConfig().rooms.Tokyo.sentenceName, 'the Imperial Palace');
-        assert.deepStrictEqual(Object.keys(realConfig().rooms).filter((k) => realConfig().rooms[k].sentenceName), ['Tokyo']);
+        assert.deepStrictEqual(Object.keys(realConfig().rooms).filter((k) => realConfig().rooms[k].sentenceName).sort(), ['LakeBiwa', 'Tokyo']);
         assert.deepStrictEqual({ ...T.startFor(posted, '2027-02-11', { played: 'james' }) }, { room: 'Sapporo', x: 33, y: 12 }, 'the day before the post');
         assert.deepStrictEqual({ ...T.startFor(posted, '2027-02-18', { played: 'james' }) }, { room: 'Sapporo', x: 33, y: 12 }, 'day one: the lead-in post is history');
     });

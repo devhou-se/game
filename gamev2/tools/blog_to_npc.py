@@ -273,6 +273,11 @@ LANDMARKS = [
     ('nara-nandaimon_', 'the Nandaimon gate', (1, 4), {'rooms': ('Nara',)}),       # (35, 16): the plaza below its west post, off the gateway
     ('nara-senbei-stall_', 'the deer cracker stall', (0, 2), {'rooms': ('Nara',)}),   # (41, 18): the plaza at its counter
     ('nara-deer-stag_', 'the deer of Nara Park', (1, 0), {'rooms': ('Nara',)}),    # (13, 29): the lawn beside the first stag
+    # Lake Biwa (issue #380): the spots #382 re-homes Dylan's posts to
+    ('biwa-cycle-sign_', 'the Otsu lakefront', (-1, 1), {'rooms': ('LakeBiwa',)}),   # (17, 27): the quay beside the sign
+    ('biwa-hikone-keep_', 'Hikone Castle', (1, 6), {'rooms': ('LakeBiwa',)}),         # (34, 12): the apron, off the steps
+    ('biwa-tunnel_', 'the lakeside tunnel', (-1, 3), {'rooms': ('LakeBiwa',)}),       # (25, 3): beside the mouth
+    ('biwa-torii_', 'the Shirahige torii', (1, -2), {'rooms': ('LakeBiwa',)}),        # (10, 6): the shore above it
     ('shrine-building', 'Kasuga Taisha', (2, 6), {'rooms': ('Nara',)}),            # (45, 32): the approach, east of the door's column
     ('karuizawa-fingerpost_', 'the road from Tokyo', (-1, 1), {'rooms': ('Karuizawa',)}),   # the verge beside its foot, clear of the road and the gate's landing cells
     ('karuizawa-falls_', 'Shiraito Falls', (1, 5), {'rooms': ('Karuizawa',)}),       # (13, 8): the bank, at the pool's south-west corner

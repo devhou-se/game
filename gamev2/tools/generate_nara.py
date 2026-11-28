@@ -4,8 +4,8 @@
 devhouse 2's Damian was here on 14 November 2025 (post 764: the day trip to
 Nara, the Great Buddha, the deer). It is the eastern district of the stitched
 `KansaiCity` (tools/kansai.py has the layout) with NO station: you walk in from
-Osaka along the avenue (west edge, rows 18-22). Its north edge opens with Lake
-Biwa (`ks.is_open('Nara', 'n')`); until then it is woods. Its east and south
+Osaka along the avenue (west edge, rows 18-22), and walk on north up the towpath
+into Lake Biwa (`ks.is_open('Nara', 'n')`, issue #380). Its east and south
 edges are closed: nothing is planned beyond them.
 
 Todaiji is laid out on one north-south axis (columns 36-37): the hall, its
@@ -15,8 +15,9 @@ gravel court, the gate, the plaza.
           earthen wall crossed only through the NANDAIMON gate on the axis.
           Rows 0-1 behind the hall are wood
   west    Osaka's canal runs on as a RIVER (rows 14-16) that bends north up
-          columns 20-22, with a gravel TOWPATH beside it (23-24) up to where
-          Lake Biwa will join. It is declared in `waterways` as far as the
+          columns 20-22, with a gravel TOWPATH beside it (23-24) up to the
+          north edge, where both run on into Lake Biwa; a fingerpost stands by
+          that seam too. It is declared in `waterways` as far as the
           bend, so the canal's boats sail it
   avenue  the avenue in from Osaka ends in a paved PLAZA below the gate: a
           stall of deer crackers, deer bowing for them. A fingerpost stands by
@@ -28,8 +29,8 @@ gravel court, the gate, the plaza.
 
 The river is `pond-autotile`, solid throughout. The set has no inner-corner
 piece, so a heap of the rim's stones (`okayama-bank-rock`) lies over the inside
-of the bend; while the north is closed the river ends in a round east corner
-with another heap over its west one (not `corner-nw`, which the blog pipeline
+of the bend; were the north closed (Lake Biwa not built) the river would end in a
+round east corner with another heap over its west one (not `corner-nw`, which the blog pipeline
 would read as a pond of its own).
 
 Nobody gets lost behind anything: the hall is solid over its whole footprint,
@@ -104,6 +105,9 @@ if not NORTH:
 
 # ---- the towpath, up the river's east bank ----------------------------------------------
 b.autotile('gravel-autotile', rect(TX0, TOP, TX1, AVE0 - 1))      # it meets the avenue's pavement at row 18
+if NORTH:
+    b.put('Floor', TX0, 0, 'gravel-autotile_edge-w')              # it runs on into Lake Biwa:
+    b.put('Floor', TX1, 0, 'gravel-autotile_edge-e')              # no rounded end at the seam
 
 # ---- Todaiji: the court, the hall, the wall and the Nandaimon ----------------------------
 b.autotile('gravel-autotile', rect(28, 10, 45, 13) + rect(36, 13, 37, 15))
@@ -142,14 +146,16 @@ k.trees('sendai-pine', [(10, 33), (20, 28), (24, 32)])
 # ---- the fingerpost by the seam --------------------------------------------------------------
 b.stamp('nara-fingerpost', 3, AVE1)                               # feet on (3, 23), beside the pavement
 
-# ---- closed all round, but for the avenue into Osaka (and the towpath, once Lake Biwa is built) --
+# ---- closed all round, but for the avenue into Osaka and the towpath into Lake Biwa --------
 for x, y in ((0, AVE0 - 1), (1, AVE0 - 1), (0, AVE1 + 1), (1, AVE1 + 1)):
     b.stamp('shrub-small', x, y)                                  # the verges either side of the avenue, at the seam
 k.woods(0, 0, BX0 - 1, RIV0 - 1, AUTUMN, rng)                     # west of the river
 if not NORTH:
     k.woods(BX0, 0, TX1, TOP - 1, AUTUMN, rng)                    # above the river's head and the towpath's end
+else:                                                             # the same draws, planted nowhere: the rest of
+    ks.Kit(rg.Builder(W, H)).woods(BX0, 0, TX1, 1, AUTUMN, rng)   # the seeded scatter stays where it was
 k.woods(25, 0, W - 1, 1, AUTUMN, rng)                             # behind the hall
-k.woods(25, 2, 30, 9, AUTUMN, rng)                                # west of it
+k.woods(25, 2, 30, 9, AUTUMN, rng, clear=rect(TX1 + 1, 2, TX1 + 1, 5) if NORTH else ())   # west of it
 k.woods(25, 10, 27, 13, AUTUMN, rng)                              # ...and of the court
 k.woods(43, 2, W - 1, 9, AUTUMN, rng)                             # east of the hall
 k.woods(46, 10, W - 1, 13, AUTUMN, rng)                           # ...and of the court
@@ -161,6 +167,8 @@ k.woods(4, 34, 30, H - 1, AUTUMN, rng)                            # south of the
 k.woods(31, 38, 46, H - 1, CEDARS, rng)                           # south of the approach
 k.plants(rng, 26, 4, 24, 29, 33)                                  # the lawn
 k.plants(rng, 8, 2, 17, 22, 17); k.plants(rng, 6, 25, 16, 30, 17)    # the verges north of the avenue
+if NORTH:                                                         # after every wood: stamped before them, the
+    b.stamp('biwa-fingerpost', TX1 + 1, 2)                        # woods would plant round it (feet on (25, 3))
 
 # ---- write ----------------------------------------------------------------------------------
 prev = cfg['rooms'].get('Nara', {})

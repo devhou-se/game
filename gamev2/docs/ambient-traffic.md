@@ -36,9 +36,13 @@ their route in the room's map data rather than in coordinates, have no collision
     as it does to the east. An end of track that is not at the room's edge is still "closed", and a train
     fades in / out standing on the rails there. The depth rule uses the district's own row and is then moved down by the district's
     offset (`span.lift`), so the Palace train sits at the same place in the draw order as it does unstitched.
-  - In `KansaiCity` Osaka's track is carried on west over the wood above Himeji and Okayama and, since
-    Nara (issue #268), east across the bare strip the backdrop keeps clear of trees above Nara
-    (`extendClear`), to the city's edge both ways: no train stops in either.
+  - In `KansaiCity` Osaka's track is carried on west over the wood above Himeji and Okayama to the city's
+    edge and, since Nara (issue #268), east across the bare strip the backdrop keeps clear of trees above
+    Nara (`extendClear`). Since Lake Biwa (issue #380) the city is wider than Nara, so the east end no longer
+    meets the city's edge: it stops in the wood at city (147,34), capped by a shrub (`backdrop.extendStop: 4`,
+    chosen so the capped end is never in view from Osaka or the towpath; "Kansai" in
+    `landmarks-and-towns.md`). The train runs off-screen to the west and fades on the rails at that closed
+    east end, out of view.
 - **`AmbientBoats`** - a room gets boats from its waterways, which it finds in the map data in two ways:
   - **moat tiles** (the Tokyo moat): a "run" is a line of consecutive cells holding the same plain
     `moat-<north|south|east|west>` tile; `-rocks` tiles, corner pieces and gaps end a run, so a boat never

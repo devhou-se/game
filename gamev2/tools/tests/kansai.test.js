@@ -1,10 +1,10 @@
-// Kansai (issues #255, #267, #268; #68, runs 2, 4 and 5): Osaka the town, Himeji walked to from it along
-// Canal-side Avenue, Okayama further along the same avenue, and Nara east of Osaka along it the other way -
-// four districts of a third stitched city, KansaiCity. One more district is planned (tools/kansai.py).
+// Kansai (issues #255, #267, #268, #380; #68, runs 2, 4 and 5): Osaka the town, Himeji walked to from it along
+// Canal-side Avenue, Okayama further along the same avenue, Nara east of Osaka along it the other way, and
+// Lake Biwa north of Nara up the towpath - the five districts of a third stitched city, KansaiCity (tools/kansai.py).
 module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWith }) => {
     const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
     const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
-    const DISTRICTS = ['Himeji', 'Nara', 'Okayama', 'Osaka'];
+    const DISTRICTS = ['Himeji', 'LakeBiwa', 'Nara', 'Okayama', 'Osaka'];
     const layer = (room, n) => ((cfg.rooms[room].layers || []).find((l) => l.name === n) || {}).tiles || {};
     const size = (room) => [cfg.rooms[room].worldWidth / 64, cfg.rooms[room].worldHeight / 64];
     const solid = (room, x, y) => `${x},${y}` in layer(room, 'Colliders');
@@ -30,14 +30,14 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
     const O_AVENUE = [24, 25, 26, 27, 28], H_AVENUE = [18, 19, 20, 21, 22], OK_AVENUE = H_AVENUE;   // Okayama's rows are Himeji's
     const N_AVENUE = H_AVENUE;                            // ...and Nara's, which sits on the same city rows
 
-    test('Kansai is a third stitched city: Osaka, Himeji, Okayama and Nara, placed as tools/kansai.py lays them out, with room left for the district to come (#255, #267, #268)', () => {
+    test('Kansai is a third stitched city: Osaka, Himeji, Okayama, Nara and Lake Biwa, placed as tools/kansai.py lays them out (#255, #267, #268, #380)', () => {
         const city = cfg.cities.KansaiCity;
         assert.ok(city, 'config cities has no KansaiCity');
         assert.deepStrictEqual(city.rooms.map((m) => m.room).sort(), BUILT.slice().sort(), 'the city is the districts kansai.py says are built');
         assert.deepStrictEqual(BUILT.slice().sort(), DISTRICTS);
         assert.strictEqual(city.name, 'Kansai');
         assert.ok(city.backdrop && city.backdrop.floor && city.backdrop.tree, 'the gaps between the districts need a woodland backdrop');
-        assert.deepStrictEqual(DISTRICTS.map((r) => cfg.rooms[r].name), ['Himeji', 'Nara', 'Okayama', 'Osaka'], 'the HUD names');
+        assert.deepStrictEqual(DISTRICTS.map((r) => cfg.rooms[r].name), ['Himeji', 'Lake Biwa', 'Nara', 'Okayama', 'Osaka'], 'the HUD names');
         const world = JSON.parse(fs.readFileSync(path.join(GV2, '..', 'devhouse.world'), 'utf8')).maps;
         const key = (m) => path.basename(m.fileName, '.tmj');
         for (const r of DISTRICTS) {
@@ -56,7 +56,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         const apart = (a, b) => a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y;
         const rect = (d) => ({ x: (AT[d][0] + ORIGIN[0]) * 64, y: (AT[d][1] + ORIGIN[1]) * 64, width: SIZE[d][0] * 64, height: SIZE[d][1] * 64 });
         const unbuilt = Object.keys(AT).filter((d) => !BUILT.includes(d));
-        assert.deepStrictEqual(unbuilt.sort(), ['LakeBiwa']);
+        assert.deepStrictEqual(unbuilt, [], 'every planned district is built');
         for (const m of world) {
             if (mine.includes(m)) continue;
             assert.ok(apart(box, m), `${key(m)} is inside Kansai's box`);
@@ -71,33 +71,46 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         for (const d of DISTRICTS) assert.deepStrictEqual(map.rooms[d] && map.rooms[d].cells, size(d), `world-map.json has no ${d}: run make_worldmap.py`);
     });
 
-    test('Kansai: the seams line up - the avenue carries straight across into Himeji, on into Okayama and the other way into Nara, the canal into Himeji\'s moat and Nara\'s river, and each seam cell has its ?stitch=0 transporter both ways (#255, #267, #268)', () => {
+    test('Kansai: the seams line up - the avenue carries straight across into Himeji, on into Okayama and the other way into Nara, the canal into Himeji\'s moat and Nara\'s river, the towpath and the river on into Lake Biwa, and each seam cell has its ?stitch=0 transporter both ways (#255, #267, #268, #380)', () => {
         const pairs = DISTRICTS.flatMap((r) => seams(r).map((t) => [r, t]));
-        assert.strictEqual(pairs.length, 6 * 5, 'the five avenue cells Osaka<->Himeji, Himeji<->Okayama and Osaka<->Nara, each way');
+        assert.strictEqual(pairs.length, 6 * 5 + 4, 'the five avenue cells Osaka<->Himeji, Himeji<->Okayama and Osaka<->Nara, and the two towpath cells Nara<->Lake Biwa, each way');
         // Osaka's west five first, where they were before Nara was built, then its east five: the row order of
         // kansai.py's JOINS, which generate_osaka.py writes as it is. They are the last ten of its transporters
         const OSAKA = O_AVENUE.map((y) => [0, y]).concat(O_AVENUE.map((y) => [size('Osaka')[0] - 1, y]));
         assert.deepStrictEqual(seams('Osaka').map((t) => [t.gridX, t.gridY]), OSAKA);
         assert.deepStrictEqual(seams('Osaka').map((t) => t.targetRoom), Array(5).fill('Himeji').concat(Array(5).fill('Nara')));
         assert.deepStrictEqual(cfg.rooms.Osaka.transporters.slice(-10).map((t) => [t.gridX, t.gridY]), OSAKA);
-        assert.deepStrictEqual(seams('Nara').map((t) => [t.gridX, t.gridY]), N_AVENUE.map((y) => [0, y]));
+        assert.deepStrictEqual(seams('Nara').map((t) => [t.gridX, t.gridY]), N_AVENUE.map((y) => [0, y]).concat([[23, 0], [24, 0]]));
+        assert.deepStrictEqual(seams('Nara').map((t) => t.targetRoom), Array(5).fill('Osaka').concat(['LakeBiwa', 'LakeBiwa']));
+        assert.deepStrictEqual(seams('LakeBiwa').map((t) => [t.gridX, t.gridY, t.targetRoom]), [[9, 35, 'Nara'], [10, 35, 'Nara']]);
         // Himeji's east five first, where they were before Okayama was built, then its west five
         assert.deepStrictEqual(seams('Himeji').map((t) => [t.gridX, t.gridY]), H_AVENUE.map((y) => [size('Himeji')[0] - 1, y]).concat(H_AVENUE.map((y) => [0, y])));
         assert.deepStrictEqual(seams('Himeji').map((t) => t.targetRoom), Array(5).fill('Osaka').concat(Array(5).fill('Okayama')));
         assert.deepStrictEqual(seams('Okayama').map((t) => [t.gridX, t.gridY]), OK_AVENUE.map((y) => [size('Okayama')[0] - 1, y]));
         const floorAt = (room, x, y) => name(layer(room, 'Floor')[`${x},${y}`]);
         for (const [room, t] of pairs) {
-            const [w] = size(room);
-            assert.ok(t.hidden && (t.gridX === 0 || t.gridX === w - 1), `${room} ${t.gridX},${t.gridY}: a seam is a hidden transporter on the district's edge`);
+            const [w, h] = size(room);
+            const across = t.gridX === 0 || t.gridX === w - 1;          // a seam on a west or east edge; else a top or bottom one
+            assert.ok(t.hidden && (across || t.gridY === 0 || t.gridY === h - 1), `${room} ${t.gridX},${t.gridY}: a seam is a hidden transporter on the district's edge`);
             assert.ok(!solid(room, t.gridX, t.gridY) && !solid(t.targetRoom, t.targetX, t.targetY), `${room} ${t.gridX},${t.gridY}: the seam or its target is solid`);
             // the cell across the edge, in the neighbour: the same city cell + 1, open, the same ground, and it leads back
-            const dx = t.gridX === 0 ? -1 : 1;
-            const nx = t.gridX + offset[room].x + dx - offset[t.targetRoom].x, ny = t.gridY + offset[room].y - offset[t.targetRoom].y;
+            const dx = across ? (t.gridX === 0 ? -1 : 1) : 0, dy = across ? 0 : (t.gridY === 0 ? -1 : 1);
+            const nx = t.gridX + offset[room].x + dx - offset[t.targetRoom].x, ny = t.gridY + offset[room].y + dy - offset[t.targetRoom].y;
             const back = cfg.rooms[t.targetRoom].transporters.find((b) => b.gridX === nx && b.gridY === ny);
             assert.ok(back && back.targetRoom === room && back.hidden, `${room} ${t.gridX},${t.gridY}: the cell across the seam (${t.targetRoom} ${nx},${ny}) has no transporter back`);
-            assert.ok(/^(flat-grey-brick-autotile_edge-[ns]|road-)/.test(floorAt(room, t.gridX, t.gridY)), `${room} ${t.gridX},${t.gridY} is not the avenue: a pavement either side of its road`);
+            const ground = across ? /^(flat-grey-brick-autotile_edge-[ns]|road-)/ : /^gravel-autotile_edge-[we]$/;
+            assert.ok(ground.test(floorAt(room, t.gridX, t.gridY)), `${room} ${t.gridX},${t.gridY} is not the avenue or the towpath`);
             assert.strictEqual(floorAt(room, t.gridX, t.gridY), floorAt(t.targetRoom, nx, ny), `the ground changes across the seam at ${room} ${t.gridX},${t.gridY}`);
-            assert.deepStrictEqual([t.targetX, t.targetY], [nx + dx * IN, ny], `a seam lands ${IN} cells in from the neighbour's edge`);
+            assert.deepStrictEqual([t.targetX, t.targetY], [nx + dx * IN, ny + dy * IN], `a seam lands ${IN} cells in from the neighbour's edge`);
+        }
+        // the river carries on north across the towpath's seam into Lake Biwa, where it widens into the lake
+        for (const [i, x] of [20, 21, 22].entries()) {
+            const lx = x + offset.Nara.x - offset.LakeBiwa.x, ly = SIZE.LakeBiwa[1] - 1;
+            assert.strictEqual(lx, 6 + i);
+            const role = ['pond-autotile_edge-w', 'pond-autotile_center', 'pond-autotile_edge-e'][i];
+            assert.strictEqual(name(layer('Nara', 'Water')[`${x},0`]), role, `Nara's river at ${x},0`);
+            assert.strictEqual(name(layer('LakeBiwa', 'Water')[`${lx},${ly}`]), role, `Lake Biwa's river at ${lx},${ly}`);
+            assert.ok(solid('Nara', x, 0) && solid('LakeBiwa', lx, ly), 'the river at the seam into Lake Biwa can be walked on');
         }
         // the canal is the moat: the same water tile on the same city rows either side of the edge, and no way across it
         const hw = size('Himeji')[0];
@@ -123,8 +136,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.deepStrictEqual(N_AVENUE.map((y) => name(layer('Nara', 'Floor')[`0,${y}`])), ['flat-grey-brick-autotile_edge-n', 'road-edge-top_0_0',
             'road-div-horizontal_0_0', 'road-edge-bottom_0_0', 'flat-grey-brick-autotile_edge-s']);
         // the only open cells on a district's edge are the seam cells. Okayama's west, north and south edges
-        // are closed: nothing is planned beyond it; Nara's east and south ones likewise, and its north edge
-        // until Lake Biwa is built (#269)
+        // are closed: nothing is planned beyond it; Nara's east and south ones likewise, and Lake Biwa's west,
+        // north and east ones (#380)
         const edgeOpen = (room) => {                  // the edge cells that can be walked to from the district's ways in
             const [w, h] = size(room), todo = cfg.rooms[room].transporters.map((t) => [t.gridX, t.gridY]);
             const seen = new Set(todo.map((c) => c.join()));
@@ -143,7 +156,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.ok(edgeOpen('Okayama').every((xy) => xy.startsWith(`${size('Okayama')[0] - 1},`)), "Okayama is open on an edge that is not its east one");
         assert.deepStrictEqual(edgeOpen('Osaka'), mine('Osaka').sort(), 'Osaka: an edge cell is open that is not a seam');
         assert.strictEqual(edgeOpen('Osaka').length, 10);
-        assert.deepStrictEqual(edgeOpen('Nara'), N_AVENUE.map((y) => `0,${y}`).sort(), 'Nara: an edge cell is open that is not a seam into Osaka');
+        assert.deepStrictEqual(edgeOpen('Nara'), N_AVENUE.map((y) => `0,${y}`).concat(['23,0', '24,0']).sort(), 'Nara: an edge cell is open that is not a seam into Osaka or Lake Biwa');
+        assert.deepStrictEqual(edgeOpen('LakeBiwa'), ['10,35', '9,35'], 'Lake Biwa: an edge cell is open that is not a seam into Nara');
     });
 
     test('Kansai: the moat is the west end of Osaka\'s canal and Nara\'s river its east end - the three declared waterways sail as one run across the seams (#255, #268)', () => {
@@ -186,7 +200,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.deepStrictEqual(cfg.rooms.Himeji.waterways[0].under, [[bx, bx + 1]]);
     });
 
-    test('Kansai is one walkable room: Osaka -> Himeji\'s keep terrace -> Koko-en -> Okayama\'s court -> Korakuen -> the Great Buddha Hall -> Kasuga Taisha -> the towpath -> Nara Park -> Osaka on foot, stitched and with ?stitch=0 (#255, #267, #268)', () => {
+    test('Kansai is one walkable room: Osaka -> Himeji\'s keep terrace -> Koko-en -> Okayama\'s court -> Korakuen -> the Great Buddha Hall -> Kasuga Taisha -> the towpath -> the Otsu quay -> Hikone Castle -> the hill -> the tunnel -> Nara Park -> Osaka on foot, stitched and with ?stitch=0 (#255, #267, #268, #380)', () => {
         const [kx, ky] = at('Himeji', 'himeji-keep_0_0'), [gx, gy] = at('Himeji', 'himeji-kokoen-gate_0_0');
         const stops = [['Osaka', 3, 26],                                // on the avenue, by the fingerpost
             ['Himeji', kx + 4, ky + 9],                                  // the terrace in front of the keep: over the bridge, up the steps
@@ -195,11 +209,15 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
             ['Okayama', 18, 30],                                         // on Korakuen's lawn: over the Tsukimi bridge
             ['Nara', 34, 10],                                            // in front of the hall: through the Nandaimon
             ['Nara', 44, 31],                                            // in front of Kasuga Taisha: through the torii, up the approach
-            ['Nara', 23, 2],                                             // the towpath's end, by the river's head
+            ['Nara', 23, 2],                                             // up the towpath, by the river
+            ['LakeBiwa', 15, 27],                                        // the Otsu quay: on up the towpath into Lake Biwa
+            ['LakeBiwa', 35, 12],                                        // Hikone's apron: up the Biwaichi and the castle's steps
+            ['LakeBiwa', 37, 24],                                        // the hilltop: up its west flank
+            ['LakeBiwa', 27, 3],                                         // the tunnel mouth at Takashima
             ['Nara', 16, 28],                                            // on the lawn among the deer
             ['Osaka', 3, 26]];
         const ORDER = Object.keys(AT).filter((d) => BUILT.includes(d)).sort((a, b) => AT[a][0] - AT[b][0]);   // west to east
-        assert.deepStrictEqual(ORDER, ['Okayama', 'Himeji', 'Osaka', 'Nara']);
+        assert.deepStrictEqual(ORDER, ['Okayama', 'Himeji', 'Osaka', 'Nara', 'LakeBiwa']);
         for (const stitch of [true, false]) {
             const { world } = worldWith(stitch);
             const rm = world.roomManager, tag = stitch ? 'stitched' : '?stitch=0';
@@ -207,15 +225,18 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
             if (stitch) {
                 assert.strictEqual(world.here().city, 'KansaiCity', 'Osaka is entered as the city room');
                 const city = rm.rooms.KansaiCity;
-                assert.deepStrictEqual([city.worldWidth / 64, city.worldHeight / 64], [AT.Nara[0] + SIZE.Nara[0], SIZE.Osaka[1]]);
-                assert.deepStrictEqual([city.worldWidth / 64, city.worldHeight / 64], [190, 46]);
+                assert.deepStrictEqual([city.worldWidth / 64, city.worldHeight / 64], [AT.LakeBiwa[0] + SIZE.LakeBiwa[0], AT.Nara[1] + SIZE.Nara[1]]);
+                assert.deepStrictEqual([city.worldWidth / 64, city.worldHeight / 64], [198, 76]);
                 assert.strictEqual(city.depthScale, 1, 'the city is short enough that Y-sorted depths need no squeeze');
-                // the railway is Osaka's: it carries on west over the wood above Himeji and Okayama, and east over
-                // the open strip above Nara, in the city's backdrop
+                // the railway is Osaka's: it carries on west over the wood above Himeji and Okayama to the city's
+                // edge, and east over the strip above Nara, where it stops in the wood short of Lake Biwa
+                // (backdrop.extendStop: its capped end is never in view from Osaka or the towpath, #380)
                 const track = city.layers.filter((l) => /^Backdrop/.test(l.name)).flatMap((l) => Object.entries(l.tiles))
                     .filter(([, t]) => /^train-track/.test(t)).map(([xy]) => xy.split(',').map(Number));
-                assert.strictEqual(track.length, AT.Osaka[0] + SIZE.Nara[0], 'the track is not carried on to the city\'s west and east edges');
-                assert.ok(track.every(([x, y]) => (x < AT.Osaka[0] || x >= AT.Nara[0]) && y === 4), 'the track runs two rows above Himeji\'s, Okayama\'s and Nara\'s top row');
+                const row = AT.Osaka[1] + 4;
+                assert.strictEqual(row, 34);
+                assert.strictEqual(track.length, 98, 'the track is not carried on west to the city\'s edge and east to its stop');
+                assert.ok(track.every(([x, y]) => (x < AT.Osaka[0] || (x >= AT.Nara[0] && x <= 147)) && y === row), 'the track runs two rows above Himeji\'s, Okayama\'s and Nara\'s top row, and stops at x 147');
             } else {
                 assert.strictEqual(world.here().city, null);
             }
@@ -233,9 +254,9 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
                         assert.ok(r.moved, `${tag}: blocked on the way to the seam`);
                         if (r.transported) {
                             fades++;
-                            // it lands IN cells inside the neighbour, on the avenue
-                            const [w] = size(world.here().room), x0 = world.here().x;
-                            assert.ok(x0 === IN || x0 === w - 1 - IN, `${tag}: landed at ${world.here().room} ${x0},${world.here().y}`);
+                            // it lands IN cells inside the neighbour, on the avenue or the towpath
+                            const [w, h] = size(world.here().room), x0 = world.here().x, y0 = world.here().y;
+                            assert.ok(x0 === IN || x0 === w - 1 - IN || y0 === IN || y0 === h - 1 - IN, `${tag}: landed at ${world.here().room} ${x0},${y0}`);
                         }
                     }
                     assert.strictEqual(world.here().room, next, `${tag}: the seam out of ${from} did not lead into ${next}`);
@@ -252,8 +273,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
                 assert.deepStrictEqual([world.here().room, world.here().x, world.here().y], [room, x, y], tag);
             };
             for (const stop of stops.slice(1)) walk(...stop);
-            // out along the avenue to its west end, back east to Nara and home: six district changes
-            assert.deepStrictEqual([fades, crossings], stitch ? [0, 6] : [6, 0], `${tag}: fades, crossings`);
+            // out along the avenue to its west end, back east to Nara, up to Lake Biwa and back, and home: eight district changes
+            assert.deepStrictEqual([fades, crossings], stitch ? [0, 8] : [8, 0], `${tag}: fades, crossings`);
         }
     });
 
@@ -375,7 +396,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.ok(!(sprites.Himeji['sendai-maple_0_0'] || []).some(([, y]) => y <= 22), 'a maple in the castle');
     });
 
-    test('Kansai: a fingerpost stands by each seam on each side and says where the avenue goes; Himeji is its own place (#255, #267, #268)', () => {
+    test('Kansai: a fingerpost stands by each seam on each side and says where the avenue or the towpath goes; Himeji is its own place (#255, #267, #268, #380)', () => {
         if (game('typeof Interactions') === 'undefined') load('utils/Interactions.js');
         const I = game('Interactions');
         const { world, config } = worldWith(false);
@@ -403,6 +424,23 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
             for (const cy of [y, y + 1]) {
                 const hit = I.find(config.rooms[room], config.rooms[room], x, cy, { sizeOf, group: 'flavour' });
                 assert.deepStrictEqual([hit && hit.kind, hit && hit.say], ['fingerpost', line], `${room} ${x},${cy}`);
+            }
+        }
+        // ...and the towpath's seam into Lake Biwa (#380): one post either side, beside the towpath, within
+        // four rows of the seam, under a key of its own
+        const NARA_BIWA = 'north: lake biwa, otsu and the cycle path round the lake. south: nara, the deer and the great buddha';
+        for (const [room, cell, seamRow] of [['Nara', [25, 2], 0], ['LakeBiwa', [11, 31], size('LakeBiwa')[1] - 1]]) {
+            for (const r of DISTRICTS) {
+                assert.strictEqual((sprites[r]['biwa-fingerpost_0_0'] || []).length, r === 'Nara' || r === 'LakeBiwa' ? 1 : 0, `${r}'s biwa-fingerpost`);
+            }
+            const [x, y] = at(room, 'biwa-fingerpost_0_0');
+            assert.deepStrictEqual([x, y], cell, `${room}'s fingerpost`);
+            assert.ok(Math.abs(y + 1 - seamRow) <= 4, `${room}'s fingerpost is not by the seam`);
+            assert.ok(solid(room, x, y + 1), `${room}'s fingerpost`);
+            assert.ok([x - 1, x + 1].some((nx) => /^gravel-autotile_/.test(name(layer(room, 'Floor')[`${nx},${y + 1}`])) && !solid(room, nx, y + 1)), `${room}'s fingerpost is not beside the towpath`);
+            for (const cy of [y, y + 1]) {
+                const hit = I.find(config.rooms[room], config.rooms[room], x, cy, { sizeOf, group: 'flavour' });
+                assert.deepStrictEqual([hit && hit.kind, hit && hit.say], ['fingerpost', NARA_BIWA], `${room} ${x},${cy}`);
             }
         }
         // Himeji has no station and no railway (the train's row is Osaka's), no door but the seam, and nothing
@@ -659,7 +697,10 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         const png = fs.readFileSync(path.join(GV2, 'assets', 'sprites', 'nara-daibutsuden_0_0.png'));
         assert.deepStrictEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [768, 512]);
         for (let x = hx; x < hx + 12; x++) for (let y = hy; y < hy + 8; y++) assert.ok(!walkable(x, y), `the hall can be walked onto at ${x},${y}`);
-        for (let x = 0; x < SIZE.Nara[0]; x++) for (const y of [0, 1]) assert.ok(!walkable(x, y), `the wood behind the hall can be walked into at ${x},${y}`);
+        for (let x = 0; x < SIZE.Nara[0]; x++) for (const y of [0, 1]) {
+            if (x === 23 || x === 24) continue;                         // the towpath, on its way into Lake Biwa
+            assert.ok(!walkable(x, y), `the wood behind the hall can be walked into at ${x},${y}`);
+        }
         // the earthen wall in front of the court is crossed through the gate's two middle columns alone
         assert.deepStrictEqual(at('Nara', 'nara-nandaimon_0_0'), [34, 12]);
         for (let x = 25; x <= 46; x++) {
@@ -773,7 +814,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         // from Hokuriku's own art, no ordinary sealed building, no bin
         assert.deepStrictEqual(Object.values(cfg.stations).filter((st) => st.town === 'Nara'), [], 'you walk to Nara');
         assert.deepStrictEqual(Object.keys(cfg.rooms).filter((k) => /^Nara/.test(k)), ['Nara'], 'Nara has a station or an interior of its own name');
-        assert.ok(cfg.rooms.Nara.transporters.every((t) => t.hidden && ['Osaka', 'ShrineNara1'].includes(t.targetRoom)), 'Nara has a door that is not a seam or the shrine\'s');
+        assert.ok(cfg.rooms.Nara.transporters.every((t) => t.hidden && ['Osaka', 'LakeBiwa', 'ShrineNara1'].includes(t.targetRoom)), 'Nara has a door that is not a seam or the shrine\'s');
         assert.ok(!Object.keys(sprites.Nara).some((k) => /^train-track/.test(k)), 'Nara has a railway');
         assert.deepStrictEqual(Object.keys(sprites.Nara).filter((k) => /^(hokuriku|kanazawa|shirakawa|toyama)-/.test(k)), [], 'Nara wears another town\'s art');
         assert.deepStrictEqual(Object.keys(sprites.Nara).filter((k) => /rubbish-bin/.test(k)), []);
@@ -783,20 +824,207 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.ok(cfg.places.Nara.geo[0] > cfg.places.Osaka.geo[0], 'Nara is east of Osaka');
     });
 
-    test('Nara: its north edge waits for Lake Biwa - the river and the towpath stop two rows short of it, and nothing is open there (#268)', () => {
+    test('Nara: its north edge opens into Lake Biwa - the river and the towpath reach row 0, and the towpath is the only way out there (#268, #380)', () => {
         const walkable = fromOsaka();
-        assert.ok(!BUILT.includes('LakeBiwa'), 'Lake Biwa is built: this test is #269\'s to change');
+        assert.ok(BUILT.includes('LakeBiwa'), 'Lake Biwa is not built');
         assert.ok(/\('Nara', 'n', N_TOWPATH, 'LakeBiwa', L_TOWPATH\)/.test(py), 'kansai.py has no join from Nara\'s towpath to Lake Biwa');
         const water = layer('Nara', 'Water'), floor = layer('Nara', 'Floor');
-        for (const x of [20, 21, 22]) {
-            assert.ok(/^pond-autotile_/.test(name(water[`${x},2`])) && !(`${x},1` in water), `the river's head at column ${x}`);
+        for (const x of [20, 21, 22]) for (let y = 0; y <= 2; y++) {
+            assert.ok(/^pond-autotile_/.test(name(water[`${x},${y}`])) && solid('Nara', x, y), `the river at ${x},${y}`);
         }
-        assert.deepStrictEqual([20, 21, 22].map((x) => name(water[`${x},2`])), ['pond-autotile_edge-n', 'pond-autotile_edge-n', 'pond-autotile_corner-ne']);
-        for (const x of [23, 24]) {
-            assert.ok(/^gravel-autotile_/.test(name(floor[`${x},2`])) && !/^gravel/.test(name(floor[`${x},1`])), `the towpath's end at column ${x}`);
-            assert.ok(walkable(x, 2), `the towpath's end at ${x},2 cannot be walked to`);
-        }
-        for (let x = 0; x < SIZE.Nara[0]; x++) for (const y of [0, 1]) assert.ok(!walkable(x, y), `Nara ${x},${y} is open on its north edge`);
+        assert.deepStrictEqual([23, 24].map((x) => name(floor[`${x},0`])), ['gravel-autotile_edge-w', 'gravel-autotile_edge-e']);
+        for (const x of [23, 24]) for (let y = 0; y <= 2; y++) assert.ok(walkable(x, y), `the towpath at ${x},${y} cannot be walked to`);
+        const open = [];
+        for (let x = 0; x < SIZE.Nara[0]; x++) if (walkable(x, 0)) open.push(x);
+        assert.deepStrictEqual(open, [23, 24], 'Nara is open on its north edge other than the towpath');
         assert.ok(!Object.values(water).some((t) => name(t) === 'pond-autotile_corner-nw'), 'a pond corner the blog pipeline would read as "the pond"');
+    });
+
+    // Lake Biwa (#380): reached on foot from Nara up the towpath; `walkable` is what can be walked to from Osaka's avenue, stitched
+    const toBiwa = () => {
+        const { world } = worldWith(true);
+        world.enter('Osaka', 3, 26);
+        const seen = world.reachable();
+        return (x, y) => { const c = world.roomManager.resolve('LakeBiwa', x, y); return seen.has(`${c.x},${c.y}`); };
+    };
+    const BIWA = 'LakeBiwa';
+
+    test('Lake Biwa: a room of the lake, walked into from Nara alone - closed on its far edges, no railway, no station, no bin, no building, no borrowed art (#380)', () => {
+        const room = cfg.rooms[BIWA], walkable = toBiwa();
+        assert.deepStrictEqual(size(BIWA), [46, 36]);
+        assert.strictEqual(room.name, 'Lake Biwa');
+        assert.strictEqual(room.sentenceName, 'Shiga, by Lake Biwa');
+        assert.ok(room.transporters.length === 2 && room.transporters.every((t) => t.hidden && t.targetRoom === 'Nara'), 'Lake Biwa has a door that is not a seam into Nara');
+        // the west, north and east edges are closed until a neighbour exists: kansai.py has no join there
+        const [w, h] = size(BIWA);
+        for (let x = 0; x < w; x++) assert.ok(!walkable(x, 0), `Lake Biwa ${x},0 is open on its north edge`);
+        for (let y = 0; y < h; y++) for (const x of [0, w - 1]) assert.ok(!walkable(x, y), `Lake Biwa ${x},${y} is open on its west or east edge`);
+        const south = []; for (let x = 0; x < w; x++) if (walkable(x, h - 1)) south.push(x);
+        assert.deepStrictEqual(south, [9, 10], 'the towpath is the only way out');
+        assert.ok(/assert not any\(ks\.is_open\('LakeBiwa', side\) for side in 'wne'\)/.test(fs.readFileSync(path.join(GV2, 'tools', 'generate_lakebiwa.py'), 'utf8')), 'the generator does not refuse a join on a far edge');
+        // walkable places only: no railway, no station, no door, no bin
+        const keys = Object.keys(sprites[BIWA]);
+        assert.deepStrictEqual(keys.filter((k) => /^train-track/.test(k)), [], 'Lake Biwa has a railway');
+        assert.deepStrictEqual(Object.values(cfg.stations).filter((st) => st.town === BIWA || /Biwa|Takashima/.test(st.label || '')), [], 'you walk to Lake Biwa');
+        assert.deepStrictEqual(keys.filter((k) => /rubbish-bin/.test(k)), []);
+        // no building: everything standing is its own art, a tree, a shrub or the hill's picket rail
+        const standing = Object.values(layer(BIWA, 'Collidables')).map(name);
+        assert.deepStrictEqual([...new Set(standing.filter((k) => !/^(biwa-|sendai-(pine|cedar|maple)_|shrub-|fence-)/.test(k)))], [], 'Lake Biwa has something standing that is not its own');
+        assert.deepStrictEqual(keys.filter((k) => /^(hokuriku|kanazawa|shirakawa|toyama)-/.test(k)), [], 'Lake Biwa wears another town\'s art (biwa-paddy, not shirakawa-paddy)');
+        assert.ok(keys.includes('biwa-paddy_0_0'));
+        assert.ok(!Object.values(layer(BIWA, 'Water')).some((t) => name(t) === 'pond-autotile_corner-nw'), 'a pond corner the blog pipeline would read as "the pond"');
+        for (const k of ['biwa-hikone-keep', 'biwa-torii', 'biwa-tunnel', 'biwa-monkey', 'biwa-cycle-sign', 'biwa-paddy', 'biwa-station-sign', 'biwa-fingerpost']) {
+            assert.ok(sprites[BIWA][`${k}_0_0`] && `${k}_0_0` in cfg.spriteMetadata, `Lake Biwa has no ${k}`);
+        }
+    });
+
+    test('Lake Biwa: the lake is fished from the quay, and none of it is walked on (#380)', () => {
+        if (game('typeof Interactions') === 'undefined') load('utils/Interactions.js');
+        const { world, config } = worldWith(false);
+        const walkable = toBiwa();
+        assert.ok(walkable(14, 27), 'nobody can walk to the quay');
+        const fish = game('Interactions').find(config.rooms[BIWA], config.rooms[BIWA], 13, 27, { sizeOf: (key) => world.cells(key) });
+        assert.strictEqual(fish && fish.kind, 'pond', 'the lake is not fished');
+        const water = layer(BIWA, 'Water');
+        assert.ok(Object.keys(water).length > 300, 'the lake is not a lake');
+        for (const [xy, t] of Object.entries(water)) {
+            assert.ok(/^pond-autotile_/.test(name(t)), `Lake Biwa ${xy}: ${name(t)}`);
+            assert.ok(xy in layer(BIWA, 'Colliders'), `the lake can be walked on at ${xy}`);
+        }
+    });
+
+    test('Lake Biwa: Hikone\'s keep stands on its wooded knoll up one flight of steps, no wall and no terrace, and is looked up at from its apron (#380)', () => {
+        const walkable = toBiwa();
+        const [kx, ky] = at(BIWA, 'biwa-hikone-keep_0_0');
+        assert.deepStrictEqual([kx, ky], [33, 6]);
+        const png = fs.readFileSync(path.join(GV2, 'assets', 'sprites', 'biwa-hikone-keep_0_0.png'));
+        assert.deepStrictEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [384, 384]);
+        for (let x = kx; x < kx + 6; x++) for (let y = ky; y < ky + 6; y++) assert.ok(solid(BIWA, x, y) && !walkable(x, y), `the keep can be walked onto at ${x},${y}`);
+        assert.deepStrictEqual(Object.keys(sprites[BIWA]).filter((k) => /wall/.test(k)), [], 'Hikone is not a third terrace above a wall');
+        // the apron: four cells under the keep, closed at either end
+        for (let x = 34; x <= 37; x++) assert.ok(walkable(x, 12), `the apron at ${x},12`);
+        assert.ok(solid(BIWA, 33, 12) && solid(BIWA, 38, 12), 'the apron is open at an end');
+        // every flight of steps in the room is at least three rows long, and walled by wood or rail on both sides
+        const steps = Object.entries(layer(BIWA, 'Over Floor')).filter(([, t]) => name(t) === 'castle-stairs_0_0').map(([xy]) => xy.split(',').map(Number));
+        assert.strictEqual(steps.length, 2 * 5 + 2 * 3, 'the castle\'s flight and the hill\'s');
+        const has = new Set(steps.map((c) => c.join()));
+        for (const [x, y] of steps) {
+            let y0 = y, y1 = y;
+            while (has.has(`${x},${y0 - 1}`)) y0--;
+            while (has.has(`${x},${y1 + 1}`)) y1++;
+            assert.ok(y1 - y0 + 1 >= 3, `the steps at ${x},${y} are not a flight`);
+            let x0 = x, x1 = x;
+            while (has.has(`${x0 - 1},${y}`)) x0--;
+            while (has.has(`${x1 + 1},${y}`)) x1++;
+            assert.ok(solid(BIWA, x0 - 1, y) && solid(BIWA, x1 + 1, y), `the flight at ${x},${y} is open at its side`);
+        }
+        // the camera looks up at it from every apron cell: on desktop the whole keep is in view
+        if (!game('typeof LandmarkView !== "undefined"')) load('systems/LandmarkView.js');
+        const LandmarkView = game('LandmarkView'), look = realConfig().game.lookUp, G = 64;
+        assert.strictEqual(look.sprites['biwa-hikone-keep'], 0, 'the keep is not a landmark the camera looks up at');
+        const [mark] = LandmarkView.index([{ key: 'biwa-hikone-keep_0_0', left: kx * G, top: ky * G, width: 384, height: 384 }], look.sprites, G);
+        for (let x = 34; x <= 37; x++) {
+            const aim = (view) => LandmarkView.aim(Object.assign({ x: x * G + 32, y: 12 * G + 32, landmarks: [mark], grid: G, cells: look.cells, fade: look.fade, side: look.side }, view));
+            const desk = aim({ viewH: 960, bar: 40, deadzone: 256, foot: 128 }), phone = aim({ viewH: 480, bar: 46, deadzone: 128, foot: 188 });
+            assert.strictEqual(desk.weight, 1, `the camera does not look up from ${x},12`);
+            assert.ok(12 * G + 32 - desk.offset - 960 / 2 + 40 <= ky * G, `the top of the keep is cut off on desktop from ${x},12`);
+            assert.ok(phone.weight === 1 && phone.offset > 0, `the phone view does not look up from ${x},12`);
+        }
+    });
+
+    test('Lake Biwa: the hill viewpoint is climbed up its west flank alone, a rail on its brow, over walkable paddies in four plots (#380)', () => {
+        const walkable = toBiwa();
+        assert.ok(walkable(37, 24) && walkable(31, 28), 'nobody can walk to the hilltop');
+        // the hilltop is walked out of only down its steps to (31..32, 28)
+        const open = (x, y) => x >= 0 && y >= 0 && x < 46 && y < 36 && !solid(BIWA, x, y);
+        const seen = new Set(['37,24']), todo = [[37, 24]];
+        while (todo.length) {
+            const [x, y] = todo.pop();
+            for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+                if (!open(nx, ny) || seen.has(`${nx},${ny}`) || (ny === 28 && (nx === 31 || nx === 32))) continue;
+                seen.add(`${nx},${ny}`); todo.push([nx, ny]);
+            }
+        }
+        for (const xy of seen) { const [x, y] = xy.split(',').map(Number); assert.ok(x >= 31 && x <= 41 && y >= 22 && y <= 27, `the hilltop leads out at ${xy}`); }
+        assert.ok(seen.has('31,27'), 'the hill\'s steps do not reach the top');
+        // the rail: nine picket cells on the brow, solid, and solid slope under it
+        for (let x = 33; x <= 41; x++) {
+            assert.ok(/^fence-garden-outside_/.test(name(layer(BIWA, 'Collidables')[`${x},25`])) && solid(BIWA, x, 25), `no rail at ${x},25`);
+            for (const y of [26, 27]) assert.ok(solid(BIWA, x, y), `the slope under the rail at ${x},${y}`);
+        }
+        // the paddies: walkable stubble, parted by grass levees on column 37 and row 31 into four plots
+        const paddy = Object.entries(layer(BIWA, 'Floor')).filter(([, t]) => name(t) === 'biwa-paddy_0_0').map(([xy]) => xy.split(',').map(Number));
+        assert.ok(paddy.length > 40);
+        for (const [x, y] of paddy) {
+            assert.ok(x !== 37 && y !== 31, `a paddy on a levee at ${x},${y}`);
+            assert.ok(walkable(x, y) || solid(BIWA, x, y), `the paddy at ${x},${y} cannot be walked to`);
+        }
+        assert.ok(paddy.filter(([x, y]) => walkable(x, y)).length > 40, 'the paddies are not walked on');
+        for (const [ex, ey] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+            assert.ok(paddy.some(([x, y]) => Math.sign(x - 37) === ex && Math.sign(y - 31) === ey), `no plot ${ex},${ey}`);
+        }
+    });
+
+    test('Lake Biwa: Kansai is still distinct from the other cities with the lake in it (check_distinct.py) (#380)', () => {
+        const { spawnSync } = require('child_process');
+        const r = spawnSync('python3', ['-I', 'tools/check_distinct.py'], { cwd: GV2, encoding: 'utf8' });
+        assert.ok(!r.error, `check_distinct.py did not run: ${r.error}`);
+        const line = r.stdout.split('\n').find((l) => l.startsWith('Kansai '));
+        assert.ok(line, `check_distinct.py printed no line for Kansai:\n${r.stdout}${r.stderr}`);
+        assert.ok(!/WORSE/.test(line), `Kansai is less distinct than its baseline: ${line}`);
+    });
+
+    test('Lake Biwa: four districts and four landmark spots for the blog pipeline, each on an open cell (#380)', () => {
+        const walkable = toBiwa();
+        const d = Object.fromEntries(cfg.districts[BIWA].map((x) => [x.key, x]));
+        assert.deepStrictEqual(Object.keys(d).sort(), ['hikone', 'otsu', 'takashima', 'viewpoint']);
+        for (const x of Object.values(d)) {
+            const [x0, y0, x1, y1] = x.bounds, [sx, sy] = x.stand;
+            assert.ok(sx >= x0 && sx <= x1 && sy >= y0 && sy <= y1, `${x.key}: its stand is outside it`);
+            assert.ok(walkable(sx, sy), `${x.key}: nobody can walk to its stand ${sx},${sy}`);
+            assert.ok(x.name.length <= 20, `${x.key}: ${x.name}`);
+        }
+        const tool = fs.readFileSync(path.join(GV2, 'tools', 'blog_to_npc.py'), 'utf8');
+        const seamCells = cfg.rooms[BIWA].transporters.map((t) => `${t.gridX},${t.gridY}`);
+        for (const [key, label, dx, dy, cell] of [['biwa-cycle-sign_', 'the Otsu lakefront', -1, 1, [17, 27]], ['biwa-hikone-keep_', 'Hikone Castle', 1, 6, [34, 12]],
+            ['biwa-tunnel_', 'the lakeside tunnel', -1, 3, [25, 3]], ['biwa-torii_', 'the Shirahige torii', 1, -2, [10, 6]]]) {
+            assert.ok(label.length <= 20, label);
+            assert.ok(tool.includes(`('${key}', '${label}', (${dx}, ${dy}), {'rooms': ('LakeBiwa',)})`), `LANDMARKS has no row for ${label}`);
+            const [sx, sy] = at(BIWA, `${key}0_0`);
+            assert.deepStrictEqual([sx + dx, sy + dy], cell, label);
+            assert.ok(walkable(...cell) && !seamCells.includes(cell.join()), `${label}: its visitor's cell ${cell} is not a free open cell`);
+        }
+        assert.deepStrictEqual(d.otsu.spots, ['the Otsu lakefront']);
+        assert.deepStrictEqual(d.hikone.spots, ['Hikone Castle']);
+        assert.deepStrictEqual(d.takashima.spots.slice().sort(), ['the Shirahige torii', 'the lakeside tunnel']);
+    });
+
+    test('Lake Biwa: the keep, the tunnel, the monkeys, the signs and the fingerpost answer a bump from where you stand; the torii in the water does not (#380)', () => {
+        if (game('typeof Interactions') === 'undefined') load('utils/Interactions.js');
+        const I = game('Interactions');
+        const { world, config } = worldWith(false);
+        const sizeOf = (key) => world.cells(key), walkable = toBiwa();
+        const says = (x, y) => { const hit = I.find(config.rooms[BIWA], config.rooms[BIWA], x, y, { sizeOf, group: 'flavour' }); return hit && hit.kind; };
+        const KINDS = { 'biwa-hikone-keep_0_0': 'hikone-keep', 'biwa-tunnel_0_0': 'tunnel', 'biwa-monkey_0_0': 'monkey', 'biwa-cycle-sign_0_0': 'cycle-sign',
+            'biwa-station-sign_0_0': 'station-sign', 'biwa-fingerpost_0_0': 'fingerpost' };
+        for (const [key, kind] of Object.entries(KINDS)) {
+            const [cw, ch] = sizeOf(key);
+            for (const [x, y] of sprites[BIWA][key]) {
+                const bumped = [];
+                for (let cx = x; cx < x + cw; cx++) for (let cy = y; cy < y + ch; cy++) {
+                    if (!solid(BIWA, cx, cy)) continue;
+                    if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => walkable(cx + dx, cy + dy))) bumped.push([cx, cy]);
+                }
+                assert.ok(bumped.length, `${key} at ${x},${y} cannot be bumped from anywhere`);
+                for (const [cx, cy] of bumped) assert.strictEqual(says(cx, cy), kind, `${key} at ${x},${y}: bumped at ${cx},${cy}`);
+            }
+        }
+        const [tx, ty] = at(BIWA, 'biwa-torii_0_0');
+        for (let x = tx; x < tx + 2; x++) for (let y = ty; y < ty + 3; y++) {
+            assert.strictEqual(says(x, y), null, `the torii answers at ${x},${y}`);
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) assert.ok(!walkable(x + dx, y + dy) || (x + dx >= tx && x + dx < tx + 2 && y + dy >= ty && y + dy < ty + 3), `the torii can be stood beside at ${x + dx},${y + dy}`);
+        }
+        const rules = fs.readFileSync(path.join(GV2, 'src', 'utils', 'Interactions.js'), 'utf8');
+        assert.ok(!/biwa-torii/.test(rules), 'the torii has a bump line nobody can stand to hear');
     });
 };

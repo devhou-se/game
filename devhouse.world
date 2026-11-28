@@ -71,6 +71,13 @@
       "height": 2560
     },
     {
+      "fileName": "gamev2/tiled/lakebiwa.tmj",
+      "x": -6784,
+      "y": 1984,
+      "width": 2944,
+      "height": 2304
+    },
+    {
       "fileName": "gamev2/tiled/sapporo.tmj",
       "x": 256,
       "y": -3776,

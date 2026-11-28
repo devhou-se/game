@@ -174,7 +174,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   pipeline is Tokyo-specific - every one of them loops over config `cities` - so the second city needed no
   code change; `tools/tests/kanazawa.test.js` walks it stitched and with `--stitch=0`. A city's key sorts
   into config order (`HokurikuCity` before `TokyoCity`): do not read "the city" as the first entry.
-- **The third city** (issue #255): `KansaiCity` stitches Osaka, Himeji, Okayama and Nara (see "Kansai" in
+- **The third city** (issue #255): `KansaiCity` stitches Osaka, Himeji, Okayama, Nara and Lake Biwa (see "Kansai" in
   `landmarks-and-towns.md`), again with no code change. It is the first city planned to GROW: its layout
   module (`tools/kansai.py`) places five districts and names the ones built, a generator closes an edge
   whose neighbour is not built yet, and `cities.KansaiCity.rooms` lists only the built ones. It began as
@@ -182,7 +182,10 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   grew from 94x46 to 138x46 and its (0,0) is Okayama's corner of the union now, so a CITY cell of Himeji
   or Osaka is 44 columns further east than it was (district cells, which is what is authored, did not change).
   Nara (issue #268) was the second, east of Osaka: it moved nothing either (the union's (0,0) stays
-  Okayama's corner), and the city is 190x46 with four districts.
+  Okayama's corner), and the city was 190x46 with four districts. Lake Biwa (issue #380) was the third and
+  last, north of Nara (joined by the towpath on Nara's north edge, the first top/bottom seam of the city):
+  it moved nothing, and the city is 198x76 with all five. Being wider than Nara, it made Osaka's railway the
+  first line in a city to stop short of the city's edge (`extendStop`, below and in "Kansai").
   `tools/tests/kansai.test.js` walks it stitched and with `--stitch=0`. A town that used to be a room of its
   own becomes a district this way: the room the game plays in Osaka is `KansaiCity` now, and code or a test
   that wants "a town that is not stitched" must not use Osaka (Sendai is one).
