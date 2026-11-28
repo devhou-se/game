@@ -2,10 +2,11 @@
 """generate_palace_art.py — everything inside the palace's audience hall (issue
 #215). The GuttyKreum temple packs are exteriors only, so the interior is drawn
 here, in the manner of tools/generate_shrine_art.py: shaded pixel art with a
-1px ink outline, drawn at half size (32px a cell) and pixel-doubled. Nothing is
-line art, nothing is random between runs (every scatter is seeded), and the
-only text is set in the game's own font, so a re-run is byte-identical on any
-machine.
+1px ink outline, drawn at half size (32px a cell) and pixel-doubled. Every
+colour is one of the GuttyKreum sheets', and the lamps are a dim gold: their
+glow at night is src/utils/Glows.js's. Nothing is line art, nothing is random
+between runs (every scatter is seeded), and the only text is set in the game's
+own font, so a re-run is byte-identical on any machine.
 
 The hall is an Edo ohiroma: gold leaf, black and vermilion lacquer, tatami.
 All sprites are `palace-in-<piece>`:
@@ -47,28 +48,41 @@ from PIL import Image, ImageDraw, ImageFont
 
 C = 32      # canvas px per cell (doubled on save)
 
-INK = (38, 43, 68)
-VOID = (16, 18, 30)
-WHITE, PAPER, PAPER_SH = (250, 250, 246), (240, 236, 220), (204, 204, 212)
-GLOW, GLOW_HI = (255, 222, 150), (255, 246, 208)
-LQ, LQ_HI, LQ_DK = (44, 38, 56), (92, 82, 108), (26, 22, 36)                 # black lacquer
-RED, RED_HI, RED_DK = (200, 58, 48), (236, 106, 74), (140, 38, 46)           # vermilion lacquer
-GOLD, GOLD_HI, GOLD_DK = (226, 180, 78), (250, 224, 134), (172, 122, 56)     # gold leaf, gilt fittings
-LEAF_A, LEAF_B, LEAF_C = (222, 176, 76), (232, 190, 90), (212, 164, 70)      # squares of leaf
-CLOUD, CLOUD_HI = (244, 212, 120), (252, 232, 156)
-PINE, PINE_HI, PINE_DK = (52, 110, 78), (104, 160, 96), (30, 68, 62)
-BARK, BARK_HI, BARK_DK = (118, 82, 62), (158, 116, 82), (74, 50, 48)
-TATAMI, TATAMI_HI, TATAMI_DK = (184, 184, 114), (204, 204, 138), (150, 154, 98)
-HERI, HERI_HI = (58, 62, 60), (96, 104, 84)
-BOARD, BOARD_ALT, BOARD_HI, BOARD_DK = (112, 72, 54), (122, 80, 58), (166, 116, 80), (78, 50, 46)
-PLASTER, PLASTER_SH = (236, 226, 202), (208, 194, 168)
-PURPLE, PURPLE_HI, PURPLE_DK = (116, 76, 148), (156, 116, 186), (80, 50, 108)
-INDIGO, INDIGO_HI, INDIGO_DK = (50, 78, 140), (96, 130, 190), (34, 50, 98)
-STEEL, STEEL_HI, STEEL_DK = (160, 168, 188), (220, 226, 238), (104, 112, 140)
-BAMBOO, BAMBOO_HI, BAMBOO_DK = (88, 140, 84), (140, 184, 110), (52, 92, 70)
-TIGER, TIGER_HI, TIGER_DK = (226, 142, 60), (246, 184, 96), (170, 96, 50)
-MAPLE, MAPLE_HI = (206, 70, 50), (240, 128, 70)
-BRONZE, BRONZE_HI, BRONZE_DK = (120, 108, 96), (168, 154, 130), (76, 68, 70)
+def rgb(h):
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+# Every colour is one the GuttyKreum sheets use (art-source/GuttyKreum; palace.test.js checks it).
+INK = rgb('1f1f3b')                      # the temple sheets' outline navy
+VOID = rgb('080d16')
+SHADE = rgb('080d16')                    # cast shadows, with alpha
+DAY = rgb('e4cecc')                      # daylight lying on the floor, with alpha
+WHITE, PAPER, PAPER_SH = rgb('fafcfd'), rgb('e4cecc'), rgb('bcc7cc')
+SHOJI, SHOJI_SH = rgb('ffe2e0'), rgb('d7b6ab')                               # paper screens with the day behind them
+LAMP, LAMP_SH, LAMP_HI = rgb('c6a663'), rgb('a7843b'), rgb('f3d890')         # a lamp's paper; its small core
+LQ, LQ_HI, LQ_DK = rgb('2a2636'), rgb('524b59'), rgb('171831')               # black lacquer
+RED, RED_MID, RED_HI, RED_DK = rgb('aa4d31'), rgb('c66347'), rgb('d16b56'), rgb('8a3a22')   # vermilion lacquer
+GOLD, GOLD_HI, GOLD_DK = rgb('c6a663'), rgb('e3c587'), rgb('a7843b')         # gilt fittings
+LEAF_A, LEAF_B, LEAF_C = rgb('c6aa71'), rgb('c6a663'), rgb('b2a168')         # squares of gold leaf
+CLOUD, CLOUD_HI = rgb('e3c587'), rgb('e4cecc')                               # gold mist, lit on top
+PINE, PINE_HI, PINE_DK = rgb('506b6b'), rgb('83af6f'), rgb('2e4040')
+BARK, BARK_HI, BARK_DK = rgb('7f513b'), rgb('aa775f'), rgb('4d3326')
+TATAMI, TATAMI_MID, TATAMI_HI, TATAMI_DK = rgb('b2ad73'), rgb('b2a168'), rgb('b0c276'), rgb('928372')
+HERI, HERI_HI = rgb('2e4040'), rgb('506b6b')
+BOARD, BOARD_ALT, BOARD_HI, BOARD_DK = rgb('7f513b'), rgb('85553e'), rgb('aa775f'), rgb('5a3827')
+PLASTER, PLASTER_SH, PLASTER_DK = rgb('e4cecc'), rgb('d7b6ab'), rgb('c69f96')
+PURPLE, PURPLE_HI, PURPLE_DK = rgb('5c527d'), rgb('8f72b6'), rgb('3f3651')
+INDIGO, INDIGO_HI, INDIGO_DK = rgb('314b8e'), rgb('588cc6'), rgb('172459')
+WATER, WATER_HI = rgb('4b6396'), rgb('7db9fa')
+STEEL, STEEL_HI, STEEL_DK = rgb('a4b0b5'), rgb('dae2e4'), rgb('575f79')
+BAMBOO, BAMBOO_HI, BAMBOO_DK = rgb('678e57'), rgb('83af6f'), rgb('395050')
+TIGER, TIGER_HI, TIGER_DK = rgb('ce6a42'), rgb('f6a583'), rgb('904a37')
+MAPLE, MAPLE_HI = rgb('d16b56'), rgb('e78d7b')
+BRONZE, BRONZE_HI, BRONZE_DK = rgb('826f60'), rgb('a68777'), rgb('594b45')
+EARTH, MOSS = rgb('a7843b'), rgb('678e57')
+CELADON, CELADON_HI = rgb('a0bbc2'), rgb('dae2e4')
+PEONY = rgb('e78d7b')
+COFFER_A, COFFER_B = rgb('4b6396'), rgb('83374f')                            # the ceiling's painted panels
 
 _FONTS = {}
 
@@ -94,10 +108,6 @@ def text(d, x, y, s, f, fill):
     """Text with its top-left ink pixel at (x, y), whatever the font's bearings."""
     l, t, _, _ = d.textbbox((0, 0), s, font=f)
     d.text((x - l, y - t), s, font=f, fill=fill)
-
-
-def mix(a, b, t):
-    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
 
 def bar(d, x0, y0, x1, y1, base, hi, dk, outline=True):
@@ -137,7 +147,7 @@ def outline_alpha(im, colour=INK):
 
 
 def shadow(d, x0, y0, x1, y1, a=70):
-    d.ellipse([x0, y0, x1, y1], fill=(0, 0, 0, a))
+    d.ellipse([x0, y0, x1, y1], fill=SHADE + (a,))
 
 
 def stud(d, x, y):
@@ -253,11 +263,11 @@ def wall_side(side):
         d.rectangle([0, 0, 31, 31], fill=VOID)
         d.rectangle([12, 0, 21, 31], fill=LQ)                   # the head rail
         d.line([13, 0, 13, 31], fill=LQ_HI)
-        d.rectangle([22, 0, 29, 31], fill=GLOW_HI)              # paper
+        d.rectangle([22, 0, 29, 31], fill=SHOJI)                # paper
         d.line([22, 0, 22, 31], fill=INK)
         for y in (0, 10, 21):                                   # the lattice, foreshortened
             d.line([23, y, 29, y], fill=BOARD)
-        d.line([26, 0, 26, 31], fill=mix(GLOW_HI, BOARD, 0.45))
+        d.line([26, 0, 26, 31], fill=SHOJI_SH)
         d.rectangle([30, 0, 31, 31], fill=BOARD_DK)             # the sill the screens run in
         d.line([30, 0, 30, 31], fill=INK)
         d.rectangle([22, 15, 31, 17], fill=RED_DK)              # a post between two screens
@@ -278,7 +288,7 @@ def sun(side):
                     continue                                     # a bar of the lattice
                 a = round(96 * (1 - x / 62) ** 1.5)
                 if a > 4:
-                    im.putpixel((x, y), (255, 232, 160, a))
+                    im.putpixel((x, y), DAY + (a,))
         return im if side == 'w' else im.transpose(Image.FLIP_LEFT_RIGHT)
     return draw
 
@@ -299,9 +309,10 @@ def wall_front():
 def threshold(side):
     def draw():
         im, d = new(C, C)
-        d.rectangle([0, 0, 31, 31], fill=GLOW_HI)                # the day outside
-        for y in range(0, 32):
-            d.line([0, y, 31, y], fill=mix((255, 240, 200), WHITE, y / 31))
+        d.rectangle([0, 0, 31, 31], fill=WHITE)                  # the day outside
+        d.rectangle([0, 0, 31, 2], fill=PAPER)
+        for y in (3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 18):
+            d.line([0, y, 31, y], fill=SHOJI)
         d.line([0, 10, 31, 10], fill=PAPER_SH)                   # the stone step
         d.line([0, 22, 31, 22], fill=PAPER_SH)
         x0 = 0 if side == 'w' else 26                            # the door post
@@ -322,7 +333,7 @@ def doorlight():
         inset = round((1 - t) * 12)
         a = round(120 * t * t)
         if a:
-            d.line([inset, y, 63 - inset, y], fill=(255, 236, 176, a))
+            d.line([inset, y, 63 - inset, y], fill=DAY + (a,))
     return im
 
 
@@ -333,8 +344,8 @@ def _wall_head(d, w):
     lacquer ribs, gilt bosses, painted panels between) and the beam under it."""
     d.rectangle([0, 0, w - 1, 13], fill=LQ_DK)
     for x in range(0, w, 8):                                    # the panels, in turn
-        d.rectangle([x + 1, 1, x + 6, 5], fill=(60, 84, 110) if (x // 8) % 2 == 0 else (112, 60, 62))
-        d.rectangle([x + 1, 8, x + 6, 12], fill=(112, 60, 62) if (x // 8) % 2 == 0 else (60, 84, 110))
+        d.rectangle([x + 1, 1, x + 6, 5], fill=COFFER_A if (x // 8) % 2 == 0 else COFFER_B)
+        d.rectangle([x + 1, 8, x + 6, 12], fill=COFFER_B if (x // 8) % 2 == 0 else COFFER_A)
         d.point((x + 3, 3), fill=GOLD)
         d.point((x + 4, 10), fill=GOLD)
     for x in range(0, w, 8):                                    # ribs and bosses
@@ -364,10 +375,9 @@ def wall_shoji():
     im, d = new(C, 3 * C)
     d.rectangle([0, 0, 31, 95], fill=PLASTER)
     _wall_head(d, C)
-    d.rectangle([1, 23, 30, 87], fill=GLOW_HI)                  # the screen, lit from outside
-    for y in range(24, 72):
-        t = abs(y - 46) / 26
-        d.line([2, y, 29, y], fill=mix(GLOW_HI, PAPER, min(1, t)))
+    d.rectangle([1, 23, 30, 87], fill=PAPER)                    # the screen, the day behind it
+    d.rectangle([2, 32, 29, 62], fill=SHOJI)
+    d.rectangle([2, 40, 29, 54], fill=WHITE)
     for x in (8, 15, 22):                                       # the lattice
         d.line([x, 24, x, 71], fill=BOARD)
     for y in (31, 39, 47, 55, 63, 71):
@@ -407,8 +417,8 @@ def alcove_shelves():
     im, d = new(W, 3 * C)
     d.rectangle([0, 0, W - 1, 95], fill=PLASTER)
     _wall_head(d, W)
-    box(d, 3, 22, W - 4, 87, (196, 180, 150))                   # the recess, in shade
-    d.rectangle([4, 23, W - 5, 27], fill=(168, 152, 130))
+    box(d, 3, 22, W - 4, 87, PLASTER_SH)                        # the recess, in shade
+    d.rectangle([4, 23, W - 5, 27], fill=PLASTER_DK)
     # the upper cupboard: four small gold doors
     box(d, 4, 28, W - 5, 42, LQ)
     for i in range(4):
@@ -422,9 +432,9 @@ def alcove_shelves():
     post(d, 47, 55, 50, 64, LQ, LQ_HI, LQ_DK)
     d.polygon([(54, 52), (58, 50), (58, 52)], fill=LQ)          # the upturned end of the upper shelf
     # on them: a celadon vase, a lacquer box, an incense burner
-    d.ellipse([17, 41, 27, 52], fill=(150, 196, 176), outline=INK)
-    d.rectangle([20, 38, 24, 42], fill=(150, 196, 176), outline=INK)
-    d.line([19, 44, 19, 49], fill=(204, 232, 214))
+    d.ellipse([17, 41, 27, 52], fill=CELADON, outline=INK)
+    d.rectangle([20, 38, 24, 42], fill=CELADON, outline=INK)
+    d.line([19, 44, 19, 49], fill=CELADON_HI)
     d.line([22, 34, 22, 38], fill=PINE)
     d.point((21, 33), fill=MAPLE)
     d.point((23, 34), fill=MAPLE)
@@ -471,7 +481,7 @@ def alcove_doors():
         for _ in range(3):
             cx, cy = x0 + 4 + rnd.randrange(11), 42 + rnd.randrange(28)
             d.line([cx, cy, cx - 2, cy + 6], fill=PINE)
-            d.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=WHITE if rnd.random() < 0.5 else (236, 150, 150))
+            d.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=WHITE if rnd.random() < 0.5 else PEONY)
             d.point((cx, cy), fill=MAPLE)
             d.point((cx + 2, cy + 4), fill=PINE_HI)
     box(d, 4, 79, W - 5, 87, LQ)                                # the raised sill
@@ -565,8 +575,8 @@ def mural():
     for x0, y, x1 in ((6, 26, 96), (70, 33, 150), (210, 25, 300), (284, 32, 378), (150, 74, 236), (20, 66, 84), (300, 70, 372)):
         gold_cloud(d, x0, y, x1)
     # the ground the pine stands on: a bank of earth and moss at the left
-    d.polygon([(0, 87), (0, 76), (30, 72), (70, 75), (112, 82), (130, 87)], fill=(150, 128, 78))
-    d.polygon([(0, 87), (0, 80), (34, 76), (80, 80), (118, 87)], fill=(120, 132, 80))
+    d.polygon([(0, 87), (0, 76), (30, 72), (70, 75), (112, 82), (130, 87)], fill=EARTH)
+    d.polygon([(0, 87), (0, 80), (34, 76), (80, 80), (118, 87)], fill=MOSS)
     for _ in range(26):
         d.point((rnd.randrange(4, 112), 79 + rnd.randrange(8)), fill=PINE)
     # the pine: a heavy trunk leaning in from the left, one bough the length of the wall
@@ -589,12 +599,12 @@ def mural():
     _crane(d, 250, 70, flying=True, flip=True)
     _crane(d, 342, 86, flip=True)
     # water and reeds at the right
-    d.polygon([(250, 87), (270, 80), (384, 78), (384, 87)], fill=(74, 110, 150))
+    d.polygon([(250, 87), (270, 80), (384, 78), (384, 87)], fill=WATER)
     for x0, y in ((268, 82), (300, 84), (330, 81), (356, 85), (286, 86)):
-        d.line([x0, y, x0 + 9, y], fill=(150, 184, 212))
+        d.line([x0, y, x0 + 9, y], fill=WATER_HI)
     for x in (362, 366, 371, 376):
-        d.line([x, 80, x - 1, 66 + (x % 5)], fill=BAMBOO_DK)
-        d.point((x - 1, 65 + (x % 5)), fill=(196, 170, 110))
+        d.line([x, 80, x - 1, 66 + (x % 5)], fill=PINE_DK)
+        d.point((x - 1, 65 + (x % 5)), fill=BARK_HI)
     _seams(d, W, 22, 87)
     d.line([0, 22, W - 1, 22], fill=INK)
     _wall_foot(d, W)
@@ -611,21 +621,21 @@ def _candle(d, x, y):
     d.rectangle([x - 2, y - 18, x + 1, y - 16], fill=GOLD)
     d.ellipse([x - 5, y - 33, x + 4, y - 29], fill=GOLD, outline=INK)
     d.rectangle([x - 2, y - 40, x + 1, y - 33], fill=WHITE, outline=PAPER_SH)
-    d.rectangle([x - 1, y - 45, x, y - 41], fill=(255, 190, 80))
-    d.point((x - 1, y - 46), fill=(255, 240, 180))
-    d.point((x, y - 43), fill=WHITE)
+    d.rectangle([x - 1, y - 45, x, y - 41], fill=LAMP)
+    d.point((x - 1, y - 46), fill=LAMP_SH)
+    d.point((x, y - 43), fill=LAMP_HI)
 
 
 def _brazier(d, x, y):
     """A bronze hibachi with its foot at (x, y)."""
     d.ellipse([x - 9, y - 12, x + 9, y], fill=BRONZE, outline=INK)
     d.ellipse([x - 8, y - 14, x + 8, y - 7], fill=BRONZE_DK, outline=INK)
-    d.ellipse([x - 6, y - 13, x + 6, y - 9], fill=(206, 200, 190))                 # ash
+    d.ellipse([x - 6, y - 13, x + 6, y - 9], fill=PAPER_SH)                       # ash
     for dx in (-3, 0, 3):
-        d.point((x + dx, y - 11), fill=(240, 110, 60))
+        d.point((x + dx, y - 11), fill=RED_HI)
     d.line([x - 7, y - 5, x - 3, y - 2], fill=BRONZE_HI)
-    d.line([x + 2, y - 14, x + 2, y - 19], fill=STEEL_DK)                           # fire tongs
-    d.line([x + 4, y - 14, x + 4, y - 19], fill=STEEL_DK)
+    d.line([x + 2, y - 14, x + 2, y - 19], fill=LQ_HI)                              # fire tongs
+    d.line([x + 4, y - 14, x + 4, y - 19], fill=LQ_HI)
 
 
 def dais():
@@ -636,9 +646,9 @@ def dais():
     # the raised floor: mats laid across, a broad figured border round the lot
     d.rectangle([0, 0, W - 1, 81], fill=TATAMI_HI)
     for y in range(1, 81, 2):
-        d.line([0, y, W - 1, y], fill=mix(TATAMI_HI, TATAMI, 0.6) if y % 4 == 1 else TATAMI_HI)
+        d.line([0, y, W - 1, y], fill=TATAMI if y % 4 == 1 else TATAMI_HI)
     for y in range(0, 6):                                        # shade under the painted wall
-        d.line([0, y, W - 1, y], fill=mix(TATAMI_DK, TATAMI_HI, y / 6))
+        d.line([0, y, W - 1, y], fill=TATAMI_DK if y < 2 else TATAMI_MID if y < 4 else TATAMI)
     for x in range(0, W + 1, 64):                                # the mats' borders (ungen: white, red, indigo)
         d.rectangle([x - 2, 0, x + 1, 81], fill=WHITE)
         for y in range(0, 81, 6):
@@ -656,8 +666,8 @@ def dais():
         d.point((x + 1, 86), fill=GOLD_HI)
         d.point((x + 3, 88), fill=GOLD_DK)
     for x in range(0, W):                                        # its shadow on the hall floor
-        d.point((x, 94), fill=(0, 0, 0, 90))
-        d.point((x, 95), fill=(0, 0, 0, 40))
+        d.point((x, 94), fill=SHADE + (90,))
+        d.point((x, 95), fill=SHADE + (40,))
     d.line([0, 0, 0, 93], fill=INK)
     d.line([W - 1, 0, W - 1, 93], fill=INK)
     # the seat: a thick mat of its own, a brocade cushion, the arm rest beside it
@@ -666,7 +676,7 @@ def dais():
     box(d, cx - 38, 34, cx + 37, 62, TATAMI_HI)
     for y in range(36, 61, 2):
         d.line([cx - 37, y, cx + 36, y], fill=TATAMI)
-    box(d, cx - 38, 62, cx + 37, 67, (214, 206, 150))            # its thick edge
+    box(d, cx - 38, 62, cx + 37, 67, TATAMI_MID)                  # its thick edge
     for x in range(cx - 38, cx + 38, 6):                         # ungen border all round
         col = RED if ((x - cx) // 6) % 2 == 0 else INDIGO
         d.rectangle([x, 34, min(x + 2, cx + 37), 36], fill=col)
@@ -707,7 +717,7 @@ def dais():
         # on it: a scroll box and a writing box
         box(d, x0 + 4, 43, x0 + 14, 47, LQ)
         d.rectangle([x0 + 8, 44, x0 + 10, 46], fill=GOLD)
-        d.rectangle([x0 + 18, 44, x0 + 27, 47], fill=PAPER, outline=INK)
+        d.rectangle([x0 + 18, 44, x0 + 27, 47], fill=WHITE, outline=INK)
         d.line([x0 + 20, 45, x0 + 25, 45], fill=RED)
     return im
 
@@ -718,7 +728,7 @@ def pillar():
     shadow(d, 5, 86, 27, 95, 80)
     d.rectangle([10, 3, 21, 90], fill=RED)
     d.rectangle([11, 3, 12, 90], fill=RED_HI)
-    d.rectangle([13, 3, 13, 90], fill=mix(RED, RED_HI, 0.5))
+    d.rectangle([13, 3, 13, 90], fill=RED_MID)
     d.rectangle([18, 3, 20, 90], fill=RED_DK)
     d.rectangle([10, 60, 21, 90], fill=LQ)                       # the lacquered foot
     d.rectangle([11, 60, 12, 90], fill=LQ_HI)
@@ -787,7 +797,7 @@ def fusuma_tiger():
     gold_cloud(d, 120, 16, 188)
     for x, lean in ((10, 2), (22, -1), (58, 3), (142, -2), (156, 2), (178, -1), (120, 1)):
         _bamboo(d, x, 10, 56, lean)
-    d.polygon([(0, 56), (0, 50), (40, 47), (96, 50), (150, 46), (191, 50), (191, 56)], fill=(150, 128, 78))
+    d.polygon([(0, 56), (0, 50), (40, 47), (96, 50), (150, 46), (191, 50), (191, 56)], fill=EARTH)
     # the tiger: crouched, looking back over its shoulder
     x, y = 74, 49
     d.line([x - 22, y - 8, x - 30, y - 14, x - 28, y - 22], fill=TIGER_DK, width=3, joint='curve')   # tail
@@ -819,7 +829,7 @@ def fusuma_tiger():
 def fusuma_waves():
     im, d = _screen_run(2152)
     gold_cloud(d, 30, 13, 110)
-    d.ellipse([146, 12, 166, 32], fill=(244, 240, 222), outline=CLOUD)                # the moon
+    d.ellipse([146, 12, 166, 32], fill=PAPER, outline=CLOUD)                # the moon
     gold_cloud(d, 132, 26, 186)
     # the sea: rows of rollers, each crest a white comb
     d.rectangle([0, 36, 191, 56], fill=INDIGO)
@@ -879,7 +889,7 @@ def armour():
             d.line([x0 + 1, y + 1, x0 + 10, y + 1], fill=GOLD_DK)
         d.line([x0 + 1, 34, x0 + 10, 34], fill=GOLD)
     # the mask, the neck guard, the helmet
-    d.rectangle([24, 25, 39, 34], fill=(70, 44, 44), outline=INK)
+    d.rectangle([24, 25, 39, 34], fill=BARK_DK, outline=INK)
     d.rectangle([27, 27, 29, 28], fill=VOID)
     d.rectangle([34, 27, 36, 28], fill=VOID)
     d.line([27, 31, 36, 31], fill=WHITE)                           # its bristling moustache
@@ -914,10 +924,10 @@ def swords():
         d.rectangle([x - 6, 58, x + 6, 61], fill=LQ, outline=INK)
         d.rectangle([x - 1, 20, x + 1, 22], fill=GOLD)
     bar(d, 10, 50, 50, 53, LQ, LQ_HI, LQ_DK)
-    for i, (y, x0, x1, sheath) in enumerate(((22, 3, 60, LQ), (33, 3, 60, (120, 44, 50)), (44, 10, 52, (40, 60, 110)))):
+    for y, x0, x1, sheath, shine in ((22, 3, 60, LQ, LQ_HI), (33, 3, 60, RED_DK, RED), (44, 10, 52, INDIGO, INDIGO_HI)):
         d.line([x0 + 14, y, x1 - 8, y - 1, x1, y - 3], fill=INK, width=5, joint='curve')
         d.line([x0 + 14, y, x1 - 8, y - 1, x1, y - 3], fill=sheath, width=3, joint='curve')
-        d.line([x0 + 16, y - 1, x1 - 10, y - 2], fill=mix(sheath, WHITE, 0.35))
+        d.line([x0 + 16, y - 1, x1 - 10, y - 2], fill=shine)
         d.rectangle([x0, y - 2, x0 + 12, y + 1], fill=WHITE, outline=INK)                # the hilt, bound
         for x in range(x0 + 2, x0 + 12, 3):
             d.point((x, y - 1), fill=LQ)
@@ -937,11 +947,10 @@ def andon():
         d.rectangle([x, 44, x + 1, 59], fill=LQ)
     d.line([8, 59, 23, 59], fill=LQ)
     d.line([9, 52, 22, 52], fill=LQ)
-    box(d, 7, 14, 24, 45, GLOW_HI)                                 # the paper box
-    for y in range(15, 45):
-        t = abs(y - 31) / 16
-        d.line([8, y, 23, y], fill=mix(GLOW_HI, GLOW, min(1, t)))
-    d.ellipse([12, 24, 19, 38], fill=WHITE)                        # the flame behind the paper
+    box(d, 7, 14, 24, 45, LAMP)                                    # the paper box
+    d.rectangle([8, 15, 23, 18], fill=LAMP_SH)
+    d.rectangle([8, 41, 23, 44], fill=LAMP_SH)
+    d.rectangle([14, 27, 17, 33], fill=LAMP_HI)                    # the flame behind the paper
     for x in (12, 19):
         d.line([x, 15, x, 44], fill=LQ)
     for y in (24, 35):
@@ -966,14 +975,14 @@ def lamp_hang():
         d.point((x, 21), fill=GOLD_HI)
         d.point((x, 20), fill=GOLD)
     d.rectangle([14, 10, 17, 12], fill=GOLD, outline=INK)
-    box(d, 8, 23, 23, 42, GLOW_HI)                                 # the lit cage
-    for y in range(24, 42):
-        t = abs(y - 32) / 10
-        d.line([9, y, 22, y], fill=mix(GLOW_HI, GLOW, min(1, t)))
+    box(d, 8, 23, 23, 42, LAMP)                                    # the lit cage
+    d.rectangle([9, 24, 22, 26], fill=LAMP_SH)
+    d.rectangle([9, 39, 22, 41], fill=LAMP_SH)
+    d.rectangle([13, 30, 18, 35], fill=LAMP_HI)
     for x in (11, 15, 16, 20):
-        d.line([x, 24, x, 41], fill=GOLD_DK)
+        d.line([x, 24, x, 41], fill=BARK_DK)
     for y in (28, 37):
-        d.line([9, y, 22, y], fill=GOLD_DK)
+        d.line([9, y, 22, y], fill=BARK_DK)
     d.rectangle([8, 23, 23, 42], outline=INK)
     box(d, 6, 42, 25, 45, GOLD)
     d.line([7, 43, 24, 43], fill=GOLD_HI)
@@ -1020,10 +1029,9 @@ def guardpost():
     # the lamp: a paper box on a post, marked for the watch
     d.rectangle([81, 44, 82, 60], fill=LQ)
     d.rectangle([76, 59, 87, 62], fill=LQ, outline=INK)
-    box(d, 74, 18, 90, 44, GLOW_HI)
-    for y in range(19, 44):
-        t = abs(y - 31) / 13
-        d.line([75, y, 89, y], fill=mix(GLOW_HI, GLOW, min(1, t)))
+    box(d, 74, 18, 90, 44, LAMP)
+    d.rectangle([75, 19, 89, 22], fill=LAMP_SH)
+    d.rectangle([75, 40, 89, 43], fill=LAMP_SH)
     text(d, 77, 25, '番', kana(), RED_DK)
     d.rectangle([74, 18, 90, 44], outline=INK)
     box(d, 72, 14, 92, 18, LQ)
@@ -1117,7 +1125,7 @@ def table():
     for x in (14, 44):                                             # cups
         d.rectangle([x, 10, x + 5, 14], fill=WHITE, outline=INK)
         d.line([x + 1, 11, x + 4, 11], fill=BAMBOO_HI)
-    d.rectangle([48, 12, 55, 14], fill=(236, 150, 150), outline=INK)   # a sweet on a dish
+    d.rectangle([48, 12, 55, 14], fill=PEONY, outline=INK)   # a sweet on a dish
     return im
 
 

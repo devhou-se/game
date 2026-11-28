@@ -1401,7 +1401,10 @@ either door: the west mats put you on 19,23, the east mats on 41,23, so the hall
   `.held`).
 - **Art**: `tools/generate_palace_art.py` (needs Pillow; `--preview out.png`) draws all 32 sprites
   (`palace-in-<piece>`) as shaded pixel art at the shrine kit's scale; every scatter is seeded, so a re-run
-  is byte-identical. It and the generator are in `check_generators.py`.
+  is byte-identical. It and the generator are in `check_generators.py`. Every colour is one of the GuttyKreum
+  sheets' (the tool's palette block; `palace.test.js` checks it), the outline is the navy `1f1f3b`, and the
+  lamps and candles are the dim gold `c6a663` with a small `f3d890` core: the night glow is `Glows.js`'s
+  alone (#341).
 - **Doors and blog NPCs**: no dated position, district stand cell or landmark stand cell is on a tower door
   or the cell in front of it (`palace.test.js` holds it for every date); `the Imperial Palace gate` (28,34)
   and `the palace moat` (20,33) are far from both.
