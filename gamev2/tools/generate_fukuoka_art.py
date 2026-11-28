@@ -8,10 +8,11 @@ pixel-doubled, with a 1px ink outline. Not line-art placeholders.
 
   fukuoka-tower_0_0      4x12  Fukuoka Tower: the mirrored triangular prism at
                                Momochi, its mast, the low base building
-  yatai-ramen_0_0        3x3   a Nakasu food stall: striped canvas roof, a noren
-  yatai-yakitori_0_0     3x3   (ラーメン on the ramen one), the lit counter with
-  yatai-oden_0_0         3x3   bowls, stools in front, a paper lantern
-  yatai-lanterns_0_0     1x2   a post strung with red paper lanterns - the key
+  yatai-ramen_0_0        3x3   a Nakasu food stall: a striped canvas awning seen
+  yatai-yakitori_0_0     3x3   from above, a noren (ラーメン on the ramen one), the
+  yatai-oden_0_0         3x3   counter in dim gold lamplight with bowls, a shaded
+                               boarded cart, stools in front, a paper lantern
+  yatai-lanterns_0_0     1x2   a post strung with lit paper lanterns - the key
                                holds `-lanterns`, so src/DayNight.js lights it
                                at night like every other lantern
   hakata-yamakasa_0_0    2x4   a decorated Hakata Gion Yamakasa float, the kind
@@ -196,115 +197,193 @@ def glyph_row(d, names, x, y, fill):
         x += 11
 
 
-def paper_lantern(d, x, y, w=8, h=11, body=RED, hi=RED_HI, lo=RED_DK):
-    """A chochin: a ribbed paper drum between two dark caps."""
-    d.rectangle([x + 1, y, x + w - 2, y + 1], fill=INK)
-    d.rectangle([x, y + 2, x + w - 1, y + h - 3], fill=body)
-    d.line([(x, y + 2), (x, y + h - 3)], fill=hi)
-    d.line([(x + w - 1, y + 2), (x + w - 1, y + h - 3)], fill=lo)
-    for ry in range(y + 4, y + h - 3, 2):
-        d.line([(x + 1, ry), (x + w - 2, ry)], fill=lo)
-    d.rectangle([x + 2, y + 3, x + 3, y + h - 5], fill=hi)
-    d.rectangle([x + 1, y + h - 2, x + w - 2, y + h - 1], fill=INK)
+LAMP, LAMP_HI = GOLD, rgb('f3d890')       # the pack's dim gold, and the glow at its heart
+SHADE = rgb('2a3151', 90)                 # a shadow on the pavement
+BLUE, BLUE_HI = rgb('314b8e'), rgb('425faa')
 
-
-YATAI = {      # kind: (roof stripe, noren cloth, noren shade, noren mark)
-    'ramen':    (RED, RED, RED_DK, WHITE),
-    'yakitori': (NAVY, rgb('2f3f7a'), NAVY, WHITE),
-    'oden':     (GREEN, CREAM, CREAM_LO, RED),
+YATAI = {      # kind: (awning stripe lit / mid / dark, noren cloth, noren shade, noren mark, stool)
+    'ramen':    ((RED_HI, RED, RED_LO), RED, RED_LO, WHITE, BLUE),
+    'yakitori': ((BLUE_HI, BLUE, NAVY), BLUE, NAVY, WHITE, RED),
+    'oden':     ((rgb('508582'), GREEN, GREEN_LO), CREAM, CREAM_LO, RED, RED),
 }
+CANVAS = (WHITE, CREAM, CREAM_LO)          # the awning's plain stripes
+
+
+def paper_lantern(d, x, y, w=8, h=11, body=RED, hi=RED_HI, lo=RED_LO, glow=LAMP):
+    """A lit chochin: a ribbed paper drum between two dark caps, the lamp
+    inside showing dim gold through the middle of it."""
+    d.line([(x + 1, y), (x + w - 2, y)], fill=WOOD_DK)
+    d.rectangle([x, y + 1, x + w - 1, y + h - 2], fill=body)
+    d.line([(x, y + 1), (x, y + h - 2)], fill=hi)
+    d.line([(x + w - 1, y + 1), (x + w - 1, y + h - 2)], fill=lo)
+    d.rectangle([x + 1, y + 3, x + w - 2, y + h - 4], fill=glow)
+    d.rectangle([x + 2, y + 4, x + w - 4, y + h - 5], fill=LAMP_HI)
+    for ry in range(y + 3, y + h - 2, 3):
+        d.line([(x + 1, ry), (x + w - 2, ry)], fill=lo)
+    d.line([(x + 1, y + h - 1), (x + w - 2, y + h - 1)], fill=WOOD_DK)
 
 
 def yatai(kind):
-    stripe, cloth, cloth_lo, mark = YATAI[kind]
+    ramp, cloth, cloth_lo, mark, stool = YATAI[kind]
     im, d = canvas(3, 3)                 # 96 x 96
 
     # ---- the lit inside of the stall, behind everything -------------------------
-    d.rectangle([9, 26, 86, 62], fill=DARK)
-    d.rectangle([9, 44, 86, 62], fill=rgb('5a3b34'))              # lamplight on the back boards
+    d.rectangle([9, 26, 86, 60], fill=DARK)
+    d.rectangle([9, 44, 86, 60], fill=WOOD_DK)                    # lamplight on the back boards
     for x in range(14, 84, 10):
-        d.line([(x, 44), (x, 62)], fill=DARK)
+        d.line([(x, 44), (x, 60)], fill=DARK)
     d.rectangle([14, 48, 80, 49], fill=WOOD_LO)                   # a shelf of bottles
     for i, x in enumerate(range(17, 78, 6)):
-        c = (GREEN_HI, AMBER, WHITE, RED_HI)[i % 4]
+        c = (GREEN_HI, LAMP, WHITE, RED_HI)[i % 4]
         d.rectangle([x, 44, x + 1, 47], fill=c)
-    d.rectangle([60, 52, 72, 60], fill=STONE_DK)                  # the stock pot, steaming
-    d.line([(60, 52), (72, 52)], fill=STONE)
-    for sx, sy in ((63, 49), (66, 47), (69, 49), (65, 45)):
+    d.rectangle([60, 51, 72, 57], fill=STONE_DK)                  # the stock pot, steaming
+    d.line([(60, 51), (72, 51)], fill=STONE)
+    d.line([(61, 52), (61, 57)], fill=STONE_LO)
+    for sx, sy in ((63, 48), (66, 46), (69, 48), (65, 44)):
         d.point((sx, sy), fill=WHITE)
-    d.rectangle([46, 40, 49, 43], fill=AMBER); d.point((47, 41), fill=WHITE)    # the bare bulb
+    d.rectangle([46, 40, 49, 43], fill=LAMP); d.point((47, 41), fill=LAMP_HI)   # the bare bulb
     # ---- corner poles ------------------------------------------------------------
     for x in (7, 87):
         d.rectangle([x, 22, x + 1, 70], fill=WOOD_LO)
         d.line([(x, 22), (x, 70)], fill=WOOD)
-    # ---- the canvas roof: striped, wider at the eaves, a scalloped valance ------
-    for y in range(5, 23):
-        t = (y - 5) / 17
-        x0, x1 = int(15 - 12 * t), int(80 + 12 * t)
-        for x in range(x0, x1 + 1):
-            band = int((x - 47.5) / (4 + 3 * t) + 40) % 2
-            c = stripe if band else CREAM
-            if y >= 21:
-                c = RED_DK if band and stripe == RED else (INK if band else CREAM_LO)
-            d.point((x, y), fill=c)
-        d.point((x0, y), fill=WHITE)
-    for x in range(3, 93):
-        if (x // 5) % 2 == 0:
-            d.line([(x, 23), (x, 24)], fill=CREAM if (x // 5) % 4 == 0 else stripe)
     # ---- the noren: split cloth across the front --------------------------------
-    for i, x0 in enumerate(range(12, 84, 12)):
+    for x0 in range(12, 84, 12):
         d.rectangle([x0, 26, x0 + 10, 41], fill=cloth)
         d.line([(x0, 26), (x0, 41)], fill=cloth_lo)
+        d.line([(x0 + 10, 26), (x0 + 10, 41)], fill=cloth_lo)
         d.line([(x0, 41), (x0 + 10, 41)], fill=cloth_lo)
-    d.line([(10, 25), (86, 25)], fill=WOOD_DK)                    # the rod it hangs on
     if kind == 'ramen':
-        glyph_row(d, ('ra', 'bar', 'me', 'n'), 27, 29, mark)
+        glyph_row(d, ('ra', 'bar', 'me', 'n'), 27, 30, mark)
     elif kind == 'yakitori':
         for x0 in range(12, 84, 12):                              # a white roundel on every strip
-            d.ellipse([x0 + 2, 30, x0 + 8, 36], outline=mark)
-            d.line([(x0 + 4, 33), (x0 + 6, 33)], fill=mark)
+            d.ellipse([x0 + 2, 31, x0 + 8, 37], outline=mark)
+            d.line([(x0 + 4, 34), (x0 + 6, 34)], fill=mark)
     else:
         for x0 in range(12, 84, 24):                              # red discs on cream
-            d.ellipse([x0 + 8, 29, x0 + 15, 36], fill=mark)
-    # ---- the counter, with bowls on it, and the cart's boarded front ------------
-    d.rectangle([5, 60, 90, 64], fill=WOOD_HI)
-    d.line([(5, 64), (90, 64)], fill=WOOD_LO)
-    for bx in (18, 40, 72):
-        d.rectangle([bx, 57, bx + 7, 59], fill=WHITE)
-        d.line([(bx, 57), (bx + 7, 57)], fill=RED)
-        d.line([(bx + 1, 60), (bx + 6, 60)], fill=CREAM_LO)
-    d.rectangle([7, 65, 88, 84], fill=WOOD)
-    for x in range(7, 89, 9):
-        d.line([(x, 65), (x, 84)], fill=WOOD_LO)
-    d.line([(7, 65), (88, 65)], fill=WOOD_DK)
+            d.ellipse([x0 + 8, 30, x0 + 15, 37], fill=mark)
+    px = im.load()
+    for y in range(26, 30):                                       # the awning's shadow across the top
+        for x in range(8, 88):
+            c = px[x, y]
+            if c[3] and (y < 28 or (x + y) % 2):
+                px[x, y] = {cloth: cloth_lo, CREAM: CREAM_LO, WHITE: CREAM_LO}.get(c, DARK)
+    d.line([(10, 25), (86, 25)], fill=WOOD_DK)                    # the rod it hangs on
+
+    # ---- the awning seen from above: canvas sloping down from a ridge pole at
+    # the back to the eaves at the front, its stripes running front to back and
+    # drawing in toward the ridge; lit from the left, a fold down each stripe --
+    top, eave = 4, 19
+    for y in range(top, eave + 1):
+        t = (y - top) / (eave - top)
+        x0, x1 = round(14 - 11 * t), round(81 + 11 * t)
+        half = (x1 - x0) / 2
+        for x in range(x0, x1 + 1):
+            u = (x - x0) / half - 1                               # -1 .. 1 across the awning
+            k = int((u + 1) * 4.5)                                # nine stripes
+            edge = (u + 1) * 4.5 - k
+            tones = ramp if k % 2 == 0 else CANVAS
+            c = tones[1]
+            if u < -0.6 or edge < 0.18:
+                c = tones[0]
+            if u > 0.55 or edge > 0.85:
+                c = tones[2]
+            if y == top + 1 and tones is CANVAS:
+                c = CREAM_LO                                       # tucked under the ridge pole
+            px[x, y] = c
+    d.rectangle([13, top - 1, 82, top], fill=WOOD_LO)              # the ridge pole
+    d.line([(13, top - 1), (82, top - 1)], fill=WOOD)
+    # the valance: the canvas hanging straight down at the eaves, in shade, scalloped
+    for x in range(3, 93):
+        u = (x - 3) / 44.5 - 1
+        k = int((u + 1) * 4.5)
+        tones = ramp if k % 2 == 0 else CANVAS
+        d.line([(x, eave + 1), (x, eave + 3)], fill=tones[2] if tones is ramp else tones[1])
+        if (x - 3) % 6 in (1, 2, 3, 4):
+            px[x, eave + 4] = tones[2]
+            if (x - 3) % 6 in (2, 3):
+                px[x, eave + 5] = tones[2]
+    d.line([(3, eave + 1), (92, eave + 1)], fill=CANVAS[2])       # the fold at the eave
+
+    # ---- the counter: its top in the stall's dim gold lamplight -----------------
+    d.rectangle([5, 58, 90, 62], fill=WOOD)
+    for x in range(6, 90):
+        d.line([(x, 59), (x, 61)], fill=LAMP)
+        if abs(x - 47) < 14 - (x % 3) * 2:
+            d.line([(x, 59), (x, 60)], fill=LAMP_HI)
+    d.line([(5, 58), (90, 58)], fill=WOOD_LO)                     # the back edge, in the stall's shade
+    d.line([(5, 62), (90, 62)], fill=WOOD_HI)                     # the lit front lip
+    for bx in (18, 34, 72):                                       # bowls on it
+        d.rectangle([bx, 56, bx + 7, 59], fill=WHITE)
+        d.line([(bx, 56), (bx + 7, 56)], fill=RED)
+        d.line([(bx + 1, 59), (bx + 6, 59)], fill=CREAM_LO)
+        d.line([(bx + 7, 57), (bx + 7, 59)], fill=CREAM_LO)
+    # ---- the cart's boarded body: lit from the left, the counter's shadow under
+    # its lip, darker toward the ground, and its right end turned away ---------
+    for y in range(63, 84):
+        for x in range(7, 89):
+            plank = (x - 7) % 9
+            if x >= 85:
+                c = WOOD_DK if x > 85 else WOOD_LO                # the cart's end, in shade
+            elif y <= 64:
+                c = WOOD_DK                                       # under the counter's lip
+            elif plank == 0:
+                c = WOOD_LO
+            elif plank == 1:
+                c = WOOD_HI
+            else:
+                c = WOOD_LO if y >= 79 else WOOD
+            px[x, y] = c
+    d.line([(7, 72), (84, 72)], fill=WOOD_LO)                     # a rail across the boards
+    d.line([(7, 71), (84, 71)], fill=WOOD_HI)
     d.rectangle([7, 83, 88, 84], fill=WOOD_DK)
-    for wx in (14, 81):                                           # cart wheels
+    for wx in (14, 81):                                           # cart wheels with spokes
         d.ellipse([wx - 6, 78, wx + 6, 90], fill=WOOD_DK)
-        d.ellipse([wx - 3, 81, wx + 3, 87], fill=STONE_LO)
-        d.point((wx, 84), fill=INK)
+        d.ellipse([wx - 5, 79, wx + 5, 89], outline=WOOD_LO)
+        d.arc([wx - 5, 79, wx + 5, 89], 160, 260, fill=WOOD)
+        d.line([(wx - 4, 84), (wx + 4, 84)], fill=WOOD_LO)
+        d.line([(wx, 80), (wx, 88)], fill=WOOD_LO)
+        d.rectangle([wx - 1, 83, wx + 1, 85], fill=STONE_LO)
+        d.point((wx - 1, 83), fill=STONE)
     # ---- three stools on the pavement in front -----------------------------------
     for sx in (27, 44, 61):
         d.rectangle([sx + 1, 84, sx + 2, 92], fill=STONE_DK); d.rectangle([sx + 7, 84, sx + 8, 92], fill=STONE_DK)
-        d.rectangle([sx, 80, sx + 9, 83], fill=RED if kind != 'ramen' else rgb('2f3f7a'))
-        d.line([(sx, 80), (sx + 9, 80)], fill=RED_HI if kind != 'ramen' else GLASS)
+        d.point((sx + 1, 84), fill=STONE_LO)
+        hi, lo = (BLUE_HI, NAVY) if stool == BLUE else (RED_HI, RED_LO)
+        d.rectangle([sx, 80, sx + 9, 83], fill=stool)
+        d.line([(sx, 80), (sx + 9, 80)], fill=hi)
+        d.line([(sx, 83), (sx + 9, 83)], fill=lo)
     # ---- the paper lantern on the corner pole ------------------------------------
     paper_lantern(d, 84, 27, 9, 14)
-    outline(im)
+    outline(im, NAVY)
+    for y, inset in zip(range(89, 95), (6, 2, 0, 0, 2, 6)):     # its shadow on the pavement
+        for x in range(4 + inset, 92 - inset):
+            if not px[x, y][3]:
+                px[x, y] = SHADE
     return im
 
 
 def lantern_post():
     im, d = canvas(1, 2)                 # 32 x 64
-    d.rectangle([15, 4, 16, 60], fill=WOOD_LO)
-    d.line([(15, 4), (15, 60)], fill=WOOD)
-    d.rectangle([12, 59, 19, 61], fill=STONE_DK)
-    d.rectangle([3, 5, 28, 6], fill=WOOD_LO)                      # the cross arm
+    px = im.load()
+    d.rectangle([15, 4, 17, 59], fill=WOOD)                      # a squared post, lit on the left
+    d.line([(15, 4), (15, 59)], fill=WOOD_HI)
+    d.line([(17, 4), (17, 59)], fill=WOOD_LO)
+    d.rectangle([12, 58, 20, 61], fill=STONE)                     # its stone foot
+    d.line([(12, 58), (20, 58)], fill=WHITE)
+    d.rectangle([18, 59, 20, 61], fill=STONE_LO)
+    d.rectangle([3, 4, 29, 6], fill=WOOD)                         # the cross arm, its underside in shade
+    d.line([(3, 4), (29, 4)], fill=WOOD_HI)
+    d.line([(3, 6), (29, 6)], fill=WOOD_LO)
     for lx in (4, 20):                                            # two strings of two
-        d.line([(lx + 3, 7), (lx + 3, 8)], fill=INK)
+        d.line([(lx + 3, 7), (lx + 3, 8)], fill=NAVY)
         paper_lantern(d, lx, 9, 8, 11)
-        paper_lantern(d, lx, 21, 8, 11, body=WHITE, hi=WHITE, lo=CREAM_LO)
-        d.rectangle([lx + 3, 25, lx + 4, 27], fill=RED)           # the stall's mark on the white one
-    outline(im)
+        paper_lantern(d, lx, 21, 8, 11, body=LAMP, hi=LAMP_HI, lo=CREAM_LO)
+        d.rectangle([lx + 3, 25, lx + 4, 27], fill=RED)           # the stall's mark on the gold one
+    outline(im, NAVY)
+    for y, inset in zip(range(62, 64), (1, 3)):                   # its shadow on the pavement
+        for x in range(9 + inset, 25 - inset):
+            if not px[x, y][3]:
+                px[x, y] = SHADE
     return im
 
 
