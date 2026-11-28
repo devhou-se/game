@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 11,
- "nextobjectid": 22,
+ "nextobjectid": 25,
  "properties": [
   {
    "name": "gv2room",
@@ -10606,6 +10606,117 @@
     },
     {
      "id": 21,
+     "name": "transporter",
+     "point": true,
+     "x": 32.0,
+     "y": 1184.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Shinjuku"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 30
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 14
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 22,
+     "name": "transporter",
+     "point": true,
+     "x": 32.0,
+     "y": 1248.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Shinjuku"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 30
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 15
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 23,
+     "name": "transporter",
+     "point": true,
+     "x": 32.0,
+     "y": 1312.0,
+     "width": 0,
+     "height": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "transporter"
+      },
+      {
+       "name": "targetRoom",
+       "type": "string",
+       "value": "Shinjuku"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 30
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 16
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 24,
      "name": "boundary",
      "x": 0,
      "y": 0,

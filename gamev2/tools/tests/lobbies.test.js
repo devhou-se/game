@@ -98,6 +98,16 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
             Kanazawa: [['LobbyKanazawa1', 'Lobby · Kanazawa 1', 'highrise-yellow_0_0', [[15, 28]]],
                 ['LobbyKanazawa2', 'Lobby · Kanazawa 2', 'midrise-apartment_0_0', [[28, 28]]]],
             SanFranbourne: [['LobbySanFranbourne1', 'Lobby · San Franbourne', 'highrise-glass_0_0', [[47, 27], [48, 27]]]],
+            // the street of high-rises (#94): five towers north of the avenue, four in the south block
+            Shinjuku: [['LobbyShinjuku1', 'Lobby · Shinjuku 1', 'highrise-apartment_0_0', [[6, 11]]],
+                ['LobbyShinjuku2', 'Lobby · Shinjuku 2', 'highrise-glass_0_0', [[11, 11], [12, 11]]],
+                ['LobbyShinjuku3', 'Lobby · Shinjuku 3', 'highrise-blue_0_0', [[17, 11]]],
+                ['LobbyShinjuku4', 'Lobby · Shinjuku 4', 'highrise-yellow_0_0', [[22, 11]]],
+                ['LobbyShinjuku5', 'Lobby · Shinjuku 5', 'midrise-apartment_0_0', [[28, 11]]],
+                ['LobbyShinjuku6', 'Lobby · Shinjuku 6', 'highrise-blue_0_0', [[7, 29]]],
+                ['LobbyShinjuku7', 'Lobby · Shinjuku 7', 'highrise-glass_0_0', [[13, 29], [14, 29]]],
+                ['LobbyShinjuku8', 'Lobby · Shinjuku 8', 'highrise-apartment_0_0', [[20, 29]]],
+                ['LobbyShinjuku9', 'Lobby · Shinjuku 9', 'highrise-yellow_0_0', [[26, 29]]]],
         };
         // Sendai's block of flats is the 7-Eleven's: the store stands across its door, so it has no lobby of its own
         const inUse = { Sendai: 1 };
@@ -126,10 +136,10 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         }
         // every town with a tower, and every lobby there is
         assert.deepStrictEqual([...new Set(lobbies(c).map(([, r]) => r.lobby.host))].sort(),
-            ['Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo', 'Sendai']);
-        assert.strictEqual(lobbies(c).length, 17);
+            ['Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo', 'Sendai', 'Shinjuku']);
+        assert.strictEqual(lobbies(c).length, 26);
         const towered = Object.keys(c.rooms).filter((k) => !c.rooms[k].interior && Object.values(tiles(c.rooms[k], 'Collidables')).some((t) => c.tilePalette[t] in TOWERS));
-        assert.deepStrictEqual(towered.sort(), ['Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo', 'Sendai'], 'a town has a tower and no lobby');
+        assert.deepStrictEqual(towered.sort(), ['Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo', 'Sendai', 'Shinjuku'], 'a town has a tower and no lobby');
     });
 
     test('a block of flats with a 7-Eleven across its door is the store\'s, not a tower: Sendai\'s has no lobby and stays shut (#216)', () => {
@@ -148,9 +158,9 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         assert.ok(/built {4}LobbySendai1 "Lobby · Sendai" - highrise-yellow, door \(23, 20\)/.test(dry.stdout), dry.stdout);
         assert.ok(!/skipped/.test(dry.stdout), dry.stdout);
         // no other town's roll-out skips or excludes a tower
-        const rest = python(['tools/generate_houses.py', '--dry-run', '--lobbies', 'Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo']);
+        const rest = python(['tools/generate_houses.py', '--dry-run', '--lobbies', 'Fukuoka', 'Kanazawa', 'Market', 'Osaka', 'Palace', 'SanFranbourne', 'Sapporo', 'Shinjuku']);
         assert.strictEqual(rest.status, 0, rest.stderr);
-        assert.ok(!/skipped|not a tower/.test(rest.stdout) && /dry run: 16 interior\(s\)/.test(rest.stdout), rest.stdout);
+        assert.ok(!/skipped|not a tower/.test(rest.stdout) && /dry run: 25 interior\(s\)/.test(rest.stdout), rest.stdout);
         // a 7-Eleven beside a tower, not across its door, does not make it the store's: take Sendai's away from the
         // door's row and the flats are a tower again (skipped there: the store's own ground is in front of the door)
         scratch((tmp, read) => {

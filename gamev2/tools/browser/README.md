@@ -1,7 +1,7 @@
 # Browser regression (tools/browser)
 
 `regress.js` drives the real game in a headless Chrome: boot as a returning and a first-time player, walking and
-walls, a district seam (stitched and `?stitch=0`), a konbini in and out with its shop, a Devhouse in by its street
+walls, a district seam (stitched and `?stitch=0`), the street of high-rises (off the Palace/Park road onto Shinjuku's avenue with no fade, to a tower door, into its lobby and out again; with the keys, and with the d-pad on a landscape phone), a konbini in and out with its shop, a Devhouse in by its street
 door and up its stair with the key held down (desktop and a landscape phone), NPC dialogue, the menu, Map and Time
 Travel, a shift at the job in a tower lobby, the station with the clocks in San Franbourne in by its door, its clocks bumped and out again, a train ride, a streetcar ride (on at a stop, carried to the next, off on
 the side asked for; with the keys, and with the d-pad on a landscape phone), a trip day and a lead-in day, a landscape and a portrait

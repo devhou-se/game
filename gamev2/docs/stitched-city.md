@@ -6,10 +6,10 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 
 ### Stitched cities: one continuous Tokyo (issues #40 / #41)
 
-Tokyo, Market, Palace, Park and Karuizawa (room KEYS: the player reads their display names, "Imperial Palace",
-"Asakusa", "Marunouchi", "Park", "Karuizawa", issue #219 — see `name` in `maps-and-rooms.md`) are still five Tiled maps and five room keys in `config.json` — but at
+Tokyo, Market, Palace, Park, Shinjuku and Karuizawa (room KEYS: the player reads their display names, "Imperial Palace",
+"Asakusa", "Marunouchi", "Park", "Karuizawa", issue #219 — see `name` in `maps-and-rooms.md`; Shinjuku's name is its key) are still six Tiled maps and six room keys in `config.json` — but at
 load they are merged into ONE runtime room, `TokyoCity`, so you walk between them with no fade, no input
-block and no reload, and the next district is on screen before you reach it. (Issue #68 deleted Machi, a made-up town west of Tokyo; issue #260 put Karuizawa, a real one, where it stood: see The west gate below.) Osaka, Sapporo and
+block and no reload, and the next district is on screen before you reach it. (Four are the ported maps; Shinjuku, the street of high-rises, is generated: issue #94, "Shinjuku is a district" below. Issue #68 deleted Machi, a made-up town west of Tokyo; issue #260 put Karuizawa, a real one, where it stood: see The west gate below.) Osaka, Sapporo and
 Asahikawa were always single maps; interiors and trains keep their fade.
 
 - **Data** — config `cities`: `{"TokyoCity": {"name", "rooms": [{"room", "x", "y"}...], "drop", "patch", "backdrop"}}`.
@@ -27,7 +27,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   `tools/play.js` and `tools/blog_to_npc.py` read the district data and never see a patch.
 - **Merge** — `src/systems/CityStitcher.js` (`build`): layers, objects, signage and door transporters are
   translated into merged cells (the union's top-left is 0,0 — Karuizawa is at 0,8, Tokyo at 48,1, Market at
-  106,0); the 22 hidden seam transporters (target = a sibling district) are dropped; `RoomManager.rooms`
+  106,0); the 25 hidden seam transporters (target = a sibling district) are dropped; `RoomManager.rooms`
   gets the city next to its districts, which stay as data and are never entered. **`config.rooms` is not
   touched** — it still has exactly the authored rooms, so `tools/blog_to_npc.py`, the world map, the
   generators and the seam transporters themselves are unchanged.
@@ -41,7 +41,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   marker and NPC dots (`roomManager.npcsIn(room)`), debug flags. `npc.homeRoom` is an NPC's district and its
   wander box is clamped to it. Code that scans `rooms[currentRoom].layers` (shop, fishing, glows, ambient
   traffic, clocks) just works: the city's layers are the merged ones.
-- **The woods** — the union is L-shaped and the camera is clamped to its bounding box, so every cell no
+- **The woods** — the union is not a rectangle and the camera is clamped to its bounding box, so every cell no
   district covers is filled by `CityStitcher.buildBackdrop` from config `backdrop`: grass, unevenly spaced
   trees, shrubs, the missing kerb of the road down Palace's west side (`edges`), and the Palace railway
   carried on west through a cutting (`extend`: it runs off the city's west edge, under Karuizawa, whose
@@ -101,7 +101,7 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   colliders lost to an overlap, a `patch` gone wrong; `Backdrop ...` layers are scenery and are not linted
   as objects), `lint <District>` is unchanged, `render TokyoCity out.png` draws the city with its woods,
   and `reach` prints the walkable cells of every room as JSON. `--stitch=0` (play.js) / `?stitch=0`
-  (studio) give the five rooms joined by the 22 seam transporters, i.e. what the game's `?stitch=0` plays.
+  (studio) give the six rooms joined by the 25 seam transporters, i.e. what the game's `?stitch=0` plays.
   `tools/blog_to_npc.py` has no node at hand, so it carries a ten-line port of "who sits where, later room
   owns the overlap" (`city_districts` / `city_reachable`); `tools/test_blog_to_npc.py` pins it to
   `play.js reach` for every cell of every room.
@@ -147,6 +147,26 @@ Asahikawa were always single maps; interiors and trains keep their fade.
   issue #247), with no closed side: the west road comes into it from the north there, where Park's
   own map ends in a kerb. The three one-row side lanes across that pavement
   (`road-2-tile-vertical`, Market rows 15, 24 and 32) are not junctions: the kerb passes them.
+- **Shinjuku is the fifth district** (issue #94): Market and Palace had no free street front for a street
+  of high-rises, so the towers have a district of their own in what was wood west of the Palace/Park west
+  road: `Shinjuku`, 34x36, at city cell `(24,51)` (`devhouse.world` `1536,3264`), last in
+  `cities.TokyoCity.rooms`. It overlaps no other district and moves none. Unlike the other four it is
+  generated (`tools/generate_shinjuku.py`, in `check_generators.py`; "Shinjuku" under Tokyo in
+  `landmarks-and-towns.md` has what stands there).
+  - **How it joins.** Its last column (33, the city's 57) is the west road's west kerb, the column
+    `backdrop.edges` drew in the wood: `road-edge-left` on every row but the avenue's (14-16, the city's
+    65-67), which are `road-plain`. Those are the rows of the road between Palace and Park (Palace rows 18-20
+    at its `x = 0`), so that road's T-junction with the west road is a crossroads now and the road carries
+    on west as Shinjuku's avenue: the same three-cell road, kerb to kerb. The kerb column has no collider
+    (no kerb of a shared road has), so stitched you step onto it from any cell of the west road, and
+    `roomManager.currentDistrict()` is `Shinjuku` there.
+  - **The seam** is three hidden transporters each way: `Shinjuku` `(33,14..16)` to `Palace` `(3,18..20)`
+    and `Palace` `(0,18..20)` to `Shinjuku` `(30,14..16)`. Palace is a ported map, so its three are pinned
+    by the generator (`roomgen.pin`) and nothing else of Palace is written. With `?stitch=0` Shinjuku is a
+    room of its own whose east edge is that kerb column; the avenue's three cells there are the way out.
+  - **A road that leaves a junction leads somewhere** (#240): the avenue ends in a capped turning box
+    with a bus bay (`bus-stop` on the south pavement) opposite the first tower, and the pavement goes
+    round its end.
 - **`?stitch=0`** is the safety valve: no cities, the districts are separate rooms joined by the fade
   transporters exactly as before. `?cull=0` keeps stitching but creates every sprite (for measuring).
 - **The second city** (issue #68): `HokurikuCity` stitches Kanazawa, Shirakawa-go and Toyama (see

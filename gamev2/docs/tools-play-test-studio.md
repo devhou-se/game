@@ -48,7 +48,7 @@ what sits next to what, and SanFranbourne sits where the in-game Map draws it, o
 Tokyo is drawn as the one stitched city the game plays (woodland included, the five districts outlined and
 named inside it; the inspector gives the district's own cell and the city cell, the owning district where two
 overlap); the **Stitched** button, or `/studio/?stitch=0`, shows the five rooms joined by seam teleports instead.
-In that five-room view, where a city's districts overlap on the map (Palace / Park share four rows) the later
+In that separate-rooms view, where a city's districts overlap on the map (Palace / Park share four rows) the later
 district in the city's `rooms` list is drawn on top and takes the click, as in the stitched city
 (`WorldModel.stackOrder`). Click the selected cell again for the room underneath (`WorldModel.stackPick`):
 that is how the covered seam transporters (Palace 38..39,21, Market 54..56,47) are inspected - and, in the

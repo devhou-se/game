@@ -13,7 +13,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
     const seam = (x, y, targetRoom, targetX, targetY) => ({ gridX: x, gridY: y, targetRoom, targetX, targetY, hidden: true });
 
     test('Karuizawa is the fifth district of TokyoCity, west of Tokyo, and a small place with a dot of its own on the Map (#260)', () => {
-        assert.deepStrictEqual(cfg.cities.TokyoCity.rooms.map((m) => m.room), ['Tokyo', 'Market', 'Palace', 'Park', KEY]);
+        assert.deepStrictEqual(cfg.cities.TokyoCity.rooms.map((m) => m.room), ['Tokyo', 'Market', 'Palace', 'Park', KEY, 'Shinjuku']);
         const room = cfg.rooms[KEY];
         assert.deepStrictEqual([room.name, room.worldWidth / 64, room.worldHeight / 64], [KEY, W, H]);
         assert.ok(!room.interior, 'it is an outdoor room');

@@ -21,7 +21,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         }
         const world = JSON.parse(fs.readFileSync(path.join(GV2, '..', 'devhouse.world'), 'utf8'));
         assert.ok(!world.maps.some((m) => /machi|inaka|yukimura/.test(m.fileName)), 'devhouse.world still places one');
-        assert.deepStrictEqual(cfg.cities.TokyoCity.rooms.map((m) => m.room), ['Tokyo', 'Market', 'Palace', 'Park', 'Karuizawa'], 'Tokyo is five districts');
+        assert.deepStrictEqual(cfg.cities.TokyoCity.rooms.map((m) => m.room), ['Tokyo', 'Market', 'Palace', 'Park', 'Karuizawa', 'Shinjuku'], 'Tokyo is six districts');
         // the generators went with them, and the positional palette was not shortened for it
         for (const town of ['machi', 'inaka', 'yukimura']) assert.ok(!fs.existsSync(path.join(GV2, 'tools', `generate_${town}.py`)));
         const pal = new Set(cfg.tilePalette);

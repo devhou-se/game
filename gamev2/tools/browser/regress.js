@@ -498,6 +498,141 @@ async function streetcar(page, input, { hint, menu, shot }) {
     need(!home.riding && home.screen.visible && home.screen.inView, { stillRidingAtHome: home });
 }
 
+// ------------------------------------------------------------------ a street of towers beyond a seam (issue #94)
+
+/**
+ * The district of a stitched city with the most towers that open into lobbies (Shinjuku), walked onto from the
+ * district beside it: over the seam with no fade, along the street to the nearest tower door, into the lobby and
+ * out again onto the pavement. Every cell is the game's own: the seam is where a hidden transporter of the
+ * district to a sibling stands, a door is a transporter of the district into a room whose `lobby.host` it is, the
+ * way out is the lobby's mat.
+ * `input` is { down(dx, dy), up() }: real keys, or touches on the d-pad.
+ */
+async function avenue(page, input, shot) {
+    const walk = await page.evaluate(() => {
+        const { s, rm } = __t, rooms = s.config.rooms;
+        const towers = (key) => new Set(rm.rooms[key].transporters.map(t => t.targetRoom).filter(k => rooms[k] && rooms[k].lobby && rooms[k].lobby.host === key)).size;
+        const districts = Object.values(rm.cities).flatMap(city => city.members.map(m => ({ city, D: m.key, towers: towers(m.key) })));
+        const { city, D, towers: n } = districts.sort((a, b) => b.towers - a.towers)[0] || {};
+        if (!n) return null;
+        // a seam of the district is a transporter of its own to a sibling: the cell it is on is the district's edge.
+        // Up to three cells outside it, in a straight line of open cells that are another district's when stitched
+        for (const t of rm.rooms[D].transporters) {
+            const sib = rm.memberOf[t.targetRoom];
+            if (!sib || sib.city !== city || t.targetRoom === D) continue;
+            const c = rm.resolve(D, t.gridX, t.gridY);
+            __t.place(D, t.gridX, t.gridY);                  // collision is the current room's: be in the city
+            if (!__t.free(c.x, c.y)) continue;
+            for (const [dx, dy] of __t.DIRS) {
+                const outside = (k) => { const l = rm.localize(c.x - dx * k, c.y - dy * k); return l && l.room !== D && __t.open(c.x - dx * k, c.y - dy * k) ? l : null; };
+                for (let steps = 3; steps >= 1; steps--) {
+                    const from = outside(steps);
+                    if (!from || ![1, 2, 3].slice(0, steps).every(outside) || !__t.quiet(c.x - dx * steps, c.y - dy * steps, 6)) continue;
+                    const placed = __t.place(from.room, from.x, from.y);
+                    return { city: city.key, A: from.room, D, towers: n, others: districts.slice(1).map(d => d.towers), from: { x: from.x, y: from.y }, dx, dy, steps,
+                        placed, hud: __t.hud(), nameA: __t.roomName(from.room), nameD: __t.roomName(D) };
+                }
+            }
+        }
+        return { D, towers: n };
+    });
+    need(walk && walk.steps, { noSeamToWalkOntoTheStreetOfTowersBy: walk });
+    // a street of them: the district has more towers than any other district of a stitched city
+    need(walk.others.every(n => n < walk.towers), { towers: walk.towers, others: walk.others, district: walk.D });
+    need(walk.placed.room === walk.city && walk.placed.district === walk.A && walk.hud.room.includes(walk.nameA), { placed: walk.placed, hud: walk.hud.room, walk });
+    const released = async () => {
+        need(await until(page, '__t.keysUp()', 5000), 'a key or the d-pad stayed down after it was let go');
+        await frames(page);
+    };
+
+    // over the seam, the key held: no fade, the bar names the district of towers
+    await idle(page);
+    await page.evaluate('__t.rm.__sw = 0, __t.rm.__fade = 0, __t.unsee()');
+    await input.down(walk.dx, walk.dy);
+    const crossed = await until(page, `__t.rm.currentDistrict() === ${JSON.stringify(walk.D)}`, 400 * walk.steps + 2500);
+    await input.up();
+    await released();
+    await idle(page);
+    const on = await page.evaluate('({ pos: __t.pos(), hud: __t.hud(), sw: __t.rm.__sw, fade: __t.rm.__fade, seen: Object.assign({}, __t.seen), screen: __t.onScreen() })');
+    need(crossed && on.pos.room === walk.city && on.pos.district === walk.D, { didNotCross: on.pos, walk });
+    need(on.sw === 0 && on.fade === 0 && on.seen.transition === 0 && on.seen.fade === 0, { fadedOntoTheAvenue: on });
+    need(on.hud.room.includes(walk.nameD) && !on.hud.room.includes(walk.nameA) && on.screen.inView && on.screen.visible, { hud: on.hud.room, expected: walk.nameD, screen: on.screen });
+
+    // along the street to the nearest tower door, one step at a time: the way is found again after every step,
+    // over the district's open cells, so a step too many on a slow machine is walked back
+    const next = () => page.evaluate((D) => {
+        const { s, rm } = __t, p = s.player, rooms = s.config.rooms;
+        const doors = rm.rooms[D].transporters.filter(t => rooms[t.targetRoom] && rooms[t.targetRoom].lobby && rooms[t.targetRoom].lobby.host === D)
+            .map(t => ({ t, c: rm.resolve(D, t.gridX, t.gridY) }));
+        const before = (x, y) => {      // the door this cell is in front of, and the step into it
+            for (const [dx, dy] of __t.DIRS) {
+                const d = doors.find(q => q.c.x === x + dx && q.c.y === y + dy);
+                if (!d) continue;
+                const mat = rooms[d.t.targetRoom].transporters.find(m => m.targetRoom === D);
+                return { dx, dy, lobby: d.t.targetRoom, name: __t.roomName(d.t.targetRoom), brief: hudBrief(__t.roomName(d.t.targetRoom)), in: { x: d.t.targetX, y: d.t.targetY },
+                    mat: mat && { x: mat.gridX, y: mat.gridY }, out: mat && rm.resolve(D, mat.targetX, mat.targetY) };
+            }
+            return null;
+        };
+        const key = (x, y) => x + ',' + y, came = new Map([[key(p.gridX, p.gridY), null]]), queue = [[p.gridX, p.gridY]];
+        while (queue.length) {
+            const [x, y] = queue.shift(), door = before(x, y);
+            if (door) {
+                let at = [x, y], first = null;
+                for (let prev = came.get(key(x, y)); prev; prev = came.get(key(at[0], at[1]))) { first = [at[0] - prev[0], at[1] - prev[1]]; at = prev; }
+                return { front: { x, y }, door, step: first };
+            }
+            for (const [dx, dy] of __t.DIRS) {
+                const nx = x + dx, ny = y + dy;
+                if (came.has(key(nx, ny)) || !__t.open(nx, ny) || !__t.quiet(nx, ny, 1) || rm.localize(nx, ny).room !== D) continue;
+                came.set(key(nx, ny), [x, y]);
+                queue.push([nx, ny]);
+            }
+        }
+        return null;
+    }, walk.D);
+    const go = async (dx, dy) => {
+        await idle(page);
+        await input.down(dx, dy);
+        const going = await until(page, '__t.s.player.isMoving || __t.rm.isTransitioning', 2000);
+        await input.up();
+        await released();
+        await idle(page);
+        return going;
+    };
+    let way = await next(), walked = 0;
+    need(way, { noTowerDoorCanBeWalkedTo: await page.evaluate('__t.pos()'), walk });
+    for (; way && way.step; way = await next()) {
+        need(walked++ < 80, { neverReachedADoor: await page.evaluate('__t.pos()'), way });
+        need(await go(way.step[0], way.step[1]), { didNotStep: await page.evaluate('__t.pos()'), way });
+    }
+    const front = await page.evaluate('({ pos: __t.pos(), sw: __t.rm.__sw, fade: __t.rm.__fade, hud: __t.hud(), screen: __t.onScreen() })');
+    need(way && way.door.mat && front.pos.x === way.front.x && front.pos.y === way.front.y && front.pos.district === walk.D, { notInFrontOfADoor: front.pos, way });
+    need(walked > 0 && front.sw === 0 && front.fade === 0 && front.hud.room.includes(walk.nameD) && front.screen.inView && front.screen.visible, { onTheStreet: front, walked });
+    await page.screenshot({ path: path.join(SHOTS, shot) });
+
+    // up into the door: a fade, the lobby of that tower, on the cell its door leads to
+    const door = way.door;
+    need(await go(door.dx, door.dy), { didNotStepIntoTheDoor: await page.evaluate('__t.pos()'), door });
+    const inside = await page.evaluate('({ pos: __t.pos(), sw: __t.rm.__sw, fade: __t.rm.__fade, hud: __t.hud(), screen: __t.onScreen(), free: __t.free(__t.s.player.gridX, __t.s.player.gridY), tiles: __t.rm.liveTiles.size })');
+    need(inside.pos.room === door.lobby && inside.pos.x === door.in.x && inside.pos.y === door.in.y, { notInTheLobby: inside.pos, door });
+    need(inside.sw === 1 && inside.fade === 1, { noFadeIntoTheLobby: inside });
+    // the bar names the lobby: whole, or in brief where there is no room for that (the caller says which)
+    need((inside.hud.room.includes(door.name) || inside.hud.room.includes(door.brief)) && inside.free && inside.screen.inView && inside.screen.visible && inside.tiles > 0, { inside, expected: [door.name, door.brief] });
+
+    // and out by the mat: back on the pavement in front of the tower
+    const dx = door.mat.x - inside.pos.x, dy = door.mat.y - inside.pos.y;
+    need(Math.abs(dx) + Math.abs(dy) === 1, { matNotBesideTheWayIn: door, inside: inside.pos });
+    need(await go(dx, dy), { didNotStepOntoTheMat: await page.evaluate('__t.pos()'), door });
+    const out = await page.evaluate('({ pos: __t.pos(), sw: __t.rm.__sw, fade: __t.rm.__fade, hud: __t.hud(), screen: __t.onScreen(), free: __t.free(__t.s.player.gridX, __t.s.player.gridY) })');
+    need(out.pos.room === walk.city && out.pos.district === walk.D && out.pos.x === door.out.x && out.pos.y === door.out.y, { notBackOnThePavement: out.pos, door });
+    need(out.sw === 2 && out.fade === 2 && out.free && out.screen.inView && out.screen.visible && out.hud.room.includes(walk.nameD), { out });
+
+    await page.evaluate('__t.home()');
+    await idle(page);
+    return { walk, door, walked, bar: inside.hud };
+}
+
 // ------------------------------------------------------------------ the lift up a tower (issue #242)
 
 /**
@@ -770,6 +905,17 @@ async function desktop(shared) {
             need(st.hud.room.includes(nameB) && !st.hud.room.includes(seam.hud.room.split(' | ').slice(-2)[0] + ' |'), { hudAfter: st.hud.room, expected: nameB, before: seam.hud.room });
             need(st.missing.length === 0, { cellsWithNoTileSprite: st.missing.slice(0, 8), around: st.pos });
             need(st.screen.inView && st.screen.visible, { screen: st.screen });
+        });
+
+        // 4a --------------------------------------------------------------- the street of high-rises (issue #94)
+        // off the Palace/Park road onto Shinjuku's avenue, to a tower, into its lobby and out again
+        await cleanly('shinjuku-avenue', async () => {
+            let key = null;
+            const keys = { down: (dx, dy) => { key = keyFor(dx, dy); return page.keyboard.down(key); }, up: () => page.keyboard.up(key) };
+            try {
+                const st = await avenue(page, keys, 'regress_shinjuku.png');
+                need(st.bar.room.includes(st.door.name), { lobbyNotNamedOnTheBar: st.bar.room, expected: st.door.name });
+            } finally { if (key) await page.keyboard.up(key); }
         });
 
         // 5 ---------------------------------------------------------------- a konbini, by its door
@@ -2014,6 +2160,25 @@ async function phones() {
             need(st.under >= spot.foot - 0.01 && st.screen.inView && st.screen.inWindow && st.screen.visible, { playerLostUnderTheWall: st });
             await page.screenshot({ path: path.join(SHOTS, 'regress_phone_atrium.png') });
             await page.evaluate('__t.home()');
+            need(errors.length === 0, { errors });
+        });
+
+        // the street of high-rises on the phone (issue #94): onto the avenue, to a tower and into its lobby on the d-pad
+        await cleanly('phone-landscape-avenue', async () => {
+            const arrows = await page.evaluate(() => [...document.querySelectorAll('#touch-controls .tc-padzone .tc-pad')].map(b => { const q = b.getBoundingClientRect(); return { label: b.textContent, x: Math.round(q.left + q.width / 2), y: Math.round(q.top + q.height / 2) }; }));
+            const GLYPH = { '1,0': '▶', '-1,0': '◀', '0,1': '▼', '0,-1': '▲' };
+            need(Object.values(GLYPH).every(g => arrows.some(a => a.label === g)), { noDpad: arrows });
+            const cdp = await context.newCDPSession(page);
+            const pad = {
+                down: (dx, dy) => { const a = arrows.find(q => q.label === GLYPH[`${dx},${dy}`]); return cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: a.x, y: a.y }] }); },
+                up: () => cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }),
+            };
+            try {
+                const st = await avenue(page, pad, 'regress_phone_shinjuku.png');
+                // the bar has no room for the lobby's whole name here: it says which town's lobby
+                need(st.bar.oneRow && st.bar.room.startsWith(st.door.brief) && st.door.brief !== st.door.name, { lobbyNotOnTheBar: st.bar, expected: st.door.brief });
+            } finally { await pad.up().catch(() => {}); }
+            need(await until(page, '!Object.values(__t.s.touchControls.state).some(Boolean)', 1500), 'the d-pad stayed held after the touch ended');
             need(errors.length === 0, { errors });
         });
 

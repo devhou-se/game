@@ -85,8 +85,9 @@ by one agent per town at a time.
   make a surgical edit and mirror it in the generator; never leave `check_generators.py` failing. Ported
   rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth (Tokyo's west gate
   cells are written by `generate_karuizawa.py`).
-- **Everything authored stays district-local.** The five Tokyo districts are stitched into one runtime
-  room; coordinates in config, tools and docs are the district's own.
+- **Everything authored stays district-local.** The six Tokyo districts (the four ported ones, and
+  Shinjuku and Karuizawa, which are generated) are stitched into one runtime room; coordinates in config,
+  tools and docs are the district's own.
 - **New JS files** go in the script list in `index.html`, between its `build:scripts` marks (the page loads
   them one by one; the deploy build joins the same list into one file).
 - **Every image and JSON file the scene loads goes through `Assets`**: `load.image(key, Assets.url(path))`,

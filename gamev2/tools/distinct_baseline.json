@@ -5,7 +5,7 @@
     "sprites": 0.108
   },
   "Fukuoka": {
-    "buildings": 0.174,
+    "buildings": 0.183,
     "own": 0.262,
     "sprites": 0.44
   },
@@ -35,8 +35,8 @@
     "sprites": 0.544
   },
   "Tokyo": {
-    "buildings": 0.155,
-    "own": 0.557,
-    "sprites": 0.317
+    "buildings": 0.183,
+    "own": 0.541,
+    "sprites": 0.326
   }
 }

@@ -93,7 +93,7 @@ If sprite sizes differ when swapping A→B, re-anchor so the FEET line up
    free where open. If a door/transporter changed, walk through it both ways.
 5. If the room is in `devhouse.world` and its size/position changed, update
    the world file and rasterize it. If it is a district of a stitched city
-   (config `cities` — Tokyo, Market, Palace and Park in Tokyo; Kanazawa,
+   (config `cities` — Tokyo, Market, Palace, Park, Shinjuku and Karuizawa in Tokyo; Kanazawa,
    Shirakawago and Toyama in Hokuriku), also run
    `python3 tools/sync_cities.py`: the game merges those rooms into one map
    using the world offsets, so their edges are visible from the neighbour.

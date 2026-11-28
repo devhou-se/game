@@ -91,7 +91,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
   one line of what is there, written for the blog placement model. Districts of one room never overlap; a
   room need not be covered edge to edge.
 - **What it is for today**: the blog pipeline (`blog-pipeline.md`, "Districts"). The game does not read
-  `districts`; the HUD names the ROOM (`hudRoomName`), which for Tokyo's four ported rooms is the district.
+  `districts`; the HUD names the ROOM (`hudRoomName`), which for Tokyo's five rooms is the district.
 - **Names are the redesign plan's, bounds are today's map.** A district the plan names that is not built yet
   has NO entry: Ueno and Shibuya (Park is one district, "Park", whose description says it stands in for both),
   Shirakawa-go's ryokan, Osaka's station front (a
@@ -103,6 +103,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Market | Asakusa |
 | Palace | Marunouchi |
 | Park | Park |
+| Shinjuku | Shinjuku |
 | Sapporo | Sapporo Station front, Clock Tower block, Odori Park, Tanukikoji |
 | Asahikawa | Station front and Heiwa-dori, Ramen alley, Asahibashi and the riverbank |
 | Osaka | Dotonbori, Shinsekai |
@@ -113,8 +114,40 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Toyama | Iwase port, Tram street |
 
 - **Tokyo's display names**: the room keys are unchanged; see `name` in `maps-and-rooms.md`.
+- **Shinjuku** is a room and a district of one name: "Shinjuku, Tokyo's street of high-rises" below.
 - **Is a city its own?** `tools/check_distinct.py` (`generators-and-checks.md`) measures how much art each
   city shares with the others; a rebuild must not make a city worse.
+
+### Shinjuku, Tokyo's street of high-rises (issue #94)
+
+Market and Palace are ported maps with no free street front, so two towers were all either could take. The
+street of high-rises is a district of its own, `Shinjuku` (34x36), in what was wood west of the west road of
+Palace and Park, and the fifth district of the stitched Tokyo ("Shinjuku is the fifth district" in
+`stitched-city.md`: where it sits, its seam with Palace, `?stitch=0`). It is generated:
+`tools/generate_shinjuku.py` (on `hokuriku.Kit`, in `check_generators.py`), then
+`tools/generate_houses.py --lobbies Shinjuku`. No art of its own and no palette entry: every sprite is the
+city kit's. Tokyo, Market, Palace and Park lose no tile to it.
+
+- **The avenue** is rows 14-16, the road between Palace and Park carried on west over the west road (the
+  T-junction there is a crossroads now). It runs from column 4 to the west road, a pavement two cells deep either side,
+  a zebra crossing on columns 22-23 under two signals (`traffic-light` stamped at `(21,11)`, its foot on the
+  north pavement, and at `(24,15)`, its foot on the south one; `TrafficLights` runs them like any other), and it ends at column 4 in a
+  capped turning box with a bus bay (`bus-stop` at `(4,17)`): a road that leaves a junction leads
+  somewhere (#240).
+- **Nine towers, every one with a lobby** (see Tower lobbies). Five stand on row 11 along the north
+  pavement: flats `(4,4)`, the glass tower `(10,2)`, the blue office block `(15,1)`, the ochre one
+  `(21,4)`, the lower flats `(26,6)`. Four stand on row 29 in the south block, facing a promenade (rows
+  30-32) that the pavement reaches down both sides of the block: the blue block `(5,19)`, the glass tower
+  `(12,20)`, flats `(18,22)`, the ochre block `(25,22)`. Two vending machines (`(9,10)`, `(14,10)`) and a
+  utility pole stand between the northern towers; the rest is wood. No rubbish bins.
+- **The district** (`districts.py`) is "Shinjuku", bounds `(2,2)-(32,32)`, standing cell `(16,13)`; its one
+  named spot is "the vending machines". The blog pipeline may place a Tokyo post there like in any district.
+- **Is Tokyo still its own?** The towers are the kit's, which Osaka and Fukuoka also use, so Tokyo's numbers
+  in `check_distinct.py` moved (buildings 0.16 to 0.19, own art 55% to 53%; it still passes all three
+  targets) and its baseline entry records that (`generators-and-checks.md`).
+- **Checks**: `tools/tests/shinjuku.test.js` (the district in the city, the kerb column, the crossing, the
+  seam both ways, every tower's door and lobby, the walk in from the Palace/Park road, stitched and
+  `--stitch=0`); `shinjuku-avenue` and `phone-landscape-avenue` in the browser regression.
 
 ### Sendai, the samurai town (issue #66)
 
@@ -671,7 +704,7 @@ The same generator opens a second kind of building: `tools/generate_houses.py --
 gives every high-rise, office tower and block of flats a `Lobby<Town><n>` room (`Lobby · Osaka 2`). It is
 the house code with another row in its `KINDS` table, so everything above holds - found in the town's map
 data, numbered in door order, skipped and sealed by the same rules, a no-op on a re-run, kept through a
-town rebuild by `roomgen.save_config`. **Applied to every town that has a tower**: seventeen lobbies in eight
+town rebuild by `roomgen.save_config`. **Applied to every town that has a tower**: twenty-six lobbies in nine
 towns, no tower skipped. Asahikawa, Tokyo, Park, Shirakawa-go and Toyama have no towers.
 
 | Town (display name) | Rooms | Tower and its door cell(s) in the town |
@@ -680,6 +713,7 @@ towns, no tower skipped. Asahikawa, Tokyo, Park, Shirakawa-go and Toyama have no
 | Sapporo | `LobbySapporo1..3` "Lobby · Sapporo 1..3" | its own office blocks (#219): the brick one in the Clock Tower block (51,15); the glass one west of the station plaza (12,16); Susukino's neon corner building (35,46) |
 | Market (Asakusa) | `LobbyMarket1` "Lobby · Asakusa" | highrise-yellow (16,29) |
 | Palace (Marunouchi) | `LobbyPalace1..2` "Lobby · Marunouchi 1..2" | highrise-yellow (49,13); midrise-apartment (42,15) |
+| Shinjuku | `LobbyShinjuku1..9` "Lobby · Shinjuku 1..9" | the street of high-rises (#94). North of the avenue: highrise-apartment (6,11); -glass (11,11)+(12,11); -blue (17,11); -yellow (22,11); midrise-apartment (28,11). The south block: highrise-blue (7,29); -glass (13,29)+(14,29); -apartment (20,29); -yellow (26,29) |
 | Fukuoka | `LobbyFukuoka1..4` "Lobby · Fukuoka 1..4" | highrise-glass (17,18)+(18,18); -blue (22,18); -yellow (26,18); midrise-apartment (38,18) |
 | Sendai | `LobbySendai1` "Lobby · Sendai" | highrise-yellow (23,20) |
 | Kanazawa | `LobbyKanazawa1..2` "Lobby · Kanazawa 1..2" | highrise-yellow (15,28); midrise-apartment (28,28) |

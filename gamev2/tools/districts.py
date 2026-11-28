@@ -61,7 +61,7 @@ def d(key, name, description, bounds, stand=None):
 # room key -> its districts, in the order they are offered. Bounds are cells
 # of the room's own map, [x0, y0, x1, y1] inclusive.
 DISTRICTS = {
-    # --- Tokyo: one district per ported room (the room is the district) -----
+    # --- Tokyo: one district per room of the stitched city (the room is the district) -----
     'Tokyo': [
         d('imperial-palace', 'Imperial Palace',
           'the moat, stone walls and blue-tiled gate of the palace, its gardens, pond and cherry trees',
@@ -77,6 +77,12 @@ DISTRICTS = {
         d('marunouchi', 'Marunouchi',
           "Tokyo Station's red-brick front and forecourt, the shinkansen, office blocks, Tokyo Tower on the skyline",
           (2, 5, 52, 20), stand=(20, 12)),
+    ],
+    'Shinjuku': [
+        d('shinjuku', 'Shinjuku',
+          'the skyscraper district: an avenue of office towers and blocks of flats west of Marunouchi, '
+          'a zebra crossing under the signals, vending machines, the bus bay at the end of the avenue',
+          (2, 2, 32, 32), stand=(16, 13)),
     ],
     'Park': [
         d('park', 'Park',

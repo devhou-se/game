@@ -15,15 +15,15 @@ lobbies in `landmarks-and-towns.md`). Of the ported houses, one opens: the red h
 (issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`). Houses (the
 `house-*` townhouses, and a machiya with no shop sign) get a generic home interior from
 `tools/generate_houses.py` - in Fukuoka, Market, Osaka and Sendai (issue #208, see House interiors; Sapporo's last townhouses went when Tanukikoji was built and Asahikawa's are Hokkaido houses of its own art, #219). The high-rises and
-apartment blocks get a lobby from the same tool (`--lobbies`; seventeen in the eight towns that have a tower, all but Sendai's flats over its 7-Eleven, issues #216 and #219, see Tower lobbies), and a shopfront in `roomgen.SHOP_DOORS` a small shop floor (`--shops`; Tanukikoji's three, Susukino's karaoke bar, and in Asahikawa Heiwa-dori's three and the shoyu ramen counter, see Shop floors).
+apartment blocks get a lobby from the same tool (`--lobbies`; twenty-six in the nine towns that have a tower, all but Sendai's flats over its 7-Eleven, issues #216 and #219, see Tower lobbies), and a shopfront in `roomgen.SHOP_DOORS` a small shop floor (`--shops`; Tanukikoji's three, Susukino's karaoke bar, and in Asahikawa Heiwa-dori's three and the shoyu ramen counter, see Shop floors).
 
 | Prefab | Cells | Placed in |
 |---|---|---|
-| `highrise-yellow` (ochre office block) | 4x8 | Market (15,22), Palace (48,6) |
-| `highrise-blue` (blue-grey office block) | 5x11 | Osaka (3,7) |
-| `highrise-glass` (curtain-wall tower) | 4x10 | Osaka (42,29) |
-| `highrise-apartment` (tiled-balcony flats) | 5x8 | Osaka (3,30) |
-| `midrise-apartment` (the same block, two floors lower) | 5x6 | Palace (40,10), feet on the forecourt edge |
+| `highrise-yellow` (ochre office block) | 4x8 | Market (15,22), Palace (48,6), Shinjuku (21,4) and (25,22) |
+| `highrise-blue` (blue-grey office block) | 5x11 | Osaka (3,7), Shinjuku (15,1) and (5,19) |
+| `highrise-glass` (curtain-wall tower) | 4x10 | Osaka (42,29), Shinjuku (10,2) and (12,20) |
+| `highrise-apartment` (tiled-balcony flats) | 5x8 | Osaka (3,30), Shinjuku (4,4) and (18,22) |
+| `midrise-apartment` (the same block, two floors lower) | 5x6 | Palace (40,10), feet on the forecourt edge; Shinjuku (26,6) |
 | `sapporo-office-brick` / `sapporo-office-glass` (Sapporo's own office blocks, `roof=1`: only the top row is walk-behind) | 4x7 / 5x6 | Sapporo (49,9) / (10,11) - each with a lobby |
 | `discount-store` (the "Don Quijote") | 5x8 | Market (46,22), Osaka (13,9) by the Dotonbori arch, Sapporo (16,11) - each with an interior |
 | `machiya-black` / `-red` / `-blue` (Kyoto townhouse) | 5x5 | Sendai, Kanazawa, Toyama's old street, Fukuoka (Asahikawa's ramen alley has fronts of its own since #219) |
@@ -78,8 +78,9 @@ All art comes from `tools/extract_street.py` (run it before `make_prefabs.py`); 
   (Temples & Shrines `GK_TS_A5`). The top / left kerb tiles are the bottom / right ones flipped: the sheet's own
   have a heavily worn second stripe that reads as a glitch in game. The Japanese City `GK_JC_A5_2` crossings are on a much darker asphalt - not those.
 - **Where**: signalled crossings in Tokyo (south road at the palace path, west road), Market (north road on the
-  temple axis, east road, south road at the torii), Palace (east road), Park (south road, east road) and Osaka
-  (the main street, between the arch and the bridge); props scattered through those.
+  temple axis, east road, south road at the torii), Palace (east road), Park (south road, east road), Shinjuku
+  (the avenue, columns 22-23, issue #94) and Osaka (the main street, between the arch and the bridge); props
+  scattered through those.
 - **Osaka's roads** (issues #106 / #151, `generate_osaka.py`): the **main street** is columns 23-26 from row
   11 to the avenue - `road-edge-left`, `road-lane-left`, `road-lane-right`, `road-edge-right` - with the dark
   brick either side as its pavement. It ends square a row below the station door (`road-corner-nw`, two

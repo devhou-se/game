@@ -507,7 +507,7 @@ def test_city_reach(cfg):
     import subprocess
     city = cfg['cities']['TokyoCity']
     names = [m['room'] for m in city['rooms']]
-    assert names == ['Tokyo', 'Market', 'Palace', 'Park', 'Karuizawa'], names
+    assert names == ['Tokyo', 'Market', 'Palace', 'Park', 'Karuizawa', 'Shinjuku'], names
 
     # the layout: offsets from the union's top-left, sizes from the rooms
     districts = b.city_districts(cfg, 'Market')

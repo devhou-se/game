@@ -29,6 +29,13 @@
       "height": 2816
     },
     {
+      "fileName": "gamev2/tiled/shinjuku.tmj",
+      "x": 1536,
+      "y": 3264,
+      "width": 2176,
+      "height": 2304
+    },
+    {
       "fileName": "gamev2/tiled/karuizawa.tmj",
       "x": -3072,
       "y": 512,

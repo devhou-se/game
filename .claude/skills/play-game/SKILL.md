@@ -35,8 +35,8 @@ Cells are `x,y` from the room's top-left, the same numbers as `gridX`/`gridY`
 in `config.json`, Tiled cell coordinates, and the in-game debug inspector.
 `n` is up (y - 1), `e` is right (x + 1).
 
-**Tokyo is one stitched city.** The game merges Tokyo, Market, Palace and
-Park into a single room (`TokyoCity`) and so does this tool — it runs the
+**Tokyo is one stitched city.** The game merges Tokyo, Market, Palace, Park,
+Shinjuku and Karuizawa into a single room (`TokyoCity`) and so does this tool — it runs the
 game's own stitcher. Coordinates are still each district's own, everywhere:
 `where` prints `Market 5,24 (TokyoCity 63,24)`, `look` rules its map in the
 cells of the district you stand in (a neighbour's cells run negative or past

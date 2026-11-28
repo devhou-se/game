@@ -10,7 +10,7 @@ Rooms are defined in `config.json` and loaded into `GameScene.rooms`. Each room 
 - `name`: Display name. It is what the player reads (HUD, Map, Stamp Card, the intro) and is never an
   identifier: the room KEY is. The four ported Tokyo districts show their real names while their keys stay
   what they were (issue #219): `Tokyo` -> "Imperial Palace", `Market` -> "Asakusa", `Palace` -> "Marunouchi",
-  `Park` -> "Park"; the city's dot on the Map is still "Tokyo" (`cities.TokyoCity.name`) and the station room
+  `Park` -> "Park" (the fifth district, Shinjuku, is generated and its name is its key, issue #94); the city's dot on the Map is still "Tokyo" (`cities.TokyoCity.name`) and the station room
   is "Tokyo Station". Everything authored, every tool and every doc coordinate keeps using the key
   (`goto Market 5 24`). An interior names its host by the host's display name (`7-Eleven · Asakusa 1`,
   `Shrine · Asakusa`), so rename a host in config and re-run the interior generators.
