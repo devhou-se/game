@@ -54,7 +54,7 @@ def lettering():
     px = im.load()
     lum = lambda x, y: (299 * px[x, y][0] + 587 * px[x, y][1] + 114 * px[x, y][2]) // 1000
     name = [(x, y) for y in range(9, 45) for x in range(38, 156) if lum(x, y) < 110]
-    hook = [(x, y) for y in range(47, 57) for x in range(4, 156) if lum(x, y) > 150]
+    hook = [(x, y) for y in range(47, 61) for x in range(4, 156) if lum(x, y) > 150]
     return name, hook
 
 

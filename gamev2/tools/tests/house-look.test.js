@@ -123,4 +123,19 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             fs.rmSync(tmp, { recursive: true, force: true });
         }
     });
+
+    test('extract_city: the Don Takote sign is drawn in the house look, its colours the sheets\' (#346)', () => {
+        // the sign is the store's top two cells; the facade under it is cut from the sheets as it is
+        const { width: w, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', 'discount-store_0_0.png')));
+        const h = 128, at = (x, y) => (y * w + x) * 4, known = sheets(), colours = new Set();
+        for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
+            const c = data.readUInt32BE(at(x, y));
+            assert.ok([[1, 0], [0, 1], [1, 1]].every(([dx, dy]) => data.readUInt32BE(at(x + dx, y + dy)) === c), `(${x},${y}) is not a 2x2 block`);
+        }
+        for (const [x, y] of [[0, 0], [w - 2, 0], [0, h - 2], [w - 2, h - 2]]) assert.strictEqual(data[at(x, y) + 3], 0, `corner (${x},${y})`);
+        for (let i = 0; i < w * h * 4; i += 4) if (data[i + 3]) colours.add(hex(data, i));
+        assert.deepStrictEqual([...colours].filter((c) => !known.has(c)), [], 'every colour of the sign is a sheet\'s');
+        assert.ok(colours.size >= 8 && colours.size <= 24, `${colours.size} colours`);
+        for (let x = 2; x < w - 2; x++) assert.strictEqual(hex(data, at(x, 0)), '0a1627', `(${x},0) is on the silhouette and not ink`);
+    });
 };

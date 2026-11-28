@@ -107,6 +107,6 @@ Under Workshop (your instructions say so, and the checkout is on a `workshop/<n>
   folder needs its own `source` there (`gamev2/tools/tests/hosting.test.js` fails without it).
 - **Checks** (`.github/workflows/checks.yml`) runs the five no-browser checks above on every push to master
   and every pull request that touches the game, the source art or `devhouse.world`. It installs the
-  Pillow pinned in `gamev2/tools/requirements-art.txt`, so the art tools are checked there too (the one that
-  needs a Japanese system font is listed as `skip`), and it does not gate the deploy.
+  Pillow pinned in `gamev2/tools/requirements-art.txt`, so the art tools are checked there too, and it does not
+  gate the deploy.
 - **Label New Issues** (`.github/workflows/label-new-issues.yml`) adds the `workshop/nominated` label to every newly opened issue.

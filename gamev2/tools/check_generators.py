@@ -44,11 +44,9 @@ Run from gamev2/:  python3 tools/check_generators.py [generator ...]
 Exit 0 when every generator reproduces the committed world, 1 otherwise.
 The room generators and config_to_tiled need no Pillow. The art tools do:
 without it they are listed as skipped, not as ok — run the check with a
-python3 that has Pillow to cover them. The one that draws Japanese text in a
-system font (FONT_TOOLS: extract_city's Don Takote sign; the ad pool is set in
-the game's own PixelMplus12) is skipped the same way where no Japanese system
-font is readable (a sandboxed shell, a machine without one): the glyphs decide the
-pixels, so no stand-in font would rebuild the committed art. A new room
+python3 that has Pillow to cover them. None needs a system font: the tools that
+set Japanese text use the game's own fonts in fonts/ (#346), so the glyphs, which
+decide the pixels, are the same on every machine. A new room
 generator belongs in GENERATORS, a new art tool in ART_TOOLS.
 """
 import filecmp
@@ -120,15 +118,12 @@ ART_TOOLS += [WORLDMAP]
 # what a tool is run with. --pil: the map as play.js draws it on any machine, the one that is committed;
 # without it the tool uses Tiled's tmxrasterizer where the app is installed, and that is another picture
 ARGS = {WORLDMAP: ['--pil']}
-# the art tools that also need a Japanese system font (generate_ads.find_font, which extract_city
-# sets the Don Takote sign with; the ads themselves are in fonts/PixelMplus12 since #279)
-FONT_TOOLS = ['extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS
 # what a tool reads and may write, relative to gamev2/ — copied to the scratch
 # project once (plus config.json), compared and put back after every run
 OUTPUTS = ['tiled', 'assets/sprites', 'assets/ads', 'assets/map']
 # (src: generate_cast reads the character creator's tables, and make_worldmap's play.js loads the game's
-# own code; fonts: generate_station_art sets its signs in the game's own pixel fonts)
+# own code; fonts: generate_station_art, generate_ads and extract_city set their text in the game's own pixel fonts)
 INPUTS = ['tools', 'src', 'fonts'] + OUTPUTS
 
 
@@ -145,24 +140,10 @@ def have_pillow():
     return pillow_version() is not None
 
 
-def have_jp_font():
-    """Whether generate_ads.find_font, which extract_city uses, finds a font it
-    can read (needs Pillow)."""
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    import generate_ads
-    try:
-        generate_ads.find_font()
-        return True
-    except SystemExit:
-        return False
-
-
-def skips(names, pillow, font):
+def skips(names, pillow):
     """{tool: why it cannot be checked here} for the art tools among `names`:
-    all of them without Pillow, the FONT_TOOLS without a Japanese font."""
-    if not pillow:
-        return {n: 'needs Pillow' for n in names if n in ART_TOOLS}
-    return {} if font else {n: 'needs a Japanese system font' for n in names if n in FONT_TOOLS}
+    all of them without Pillow, none with it."""
+    return {} if pillow else {n: 'needs Pillow' for n in names if n in ART_TOOLS}
 
 
 def tiled_rooms(root='.'):
@@ -328,7 +309,7 @@ def main(argv):
         print(f'unknown generator(s) {unknown}; expected some of {CHECKS}')
         return 2
     pillow = have_pillow()
-    skipped = skips(names, pillow, pillow and have_jp_font())
+    skipped = skips(names, pillow)
     failures = check([n for n in names if n not in skipped])
     what = lambda n: ('the Tiled maps' if n == TILED else 'the world map' if n == WORLDMAP else
                       'the sprites and prefabs' if n in ART_TOOLS else 'config.json')
@@ -354,10 +335,8 @@ def main(argv):
             print(f'The art tools ran on Pillow {pillow_version()}. A sprite drawn a pixel off by another Pillow\n'
                   'shows as drift too: docs/generators-and-checks.md lists the versions that rebuild the art.')
     if skipped:
-        print(f'\n{len(skipped)} art tool(s) not checked: ' +
-              ('this python3 has no Pillow. Run the check with one that does.' if not pillow else
-               'no Japanese system font is readable here (generate_ads.find_font). '
-               'Run the check where the system fonts are.'))
+        print(f'\n{len(skipped)} art tool(s) not checked: this python3 has no Pillow. '
+              'Run the check with one that does.')
     return 1 if failures else 0
 
 

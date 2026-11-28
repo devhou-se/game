@@ -17,9 +17,9 @@ change (issues #186, #193). Last it runs `make_worldmap.py --pil` and fails if `
 `world-map.json` would change (issue #270, see "The world map"). Run it after any edit to a
 generated room, a map or a generator. The room and map checks take a few seconds and need no Pillow; the
 art tools are listed as `skip` without it, so use `/Library/Developer/CommandLineTools/usr/bin/python3
-tools/check_generators.py` to cover them (ten seconds; `extract_city` alone also needs a Japanese system font,
-for the Don Takote sign, see `generate_ads.find_font`, and is listed as `skip`, not checked, where none is readable — a
-sandboxed shell; `generate_ads` sets the ads in the game's own PixelMplus12 and is checked wherever Pillow is, #279).
+tools/check_generators.py` to cover them (ten seconds). None needs a system font: `generate_ads` (#279) and
+`extract_city`'s Don Takote sign (#346) set their text in the game's own PixelMplus12, so they are checked wherever
+Pillow is.
 
 The `extract_*.py` tools cut their sprites from the source sheets in `../art-source/GuttyKreum` (the
 repository's `art-source/`, beside `gamev2/`; its `README.md` lists the sheets and how to bring back another

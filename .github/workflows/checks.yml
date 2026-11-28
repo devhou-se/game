@@ -42,9 +42,8 @@ jobs:
 
       # Pillow is for check_generators.py's art tools: without it they are listed as `skip`. The check
       # compares a PNG by its decoded pixels, so the runner's zlib does not matter, but what a tool draws
-      # can depend on the Pillow release: the file pins one that draws the committed sprites. The one tool
-      # that sets Japanese text in a system font (extract_city) is still `skip` here: the runner has no
-      # Japanese system font.
+      # can depend on the Pillow release: the file pins one that draws the committed sprites. The tools
+      # that set Japanese text use the game's own fonts in gamev2/fonts, so none needs a system font.
       - name: Install Pillow
         run: pip install -r tools/requirements-art.txt
 

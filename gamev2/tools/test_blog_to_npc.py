@@ -1181,16 +1181,18 @@ def test_tiled_maps_in_sync():
 def test_generator_check_skips():
     """check_generators covers generate_ads and generate_cast, and lists a tool
     it cannot run here as skipped rather than failed: every art tool without
-    Pillow, the one that draws Japanese text in a system font without a
-    readable one (#193). The ads are set in PixelMplus12 and always run (#279)."""
+    Pillow (#193). None waits on a system font: the ads (#279) and the Don
+    Takote sign (#346) are set in the game's own PixelMplus12."""
     cg = check_generators
-    assert {'generate_ads', 'generate_cast'} < set(cg.ART_TOOLS) and set(cg.FONT_TOOLS) < set(cg.ART_TOOLS)
-    assert 'generate_ads' not in cg.FONT_TOOLS and cg.FONT_TOOLS == ['extract_city']
-    assert 'assets/ads' in cg.OUTPUTS and 'src' in cg.INPUTS    # generate_cast reads src/CharacterCreator.js
-    assert cg.skips(cg.CHECKS, True, True) == {}
-    assert cg.skips(cg.CHECKS, True, False) == {n: 'needs a Japanese system font' for n in cg.FONT_TOOLS}
-    assert sorted(cg.skips(cg.CHECKS, False, False)) == sorted(cg.ART_TOOLS)
-    assert cg.skips(['generate_osaka', cg.TILED], False, False) == {}
+    assert {'generate_ads', 'generate_cast', 'extract_city'} < set(cg.ART_TOOLS)
+    assert not hasattr(cg, 'FONT_TOOLS') and not hasattr(cg, 'have_jp_font')
+    assert 'assets/ads' in cg.OUTPUTS and 'src' in cg.INPUTS and 'fonts' in cg.INPUTS
+    assert cg.skips(cg.CHECKS, True) == {}
+    assert sorted(cg.skips(cg.CHECKS, False)) == sorted(cg.ART_TOOLS)
+    assert cg.skips(['generate_osaka', cg.TILED], False) == {}
+    for tool in ('extract_city.py', 'generate_ads.py'):     # no system font is looked for any more
+        src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), tool)).read()
+        assert 'find_font' not in src and '/System/Library/Fonts' not in src, tool
 
 
 def png_bytes(rows, level=9):

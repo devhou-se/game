@@ -276,8 +276,6 @@ committed one differs.
   forecourt reached over the kerb and walled off the pavement. Where the gap is short use the lower
   variant (`midrise-apartment`, 5x6) rather than letting a tall one overhang.
 - **Anchors are not rounded**: `anchorY = 32/height` to 4 places put the 11-row tower 0.03px off the grid.
-- **`extract_city.py` needs a Japanese font** for the discount-store sign (`generate_ads.find_font()`); in
-  a sandbox that hides `/System/Library/Fonts` it stops before writing that sprite.
 - **One tile per cell per layer**: a big landmark sprite occupies only its
   top-left cell on `Collidables`, so a lantern post stamped on that exact cell
   is silently replaced (its collider stays). Keep small props off the top-left

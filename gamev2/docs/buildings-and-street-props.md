@@ -38,8 +38,9 @@ apartment blocks get a lobby from the same tool (`--lobbies`; twenty-six in the 
   Do not mix in the LimeZu `Modern_Exteriors` pack (different, more saturated style; it left the tree with the
   Godot project and is in git history, see `art-source/README.md`).
 - **The discount store** carries no real branding, like the ad pool: its sign is drawn by `extract_city.py`
-  with `tools/generate_ads.py`'s text helpers - ドン・タコーテ ("Don Takote"), yellow board, blue band, a red
-  octopus. It needs a Japanese font from `generate_ads.find_font()` (macOS system fonts).
+  in the house look (`tools/house_look.py`), built like the ad pool's boards - ドン・タコーテ ("Don Takote") in
+  the game's own `fonts/PixelMplus12-Grid.ttf`, a shaded gold board in a steel housing, marquee bulbs, a blue
+  band, a red octopus (#346). It needs no system font, so `check_generators.py` checks it wherever Pillow is.
 - **Placing one**: generated rooms `b.stamp('highrise-glass', x, y)` in their generator (Osaka does). Ported
   rooms use **`tools/stamp_prefab.py <Room> --add <prefab> x y [--remove <prefab> x y] [--dry-run]`**,
   which refuses to write if the prefab overlaps another standing sprite, lands on a solid cell, covers a

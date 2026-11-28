@@ -123,15 +123,15 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
             'out["args"] = cg.ARGS',
             // play.js loads the game's code from src/ and the tool writes under assets/map
             'out["copied"] = "src" in cg.INPUTS and "tools" in cg.INPUTS and "assets/map" in cg.OUTPUTS and "assets/sprites" in cg.OUTPUTS',
-            'out["noPillow"] = cg.skips([cg.WORLDMAP, "generate_osaka"], False, False)',
-            'out["noFont"] = cg.skips([cg.WORLDMAP], True, False)',
+            'out["noPillow"] = cg.skips([cg.WORLDMAP, "generate_osaka"], False)',
+            'out["withPillow"] = cg.skips([cg.WORLDMAP], True)',
         ].join('\n'));
         assert.ok(out.last, 'make_worldmap is the last of ART_TOOLS: it draws what the other tools made');
         // without --pil the tool draws with tmxrasterizer where Tiled is installed, and that is another picture
         assert.deepStrictEqual(out.args, { make_worldmap: ['--pil'] });
         assert.ok(out.copied, 'the scratch project lacks something make_worldmap reads or writes');
         assert.deepStrictEqual(out.noPillow, { make_worldmap: 'needs Pillow' });
-        assert.deepStrictEqual(out.noFont, {}, 'the map sets no Japanese text');
+        assert.deepStrictEqual(out.withPillow, {});
         const tool = fs.readFileSync(path.join(GV2, 'tools', 'make_worldmap.py'), 'utf8');
         assert.ok(/'--pil' not in sys\.argv/.test(tool), 'make_worldmap.py no longer takes --pil');
         const meta = JSON.parse(fs.readFileSync(path.join(GV2, 'assets', 'map', 'world-map.json'), 'utf8'));
@@ -202,7 +202,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.deepStrictEqual(code.slice(0, 2), ['ARG WORKSHOP_BASE', 'FROM ${WORKSHOP_BASE}']);
         assert.deepStrictEqual(code.filter((l) => l.startsWith('USER ')), ['USER root', 'USER agent']);
         assert.ok(!code.some((l) => /^(ENTRYPOINT|WORKDIR|CMD)\b|CLAUDE_CONFIG_DIR/.test(l)), 'ENTRYPOINT, WORKDIR and CLAUDE_CONFIG_DIR stay the base image\'s');
-        // no Japanese font: with one the font tool (extract_city) is run and reports DRIFT (check_generators.py, FONT_TOOLS)
+        // no system font: the art tools set their text in the game's own fonts/, and a stray one is not needed (#346)
         assert.ok(!code.some((l) => /fonts-|noto/i.test(l)), 'the image installs no font');
     });
 };

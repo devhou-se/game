@@ -40,8 +40,6 @@ import argparse
 import json
 import os
 
-from PIL import Image, ImageDraw, ImageFont
-
 import house_look as hl
 from house_look import rgb
 
@@ -122,58 +120,6 @@ SPECS = [
     dict(shape='big', text='歳末セール', sub='全品半額', pal='kiiro', motif='burst'),
     dict(shape='big', text='映画祭', sub='今週末', pal='murasaki', motif='reel'),
 ]
-
-
-# ---- the old text helpers ---------------------------------------------------------
-# Kept as they were for tools/extract_city.py's Don Takote sign, which still sets its
-# text in a system font (and so is checked only where one is readable); the ads
-# themselves no longer use them.
-def find_font():
-    """First present JP-capable font. Bold-ish weight where the TTC allows."""
-    candidates = [
-        ('/System/Library/Fonts/Hiragino Sans GB.ttc', 2),   # W6 weight index
-        ('/System/Library/Fonts/Hiragino Sans GB.ttc', 0),
-        ('/System/Library/Fonts/Supplemental/Arial Unicode.ttf', 0),
-        ('/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc', 0),
-    ]
-    for path, index in candidates:
-        if os.path.exists(path):
-            try:
-                ImageFont.truetype(path, 40, index=index)
-                return path, index
-            except OSError:
-                continue
-    raise SystemExit('no JP-capable font found (looked for ' +
-                     ', '.join(sorted({os.path.basename(p) for p, _ in candidates})) +
-                     ' — unreadable in a sandboxed shell); run where the system fonts '
-                     'are readable, or add one to find_font()')
-
-
-FONT_PATH, FONT_INDEX = None, None
-
-
-def text_bitmap(text, px, color):
-    """Render text at 4x then NEAREST-downscale: chunky pixel glyphs."""
-    big = px * 4
-    font = ImageFont.truetype(FONT_PATH, big, index=FONT_INDEX)
-    l, t, r, b = font.getbbox(text)
-    img = Image.new('RGBA', (max(1, r - l), max(1, b - t)), (0, 0, 0, 0))
-    ImageDraw.Draw(img).text((-l, -t), text, font=font, fill=color)
-    return img.resize((max(1, img.width // 4), max(1, img.height // 4)), Image.NEAREST)
-
-
-def fit_text(text, max_w, max_h, color):
-    """Largest pixel-text that fits the box."""
-    for px in range(max_h, 5, -1):
-        img = text_bitmap(text, px, color)
-        if img.width <= max_w and img.height <= max_h:
-            return img
-    return text_bitmap(text, 6, color)
-
-
-def paste_center(canvas, img, cx, cy):
-    canvas.alpha_composite(img, (int(cx - img.width / 2), int(cy - img.height / 2)))
-
 
 
 # ---- motifs and pictures, set by hand ---------------------------------------------------
