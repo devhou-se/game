@@ -1453,9 +1453,13 @@ again: it finds the building where it now is and wires the door anew. Nothing el
   line each (`flavour` rules in `Interactions.js`; the screen's is post 505's own words). No new overlay, key
   or save field.
 - **Art**: `tools/generate_pub_art.py` (needs Pillow; `--preview out.png`) draws the 21 sprites
-  (`pub-in-<piece>`) at the palace kit's scale. Its frame (`wall_side`, `wall_front`, `threshold`,
-  `doorlight`, each taking a palette), its helpers and `register()` are imported by the distillery's and
-  Canal City's art tools. It and the generator are in `check_generators.py`.
+  (`pub-in-<piece>`) at the palace kit's scale, in the house look (#334): GuttyKreum colours only, a navy
+  outline, dark glass behind the bottles, the lamps unlit in the pack's dim gold `c6a663` (night light is
+  `Glows.js`), held by `pub.test.js`. Its frame (`wall_side`, `wall_front`, `threshold`, `doorlight`, each
+  taking a palette), its helpers, its colour constants (pack colours too) and `register()` are imported by
+  `generate_distillery_art.py`, `generate_mall_art.py`, `generate_tower_deck_art.py`, `generate_wheel_art.py`
+  and `generate_flinders_art.py`: after changing a value, rerun those and look at their rooms. It and the
+  generator are in `check_generators.py`.
 - **Doors and blog NPCs**: no dated position or district stand cell is on the door or the cell in front of
   it, and a wanderer never steps there (`NPCManager.atDoorway`). The `the HUB pub` LANDMARK stands its
   visitor on the pavement beside the door (the sprite's cell + (3,5): Julia on 29 October 2025).

@@ -3,7 +3,9 @@
 the frame the two other interiors of that issue are built in.
 
 In the manner of tools/generate_palace_art.py: shaded pixel art with a 1px ink
-outline, drawn at half size (32px a cell) and pixel-doubled. Nothing is random
+outline, drawn at half size (32px a cell) and pixel-doubled, in the house look
+(issue #334): every colour is one the GuttyKreum sheets use, the outline is the
+pack's navy, and nothing is lit (a lamp is the pack's dim gold, c6a663). Nothing is random
 between runs (every scatter is seeded) and the only text (the score on the
 television) is set in the game's own font, so a re-run is byte-identical on
 the same machine.
@@ -15,7 +17,7 @@ brass and red leather. All sprites are `pub-in-<piece>`:
   wall-front              the front wall's head from inside
   threshold-w / -e        the doorway's two cells; doorlight: daylight through it (2x3, flat)
   wall-panel, wall-print  1x3 bays of the back wall: paper over a wainscot; a framed print
-  wall-backbar            7x3 the back bar: mirrors, two shelves of bottles, optics
+  wall-backbar            7x3 the back bar: dark glass, two shelves of bottles, optics
   wall-tv                 4x3 the big screen: the baseball (bump it)
   wall-darts              2x3 the dartboard in its cabinet, chalk scores (bump it)
   bar                     7x2 the bar: the staff's aisle behind, the counter with three
@@ -27,9 +29,11 @@ brass and red leather. All sprites are `pub-in-<piece>`:
   lamp-hang               1x2 a green glass lamp hung from the ceiling (Tops)
                           (the lamps, the back bar and the screen glow at night: src/utils/Glows.js)
 
-The frame (wall_side, wall_front, threshold, doorlight), the drawing helpers
-and register() are imported by tools/generate_distillery_art.py and
-tools/generate_mall_art.py; nothing is drawn or written on import.
+The frame (wall_side, wall_front, threshold, doorlight), the drawing helpers,
+the colours and register() are imported by tools/generate_distillery_art.py,
+generate_mall_art.py, generate_tower_deck_art.py, generate_wheel_art.py and
+generate_flinders_art.py: rerun them after changing a value here. Nothing is
+drawn or written on import.
 
 Run from gamev2/:  python3 tools/generate_pub_art.py [--preview out.png]
 Needs Pillow. Registers the sprites in config.json spriteMetadata + tileNames.
@@ -42,23 +46,37 @@ from PIL import Image, ImageDraw, ImageFont
 
 C = 32      # canvas px per cell (doubled on save)
 
-INK = (38, 43, 68)
-VOID = (16, 18, 30)
-WHITE, CREAM, CREAM_SH = (250, 250, 246), (240, 230, 206), (208, 194, 168)
-GLOW, GLOW_HI = (255, 222, 150), (255, 246, 208)
-WOOD, WOOD_HI, WOOD_DK = (112, 64, 52), (158, 100, 70), (74, 42, 44)             # mahogany
-TOP, TOP_HI, TOP_DK = (150, 92, 62), (196, 136, 88), (104, 60, 50)               # a polished counter top
-BOARD, BOARD_ALT, BOARD_HI, BOARD_DK = (92, 62, 54), (100, 68, 58), (132, 94, 72), (64, 44, 46)
-GREEN, GREEN_HI, GREEN_DK = (44, 84, 72), (66, 112, 90), (30, 60, 58)            # the wallpaper
-BRASS, BRASS_HI, BRASS_DK = (226, 180, 78), (250, 224, 134), (172, 122, 56)
-LEATHER, LEATHER_HI, LEATHER_DK = (160, 46, 50), (204, 82, 70), (110, 32, 46)
-STEEL, STEEL_HI, STEEL_DK = (160, 168, 188), (220, 226, 238), (104, 112, 140)
-MIRROR, MIRROR_HI = (150, 176, 196), (204, 222, 232)
-BEER, BEER_DK, FOAM = (236, 170, 60), (190, 120, 50), (252, 246, 228)
-SLATE, SLATE_HI = (52, 60, 64), (84, 94, 98)
-BLACK = (24, 24, 34)
-GRASS, GRASS_HI, DIRT, DIRT_DK = (72, 150, 84), (104, 180, 100), (190, 132, 86), (150, 98, 70)
-BOTTLES = [(60, 120, 80), (200, 150, 60), (150, 60, 50), (70, 100, 160), (220, 210, 190), (120, 80, 50), (190, 70, 90)]
+
+def rgb(h):
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+# Every colour is one the GuttyKreum sheets use (art-source/GuttyKreum; pub.test.js holds the pub to it).
+
+INK = rgb('172459')                      # the pack's navy: every outline
+VOID = rgb('080d16')
+SHADE = rgb('2a3151')                    # what a thing throws on the floor, with alpha
+WHITE, CREAM, CREAM_SH = rgb('fafcfd'), rgb('e4cecc'), rgb('d7b6ab')
+DAY = (WHITE, rgb('ffe2e0'), CREAM)      # daylight at a door, palest first
+GLOW, GLOW_HI = rgb('c6a663'), rgb('f3d890')                          # a lamp: the pack's dim gold, its core
+WOOD, WOOD_HI, WOOD_DK = rgb('71412a'), rgb('85553e'), rgb('4d3326')  # mahogany
+TOP, TOP_HI, TOP_DK = rgb('85553e'), rgb('b07c63'), rgb('68422d')     # a polished counter top
+BOARD, BOARD_ALT, BOARD_HI, BOARD_DK = rgb('4d3326'), rgb('5a3827'), rgb('68422d'), rgb('2a2636')
+GREEN, GREEN_HI, GREEN_DK = rgb('395050'), rgb('4a6262'), rgb('2e4040')   # the wallpaper
+GREEN_GLINT = rgb('6c8e7f')
+BRASS, BRASS_HI, BRASS_DK = rgb('c6a663'), rgb('f3d890'), rgb('a7843b')
+LEATHER, LEATHER_HI, LEATHER_DK = rgb('aa4d31'), rgb('d16b56'), rgb('8a3a22')
+STEEL, STEEL_HI, STEEL_DK = rgb('a4b0b5'), rgb('d1e2eb'), rgb('656e92')
+MIRROR, MIRROR_HI = rgb('2c2d51'), rgb('4b6396')    # the back bar's glass: dark, a slanted glare
+BEER, BEER_DK, FOAM = rgb('c6a663'), rgb('a7843b'), rgb('fafcfd')
+SLATE, SLATE_HI = rgb('2e4040'), rgb('4a6262')
+BLACK, BLACK_HI = rgb('1b1e2a'), rgb('47485d')
+GRASS, GRASS_HI, DIRT, DIRT_DK = rgb('678e57'), rgb('83af6f'), rgb('b07c63'), rgb('86624f')
+RED, LEAF, BLUE, BLUE_DK, ORANGE, PINK = rgb('d16b56'), rgb('508582'), rgb('4b6396'), rgb('314b8e'), rgb('ce6a42'), rgb('bb6479')
+MAT, MAT_HI, ICE, SKY, SKIN = rgb('2a2636'), rgb('47485d'), rgb('d1e2eb'), rgb('bbe9ff'), rgb('f6a583')
+# a bottle: its glass, the light down its side, its label
+BOTTLES = [(LEAF, rgb('93c297'), CREAM), (GLOW, GLOW_HI, WHITE), (rgb('904a37'), RED, CREAM), (BLUE, rgb('588cc6'), CREAM),
+           (CREAM, WHITE, CREAM_SH), (rgb('7f513b'), rgb('aa775f'), CREAM), (PINK, rgb('d78bc1'), CREAM)]
 
 _FONTS = {}
 
@@ -109,8 +127,8 @@ def post(d, x0, y0, x1, y1, base, hi, dk, outline=True):
         d.rectangle([x0, y0, x1, y1], outline=INK)
 
 
-def shadow(d, x0, y0, x1, y1, a=70):
-    d.ellipse([x0, y0, x1, y1], fill=(0, 0, 0, a))
+def shadow(d, x0, y0, x1, y1, a=90):
+    d.ellipse([x0, y0, x1, y1], fill=SHADE + (a,))
 
 
 def pint(d, x, y):
@@ -121,14 +139,15 @@ def pint(d, x, y):
     d.line([x + 4, y + 4, x + 4, y + 7], fill=BEER_DK)
 
 
-def bottle(d, x, foot, h, col):
+def bottle(d, x, foot, h, col, hi=None, label=None):
     """A bottle 4px wide standing on `foot`, `h` tall, neck and all."""
+    hi, label = hi or mix(col, WHITE, 0.45), label or mix(col, CREAM, 0.7)
     d.rectangle([x, foot - h + 5, x + 3, foot], fill=col)
     d.rectangle([x + 1, foot - h + 1, x + 2, foot - h + 4], fill=col)
     d.point((x + 1, foot - h), fill=CREAM)
     d.point((x + 2, foot - h), fill=CREAM)
-    d.line([x, foot - h + 6, x, foot - 1], fill=mix(col, WHITE, 0.45))
-    d.rectangle([x + 1, foot - 5, x + 3, foot - 3], fill=mix(col, CREAM, 0.7))     # the label
+    d.line([x, foot - h + 6, x, foot - 1], fill=hi)
+    d.rectangle([x + 1, foot - 5, x + 3, foot - 3], fill=label)     # the label
 
 
 # ---- the frame: shared by the three interiors of issue #217 ---------------------------
@@ -178,8 +197,9 @@ def wall_front(pal):
 def threshold(pal, side):
     def draw():
         im, d = new(C, C)
-        for y in range(0, 32):                                      # the day outside
-            d.line([0, y, 31, y], fill=mix((255, 240, 200), WHITE, y / 31))
+        d.rectangle([0, 0, 31, 31], fill=DAY[0])                    # the day outside, in flat steps
+        d.rectangle([0, 0, 31, 3], fill=DAY[2])
+        d.rectangle([0, 4, 31, 9], fill=DAY[1])
         d.line([0, 10, 31, 10], fill=pal['sill'])                   # the step
         d.line([0, 22, 31, 22], fill=pal['sill'])
         x0 = 0 if side == 'w' else 26                               # the door post
@@ -195,12 +215,8 @@ def threshold(pal, side):
 def doorlight():
     """Daylight falling in through a door: 2x3, on the floor, strongest at the sill."""
     im, d = new(2 * C, 3 * C)
-    for y in range(96):
-        t = y / 95
-        inset = round((1 - t) * 12)
-        a = round(120 * t * t)
-        if a:
-            d.line([inset, y, 63 - inset, y], fill=(255, 236, 176, a))
+    for y0, y1, inset, a in ((28, 47, 9, 28), (48, 67, 6, 56), (68, 83, 3, 84), (84, 95, 0, 112)):
+        d.rectangle([inset, y0, 63 - inset, y1], fill=CREAM + (a,))
     return im
 
 
@@ -300,16 +316,16 @@ def wall_print():
     box(d, 5, 20, 26, 46, WOOD_DK)
     d.rectangle([6, 21, 25, 45], outline=BRASS)
     d.rectangle([8, 23, 23, 43], fill=CREAM)
-    d.rectangle([9, 24, 22, 34], fill=(190, 214, 226))
-    d.rectangle([9, 35, 22, 42], fill=(120, 160, 96))
-    d.polygon([(9, 35), (14, 30), (19, 33), (22, 31), (22, 35)], fill=(96, 136, 110))
+    d.rectangle([9, 24, 22, 34], fill=SKY)
+    d.rectangle([9, 35, 22, 42], fill=GRASS_HI)
+    d.polygon([(9, 35), (14, 30), (19, 33), (22, 31), (22, 35)], fill=GREEN_GLINT)
     d.line([18, 28, 18, 35], fill=WOOD_DK)
-    d.rectangle([16, 26, 20, 30], fill=(60, 110, 76))
+    d.rectangle([16, 26, 20, 30], fill=LEAF)
     return im
 
 
 def wall_backbar():
-    """The back bar: a mahogany cabinet of three mirrored bays, two shelves of
+    """The back bar: a mahogany cabinet of three glass-backed bays, two shelves of
     bottles in each, a row of optics across the middle one, cupboards below."""
     W = 7 * C
     im, d = new(W, 3 * C)
@@ -333,17 +349,17 @@ def wall_backbar():
                 continue                                        # the optics hang there instead
             x = x0 + 3
             while x + 4 < x1 - 1:
-                bottle(d, x, shelf - 1, rnd.choice((13, 15, 16, 17)), rnd.choice(BOTTLES))
+                bottle(d, x, shelf - 1, rnd.choice((13, 15, 16, 17)), *rnd.choice(BOTTLES))
                 x += rnd.choice((5, 6, 6, 7))
     x0, x1 = bays[1]
     d.line([x0 + 3, 20, x1 - 3, 20], fill=BRASS)                # the optics: bottles hung upside down
     d.line([x0 + 3, 21, x1 - 3, 21], fill=BRASS_DK)
     for i in range(6):
         x = x0 + 7 + i * 10
-        col = BOTTLES[(i * 3 + 1) % len(BOTTLES)]
+        col, hi, label = BOTTLES[(i * 3 + 1) % len(BOTTLES)]
         d.rectangle([x, 22, x + 4, 32], fill=col)
-        d.line([x, 22, x, 32], fill=mix(col, WHITE, 0.45))
-        d.rectangle([x + 1, 26, x + 4, 29], fill=mix(col, CREAM, 0.7))
+        d.line([x, 22, x, 32], fill=hi)
+        d.rectangle([x + 1, 26, x + 4, 29], fill=label)
         d.rectangle([x + 1, 33, x + 3, 35], fill=STEEL)
         d.point((x + 2, 36), fill=STEEL_DK)
     for x0, x1 in bays:                                         # cupboards under the shelves
@@ -366,15 +382,15 @@ def wall_tv():
     im, d = new(W, 3 * C)
     _wall(d, W)
     box(d, 6, 11, W - 7, 57, BLACK)                             # the set
-    d.line([7, 12, W - 8, 12], fill=(70, 74, 96))
+    d.line([7, 12, W - 8, 12], fill=BLACK_HI)
     d.rectangle([9, 14, W - 10, 54], fill=GRASS)                # the picture
     for y in range(14, 55, 6):                                  # mown stripes
         d.rectangle([9, y, W - 10, min(y + 2, 54)], fill=GRASS_HI)
-    d.rectangle([9, 14, W - 10, 19], fill=(46, 70, 110))        # the outfield wall, the crowd over it
+    d.rectangle([9, 14, W - 10, 19], fill=BLUE_DK)        # the outfield wall, the crowd over it
     rnd = random.Random(505)
     for x in range(10, W - 10, 2):
-        d.point((x, 15 + rnd.randrange(2)), fill=rnd.choice(((200, 60, 60), CREAM, (226, 180, 78), (120, 150, 200))))
-    d.line([9, 19, W - 10, 19], fill=(226, 200, 90))
+        d.point((x, 15 + rnd.randrange(2)), fill=rnd.choice((RED, CREAM, GLOW, rgb('588cc6'))))
+    d.line([9, 19, W - 10, 19], fill=GLOW)
     home, first, second, third = (64, 50), (88, 38), (64, 27), (40, 38)
     d.polygon([home, first, second, third], fill=DIRT)          # the infield
     d.polygon([(64, 44), (78, 38), (64, 32), (50, 38)], fill=GRASS_HI)
@@ -388,20 +404,20 @@ def wall_tv():
 
     def man(x, y, shirt, cap):
         d.rectangle([x, y, x + 2, y + 3], fill=shirt)
-        d.point((x + 1, y - 1), fill=(246, 195, 154))
+        d.point((x + 1, y - 1), fill=SKIN)
         d.line([x, y - 2, x + 2, y - 2], fill=cap)
     for x, y in ((62, 33), (84, 33), (70, 26), (54, 27), (42, 33), (30, 23), (63, 21), (96, 23)):
-        man(x, y, WHITE, (150, 30, 50))                         # the Eagles in the field
-    man(60, 45, (60, 70, 130), (40, 50, 100))                   # the batter, and his bat
+        man(x, y, WHITE, LEATHER_DK)                         # the Eagles in the field
+    man(60, 45, BLUE, BLUE_DK)                   # the batter, and his bat
     d.line([63, 43, 66, 41], fill=BRASS_HI)
     man(63, 51, BLACK, BLACK)                                   # the catcher
-    man(89, 34, (60, 70, 130), (40, 50, 100))                   # a runner on first
-    box(d, 11, 43, 43, 53, BLACK, outline=(70, 74, 96))         # the score
-    d.rectangle([13, 45, 15, 51], fill=(150, 30, 50))
+    man(89, 34, BLUE, BLUE_DK)                   # a runner on first
+    box(d, 11, 43, 43, 53, BLACK, outline=BLACK_HI)         # the score
+    d.rectangle([13, 45, 15, 51], fill=LEATHER_DK)
     text(d, 18, 45, '3-2', latin(8), WHITE)
     d.rectangle([9, 14, W - 10, 54], outline=INK)
-    d.line([10, 15, W - 11, 15], fill=mix(GRASS, WHITE, 0.5))   # the glass
-    d.point((W - 12, 56), fill=(90, 220, 120))                  # it is on
+    d.line([10, 15, W - 11, 15], fill=rgb('93c297'))   # the glass
+    d.point((W - 12, 56), fill=rgb('93c297'))                  # it is on
     d.rectangle([58, 58, 69, 59], fill=BLACK)                   # its bracket
     return im
 
@@ -427,10 +443,10 @@ def wall_darts():
     for rr, wdt in ((14, 1), (8, 1)):                           # the double and the treble
         for i in range(20):
             d.arc([cx - rr, cy - rr, cx + rr, cy + rr], i * 18 - 9, i * 18 + 9,
-                  fill=(200, 58, 48) if i % 2 else (60, 140, 84), width=wdt + 1)
-    d.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=(60, 140, 84), outline=INK)
-    d.rectangle([cx - 1, cy - 1, cx + 1, cy + 1], fill=(200, 58, 48))
-    for x, y, col in ((8, 55, (200, 58, 48)), (27, 54, BRASS), (47, 56, (70, 100, 160))):   # three darts in the paper
+                  fill=RED if i % 2 else GRASS, width=wdt + 1)
+    d.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=GRASS, outline=INK)
+    d.rectangle([cx - 1, cy - 1, cx + 1, cy + 1], fill=RED)
+    for x, y, col in ((8, 55, RED), (27, 54, BRASS), (47, 56, BLUE)):   # three darts in the paper
         d.line([x, y, x + 5, y - 3], fill=STEEL_HI)
         d.point((x, y), fill=INK)
         d.rectangle([x + 5, y - 5, x + 7, y - 3], fill=col)
@@ -445,15 +461,15 @@ def the_bar():
     taps, the till, glasses, a towel."""
     W = 7 * C
     im, d = new(W, 2 * C)
-    d.rectangle([0, 0, W - 1, 23], fill=(50, 48, 58))           # the aisle: a rubber mat
+    d.rectangle([0, 0, W - 1, 23], fill=MAT)           # the aisle: a rubber mat
     for y in range(3, 22, 4):
         for x in range(2 + (y // 4 % 2) * 2, W - 22, 4):
-            d.point((x, y), fill=(74, 72, 86))
+            d.point((x, y), fill=MAT_HI)
     d.rectangle([4, 2, 40, 12], fill=STEEL_DK, outline=INK)     # the glass washer's rack
     for x in range(7, 39, 6):
         d.ellipse([x, 4, x + 4, 8], fill=STEEL_HI, outline=STEEL)
     box(d, 150, 3, 190, 13, STEEL)                              # the ice well
-    d.rectangle([152, 5, 188, 11], fill=(214, 232, 240))
+    d.rectangle([152, 5, 188, 11], fill=ICE)
     for x in range(154, 187, 5):
         d.point((x, 7 + x % 3), fill=WHITE)
     d.polygon([(0, 19), (W - 1, 19), (W - 1, 37), (0, 37)], fill=TOP)   # the counter top
@@ -488,14 +504,14 @@ def the_bar():
         d.line([cx - 10, 32, cx + 10, 32], fill=STEEL_HI)
         post(d, cx - 2, 12, cx + 2, 30, BRASS, BRASS_HI, BRASS_DK)
         bar(d, cx - 11, 12, cx + 11, 16, BRASS, BRASS_HI, BRASS_DK)
-        for k, col in enumerate(((200, 58, 48), CREAM, (60, 140, 84))):
+        for k, col in enumerate((RED, CREAM, GRASS)):
             hx = cx - 9 + k * 8
-            col = (col, (226, 150, 50), (40, 50, 100))[(k + n) % 3] if n else col
+            col = (col, ORANGE, BLUE_DK)[(k + n) % 3] if n else col
             d.rectangle([hx, 3, hx + 2, 11], fill=col, outline=INK)
             d.point((hx + 1, 5), fill=WHITE)
             d.line([hx + 1, 17, hx + 1, 20], fill=BRASS_DK)     # the spout
     box(d, 70, 13, 91, 33, BLACK)                               # the till
-    d.rectangle([72, 15, 89, 20], fill=(120, 200, 150))
+    d.rectangle([72, 15, 89, 20], fill=rgb('93c297'))
     d.line([74, 17, 80, 17], fill=BLACK)
     for y in (23, 26, 29):
         for x in range(73, 89, 4):
@@ -505,8 +521,8 @@ def the_bar():
     pint(d, 134, 23)
     pint(d, 143, 25)
     d.ellipse([10, 26, 20, 32], fill=CREAM, outline=INK)        # a bowl of nuts
-    d.rectangle([12, 27, 18, 29], fill=(190, 132, 86))
-    d.rectangle([196, 24, 208, 33], fill=(200, 58, 48), outline=INK)    # a bar towel
+    d.rectangle([12, 27, 18, 29], fill=DIRT)
+    d.rectangle([196, 24, 208, 33], fill=RED, outline=INK)    # a bar towel
     d.line([198, 27, 206, 27], fill=CREAM)
     d.line([198, 30, 206, 30], fill=CREAM)
     for x in (30, 96, 160):                                     # beer mats
@@ -516,7 +532,7 @@ def the_bar():
 
 def stool():
     im, d = new(C, C)
-    shadow(d, 7, 23, 24, 30, 70)
+    shadow(d, 7, 23, 24, 30)
     for x in (10, 20):                                          # its legs, a ring to rest your feet on
         d.line([x, 13, x - (1 if x == 10 else -1), 27], fill=WOOD_DK, width=2)
     d.line([15, 13, 15, 26], fill=WOOD_DK, width=2)
@@ -531,7 +547,7 @@ def stool():
 def table():
     """A pub table with two pints on it."""
     im, d = new(2 * C, C)
-    shadow(d, 5, 22, 58, 31, 70)
+    shadow(d, 5, 22, 58, 31)
     for x in (10, 51):
         d.rectangle([x, 20, x + 2, 28], fill=WOOD_DK)
         d.line([x, 20, x, 28], fill=WOOD)
@@ -545,7 +561,7 @@ def table():
     pint(d, 16, 3)
     pint(d, 41, 6)
     d.rectangle([27, 12, 31, 15], fill=CREAM, outline=CREAM_SH)     # a beer mat, a packet of crisps
-    d.rectangle([33, 8, 38, 13], fill=(70, 100, 160), outline=INK)
+    d.rectangle([33, 8, 38, 13], fill=BLUE, outline=INK)
     d.point((35, 10), fill=BRASS_HI)
     return im
 
@@ -554,7 +570,7 @@ def chair(side):
     """A chair drawn up to a table: `w` stands on its west side, `e` on its east."""
     def draw():
         im, d = new(C, C)
-        shadow(d, 8, 23, 27, 30, 60)
+        shadow(d, 8, 23, 27, 30)
         post(d, 9, 3, 12, 27, WOOD, WOOD_HI, WOOD_DK)              # the back
         d.rectangle([9, 3, 12, 5], fill=WOOD_HI)
         d.point((9, 3), fill=INK)
@@ -581,7 +597,7 @@ def booth():
     box(d, 1, 22, W - 2, 31, LEATHER)                           # ...and its seat
     d.line([2, 23, W - 3, 23], fill=LEATHER_HI)
     d.line([2, 30, W - 3, 30], fill=LEATHER_DK)
-    d.rectangle([6, 32, W - 7, 38], fill=(0, 0, 0, 60))         # the table between them
+    d.rectangle([6, 32, W - 7, 38], fill=SHADE + (90,))         # the table between them
     d.rounded_rectangle([5, 34, W - 6, 56], radius=3, fill=TOP, outline=INK)
     d.line([8, 35, W - 9, 35], fill=TOP_HI)
     d.line([12, 44, 26, 44], fill=TOP_HI)
@@ -608,7 +624,7 @@ def booth():
 def chalkboard():
     """The specials, chalked on a board on an easel."""
     im, d = new(C, 2 * C)
-    shadow(d, 3, 54, 28, 62, 70)
+    shadow(d, 3, 54, 28, 62)
     d.line([7, 8, 4, 60], fill=WOOD_DK, width=2)                # the easel
     d.line([24, 8, 27, 60], fill=WOOD_DK, width=2)
     d.line([15, 30, 15, 56], fill=WOOD_DK)
@@ -625,7 +641,7 @@ def chalkboard():
         d.line([x, y, x + 2, y], fill=BEER)
     for y, w in ((35, 12), (38, 8), (41, 10)):                  # the rest, in a smaller hand
         d.line([9, y, 9 + w, y], fill=CREAM_SH)
-    d.line([20, 38, 22, 38], fill=(236, 150, 150))              # a price, in pink chalk
+    d.line([20, 38, 22, 38], fill=rgb('ff9b92'))              # a price, in pink chalk
     return im
 
 
@@ -637,10 +653,11 @@ def lamp_hang():
         d.point((16, y + 1), fill=BRASS)
     d.rectangle([13, 30, 18, 33], fill=BRASS, outline=INK)
     d.polygon([(11, 34), (20, 34), (27, 46), (4, 46)], fill=GREEN_HI, outline=INK)   # the shade
-    d.line([12, 36, 8, 44], fill=(120, 170, 130))
+    d.line([12, 36, 8, 44], fill=GREEN_GLINT)
     d.line([20, 36, 24, 44], fill=GREEN_DK)
     d.rectangle([4, 46, 27, 47], fill=BRASS, outline=INK)
-    d.ellipse([10, 46, 21, 52], fill=GLOW_HI, outline=GLOW)     # the light under it
+    d.ellipse([10, 46, 21, 52], fill=GLOW, outline=BRASS_DK)    # the bulb under it: unlit, the pack's dim gold
+    d.rectangle([13, 48, 16, 49], fill=GLOW_HI)
     return im
 
 
