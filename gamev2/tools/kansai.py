@@ -1,6 +1,6 @@
-"""kansai.py — what the Kansai district generators share (issues #255, #68).
+"""kansai.py — what the Kansai district generators share (issues #255, #267, #68).
 
-Osaka and Himeji are two rooms the game stitches into ONE walkable room,
+Osaka, Himeji and Okayama are three rooms the game stitches into ONE walkable room,
 `KansaiCity` (config `cities`, src/systems/CityStitcher.js — the mechanism
 Tokyo's and Hokuriku's districts use). Each has its own generator; this module
 holds the one thing they must agree on, where the districts meet. The building
@@ -11,7 +11,8 @@ five, in the city's own cells (the union's top-left is 0,0), which is also how
 they sit in ../devhouse.world relative to each other — so that a later ticket
 moves nothing; `BUILT` names the ones that exist:
 
-    Okayama   44x40 at (0, 36)     not built: Himeji's west edge is closed until it is
+    Okayama   44x40 at (0, 36)     the black keep and Korakuen, west of Himeji. Its
+                                   own west edge has no join: nothing is planned beyond it
     Himeji    44x40 at (44, 36)    the castle and Koko-en, west of Osaka
     Osaka     50x46 at (88, 30)    the town: the station, the canal, Dotonbori
     Nara      52x40 at (138, 36)   not built
@@ -20,6 +21,8 @@ moves nothing; `BUILT` names the ones that exist:
     Osaka's west edge meets Himeji's east edge: Canal-side Avenue (Osaka rows
     24-28) is Himeji rows 18-22, and Osaka's canal (rows 20-22) runs on as the
     castle moat (Himeji rows 14-16).
+    Himeji's west edge meets Okayama's east edge: the avenue carries on, on the
+    same rows (Okayama rows 18-22), and ends in Okayama's plaza.
 
 A join (`JOINS`) is open only when both its districts are in `BUILT`; a
 generator asks `is_open(district, side)` and closes its edge otherwise. Every
@@ -33,13 +36,15 @@ from hokuriku import Kit       # noqa: F401 — the generators build with ks.Kit
 AT = {'Okayama': (0, 36), 'Himeji': (44, 36), 'Osaka': (88, 30), 'Nara': (138, 36), 'LakeBiwa': (152, 0)}
 SIZE = {'Okayama': (44, 40), 'Himeji': (44, 40), 'Osaka': (50, 46), 'Nara': (52, 40), 'LakeBiwa': (46, 36)}
 CITY, IN = 'KansaiCity', 3               # a seam transporter lands IN cells inside the neighbour
-BUILT = ('Himeji', 'Osaka')              # each later ticket adds its district
+BUILT = ('Himeji', 'Okayama', 'Osaka')   # each later ticket adds its district
 
 O_AVENUE = (24, 25, 26, 27, 28)          # Osaka: the rows of Canal-side Avenue, at x = 0
 H_AVENUE = tuple(y + AT['Osaka'][1] - AT['Himeji'][1] for y in O_AVENUE)          # Himeji: 18-22, at x = 43
 O_CANAL = (20, 22)                       # Osaka: the canal's first and last row
 H_MOAT = tuple(y + AT['Osaka'][1] - AT['Himeji'][1] for y in O_CANAL)             # Himeji: 14-16, the moat
-JOINS = [('Osaka', 'w', O_AVENUE, 'Himeji', H_AVENUE)]      # (district, side, its cells, neighbour, its cells)
+OK_AVENUE = tuple(y + AT['Himeji'][1] - AT['Okayama'][1] for y in H_AVENUE)       # Okayama: 18-22, at x = 43
+JOINS = [('Osaka', 'w', O_AVENUE, 'Himeji', H_AVENUE),      # (district, side, its cells, neighbour, its cells)
+         ('Himeji', 'w', H_AVENUE, 'Okayama', OK_AVENUE)]
 
 OPPOSITE = {'w': 'e', 'e': 'w', 'n': 's', 's': 'n'}
 

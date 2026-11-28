@@ -38,6 +38,9 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Glass Art Museum, tram and stop, black-ramen shop, port observation tower | Toyama | `toyama-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 | Himeji Castle: the keep, a corner turret, the gatehouse, the white wall, the moat bridge | Himeji | `himeji-keep_0_0`, `himeji-turret_0_0`, `himeji-gate_0_0`, `himeji-wall_0_0`, `himeji-bridge_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
 | Koko-en's roofed gate | Himeji | `himeji-kokoen-gate_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| Okayama Castle: the black "crow" keep | Okayama | `okayama-keep_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
+| Korakuen: the Tsukimi bridge, the red-crowned cranes, the stones at the island's corners | Okayama | `okayama-bridge_0_0`, `okayama-crane_0_0`, `okayama-bank-rock_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| The Momotaro statue, the Bizen-ware stall | Okayama | `okayama-momotaro_0_0`, `okayama-bizen-stall_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 
 The three placeholders are line drawings with colour laid on (#271): the drawing is kept in
 `../art-source/line-art/`, `tools/line_art.py` paints it by rule (regions of the drawing take a material, small
@@ -67,7 +70,7 @@ them over the player, see `occlusion.md`.)
   this ground line (#70) or moves the colliders with it: `map-data.test.js` fails on a solid bottom-row cell
   with nothing standing on it and on an open cell under the art.
 - **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reached by train, and the town of the
-  stitched city `KansaiCity` (see "Kansai": Himeji is walked to from its west edge):
+  stitched city `KansaiCity` (see "Kansai": Himeji is walked to from its west edge, and Okayama from Himeji's):
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
   plaza, with the ferris wheel on the north bank (a gondola at its foot is boarded for one turn and the view:
   see "A turn on the Dotonbori wheel", issue #242). The Dotonbori canal (rows 20-22) runs the whole width of
@@ -129,6 +132,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Asahikawa | Station front and Heiwa-dori, Ramen alley, Asahibashi and the riverbank |
 | Osaka | Dotonbori, Shinsekai |
 | Himeji | Himeji Castle, Koko-en garden |
+| Okayama | Okayama Castle, Momotaro Avenue, Korakuen garden |
 | Sendai | Sendai Station front, Aoba Castle ruins, Downtown, Zuihoden, Nikka distillery, Samurai quarter, Matsushima bay |
 | Fukuoka | Hakata Station, Momochi, Canal City, Old Hakata, Nakasu, Dazaifu |
 | Kanazawa | Station front, Higashi Chaya and the temple hill, Katamachi, Castle, Kenrokuen, Nagamachi |
@@ -284,23 +288,26 @@ station: the owner's rule is that small places are walked to from their town, no
   7-Eleven / vending / pond spots. Fourteen devhouse 2 placements were re-homed there with `--rehome`
   (see `blog-pipeline.md`).
 
-### Kansai: Osaka, with Himeji on foot (issue #255; #68, run 2)
+### Kansai: Osaka, with Himeji and Okayama on foot (issues #255, #267; #68, runs 2 and 4)
 
-Osaka and the new **Himeji** are two generated rooms the game stitches into ONE walkable room,
+Osaka, **Himeji** and **Okayama** are three generated rooms the game stitches into ONE walkable room,
 **`KansaiCity`** - the third stitched city, built as Hokuriku is (above; `stitched-city.md`). Osaka is the
-town and has the region's one station. Himeji is a small place with NO station: you walk to it from Osaka,
-west along Canal-side Avenue. Devhouse 2's Damian was there on 13 November 2025 (post 754).
+town and has the region's one station. Himeji and Okayama are small places with NO station: you walk to
+Himeji from Osaka, west along Canal-side Avenue, and on along the same avenue to Okayama, where it ends.
+Devhouse 2's Damian was in Okayama on 12 November 2025 (post 745) and in Himeji on the 13th (post 754).
 
 - **Layout** (`tools/kansai.py`, the one place the generators agree on it; city cells, the union's top-left
   is 0,0). Kansai is planned as FIVE districts, one ticket each, and `AT` / `SIZE` hold all five so that a
-  later ticket moves nothing: Okayama 44x40 at (0,36), **Himeji** 44x40 at (44,36), **Osaka** 50x46 at
+  later ticket moves nothing: **Okayama** 44x40 at (0,36), **Himeji** 44x40 at (44,36), **Osaka** 50x46 at
   (88,30), Nara 52x40 at (138,36), LakeBiwa 46x36 at (152,0). **`BUILT`** names the ones that exist
-  (`('Himeji', 'Osaka')` today); config `cities.KansaiCity.rooms` is exactly those. A join (`JOINS`) is open
-  only when both its districts are built: a generator asks `ks.is_open(district, side)` and closes its edge
-  otherwise, so **Himeji's west edge is solid wood until Okayama is built**, and Osaka's west rail caps and
-  seam pieces are there only because Himeji is. The city today is 94x46 (`depthScale` 1): Himeji's top row
-  is six rows below Osaka's, and that gap is the stitcher's woodland (`cities.KansaiCity.backdrop`, a copy
-  of Hokuriku's), which also carries Osaka's railway on west - the track runs two rows above the keep's roof.
+  (`('Himeji', 'Okayama', 'Osaka')` today); config `cities.KansaiCity.rooms` is exactly those. A join
+  (`JOINS`, two today) is open only when both its districts are built: a generator asks
+  `ks.is_open(district, side)` and closes its edge otherwise, so Himeji's west edge opened when Okayama was
+  built (`generate_himeji.py` keeps the closed branch), and Osaka's west rail caps and seam pieces are there
+  only because Himeji is. **Okayama's own west edge has no join**: nothing is planned beyond it. The city
+  today is 138x46 (`depthScale` 1): Himeji's and Okayama's top row is six rows below Osaka's, and that gap
+  is the stitcher's woodland (`cities.KansaiCity.backdrop`, a copy of Hokuriku's), which also carries
+  Osaka's railway on west to the city's edge - the track runs two rows above Himeji's keep's roof.
 - **The seam**: Osaka's west edge meets Himeji's east edge. **Canal-side Avenue** (Osaka rows 24-28: a
   pavement, three rows of road, a pavement) is Himeji rows 18-22, and **Osaka's canal** (rows 20-22) runs on
   as the **castle moat** (Himeji rows 14-16): the same Floor and Water tiles either side of the edge, with
@@ -309,6 +316,13 @@ west along Canal-side Avenue. Devhouse 2's Damian was there on 13 November 2025 
   what `?stitch=0` plays; they are the only open cells on the shared edge. A **fingerpost**
   (`kansai-fingerpost`, 1x2) stands beside the pavement on each side of the seam, and a bump reads it (one
   `flavour` row in `Interactions.js`).
+- **The second seam** (issue #267): Himeji's west edge meets Okayama's east edge, and the avenue carries
+  on, on the same rows either side (18-22), with the same seam pieces and five more hidden transporters each
+  way (Himeji's ten are its east five, then its west five). Nothing else crosses it: the verges either side
+  of the avenue are shrubs and wood. Its fingerposts are a second sprite key, **`okayama-fingerpost`** (the
+  same drawing): a `flavour` rule is matched by sprite key alone, so one key cannot say two lines, and a
+  key beginning `kansai-fingerpost` would be caught by the first rule. Himeji has one of each, by the seam
+  it is for.
 - **Osaka** changed only at its west edge: no bushes cap the rail corridor on (0, 3..5) - the line carries
   on west - the pavement's seam pieces on (0,24) and (0,28), the fingerpost at (2,28), and the five seam
   transporters. A later Osaka must keep the avenue on rows 24-28 and the canal on rows 20-22 at that edge.
@@ -321,24 +335,52 @@ west along Canal-side Avenue. Devhouse 2's Damian was there on 13 November 2025 
   columns 2-3): over the timber **bridge** across the moat (`himeji-bridge`, 2x4, flat with
   `depthBias: -200`), through the gateway, up the steps. The **moat** ends at a bank at column 6 and is
   Himeji's `waterways` entry, declared from column 7 (see "Boats" in `ambient-traffic.md`), so the canal's
-  boats sail it; it is `pond-autotile`, so it can be fished. The avenue ends at the woods at column 5. South
+  boats sail it; it is `pond-autotile`, so it can be fished. The avenue runs on out of the west edge to
+  Okayama (it ended at the woods at column 5 until #267). South
   of it, **Koko-en**: a garden behind an earthen wall (Sendai's wall and pine sprites), entered through its
   roofed gate (`himeji-kokoen-gate`, 4x3 at (20,23); the gateway is its columns 1-2) - a gravel loop round a
   pond, crossed by the same timber bridge, with lanterns, pines and maples. There is no building with a
   door: the keep and the turret are solid over their whole footprint, and the keep is looked at, not entered.
-- **The Map** has a dot for Himeji (`config.places.Himeji`, `"minor": true`: a small place, whose label
-  gives way to the towns' - `hud-input-touch.md`). Debug map-click travel lands on Himeji (40,18), on the
-  avenue three cells in from Osaka (`Places.arrival`).
+- **Okayama** (`tools/generate_okayama.py`, issue #267) is laid out on one north-south axis, columns
+  21-22: the keep, the steps down the stone wall, across the avenue, the bridge, the island. North,
+  **Okayama Castle**, the black "crow castle" (`okayama-keep`, 8x7 at (18,2): black boarded walls with a
+  white band under each eave, gold shachi on the ridge, a low stone base; solid over its whole
+  footprint, roof rows too; `game.lookUp.sprites` has it), on a gravel terrace with pines and stone lanterns
+  above a **stone wall** (rows 13-14) whose only way up is the steps on the axis. The avenue (rows 18-22)
+  ends west in a paved **plaza** with the bronze **Momotaro** and his dog, monkey and pheasant
+  (`okayama-momotaro`, 2x3 at (8,17)); a **stall of Bizen ware** (`okayama-bizen-stall`, 3x3 at (15,15))
+  stands beside the pavement. South, **Korakuen** is an island (7..38, 27..35) in a **river**: a ring of
+  solid `pond-autotile` (5..40, 24..37; it can be fished), crossed only by the steel **Tsukimi bridge**
+  (`okayama-bridge`, 2x4 at (21,24), flat with `depthBias: -200`). The pond set has no inner-corner piece,
+  so a heap of the rim's own stones (`okayama-bank-rock`, 2x2, flat) lies over each corner of the island,
+  under a pine. On the island: a gravel loop round the lawns, a pond, maples and pines, lanterns and two
+  red-crowned **cranes** (`okayama-crane`, 1x2). The statue, the stall and a crane each answer a bump
+  (`flavour` rows). The river is NOT a `waterways` run: no arm of the ring leads anywhere, so a boat would
+  fade in and out in full view. There is no building with a door and no ordinary sealed building: the keep
+  is looked at, not entered, and the stall is an open counter. The west, north and south edges are wood.
+- **The Map** has a dot for Himeji and one for Okayama (`config.places.Himeji` / `.Okayama`,
+  `"minor": true`: a small place, whose label gives way to the towns' - `hud-input-touch.md`). Debug
+  map-click travel lands on Himeji (40,18), on the avenue three cells in from Osaka, and on Okayama (40,18),
+  three cells in from Himeji (`Places.arrival`).
 - **Districts and the blog pipeline**: `districts.py` has `castle` and `kokoen`; `LANDMARKS` has `Himeji
   Castle` (the visitor stands at (12,8), on the terrace in front of the keep's middle, where the camera
   looks up) and `Koko-en garden`, both `rooms:`-scoped. "the pond" is a spot of Koko-en, not of the castle:
   the moat's bank tile is the same `pond-autotile_corner-nw` the pond's label looks for, and the garden's is
   found first (`kansai.test.js` holds it there). Damian's 13 November placement was re-homed from Osaka with
   `blog_to_npc.py --rehome Damian 2025-11-13 "Himeji · Himeji Castle"` (see `blog-pipeline.md`).
+  Okayama has `castle`, `momotaro` (the avenue and the plaza) and `korakuen`, and four `rooms:`-scoped
+  `LANDMARKS` rows: `Okayama Castle` (the visitor stands at (20,9), in front of the keep and off the steps'
+  columns), `Korakuen garden` (anchored on the first crane: (27,31), the lawn beside it), `the Momotaro
+  statue` (8,20) and `the Bizen-ware stall` (16,18). "the pond" is a spot of Korakuen for the same reason
+  it is Koko-en's: the label's tile is found in `"x,y"` string order, and the garden pond's `"14,31"` sorts
+  before the river's corner `"5,24"` - keep the garden pond's first column between 10 and 43. Damian's 12
+  November placement was re-homed from Hakata's platform with
+  `blog_to_npc.py --rehome Damian 2025-11-12 "Okayama · Korakuen garden"`.
 - **Build order** (art tools with a Pillow python): `generate_kansai_art.py`, `make_prefabs.py`,
-  `generate_himeji.py`, `generate_osaka.py`, the maps in `../devhouse.world` (as `kansai.AT` places them:
-  the city's (0,0) is world cell (-258,31)) and `config cities.KansaiCity`, `sync_cities.py`,
-  `districts.py`, `config_to_tiled.py Osaka Himeji`, `play.js lint` for `Osaka`, `Himeji` and `KansaiCity`,
+  `generate_okayama.py`, `generate_himeji.py`, `generate_osaka.py`, the maps in `../devhouse.world` (as
+  `kansai.AT` places them: the city's (0,0) is world cell (-258,31), which is Okayama's corner now) and
+  `config cities.KansaiCity`, `sync_cities.py`, `districts.py`, `config_to_tiled.py Osaka Himeji Okayama`,
+  `play.js lint` for `Osaka`, `Himeji`, `Okayama` and `KansaiCity`,
   `make_worldmap.py`, `check_distinct.py` (its row is `Kansai`). A ticket that builds the next district
   adds its generator, adds the district to `BUILT` and to `cities.KansaiCity.rooms`, re-runs the neighbours'
   generators (their edge opens) and drops its stub from `japan-map.test.js`. In `devhouse.world` the five

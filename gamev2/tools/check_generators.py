@@ -73,6 +73,7 @@ GENERATORS = [
 ]
 GENERATORS += ['generate_kanazawa', 'generate_shirakawago', 'generate_toyama']     # Hokuriku (issue #68)
 GENERATORS += ['generate_himeji']            # Kansai: Himeji, stitched to Osaka (issue #255; generate_osaka is above)
+GENERATORS += ['generate_okayama']           # ...and Okayama, west of Himeji (issue #267)
 GENERATORS += ['generate_karuizawa']         # Karuizawa, and Tokyo's west gate into it (issue #260)
 GENERATORS += ['generate_shinjuku']          # Tokyo's street of high-rises (issue #94)
 # config `districts` from tools/districts.py: last, it reads where the landmarks of every room stand (issue #219)

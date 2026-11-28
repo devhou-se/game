@@ -88,7 +88,9 @@ day the trip starts. Days before the FIRST trip are not a lead-in (they show its
   EVERY player — new (#96, #59) or returning, after a reload or a Time Travel hop (#166) — starts where
   there is someone to talk to: the room with the most members that day, never counting the
   member they are playing as; a tie goes to a room outdoors before a station interior (a `config.stations` room: a platform is
-  always one hop nearer than its town), then to the room fewest doors / train rides from home
+  always one hop nearer than its town; a platform with more people on it than anywhere else still wins, as
+  Tokyo Station's does on 20 October 2025 - Hakata's did on 12 November 2025 for Bailey and Julia until
+  Damian's post of that day moved to Okayama, issue #267, and both start in Fukuoka town now), then to the room fewest doors / train rides from home
   (`Trips.hopsFrom`), then config order. In the home room they stand on the home cell when somebody is
   within `Trips.NEAR` (6) cells; otherwise on the cell nearest the group, at least two cells from
   everyone, that can be walked to from the room's arrivals (`Trips.standNear`: Floor tile, no collider,

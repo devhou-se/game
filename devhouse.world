@@ -57,6 +57,13 @@
       "height": 2560
     },
     {
+      "fileName": "gamev2/tiled/okayama.tmj",
+      "x": -16512,
+      "y": 4288,
+      "width": 2816,
+      "height": 2560
+    },
+    {
       "fileName": "gamev2/tiled/sapporo.tmj",
       "x": 256,
       "y": -3776,

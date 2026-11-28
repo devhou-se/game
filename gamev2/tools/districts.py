@@ -149,6 +149,18 @@ DISTRICTS = {
           'the walled strolling garden beside the castle: its pond and bridge, lanterns, pines and maples',
           (5, 26, 41, 35), stand=(22, 28)),
     ],
+    # Okayama: walked to from Himeji, the west end of KansaiCity (issue #267)
+    'Okayama': [
+        d('castle', 'Okayama Castle',
+          'the black "crow" castle on its stone wall above the river: the keep, the gravel terrace, pines and lanterns',
+          (13, 2, 40, 14), stand=(22, 10)),
+        d('momotaro', 'Momotaro Avenue',
+          'the avenue in from Himeji and the plaza it ends in: the Momotaro statue and a stall of Bizen ware',
+          (5, 15, 40, 23), stand=(14, 22)),
+        d('korakuen', 'Korakuen garden',
+          'the strolling garden on its island in the river, over the Tsukimi bridge: lawns, a pond, red-crowned cranes',
+          (7, 27, 38, 35), stand=(22, 28)),
+    ],
     # --- Tohoku -----------------------------------------------------------
     'Sendai': [
         d('station-front', 'Sendai Station front',

@@ -265,6 +265,10 @@ LANDMARKS = [
     # Kansai (issue #255): Himeji, walked to from Osaka
     ('himeji-keep_', 'Himeji Castle', (4, 8), {'rooms': ('Himeji',)}),   # the terrace in front of the keep's middle, where the camera looks up at it
     ('himeji-kokoen-gate_', 'Koko-en garden', (1, 5), {'rooms': ('Himeji',)}),   # the garden's path, inside the gate
+    ('okayama-keep_', 'Okayama Castle', (2, 7), {'rooms': ('Okayama',)}),         # (20, 9): in front of the keep, off the steps' columns
+    ('okayama-crane_', 'Korakuen garden', (-1, 1), {'rooms': ('Okayama',)}),      # (27, 31): the lawn beside the first crane
+    ('okayama-momotaro_', 'the Momotaro statue', (0, 3), {'rooms': ('Okayama',)}),    # (8, 20): the plaza in front of him
+    ('okayama-bizen-stall_', 'the Bizen-ware stall', (1, 3), {'rooms': ('Okayama',)}),  # (16, 18): the pavement at its counter
     ('karuizawa-fingerpost_', 'the road from Tokyo', (-1, 1), {'rooms': ('Karuizawa',)}),   # the verge beside its foot, clear of the road and the gate's landing cells
     ('karuizawa-falls_', 'Shiraito Falls', (1, 5), {'rooms': ('Karuizawa',)}),       # (13, 8): the bank, at the pool's south-west corner
     ('karuizawa-corn-stall_', 'the corn stall', (2, 2), {'rooms': ('Karuizawa',)}),  # (21, 8): at the east end of the counter

@@ -489,6 +489,25 @@ PREFABS = {
                                    colliders=[(0, 0), (0, 1)], doors=[]),
     'kansai-fingerpost':      dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'kansai-fingerpost_0_0')],
                                    colliders=[(0, 1)], doors=[]),
+    # Okayama (issue #267). The black keep: solid from the third row down;
+    # generate_okayama.py closes the two roof rows above as well.
+    'okayama-keep':           dict(w=8, h=7, sprites=[('Collidables', 0, 0, 'okayama-keep_0_0')],
+                                   colliders=[(x, y) for x in range(8) for y in range(2, 7)], doors=[]),
+    # the Tsukimi bridge and the rocks at the corners of Korakuen's island: flat,
+    # walked on or lying on the bank (Non-Collidables + depthBias)
+    'okayama-bridge':         dict(w=2, h=4, sprites=[('Non-Collidables', 0, 0, 'okayama-bridge_0_0')],
+                                   colliders=[], doors=[]),
+    'okayama-bank-rock':      dict(w=2, h=2, sprites=[('Non-Collidables', 0, 0, 'okayama-bank-rock_0_0')],
+                                   colliders=[], doors=[]),
+    'okayama-crane':          dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'okayama-crane_0_0')],
+                                   colliders=[(0, 1)], doors=[]),
+    'okayama-momotaro':       dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'okayama-momotaro_0_0')],
+                                   colliders=[(0, 2), (1, 2)], doors=[]),
+    'okayama-bizen-stall':    dict(w=3, h=3, sprites=[('Collidables', 0, 0, 'okayama-bizen-stall_0_0')],
+                                   colliders=[(x, y) for x in range(3) for y in (1, 2)], doors=[]),
+    # the fingerpost again, under its own key: where Himeji and Okayama meet it says another line
+    'okayama-fingerpost':     dict(w=1, h=2, sprites=[('Collidables', 0, 0, 'okayama-fingerpost_0_0')],
+                                   colliders=[(0, 1)], doors=[]),
     # ---- street accessories (issue #19; art from tools/extract_street.py) --------
     # One sprite on Collidables each, so it Y-sorts by its feet: the bottom cell
     # is solid, the pole / head above it is walk-behind. Maps place the green

@@ -114,6 +114,11 @@ const Interactions = {
         { kind: 'fountain', group: 'flavour', pattern: /^odori-fountain/, footprint: true, say: 'the fountain is off for the winter. the lights under the ice are not' },
         // Kansai (issue #255): the fingerposts either side of the seam where Osaka's avenue walks on to Himeji
         { kind: 'fingerpost', group: 'flavour', pattern: /^kansai-fingerpost/, footprint: true, say: 'west: himeji castle and koko-en. east: osaka, dotonbori' },
+        // ...the ones either side of the seam where it walks on from Himeji to Okayama (issue #267), and what stands in Okayama
+        { kind: 'fingerpost', group: 'flavour', pattern: /^okayama-fingerpost/, footprint: true, say: 'west: okayama, the black castle and korakuen. east: himeji castle, then osaka' },
+        { kind: 'momotaro', group: 'flavour', pattern: /^okayama-momotaro/, footprint: true, say: 'momotaro the peach boy, with his dog, monkey and pheasant. the ogres never stood a chance' },
+        { kind: 'bizen-stall', group: 'flavour', pattern: /^okayama-bizen-stall/, footprint: true, say: 'bizen ware: no glaze, two weeks in the kiln, no two alike. beer tastes better from it, they say' },
+        { kind: 'crane', group: 'flavour', pattern: /^okayama-crane/, footprint: true, say: 'a red-crowned crane. it looks at you, then at the pond, and chooses the pond' },
         // ...and the people folded double at the waist on its pavements: one line each
         // an underground arcade's other fronts and furniture
         { kind: 'bookshop', group: 'flavour', pattern: /^chika-shop-books/, footprint: true, say: 'this week\'s manga, tied shut with string. everyone is reading them standing up anyway' },

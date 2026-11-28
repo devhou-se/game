@@ -20,7 +20,8 @@ the room's HUD name is `Hakata Station`, the town room is `Fukuoka`).
 A town's station can serve places with none: `KanazawaStation` is the only stop in the stitched Hokuriku
 city (issue #68) - Shirakawa-go and Toyama are walked to from Kanazawa and are not on the board.
 `OsakaStation` is the same for the stitched Kansai city (issue #255): Himeji has no station and is not on
-the board - you ride to Osaka and walk west along Canal-side Avenue.
+the board - you ride to Osaka and walk west along Canal-side Avenue. Okayama (issue #267) has none either:
+it is the far end of the same avenue, through Himeji.
 
 `src/StationPicker.js` builds the board with the static `StationPicker.board(stations, fromKey, cameFrom)`:
 cities in `order`, each followed by its day trips, tagged `day trip` (not indented). The station you are at

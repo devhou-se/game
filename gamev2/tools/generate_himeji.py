@@ -4,8 +4,9 @@
 devhouse 2's Damian was here on 13 November 2025 (post 754: the castle, then
 Koko-en beside it). It is a small district of the stitched `KansaiCity`
 (tools/kansai.py has the layout) with NO station: you walk in from Osaka along
-Canal-side Avenue (east edge, rows 18-22). Its west edge is closed until
-Okayama is built (`ks.is_open('Himeji', 'w')`).
+Canal-side Avenue (east edge, rows 18-22), and on out of its west edge along
+the same avenue to Okayama (issue #267; `ks.is_open('Himeji', 'w')`, and the
+edge is woods wherever that is False).
 
   north   HIMEJI CASTLE on its hill: the white keep on the district's top row,
           a corner turret, a gravel terrace with pines and stone lanterns. Two
@@ -15,8 +16,8 @@ Okayama is built (`ks.is_open('Himeji', 'w')`).
   moat    Osaka's canal runs on west as the castle moat (rows 14-16) and ends
           at a bank; a timber bridge crosses it to the gate. It is declared in
           `waterways`, so the canal's boats sail it
-  avenue  Canal-side Avenue carries on from Osaka and ends at the woods; a
-          fingerpost stands by the seam
+  avenue  Canal-side Avenue carries on from Osaka and out west to Okayama; a
+          fingerpost stands by each seam
   south   KOKO-EN: the walled strolling garden, through its roofed gate - a
           gravel loop round a pond with a bridge, lanterns, pines and maples
 
@@ -44,6 +45,7 @@ k = ks.Kit(b)
 rng = random.Random(2551)
 
 AVE0, AVE1 = ks.H_AVENUE[0], ks.H_AVENUE[-1]      # Canal-side Avenue: rows 18-22
+WEST = ks.is_open('Himeji', 'w')                  # the avenue runs on to Okayama
 MOAT0, MOAT1 = ks.H_MOAT                          # the moat: rows 14-16
 BRIDGE = (32, MOAT0)                              # 2x4: the deck's columns 32-33, landing on row 17
 GATE = (30, 10)                                   # 6x4: the gateway is columns 32-33
@@ -58,10 +60,11 @@ GARDEN = ['sendai-maple', 'sendai-pine', 'sendai-maple']
 b.fill('grass-autotile')
 
 # ---- Canal-side Avenue, in from Osaka ------------------------------------------------
-b.autotile('flat-grey-brick-autotile', rect(5, AVE0, W - 1, AVE1))
-b.put('Floor', W - 1, AVE0, 'flat-grey-brick-autotile_edge-n')    # the pavement runs on into Osaka:
-b.put('Floor', W - 1, AVE1, 'flat-grey-brick-autotile_edge-s')    # no rounded corner at the seam
-k.road_h(6, W - 1, AVE0 + 1, cap_w=True)
+b.autotile('flat-grey-brick-autotile', rect(0 if WEST else 5, AVE0, W - 1, AVE1))
+for x in (W - 1,) + ((0,) if WEST else ()):
+    b.put('Floor', x, AVE0, 'flat-grey-brick-autotile_edge-n')    # the pavement runs on into Osaka (and
+    b.put('Floor', x, AVE1, 'flat-grey-brick-autotile_edge-s')    # Okayama): no rounded corner at a seam
+k.road_h(0 if WEST else 6, W - 1, AVE0 + 1, cap_w=not WEST)
 
 # ---- the ground of the castle hill and of the garden ---------------------------------
 # Laid before the walls and the paving, so that what shows under and between the
@@ -119,10 +122,15 @@ for x, y in ((12, 29), (34, 32), (19, 26), (24, 26)):             # feet: two of
 # ---- the fingerpost by the seam ----------------------------------------------------------
 b.stamp('kansai-fingerpost', 39, AVE1)                            # feet on (39, 23), beside the pavement
 
-# ---- closed all round, but for the avenue into Osaka ---------------------------------------
-if not ks.is_open('Himeji', 'w'):                                 # until Okayama is built
-    k.woods(0, 0, 7, 7, AUTUMN, rng)                              # behind and beside the keep
-    k.woods(0, 8, 5, AVE0 - 1, AUTUMN, rng)                       # the hill's west flank, the moat's bank
+# ---- closed all round, but for the avenue into Osaka and on to Okayama ---------------------
+k.woods(0, 0, 7, 7, AUTUMN, rng)                                  # behind and beside the keep
+k.woods(0, 8, 5, AVE0 - 1, AUTUMN, rng)                           # the hill's west flank, the moat's bank
+if WEST:
+    b.stamp('okayama-fingerpost', 4, AVE1)                        # feet on (4, 23): the one for the west seam
+    for x in (0, 1):
+        b.stamp('shrub-small', x, AVE1 + 1)                       # the verge south of the avenue, at the seam
+    k.woods(0, AVE1 + 2, 4, H - 1, AUTUMN, rng)                   # west of the garden
+else:
     k.woods(0, AVE0, 4, H - 1, AUTUMN, rng)                       # the end of the avenue, west of the garden
 k.woods(18, 0, W - 1, 1, AUTUMN, rng)                             # behind the terrace
 k.woods(W - 2, 2, W - 1, 13, AUTUMN, rng)                         # east of it

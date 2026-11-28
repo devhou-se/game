@@ -110,8 +110,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         // the tie rule is only the tie rule: hops still decide between two towns ...
         assert.strictEqual(room('2025-11-16'), 'Osaka');
         assert.strictEqual(room('2025-11-18'), 'Tokyo');
+        // ... and on the day Damian's post moved off Hakata's platform to Korakuen (#267), which had made it a
+        // majority there, whoever is played starts in town with the others
+        assert.strictEqual(room('2025-11-12', 'bailey'), 'Fukuoka');
+        assert.strictEqual(room('2025-11-12', 'julia'), 'Fukuoka');
         // ... and a platform with more people on it than anywhere else is still where you start
-        assert.strictEqual(room('2025-11-12', 'bailey'), 'FukuokaStation');
         assert.strictEqual(room('2025-10-20'), 'TokyoStation');
     });
 };
