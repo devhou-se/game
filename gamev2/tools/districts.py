@@ -92,7 +92,8 @@ DISTRICTS = {
     ],
     'Karuizawa': [
         d('larch-road', 'Larch road',
-          "the packed-dirt road in from Tokyo's west gate, through the larch woods to a quiet clearing",
+          "the packed-dirt road in from Tokyo's west gate, through golden larch woods to Shiraito Falls, "
+          "where the bus stops and a stall grills corn",
           (10, 5, 46, 36), stand=(30, 33)),
     ],
     # --- Hokkaido ---------------------------------------------------------

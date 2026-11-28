@@ -2,6 +2,7 @@
 // Tokyo's west gate. tools/generate_karuizawa.py builds the room and reopens the gate e3cb4d0d fenced.
 // Part 2 (#261) is Kyu-Karuizawa Ginza: three shopfronts where the road in turns north, each with a shop
 // floor behind its door (tools/generate_houses.py --shops Karuizawa).
+// #262 is part 3: Shiraito Falls over its pool, the bus stop, the corn stall and the larch woods.
 module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWith }) => {
     const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
     const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
@@ -13,6 +14,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
     const plain = (v) => JSON.parse(JSON.stringify(v === undefined ? null : v));   // out of the vm's realm
     const offset = Object.fromEntries(cfg.cities.TokyoCity.rooms.map((m) => [m.room, m]));
     const seam = (x, y, targetRoom, targetX, targetY) => ({ gridX: x, gridY: y, targetRoom, targetX, targetY, hidden: true });
+    const SPOTS = ['Shiraito Falls', 'the corn stall', 'the road from Tokyo'];      // what the blog pipeline can name here
 
     test('Karuizawa is the fifth district of TokyoCity, west of Tokyo, and a small place with a dot of its own on the Map (#260)', () => {
         assert.deepStrictEqual(cfg.cities.TokyoCity.rooms.map((m) => m.room), ['Tokyo', 'Market', 'Palace', 'Park', KEY, 'Shinjuku']);
@@ -151,11 +153,145 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
             assert.ok(/Tokyo/.test(bump.interaction.say) && /Karuizawa/.test(bump.interaction.say) && bump.interaction.say.length <= 100, bump.interaction.say);
             assert.deepStrictEqual([world.player.gridX, world.player.gridY], [at.x, at.y], 'the bump does not move you');
         }
-        // no other town's sign is borrowed, and the blog pipeline has a named spot to stand somebody at
-        assert.deepStrictEqual(tilesOf(KEY).filter(([k]) => /sign|bus-stop/.test(k)), []);
+        // no other town's sign is borrowed (the bus stop at the head of the road is the one eleven rooms share, #262),
+        // and the blog pipeline has a named spot to stand somebody at
+        assert.deepStrictEqual(tilesOf(KEY).filter(([k]) => /sign|bus-stop/.test(k)), [['bus-stop_0_0', '18,8', 'Collidables']]);
         const spots = fs.readFileSync(path.join(GV2, 'tools', 'blog_to_npc.py'), 'utf8');
         assert.ok(spots.includes("('karuizawa-fingerpost_', 'the road from Tokyo', (-1, 1), {'rooms': ('Karuizawa',)})"));
-        assert.deepStrictEqual(cfg.districts[KEY].map((d) => [d.key, d.spots]), [['larch-road', ['the road from Tokyo']]]);
+        assert.deepStrictEqual(cfg.districts[KEY].map((d) => [d.key, d.spots]), [['larch-road', SPOTS]]);
+    });
+
+    // ---- #262: the head of the road. Cells are the room's own -------------------------------------------
+    const FALLS = { x0: 12, y0: 3, x1: 19, y1: 5 }, POOL = { x0: 13, y0: 5, x1: 18, y1: 7 }, STALL = { x0: 19, y0: 6, x1: 21, y1: 7 };
+    const cells = ({ x0, y0, x1, y1 }) => { const out = []; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) out.push([x, y]); return out; };
+    const near = (x, y) => [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]].filter(([nx, ny]) => nx >= 0 && ny >= 0 && nx < W && ny < H);
+    // every cell that can be walked to from the gate, as the gate test counts them
+    const onFoot = () => {
+        const todo = cfg.rooms[HOST].transporters.filter((t) => t.targetRoom === KEY).map((t) => [t.targetX, t.targetY]);   // where the gate lands you
+        const seen = new Set(todo.map((c) => c.join()));
+        while (todo.length) {
+            for (const [nx, ny] of near(...todo.pop())) {
+                if (solid(KEY, nx, ny) || seen.has(`${nx},${ny}`)) continue;
+                seen.add(`${nx},${ny}`); todo.push([nx, ny]);
+            }
+        }
+        return seen;
+    };
+
+    test('Karuizawa: Shiraito Falls stands over its pool at the head of the road, with the corn stall and the bus stop beside it (#262)', () => {
+        const one = (key) => tilesOf(KEY).filter(([k]) => k === key).map(([, xy, l]) => [xy, l]);
+        assert.deepStrictEqual(one('karuizawa-falls_0_0'), [['12,3', 'Collidables']]);
+        assert.deepStrictEqual(one('karuizawa-corn-stall_0_0'), [['19,6', 'Collidables']]);
+        assert.deepStrictEqual(one('bus-stop_0_0'), [['18,8', 'Collidables']]);
+        const meta = (key, w, h) => assert.deepStrictEqual(cfg.spriteMetadata[key], { anchorX: 0.5 / w, anchorY: 0.5 / h, frameCount: 1 }, `${key} is not ${w}x${h} cells`);
+        meta('karuizawa-falls_0_0', 8, 3); meta('karuizawa-corn-stall_0_0', 3, 2);
+        meta('karuizawa-larch_0_0', 2, 3); meta('karuizawa-larch_0_1', 2, 4);
+        for (const key of ['karuizawa-falls_0_0', 'karuizawa-corn-stall_0_0', 'karuizawa-larch_0_0', 'karuizawa-larch_0_1']) {
+            assert.ok(fs.existsSync(path.join(GV2, 'assets', 'sprites', `${key}.png`)), `${key}.png is not drawn`);
+            assert.ok(cfg.tileNames[key], `${key} has no name in the editor`);
+        }
+        // the pool: the shared pond, three rows, the top one under the falls. No north rim: its rocks would show
+        // through the falling water, and a corner-nw tile would add the generic `the pond` spot beside the falls
+        const water = layer(KEY, 'Water');
+        assert.deepStrictEqual(Object.keys(water).sort(), cells(POOL).map((c) => c.join()).sort());
+        for (const [xy, t] of Object.entries(water)) {
+            assert.ok(/^pond-autotile_/.test(name(t)) && !/corner-n|edge-n/.test(name(t)), `${xy}: ${name(t)}`);
+        }
+        // nobody walks into the rock, the water, the stall or the stop, or round behind the stall
+        for (const [x, y] of [...cells(FALLS), ...cells(POOL), ...cells(STALL), [18, 8], [20, 5], [21, 5]]) {
+            assert.ok(solid(KEY, x, y), `${x},${y} can be walked into`);
+        }
+        // the road ends in the bay where the bus turns, under the stop
+        for (const [x, y] of [[11, 9], [20, 10], [18, 9]]) {
+            assert.ok(name(layer(KEY, 'Floor')[`${x},${y}`]).startsWith('dirt-outside-autotile_') && !solid(KEY, x, y), `no bay at ${x},${y}`);
+        }
+    });
+
+    test('Karuizawa: the falls, the corn stall and the bus stop are reached on foot from the gate (#262)', () => {
+        const seen = onFoot();
+        const reached = (what, list) => { for (const [x, y] of list) assert.ok(seen.has(`${x},${y}`), `${what}: ${x},${y} cannot be walked to from the gate`); };
+        reached('beside the falls\' west arm', [[12, 6], [11, 5]]);
+        reached('the pool\'s bank', [[13, 8], [14, 8], [15, 8], [16, 8], [17, 8]]);
+        reached('the stall\'s counter', [[19, 8], [20, 8], [21, 8]]);
+        reached('beside and below the bus stop', [[17, 8], [18, 9]]);
+        reached('the blog spots', [[13, 8], [21, 8]]);
+        // each of the three has a cell to stand on beside it
+        for (const [what, box] of [['falls', FALLS], ['stall', STALL], ['bus stop', { x0: 18, y0: 8, x1: 18, y1: 8 }]]) {
+            assert.ok(cells(box).some(([x, y]) => near(x, y).some((c) => seen.has(c.join()))), `nobody can stand beside the ${what}`);
+        }
+        // ...and the walk is a real one, stitched and not: Tokyo's side of the gate to the falls, the stall, the stop
+        for (const stitch of [true, false]) {
+            const { world } = worldWith(stitch);
+            const rm = world.roomManager;
+            world.enter(KEY, W - 4, 34);
+            for (const [x, y] of [[12, 6], [20, 8], [18, 9]]) {
+                const to = rm.resolve(KEY, x, y);
+                const route = world.path(to.x, to.y);
+                assert.ok(route, `${stitch ? 'stitched' : '?stitch=0'}: no way on foot to ${x},${y}`);
+                for (const dir of route) assert.ok(world.step(dir).moved);
+                assert.deepStrictEqual([world.here().room, world.here().x, world.here().y], [KEY, x, y]);
+            }
+        }
+    });
+
+    test('Karuizawa: bumping the falls\' rock arms and the stall says a line, bumping the pool fishes, and no bump does both (#262)', () => {
+        const bumps = [
+            [12, 6, 'n', 'waterfall', 'flavour'], [11, 5, 'e', 'waterfall', 'flavour'],      // the west arm, from below and from beside
+            [15, 8, 'n', 'pond', 'pond'], [12, 6, 'e', 'pond', 'pond'],                      // the pool, from its bank and its west side
+            [20, 8, 'n', 'corn-stall', 'flavour'],                                           // the stall's counter
+            [18, 9, 'n', null, null],                                                        // the bus stop says nothing, as in every town
+        ];
+        for (const stitch of [true, false]) {
+            const { world } = worldWith(stitch);
+            for (const [x, y, dir, kind, group] of bumps) {
+                world.enter(KEY, x, y);
+                const bump = world.step(dir);
+                const tag = `${stitch ? 'stitched' : '?stitch=0'} ${x},${y} ${dir}`;
+                assert.strictEqual(bump.moved, false, tag);
+                assert.deepStrictEqual(plain(bump.interaction ? [bump.interaction.kind, bump.interaction.group] : [null, null]), [kind, group], tag);
+                if (group === 'flavour') assert.ok(bump.interaction.say && bump.interaction.say.length <= 100, bump.interaction.say);
+            }
+        }
+        // never both: a cell that is pool and falls at once (the pool's top row) has no open cell beside it
+        const water = layer(KEY, 'Water');
+        const both = cells(FALLS).filter(([x, y]) => `${x},${y}` in water);
+        assert.strictEqual(both.length, 6);
+        for (const [x, y] of both) assert.deepStrictEqual(near(x, y).filter(([nx, ny]) => !solid(KEY, nx, ny)), [], `${x},${y} is pool and falls, and can be bumped`);
+    });
+
+    test('Karuizawa: the woods are its own larches, and nothing in the room is one other town\'s (#262)', () => {
+        const tiles = tilesOf(KEY);
+        assert.deepStrictEqual(tiles.filter(([k]) => k.startsWith('tree-')), [], 'Tokyo\'s tree is still in the wood');
+        const borrowed = tiles.filter(([k, , l]) => l === 'Collidables' && !/^karuizawa-/.test(k) && !['shrub-small-circle_0_0', 'bus-stop_0_0'].includes(k));
+        assert.deepStrictEqual(borrowed, []);
+        const count = (key) => tiles.filter(([k]) => k === key).length;
+        assert.ok(count('karuizawa-larch_0_0') > 50 && count('karuizawa-larch_0_1') > 20, 'both larches make the wood');
+        // the kit that is not its own is common to many rooms, not one town's
+        for (const key of ['bus-stop_0_0', 'shrub-small-circle_0_0']) {
+            const rooms = Object.keys(cfg.rooms).filter((r) => r !== KEY && tilesOf(r).some(([k]) => k === key));
+            assert.ok(rooms.length >= 5, `${key} is in only ${rooms}`);
+        }
+        // the larches are stamped: their prefabs are built, and the wood kit knows how tall each stands
+        const prefabs = fs.readFileSync(path.join(GV2, 'tools', 'make_prefabs.py'), 'utf8');
+        for (const p of ['karuizawa-larch', 'karuizawa-larch-tall', 'karuizawa-falls', 'karuizawa-corn-stall']) {
+            assert.ok(prefabs.includes(`'${p}':`) && fs.existsSync(path.join(GV2, 'tiled', 'prefabs', `${p}.tmj`)), `no prefab ${p}`);
+        }
+        assert.ok(/'karuizawa-larch': 3, 'karuizawa-larch-tall': 4/.test(fs.readFileSync(path.join(GV2, 'tools', 'hokuriku.py'), 'utf8')));
+    });
+
+    test('Karuizawa: the blog pipeline can stand somebody at Shiraito Falls and at the corn stall (#262)', () => {
+        const py = fs.readFileSync(path.join(GV2, 'tools', 'blog_to_npc.py'), 'utf8');
+        assert.ok(py.includes("('karuizawa-falls_', 'Shiraito Falls', (1, 5), {'rooms': ('Karuizawa',)})"));
+        assert.ok(py.includes("('karuizawa-corn-stall_', 'the corn stall', (2, 2), {'rooms': ('Karuizawa',)})"));
+        assert.deepStrictEqual(cfg.districts[KEY].map((d) => [d.key, d.spots]), [['larch-road', SPOTS]]);
+        assert.ok(/Shiraito Falls/.test(cfg.districts[KEY][0].description) && /corn/.test(cfg.districts[KEY][0].description));
+        // where those rows put them: the tile cell plus the offset, an open cell inside the district that is not the road
+        const seen = onFoot();
+        const [bx0, by0, bx1, by1] = cfg.districts[KEY][0].bounds;
+        for (const [x, y] of [[FALLS.x0 + 1, FALLS.y0 + 5], [STALL.x0 + 2, STALL.y0 + 2]]) {
+            assert.ok(seen.has(`${x},${y}`) && x >= bx0 && x <= bx1 && y >= by0 && y <= by1, `${x},${y}`);
+            assert.ok(name(layer(KEY, 'Floor')[`${x},${y}`]).startsWith('grass'), `${x},${y} is on the road`);
+        }
     });
 
     test('Kyu-Karuizawa Ginza: a bakery, a souvenir shop and a lounge you can enter, each with its list (#261)', () => {

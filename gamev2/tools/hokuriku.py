@@ -74,7 +74,8 @@ class Kit:
         self.b.stamp(f'house-{colour}', x, y)
         self.solid_rect(x, y, x + 2, y + 2)
 
-    TALL = {'sendai-pine': 3, 'sendai-cedar': 4, 'sendai-maple': 3, 'hokuriku-ginkgo': 3, 'tree-green': 3}
+    TALL = {'sendai-pine': 3, 'sendai-cedar': 4, 'sendai-maple': 3, 'hokuriku-ginkgo': 3, 'tree-green': 3,
+            'karuizawa-larch': 3, 'karuizawa-larch-tall': 4}
 
     def trees(self, name, cells):
         """Stamp `name` (2 wide) with its trunk on each (x, y)."""

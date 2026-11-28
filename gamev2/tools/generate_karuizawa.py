@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """generate_karuizawa.py — "Karuizawa", the mountain resort out of Tokyo's west
-gate (issues #68, #256; #260 is part 1: the room and the gate; #261 part 2:
-Kyu-Karuizawa Ginza).
+gate (issues #68, #256; #260 built the room and the gate, #261 the Ginza, #262 the falls, the
+bus stop, the corn stall and the larches).
 
 devhouse 2's Damian and Julia were here on 1-2 November 2025. It is the fifth
 district of the stitched `TokyoCity`, west of the `Tokyo` room at world cell
@@ -24,9 +24,26 @@ Tokyo's west gate, along the old road out of Edo.
           tools/generate_houses.py --shops Karuizawa opens the door of each
           (roomgen.SHOP_DOORS) into a ShopKaruizawa<n> shop floor, and
           save_config keeps those doors through a rebuild here
-  head    an open clearing, (10..21, 5..11), where the falls will stand
-  woods   everywhere else, solid throughout. They are `tree-green`, Tokyo's
-          own tree, until a later part draws `karuizawa-larch`
+  head    what Damian and Julia came for, at the head of the road:
+          falls  Shiraito Falls, one 8x3 sprite set into the north wood at
+                 (12..19, 3..5), solid all over. The two end cells of its
+                 bottom row, (12, 5) and (19, 5), are rock arms on the bank:
+                 bumping one says its line (Interactions.js, `waterfall`)
+          pool   the shared pond-autotile on the Water layer, (13..18, 5..7);
+                 its top row lies under the falls. It has NO north rim (the
+                 west and east edges and the centre where a rim would be):
+                 the rim's white rocks would show through the falling water,
+                 and with no `pond-autotile_corner-nw` tile the pipeline's
+                 generic `the pond` spot is not added beside `Shiraito Falls`.
+                 Bumping it fishes; no cell that is both pool and falls can
+                 be reached, so no bump does both
+          bay    packed dirt, (11..20, 9..10), where the bus turns round
+          stop   the shared `bus-stop` at (18, 8), on the bank above the bay
+          stall  the corn stall, 3x2 at (19..21, 6..7): a prop with a line
+                 (`corn-stall`), not a shop. Its counter is row 7, bumped
+                 from row 8
+  woods   everywhere else, solid throughout: `karuizawa-larch`, a 2x3 and a
+          2x4 sprite of one family, so the wood has a skyline
 
 Every seam cell carries a hidden transporter to the cell three in from the
 neighbour's edge, which is what `?stitch=0` (and `play.js --stitch=0`) plays;
@@ -47,6 +64,7 @@ Run from gamev2/:  python3 tools/generate_karuizawa.py
 
 Build order:
     python3 tools/generate_karuizawa_art.py
+    python3 tools/make_prefabs.py          # the larches, the falls and the stall are stamped
     python3 tools/generate_karuizawa.py
     python3 tools/generate_houses.py --shops Karuizawa
     python3 tools/districts.py
@@ -66,8 +84,13 @@ HOST_GATE = (41, 42)              # Tokyo: the same rows, at x = 0
 IN = 3                            # a seam transporter lands this many cells inside the neighbour
 BRICK = 'flat-grey-brick-autotile_center'
 POST = (44, 33)                   # the fingerpost's foot, on the verge north of the road
-LARCH = ['tree-green']            # a later part: karuizawa-larch
+LARCH = ['karuizawa-larch', 'karuizawa-larch', 'karuizawa-larch-tall']
 RX0, RX1 = 14, 15                 # the columns of the road north
+FALLS = (12, 3)                   # the falls' tile cell: columns 12..19, rows 3..5
+POOL = (13, 5, 18, 7)             # its pool; row 5 lies under the falls
+BAY = (11, 9, 20, 10)             # where the bus turns, at the head of the road
+STALL = (19, 6)                   # the corn stall's tile cell: its counter is row 7, bumped from row 8
+STOP = (18, 8)                    # the bus stop
 GINZA_Y = 29                      # Kyu-Karuizawa Ginza: the top row of its fronts, each 3x4, and their west columns
 GINZA = [('karuizawa-shop-bakery_0_0', 17), ('karuizawa-shop-jam_0_0', 21), ('karuizawa-shop-lounge_0_0', 25)]
 
@@ -80,31 +103,44 @@ rng = random.Random(260)
 
 b.fill('grass-autotile')
 
-# ---- the road: in from the gate, west, then north to the clearing ---------------------
+# ---- the road: in from the gate, west, then north to the bay where the bus turns ------
 # (and one row wider along the Ginza, up to its doors)
-b.autotile('dirt-outside-autotile', rect(RX0, GATE[0], W - 2, GATE[1]) + rect(RX0, 10, RX1, GATE[0] - 1)
-           + rect(RX1 + 1, GATE[0] - 1, GINZA[-1][1] + 3, GATE[0] - 1))
+b.autotile('dirt-outside-autotile', sorted(set(rect(RX0, GATE[0], W - 2, GATE[1]) + rect(RX0, 10, RX1, GATE[0] - 1)
+                                               + rect(*BAY)
+                                               + rect(RX1 + 1, GATE[0] - 1, GINZA[-1][1] + 3, GATE[0] - 1))))
 b.put('Floor', W - 2, GATE[0], 'dirt-outside-autotile_edge-n')    # open to the brick, not a closed end
 b.put('Floor', W - 2, GATE[1], 'dirt-outside-autotile_edge-s')
 for y in GATE:
     b.put('Floor', W - 1, y, BRICK)                               # the same brick as Tokyo's apron
 b.stand('karuizawa-fingerpost_0_0', *POST)
 
+# ---- the head of the road: Shiraito Falls over its pool, the corn stall, the bus stop --
+b.stamp('karuizawa-falls', *FALLS)
+x0, y0, x1, y1 = POOL
+for x, y in rect(*POOL):                                          # no north rim: see the docstring
+    we = 'w' if x == x0 else 'e' if x == x1 else ''
+    role = (f'corner-s{we}' if we else 'edge-s') if y == y1 else (f'edge-{we}' if we else 'center')
+    b.put('Water', x, y, f'pond-autotile_{role}')
+    b.solid(x, y)
+b.stamp('karuizawa-corn-stall', *STALL)
+b.stamp('bus-stop', *STOP)
+
 # ---- Kyu-Karuizawa Ginza: three shopfronts on the north side of the road in ------------
 # Sealed here, before the woods are scattered round them; generate_houses.py --shops opens the doors.
 for key, x in GINZA:
     b.prop(key, x, GINZA_Y, 3, 4)
 
-# ---- the woods: solid, everywhere but the road, its verges and the clearing ------------
+# ---- the woods: solid, everywhere but the road, its verges and the head ----------------
 k.woods(0, 0, W - 1, 4, LARCH, rng)                               # north
 k.woods(0, 5, 9, H - 1, LARCH, rng)                               # west
+k.woods(20, 5, 21, 5, LARCH, rng, over=2)                         # the two cells east of the falls' arm, behind the stall
 k.woods(22, 5, W - 1, GATE[0] - 2, LARCH, rng)                    # east, north of the road in
 k.woods(10, 12, RX0 - 2, H - 1, LARCH, rng)                       # west of the road north
-k.woods(RX1 + 2, 12, 21, GATE[0] - 2, LARCH, rng)                 # east of it, under the clearing
+k.woods(RX1 + 2, 12, 21, GATE[0] - 2, LARCH, rng)                 # east of it, under the head of the road
 k.woods(RX0 - 1, GATE[1] + 2, W - 1, H - 1, LARCH, rng)           # south
 k.solid_rect(W - 1, GATE[0] - 1, W - 1, GATE[0] - 1)              # the verge cells on the edge: only the gate is open
 k.solid_rect(W - 1, GATE[1] + 1, W - 1, GATE[1] + 1)
-k.plants(rng, 40, 10, 5, 21, 11)                                  # the clearing
+k.plants(rng, 40, 10, 5, 21, 11)                                  # the open ground at the head
 k.plants(rng, 30, RX0 - 1, GATE[0] - 1, W - 2, GATE[1] + 1)       # the verges
 
 # NPCs are placed here by the blog pipeline (tools/blog_to_npc.py) - keep them.
@@ -139,4 +175,5 @@ for y, hy in zip(GATE, HOST_GATE):
 rg.save_config(cfg)
 print(f'Karuizawa {W}x{H}; gate on rows {GATE} of its east edge (Tokyo x=0, rows {HOST_GATE}), '
       f'fingerpost at {POST}, road north on columns {(RX0, RX1)}, '
-      f'Ginza fronts at columns {[x for _, x in GINZA]} of row {GINZA_Y}')
+      f'Ginza fronts at columns {[x for _, x in GINZA]} of row {GINZA_Y}; Shiraito Falls at {FALLS} over its pool '
+      f'{POOL}, corn stall at {STALL}, bus stop at {STOP}')

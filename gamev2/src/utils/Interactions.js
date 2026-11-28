@@ -103,6 +103,9 @@ const Interactions = {
         { kind: 'sea-lions', group: 'flavour', pattern: /^sfb-sea-lions/, footprint: true, say: 'the sea lions bark at you. one of them is eating somebody\'s chips' },
         // the fingerpost inside Karuizawa's gate, out of Tokyo's west gate (issue #260)
         { kind: 'fingerpost', group: 'flavour', pattern: /^karuizawa-fingerpost/, footprint: true, say: 'east, through the gate: Tokyo. west, up the road through the larches: Karuizawa' },
+        // ...and at the head of its road (issue #262): Shiraito Falls (its rock arms, either side of the pool, which fishes) and the corn stall
+        { kind: 'waterfall', group: 'flavour', pattern: /^karuizawa-falls/, footprint: true, say: 'hundreds of white threads slip out of the rock itself. no river above: the mountain just leaks' },
+        { kind: 'corn-stall', group: 'flavour', pattern: /^karuizawa-corn-stall/, footprint: true, say: 'corn off the charcoal, brushed with soy sauce. next bus in forty minutes, which is about right' },
         // Odori Park in the snow festival (issue #219): the corn tent, the sculptures, the frozen fountain
         { kind: 'corn', group: 'flavour', pattern: /^snowfest-stall-corn/, footprint: true, say: 'grilled corn, butter and soy sauce. the queue starts somewhere behind you' },
         { kind: 'snow-castle', group: 'flavour', pattern: /^snow-sculpture-castle/, footprint: true, say: 'a castle keep carved out of packed snow. the board says please do not climb it' },

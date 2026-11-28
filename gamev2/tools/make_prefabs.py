@@ -432,6 +432,16 @@ PREFABS = {
                                    colliders=[], doors=[]),
     'hokuriku-ginkgo':        dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'hokuriku-ginkgo_0_0')],
                                    colliders=[(0, 2), (1, 2)], doors=[]),
+    # Karuizawa (issue #262): its larches, Shiraito Falls (solid all over: the two end cells of its
+    # bottom row are the rock arms you bump) and the corn stall by the bus stop
+    'karuizawa-larch':        dict(w=2, h=3, sprites=[('Collidables', 0, 0, 'karuizawa-larch_0_0')],
+                                   colliders=[(0, 2), (1, 2)], doors=[]),
+    'karuizawa-larch-tall':   dict(w=2, h=4, sprites=[('Collidables', 0, 0, 'karuizawa-larch_0_1')],
+                                   colliders=[(0, 3), (1, 3)], doors=[]),
+    'karuizawa-falls':        dict(w=8, h=3, sprites=[('Collidables', 0, 0, 'karuizawa-falls_0_0')],
+                                   colliders=[(x, y) for y in range(3) for x in range(8)], doors=[]),
+    'karuizawa-corn-stall':   dict(w=3, h=2, sprites=[('Collidables', 0, 0, 'karuizawa-corn-stall_0_0')],
+                                   colliders=[(x, y) for y in range(2) for x in range(3)], doors=[]),
     # gassho farmhouses: the ground floor and the gable above it are solid; the
     # generators close the roof's top rows too, so nobody stands behind the thatch
     'shirakawa-gassho':       dict(w=5, h=5, sprites=[('Collidables', 0, 0, 'shirakawa-gassho_0_0')],

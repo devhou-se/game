@@ -338,7 +338,7 @@ west along Canal-side Avenue. Devhouse 2's Damian was there on 13 November 2025 
   south to (-330,90) to stay clear and stay the westernmost map. `kansai.test.js` checks that nothing else
   stands in any of the five.
 
-### Karuizawa: out of Tokyo's west gate, on foot (issues #68, #256; parts 1 and 2 are #260 and #261)
+### Karuizawa: out of Tokyo's west gate, on foot (issues #68, #256; parts #260, #261, #262)
 
 The mountain resort devhouse 2's Damian and Julia went to on 1-2 November 2025. A small place with NO
 station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth district of `TokyoCity`**, a
@@ -348,13 +348,10 @@ station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth
 
 - **What is there now** (part 1: the room and the gate; part 2: the Ginza; room cells): the gate on the east edge, `(47, 34..35)`,
   on Tokyo's own brick; a two-cell packed-dirt road (`dirt-outside-autotile`) west from it along rows 34-35 to
-  column 14, then north up columns 14-15 to row 10; an open clearing at the head of it, `(10..21, 5..11)`;
-  solid woods everywhere else, so the gate cells are the only open cells on the room's edge. The woods are
-  `tree-green`, Tokyo's tree, until the next part draws the larches. The **fingerpost**
+  column 14, then north up columns 14-15 to row 10 (the bay at its head is below). The **fingerpost**
   (`karuizawa-fingerpost_0_0`, 1x2) stands on the verge inside the gate, foot at `(44, 33)`, beside the cell
   the gate lands you on with `?stitch=0`; bumping it reads which way is Tokyo and which Karuizawa
-  (`Interactions.js`, kind `fingerpost`). The falls, the larches and the corn stall are the later parts of
-  #256: each adds its sprites to the art tool's `SPRITES` and its pieces to the generator.
+  (`Interactions.js`, kind `fingerpost`).
 - **Kyu-Karuizawa Ginza** (part 2, issue #261): three shopfronts side by side on the north side of the road
   in, where it turns north, each 3x4 with its top-left on row 29 and its door in the middle of its bottom
   row. Every shopfront in the game has its door in its bottom row, so they face south onto the road in, not
@@ -374,6 +371,25 @@ station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth
   cells in front of them, `(18 | 22 | 26, 32..33)`, free of NPCs and blog spots: somebody standing there
   seals that shop on the next `generate_houses.py` run (`tools/tests/karuizawa.test.js` holds it). Moving
   the Ginza is `GINZA_Y`, the three columns of `GINZA` and the widened-dirt rectangle in the generator.
+- **The head of the road** (#262), what the two of them came for:
+  - **Shiraito Falls**: one static 8x3 sprite, `karuizawa-falls_0_0`, at `(12..19, 3..5)`, set into the north
+    wood and solid all over. The two end cells of its bottom row, `(12, 5)` and `(19, 5)`, are rock arms on
+    the bank: bump one (from `(12, 6)` or `(11, 5)`) for its line (kind `waterfall`).
+  - **The pool**: the shared `pond-autotile` on the Water layer, `(13..18, 5..7)`, its top row under the
+    falls. It has **no north rim on purpose** (`edge-w` / `center` / `edge-e` where a rim would be): the
+    rim's white rocks would show through the falling water, and with no `pond-autotile_corner-nw` tile the
+    pipeline's generic `the pond` spot is not added beside `Shiraito Falls`. Bumping it fishes, as any pond
+    does. No cell that is both pool and falls has an open cell beside it, so no bump both fishes and talks.
+  - **The bay**: packed dirt, `(11..20, 9..10)`, where the bus turns round; the shared **bus stop**
+    (`bus-stop_0_0`, the one eleven other rooms have; no line, as in every town) at `(18, 8)` above it.
+  - **The corn stall**: `karuizawa-corn-stall_0_0`, 3x2 at `(19..21, 6..7)`, a prop with a line (kind
+    `corn-stall`), not a shop: its counter is row 7, bumped from row 8.
+  - Open ground: `(10..11, 5)`, `(10..12, 6..7)`, row 8 but for the stop, and rows 9..11 of columns 10..21.
+- **The woods** are solid everywhere else, so the gate cells are the only open cells on the room's edge.
+  They are `karuizawa-larch`, a November larch drawn as a 2x3 (`_0_0`) and a 2x4 (`_0_1`) sprite of one
+  family (prefabs `karuizawa-larch`, `karuizawa-larch-tall`; `Kit.TALL` in `tools/hokuriku.py`), so the wood
+  has a skyline. No sprite in the room is one other town's: its Collidables are `karuizawa-*`, the common
+  shrub and the common bus stop (`karuizawa.test.js`).
 - **No track.** The room has no `train-track*` tile and must not get one: the city's ambient train runs on
   the topmost track row of the whole stitched room, and the Palace line's cutting passes under Karuizawa
   three rows south of its last row.
@@ -382,10 +398,12 @@ station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth
   own place wins over the city it is stitched into, so the gold ring moves from Tokyo's dot to Karuizawa's
   as you walk through the gate. Debug map-click travel lands inside the gate, Karuizawa `(44, 34)`
   (`Places.arrival`). In the studio the city stays at Tokyo's own dot (`WorldModel.geoOf`).
-- **Blog pipeline**: one district, `larch-road` (`tools/districts.py`), and one named spot, `the road from
-  Tokyo` (beside the fingerpost; `LANDMARKS` in `tools/blog_to_npc.py`, `rooms:`-scoped). No placement has
-  been re-homed there yet.
-- **Build order**: `generate_karuizawa_art.py`, `generate_karuizawa.py`,
+- **Blog pipeline**: one district, `larch-road` (`tools/districts.py`), and three named spots, each
+  `rooms:`-scoped in `LANDMARKS` (`tools/blog_to_npc.py`): `Shiraito Falls` (`(13, 8)`, the bank at the
+  pool's south-west corner), `the corn stall` (`(21, 8)`, the east end of its counter) and `the road from
+  Tokyo` (beside the fingerpost). No placement has been re-homed there yet.
+- **Build order**: `generate_karuizawa_art.py`, `make_prefabs.py` (the larches, the falls and the stall are
+  stamped), `generate_karuizawa.py`,
   `generate_houses.py --shops Karuizawa`, `districts.py`,
   `config_to_tiled.py Karuizawa Tokyo ShopKaruizawa1 ShopKaruizawa2 ShopKaruizawa3`, `sync_cities.py`,
   `make_worldmap.py`, then `play.js lint Karuizawa Tokyo TokyoCity ShopKaruizawa1 ShopKaruizawa2
