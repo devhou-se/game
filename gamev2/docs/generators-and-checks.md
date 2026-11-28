@@ -35,6 +35,10 @@ with a Pillow that draws the same pixels will do, not only the macOS one:
 
 - The Checks workflow installs the release pinned in `tools/requirements-art.txt` (`pip install -r tools/requirements-art.txt`);
   move the pin only together with the art it changes.
+- Workshop's agent image (`.workshop/Dockerfile` at the repository root) installs the same release, so plain
+  `python3 tools/check_generators.py` covers the art tools there. The image has no Japanese font, so
+  `generate_ads` and `extract_city` stay `skip` as they do in the workflow. The pin is written out in the
+  Dockerfile (the build cannot read `requirements-art.txt`): move the two together.
 - **Pillow 11.2 to 13.0 rebuild the committed art** (11.2.1, 11.3.0, 12.0.0, 12.1.1, 12.3.0 and 13.0.0 were
   run on Linux on 27 Nov 2026, every art tool but the two that need a Japanese font).
 - **Pillow 11.1 and older do not**: they draw some curves and slanted lines a pixel off, and the check reports

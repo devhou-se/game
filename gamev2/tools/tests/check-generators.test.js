@@ -179,4 +179,24 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.ok(/pip install -r tools\/requirements-art\.txt/.test(workflow), 'checks.yml installs tools/requirements-art.txt');
         assert.ok(workflow.indexOf('requirements-art.txt') < workflow.indexOf('tools/check_generators.py'), 'Pillow is installed before the generators are checked');
     });
+
+    test('check_generators: the Workshop agent image installs the pinned Pillow (#222)', () => {
+        const pin = fs.readFileSync(path.join(GV2, 'tools', 'requirements-art.txt'), 'utf8').split('\n').filter((l) => l && !l.startsWith('#'))[0];
+        // the image build is sent .workshop/ and nothing else, so the Dockerfile repeats the pin
+        const lines = fs.readFileSync(path.join(GV2, '..', '.workshop', 'Dockerfile'), 'utf8').split('\n');
+        const code = lines.filter((l) => l.trim() && !l.trim().startsWith('#'));
+        const pillow = code.join('\n').match(/Pillow==[\d.]+/g);
+        assert.deepStrictEqual(pillow, [pin], '.workshop/Dockerfile installs the Pillow of requirements-art.txt');
+        // the build's own check and the note to later agents name the same release
+        const version = pin.split('==')[1];
+        assert.ok(code.some((l) => l.includes(`PIL.__version__ == '${version}'`)), 'the build checks the Pillow it installed');
+        const label = code[code.length - 1];
+        assert.ok(label.startsWith('LABEL workshop.environment="') && label.includes(`Pillow ${version}`), 'the label is last and names the Pillow');
+        // what Workshop asks of the file: its own base image, and the agent's user at the end
+        assert.deepStrictEqual(code.slice(0, 2), ['ARG WORKSHOP_BASE', 'FROM ${WORKSHOP_BASE}']);
+        assert.deepStrictEqual(code.filter((l) => l.startsWith('USER ')), ['USER root', 'USER agent']);
+        assert.ok(!code.some((l) => /^(ENTRYPOINT|WORKDIR|CMD)\b|CLAUDE_CONFIG_DIR/.test(l)), 'ENTRYPOINT, WORKDIR and CLAUDE_CONFIG_DIR stay the base image\'s');
+        // no Japanese font: with one the two font tools are run and report DRIFT (check_generators.py, FONT_TOOLS)
+        assert.ok(!code.some((l) => /fonts-|noto/i.test(l)), 'the image installs no font');
+    });
 };
