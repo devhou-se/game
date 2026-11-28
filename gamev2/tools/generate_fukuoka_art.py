@@ -65,6 +65,42 @@ PACK_SWAP = {rgb(a): rgb(b) for a, b in (
     ('f9c22e', 'c6a663'), ('d2a58c', 'be9e8c'), ('5a3b34', '5a3827'), ('2a2330', '1b1e2a'), ('40303a', '3c3a4c'),
     ('34343f', '3c3a4c'), ('2f3f7a', '314b8e'), ('6b4a8c', '585575'), ('d9553b', 'd16b56'), ('ee8468', 'e78d7b'),
     ('a13a2a', 'aa4d31'), ('6583bd', '588cc6'), ('a9d3fb', '8ec2fa'), ('5d7fc0', '588cc6'), ('89af78', '83af6f'))}
+P_SLATE, P_SLATE_HI, P_SLATE_JOINT, P_SLATE_LO = rgb('5b6c79'), rgb('698592'), rgb('444f5e'), rgb('2b373c')
+P_COPING, P_COPING_HI, P_EDGE = rgb('94a2a8'), rgb('d1e2eb'), rgb('172459')
+P_PANE, P_PANE_LO, P_GLARE = rgb('2c2d51'), rgb('2a3151'), rgb('4b6396')
+
+
+def glaze(im, y0=0):
+    """Every window from row y0 down becomes the pack's: dark glass, a slanted glare."""
+    px = im.load()
+    for y in range(y0, im.height):
+        for x in range(im.width):
+            c = px[x, y]
+            if c == GLASS:
+                px[x, y] = P_GLARE if (x + y) % 13 == 0 else P_PANE
+            elif c == GLASS_HI:
+                px[x, y] = P_PANE_LO
+
+
+def flat_roof(px, x0, y0, x1, y1, skip=lambda x, y: False):
+    """A flat roof seen from above: slate panels inside a steel coping."""
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            if skip(x, y):
+                continue
+            if x in (x0, x1) or y in (y0, y1):
+                c = P_EDGE
+            elif x in (x0 + 1, x0 + 2, x1 - 1, x1 - 2) or y in (y0 + 1, y0 + 2, y1 - 1):
+                c = P_COPING_HI if (x == x0 + 1 or y == y0 + 1) else P_COPING
+            elif (x - x0) % 9 == 3 or (y - y0 + (x - x0) // 9 * 5) % 14 == 6:
+                c = P_SLATE_JOINT
+            elif x >= x1 - 5 or y >= y1 - 3:
+                c = P_SLATE_LO
+            else:
+                c = P_SLATE_HI if y == y0 + 3 else P_SLATE
+            px[x, y] = c
+
+
 KEEP = ('beach-shore',)                    # the sand is the sand set's own colour
 
 
@@ -115,6 +151,11 @@ def tower():
         d.line([(cx - w, y0 + 9), (cx + w, y0 + 9)], fill=STONE_LO)
         for x in range(cx - w + 2, cx + w - 1, 4):
             d.rectangle([x, y0 + 3, x + 1, y0 + 6], fill=AMBER if (x // 4) % 3 else GLASS_HI)
+    # ---- the base building's roof, seen from above, the shaft's shade across it -
+    flat_roof(px, 8, 312, 119, 330, skip=lambda x, y: abs(x - cx) <= int(half(y)))
+    for y in range(316, 328):
+        for x in range(cx + int(half(y)) + 1, cx + int(half(y)) + 12):
+            px[x, y] = P_SLATE_LO
     # ---- the base building: stone, a glazed hall, the entrance under a canopy --
     d.rectangle([8, 330, 119, 379], fill=STONE)
     d.rectangle([8, 330, 119, 334], fill=WHITE)
@@ -134,6 +175,7 @@ def tower():
     d.line([(44, 341), (83, 341)], fill=GLASS)
     for x in (22, 36, 92, 106):                                   # planters by the wall
         d.rectangle([x - 3, 366, x + 3, 371], fill=LEAF); d.point((x - 1, 366), fill=LEAF_HI)
+    glaze(im, 332)
 
     outline(im)
     return im
@@ -357,10 +399,18 @@ def canal_city():
                 else:
                     c = CREAM if band < 25 else CREAM_LO
             px[x, y] = c
+    # ---- the roof of the curve, seen from above, behind its parapet --------------
+    for x in range(40, 216):
+        s = sag(x)
+        for y in range(20 + s, 34 + s):
+            v = y - s - 20
+            px[x, y] = (P_EDGE if v == 0 else P_COPING_HI if v == 1 else P_COPING if v == 2 else
+                        P_SLATE_JOINT if x % 9 == 4 or v == 8 else P_SLATE_LO if v > 11 else P_SLATE)
     # ---- the hotel block on the left, cream with a grid of windows --------------
     d.rectangle([4, 12, 43, 186], fill=CREAM)
     d.line([(4, 12), (4, 186)], fill=WHITE); d.rectangle([40, 12, 43, 186], fill=CREAM_LO)
     d.rectangle([2, 8, 45, 12], fill=CREAM_DK); d.line([(2, 8), (45, 8)], fill=CREAM)
+    flat_roof(px, 2, 0, 45, 12)                                    # the hotel's roof
     for wy in range(18, 146, 13):
         for wx in (9, 19, 29):
             d.rectangle([wx, wy, wx + 6, wy + 8], fill=GLASS)
@@ -377,7 +427,10 @@ def canal_city():
             if 30 <= y <= 38:
                 c = GLASS_HI if (x - 212) % 5 else GLASS_DK
             px[x, y] = c
-    d.rectangle([210, 18, 253, 22], fill=STONE); d.line([(210, 18), (253, 18)], fill=WHITE)
+    for y, inset in zip(range(8, 23), (12, 8, 5, 3, 2, 1, 0, 0, 0, 1, 2, 3, 5, 8, 12)):   # the drum's cap, a disc from above
+        for x in range(210 + inset, 254 - inset):
+            edge = x in (210 + inset, 253 - inset) or y in (8, 22)
+            px[x, y] = P_EDGE if edge else P_COPING_HI if y < 11 else P_SLATE_LO if x > 244 or y > 19 else P_SLATE
     # ---- the sign, across the top of the curve ----------------------------------
     text = 'CANAL CITY'
     tx = 128 - (len(text) * 6 - 1) // 2
@@ -414,8 +467,8 @@ def canal_city():
     # ---- roof gardens along the parapet ------------------------------------------
     for x in range(52, 206, 9):
         y = 31 + sag(x)
-        d.ellipse([x, y - 3, x + 6, y + 3], fill=LEAF if (x // 9) % 2 else LEAF_LO)
-        d.point((x + 2, y - 2), fill=LEAF_HI)
+        foliage(im, [(x + 3, y - 5, 5, 4)], PACK_LEAF if (x // 9) % 2 else NEEDLE, x)
+    glaze(im)
     outline(im)
     return im
 
