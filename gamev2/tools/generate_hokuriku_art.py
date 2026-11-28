@@ -56,7 +56,7 @@ from generate_hokkaido import (rgb, canvas, outline, tiles, GLYPHS,
                                INK, RED, RED_HI, RED_LO, RED_DK, CREAM, CREAM_LO, CREAM_DK,
                                WHITE, GLASS, GLASS_HI, GLASS_DK, WOOD, WOOD_LO, WOOD_DK,
                                STONE, STONE_LO, STONE_DK, GREEN, GREEN_LO, GREEN_HI, GOLD, AMBER)
-from generate_sendai_art import (roof_rows, tiled_roof, blob, trunk, lit_window,
+from generate_sendai_art import (roof_rows, tiled_roof, blob, trunk, lit_window, roof_tile,
                                  LACQUER, LACQUER_HI, LACQUER_LO, GOLD_HI, GOLD_LO,
                                  SLATE, SLATE_HI, SLATE_LO, PINE, PINE_HI, PINE_LO,
                                  MAPLE, MAPLE_HI, MAPLE_OR, BARK, BARK_LO, LIT, LIT_HI, FONT as _FONT)
@@ -219,50 +219,80 @@ def lattice(d, x0, y0, x1, y1, a, b, step=3):
         d.line([(x, y0), (x, y1)], fill=a)
 
 
+# The teahouses are drawn in the manner of the GuttyKreum pack's machiya: its
+# kawara roofs as straight bands of small tiles, its red-browns for the
+# bengara, dark openings behind the lattice and reed blinds in place of lit
+# yellow paper. Rectangles and points only.
+T_INK, T_EDGE = rgb('0a1627'), rgb('172459')
+T_RIDGE, T_RIDGE_HI, T_EAVE = rgb('434857'), rgb('53596d'), rgb('191c2a')
+T_WALL, T_WALL_HI, T_WALL_LO, T_WALL_DK = rgb('71412a'), rgb('aa775f'), rgb('5a3827'), rgb('3f210f')
+T_DARK, T_DARK_LO = rgb('2c2d51'), rgb('2a3151')
+T_REED, T_REED_LO = rgb('be9e8c'), rgb('aa775f')
+T_PAPER, T_PAPER_HI, T_RED = rgb('e4cecc'), rgb('fafcfd'), rgb('aa4d31')
+T_STONE, T_STONE_LO = rgb('848295'), rgb('53596d')
+T_NOREN = {INDIGO: rgb('314b8e'), INDIGO_HI: rgb('4b6396'), CREAM: T_PAPER, WHITE: T_PAPER_HI, BENGARA: T_RED}
+
+
+def kawara(im, d, x0, y0, x1, y1):
+    """A band of roof: a ridge course, the tiles, a dark eave."""
+    px = im.load()
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            px[x, y] = roof_tile(x, y - y0)
+    d.rectangle([x0, y0, x1, y0 + 2], fill=T_RIDGE); d.rectangle([x0, y0, x1, y0], fill=T_RIDGE_HI)
+    d.rectangle([x0, y1 - 1, x1, y1], fill=T_EAVE)
+    d.rectangle([x0, y0, x0, y1], fill=T_EDGE); d.rectangle([x1, y0, x1, y1], fill=T_EDGE)
+
+
+def bars(d, x0, y0, x1, y1, bar, back, step=3):
+    d.rectangle([x0, y0, x1, y1], fill=back)
+    for x in range(x0, x1 + 1, step):
+        d.rectangle([x, y0, x, y1], fill=bar)
+
+
 def chaya(noren, blinds):
+    cloth, cloth_hi, crest = (T_NOREN[c] for c in noren)
+
     def build():
         im, d = canvas(4, 4)             # 128 x 128; the door is column 1 (x 32-63)
-        # the main roof
-        rows = roof_rows(10, 34, (10, 117), (0, 127))
-        tiled_roof(d, rows)
-        d.rectangle([8, 5, 119, 10], fill=SLATE_LO); d.line([(8, 5), (119, 5)], fill=SLATE_HI)
-        d.rectangle([0, 34, 127, 36], fill=SLATE_LO)
-        for x in range(2, 127, 4):
-            d.point((x, 36), fill=SLATE_HI)
-        # the upper floor: bengara lattice, bamboo blinds rolled half down
-        d.rectangle([3, 37, 124, 70], fill=BENGARA)
-        d.line([(3, 37), (3, 70)], fill=BENGARA_HI); d.rectangle([121, 37, 124, 70], fill=BENGARA_LO)
-        d.line([(3, 37), (124, 37)], fill=BENGARA_DK)
+        kawara(im, d, 0, 3, 127, 36)                                  # the main roof
+        # the upper floor: bengara lattice, reed blinds rolled half down
+        d.rectangle([2, 37, 125, 70], fill=T_WALL)
+        d.rectangle([2, 37, 125, 39], fill=T_WALL_DK)                 # the eave's shade
+        d.rectangle([2, 40, 2, 70], fill=T_WALL_HI); d.rectangle([122, 40, 125, 70], fill=T_WALL_LO)
         for i, x0 in enumerate((9, 39, 69, 99)):
-            lattice(d, x0, 42, x0 + 21, 66, BENGARA_DK, LIT if i in blinds else BENGARA_LO)
+            d.rectangle([x0 - 1, 41, x0 + 22, 67], fill=T_INK)
+            bars(d, x0, 42, x0 + 21, 66, T_WALL_LO, T_DARK)
             if i in blinds:
-                d.rectangle([x0, 42, x0 + 21, 54], fill=BLIND)
+                d.rectangle([x0, 42, x0 + 21, 54], fill=T_REED)
                 for y in range(44, 55, 2):
-                    d.line([(x0, y), (x0 + 21, y)], fill=BLIND_LO)
-            d.rectangle([x0 - 1, 67, x0 + 22, 68], fill=BENGARA_DK)
-        # the pent roof over the ground floor
-        rows = roof_rows(71, 83, (4, 123), (0, 127))
-        tiled_roof(d, rows)
-        d.rectangle([0, 83, 127, 85], fill=SLATE_LO)
+                    d.rectangle([x0, y, x0 + 21, y], fill=T_REED_LO)
+                d.rectangle([x0, 55, x0 + 21, 55], fill=T_DARK_LO)
+            d.rectangle([x0 - 1, 68, x0 + 22, 69], fill=T_WALL_DK)
+        kawara(im, d, 0, 71, 127, 85)                                 # the pent roof over the ground floor
         # the ground floor: fine kimusuko lattice, the doorway under its noren
-        d.rectangle([3, 86, 124, 123], fill=BENGARA_LO)
-        lattice(d, 6, 90, 29, 118, BENGARA, BENGARA_DK, 2)
-        lattice(d, 68, 90, 121, 118, BENGARA, BENGARA_DK, 2)
-        d.rectangle([4, 119, 123, 123], fill=BENGARA_DK)
-        d.rectangle([34, 88, 61, 123], fill=SOOT_LO)
-        d.rectangle([36, 104, 47, 123], fill=BOARD_LO); d.rectangle([49, 104, 59, 123], fill=BOARD_LO)
-        d.rectangle([34, 88, 61, 103], fill=noren[0])
-        d.line([(34, 88), (61, 88)], fill=noren[1])
+        d.rectangle([2, 86, 125, 123], fill=T_WALL_LO)
+        d.rectangle([2, 86, 125, 88], fill=T_WALL_DK)
+        bars(d, 6, 90, 29, 118, T_WALL, T_WALL_DK, 2)
+        bars(d, 68, 90, 121, 118, T_WALL, T_WALL_DK, 2)
+        d.rectangle([3, 119, 124, 123], fill=T_WALL_DK)
+        d.rectangle([33, 87, 62, 123], fill=T_INK)
+        d.rectangle([34, 88, 61, 123], fill=T_DARK)
+        d.rectangle([36, 104, 47, 123], fill=T_WALL_DK); d.rectangle([49, 104, 59, 123], fill=T_WALL_DK)
+        d.rectangle([36, 104, 36, 123], fill=T_WALL_LO); d.rectangle([49, 104, 49, 123], fill=T_WALL_LO)
+        d.rectangle([34, 88, 61, 103], fill=cloth)
+        d.rectangle([34, 88, 61, 88], fill=cloth_hi)
         for x in (43, 52):
-            d.line([(x, 92), (x, 103)], fill=SOOT_LO)
-        d.ellipse([45, 92, 50, 97], fill=noren[2])
+            d.rectangle([x, 92, x, 103], fill=T_DARK)
+        d.rectangle([46, 92, 49, 97], fill=crest); d.rectangle([45, 93, 50, 96], fill=crest)
         # a paper lantern by the door
-        d.rectangle([64, 92, 66, 94], fill=SOOT_LO)
-        d.rectangle([62, 95, 68, 108], fill=CREAM); d.line([(62, 95), (62, 108)], fill=WHITE)
-        d.rectangle([62, 95, 68, 96], fill=SOOT); d.rectangle([62, 107, 68, 108], fill=SOOT)
-        d.rectangle([64, 99, 66, 104], fill=RED)
-        d.rectangle([0, 124, 127, 127], fill=STONE_LO); d.line([(0, 124), (127, 124)], fill=STONE)
-        outline(im)
+        d.rectangle([64, 92, 66, 94], fill=T_INK)
+        d.rectangle([61, 94, 69, 109], fill=T_INK)
+        d.rectangle([62, 95, 68, 108], fill=T_PAPER); d.rectangle([62, 95, 62, 108], fill=T_PAPER_HI)
+        d.rectangle([62, 95, 68, 96], fill=T_EAVE); d.rectangle([62, 107, 68, 108], fill=T_EAVE)
+        d.rectangle([64, 99, 66, 104], fill=T_RED)
+        d.rectangle([0, 124, 127, 127], fill=T_STONE_LO); d.rectangle([0, 124, 127, 124], fill=T_STONE)
+        outline(im, T_INK)
         return im
     return build
 

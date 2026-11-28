@@ -272,11 +272,13 @@ def zuihoden():
     d.ellipse([cx - 6, 61, cx + 5, 72], fill=LACQUER)
     d.ellipse([cx - 3, 64, cx + 2, 69], fill=GOLD_HI)
     d.rectangle([cx - 2, 36, cx + 1, 44], fill=GOLD)              # finial
-    outline(im)
+    repaint(im, {LACQUER: rgb('1b1e2a'), LACQUER_LO: rgb('080d16'), LACQUER_HI: rgb('413f53'), SLATE_HI: rgb('53596d'),
+                 GOLD_LO: rgb('a7843b'), GOLD_HI: rgb('f3d890'), rgb('ffffff'): P_WHITE, rgb('89af78'): rgb('83af6f')},
+            roof=(SLATE, SLATE_LO))
+    outline(im, P_INK)
     return im
 
 
-# ------------------------------------------------------------------------------
 def coping(d, x0, x1, y):
     """A wall's tiled coping, 14px deep from y: ridge, a fall of tiles, the eave."""
     d.rectangle([x0, y, x1, y + 2], fill=SLATE_LO)
@@ -371,12 +373,41 @@ P_GLASS, P_GLASS_LO, P_GLARE = rgb('2c2d51'), rgb('2a3151'), rgb('4b6396')
 P_RED, P_RED_HI, P_RED_LO = rgb('aa4d31'), rgb('d16b56'), rgb('8a3a22')
 P_JOIN, P_JOIN_HI, P_JOIN_LO = rgb('4a6262'), rgb('508582'), rgb('2b373c')
 P_WOOD, P_WOOD_LO = rgb('7f513b'), rgb('594b45')
+P_LAMP, P_LAMP_HI = rgb('c6a663'), rgb('f3d890')
 
 
 def speck(x, y, seed=0):
     """0..99, the same for the same cell on any machine."""
     n = (x * 73856093) ^ (y * 19349663) ^ (seed * 83492791)
     return (n ^ (n >> 13)) * 1274126177 % 100 if n >= 0 else (-n ^ (-n >> 13)) * 1274126177 % 100
+
+
+ROOF_TILE = [rgb(c) for c in ('0a1627', '172459', '434857', '2e4040', '395050')]
+
+
+def roof_tile(x, y):
+    """The pack's kawara: small tiles in courses, a blue joint down each, every other course shifted."""
+    row = y % 5
+    col = (x + (2 if y // 5 % 2 else 0)) % 4
+    if row == 4:
+        return ROOF_TILE[0]
+    if col == 3:
+        return ROOF_TILE[1]
+    if row == 0:
+        return ROOF_TILE[2]
+    return ROOF_TILE[3] if col == 2 or row == 3 else ROOF_TILE[4]
+
+
+def repaint(im, swap, roof=()):
+    """Every pixel of a colour in `swap` becomes its pack colour; one in `roof` becomes roof tile."""
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            c = px[x, y]
+            if c in roof:
+                px[x, y] = roof_tile(x, y)
+            elif c in swap:
+                px[x, y] = swap[c]
 
 
 def foliage(im, clumps, ramp, seed=0):
@@ -437,8 +468,8 @@ def cedar():
     im, d = canvas(2, 4)                 # 64 x 128
     ground_shade(d, 33, 120, 17)
     stem(d, 29, 96, 124, 6)
-    tiers = [(32, 100 - n * 8, max(5, 23 - n * 3 // 2 - (4 - n if n < 2 else 0)), 8) for n in range(12)]
-    foliage(im, tiers + [(32, 6, 4, 6)], NEEDLE, 5)
+    tiers = [(32, 102 - n * 7, 22 - n * 19 // 13, 7) for n in range(14)]
+    foliage(im, tiers + [(32, 6, 2, 5)], NEEDLE, 5)
     outline(im, P_INK)
     return im
 
@@ -458,16 +489,16 @@ def stone_lantern():
     im, d = canvas(1, 2)                 # 32 x 64
     d.rectangle([8, 58, 23, 62], fill=STONE_LO); d.line([(8, 58), (23, 58)], fill=STONE)      # base
     d.rectangle([13, 38, 18, 58], fill=STONE); d.line([(18, 38), (18, 58)], fill=STONE_LO)    # shaft
-    d.line([(13, 38), (13, 58)], fill=WHITE)
+    d.line([(13, 38), (13, 58)], fill=P_WHITE)
     d.rectangle([9, 34, 22, 38], fill=STONE); d.line([(9, 38), (22, 38)], fill=STONE_DK)      # platform
     d.rectangle([10, 22, 21, 34], fill=STONE_LO)                                              # the light box
-    d.rectangle([12, 24, 19, 32], fill=LIT); d.rectangle([13, 25, 16, 28], fill=LIT_HI)
+    d.rectangle([12, 24, 19, 32], fill=P_LAMP); d.rectangle([13, 25, 16, 28], fill=P_LAMP_HI)
     d.line([(15, 24), (15, 32)], fill=STONE_DK); d.line([(16, 24), (16, 32)], fill=STONE_DK)
     d.polygon([(4, 22), (27, 22), (20, 13), (11, 13)], fill=STONE)                            # the roof
-    d.line([(11, 13), (4, 22)], fill=WHITE); d.line([(20, 13), (27, 22)], fill=STONE_LO)
+    d.line([(11, 13), (4, 22)], fill=P_WHITE); d.line([(20, 13), (27, 22)], fill=STONE_LO)
     d.line([(4, 22), (27, 22)], fill=STONE_DK)
     d.rectangle([14, 8, 17, 13], fill=STONE); d.rectangle([15, 5, 16, 8], fill=STONE_LO)      # the jewel
-    outline(im)
+    outline(im, P_INK)
     return im
 
 
