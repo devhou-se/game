@@ -1,7 +1,8 @@
-// The placeholders for Tokyo Tower, Tokyo Station and Tsutenkaku (issue #70): shaded pixel art drawn by code
-// (tools/generate_tokyo_art.py, tools/generate_tsutenkaku.py) where there was white line art, until the team's
-// own art arrives. Only the pictures changed: the map, the prefabs and config.json are as they were, so the
-// pictures have to fit them. These are the rules that keep them fitting, for this art and for what replaces it.
+// The placeholders for Tokyo Tower, Tokyo Station and Tsutenkaku (issues #70, #271): the team's line drawings
+// (../art-source/line-art/), painted by rule (tools/line_art.py through tools/generate_tokyo_art.py and
+// tools/generate_tsutenkaku.py) until the team's own art arrives. A sprite is its drawing with colour laid on,
+// outline and lines unchanged; the map, the prefabs and config.json are as they were, so the pictures have to
+// fit them. These are the rules that keep them fitting, for this art and for what replaces it.
 module.exports = ({ test, assert, fs, path, GV2 }) => {
     const png = require(path.join(GV2, 'tools', 'png'));
     const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
@@ -35,6 +36,29 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         }
     });
 
+    test('landmark placeholders: each sprite is its line drawing, painted (#271)', () => {
+        const luma = (im, i) => 0.299 * im.data[i] + 0.587 * im.data[i + 1] + 0.114 * im.data[i + 2];
+        for (const key of ['tokyo-station_0_0', 'tokyo-tower_0_0', 'tsutenkaku_0_0']) {
+            const im = image(key);
+            const art = png.decode(fs.readFileSync(path.join(GV2, '..', 'art-source', 'line-art', key + '.png')));
+            assert.deepStrictEqual([im.width, im.height], [art.width, art.height], `${key} is not the size of its line drawing`);
+            // the outline is the drawing's: not a pixel added, not a pixel cut away
+            let differ = 0;
+            const line = { sum: 0, n: 0 }, fill = { sum: 0, n: 0 };
+            for (let i = 0; i < art.data.length; i += 4) {
+                if (art.data[i + 3] !== im.data[i + 3]) differ++;
+                if (!art.data[i + 3]) continue;
+                const on = art.data[i] + art.data[i + 1] + art.data[i + 2] === 0 ? line : fill;
+                on.sum += luma(im, i);
+                on.n++;
+            }
+            assert.strictEqual(differ, 0, `${key}: ${differ} pixels are drawn where the line drawing is clear, or clear where it is drawn`);
+            // and its lines are still lines: darker than what they enclose
+            const lines = line.sum / line.n, fills = fill.sum / fill.n;
+            assert.ok(lines <= fills - 30, `${key}: the drawing's lines average luma ${lines.toFixed(0)} and its fills ${fills.toFixed(0)}: the lines are lost`);
+        }
+    });
+
     test('landmark placeholders: Park\'s copy of Tokyo Tower\'s feet is the bottom three rows of the tower (#70)', () => {
         const tower = image('tokyo-tower_0_0'), feet = image('tokyo-tower-feet');
         const from = (tower.height - feet.height) * tower.width * 4;
@@ -65,7 +89,7 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         for (const [cx, cy] of open) {
             assert.ok(cell(tower, cx, cy) < 0.5, `tokyo-tower_0_0: cell (${cx},${cy}) is walked through and is ${Math.round(cell(tower, cx, cy) * 100)}% drawn`);
         }
-        // and the tower is still open steel: its solid row of legs apart, most of it is see-through
+        // and above its row of legs the tower is a narrow thing: most of the picture is clear to either side of it
         assert.ok(drawn(tower, 0, 0, tower.width, 12 * CELL) < 0.5);
         const tsutenkaku = image('tsutenkaku_0_0');
         for (const [cx, cy] of [[3, 12], [4, 12]]) {
@@ -88,8 +112,11 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         // Palace's shrub gardens, lamp posts and a vending machine stand inside the footprint, either side of the porch
         for (const cx of [16, 17, 18, 22, 23, 24]) {
             assert.strictEqual(cell(station, cx, 7), 0, `tokyo-station_0_0: forecourt cell (${cx},7) is drawn over`);
-            // the wall ends at the ground line, 30px into row 6 (and 2px of outline): the gardens' upper halves show below it
-            assert.strictEqual(drawn(station, cx * CELL, 6 * CELL + 34, (cx + 1) * CELL, 7 * CELL), 0, `tokyo-station_0_0: column ${cx} comes below the ground line`);
+        }
+        // the drawing's wing ends at the ground line, 40px into row 6: the gardens' upper halves show below it. (The small
+        // towers either side of the centre block, columns 17..18 and 22..23, come down to the foot of row 6.)
+        for (const cx of [16, 24]) {
+            assert.strictEqual(drawn(station, cx * CELL, 6 * CELL + 40, (cx + 1) * CELL, 7 * CELL), 0, `tokyo-station_0_0: column ${cx} comes below the ground line`);
         }
         assert.ok(cell(station, 20, 7) > 0.5, 'tokyo-station_0_0: cell (20,7) is the door (Palace 27,9) and is not drawn');
         // Palace keeps the bottom row solid under the pavilions, columns 3..7 and 33..37 (#259): their feet are as wide as that

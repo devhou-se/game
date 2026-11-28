@@ -46,6 +46,25 @@ git show "b5697496:Assets/GuttyKreum/<pack>/<dir>/<file>.png" > "art-source/Gutt
 Keep the path it had under `Assets/GuttyKreum/`, then add it to `SHEETS` in
 `gamev2/tools/tests/repo-layout.test.js` and to the table above.
 
+## `line-art/`
+
+The line drawings of three landmarks, as they were the game's sprites before #70: `tokyo-station_0_0.png`
+(2624x512), `tokyo-tower_0_0.png` (512x960) and `tsutenkaku_0_0.png` (512x832). Black lines, white fill, one
+red (the tower's centre panel, Tsutenkaku's sign), pixel-doubled. They are the old sprites byte for byte:
+
+```bash
+git show 422b40ec:gamev2/assets/sprites/<key>.png > art-source/line-art/<key>.png
+```
+
+`gamev2/tools/generate_tokyo_art.py` and `gamev2/tools/generate_tsutenkaku.py` paint them (through
+`gamev2/tools/line_art.py`, which reads them as `../art-source/line-art/...`, run from `gamev2/`): the game's
+sprite is the drawing with colour laid on, its outline and lines unchanged (#271;
+`gamev2/tools/tests/landmark-placeholders.test.js` compares the two). The Tokyo two are the team's Pixaki
+drawings doubled: `pixaki/Landmarks/Tokyo Station.pixaki/images/preview.png` cropped at (32,32) and
+`Tokyo Tower.pixaki/images/preview.png` cropped at (32,0). Tsutenkaku's was drawn by an earlier
+`generate_tsutenkaku.py`. A change to one of these changes its sprite's outline, so it must still fit the
+map: the same test holds the sprites to what Palace, Park and Osaka rely on.
+
 ## `pixaki/`
 
 The team's own drawings, made in Pixaki: characters (front, back and side views), landmarks (Tokyo Station,

@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""generate_tsutenkaku.py — save the Tsutenkaku Tower landmark sprite.
+"""generate_tsutenkaku.py — paint the Tsutenkaku Tower landmark sprite.
 
-There is no Tsutenkaku art anywhere in the asset packs. The landmark was white
-line art drawn here; until the team's own art arrives (issue #70) it is the
-shaded tower that tools/generate_osaka_art.py draws as `tsutenkaku()`: open
-steel lattice you see through, copper roofs, a glazed deck, the OSAKA neon
-band, a lamp on the mast. That drawing was made on the line art's own
-silhouette, so nothing moves: the same 8x13 cells (256x416 at half size,
-pixel-doubled to 512x832), the same legs and the same open archway between
-them, and the lamp on the mast still ends below the avenue's kerb (issue
-#181). The picture is a placeholder still; a PNG of the same size dropped over
-it needs no code or map change.
+There is no Tsutenkaku art anywhere in the asset packs. The landmark is a line
+drawing that was first drawn here; the drawing is now kept as source in
+../art-source/line-art/tsutenkaku_0_0.png and this tool paints it by rule
+(tools/line_art.py, issue #271): grey steel lattice, in shade on its right
+half, copper roofs, two glazed decks with every fourth bay lit, and the
+drawing's red panel as the neon sign. Only colour is laid on: the sprite has
+the drawing's outline, lines and cells pixel for pixel, so nothing moves: the
+same 8x13 cells (256x416 at half size, pixel-doubled to 512x832), the same legs
+and the same open archway between them, and the mast still ends below the
+avenue's kerb (issue #181). The picture is a placeholder still, until the
+team's own art arrives (issue #70); a PNG of the same size dropped over it
+needs no code or map change.
 
 Deterministic and idempotent: rewrites assets/sprites/tsutenkaku_0_0.png and
 registers it in config.json spriteMetadata + tileNames (the game only loads a
@@ -22,11 +24,28 @@ Run from gamev2/ BEFORE make_prefabs.py / generate_osaka.py:
 import json
 from PIL import Image
 
-from generate_osaka_art import tsutenkaku
+from line_art import template, paint, GREY_STEEL, GREY_SHADE, COPPER, NEON, GLAZED, LAMPLIT
 
 KEY = 'tsutenkaku_0_0'
+ROOFS = ((44, 55), (240, 247))        # rows of the drawing, at half size
+DECKS = ((56, 96, 10), (248, 270, 11))    # the glazed storeys under them, and the height of a row of cells
+CORBELS = ((97, 111), (271, 282))     # and what carries each deck
+BAY = 8                               # a deck's cells are 8 wide, the first starting at x = 85
 
-im = tsutenkaku()                     # half size; doubled to 512x832 = 8x13 cells
+
+def zone(x, y, accent):
+    """The material of a fill pixel of the drawing."""
+    if accent:
+        return NEON                   # the sign down the tower's face
+    for top, bottom, row in DECKS:
+        if top <= y <= bottom:        # every fourth bay is lit, a row of cells two bays on from the one above
+            return LAMPLIT if ((x - 85) // BAY + 2 * ((y - top - 1) // row)) % 4 == 1 else GLAZED
+    if any(a <= y <= b for a, b in ROOFS):
+        return COPPER
+    return GREY_SHADE if x >= 128 or any(a <= y <= b for a, b in CORBELS) else GREY_STEEL
+
+
+im = paint(template(KEY), zone)       # half size; doubled to 512x832 = 8x13 cells
 big = im.resize((im.width * 2, im.height * 2), Image.NEAREST)
 big.save(f'assets/sprites/{KEY}.png')
 

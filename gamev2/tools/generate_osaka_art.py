@@ -1942,10 +1942,7 @@ def lattice(im, pts, rows, cols, chord=3):
 def tsutenkaku():
     """Tsutenkaku on the silhouette of the old line-art placeholder: the same
     8x13 cells, legs, archway, deck, shaft and head at the same pixels. The
-    steelwork is open: legs and shaft are see-through lattice.
-    generate_tsutenkaku.py saves this drawing as the landmark, tsutenkaku_0_0,
-    until the team's own art arrives (issue #70): after a change here, run it
-    too (check_generators.py fails until the landmark is regenerated)."""
+    steelwork is open: legs and shaft are see-through lattice."""
     W, H = 256, 416
     im, d = canvas(8, 13)
     CX = W // 2

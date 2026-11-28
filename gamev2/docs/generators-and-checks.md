@@ -24,6 +24,8 @@ The `extract_*.py` tools cut their sprites from the source sheets in `../art-sou
 repository's `art-source/`, beside `gamev2/`; its `README.md` lists the sheets and how to bring back another
 one from history). `check_generators.py` links that folder beside its scratch copy, so the tools find it there
 too. A sheet a tool reads is added to `art-source/` and to `SHEETS` in `tools/tests/repo-layout.test.js`.
+`generate_tokyo_art.py` and `generate_tsutenkaku.py` read the line drawings they paint from
+`../art-source/line-art` in the same way, through `tools/line_art.py` (#271).
 
 **A PNG is compared by its decoded pixels, not its bytes** (`same_picture`, issue #230): the same size and the
 same RGBA values. The bytes of a PNG also depend on the zlib that Pillow was built with, so the same picture

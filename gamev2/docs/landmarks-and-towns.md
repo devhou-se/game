@@ -11,9 +11,9 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 
 | Landmark | Room | Sprite key | Art |
 |---|---|---|---|
-| Tokyo Tower | Palace (feet continue into Park) | `tokyo-tower_0_0` (`tokyo-tower-feet`: its bottom three rows, Park's copy) | shaded placeholder drawn by `tools/generate_tokyo_art.py`; the team's art is still wanted (#70) |
-| Tokyo Station | Palace | `tokyo-station_0_0` | shaded placeholder drawn by `tools/generate_tokyo_art.py`; the team's art is still wanted (#70) |
-| Tsutenkaku Tower | Osaka | `tsutenkaku_0_0` | shaded placeholder saved by `tools/generate_tsutenkaku.py` (the tower `tools/generate_osaka_art.py` draws); the team's art is still wanted (#70) |
+| Tokyo Tower | Palace (feet continue into Park) | `tokyo-tower_0_0` (`tokyo-tower-feet`: its bottom three rows, Park's copy) | the team's line drawing (`art-source/line-art/`) painted by `tools/generate_tokyo_art.py`; the team's art is still wanted (#70) |
+| Tokyo Station | Palace | `tokyo-station_0_0` | the team's line drawing (`art-source/line-art/`) painted by `tools/generate_tokyo_art.py`; the team's art is still wanted (#70) |
+| Tsutenkaku Tower | Osaka | `tsutenkaku_0_0` | the line drawing (`art-source/line-art/`) painted by `tools/generate_tsutenkaku.py`; the team's art is still wanted (#70) |
 | Dotonbori entrance arch | Osaka | `dotonbori-arch_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
 | Dotonbori ferris wheel | Osaka | `dotonbori-wheel_0_0` | GuttyKreum Dotonbori pack via `tools/extract_dotonbori.py` |
 | The gondola you board at the wheel's foot | Osaka | `wheel-boarding_0_0` | one of the wheel's own gondolas, cut from its sprite with the door open, by `tools/generate_wheel_art.py` (see "A turn on the Dotonbori wheel") |
@@ -39,14 +39,22 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Himeji Castle: the keep, a corner turret, the gatehouse, the white wall, the moat bridge | Himeji | `himeji-keep_0_0`, `himeji-turret_0_0`, `himeji-gate_0_0`, `himeji-wall_0_0`, `himeji-bridge_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
 | Koko-en's roofed gate | Himeji | `himeji-kokoen-gate_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 
+The three placeholders are line drawings with colour laid on (#271): the drawing is kept in
+`../art-source/line-art/`, `tools/line_art.py` paints it by rule (regions of the drawing take a material, small
+ones on a wall become window panes, the lines take a shade of what they cross; its docstring has the rules) and
+the two tools only say which part is which material. The outline and every line are the drawing's own, and the
+test below fails if a sprite's alpha differs from its drawing's by a pixel: to change a shape, change the drawing.
+
 The three placeholders (and the team's art, when it replaces them: a PNG of the same size needs no map or code
 change) have to fit a map that is not theirs to move, and `tools/tests/landmark-placeholders.test.js` holds them
-to it: Tokyo Station's picture is clear over its forecourt (cells (16..18, 7) and (22..24, 7), and nothing below
-the ground line beside the porch), where Palace's shrub gardens, lamp posts and a vending machine stand inside its
+to it: Tokyo Station's picture is clear over its forecourt (the cells (16..18, 7) and (22..24, 7) of its bottom
+row; the small towers either side of the centre block come down to the foot of the row above), where Palace's
+shrub gardens, lamp posts and a vending machine stand inside its
 footprint, its pavilions' feet are as wide as the cells Palace keeps solid under them (see "Tokyo Station's
 footprint" below), and it is clear in its top two rows outside the turrets, the domes and the centre gable, where
 Palace's passing train runs behind the roof; the cells you walk through between Tokyo Tower's feet and under
-Tsutenkaku's archway stay see-through.
+Tsutenkaku's archway stay see-through. (The towers themselves are solid, as their drawings are: the game fades
+them over the player, see `occlusion.md`.)
 
 - **Tokyo Station's footprint** (issue #259): the sprite is 41x8 cells at Palace (7,2), but only its two
   pavilions (columns 10..14 and 40..44) and the entrance (26..28) come down into its bottom row, row 9; the
