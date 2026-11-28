@@ -218,4 +218,43 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         const differ = rebuild([...Object.keys(CASTLE), ...NAGA]);
         if (differ) assert.deepStrictEqual(differ, [], 'the committed PNGs are what the tool draws');
     });
+
+    test('kanazawa art: a rerun of generate_kanazawa_art.py leaves the committed PNGs byte for byte (#384)', () => {
+        // Into a copy of the committed sprites: every file whose pixels are unchanged is left as it is, even when
+        // Pillow would encode it differently; a missing file is written and a file with other pixels rewritten.
+        const snippet = [
+            'import contextlib, io, json, os, shutil, sys, tempfile',
+            'try:',
+            '    from PIL import Image',
+            'except ImportError:',
+            '    print(json.dumps({"pillow": False})); sys.exit(0)',
+            'import generate_kanazawa_art as k',
+            'keys = sorted(k.SPRITES)',
+            'tmp = tempfile.mkdtemp()',
+            'try:',
+            '    for key in keys:',
+            '        shutil.copy("assets/sprites/%s.png" % key, tmp)',
+            '    p = lambda key: os.path.join(tmp, key + ".png")',
+            '    gone, other, reenc = keys[0], keys[1], keys[2]',
+            '    os.remove(p(gone))',
+            '    Image.new("RGBA", (64, 64), (255, 0, 0, 255)).save(p(other))',
+            '    Image.open(p(reenc)).convert("RGBA").save(p(reenc), compress_level=0)',
+            '    stamp = open(p(reenc), "rb").read()',
+            '    k.SPR, sys.argv = tmp, ["generate_kanazawa_art.py"]',
+            '    with contextlib.redirect_stdout(io.StringIO()):',
+            '        k.main()',
+            '    rewritten = [key for key in keys if key != reenc and open(p(key), "rb").read() != open("assets/sprites/%s.png" % key, "rb").read()]',
+            '    print(json.dumps({"pillow": True, "rewritten": rewritten, "reenc_kept": open(p(reenc), "rb").read() == stamp}))',
+            'finally:',
+            '    shutil.rmtree(tmp)',
+        ].join('\n');
+        const run = spawnSync('python3', ['-c', snippet], { cwd: GV2, encoding: 'utf8',
+            timeout: 120000, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHONPATH: path.join(GV2, 'tools') } });
+        assert.ok(!run.error, `python3 did not finish: ${run.error}`);
+        assert.strictEqual(run.status, 0, run.stderr);
+        const out = JSON.parse(run.stdout.trim().split('\n').pop());
+        if (!out.pillow) return;
+        assert.ok(out.reenc_kept, 'a file with the same pixels in another encoding was rewritten');
+        assert.deepStrictEqual(out.rewritten, [], 'files differ from the committed ones after a run');
+    });
 };

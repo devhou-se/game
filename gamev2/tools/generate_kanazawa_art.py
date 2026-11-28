@@ -3086,10 +3086,21 @@ def scenes(built, outdir):
     s.save(f'{outdir}/kanazawa_art_nagamachi.png')
 
 
+def save_png(im, path):
+    """Write im unless the file already holds these pixels, so a rerun leaves the
+    committed PNGs byte for byte as they are whatever Pillow's encoder does."""
+    if os.path.exists(path):
+        with Image.open(path) as old:
+            if old.size == im.size and old.convert('RGBA').tobytes() == im.convert('RGBA').tobytes():
+                return False
+    im.save(path)
+    return True
+
+
 def main():
     built = build()
     for key, im in built.items():
-        im.save(f'{SPR}/{key}.png')
+        save_png(im, f'{SPR}/{key}.png')
         if 'autotile' not in key:
             print(f'{key}: {im.width}x{im.height}px ({im.width // 64}x{im.height // 64} cells)')
     print(', '.join(f[0] for f in FAMILIES) + f': {len(ROLES)} roles each')
