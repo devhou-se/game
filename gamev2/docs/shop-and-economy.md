@@ -87,14 +87,15 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   `shopTitle: "DON TAKOTE"` titles the till's list instead of `KONBINI` - `Shop.titleFor`), built
   by `tools/generate_discount_stores.py [Host ...]` on the konbini pattern. 27x19 room, one
   fixed floor plan (so a town generator can wire its door without running it first): the
-  facade's own sign on a yellow back wall, a wall-to-wall back row (drink coolers one side,
+  facade's own sign on a gold back wall, a wall-to-wall back row (drink coolers one side,
   shelving the other), three ranks of shelves either side of a centre aisle, cartons of
   stock in the front corners, one till by the three-cell door mat. What is seeded per store
   (host + door cell) is the stock, the floor and which side the till is on. It adds no shop
   code: `interior: true` makes it a konbini to `Interactions.js`, so the counter, shelves
   and coolers sell through the rows above (the buy list is still titled KONBINI). The
-  signage (`don-takote-sign` / `-wall` / `-wall-top` / `-pop-yen` / `-pop-sale`) is cut from
-  the facade sprite by `tools/generate_discount_art.py` (Pillow, no font needed).
+  signage (`don-takote-sign` / `-wall` / `-wall-top` / `-pop-yen` / `-pop-sale`) is drawn by
+  `tools/generate_discount_art.py` in the pack's colours (the house look); only the sign's lettering
+  is taken from the facade sprite, as a mask (Pillow, no font needed).
   **Doors**: `generate_osaka.py` and `generate_sapporo.py` stamp the facade with
   `seal=False` and add `don.door_transporter(host, door)` themselves, so regenerating the
   town keeps the shop open; Market is ported, so `generate_discount_stores.py` lifts the

@@ -348,8 +348,9 @@ boards depend on: append, do not reorder.
 
 `tools/generate_cooler_art.py [--preview out.png]` draws `office-fridge_0_0`, the konbini's upright
 glass-door drinks cooler (issue #140): 1x2 cells, fully procedural (no source image or font, so a re-run is
-byte-identical), in the steel greys and glass blues of the `office-shelf-*` / `office-freezer` furniture
-and, like them, drawn at half size and pixel-doubled. Size (64x128) and anchor (0.5, 0.25) are fixed by the
+byte-identical), in the house look: the pack's steel lit from the upper left, and its dark glass with a
+slanted glare (`pane` from `generate_sendai_art.py`) with the drinks showing through; drawn at half size and
+pixel-doubled. Size (64x128) and anchor (0.5, 0.25) are fixed by the
 maps that already place it - change the art, not the footprint. Needs Pillow. In a 7-Eleven it stands
 against the back wall, its upper cell over the wall's lower row (issue #221).
 

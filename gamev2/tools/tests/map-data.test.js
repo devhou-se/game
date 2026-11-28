@@ -151,10 +151,10 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, realConfig, worldWi
             const p = (y * width + x) * 4;
             if (data[p + 3] === 0) continue;
             x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-            if (data[p] === 0xb3 && data[p + 1] === 0xe5 && data[p + 2] === 0xfc) glass++;      // the lit interior
+            if (data[p] === 0x2c && data[p + 1] === 0x2d && data[p + 2] === 0x51) glass++;      // the pack's dark glass
         }
         assert.deepStrictEqual([x0, x1, y0, y1], [0, 63, 0, 127], 'art reaches every edge of the 1x2 footprint');
-        assert.ok(glass > 500, 'a lit glass door, not a blank cabinet');
+        assert.ok(glass > 500, 'a glass door, not a blank cabinet');
         const meta = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).spriteMetadata['office-fridge_0_0'];
         assert.deepStrictEqual([meta.anchorX, meta.anchorY], [0.5, 0.25]);
     });
