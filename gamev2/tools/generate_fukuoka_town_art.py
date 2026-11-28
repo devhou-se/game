@@ -2789,23 +2789,52 @@ def office_block():
 # ==============================================================================
 # Ground families (opaque, 9 autotile roles)
 # ==============================================================================
+# The forecourt in the pack's pale stone (house_look's steel ramp and its warm sand fleck): granite
+# slabs lit from the upper left, each shaded as a painted face, round charcoal insets.
+GRANITE_HI, GRANITE, GRANITE_LO = rgb('dae2e4'), rgb('bcc7cc'), rgb('adb2c2')
+GRANITE_JOINT, GRANITE_DK, GRANITE_FLECK = rgb('a4b0b5'), rgb('949bb2'), rgb('b3aaa0')
+INSET_HI, INSET, INSET_LO = rgb('848295'), rgb('575f79'), rgb('47485d')
+
+
+def _plaza_joint(u, v):
+    """The pinwheel's joints, period 16: four slabs turned round a 4x4 inset at (0..3, 0..3)."""
+    u, v = u % 16, v % 16
+    return (u == 4 and v < 12 or v == 4 and u >= 4 or u == 15 and v >= 4 or v == 15 and u < 12
+            or u == 11 and v >= 12 or v == 11 and u < 4)
+
+
 def plaza_tex(x, y):
-    """Pale granite squares turned round small charcoal insets (a pinwheel, period 16)."""
+    """Pale granite squares turned round small charcoal insets (a pinwheel, period 16, so cells
+    join; set off by half a period so the kerb never cuts an inset). Each slab is bevelled, lit on
+    its top row and left column and shaded on its bottom row and right column, and speckled
+    with a darker grain and a warm fleck so no face is flat."""
+    x, y = x + 8, y + 8
     u, v = x % 16, y % 16
-    if (u < 4 and v < 4):
-        return rgb('8d8f98') if (u in (0, 3) or v in (0, 3)) else rgb('a3a5ad')
-    if u == 4 and v < 12 or v == 4 and u >= 4 or u == 15 and v >= 4 or v == 15 and u < 12 or (u == 11 and v >= 12) or (v == 11 and u < 4):
-        return rgb('aeb0b6')
+    if u < 4 and v < 4:                                           # the charcoal inset, bevelled
+        if u == 3 or v == 3:
+            return INSET_LO
+        return INSET_HI if (u == 0 or v == 0) else INSET
+
+    def gap(a, b):
+        return _plaza_joint(a, b) or (a % 16 < 4 and b % 16 < 4)
+    if _plaza_joint(x, y):
+        return GRANITE_JOINT
+    if gap(x + 1, y) or gap(x, y + 1):
+        return GRANITE_LO
+    if gap(x - 1, y) or gap(x, y - 1):
+        return GRANITE_HI
     k = h3(x, y, 3)
-    return rgb('d6d7da') if k < 18 else (rgb('c3c5ca') if k > 236 else rgb('cdcfd3'))
+    return GRANITE_FLECK if k < 8 else (GRANITE_LO if k < 40 else (GRANITE_HI if k > 246 else GRANITE))
 
 
 def plaza_kerb(m, along):
-    if m == 2:
-        return rgb('8f9199')
-    if along % 16 == 15:
-        return rgb('9a9ca4')
-    return rgb('eceef0') if m == 0 else rgb('c9cbd0')
+    """A pale kerb: a lit lip, a face with a joint every 8, then one dithered row of its
+    shadow onto the paving."""
+    if m == 0:
+        return GRANITE_HI
+    if m == 1:
+        return GRANITE_JOINT if along % 8 == 7 else GRANITE
+    return INSET_HI if along % 2 else GRANITE_DK
 
 
 def ground(fam):
@@ -3096,7 +3125,7 @@ PIECES = [
 FAMILIES = [
     ('fukuoka-station-plaza-autotile', HS,
      "The station forecourt's paving: pale granite squares laid as a pinwheel round small charcoal insets "
-     "(the station's own tile), a pale kerb."),
+     "(the station's own tile), each slab lit from the upper left, a pale kerb with a dithered shadow edge."),
     ('fukuoka-riverwalk-autotile', NK,
      "Nakasu's river promenade, in place of the grey brick: dusky mauve brick laid in herringbone, a pale "
      'granite kerb. Under the yatai and along the bank.'),
