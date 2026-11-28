@@ -763,6 +763,11 @@ pipeline has placed someone there.
   `susukino-ramen-gate`, `susukino-ramen-stall-a` / `-b`, `susukino-neon-lanterns`, `ramen-alley-lanterns`,
   `tram-pole`; `tanukikoji-rib` and `sapporo-konbini` are drawn and not placed).
   `--sheet`, `--scenes` and `--manifest` write a contact sheet, mock scenes and the door / footprint table.
+  Odori's pieces (the sculptures, the two tents, now ridge tents seen from above, the fountain, the lamp,
+  now a dim gold `c6a663` globe, the bench) and `ramen-alley-lanterns` are in the house look: each ends in
+  `odori_finish`, which shades the snow onto the pack's blues (`form()`), swaps every off-pack colour
+  (`O_SWAP`) and inks with the pack's `080d16` (#302); the shared snow helpers (`snow_cap`, `drift`, the
+  `SNOW*` colours) are untouched until #285, so they still draw the old whites elsewhere.
 - **Flat sprites over water**: `Over Floor` and `Water` share one fixed depth, so a multi-cell sprite on
   `Over Floor` is drawn UNDER water tiles. The bridge therefore sits on `Non-Collidables` with
   `spriteMetadata.depthBias: -200` (written by `generate_hokkaido.py`'s `FLAT` table): above every ground

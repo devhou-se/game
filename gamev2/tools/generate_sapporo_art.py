@@ -56,12 +56,14 @@ Odori Park
   snow-sculpture-castle_0_0    5x4  the big one: a castle keep carved in snow
   snow-sculpture-tanuki_0_0    2x3  a snow tanuki in a straw hat
   snow-sculpture-bear_0_0      3x2  a snow bear, side on, a salmon in its jaws
-  snowfest-stall-corn_0_0      3x3  festival tents: grilled corn, hot drinks
-  snowfest-stall-drinks_0_0    3x3
+  snowfest-stall-corn_0_0      3x3  festival tents, striped ridge tents seen
+  snowfest-stall-drinks_0_0    3x3  from above: grilled corn, hot drinks
   odori-fountain_0_0           3x3  the fountain frozen over, lights in the ice
-  odori-lamp-post_0_0          1x2  the park's lamp: a white globe on a green
+  odori-lamp-post_0_0          1x2  the park's lamp: a dim gold globe on a green
                                     iron post (`lamp-post`: a halo at night)
-  odori-bench_0_0              2x1  a dark green park bench under snow
+  odori-bench_0_0              2x1  a green iron park bench under snow
+  These and the ramen alley's lantern post end in odori_finish: the pack's
+  colours, snow shaded in the pack's blues (form), the pack's ink.
 Streetcar
   tram-rail-h / -v / -cross    1x1  track: an opaque ground tile in place of the
                                     road tile - setts, grey rails, dark grooves
@@ -973,6 +975,45 @@ def karaoke():
     return im
 
 
+from generate_sendai_art import repaint, P_INK        # noqa: E402   (draws nothing on import)
+
+# The house look for Odori's pieces: the pack's colours, light to dark
+O_SNOW = [rgb(c) for c in ('fafcfd', 'ecfaff', 'd1e2eb', 'b7c3e3', '99a1ca', '8085b1')]
+O_SNOW_OLD = {SNOW: 1, SNOW_LO: 3, SNOW_SH: 4, SNOW_DK: 5}      # d1e2eb is only reached by a lit rim
+O_STONE = [rgb(c) for c in ('d1e2eb', 'bcc7cc', '94a2a8', '848295', '47485d')]
+O_STONE_OLD = {STONE: 1, STONE_LO: 3, STONE_DK: 4}
+ICE, ICE_HI, ICE_LO = rgb('bfe3f6'), rgb('e6f6fd'), rgb('8fc3e6')
+O_ICE = [rgb(c) for c in ('ecfaff', 'bbe9ff', '8ec2fa', '588cc6')]
+O_ICE_OLD = {ICE_HI: 0, ICE: 1, ICE_LO: 2}
+O_IRON_HI, O_IRON, O_IRON_LO = rgb('6c8e7f'), rgb('4a6262'), rgb('2e4040')
+O_GOLD = [rgb(c) for c in ('f3d890', 'c6a663', 'a7843b', '7f513b')]
+O_BLUE = [rgb(c) for c in ('588cc6', '425faa', '314b8e', '172459')]
+O_SWAP = {rgb(a): rgb(b) for a, b in (
+    ('ffffff', 'fafcfd'), ('0a1627', '080d16'),
+    ('f9c22e', 'c6a663'), ('f6dc8c', 'c6a663'), ('fde38a', 'f3d890'), ('c98f1c', 'a7843b'),
+    ('3a5fb0', '425faa'), ('2a2330', '1b1e2a'), ('5a3b34', '5a3827'), ('d2a58c', 'be9e8c'), ('89af78', '83af6f'),
+    ('f0669e', 'd78bc1'), ('f3cfe6', 'ffe2e0'), ('66dcea', '76cae3'), ('c8f2f6', 'ecfaff'), ('f8efcf', 'f3d890'))}
+
+
+def form(im, ramp, old):
+    """A flat fill becomes a lit form: the `old` colours go onto `ramp`, one step lighter on the rim that
+    faces the light (up, left), one darker on the rim turned from it. Call before the outline."""
+    px = im.load(); W, H = im.size
+    idx = {(x, y): old[px[x, y]] for y in range(H) for x in range(W) if px[x, y] in old}
+    bare = lambda x, y: not (0 <= x < W and 0 <= y < H) or px[x, y][3] == 0
+    for (x, y), i in idx.items():
+        if bare(x - 1, y) or bare(x, y - 1): i = max(0, i - 1)
+        elif bare(x + 1, y) or bare(x, y + 1): i = min(len(ramp) - 1, i + 1)
+        px[x, y] = ramp[i]
+
+
+def odori_finish(im, snow=O_SNOW_OLD):
+    """Odori's pieces in the house look: snow shaded onto the pack's blues, every other colour the pack's,
+    the pack's near-black ink."""
+    form(im, O_SNOW, snow); repaint(im, O_SWAP); outline(im, P_INK)
+    return im
+
+
 # ==============================================================================
 # Odori Park
 # ==============================================================================
@@ -1062,8 +1103,7 @@ def snow_castle():
     for a, b in ((9, 34), (35, 60)):
         for x in range(a, b):
             d.point((x, 117 + int(2 * math.sin(math.pi * (x - a) / (b - a)))), fill=AMBER)
-    outline(im)
-    return im
+    return odori_finish(im, {**O_SNOW_OLD, WHITE: 0})        # the carved highlights stay the lightest
 
 
 def snow_tanuki():
@@ -1096,47 +1136,46 @@ def snow_tanuki():
             d.line([(cx - w + 1, y), (cx + w // 3, y)], fill=SNOW_LO)
     d.line([(cx - 27, 20), (cx + 27, 20)], fill=SNOW_DK)
     d.line([(cx - 22, 21), (cx + 22, 21)], fill=SNOW_SH)
-    outline(im)
-    return im
+    return odori_finish(im, {**O_SNOW_OLD, WHITE: 0})        # the carved highlights stay the lightest
 
 
-STALLS = {     # kind: (stripe, stripe shade, cloth)
-    'corn': (AMBER, rgb('c98f1c'), RED),
-    'drinks': (rgb('3a5fb0'), NAVY, rgb('3a5fb0')),
+STALLS = {     # kind: (the stripe's four tones, light to dark; cloth)
+    'corn': (O_GOLD, RED),
+    'drinks': (O_BLUE, O_BLUE[1]),
 }
 
 
 def stall(kind):
-    stripe, stripe_lo, cloth = STALLS[kind]
+    stripe, cloth = STALLS[kind]
     im, d = canvas(3, 3)                 # 96 x 96
-    # ---- the lit inside -----------------------------------------------------------
-    d.rectangle([10, 34, 85, 66], fill=DARK)
+    # ---- the lit inside, in the roof's shade --------------------------------------
+    d.rectangle([10, 36, 85, 66], fill=DARK)
     d.rectangle([10, 46, 85, 66], fill=rgb('5a3b34'))
+    d.rectangle([10, 36, 85, 38], fill=P_INK)
     d.rectangle([46, 36, 49, 39], fill=WARM)                      # the bulb
-    # ---- a peaked tent: striped canvas, snow on the ridge ------------------------
-    for y in range(8, 30):
-        t = (y - 8) / 21
-        x0, x1 = int(40 - 36 * t), int(55 + 36 * t)
-        for x in range(x0, x1 + 1):
-            band = int((x - 47.5) / (3 + 5 * t) + 40) % 2
-            c = stripe if band else WHITE
-            if x > 48 + 20 * t:
-                c = stripe_lo if band else SNOW_LO
+    # ---- a ridge tent seen from above: back slope, ridge, front slope, eave, valance,
+    #      each a tone darker, the stripes running front to back ----------------------
+    for y in range(6, 36):
+        t = 0 if y <= 13 else 1 if y <= 27 else 2 if y <= 31 else 3
+        for x in range(3, 93):
+            if y == 35 and x % 7 not in (2, 3, 4):                # the valance's scallops
+                continue
+            tt = min(3, t + 1) if x > 83 + (y - 6) // 6 else t    # the end turned from the light
+            c = stripe[tt] if (x + 4) // 7 % 2 else O_SNOW[tt]
+            if y == 13 and x <= 82:
+                c = O_SNOW[0]                                     # the ridge
             d.point((x, y), fill=c)
-    d.rectangle([3, 30, 92, 34], fill=WHITE)                      # the valance
-    for x in range(3, 93):
-        if (x // 6) % 2:
-            d.line([(x, 30), (x, 34)], fill=stripe)
-        if (x // 3) % 2 == 0:
-            d.point((x, 35), fill=stripe if (x // 6) % 2 else WHITE)
-    for x in range(32, 64):                                       # snow lying on the peak
-        t = abs(x - 47.5) / 16
-        d.line([(x, 5 + int(5 * t)), (x, 9 + int(8 * t) + (x % 5 == 0))], fill=SNOW)
-    for x0, x1 in ((6, 22), (74, 90)):
-        snow_cap(d, x0, x1, 26, 2, seed=x0)
+    px = im.load()
+    for x0, x1, y, depth in ((30, 66, 9, 4), (3, 21, 4, 3), (70, 92, 4, 3)):   # snow on the ridge, the corners
+        snow_cap(d, x0, x1, y, depth, seed=x0)
+        for x in range(x0, x1 + 1):
+            yy = y
+            while px[x, yy + 1] in (SNOW, SNOW_LO):
+                yy += 1
+            d.point((x, yy + 1), fill=SNOW_SH)
     for x in (8, 86):                                             # poles
-        d.rectangle([x, 35, x + 1, 90], fill=STONE)
-        d.line([(x + 1, 35), (x + 1, 90)], fill=STONE_LO)
+        d.rectangle([x, 36, x + 1, 90], fill=STONE)
+        d.line([(x + 1, 36), (x + 1, 90)], fill=STONE_LO)
     # ---- the hanging board ---------------------------------------------------------
     d.rectangle([28, 37, 67, 49], fill=WHITE if kind == 'corn' else AMBER)
     d.rectangle([28, 37, 67, 49], outline=cloth if kind == 'corn' else NAVY)
@@ -1186,8 +1225,7 @@ def stall(kind):
         if (x // 5) % 2 == 0:
             d.line([(x, 68), (x, 87)], fill=SNOW_LO)
     drift(d, 2, 22, 93, 5, seed=3 if kind == 'corn' else 6); drift(d, 72, 94, 93, 4, seed=5)
-    outline(im)
-    return im
+    return odori_finish(im)
 
 
 # ==============================================================================
@@ -1747,11 +1785,7 @@ def snow_bear():
         d.line([(42 + k * 7, 20 + (k % 2) * 4), (44 + k * 7, 25 + (k % 2) * 4)], fill=SNOW_LO)
     for k in range(3):
         d.line([(34 + k * 6, 14 + k), (36 + k * 6, 18 + k)], fill=SNOW_LO)
-    outline(im)
-    return im
-
-
-ICE, ICE_HI, ICE_LO = rgb('bfe3f6'), rgb('e6f6fd'), rgb('8fc3e6')
+    return odori_finish(im, {**O_SNOW_OLD, WHITE: 0})        # the carved highlights stay the lightest
 
 
 def odori_fountain():
@@ -1794,49 +1828,61 @@ def odori_fountain():
     d.ellipse([44, 8, 51, 15], fill=STONE); d.point((46, 10), fill=WHITE)       # the finial
     d.rectangle([46, 15, 49, 18], fill=STONE_LO)
     snow_cap(d, 44, 51, 6, 2, seed=3)
-    outline(im)
-    return im
+    form(im, O_STONE, O_STONE_OLD); form(im, O_ICE, O_ICE_OLD)
+    return odori_finish(im)
 
 
 def odori_lamp():
-    """Odori Park's lamp: a white globe on a dark green iron post (`lamp-post`:
+    """Odori Park's lamp: a dim gold globe on a green iron post (`lamp-post`:
     DayNight gives its head a halo at night)."""
     im, d = canvas(1, 2)                 # 32 x 64
-    d.rectangle([15, 22, 16, 59], fill=TRAM_LO); d.line([(15, 22), (15, 59)], fill=TRAM)      # the post
+    d.rectangle([15, 22, 16, 59], fill=O_IRON_LO); d.line([(15, 22), (15, 59)], fill=O_IRON)   # the post
     for y in (30, 44):                                                                       # its two collars
-        d.rectangle([14, y, 17, y + 1], fill=TRAM); d.line([(14, y + 1), (17, y + 1)], fill=TRAM_LO)
-    d.rectangle([13, 56, 18, 58], fill=TRAM_LO); d.rectangle([11, 59, 20, 61], fill=TRAM_LO)  # the foot
-    d.line([(11, 59), (20, 59)], fill=TRAM)
-    d.rectangle([12, 20, 19, 22], fill=TRAM_LO); d.line([(12, 20), (19, 20)], fill=TRAM_HI)   # the cup under the globe
-    d.ellipse([8, 5, 23, 20], fill=WHITE)                                                    # the globe
-    d.ellipse([10, 8, 21, 19], fill=rgb('fbf3d2'))
-    d.ellipse([12, 11, 19, 18], fill=WARM)
-    d.arc([8, 5, 23, 20], 20, 150, fill=CREAM_LO)
-    d.point((12, 9), fill=WHITE); d.point((13, 8), fill=WHITE)
-    d.rectangle([14, 2, 17, 4], fill=TRAM_LO)                                                # the cap
+        d.rectangle([14, y, 17, y + 1], fill=O_IRON); d.line([(14, y), (16, y)], fill=O_IRON_HI)
+        d.point((17, y + 1), fill=O_IRON_LO)
+    for x0, y0, x1, y1 in ((13, 56, 18, 58), (11, 59, 20, 61), (12, 20, 19, 22), (14, 2, 17, 4)):  # foot, cup, cap
+        d.rectangle([x0, y0, x1, y1], fill=O_IRON)
+        d.line([(x0, y0), (x1 - 1, y0)], fill=O_IRON_HI); d.line([(x0, y0), (x0, y1)], fill=O_IRON_HI)
+        d.line([(x1, y0), (x1, y1)], fill=O_IRON_LO)
+    for r, hw in enumerate((4, 6, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 4)):                 # the globe
+        v = r - 8
+        for x in range(16 - hw, 16 + hw):
+            u = x - 16
+            if (u + 3) ** 2 + (v + 3) ** 2 <= 10:
+                c = O_GOLD[0]
+            elif u + v >= 7 or (u * u + v * v >= 44 and u + v > 0):
+                c = O_GOLD[2]
+            else:
+                c = O_GOLD[1]
+            d.point((x, 5 + r), fill=c)
+    d.point((12, 9), fill=O_SNOW[0])                                                         # a glint
     snow_cap(d, 10, 21, 3, 2, seed=5)
     drift(d, 8, 23, 62, 2, seed=3)
-    outline(im)
-    return im
+    return odori_finish(im)
 
 
 def odori_bench():
-    """A park bench in Odori's dark green, snow lying on its seat and back."""
+    """A park bench in Odori's green iron, snow lying on its seat and back."""
     im, d = canvas(2, 1)                 # 64 x 32
+    frame = rgb('1b1e2a')
     for x in (8, 53):                                             # iron end frames
-        d.rectangle([x, 9, x + 2, 28], fill=DARK)
-        d.rectangle([x - 2, 27, x + 4, 29], fill=DARK)
+        d.rectangle([x, 9, x + 2, 28], fill=frame)
+        d.rectangle([x - 2, 27, x + 4, 29], fill=frame)
         d.line([(x, 9), (x, 26)], fill=STONE_DK)
-    for y in (9, 13):                                             # the back's two slats
-        d.rectangle([6, y, 57, y + 2], fill=TRAM); d.line([(6, y), (57, y)], fill=TRAM_HI)
-        d.line([(6, y + 2), (57, y + 2)], fill=TRAM_LO)
-    d.rectangle([5, 19, 58, 22], fill=TRAM); d.line([(5, 22), (58, 22)], fill=TRAM_LO)       # the seat
-    d.rectangle([5, 23, 58, 23], fill=DARK)
+    for y0, y1, x0, x1 in ((9, 11, 6, 57), (13, 15, 6, 57), (19, 22, 5, 58)):   # the back's two slats, the seat
+        d.rectangle([x0, y0, x1, y1], fill=O_IRON)
+        d.rectangle([x1 - 3, y0, x1, y1], fill=O_IRON_LO)
+        d.line([(x0, y0), (x1 - 4, y0)], fill=O_IRON_HI)
+        d.line([(x0, y1), (x1, y1)], fill=O_IRON_LO)
+    d.rectangle([5, 23, 58, 24], fill=frame)
     snow_cap(d, 6, 57, 6, 2, seed=2)                              # snow along the top of the back
     snow_cap(d, 5, 58, 16, 3, seed=6)                             # and lying on the seat
     drift(d, 3, 14, 30, 2, seed=1); drift(d, 48, 61, 30, 2, seed=4)
-    outline(im)
-    return im
+    for x in range(11, 53):                                       # the seat's shade on the snow
+        d.point((x, 25), fill=O_SNOW[3])
+        if x % 2:
+            d.point((x, 26), fill=O_SNOW[3])
+    return odori_finish(im)
 
 
 def lantern_post():
@@ -1852,8 +1898,7 @@ def lantern_post():
         d.rectangle([x, y, x + 2, y + 3], fill=RED)
     snow_cap(d, 3, 28, 6, 2, seed=4)
     drift(d, 8, 23, 62, 2, seed=2)
-    outline(im)
-    return im
+    return odori_finish(im)
 
 
 # ==============================================================================
@@ -2184,22 +2229,22 @@ PIECES = [
      'jaws, on a block.'),
     ('snowfest-stall-corn_0_0', lambda: stall('corn'), (3, 3), 'Odori Park', dict(
         solid=rows(3, 1, 2)),
-     'Snow-festival tent stall: yellow striped peaked canvas with snow, corn kana board, charcoal grill of '
+     'Snow-festival tent stall: a gold striped ridge tent seen from above with snow on it, corn kana board, charcoal grill of '
      'cobs, red striped counter cloth. Counter faces south (bump from the row below, as a yatai).'),
     ('snowfest-stall-drinks_0_0', lambda: stall('drinks'), (3, 3), 'Odori Park', dict(
         solid=rows(3, 1, 2)),
-     'Snow-festival tent stall: blue striped tent, HOT board with a cup, steaming urn and paper cups.'),
+     'Snow-festival tent stall: blue striped ridge tent seen from above, HOT board with a cup, steaming urn and paper cups.'),
     ('odori-fountain_0_0', odori_fountain, (3, 3), 'Odori Park', dict(
         solid=rows(3, 1, 2)),
      "Odori's fountain in winter (replaces odori-arch): the round basin frozen over, snow on the rim and on "
      'its two bowls, icicles, pink / cyan / warm festival lights set in the ice.'),
     ('odori-lamp-post_0_0', odori_lamp, (1, 2), 'Odori Park', dict(
         solid=[[0, 1]], glow=True),
-     "Odori Park's lamp: a white globe on a dark green iron post, snow on its cap. Its key holds `lamp-post`, "
+     "Odori Park's lamp: a dim gold globe on a green iron post, snow on its cap. Its key holds `lamp-post`, "
      'so its head has a halo at night. Only the foot collides.'),
     ('odori-bench_0_0', odori_bench, (2, 1), 'Odori Park', dict(
         solid=rows(2, 0, 0)),
-     "A park bench in Odori's dark green, snow lying on the seat and along the back. Faces south."),
+     "A park bench in Odori's green iron, snow lying on the seat and along the back. Faces south."),
     ('tram-rail-h_0_0', lambda: tram_rail('h'), (1, 1), 'Susukino', dict(layer='ground'),
      'Streetcar track running east-west: an OPAQUE ground tile that replaces the road tile (not an overlay '
      'any more) - sett bed, two grey steel rails each with a dark groove, asphalt strip top and bottom. Not '
@@ -2450,6 +2495,10 @@ def scenes(built, outdir):
     s.put('snow-sculpture-bear_0_0', 14, 9)
     s.put('odori-fountain_0_0', 6, 9)
     s.put('snowfest-stall-corn_0_0', 1, 13); s.put('snowfest-stall-drinks_0_0', 5, 13)
+    for x in (0, 11, 17):
+        s.put('odori-lamp-post_0_0', x, 9)
+    for x in (9, 13):
+        s.put('odori-bench_0_0', x, 12)
     s.put(me, 9, 7); s.put(me, 4, 10); s.put(me, 13, 10); s.put(me, 16, 10); s.put(me, 3, 13)
     s.save(f'{outdir}/sapporo_art_odori.png')
     # Tanukikoji: shops along the north side, the south row's roof over the street, the gate and a rib
