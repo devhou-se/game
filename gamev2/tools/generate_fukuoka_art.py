@@ -54,6 +54,19 @@ DARK = rgb('2a2330')                       # a lit stall's back wall, the hall's
 SEA, SHALLOW, WET, SAND = rgb('425faa'), rgb('8ec2fa'), rgb('bca67c'), rgb('e2cea0')
 LEAF, LEAF_HI, LEAF_LO = rgb('678e57'), rgb('89af78'), rgb('395050')
 
+# Brought into line with the GuttyKreum pack: blossom and leaves in ragged
+# clumps shaded the way the pack's trees are (generate_sendai_art.foliage),
+# and every colour the pack does not have swapped for its nearest one that it
+# does - a lit bulb or lantern is the pack's dim gold, not a bright yellow.
+from generate_sendai_art import foliage, repaint, limb, LEAF as PACK_LEAF, NEEDLE, P_INK    # noqa: E402
+
+BLOSSOM = [rgb(c) for c in ('fafcfd', 'ffe2e0', 'ffe2e0', 'd78bc1', 'bb6479', '83374f')]
+PACK_SWAP = {rgb(a): rgb(b) for a, b in (
+    ('f9c22e', 'c6a663'), ('d2a58c', 'be9e8c'), ('5a3b34', '5a3827'), ('2a2330', '1b1e2a'), ('40303a', '3c3a4c'),
+    ('34343f', '3c3a4c'), ('2f3f7a', '314b8e'), ('6b4a8c', '585575'), ('d9553b', 'd16b56'), ('ee8468', 'e78d7b'),
+    ('a13a2a', 'aa4d31'), ('6583bd', '588cc6'), ('a9d3fb', '8ec2fa'), ('5d7fc0', '588cc6'), ('89af78', '83af6f'))}
+KEEP = ('beach-shore',)                    # the sand is the sand set's own colour
+
 
 # ------------------------------------------------------------------------------
 def tower():
@@ -340,7 +353,7 @@ def canal_city():
                 elif band < 22:
                     c = CREAM_DK if x % 8 == 0 else (GLASS_HI if band == 9 else GLASS)
                     if (x // 8 + (v // 26)) % 5 == 0 and band > 12:
-                        c = AMBER if x % 8 else CREAM_DK          # a few lit rooms
+                        c = GLASS_DK if x % 8 else CREAM_DK       # a few rooms with the blinds down
                 else:
                     c = CREAM if band < 25 else CREAM_LO
             px[x, y] = c
@@ -435,14 +448,10 @@ def blob(d, x, y, r, base, hi, lo):
 def dazaifu_hall():
     im, d = canvas(6, 5)                 # 192 x 160
     # ---- the grove on the roof: two rows of crowns, a few in blossom -----------
-    for i, x in enumerate(range(18, 180, 13)):
-        blob(d, x, 22 + (i * 5) % 6, 9 + (i % 3), LEAF_LO, GREEN, INK)
+    foliage(im, [(x, 22 + (i * 5) % 6, 10 + i % 3, 9 + i % 3) for i, x in enumerate(range(18, 180, 13))], NEEDLE, 11)
     for i, x in enumerate(range(12, 186, 12)):
         r = 8 + (i * 7) % 4
-        if i % 5 == 2:
-            blob(d, x, 36 + (i * 3) % 5, r, PINK, PINK_HI, PINK_DK)
-        else:
-            blob(d, x, 36 + (i * 3) % 5, r, LEAF, LEAF_HI, LEAF_LO)
+        foliage(im, [(x, 36 + (i * 3) % 5, r + 1, r)], BLOSSOM if i % 5 == 2 else PACK_LEAF, 20 + i)
     # ---- the roof itself: a dark shallow bowl floating over the hall -----------
     for y in range(44, 66):
         t = (y - 44) / 21
@@ -525,20 +534,13 @@ def taiko_bridge():
 def plum_tree():
     im, d = canvas(2, 3)                 # 64 x 96
     # the trunk: dark, bent, forking low the way an old ume does
-    for (x0, y0, x1, y1, w) in ((31, 92, 29, 70, 5), (29, 70, 34, 54, 4), (33, 62, 20, 44, 3),
-                                (34, 56, 46, 40, 3), (30, 66, 14, 58, 2)):
-        d.line([(x0, y0), (x1, y1)], fill=WOOD_DK, width=w)
-    d.line([(29, 90), (28, 72)], fill=WOOD_LO)
+    limb(d, 30, 92, 28, 70, 5); limb(d, 28, 70, 33, 54, 4); limb(d, 32, 62, 19, 44); limb(d, 33, 56, 45, 40)
+    limb(d, 29, 66, 13, 58, 2)
     d.rectangle([26, 90, 37, 92], fill=WOOD_DK)
     # the crown: clouds of pale blossom, deeper pink in the shade
-    for i, (x, y, r) in enumerate(((16, 40, 10), (46, 36, 11), (31, 26, 12), (12, 54, 6),
-                                   (22, 22, 8), (42, 20, 8), (52, 48, 7), (31, 42, 9))):
-        blob(d, x, y, r, PINK, PINK_HI, PINK_DK)
-    for i in range(40):                                           # single flowers, white and deep pink
-        x = 8 + (i * 37) % 48; y = 14 + (i * 23) % 40
-        if im.getpixel((x, y))[3]:
-            d.point((x, y), fill=WHITE if i % 3 else PINK_DK)
-    outline(im)
+    foliage(im, [(12, 54, 7, 6), (52, 48, 8, 7), (16, 40, 11, 10), (46, 36, 12, 11), (31, 42, 10, 9),
+                 (22, 22, 9, 8), (42, 20, 9, 8), (31, 26, 13, 12)], BLOSSOM, 4)
+    outline(im, P_INK)
     return im
 
 
@@ -609,6 +611,8 @@ def main():
     built = {}
     for key, (fn, _) in SPRITES.items():
         im = fn()
+        if not key.startswith(KEEP):
+            repaint(im, PACK_SWAP)
         im = im.resize((im.width * 2, im.height * 2), Image.NEAREST)
         im.save(f'assets/sprites/{key}.png')
         built[key] = im
