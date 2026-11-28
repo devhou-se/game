@@ -363,6 +363,14 @@ byte-identical; it writes each sprite's `spriteMetadata` and `tileNames` and `ge
 appends the keys to the palette as it places them. Sizes are whole cells and are what the plans in
 `generate_konbinis.py` assume - change the art, not the footprint. Needs Pillow.
 
+`tools/generate_izakaya_art.py [--sheet out.png]` draws the Izakaya's interior in Tokyo, the 15
+`izakaya-in-*` sprites (issue #286), in the house look (above, with `house_look.py`'s helpers and a timber
+ramp of sheet colours of its own): the board floor, the wall tops and the doorway's thresholds, the two-row
+back wall (plain, with the menu strips, with the clock), the back bar, the bar, the table, the hung lantern
+(its night glow is in its `spriteMetadata`) and the sake casks. Fully procedural with fixed seeds, so a
+re-run is identical; it writes each sprite's `spriteMetadata` and `tileNames` and `generate_izakaya.py`
+appends the keys to the palette as it places them. Needs Pillow.
+
 `tools/generate_seven_eleven_art.py [--preview out.png]` draws `seven-eleven_0_0`, the 7-Eleven on the
 street (issue #89): 3x4 cells, a one-storey store drawn in the manner of the GuttyKreum city pack - the flat
 roof seen from above with two condensers on it, the white fascia with the orange / green / red stripes and

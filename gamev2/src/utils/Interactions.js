@@ -23,7 +23,7 @@ const Interactions = {
         { kind: 'ramen', group: 'shop', pattern: /^susukino-ramen-stall/, footprint: true },
         { kind: 'drinks', group: 'shop', pattern: /^(office-(shelf-drinks|shelf-glass|fridge|freezer)|konbini-coffee)/, footprint: true, room: 'konbini' },
         { kind: 'snacks', group: 'shop', pattern: /^(office-shelf-snacks|konbini-(chiller|gondola-(snacks|noodles|bread)))/, footprint: true, room: 'konbini' },
-        { kind: 'venue', group: 'shop', pattern: /^office-counter2/, footprint: true, room: 'venue' },
+        { kind: 'venue', group: 'shop', pattern: /^(office-counter2|izakaya-in-bar)/, footprint: true, room: 'venue' },
         { kind: 'water', group: 'water', pattern: /^(office-watercooler|konbini-water)/, footprint: true, room: 'konbini' },
         // inside a shrine's worship hall (tools/generate_shrines.py; src/ShrineVisit.js)
         { kind: 'offering', group: 'shrine', pattern: /^shrine-in-saisen/, footprint: true },
@@ -39,8 +39,8 @@ const Interactions = {
         { kind: 'pond', group: 'pond', pattern: /^pond-autotile/ },
         { kind: 'clock', group: 'clock', pattern: /^(office-clock|office-poster-menu)/ },
         // a 7-Eleven's clock is part of its back wall (tools/generate_konbinis.py, issue #221): the
-        // sprite sits on the wall's upper cell and the bump lands on the lower one
-        { kind: 'clock', group: 'clock', pattern: /^konbini-wall-clock/, footprint: true },
+        // sprite sits on the wall's upper cell and the bump lands on the lower one (the Izakaya's too, issue #286)
+        { kind: 'clock', group: 'clock', pattern: /^(konbini|izakaya-in)-wall-clock/, footprint: true },
         // a home's furniture (issue #208, tools/generate_houses.py): a bump says one line
         // (`say`, shown as a toast by GameScene) and nothing else happens
         { kind: 'kotatsu', group: 'flavour', pattern: /^home-kotatsu/, footprint: true, say: 'the kotatsu is warm. you could stay under it all winter' },
@@ -69,6 +69,8 @@ const Interactions = {
         { kind: 'baseball', group: 'flavour', pattern: /^pub-in-wall-tv/, footprint: true, say: 'the baseball is on. a man in a gold chain claps for the Eagles and the bar claps with him' },
         { kind: 'darts', group: 'flavour', pattern: /^pub-in-wall-darts/, footprint: true, say: 'three darts in the wall, none in the board. nobody is owning up' },
         { kind: 'specials', group: 'flavour', pattern: /^pub-in-chalkboard/, footprint: true, say: 'today\'s special is fish and chips. it has been today\'s special for some years' },
+        // the Izakaya in Tokyo (issue #286): the menu strips on its back wall
+        { kind: 'menu-strips', group: 'flavour', pattern: /^izakaya-in-wall-menu/, footprint: true, say: 'beer, edamame, karaage, in a hand that has written them ten thousand times. order at the counter' },
         // the distillery in Sendai (issue #217): the one pot still, and the casks on the wall and on the floor
         { kind: 'pot-still', group: 'flavour', pattern: /^distillery-in-still/, footprint: true, say: 'a copper pot still, warm to the hand. whatever is in it will be ready in about twelve years' },
         { kind: 'casks', group: 'flavour', pattern: /^distillery-in-(wall-casks|cask)/, footprint: true, say: 'the casks are asleep. the chalk on the nearest one says not before 2037' },

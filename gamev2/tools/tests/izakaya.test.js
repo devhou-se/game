@@ -111,4 +111,152 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith }) => {
             assert.strictEqual(world.step('s').moved, true, `${tag}: boxed in outside the door`);
         }
     });
+
+    // ---- the room rebuilt off the office kit, in its own izakaya-in-* kit (#286) -------------------------------
+    const K = (x, y) => `${x},${y}`;
+    const plain = (v) => JSON.parse(JSON.stringify(v === undefined ? null : v));
+    const PIECES = { 'floor-a': [1, 1], 'floor-b': [1, 1], 'side-w': [1, 1], 'side-e': [1, 1], 'wall-front': [1, 1],
+        'threshold-w': [1, 1], 'threshold-e': [1, 1], wall: [1, 2], 'wall-menu': [2, 2], 'wall-clock': [1, 2],
+        backbar: [6, 2], bar: [6, 1], table: [2, 1], chochin: [1, 2], casks: [1, 2] };
+    const STANDING = ['backbar', 'bar', 'table', 'chochin', 'casks'];
+    const TABLES = [[4, 7], [4, 11], [12, 10]];
+    // where every copy of a sprite stands in the room: [[x, y], ...]
+    const placed = (c, room, key) => room.layers.flatMap((l) => Object.entries(l.tiles))
+        .filter(([, id]) => c.tilePalette[id] === key).map(([cell]) => cell.split(',').map(Number));
+    // a cell is inside the room's outline (its centre, by ray casting)
+    const inside = (boundary, x, y) => {
+        const px = x + 0.5, py = y + 0.5;
+        let n = 0;
+        boundary.forEach(([ax, ay], i) => {
+            const [bx, by] = boundary[(i + 1) % boundary.length];
+            if ((ay > py) !== (by > py) && px < ax + (py - ay) * (bx - ax) / (by - ay)) n++;
+        });
+        return n % 2 === 1;
+    };
+
+    test('the Izakaya is drawn with its own kit: boards, a two-row back wall, the bar on the counter\'s cells, tables, hung lanterns, lantern-lit (#286)', () => {
+        const c = cfg(), room = c.rooms.Izakaya, solid = tiles(room, 'Colliders'), name = (id) => c.tilePalette[id];
+        const used = new Set(room.layers.flatMap((l) => Object.values(l.tiles)).map(name));
+        for (const re of [/^office-(?!void)/, /^(lantern-red|red-lanterns)/, /^(pub-in-|home-|konbini-)/, /bin/]) {
+            assert.deepStrictEqual([...used].filter((k) => re.test(k)), [], `${re}`);
+        }
+        const floor = tiles(room, 'Floor');
+        for (let x = 2; x <= 17; x++) for (let y = 3; y <= 12; y++) {
+            assert.ok(/^izakaya-in-floor-[ab]_0_0$/.test(name(floor[K(x, y)])), `floor ${x},${y}`);
+        }
+        // the back wall: two rows, solid end to end, inside the boundary so a phone's camera keeps it on screen
+        for (let x = 2; x <= 17; x++) for (const y of [1, 2]) {
+            assert.ok(K(x, y) in solid && inside(room.boundary, x, y), `back wall ${x},${y}`);
+        }
+        // the bar on the counter's cells, its stools with a place to stand between each
+        const size = (key) => { const m = c.spriteMetadata[key]; return [Math.round(0.5 / m.anchorX), Math.round(0.5 / m.anchorY)]; };
+        assert.deepStrictEqual(placed(c, room, 'izakaya-in-bar_0_0'), [[11, 5]]);
+        assert.deepStrictEqual(size('izakaya-in-bar_0_0'), [6, 1]);
+        for (let x = 11; x <= 16; x++) assert.ok(K(x, 5) in solid, `bar ${x},5`);
+        const stools = placed(c, room, 'izakaya-stool_0_0').map(([x, y]) => K(x, y));
+        for (const x of [11, 13, 15]) assert.ok(stools.includes(K(x, 6)) && K(x, 6) in solid, `stool ${x},6`);
+        for (const x of [12, 14, 16]) assert.ok(!(K(x, 6) in solid), `a place at the bar at ${x},6`);
+        // the back bar stands on row 3 behind it; the staff aisle (row 4) is open
+        assert.deepStrictEqual(placed(c, room, 'izakaya-in-backbar_0_0'), [[11, 2]]);
+        for (let x = 11; x <= 16; x++) assert.ok(K(x, 3) in solid, `back bar ${x},3`);
+        for (let x = 2; x <= 17; x++) assert.ok(!(K(x, 4) in solid), `row 4 at ${x}`);
+        // the tables, a stool north and south of each, a lantern hung two rows over each one's east cell
+        const tables = placed(c, room, 'izakaya-in-table_0_0').map(([x, y]) => K(x, y)).sort();
+        assert.deepStrictEqual(tables, TABLES.map(([x, y]) => K(x, y)).sort());
+        const tops = tiles(room, 'Tops'), lanterns = placed(c, room, 'izakaya-in-chochin_0_0');
+        assert.strictEqual(lanterns.length, 6);
+        assert.ok(lanterns.every(([x, y]) => name(tops[K(x, y)]) === 'izakaya-in-chochin_0_0'), 'hung, on Tops');
+        for (const [tx, ty] of TABLES) {
+            for (let x = tx; x < tx + 2; x++) assert.ok(K(x, ty) in solid, `table ${x},${ty}`);
+            assert.ok(stools.includes(K(tx, ty - 1)) && stools.includes(K(tx, ty + 1)), `stools at the table ${tx},${ty}`);
+            assert.ok(lanterns.some(([x, y]) => x === tx + 1 && y === ty - 2), `a lantern over the table at ${tx},${ty}`);
+        }
+        const glow = c.spriteMetadata['izakaya-in-chochin_0_0'].glow;
+        assert.ok(glow && glow.length === 1 && Number.isInteger(glow[0].color) && glow[0].r <= 2.5, 'the lantern glows at night');
+        assert.deepStrictEqual([room.lanternLight, room.shopEnabled, room.shopMenu], [true, false, 'izakaya']);
+        // every free floor cell can be walked to from the exits
+        const free = new Set();
+        for (let x = 2; x <= 17; x++) for (let y = 3; y <= 12; y++) if (!(K(x, y) in solid)) free.add(K(x, y));
+        const seen = new Set(), todo = room.transporters.map((t) => [t.gridX, t.gridY]);
+        while (todo.length) {
+            const [x, y] = todo.pop();
+            for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+                if (!free.has(K(nx, ny)) || seen.has(K(nx, ny))) continue;
+                seen.add(K(nx, ny));
+                todo.push([nx, ny]);
+            }
+        }
+        assert.deepStrictEqual([...free].filter((k) => !seen.has(k)), []);
+    });
+
+    test('in the Izakaya the bar sells the izakaya menu, the wall clock opens Time Travel and the menu strips say a line (#286)', () => {
+        const Rules = game('Interactions'), room = cfg().rooms.Izakaya;
+        const hit = (key) => plain(Rules.match(key, room, game('Shop.VENUES')));
+        assert.deepStrictEqual(hit('izakaya-in-bar_0_0'), { kind: 'izakaya', group: 'shop', footprint: true });
+        assert.deepStrictEqual(hit('office-counter2_0_0'), hit('izakaya-in-bar_0_0'), 'the other shops\' counters still sell');
+        assert.strictEqual(hit('izakaya-in-wall-clock_0_0').group, 'clock');
+        const menu = hit('izakaya-in-wall-menu_0_0');
+        assert.ok(menu && menu.group === 'flavour' && menu.footprint && menu.say && menu.say.length <= 100, 'the menu strips');
+        for (const piece of ['wall', 'backbar', 'table', 'chochin', 'casks', 'floor-a']) {
+            assert.strictEqual(hit(`izakaya-in-${piece}_0_0`), null, piece);
+        }
+        assert.strictEqual(Rules.RULES.filter((r) => r.kind === 'menu-strips').length, 1);
+    });
+
+    test('in the Izakaya you order at the bar from between the stools, bump the clock and the menu, and sit down to the nomikai (#286)', () => {
+        const { world } = worldWith(false);
+        const bump = (x, y, dir) => {
+            world.enter('Izakaya', x, y);
+            const r = world.step(dir);
+            assert.strictEqual(r.moved, false, `${x},${y} ${dir}`);
+            return r.interaction;
+        };
+        assert.ok(/^opens the IZAKAYA shop: Highball ¥\d+, Nama Beer ¥\d+, Edamame ¥\d+, Karaage ¥\d+/.test(world.describe(bump(12, 6, 'n'))));
+        assert.strictEqual(world.describe(bump(9, 3, 'n')), 'opens the time-travel date picker');
+        assert.ok(/^says: "beer, edamame, karaage/.test(world.describe(bump(4, 3, 'n'))));
+        assert.strictEqual(bump(5, 8, 'n').kind, 'drinking-game');
+        assert.strictEqual(bump(3, 7, 'e').kind, 'drinking-game');
+    });
+
+    test('the Izakaya\'s kit is drawn in the house look: doubled pixels, sheet colours, a small palette, inked silhouettes (#286)', () => {
+        const png = require(path.join(GV2, 'tools', 'png'));
+        const hex = (d, i) => [d[i], d[i + 1], d[i + 2]].map((v) => v.toString(16).padStart(2, '0')).join('');
+        const sheets = new Set();
+        const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).forEach((e) => {
+            const p = path.join(dir, e.name);
+            if (e.isDirectory()) walk(p);
+            else if (e.name.endsWith('.png') && !e.name.startsWith('preview')) {
+                const { data } = png.decode(fs.readFileSync(p));
+                for (let i = 0; i < data.length; i += 4) if (data[i + 3] === 255) sheets.add(hex(data, i));
+            }
+        });
+        walk(path.join(GV2, '..', 'art-source', 'GuttyKreum'));
+        for (const [piece, [cw, ch]] of Object.entries(PIECES)) {
+            const key = `izakaya-in-${piece}_0_0`;
+            const { width: w, height: h, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', key + '.png')));
+            assert.deepStrictEqual([w, h], [64 * cw, 64 * ch], key);
+            const at = (x, y) => (y * w + x) * 4;
+            for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
+                const v = data.readUInt32BE(at(x, y));
+                assert.ok([[1, 0], [0, 1], [1, 1]].every(([dx, dy]) => data.readUInt32BE(at(x + dx, y + dy)) === v), `${key}: (${x},${y}) is not a 2x2 block`);
+            }
+            const colours = new Set();
+            for (let i = 0; i < data.length; i += 4) {
+                assert.ok(data[i + 3] === 0 || data[i + 3] === 255, `${key}: alpha ${data[i + 3]}`);
+                if (data[i + 3] === 255) colours.add(hex(data, i));
+            }
+            assert.deepStrictEqual([...colours].filter((col) => !sheets.has(col)), [], `${key}: colours in no GuttyKreum sheet`);
+            assert.ok(colours.size <= (['bar', 'backbar'].includes(piece) ? 24 : 16), `${key}: ${colours.size} colours`);
+            if (!STANDING.includes(piece)) continue;
+            const clear = (x, y) => x < 0 || y < 0 || x >= w || y >= h || data[at(x, y) + 3] === 0;
+            for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+                if (!clear(x, y) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => clear(x + dx, y + dy))) {
+                    assert.strictEqual(hex(data, at(x, y)), '0a1627', `${key}: (${x},${y}) is on the silhouette and not ink`);
+                }
+            }
+        }
+        const check = fs.readFileSync(path.join(GV2, 'tools', 'check_generators.py'), 'utf8');
+        assert.ok(check.includes("'generate_izakaya_art'") && check.indexOf("'generate_izakaya_art'") < check.indexOf('ART_TOOLS += [WORLDMAP]'),
+            'check_generators.py runs the art tool, before the world map');
+    });
 };

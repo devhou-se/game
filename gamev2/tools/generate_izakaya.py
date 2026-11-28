@@ -23,7 +23,13 @@ Nothing else in the host is touched. To move the Izakaya again: seal the old
 door by hand (collider back, transporter and lanterns out), change HOST / DOOR
 / LANTERNS here and re-run.
 
-Run from gamev2/:  python3 tools/generate_izakaya.py
+The room is drawn with its own kit, izakaya-in-* (issue #286), which
+tools/generate_izakaya_art.py draws in the house look and registers: run that
+first. The only other sprites in it are the bar stools (izakaya-stool, from
+tools/extract_street.py) and the void every interior is filled with.
+
+Run from gamev2/:  python3 tools/generate_izakaya_art.py
+                   python3 tools/generate_izakaya.py
 Then:              python3 tools/config_to_tiled.py Izakaya Market
                    node tools/play.js lint Izakaya Market TokyoCity
                    node tools/play.js check
@@ -42,45 +48,48 @@ SIGNS = [((6, 36), 'wide', 'ad-wide-03'),      # 飲み放題 90分 ¥980 (all y
 cfg = rg.load_config()
 
 # ---- the interior --------------------------------------------------------------
-# The registered interior pack has no true wood floor, chairs, drinkware or
-# izakaya furniture yet. Warm floor tiles, office counters and cabinets are
-# deliberate placeholders; drink/glass shelves make the bar read clearly.
+# Drawn with the room's own kit, izakaya-in-* (tools/generate_izakaya_art.py, in the
+# house look): timber boards underfoot, a two-row plaster and timber back wall with the
+# menu strips and the clock, a back bar of bottles behind a six-cell bar, low tables,
+# paper lanterns hung overhead, sake casks in the corners. The stools are izakaya-stool.
+LAMPS = (3, 7, 10)                       # room columns of the lanterns hung along the back wall
+CASKS = ((2, 12), (17, 12), (17, 5))     # the feet of the cask stacks
+s = lambda piece: f'izakaya-in-{piece}_0_0'
+
 it = Interior(16, 10, ox=2, oy=3, w=20, h=15)     # the floor is room cells (2..17, 3..12)
-it.floor(lambda fx, fy: 'office-warm-autotile_center')
+it.floor(lambda fx, fy: s('floor-a' if (fx + fy) % 2 == 0 else 'floor-b'))
+it.side_walls(s('side-w'), s('side-e'), 2)
+it.front_wall(s('wall-front'), (7, 8), (s('threshold-w'), s('threshold-e')))
+
+# The back wall, two rows (room rows 1-2) inside the boundary, so a phone's camera keeps it on screen.
+WALL = {2: ('wall-menu', 2), 7: ('wall-clock', 1)}     # floor columns: the menu on room x 4-5, the clock on 9
+pieces, fx = [], 0
+while fx < it.fw:
+    piece, w = WALL.get(fx, ('wall', 1))
+    pieces.append((fx, s(piece), w))
+    fx += w
+it.back_wall(pieces, 2, view=True)
+
 ib = it.b                           # the furniture is laid in room coordinates
 
-# Back wall, menu and clock.
-it.back_wall([(fx, 'office-wall-white_0_0', 1) for fx in range(it.fw)], 1)
-ib.put('Other', 5, 2, 'office-poster-menu_0_0')
-ib.put('Other', 9, 2, 'office-clock_0_0')
-
-# Bar: bottle/glass shelves behind a six-cell counter, with a register.
-for x, key in zip(range(11, 17), [
-        'office-shelf-drinks_0_0', 'office-shelf-glass_0_0',
-        'office-shelf-drinks_0_0', 'office-shelf-glass_0_0',
-        'office-shelf-drinks_0_0', 'office-shelf-glass_0_0']):
-    ib.prop(key, x, 3, layer='Other')
-for x in (11, 13, 15):
-    ib.prop('office-counter2_0_0', x, 5, 2)
-ib.put('Tops', 15, 5, 'office-register_0_0')
+# The bar: the back bar of bottles against the wall, the counter that sells, its stools.
+ib.stand(s('backbar'), 11, 3, 6)                       # head over wall row 2, solid on (11..16, 3)
+ib.prop(s('bar'), 11, 5, 6)                            # (11..16, 5): the counter's cells
 for x in (11, 13, 15):
     ib.prop('izakaya-stool_0_0', x, 6)               # bar stools (tools/extract_street.py)
 
-# Red lanterns frame the dining room.
-ib.stamp('lantern-red', 2, 3)
-ib.stamp('lantern-red', 17, 3)
-ib.prop('office-plant-a_0_0', 2, 12)
-ib.prop('office-plant-b_0_0', 17, 12)
-
-# Communal tables. The sprite canvas is three cells wide but its visible table
-# and usable footprint are two, so only those two cells are solid/interactive.
-# Stools (never bins - issue #19) are placed diagonally to leave a direct
-# approach on both long sides instead of turning the dining area into a maze.
+# Communal tables, each two cells, with a stool north and south (never bins - issue #19),
+# which leaves a direct approach on both long sides; a lantern hangs over each.
 TABLES = [(4, 7), (4, 11), (12, 10)]
 for tx, ty in TABLES:
-    ib.prop('office-counter_0_0', tx, ty, 2)
+    ib.prop(s('table'), tx, ty, 2)
     for sx, sy in ((tx, ty - 1), (tx, ty + 1)):
         ib.prop('izakaya-stool_0_0', sx, sy)
+    ib.put('Tops', tx + 1, ty - 2, s('chochin'))       # (5,5), (5,9), (13,8): over each table
+for x in LAMPS:
+    ib.put('Tops', x, 2, s('chochin'))                 # cord down the wall, paper over floor row 3
+for x, y in CASKS:
+    ib.stand(s('casks'), x, y)
 
 damian = rg.make_npc('Damian', 'damian', 6, 7, [
     'Bump the table when you are ready. Fifteen seconds. No excuses.',
@@ -92,15 +101,15 @@ for opponent in (damian, bailey):
     opponent['drinkingGameOpponent'] = True
     opponent['stationary'] = True
 
-# Clear doorway mats at the bottom (room cells 9,13 and 10,13). Arrival is one row
+# The way out at the bottom (room cells 9,13 and 10,13), drawn by the thresholds. Arrival is one row
 # inside, never on an exit transporter, so entering cannot bounce the player straight back out.
 outside = (DOOR[0], DOOR[1] + 1)   # the pavement cell in front of the street door
-ARRIVE = it.doorway(7, HOST, outside, mat='office-warm-autotile_center')[0]
+ARRIVE = it.doorway(7, HOST, outside)[0]
 cfg['rooms']['Izakaya'] = it.room(
     'Izakaya', npcs=cfg['rooms'].get('Izakaya', {}).get('npcs') or [damian, bailey],
-    pockets=[(15, 0)],             # the corner behind the east lantern, shut in by the bar's shelves
+    lanternLight=True,             # at night the room dims and the hung lanterns glow, as the pub's lamps do
     shopEnabled=False,             # not a konbini: its shelves and tables stay furniture...
-    shopMenu='izakaya',            # ...but the bar (office-counter2) sells the izakaya menu
+    shopMenu='izakaya',            # ...but the bar (izakaya-in-bar) sells the izakaya menu
     drinkingGame={
         'triggerCells': [[4, 7], [5, 7]],
         'durationMs': 15_000,

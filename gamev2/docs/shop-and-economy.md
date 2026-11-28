@@ -26,7 +26,8 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
 | a 7-Eleven's drinks coolers (`office-fridge`) and coffee machine (`konbini-coffee`); `office-shelf-drinks` / `-shelf-glass` / `office-freezer` in Don Takote | `drinks` — the drinks only |
 | a 7-Eleven's open chillers (`konbini-chiller-a` / `-b`) and its snack, noodle and bread shelf blocks (`konbini-gondola-snacks` / `-noodles` / `-bread`); `office-shelf-snacks` in Don Takote | `snacks` — the food only |
 | the rest of a 7-Eleven (issue #221) | the dispenser on the back wall (`konbini-water`) pours a cup of water; the wall clock (`konbini-wall-clock`, bumped from the floor under it) opens Time Travel; the cash machine, the copier, the magazine rack, the ice-cream chest and the sundries shelf block (`konbini-gondola-daily`) say a line; the baskets and the plain wall do nothing |
-| `office-counter2*` (the bar) in a room with `"shopMenu": "izakaya"` | `izakaya` — items with `where: 'izakaya'` |
+| `izakaya-in-bar` (the bar, any cell of it, bumped from between the stools) in a room with `"shopMenu": "izakaya"` | `izakaya` — items with `where: 'izakaya'` |
+| the rest of the Izakaya (issue #286) | the wall clock (`izakaya-in-wall-clock`, bumped from the floor under it) opens Time Travel; the menu strips (`izakaya-in-wall-menu`) say a line; the back bar, the tables, the lanterns and the casks do nothing |
 
 - A "konbini" is any room with `interior: true` and `shopEnabled !== false` — the
   7-Eleven interiors and the Don Takote discount stores (below). The
@@ -51,6 +52,12 @@ food & drink effects. Everything starts with a bump (`GameScene.checkNPCInteract
   test ties the two keys to those two specs).
   The opponents at the table (Damian; Bailey when you play as Damian) are fixtures
   kept from the room as it stands. Tests: `tools/tests/izakaya.test.js`.
+- **What the Izakaya is drawn with** (issue #286): its own kit, the 15 `izakaya-in-*`
+  sprites that `tools/generate_izakaya_art.py` draws in the house look (timber boards, a
+  two-row plaster and timber back wall with three menu strips and a pendulum clock, a back
+  bar of bottles, the 6-cell bar on `(11..16, 5)`, low tables, hung paper lanterns, sake
+  casks); the stools are `izakaya-stool`. No `office-*` sprite is in it but the void. It is
+  `lanternLight`: at night the room dims and the six hung lanterns glow, as the pub's lamps do.
 - **Vending machines are solid down to their foot** (issue #101). A machine is a cabinet
   tile over a foot tile (`*-vending-machine-top*` over `-bottom` / `-base*`; the tall ones
   are a 1x2 cabinet sprite over a base), and the foot is only the last 14-18px of the
