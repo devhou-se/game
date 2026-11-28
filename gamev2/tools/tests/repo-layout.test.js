@@ -75,6 +75,26 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
         assert.deepStrictEqual(hosting.map((h) => [h.site, h.public]), [['devhouse-game-canvas', 'dist']]);
     });
 
+    test('the skills name no room the world has lost (#266)', () => {
+        // Machi, Inaka and Yukimura were deleted (#68) and the skills went on sending agents to them
+        const config = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
+        const known = new Set([...Object.keys(config.rooms), ...Object.keys(config.cities)]);
+        const skills = walk(path.join(ROOT, '.claude', 'skills'), (n) => n === 'SKILL.md');
+        assert.ok(skills.length >= 3, `found only ${skills.length} skills`);
+        let named = 0;
+        for (const f of skills) {
+            fs.readFileSync(path.join(ROOT, '.claude', 'skills', f), 'utf8').split('\n').forEach((line, i) => {
+                assert.ok(!/\b(Machi|Inaka|Yukimura)\b/.test(line), `${f}:${i + 1} names a town that was deleted`);
+                // a room handed to a play.js command in an example (`<Room>` is a placeholder, not a name)
+                for (const [, room] of line.matchAll(/\b(?:warp|goto|lint|render|reach|transporters) ([A-Z]\w*)/g)) {
+                    assert.ok(known.has(room), `${f}:${i + 1} names ${room}, which is not a room or a city in config.json`);
+                    named++;
+                }
+            });
+        }
+        assert.ok(named >= 5, `only ${named} rooms were read from the skills' examples`);
+    });
+
     test('the deploy builds the game, publishes the build and caches the packs for ever (#244)', () => {
         const [hosting] = JSON.parse(fs.readFileSync(path.join(ROOT, 'firebase.json'), 'utf8')).hosting;
         // a pack's name is the hash of its bytes, so it never changes under a name; the page that names the

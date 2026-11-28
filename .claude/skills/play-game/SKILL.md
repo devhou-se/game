@@ -20,7 +20,7 @@ One command per call, or several on stdin (one per line, `#` for comments):
 node tools/play.js <<'EOF'
 reset
 date 2025-11-04
-warp Inaka 6 9
+warp Osaka 24 10
 move w 3
 EOF
 ```
@@ -35,17 +35,17 @@ Cells are `x,y` from the room's top-left, the same numbers as `gridX`/`gridY`
 in `config.json`, Tiled cell coordinates, and the in-game debug inspector.
 `n` is up (y - 1), `e` is right (x + 1).
 
-**Tokyo is one stitched city.** The game merges Tokyo, Market, Palace, Park
-and Machi into a single room (`TokyoCity`) and so does this tool — it runs the
+**Tokyo is one stitched city.** The game merges Tokyo, Market, Palace and
+Park into a single room (`TokyoCity`) and so does this tool — it runs the
 game's own stitcher. Coordinates are still each district's own, everywhere:
-`where` prints `Market 5,24 (TokyoCity 111,24)`, `look` rules its map in the
+`where` prints `Market 5,24 (TokyoCity 63,24)`, `look` rules its map in the
 cells of the district you stand in (a neighbour's cells run negative or past
 the edge), and `goto`, `inspect` and `warp` take district cells. Walking from
 one district into the next is just a step (`walked from Tokyo into Market`);
 `goto Market 5 24` from Tokyo is one walk. `map` draws your district, `map
 city` the whole city; `lint TokyoCity` and `render TokyoCity out.png` work on
 the merged room, woodland included. Add `--stitch=0` to any command to model
-what `?stitch=0` plays: five rooms joined by hidden seam teleports.
+what `?stitch=0` plays: four rooms joined by hidden seam teleports.
 
 ## Reading the map
 

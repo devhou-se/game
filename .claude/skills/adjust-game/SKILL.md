@@ -20,9 +20,9 @@ next regen or breaks determinism.
   regenerate the room's `.tmj`. Never hand-edit config.json for these; a
   re-run would wipe your change. NPC changes for these rooms go in the
   generator too (`rg.make_npc(..., states=...)`), not `npc_state.py`.
-- **Ported rooms** (Tokyo, Market, Park, Palace — no generator) and Machi
-  (its generator must not be re-run): config.json is the map source. Add or
-  remove a prefab with `python3 tools/stamp_prefab.py <Room> --add <prefab> X Y`
+- **Ported rooms** (Tokyo, Market, Park, Palace — no generator): config.json
+  is the map source. Add or remove a prefab with
+  `python3 tools/stamp_prefab.py <Room> --add <prefab> X Y`
   / `--remove <prefab> X Y` (`--dry-run` first), which refuses a placement
   that would bury an NPC, eat a door or cut off part of the map. For anything
   a prefab cannot express, edit config.json with a small python script
@@ -93,7 +93,8 @@ If sprite sizes differ when swapping A→B, re-anchor so the FEET line up
    free where open. If a door/transporter changed, walk through it both ways.
 5. If the room is in `devhouse.world` and its size/position changed, update
    the world file and rasterize it. If it is a district of a stitched city
-   (config `cities` — Tokyo, Market, Palace, Park, Machi), also run
+   (config `cities` — Tokyo, Market, Palace and Park in Tokyo; Kanazawa,
+   Shirakawago and Toyama in Hokuriku), also run
    `python3 tools/sync_cities.py`: the game merges those rooms into one map
    using the world offsets, so their edges are visible from the neighbour.
 

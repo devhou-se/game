@@ -35,9 +35,9 @@ substitute the closest available prefab rather than inventing sprites.
     snow set `tree-snow`, `shrub-large-snow`, `shrub-small-snow`
 
   Each prefab knows its sprites, collision, and `door` cells. To add one to a
-  room that has no generator (Tokyo, Market, Park, Palace) or whose generator
-  must not be re-run (Machi), use `tools/stamp_prefab.py` instead of a
-  generator - see `gamev2/tiled/README.md`.
+  room that has no generator (Tokyo, Market, Park, Palace), use
+  `tools/stamp_prefab.py` instead of a generator - see
+  `gamev2/tiled/README.md`.
 - A layer holds one tile per cell and a big sprite lives on its top-left
   cell only, so `b.put`/`b.stamp` raise if they would replace a different
   sprite off the Floor layer. Move one of the two; pass `replace=True` only
