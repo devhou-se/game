@@ -13,7 +13,8 @@ would change (issue #107, see "Generated rooms stay regenerable"). It also re-se
 re-seeded), and runs the art / prefab tools (`make_prefabs`, `generate_hokkaido`, `_sendai_art`, `_fukuoka_art`, `_hokuriku_art`, `_sapporo_art`, `_sanfranbourne_art`, `_tsutenkaku`, `_tokyo_art`,
 `_discount_art`, `_cooler_art`, `_konbini_art`, `_seven_eleven_art`, `_station_art`, `_house_art`, `_shrine_art`, `make_snow_tiles`, `make_road_tiles`, `generate_ads`, `generate_cast`, the
 `extract_*.py` scripts, `extract_station` among them) and fails if `assets/sprites`, `assets/ads`, `assets/map`, `tiled/prefabs` or `config.json` would
-change (issues #186, #193). Run it after any edit to a
+change (issues #186, #193). Last it runs `make_worldmap.py --pil` and fails if `assets/map/world-map.png` or
+`world-map.json` would change (issue #270, see "The world map"). Run it after any edit to a
 generated room, a map or a generator. The room and map checks take a few seconds and need no Pillow; the
 art tools are listed as `skip` without it, so use `/Library/Developer/CommandLineTools/usr/bin/python3
 tools/check_generators.py` to cover them (ten seconds; `generate_ads` and `extract_city` also need a Japanese system font,
@@ -244,6 +245,17 @@ stores, houses and shrines takes any door or seed), keep their digests, and comp
   this picture** (issue #211: it is a map of Japan, below); the studio's world layout, `CityStitcher`'s boot check,
   `TrainTravel.dirTo` and the map-data tests still read it. Regenerate
   `assets/map` with the tool whenever a district, `cities.<City>.backdrop` or `patch` changes.
+- **A stale world map fails `check_generators.py`** (issue #270): `make_worldmap` is the last of its
+  `ART_TOOLS`, run as `make_worldmap.py --pil` in the scratch copy (which has `src/`, for `play.js`, and a copy
+  of `devhouse.world` beside it), and the picture is compared by its pixels like any other PNG, `world-map.json`
+  byte for byte. `DRIFT make_worldmap.py` means an outside changed (a map, a sprite on one, `devhouse.world`, a
+  city's `backdrop` or `patch`) and the map was not rebuilt, or a merge took one side's `world-map.png`: unlike
+  the other tools, the fix is to run **`python3 tools/make_worldmap.py --pil`** and commit `assets/map` (fix
+  whatever else drifts first: the map shows it). **The committed map is the `--pil` one.** The check forces
+  `--pil` (`ARGS`) because `tmxrasterizer` draws another picture, so a map made without the flag on a machine
+  that has Tiled fails the check; the tool says so when it uses `tmxrasterizer`. It needs `node` and Pillow
+  (`skip` without Pillow), and eight seconds. Should the map ever be hand-made art (`"custom": true`), the tool
+  refuses to run and the check fails: take `make_worldmap` out of `ART_TOOLS` then (a unit test says so too).
 - **The Map overlay's picture of Japan** (issue #211): `tools/make_japan_map.py` (Pillow, in `ART_TOOLS`;
   `assets/map` is one of `check_generators`' compared `OUTPUTS`) draws `assets/map/japan.png` from
   hand-authored coastlines in the tool (`ISLANDS`: Hokkaido, Honshu, Shikoku, Kyushu and ten small islands,
@@ -255,7 +267,7 @@ stores, houses and shrines takes any door or seed), keep their digests, and comp
   land. Change a coastline or the bounds there and re-run it; the dots follow the json. `--preview out.png`
   writes a 3x picture and nothing else.
 - **World map without Tiled**: `tools/make_worldmap.py` uses `tmxrasterizer` when Tiled is installed and
-  otherwise (or with `--pil`) draws the rooms itself via `node tools/play.js render`, which is also the
+  otherwise (or with `--pil`, which is how the committed map is made) draws the rooms itself via `node tools/play.js render`, which is also the
   "look at the render" step for a new room: `node tools/play.js render <Room> out.png [--scale .5] [--colliders]`.
 
 ## Asset Generation

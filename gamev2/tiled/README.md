@@ -153,7 +153,10 @@ it pins on Palace are the only thing a generator writes to a ported map.
 `node tools/play.js render <Room> out.png [--scale 0.5] [--colliders]` draws
 `tiled/<room>.tmj` in the game's own draw order (feet Y-sort, Tops bias; no
 dependencies) — use it wherever these docs say `tmxrasterizer` if Tiled isn't
-installed. `tools/make_worldmap.py` falls back to it automatically.
+installed. `tools/make_worldmap.py` falls back to it automatically, and always
+uses it with `--pil` — which is how the committed `assets/map/world-map.png` is
+made: `tools/check_generators.py` rebuilds the map that way and fails if the
+committed one differs.
 
 ## Gotcha ledger
 

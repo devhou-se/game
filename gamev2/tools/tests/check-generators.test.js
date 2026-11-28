@@ -1,6 +1,7 @@
 // Issue #235: tools/check_generators.py compares a PNG by its decoded pixels, not its bytes (which depend on
 // the Pillow and zlib that packed it), and the Checks workflow installs the pinned Pillow so the art tools
 // are checked there.
+// Issue #270: make_worldmap.py is one of those tools, so a world map nobody rebuilt is drift.
 module.exports = ({ test, assert, fs, path, GV2 }) => {
     const { spawnSync } = require('child_process');
     const os = require('os');
@@ -111,6 +112,60 @@ module.exports = ({ test, assert, fs, path, GV2 }) => {
                 'tiled/housenowhere9.tmj has no room in config.json: delete it',
                 `room ${key} has no tiled/${key.toLowerCase()}.tmj: run config_to_tiled.py ${key}`,
             ] });
+        } finally {
+            fs.rmSync(tmp, { recursive: true, force: true });
+        }
+    });
+
+    test('check_generators: make_worldmap is an art tool run with --pil, on a scratch copy that has what it reads (#270)', () => {
+        const out = python([
+            'out["last"] = cg.ART_TOOLS[-1] == cg.WORLDMAP == "make_worldmap" and cg.CHECKS[-1] == cg.WORLDMAP',
+            'out["args"] = cg.ARGS',
+            // play.js loads the game's code from src/ and the tool writes under assets/map
+            'out["copied"] = "src" in cg.INPUTS and "tools" in cg.INPUTS and "assets/map" in cg.OUTPUTS and "assets/sprites" in cg.OUTPUTS',
+            'out["noPillow"] = cg.skips([cg.WORLDMAP, "generate_osaka"], False, False)',
+            'out["noFont"] = cg.skips([cg.WORLDMAP], True, False)',
+        ].join('\n'));
+        assert.ok(out.last, 'make_worldmap is the last of ART_TOOLS: it draws what the other tools made');
+        // without --pil the tool draws with tmxrasterizer where Tiled is installed, and that is another picture
+        assert.deepStrictEqual(out.args, { make_worldmap: ['--pil'] });
+        assert.ok(out.copied, 'the scratch project lacks something make_worldmap reads or writes');
+        assert.deepStrictEqual(out.noPillow, { make_worldmap: 'needs Pillow' });
+        assert.deepStrictEqual(out.noFont, {}, 'the map sets no Japanese text');
+        const tool = fs.readFileSync(path.join(GV2, 'tools', 'make_worldmap.py'), 'utf8');
+        assert.ok(/'--pil' not in sys\.argv/.test(tool), 'make_worldmap.py no longer takes --pil');
+        const meta = JSON.parse(fs.readFileSync(path.join(GV2, 'assets', 'map', 'world-map.json'), 'utf8'));
+        assert.strictEqual(meta.custom, false, 'a hand-made map ("custom": true) is not one make_worldmap rebuilds: take it out of ART_TOOLS');
+    });
+
+    test('check_generators: a world map that is not what make_worldmap draws is drift, and only the picture is named (#270)', () => {
+        // a project like the committed one (devhouse.world beside it), but for a patch painted on its map
+        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'check-generators-worldmap-'));
+        try {
+            const root = path.join(tmp, 'gamev2');
+            fs.mkdirSync(path.join(root, 'assets', 'map'), { recursive: true });
+            for (const d of ['tools', 'src', 'fonts', 'tiled', path.join('assets', 'sprites'), path.join('assets', 'ads')]) fs.symlinkSync(path.join(GV2, d), path.join(root, d));
+            for (const f of fs.readdirSync(path.join(GV2, 'assets', 'map'))) fs.copyFileSync(path.join(GV2, 'assets', 'map', f), path.join(root, 'assets', 'map', f));
+            fs.copyFileSync(path.join(GV2, 'config.json'), path.join(root, 'config.json'));
+            fs.copyFileSync(path.join(GV2, '..', 'devhouse.world'), path.join(tmp, 'devhouse.world'));
+            const run = spawnSync('python3', ['-c', [
+                'import json, os, sys, check_generators as cg',
+                'out = {"pillow": cg.have_pillow()}',
+                'if out["pillow"]:',
+                '    from PIL import Image',
+                '    f = os.path.join(sys.argv[1], "assets", "map", "world-map.png")',
+                '    im = Image.open(f).convert("RGB")',
+                '    im.paste((255, 0, 255), (40, 40, 104, 104))',
+                '    im.save(f)',
+                '    out["stale"] = cg.check([cg.WORLDMAP], sys.argv[1])',
+                'print("\\n" + json.dumps(out))'].join('\n'), root],
+                { cwd: GV2, encoding: 'utf8', maxBuffer: 1 << 26, timeout: 120000, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHONPATH: path.join(GV2, 'tools') } });
+            assert.strictEqual(run.status, 0, run.stderr);
+            const out = JSON.parse(run.stdout.trim().split('\n').pop());
+            // the tool draws with Pillow: without it the check lists it as skipped and there is nothing to run
+            if (!out.pillow) return;
+            // world-map.json is not named: the tool ran to its end and wrote the committed one, byte for byte
+            assert.deepStrictEqual(out.stale, { make_worldmap: ['assets/map/world-map.png changed'] });
         } finally {
             fs.rmSync(tmp, { recursive: true, force: true });
         }

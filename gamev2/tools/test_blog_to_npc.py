@@ -1153,7 +1153,7 @@ def test_generator_check_skips():
     Pillow, the two that draw Japanese text without a readable font (#193)."""
     cg = check_generators
     assert {'generate_ads', 'generate_cast'} < set(cg.ART_TOOLS) and set(cg.FONT_TOOLS) < set(cg.ART_TOOLS)
-    assert 'assets/ads' in cg.OUTPUTS and 'src/CharacterCreator.js' in cg.INPUTS
+    assert 'assets/ads' in cg.OUTPUTS and 'src' in cg.INPUTS    # generate_cast reads src/CharacterCreator.js
     assert cg.skips(cg.CHECKS, True, True) == {}
     assert cg.skips(cg.CHECKS, True, False) == {n: 'needs a Japanese system font' for n in cg.FONT_TOOLS}
     assert sorted(cg.skips(cg.CHECKS, False, False)) == sorted(cg.ART_TOOLS)

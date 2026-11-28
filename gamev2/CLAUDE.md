@@ -80,7 +80,7 @@ by one agent per town at a time.
 - **Maps**: `tiled/*.tmj` is the map source of truth at runtime; `config.json`'s room layers are the
   fallback and what the generators write. After a config or generator edit, re-seed the map:
   `python3 tools/config_to_tiled.py <Room> [<Room> ...]`. If anything visible moved, rebuild
-  `assets/map` with `tools/make_worldmap.py` (needs Pillow).
+  `assets/map` with `tools/make_worldmap.py --pil` (needs Pillow; `check_generators.py` fails on a stale map).
 - **Room generators are the source of truth for generated rooms.** Edit the generator and re-run it, or
   make a surgical edit and mirror it in the generator; never leave `check_generators.py` failing. Ported
   rooms (Tokyo, Market, Park, Palace) have no generator; their map is the source of truth (Tokyo's west gate

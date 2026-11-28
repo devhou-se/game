@@ -2,8 +2,9 @@
 """check_generators.py — a generator re-run on an unchanged world must leave
 what is committed as it is: config.json for the room generators (issue #107),
 the Tiled maps for config_to_tiled.py, and the sprites and prefabs for the
-art tools (issue #186). Text is compared byte for byte, a PNG by its decoded
-pixels (issue #230).
+art tools (issue #186), and the picture of the overworld for make_worldmap.py
+(issue #270). Text is compared byte for byte, a PNG by its decoded pixels
+(issue #230).
 
 The generated rooms also collect edits their generator did not make: the blog
 pipeline's NPC states, a shop door wired by another generator, a surgical fix
@@ -20,6 +21,14 @@ room has no map (unmatched_maps, issue #243: a removed building's map left
 behind, a new room never seeded), and each art / prefab tool must rebuild
 the committed assets/sprites and tiled/prefabs. Whatever a tool writes under
 OUTPUTS is compared, so a room generator that touched a sprite fails too.
+
+make_worldmap.py is the one tool whose output follows the rest: it draws
+assets/map/world-map.png from the maps, the sprites and ../devhouse.world. So
+its DRIFT means something visible outside moved and the map was not rebuilt
+(or a merge kept one side's picture), and the fix is to re-run it with --pil
+and commit assets/map. The check runs it with --pil (ARGS): the rooms drawn by
+`node tools/play.js render` on every machine, never by Tiled's tmxrasterizer,
+whose picture is another one. It needs node as well as Pillow.
 
 A PNG is the same when it decodes to the same picture (same_picture): the
 bytes of the file also depend on the zlib that Pillow was built with, so the
@@ -100,14 +109,22 @@ ART_TOOLS += ['generate_wheel_art']          # Osaka: the gondola you board and 
 ART_TOOLS += ['generate_tokyo_art']          # Tokyo Tower and Tokyo Station, placeholders until the real art (issue #70)
 ART_TOOLS += ['generate_karuizawa_art']      # Karuizawa's own art: the fingerpost, the Ginza's three shopfronts, the larches, Shiraito Falls and the corn stall (issues #260, #261, #262)
 ART_TOOLS += ['generate_asahikawa_art']      # Asahikawa's own art (issue #219, stage B)
+# make_worldmap.py: assets/map/world-map.png and .json, the overworld drawn from the committed maps and
+# sprites. Last: it makes no art of its own, it shows what the tools above made (issue #270)
+WORLDMAP = 'make_worldmap'
+ART_TOOLS += [WORLDMAP]
+# what a tool is run with. --pil: the map as play.js draws it on any machine, the one that is committed;
+# without it the tool uses Tiled's tmxrasterizer where the app is installed, and that is another picture
+ARGS = {WORLDMAP: ['--pil']}
 # the art tools that also need a Japanese system font (generate_ads.find_font)
 FONT_TOOLS = ['generate_ads', 'extract_city']
 CHECKS = GENERATORS + [TILED] + ART_TOOLS
 # what a tool reads and may write, relative to gamev2/ — copied to the scratch
 # project once (plus config.json), compared and put back after every run
 OUTPUTS = ['tiled', 'assets/sprites', 'assets/ads', 'assets/map']
-# (fonts: generate_station_art sets its signs in the game's own pixel fonts)
-INPUTS = ['tools', 'src/CharacterCreator.js', 'fonts'] + OUTPUTS
+# (src: generate_cast reads the character creator's tables, and make_worldmap's play.js loads the game's
+# own code; fonts: generate_station_art sets its signs in the game's own pixel fonts)
+INPUTS = ['tools', 'src', 'fonts'] + OUTPUTS
 
 
 def pillow_version():
@@ -260,6 +277,11 @@ def check(names, root='.'):
         source_art = os.path.abspath(os.path.join(root, '..', 'art-source'))
         if os.path.isdir(source_art):
             os.symlink(source_art, os.path.join(top, 'art-source'))
+        # ...and so that ../devhouse.world does, where make_worldmap reads each room's place (a copy: a tool
+        # that wrote to it would otherwise write to the real one)
+        world = os.path.join(root, '..', 'devhouse.world')
+        if os.path.isfile(world):
+            shutil.copyfile(world, os.path.join(top, 'devhouse.world'))
         for rel in INPUTS:
             src, dst = os.path.join(root, rel), os.path.join(work, rel)
             if os.path.isdir(src):
@@ -270,8 +292,10 @@ def check(names, root='.'):
         scratch = os.path.join(work, 'config.json')
         for name in names:
             open(scratch, 'w').write(committed)
-            args = tiled_rooms(work) if name == TILED else []
-            run = subprocess.run([sys.executable, f'tools/{name}.py'] + args, cwd=work,
+            args = tiled_rooms(work) if name == TILED else ARGS.get(name, [])
+            # TMPDIR: what a tool leaves in the temporary folder (play.js keeps a session file there) goes
+            # with the scratch project
+            run = subprocess.run([sys.executable, f'tools/{name}.py'] + args, cwd=work, env={**os.environ, 'TMPDIR': top},
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             files = restore(root, work)     # also after a crash: it may have written some
             # a map without a room, a room without a map: no re-seed shows either
@@ -300,7 +324,7 @@ def main(argv):
     pillow = have_pillow()
     skipped = skips(names, pillow, pillow and have_jp_font())
     failures = check([n for n in names if n not in skipped])
-    what = lambda n: ('the Tiled maps' if n == TILED else
+    what = lambda n: ('the Tiled maps' if n == TILED else 'the world map' if n == WORLDMAP else
                       'the sprites and prefabs' if n in ART_TOOLS else 'config.json')
     for name in names:
         if name in skipped:
@@ -317,7 +341,10 @@ def main(argv):
         print('\nA generator no longer rebuilds the committed world. Fold the difference into the\n'
               'generator (or have it keep what it does not own) - do not re-run it over the room.\n'
               'For a Tiled map: python3 tools/config_to_tiled.py <Room> after the config edit.')
-        if any(n in ART_TOOLS for n in failures):
+        if WORLDMAP in failures and not failures[WORLDMAP][0].startswith('exited '):
+            print('For the world map, when the other checks are ok: python3 tools/make_worldmap.py --pil, and\n'
+                  'commit assets/map. Something visible outside moved, or a merge kept one side\'s picture.')
+        if any(n in ART_TOOLS and n != WORLDMAP for n in failures):
             print(f'The art tools ran on Pillow {pillow_version()}. A sprite drawn a pixel off by another Pillow\n'
                   'shows as drift too: docs/generators-and-checks.md lists the versions that rebuild the art.')
     if skipped:

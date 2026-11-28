@@ -25,7 +25,11 @@ tool runs on a machine without Tiled. Either way a stitched city (config
 `cities`) is then drawn over its districts as the one room the game plays,
 woodland included, by `play.js render <City>`. Needs Pillow and node.
 
-RE-RUN whenever exterior rooms change (unless custom). Run from gamev2/.
+RE-RUN whenever exterior rooms change (unless custom), WITH --pil: the
+committed map is the play.js picture, and tools/check_generators.py re-runs
+this tool with --pil and fails if the committed map is not what it draws
+(issue #270). tmxrasterizer's picture is not the same one, so a map drawn by
+it fails that check. Run from gamev2/.
 """
 import json, os, subprocess, sys, tempfile
 
@@ -83,6 +87,8 @@ if os.path.exists(RAST) and '--pil' not in sys.argv:
                     os.path.abspath(WORLD), tmp], check=True)
     im = Image.open(tmp).convert('RGB')
     os.unlink(tmp)
+    print('rooms drawn by tmxrasterizer - check_generators.py compares the committed map with the --pil '
+          'picture: re-run with --pil before committing assets/map', file=sys.stderr)
 else:
     # No Tiled on this machine (or --pil): each room is drawn by the game's
     # own draw order (`node tools/play.js render`, colliders and Meta pins
