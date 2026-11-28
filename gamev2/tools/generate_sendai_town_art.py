@@ -2423,41 +2423,79 @@ def family(role, tex, kerb, kw):
     return im
 
 
-PAVERS = (rgb('c9b59b'), rgb('bfa98d'), rgb('d1bfa4'), rgb('c4af94'))
+# The six grounds in the house look (docs/generators-and-checks.md, "House look: GuttyKreum"): every
+# colour is one the GuttyKreum sheets use, each slab, paver, tile, brick and plank is lit from the upper
+# left, no face is one colour from edge to edge, and each kerb ends in one dithered row of its shadow.
+GRANITE_HI, GRANITE, GRANITE_LO, GRANITE_JOINT = rgb('dae2e4'), rgb('bcc7cc'), rgb('a4b0b5'), rgb('949bb2')
+
+
+def _lit(gap, x, y, face, hi, lo):
+    """Light from the upper left on a jointed floor: a piece's top row and left column (the pixels
+    just below or right of a joint) take `hi`, its bottom row and right column `lo`."""
+    if gap(x + 1, y) or gap(x, y + 1):
+        return lo
+    if gap(x - 1, y) or gap(x, y - 1):
+        return hi
+    return face
+
+
+def _stone_kerb(m, along, shadow):
+    """A pale granite kerb, 4 wide: a lit lip, a face jointed every 16, its far edge, then one
+    dithered row of shadow (`shadow` is the two tones of the floor it falls on)."""
+    if m == 3:
+        return shadow[along % 2]
+    if m == 0:
+        return GRANITE_HI
+    if along % 16 == 15:
+        return GRANITE_JOINT
+    return GRANITE if m == 1 else GRANITE_LO
+
+
+PAVERS = (rgb('c2ac9e'), rgb('b3aaa0'), rgb('c2ac9e'), rgb('be9e8c'))
+PAVER_HI, PAVER_LO, PAVER_JOINT = rgb('d2bab0'), rgb('a68777'), rgb('8e7366')
+LEAF, LEAF_HI, LEAF_RUS, LEAF_LO = rgb('c6a663'), rgb('f3d890'), rgb('ce6a42'), rgb('a7843b')
+
+
+def _paver_gap(x, y):
+    return y % 4 == 3 or (x + (y // 4 % 2) * 4) % 8 == 7
 
 
 def jozenji_tex(x, y):
+    """Warm stone pavers in running bond (8 x 4, period 32), each lit on its top row and left
+    column, with keyaki leaves fallen on them in gilt and russet."""
+    if _paver_gap(x, y):
+        return PAVER_JOINT
+    if h3(x, y, 31) < 5 or h3(x - 1, y, 31) < 5:
+        return LEAF if h3(x, y, 2) % 3 else LEAF_HI               # keyaki leaves, fallen
+    if h3(x, y, 47) < 4:
+        return LEAF_RUS
+    if h3(x, y, 53) < 2:
+        return LEAF_LO
     j = y // 4
     u = x + (j % 2) * 4
-    if y % 4 == 3 or u % 8 == 7:
-        return rgb('a8937a')
-    if h3(x, y, 31) < 5 or h3(x - 1, y, 31) < 5:
-        return KEY if h3(x, y, 2) % 3 else KEY_HI                 # keyaki leaves, fallen
-    if h3(x, y, 47) < 4:
-        return RUS
-    if h3(x, y, 53) < 2:
-        return KEY_LO
-    return PAVERS[(u // 8 * 3 + j * 5) % 4]
+    return _lit(_paver_gap, x, y, PAVERS[(u // 8 * 3 + j * 5) % 4], PAVER_HI, PAVER_LO)
 
 
 def jozenji_kerb(m, along):
-    if m == 3:
-        return rgb('8f8676')
-    if along % 16 == 15:
-        return rgb('8a8e98')
-    return rgb('dde0e5') if m == 0 else rgb('b9bdc4')
+    return _stone_kerb(m, along, (PAVER_JOINT, PAVER_LO))
+
+
+RAKE_HI, RAKE_LO = rgb('b0b5d7'), rgb('868da9')
+GRAVEL, GRIT_HI, GRIT_LO = rgb('a2a3bd'), rgb('adb2c2'), rgb('949bb2')
 
 
 def lane_tex(x, y):
-    """Plain raked gravel: fine cool-grey grit, the rake's lines running with
-    the lane in a slow wave (period 32, so cells join)."""
+    """Plain raked gravel: fine cool-grey grit, the rake's lines running with the lane in a slow
+    wave (period 32, so cells join): a lit ridge, the face, its shadow, the trough."""
     k = h3(x, y, 17)
     rake = (y + round(1.5 * math.sin(x * math.pi / 16))) % 4
     if rake == 0:
-        return rgb('9499a8') if k > 70 else rgb('a5a9b5')
-    if rake == 1:
-        return rgb('bfc3cd') if k > 80 else rgb('b0b4bf')
-    return rgb('c4c8d1') if k < 26 else (rgb('979baa') if k > 232 else rgb('a9adb9'))
+        return GRIT_HI if k > 200 else RAKE_HI                    # the ridge, lit
+    if rake == 2:
+        return GRAVEL if k > 200 else RAKE_LO                     # its shadow
+    if rake == 3:
+        return GRIT_LO if k > 215 else GRIT_HI                    # the trough
+    return GRIT_HI if k < 20 else (GRIT_LO if k > 232 else GRAVEL)
 
 
 STEPPING = {'a': [[(6, 10), (13, 5), (23, 7), (27, 14), (24, 23), (14, 26), (7, 21)]],
@@ -2488,107 +2526,143 @@ def stepping_stone(variant):
     return im
 
 
+KERB_DK = (rgb('848295'), rgb('5f6177'), rgb('47485d'))
+
+
 def lane_kerb(m, along):
+    """Dark kerb stones of uneven length: a lit top, a face, and one dithered row of shadow."""
+    if m == 2:
+        return KERB_DK[2] if along % 2 else RAKE_LO
     if along % 11 == 10:
-        return rgb('3f4254')
-    return (rgb('8a8ea2'), rgb('63667a'), rgb('4c4f62'))[m]
+        return KERB_DK[2]
+    return KERB_DK[m]
 
 
-YARD = (rgb('a8604a'), rgb('98523f'), rgb('b56e55'), rgb('8f4c3c'))
+YARD = (rgb('aa4d31'), rgb('904a37'), rgb('aa4d31'), rgb('8a3a22'))
+YARD_HI, YARD_LO, YARD_JOINT = rgb('d16b56'), rgb('8a3a22'), rgb('5a3827')
+SOOT_BRICK, SOOT_HI, MOSS = rgb('594b45'), rgb('6d574e'), rgb('506b6b')
 
 
 def yard_tex(x, y):
+    """Worn brick laid lengthwise north-south (4 x 8, columns staggered), the top of each brick lit."""
     col = x // 4
     v = y + (col % 2) * 4
     if x % 4 == 3 or v % 8 == 7:
-        return rgb('6a7a4a') if h3(x, y, 9) < 16 else rgb('6f4034')          # moss in the joints
+        return MOSS if h3(x, y, 9) < 16 else YARD_JOINT           # moss in the joints
     if h3(col * 7 + 3, (v // 8) * 5 + col * 3, 12) < 7:
-        return rgb('6f4a44')                                      # a brick blackened by soot
+        return SOOT_HI if v % 8 == 0 else SOOT_BRICK              # a brick blackened by soot
     c = YARD[(col * 3 + (v // 8) * 5) % 4]
-    return rgb('c08268') if (x % 4 == 0 and v % 8 == 0) else c
+    if v % 8 == 0:
+        return YARD_HI if c != YARD_LO else YARD[0]
+    return c
 
 
 def yard_kerb(m, along):
-    if m == 3:
-        return ASH_DK
-    if along % 16 == 15:
-        return ASH_LO
-    return ASH_HI if m == 0 else ASH
+    return _stone_kerb(m, along, (YARD_JOINT, YARD_LO))
 
 
 PLANK = (rgb('b08a68'), rgb('a57f5f'), rgb('ba9572'), rgb('ad8766'))
+BOARD = (rgb('b07c63'), rgb('aa775f'), rgb('bb8971'), rgb('b07c63'))
+BOARD_HI, BOARD_LO, BOARD_GAP, BOARD_BUTT = rgb('c18e75'), rgb('85553e'), rgb('5a3827'), rgb('68422d')
+BOARD_GRAIN, NAIL = rgb('86624f'), rgb('2a2636')
 
 
 def board_tex(x, y):
+    """Planks 8 wide running north-south, butt joints staggered by column, nailed at each end."""
     col = x // 8
     v = y + col * 13
     if x % 8 == 7:
-        return rgb('6f5240')
+        return BOARD_GAP
     if v % 32 == 31:
-        return rgb('7a5a45')
+        return BOARD_BUTT
     if v % 32 in (2, 28) and x % 8 in (1, 5):
-        return rgb('5a4636')                                      # nail heads
-    if x % 8 == 0:
-        return rgb('c6a27e')
+        return NAIL                                               # nail heads
+    if x % 8 == 0 or v % 32 == 0:
+        return BOARD_HI
+    if x % 8 == 6:
+        return BOARD_LO
     if h3(x, y // 3, 21) < 20:
-        return rgb('9c7858')                                      # the grain
-    return PLANK[(col * 3 + v // 32) % 4]
+        return BOARD_GRAIN                                        # the grain
+    return BOARD[(col * 3 + v // 32) % 4]
 
 
 def board_kerb(m, along):
+    """The edge beam: a lit top, a face bolted every 8, one dithered row of its shadow."""
     if m == 1 and along % 8 == 4:
-        return rgb('3f3230')
-    return (rgb('b08c68'), rgb('8a6850'), rgb('5f4636'))[m]
+        return NAIL
+    if m == 2:
+        return BOARD_GAP if along % 2 else BOARD_BUTT
+    return (BOARD[2], BOARD_LO)[m]
 
 
-PLAZA = (rgb('ddd2c0'), rgb('d3c7b3'))
+SLAB = (rgb('e6d6cd'), rgb('d2bab0'))
+SLAB_HI, SLAB_LO, SLAB_JOINT = rgb('fafcfd'), rgb('c2ac9e'), rgb('ac9f96')
+BAND = (rgb('c69f96'), rgb('bb8971'))
+BAND_JOINT = rgb('a68777')
 
 
 def plaza_tex(x, y):
-    """The station plaza: big pale stone slabs set in a grid of terracotta
+    """The station plaza: big pale stone slabs (14 x 14, two tones) set in a grid of terracotta
     brick bands (a band down the west and along the north of every cell)."""
-    bx, by = x % 32 < 4, y % 32 < 4
+    x, y = x % 32, y % 32
+    bx, by = x < 4, y < 4
     if bx or by:
         if bx and by:
-            return rgb('bf9a84')
-        along, across = (y, x % 32) if bx else (x, y % 32)
-        if across in (0, 3) or along % 8 == 7:
-            return rgb('b8ab95') if across in (0, 3) else rgb('b48e78')
-        return rgb('cfab95') if (along // 8) % 2 else rgb('c6a18b')
-    sx, sy = (x % 32 - 4) % 14, (y % 32 - 4) % 14
+            return BAND_JOINT if (x in (0, 3) or y in (0, 3)) else BAND[1]
+        along, across = (y, x) if bx else (x, y)
+        if across in (0, 3):
+            return SLAB_JOINT
+        if along % 8 == 7:
+            return BAND_JOINT
+        return BAND[0] if across == 1 else BAND[1]
+    sx, sy = (x - 4) % 14, (y - 4) % 14
     if sx == 13 or sy == 13:
-        return rgb('b8ab95')
+        return SLAB_JOINT
+    if sx == 12 or sy == 12:
+        return SLAB_LO
     if sx == 0 or sy == 0:
-        return rgb('ebe2d2')
-    return PLAZA[((x % 32 - 4) // 14 + (y % 32 - 4) // 14) % 2] if h3(x, y, 23) > 9 else rgb('c9bca6')
+        return SLAB_HI
+    k = h3(x, y, 23)
+    return SLAB_LO if k < 8 else (SLAB_HI if k > 244 else SLAB[((x - 4) // 14 + (y - 4) // 14) % 2])
 
 
 def plaza_kerb(m, along):
-    if along % 16 == 15:
-        return rgb('8a8e98')
-    return (rgb('eef0f3'), rgb('c9ccd3'), rgb('a2a6b0'))[m]
+    if m == 2:
+        return GRANITE_JOINT if along % 2 else SLAB_JOINT
+    if m == 0:
+        return GRANITE_HI
+    return GRANITE_LO if along % 16 == 15 else GRANITE
+
+
+TILE = (rgb('e4cecc'), rgb('e6d6cd'))
+TILE_HI, TILE_JOINT = rgb('fafcfd'), rgb('d7b6ab')
+RUSSET_HI, RUSSET, RUSSET_LO = rgb('d16b56'), rgb('aa4d31'), rgb('8a3a22')
 
 
 def arcade_tex(x, y):
-    """The arcade's floor: polished cream tiles with a russet diamond at every
-    second crossing and a long reflection of the roof's light."""
+    """The arcade's floor: polished cream tiles (8 x 8) with a russet diamond at every second
+    crossing and a long reflection of the roof's light."""
     tx, ty = x % 8, y % 8
     dx, dy = min(x % 16, 16 - x % 16), min(y % 16, 16 - y % 16)
     if dx + dy <= 2:
-        return rgb('b9714e') if dx + dy < 2 else rgb('d39a74')
+        if dx + dy < 2:
+            return RUSSET
+        return RUSSET_HI if (x + 8) % 16 + (y + 8) % 16 <= 16 else RUSSET_LO
     if tx == 0 or ty == 0:
-        return rgb('cfc4b0')
-    if tx == 1 and ty > 1:
-        return rgb('fbf7ec')
-    if (x % 32) in (12, 13) and h3(x, y, 3) > 40:
-        return rgb('fbf7ec')                                      # the skylight, mirrored in the polish
-    return rgb('efe7d6') if (x // 8 + y // 8) % 2 else rgb('e6dcc8')
+        return TILE_JOINT
+    if tx == 1 or ty == 1:
+        return TILE_HI
+    if (x % 32) in (12, 13) and ty not in (2, 7):
+        return TILE_HI                                            # the skylight, mirrored in the polish
+    return TILE[(x // 8 + y // 8) % 2]
 
 
 def arcade_kerb(m, along):
+    if m == 2:
+        return RUSSET_LO if along % 2 else TILE_JOINT
     if along % 8 == 7:
-        return rgb('6f4034')
-    return (rgb('b9714e'), rgb('a05c40'), rgb('834a36'))[m]
+        return RUSSET_LO
+    return (RUSSET_HI, RUSSET)[m]
 
 
 def ground(fam):
