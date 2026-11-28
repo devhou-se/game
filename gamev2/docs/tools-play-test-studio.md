@@ -54,6 +54,14 @@ district in the city's `rooms` list is drawn on top and takes the click, as in t
 that is how the covered seam transporters (Palace 38..39,21, Market 54..56,47) are inspected - and, in the
 stitched view, the city's woodland under a town that sits inside its box (none does since issue #174).
 
+A room's streetcars (`tramways`, see "Streetcars" in `ambient-traffic.md`) are not tiles, so the model adds them
+(`WorldModel.tramways`, through the game's own `AmbientTrams.line` / `plan`): each car is drawn in the art where it
+first stands - a shuttle at its first stop, as the game opens the room - and `play.js render` draws it too. The
+**Tram lines** layer marks each line's rails end to end, its stops and the standing car; a cell on the rails or
+under the car lists the line in the inspector (its district's own cells, stops and dwell, the car, speed, and for a
+shuttle that a bump boards it). A standing shuttle is solid in the game but not in the model, so its cells still
+read as walkable.
+
 It has no logic of its own: `tools/world-model.js` (rooms, collision, NPC dates, interactions, the
 problem survey) is shared with `tools/play.js`, so the page and the terminal tool always agree.
 

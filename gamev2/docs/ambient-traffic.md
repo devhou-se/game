@@ -152,6 +152,8 @@ and no two lines of a room sharing cells of a row.
   hidden whenever the camera cannot see it, so off screen only that arithmetic runs, and it still arrives on time.
 - **Testing**: `game.scene.keys.GameScene.ambientTrams.cross(index, dir)` sends a car now (`dir` 1 east, -1 west;
   a shuttle starts over, standing at its first stop). Unit tests: `tools/tests/glows-trams.test.js`.
+- **In the Studio and `play.js render`** every line is shown with its car at its first stop (`WorldModel.tramways`;
+  "Studio" in `tools-play-test-studio.md`).
 
 #### Shuttles: the cars you can ride (issue #245)
 

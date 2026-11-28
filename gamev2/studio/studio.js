@@ -3,7 +3,7 @@ const COLOR = { torii: '#e0421f', moat: '#2f5fd0', moss: '#2f8f5b', sun: '#f2b01
 const GROUP_COLOR = { shop: COLOR.sun, pond: COLOR.moat, clock: '#9b4fd0', 'drinking-game': '#d04f9b' };
 const LAYERS = [
     ['art', 'Art', true], ['collision', 'Collision', false], ['unreachable', 'Unreachable', true],
-    ['teleports', 'Teleports', true], ['trains', 'Train lines', false], ['interactions', 'Interactions', true], ['people', 'People', true],
+    ['teleports', 'Teleports', true], ['trains', 'Train lines', false], ['trams', 'Tram lines', true], ['interactions', 'Interactions', true], ['people', 'People', true],
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -115,6 +115,9 @@ async function load(source) {
     for (const room of Object.values(config.rooms)) {
         for (const npc of room.npcs || []) sprites.add(npc.sprite + '_frame_0');
     }
+    for (const room of Object.values(config.rooms)) {
+        for (const line of room.tramways || []) for (const key of [].concat(line.sprite)) sprites.add(key);
+    }
     for (const pf of S.prefabs) for (const sp of pf.sprites) sprites.add(sp.key);
     await Promise.all([...sprites].map(loadImage));
 
@@ -157,7 +160,7 @@ function build(first) {
         room.w = r.worldWidth / 64;
         room.h = r.worldHeight / 64;
         m.enter(k, 0, 0);
-        Object.assign(room, { blocked: m.blocked, interactions: m.interactions(), npcs: room.npcs || [] });
+        Object.assign(room, { blocked: m.blocked, interactions: m.interactions(), trams: m.tramways(k), npcs: room.npcs || [] });
         if (first || S.stale.has(k)) room.art = renderArt(k);
         // the woodland between a city's districts is scenery, not unreachable floor
         room.outside = new Set();
@@ -809,6 +812,28 @@ function draw() {
         for (const [k, st] of stations) for (const [bx, by] of st.board) ctx.fillRect(sx(S.rooms[k].x + bx), sy(S.rooms[k].y + by), z, z);
     }
 
+    if (S.show.trams) {
+        ctx.strokeStyle = ctx.fillStyle = COLOR.moat;
+        for (const k of shown) {
+            const r = S.rooms[k];
+            for (const t of r.trams) {
+                const y = sy(r.y + t.row + 0.5);
+                ctx.lineWidth = Math.max(2, z / 6);
+                ctx.beginPath();
+                ctx.moveTo(sx(r.x + t.from), y);
+                ctx.lineTo(sx(r.x + t.to + 1), y);
+                ctx.stroke();
+                for (const end of [t.from, t.to + 1]) ctx.fillRect(sx(r.x + end) - ctx.lineWidth / 2, y - z / 2, ctx.lineWidth, z);
+                for (const stop of t.stops) {
+                    ctx.beginPath();
+                    ctx.arc(sx(r.x + stop.x + 0.5), y, Math.max(4, z / 2), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                if (t.car) ctx.strokeRect(sx(r.x + t.car.x), sy(r.y + t.car.y), t.car.w * z, t.car.h * z);
+            }
+        }
+    }
+
     if (S.show.people) {
         for (const k of shown) {
             const r = S.rooms[k];
@@ -1048,6 +1073,20 @@ function inspect() {
         for (const line of i.npc.dialogue) parts.push(el('blockquote', { textContent: line }));
     } else if (i) {
         parts.push(el('dl', { className: 'kv' }, el('dt', { textContent: 'bump' }), el('dd', { textContent: m.describe(i) })));
+    }
+
+    const tram = m.tramwayAt(sel.x, sel.y);
+    if (tram) {
+        const rows = [
+            ['rails', `${tram.room} ${tram.from - tram.x}..${tram.to - tram.x}, row ${tram.row - tram.y}`],
+            ['stops', tram.stops.map(s => `${s.x - tram.x} (${s.dwell}s)`).join(', ') || 'none'],
+            ['car', tram.sprites.join(', ')],
+            ['speed', `${tram.speed} px/s`],
+            [tram.shuttle ? 'turns round' : 'next car', `after ${tram.headway}s`],
+        ];
+        if (tram.shuttle) rows.push(['bump', `boards the ${tram.name} while it stands (free); up / down gets off at a halt`]);
+        parts.push(el('h2', {}, el('span', { textContent: tram.name }), el('span', { className: 'badge', textContent: tram.shuttle ? 'shuttle' : 'passing' })));
+        parts.push(el('dl', { className: 'kv' }, ...rows.flatMap(([k, v]) => [el('dt', { textContent: k }), el('dd', { textContent: v })])));
     }
 
     const tiles = m.tilesAt(sel.x, sel.y);

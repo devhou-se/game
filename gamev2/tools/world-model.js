@@ -444,6 +444,42 @@ class WorldModel {
         return cells.length ? cells[at <= 0 ? cells.length - 1 : at - 1] : null;
     }
 
+    /**
+     * The streetcars of a runtime room: its districts' config `tramways` as src/AmbientTrams.js runs
+     * them (none where that file is not loaded), in the room's cells. Each line also has `room` (the
+     * district that declares it), `x` / `y` (that district's place in the room) and `car`: the cells
+     * of the car where it first stands, a shuttle at its first stop as the game opens the room.
+     */
+    tramways(roomKey) {
+        if (typeof AmbientTrams === 'undefined') return [];
+        const room = this.roomManager.rooms[roomKey], GS = this.GRID_SIZE;
+        const city = this.roomManager.cities[roomKey];
+        const lines = [];
+        for (const m of city ? city.members : [{ key: roomKey, x: 0, y: 0 }]) {
+            for (const def of (this.config.rooms[m.key] || {}).tramways || []) {
+                const line = AmbientTrams.line(def, room.layers, m, Math.round(room.worldWidth / GS));
+                if (!line) continue;
+                const key = line.sprites[0];
+                let car = null;
+                if (this.exists(key)) {
+                    const [w, h] = this.cells(key);
+                    const plan = AmbientTrams.plan(line, { GS, width: w * GS, worldWidth: room.worldWidth, dir: AmbientTrams.direction(0, line.faces) });
+                    const at = AmbientTrams.at(plan, AmbientTrams.firstHalt(plan));
+                    if (at.stopped) car = { key, x: at.x / GS, y: line.row - h + 1, w, h };
+                }
+                lines.push(Object.assign(line, { room: m.key, x: m.x, y: m.y, car }));
+            }
+        }
+        return lines;
+    }
+
+    /** The line of the current room whose rails or standing car cover cell (x, y), else null. */
+    tramwayAt(x, y) {
+        const on = (t) => (y === t.row && x >= t.from && x <= t.to) ||
+            (t.car && x >= t.car.x && x < t.car.x + t.car.w && y >= t.car.y && y < t.car.y + t.car.h);
+        return this.tramways(this.roomManager.currentRoom).find(on) || null;
+    }
+
     drawOrder(roomKey) {
         const room = this.roomManager.rooms[roomKey];
         const meta = this.config.spriteMetadata || {};
@@ -458,6 +494,9 @@ class WorldModel {
                 standing.push({ key, x, y, depth, order });
             }
         });
+        for (const t of this.tramways(roomKey)) {
+            if (t.car) standing.push({ key: t.car.key, x: t.car.x, y: t.car.y, depth: AmbientTrams.depthAt(t.row), order: room.layers.length });
+        }
         standing.sort((a, b) => a.depth - b.depth || a.order - b.order || a.y - b.y || a.x - b.x);
         return ground.concat(standing);
     }

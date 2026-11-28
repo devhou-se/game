@@ -1,4 +1,4 @@
-module.exports = ({ test, assert, fs, path, GV2, game, load }) => {
+module.exports = ({ test, assert, fs, path, GV2, game, load, worldWith }) => {
     test('studio stacks overlapping districts the way the stitched city does: the later one on top', () => {
         const stackOrder = game('WorldModel.stackOrder');
         const cities = { C: { rooms: [{ room: 'Tokyo' }, { room: 'Market' }, { room: 'Gone' }, { room: 'Palace' }, { room: 'Park' }] } };
@@ -53,6 +53,53 @@ module.exports = ({ test, assert, fs, path, GV2, game, load }) => {
         assert.strictEqual(stackPick(cells, { ...palace }), park, 'and once more wraps back to the top');
         assert.strictEqual(stackPick([park], { ...park }), park, 'one room: the cell stays selected');
         assert.strictEqual(stackPick([], park), null, 'empty space selects nothing');
+    });
+
+    test('studio and play.js see the streetcars the game runs: each line in its room\'s cells, the car at its first stop', () => {
+        const src = fs.readFileSync(path.join(GV2, 'src', 'AmbientTrams.js'), 'utf8');
+        const plain = (v) => JSON.parse(JSON.stringify(v));
+        const bare = worldWith(true);
+        assert.deepStrictEqual(plain(bare.world.tramways('Sapporo')), [], 'without AmbientTrams loaded there are no lines');
+        assert.ok(!bare.world.drawOrder('SanFranbourne').some((t) => /^sfb-(cable-car|tram)_/.test(t.key)));
+
+        for (const stitch of [true, false]) {
+            const { world, run, config } = worldWith(stitch);
+            run(src);
+            const at = (room, x, y) => world.roomManager.resolve(room, x, y);
+            const declared = Object.entries(config.rooms).flatMap(([k, r]) => (r.tramways || []).map((t) => [k, t]));
+            assert.ok(declared.length >= 4, 'Sapporo, Toyama and San Franbourne\'s two');
+            const seen = world.runtimeRooms().flatMap((k) => world.tramways(k).map((t) => [k, t]));
+            assert.strictEqual(seen.length, declared.length, 'every declared line is one the game can run');
+
+            for (const [key, def] of declared) {
+                const home = at(key, 0, def.row);
+                const line = world.tramways(home.room).find((t) => t.room === key && t.row === home.y && t.sprites[0] === [].concat(def.sprite)[0]);
+                assert.ok(line, `${key}: ${def.sprite}`);
+                assert.deepStrictEqual([line.x, line.y], [home.x, home.y - def.row], 'the district\'s place in the room');
+                if (Number.isInteger(def.from)) assert.deepStrictEqual([line.from - line.x, line.to - line.x], [def.from, def.to]);
+                const [w, h] = world.cells(line.sprites[0]);
+                assert.ok(line.car, `${key}: the car stands at its first stop`);
+                assert.deepStrictEqual(plain(line.car), { key: line.sprites[0], x: line.car.x, y: line.row - h + 1, w, h });
+                const stop = line.stops[0].x + 0.5;
+                assert.ok(Math.abs(line.car.x + w / 2 - stop) <= 0.5, `${key}: its middle is over the stop`);
+                const drawn = world.drawOrder(home.room).filter((t) => t.key === line.car.key);
+                assert.deepStrictEqual(plain(drawn).map((t) => [t.x, t.y]), [[line.car.x, line.car.y]], `${key}: drawn once, where it stands`);
+
+                world.enter(home.room, line.from, line.row);
+                assert.strictEqual(world.tramwayAt(line.from, line.row).sprites[0], line.sprites[0], 'the first rail cell');
+                assert.strictEqual(world.tramwayAt(line.car.x, line.car.y).sprites[0], line.sprites[0], 'the roof of the standing car');
+                assert.strictEqual(world.tramwayAt(line.from, line.row + 3), null, 'the street beside the rails');
+            }
+        }
+        const { world, run } = worldWith(true);
+        run(src);
+        const toyama = world.tramways('HokurikuCity')[0], member = world.roomManager.cities.HokurikuCity.members.find((m) => m.key === 'Toyama');
+        assert.deepStrictEqual([toyama.room, toyama.row, toyama.from, toyama.car.x], ['Toyama', 21 + member.y, 11 + member.x, 19 + member.x],
+            'Toyama\'s tram is in the stitched city\'s cells, standing on cells 19-23 as the map once drew it');
+        const [cable, tram] = world.tramways('SanFranbourne');
+        assert.deepStrictEqual([cable.name, cable.shuttle, tram.name, tram.faces], ['cable car', true, 'tram', -1]);
+        assert.strictEqual(world.tramways('Sapporo')[0].shuttle, false, 'Sapporo\'s streetcar passes through');
+        assert.deepStrictEqual(plain(world.tramways('Osaka')), [], 'a room with no tramways');
     });
 
     test("the editor's Spawn tool moves the trip home that decides where the game opens", () => {

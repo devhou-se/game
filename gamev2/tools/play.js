@@ -15,7 +15,7 @@ const sessionFile = () => path.join(os.tmpdir(), 'gamev2-play-' +
 
 const ctx = vm.createContext({ console, URLSearchParams, location: { search: '' } });
 for (const f of ['utils/ConfigCodec.js', 'utils/Trips.js', 'utils/NpcStates.js', 'utils/Interactions.js', 'utils/Seats.js', 'systems/TiledAdapter.js',
-    'systems/RoomManager.js', 'systems/CollisionSystem.js', 'systems/CityStitcher.js', 'Shop.js', 'TrainTravel.js',
+    'systems/RoomManager.js', 'systems/CollisionSystem.js', 'systems/CityStitcher.js', 'Shop.js', 'TrainTravel.js', 'AmbientTrams.js',
     '../tools/world-model.js']) {
     vm.runInContext(fs.readFileSync(path.join(GV2, 'src', f), 'utf8'), ctx, { filename: f });
 }
