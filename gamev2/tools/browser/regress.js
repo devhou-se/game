@@ -976,6 +976,61 @@ async function desktop(shared) {
             }
         });
 
+        // 5d --------------------------------------------------------------- the station with the clocks: in, the clocks, out (#246)
+        await cleanly('station-concourse', async () => {
+            // the room that says which building's doors are its own (`flinders`: tools/generate_flinders.py)
+            const way = await page.evaluate(() => {
+                const { s, rm } = __t;
+                const room = Object.keys(s.config.rooms).find(k => s.config.rooms[k].flinders);
+                if (!room || !rm.rooms[room]) return null;
+                const { host, doors } = s.config.rooms[room].flinders, [x, y] = doors[0];
+                const door = (rm.rooms[host] ? rm.rooms[host].transporters : []).find(t => t.gridX === x && t.gridY === y && t.targetRoom === room);
+                return door ? { room, host, door: { x, y }, target: { x: door.targetX, y: door.targetY }, name: __t.roomName(room) } : null;
+            });
+            need(way, 'no room with a `flinders` marker whose first door is a transporter of its host');
+            // from two cells down the street, north twice with real keys: up to the door, then through it
+            await page.evaluate(w => { __t.place(w.host, w.door.x, w.door.y + 2); __t.rm.__sw = 0; __t.rm.__fade = 0; }, way);
+            await idle(page);
+            need(await page.evaluate(w => __t.open(w.door.x, w.door.y + 2) && __t.open(w.door.x, w.door.y + 1) && __t.free(w.door.x, w.door.y), way), { streetNotFree: way });
+            await page.evaluate('__t.unsee()');
+            await step(page, 0, -1);
+            const front = await page.evaluate('({ pos: __t.pos(), sw: __t.rm.__sw })');
+            need(front.pos.room === way.host && front.pos.x === way.door.x && front.pos.y === way.door.y + 1 && front.sw === 0, { notInFrontOfTheDoor: front });
+            await step(page, 0, -1);
+            const st = await page.evaluate('({ pos: __t.pos(), hud: __t.hud(), sw: __t.rm.__sw, fade: __t.rm.__fade, seen: Object.assign({}, __t.seen), screen: __t.onScreen(), free: __t.free(__t.s.player.gridX, __t.s.player.gridY) })');
+            need(st.pos.room === way.room && st.pos.x === way.target.x && st.pos.y === way.target.y, { notInside: st.pos, way });
+            need(st.sw === 1 && st.fade === 1 && st.seen.fade > 0 && st.seen.transition > 0, { noFadeThroughDoor: st });
+            need(st.hud.room.includes(way.name), { hud: st.hud.room, expected: way.name });
+            need(st.free && st.screen.inView && st.screen.visible, { inside: st });
+            await page.screenshot({ path: path.join(SHOTS, 'regress_station_concourse.png') });
+            // the clocks on the gate line are a clock: a bump from the concourse opens Time Travel, ESC closes it
+            const clock = await page.evaluate(() => {
+                const { rm } = __t, { w, h } = __t.size();
+                for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+                    const hit = rm.interactionAt(x, y, 'clock');
+                    if (hit && !__t.free(x, y) && __t.open(x, y + 1)) return { x, y, kind: hit.kind };
+                }
+                return null;
+            });
+            need(clock, 'no clock with a free cell south of it in ' + way.room);
+            await page.evaluate(c => __t.place(__t.rm.currentRoom, c.x, c.y + 1), clock);
+            await idle(page);
+            const date = await page.evaluate('gameDate()');
+            need(await press(page, keyFor(0, -1), '__t.s.datePicker.isVisible()'), { clocksDidNotOpenTimeTravel: await page.evaluate('({ pos: __t.pos(), overlays: __t.overlays() })'), clock });
+            need(await press(page, 'Escape', '!__t.s.datePicker.isVisible()'), 'ESC did not close the picker');
+            await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
+            const after = await page.evaluate('({ overlays: __t.overlays(), pos: __t.pos(), game: gameDate() })');
+            need(after.overlays.length === 0 && after.game === date && after.pos.x === clock.x && after.pos.y === clock.y + 1, { afterPicker: after, clock });
+            // south off the mat you arrived above: back on the street, in front of the door you went in by
+            await page.evaluate(w => { __t.place(w.room, w.target.x, w.target.y); __t.rm.__sw = 0; }, way);
+            await step(page, 0, 1);
+            const out = await page.evaluate('({ pos: __t.pos(), hud: __t.hud(), sw: __t.rm.__sw, free: __t.free(__t.s.player.gridX, __t.s.player.gridY), portal: __t.portal(__t.s.player.gridX, __t.s.player.gridY), screen: __t.onScreen() })');
+            need(out.pos.room === way.host && out.pos.x === way.door.x && out.pos.y === way.door.y + 1 && out.sw === 1, { didNotComeOut: out.pos, way });
+            need(out.free && !out.portal && out.screen.inView && out.screen.visible, { outside: out });
+            need(out.hud.room.includes(await page.evaluate(d => __t.roomName(d), out.pos.district)), { hud: out.hud.room, district: out.pos.district });
+            await page.evaluate('__t.home()');
+        });
+
         // 12 --------------------------------------------------------------- scenery that hides the player fades
         await cleanly('occlusion-fade', async () => {
             const spot = await page.evaluate(() => {

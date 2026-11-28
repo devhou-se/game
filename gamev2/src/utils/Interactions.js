@@ -77,6 +77,11 @@ const Interactions = {
         { kind: 'mall-okonomiyaki', group: 'flavour', pattern: /^mall-in-front-okonomiyaki/, footprint: true, say: 'okonomiyaki, made in front of you. the queue says it is good. opinions differ' },
         { kind: 'mall-cafe', group: 'flavour', pattern: /^mall-in-front-cafe/, footprint: true, say: 'the cafe has a queue for the queue' },
         { kind: 'mall-ramen', group: 'flavour', pattern: /^mall-in-front-ramen/, footprint: true, say: 'the ramen stadium is five floors up. the escalator is part of the wall' },
+        // the station with the clocks in San Franbourne (issue #246, tools/generate_flinders.py): the clocks on the
+        // gate line are a clock (Time Travel), the departures board and the ticket machines say a line
+        { kind: 'clock', group: 'clock', pattern: /^flinders-in-clocks/, footprint: true },
+        { kind: 'replacement-buses', group: 'flavour', pattern: /^flinders-in-board/, footprint: true, say: 'every line on the board says the same thing: buses replace trains' },
+        { kind: 'ticket-machine', group: 'flavour', pattern: /^flinders-in-tickets/, footprint: true, say: 'the machine wants a card you do not have. the card is sold by the machine' },
         // Fukuoka Tower's observation deck (issue #242): the glass, the coin binoculars, the brass map, the padlocks, the sign by the lift
         { kind: 'deck-window', group: 'flavour', pattern: /^deck-in-window/, footprint: true, say: 'the bay, 123 metres down. the glass is very clean and you are very careful not to lean on it' },
         { kind: 'binoculars', group: 'flavour', pattern: /^deck-in-binoculars/, footprint: true, say: 'a hundred yen for two minutes. somebody else\'s two minutes are still running: a ferry, very large' },

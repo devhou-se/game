@@ -92,6 +92,10 @@ DISTILLERY_PREFIX = 'Distillery'      # rooms.Distillery<Host><n>
 # one sprite -> the two leaves of the door under its arch.
 MALL_DOORS = {'canal-city_0_0': [(3, 5), (4, 5)]}
 MALL_PREFIX = 'Mall'                  # rooms.Mall<Host><n>
+# The station with the clocks in San Franbourne (issue #246, tools/generate_flinders.py):
+# the station's one sprite -> the two door cells under its clocks.
+FLINDERS_DOORS = {'sfb-clocks-station_0_0': [(5, 6), (6, 6)]}
+FLINDERS_PREFIX = 'Flinders'          # rooms.Flinders<Host><n>
 # Fukuoka Tower's observation deck (issue #242, tools/generate_tower_deck.py): the
 # tower's one sprite -> the two leaves of the door in its foot. The lift between
 # them is the game's (RoomManager.liftFor): a door into a room carrying `deck`.
@@ -126,6 +130,7 @@ OWNED_DOORS = {HOUSE_PREFIX: ('house', {k: [v] for k, v in HOUSE_DOORS.items()})
                PUB_PREFIX: ('pub', PUB_DOORS),
                DISTILLERY_PREFIX: ('distillery', DISTILLERY_DOORS),
                MALL_PREFIX: ('mall', MALL_DOORS),
+               FLINDERS_PREFIX: ('flinders', FLINDERS_DOORS),
                DECK_PREFIX: ('deck', DECK_DOORS)}
 DOOR_LAYERS = ('Collidables', 'Over Floor')   # where a door sprite is laid (a tower's foot is on Over Floor)
 _house_doors = {}           # room -> its transporters as loaded, when any leads into an OWNED_DOORS interior

@@ -429,8 +429,9 @@ and the blog pipeline never offers it (`"blog": false` on the room, see `blog-pi
   the plaza with the **pointy pyramid** beside the **arts-centre spire** (both in `game.lookUp.sprites`), a glass
   tower, vending machines and the 7-Eleven `KonbiniSanFranbourne1`; the **brown river** (solid, rowers on it)
   under the **red suspension bridge** - the deck is the avenue, and you walk between the legs of both towers
-  (only the leg cells collide); the yellow **station with the clocks** over its door (sealed: nobody catches a
-  train there, a bump says so - you meet under the clocks), townhouses and a palm garden; the boardwalk, the
+  (only the leg cells collide); the yellow **station with the clocks** over its door (nobody catches a
+  train there, a bump says so - you meet under the clocks; the two door cells under the clocks open into its
+  concourse, see "Flinders Street's concourse"), townhouses and a palm garden; the boardwalk, the
   **pier** (flat, walked on to its end) with the raft of **sea lions** beside it (a bump from the pier says a
   line), and the island with the lighthouse out in the bay. Four **leaners** (`sfb-lean-{a,b,c,d}`, `LEANERS`
   in the generator) stand folded double at the waist by the tram stop, on the pavement between the two towers,
@@ -1034,6 +1035,63 @@ walked behind, as they always were; only the two door cells opened.)
   would need the blog pipeline to place into an `interior` room, which it never does.
 - **Build order**: `generate_mall_art.py`, `generate_mall.py`, `config_to_tiled.py MallFukuoka1 Fukuoka`,
   `play.js lint MallFukuoka1 Fukuoka`. Tests: `tools/tests/mall.test.js` (on `tools/tests/interiors.js`).
+### Flinders Street's concourse (issue #246)
+
+**What the station is on the map.** One sprite, `sfb-clocks-station_0_0` (12x7), west of the avenue in
+`SanFranbourne`: the yellow station with the board of clocks over its door. It was sealed. The two door cells
+under the clocks (the sprite's cell + (5,6) and + (6,6); `SanFranbourne` 18,45 and 19,45 as the town stands)
+each carry a hidden transporter into `FlindersSanFranbourne1` (HUD: `Flinders St`, the Map footer
+`Flinders St (in San Franbourne, overseas)`). The west door puts you on the west half of the doorway and the
+east on the east, and the mat behind you puts you back on the boardwalk in front of the door above it. The
+rest of the building still bumps its line from the street. Like the pub's, the doors are found by sprite
+(`roomgen.FLINDERS_DOORS`); if a rebuild of the town moves the station, run `generate_flinders.py` then
+`config_to_tiled.py FlindersSanFranbourne1 SanFranbourne`.
+
+- **`tools/generate_flinders.py`** owns the interior and the two door cells, exactly as `generate_mall.py`
+  does Canal City's (`interiors.Interior`, `roomgen.sprite_doors`, `roomgen.open_door`);
+  `generate_sanfranbourne.py` is not edited. A re-run is a no-op, and from a sealed building it rebuilds the
+  same world (`flinders.test.js`).
+- **Door keeping.** The room carries `flinders: {host, doors}` and `'Flinders'` is a row of
+  `roomgen.OWNED_DOORS` (`FLINDERS_DOORS`), so a re-run of `generate_sanfranbourne.py` keeps both doors.
+- **What is inside** (24x18; the floor is 20x11), a station nobody catches a train from. It is not in
+  `config.stations`, on no departures board, and San Franbourne is still reached only by air.
+  - the back wall, three rows tall, in the building's mustard and maroon: a bay (`wall-bay`, 3x3), an arched
+    window (`wall-arch`, 4x3), the name board (`wall-name`, 6x3: `FLINDERS ST`), a window, a bay;
+  - **the track** under it, two rows of the station kit's rails over ballast (`station-track-n/-s`,
+    `station-ballast`), solid from end to end and empty: no train is parked, and none passes;
+  - **the platform**: the kit's yellow edge row, then two rows with two benches facing the track
+    (`station-bench-back`);
+  - **the gate line**, the last row of the platform's floor and the only way onto it: two banks of two
+    ticket gates (`station-gate`, walked through, between `station-gate-end-w/-e`) either side of **the
+    clocks** (`clocks`, 4x3: the nine dials from over the door outside, on two posts; only its foot row is in
+    the way, and from the platform you walk behind its head), a cell of tube railing outside each bank, the
+    **ticket machines** (`tickets`, 3x2) against the west wall and the **departures board** (`board`, 3x2)
+    against the east one;
+  - the concourse: terrazzo (`floor-a/-b`), two `station-pillar`s, two `station-bench`es,
+    `station-planter-a/-b` either side of the doorway and the daylight through it (`doorlight`).
+- **No lantern light.** `interior` but not `lanternLight`, and no `Glows` rows: a concourse is as bright at
+  night as by day.
+- **Something to do.** Bump the clocks from either side: they are a `clock` (`Interactions.js`), so Time Travel
+  opens, as at every clock. Bump the board or the machines for a line (`flavour` rules `replacement-buses`,
+  `ticket-machine`). Go through a gate and along the platform. No venue, no stamp, no new overlay, key or
+  save field.
+- **Looking up.** The room (18 rows) is taller than a phone's view (7.5 rows on a landscape phone), so
+  `back_wall(view=True)` cannot hold it whole (`RoomManager.heldRows`), and from the platform the ordinary
+  camera showed the track and not the wall. The wall's three pieces are in `game.lookUp.sprites` with `2`
+  (the track's rows), written by the art tool as the pagoda's roof is: on the platform the camera sits as
+  high as it goes with two rows kept under you, and the name board and the windows are in view. From the
+  second concourse row south of the gates it is the ordinary camera.
+- **Art**: `tools/generate_flinders_art.py` (needs Pillow; `--preview out.png`) draws the 14 sprites
+  (`flinders-in-<piece>`); the frame is the pub art tool's, in the building's colours. The track, the gates,
+  the railing, the benches, the pillars and the planters are the station kit's
+  (`tools/generate_station_art.py`). It and the generator are in `check_generators.py`.
+- **Doors and blog NPCs**: no dated position or district stand cell is on a door or the cell in front of one,
+  and a wanderer never steps there. The blog stands nobody at the station, and never places into an
+  `interior` room.
+- **Build order**: `generate_flinders_art.py`, `generate_flinders.py`,
+  `config_to_tiled.py FlindersSanFranbourne1 SanFranbourne`, `play.js lint FlindersSanFranbourne1 SanFranbourne`.
+  Tests: `tools/tests/flinders.test.js` (on `tools/tests/interiors.js`).
+
 ### Fukuoka Tower's deck (issue #242)
 
 **What the tower is on the map.** One sprite, `fukuoka-tower_0_0` (4x12), on its plaza by the beach in

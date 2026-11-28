@@ -89,10 +89,11 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.deepStrictEqual(plain(config.rooms.HanedaStation.transporters.map((t) => [t.targetRoom, t.targetX, t.targetY])),
             [[HANEDA, ...config.airports[HANEDA].entry], [HANEDA, ...config.airports[HANEDA].entry]]);
         assert.ok(config.rooms[HANEDA].transporters.every((t) => t.targetRoom === 'HanedaStation'), 'Haneda leads nowhere but its station');
-        // the only doors into the city are its own airport's, its own konbini's and its glass tower's lobby's (#216)
+        // the only doors into the city are its own airport's, its own konbini's, its glass tower's lobby's (#216)
+        // and the station with the clocks' (#246)
         for (const [key, room] of Object.entries(config.rooms)) {
             for (const t of room.transporters || []) {
-                if (t.targetRoom === CITY) assert.ok(key === HOME || key === 'KonbiniSanFranbourne1' || key === 'LobbySanFranbourne1', `${key} has a door into the home city`);
+                if (t.targetRoom === CITY) assert.ok(key === HOME || key === 'KonbiniSanFranbourne1' || key === 'LobbySanFranbourne1' || key === 'FlindersSanFranbourne1', `${key} has a door into the home city`);
                 if (t.targetRoom === HOME) assert.strictEqual(key, CITY, `${key} has a door into the home airport`);
             }
         }
@@ -357,7 +358,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         const says = (x, y) => (Interactions.find(room, room, x, y, { sizeOf, group: 'flavour' }) || {}).say || '';
         assert.ok(/sea lions/.test(says(lions[0] + 2, lions[1])) && /sea lions/.test(says(lions[0] + 2, lions[1] + 1)));
         const clocks = where(room, /^sfb-clocks-station/)[0];
-        assert.ok(/under the clocks/.test(says(clocks[0] + 5, clocks[1] + 6)));
+        // (bumped beside its doors: the two cells under the clocks themselves are the way in, #246)
+        assert.ok(/under the clocks/.test(says(clocks[0] + 4, clocks[1] + 6)));
         // the vehicles share the street's rails, and are not tiles: each is a shuttle that runs its own stretch of
         // them (#245; the lines themselves: glows-trams.test.js). The oval is flat (walked on), the towers are looked up at
         const rails = where(room, /^sfb-rail-h/), railed = new Set(rails.map(([x, y]) => K(x, y)));
@@ -377,9 +379,9 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.ok(lit.length >= 30 && lit.some(([, , k]) => /^sfb-oval-lamp-post/.test(k)), `${lit.length} lamps`);
         assert.ok(!room.interior, 'the city has a day and a night');
         // houses stay sealed, no bins, and the konbini is the usual interior; the glass tower's pair of doors
-        // open into its lobby (#216), the only other way off the street
+        // open into its lobby (#216) and the station's into its concourse (#246), the only other ways off the street
         assert.ok(!Object.keys(config.rooms).some((k) => k.startsWith('House' + CITY)), 'no house interiors yet');
-        assert.ok(room.transporters.every((t) => t.targetRoom === HOME || t.targetRoom === 'KonbiniSanFranbourne1' || t.targetRoom === 'LobbySanFranbourne1'));
+        assert.ok(room.transporters.every((t) => [HOME, 'KonbiniSanFranbourne1', 'LobbySanFranbourne1', 'FlindersSanFranbourne1'].includes(t.targetRoom)));
         const [glass] = where(room, /^highrise-glass_/);
         assert.deepStrictEqual(plain(room.transporters.filter((t) => t.targetRoom === 'LobbySanFranbourne1').map((t) => [t.gridX, t.gridY, t.hidden])),
             [[glass[0] + 1, glass[1] + 9, true], [glass[0] + 2, glass[1] + 9, true]]);

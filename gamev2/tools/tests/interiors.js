@@ -1,12 +1,14 @@
-// What the interiors of issue #217 have in common (pub.test.js, distillery.test.js, mall.test.js): a building
+// What the interiors of issue #217 have in common (pub.test.js, distillery.test.js, mall.test.js; and the
+// station of issue #246, flinders.test.js): a building
 // that is one sprite on its town's map, a door found from where that sprite stands, a room of its own behind
-// it. Not a test file (the runner loads *.test.js): each of the three asks for these checks by name.
+// it. Not a test file (the runner loads *.test.js): each of them asks for these checks by name.
 //
 // No host coordinate is written down here or in those files: the door, the cell in front of it and the cell
 // the blog pipeline stands a visitor on all come from the sprite's own cell, so a rebuild of the town may
 // move the building without an edit to the tests.
 //   spec = { HOST, KEY, NAME, MARK (the room's marker), SPRITE (the building), DOORS ([dx, dy] of each door
-//            cell from the sprite's cell), STAND ([dx, dy] of blog_to_npc.LANDMARKS' cell), PREFIX (sprites),
+//            cell from the sprite's cell), STAND ([dx, dy] of blog_to_npc.LANDMARKS' cell; none where the
+//            blog stands nobody at the building, and then nobodyInTheWay is not asked for), PREFIX (sprites),
 //            BEHIND (how many of the sprite's top rows are roof you walk behind and were never solid; 0) }
 module.exports = ({ assert, fs, path, vm, GV2, ctx, game }, spec) => {
     const { HOST, KEY, MARK, SPRITE, DOORS, STAND, PREFIX } = spec;
@@ -29,7 +31,7 @@ module.exports = ({ assert, fs, path, vm, GV2, ctx, game }, spec) => {
         assert.strictEqual(all.length, 1, `${HOST} has one ${SPRITE}`);
         const [sx, sy] = all[0];
         const doors = DOORS.map(([dx, dy]) => [sx + dx, sy + dy]);
-        return { sprite: [sx, sy], doors, fronts: doors.map(([x, y]) => [x, y + 1]), stand: [sx + STAND[0], sy + STAND[1]] };
+        return { sprite: [sx, sy], doors, fronts: doors.map(([x, y]) => [x, y + 1]), stand: STAND ? [sx + STAND[0], sy + STAND[1]] : null };
     };
 
     /** The floor of the room: every cell inside its outline, less the doorway's row. */

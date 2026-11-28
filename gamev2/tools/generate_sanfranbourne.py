@@ -24,7 +24,9 @@ comes here and it is on no departures board. North to south:
   river   the brown river, rowers on it, and the RED SUSPENSION BRIDGE that
           carries the avenue over: you walk between the legs of its towers
   south   the yellow STATION WITH THE CLOCKS over its door (nobody catches a
-          train there: you meet under the clocks), a palm garden, townhouses
+          train there: you meet under the clocks; its two doors open into
+          a room built by tools/generate_flinders.py, which owns them),
+          a palm garden, townhouses
   bay     the boardwalk, the PIER, the raft of SEA LIONS beside it, and the
           island with the lighthouse out in the fog
 
