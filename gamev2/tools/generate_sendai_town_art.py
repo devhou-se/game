@@ -103,6 +103,8 @@ from generate_sendai_art import (blob, trunk, rock, SLATE, SLATE_HI, SLATE_LO, P
                                  BRONZE, BRONZE_HI, BRONZE_LO)
 from generate_sapporo_art import brick, glass_door, lantern, BRICK, BRICK_HI, BRICK_LO, BRICK_DK   # noqa: E402
 from generate_kanazawa_art import text, kana, text_w, h3, shade, curve_rows, night, roof               # noqa: E402
+from generate_sendai_art import foliage, roof_tile, ground_shade, speck, pane as dark_pane                 # noqa: E402
+import house_look as hl                                                                                # noqa: E402
 
 SPR = 'assets/sprites'
 ROLES = ('center', 'edge-n', 'edge-s', 'edge-e', 'edge-w',
@@ -740,109 +742,165 @@ def tanabata(variant):
 # ==============================================================================
 # Downtown / Jozenji-dori
 # ==============================================================================
-def limb(d, pts, w, base=ZBARK, hi=ZBARK_HI, lo=ZBARK_LO):
-    d.line(pts, fill=base, width=w)
-    d.line([(x - max(1, w // 2), y) for x, y in pts], fill=hi)
-    d.line([(x + max(1, w // 2), y) for x, y in pts], fill=lo)
+# ---- the house look (#343): the downtown pieces in the sheets' colours, rectangles and pixels only ----
+D_KEYAKI_GOLD = [rgb(c) for c in 'f3d890 f3d890 c6a663 c6a663 c6a663 a7843b a7843b 93c297 508582 425faa 3c396d'.split()]
+D_KEYAKI_RUSSET = [rgb(c) for c in 'f6a583 f6a583 ce6a42 ce6a42 ce6a42 aa4d31 aa4d31 6c8e7f 508582 314b8e 3c396d'.split()]
+D_GREY, D_GREY_HI, D_GREY_TOP, D_GREY_LO = rgb('848295'), rgb('a4b0b5'), rgb('dae2e4'), rgb('575f79')   # bark, granite, steel
+D_BRONZE, D_BRONZE_HI, D_BRONZE_LO = rgb('7f513b'), rgb('a68777'), rgb('594b45')                      # bronze, wood
+D_SLATE, D_SLATE_HI, D_SLATE_LO = rgb('5b6c79'), rgb('698592'), rgb('444f5e')
+D_CHAR, D_CHAR_HI, D_CHAR_LO = rgb('2a2636'), rgb('47485d'), rgb('191c2a')                            # charred cedar
+D_PAPER, D_PAPER_HI, D_PAPER_JOINT, D_PAPER_LO = rgb('e4cecc'), rgb('fafcfd'), rgb('d7b6ab'), rgb('be9e8c')
+D_RED, D_RED_HI, D_RED_LO = rgb('aa4d31'), rgb('d16b56'), rgb('8a3a22')
+D_GOLD, D_GOLD_LO = rgb('c6a663'), rgb('a7843b')                                                    # the pack's dim gold
+D_INDIGO, D_INDIGO_HI, D_INDIGO_LO = rgb('314b8e'), rgb('4b6396'), rgb('172459')
+D_SAGE_HI, D_SAGE, D_SAGE_LO, D_SAGE_DK = rgb('b1dfdc'), rgb('93c297'), rgb('6c8e7f'), rgb('508582')
+D_GREEN, D_GREEN_HI, D_GREEN_LO = rgb('395050'), rgb('506b6b'), rgb('2e4040')
+D_SKIN, D_EMBER, D_GLASS_LO = rgb('f6a583'), rgb('ce6a42'), rgb('2a3151')
+D_INK = hl.INK
+
+
+def bough(d, pts, w, base, hi, lo):
+    """A limb through pts, w wide, a rectangle a step: its west (or top) pixel lit, its east (or bottom) one dark."""
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        steps = max(abs(x1 - x0), abs(y1 - y0), 1)
+        flat = abs(x1 - x0) > abs(y1 - y0)
+        for n in range(steps + 1):
+            x, y = x0 + (x1 - x0) * n // steps, y0 + (y1 - y0) * n // steps
+            if flat:
+                t = y - w // 2
+                d.rectangle([x, t, x, t + w - 1], fill=base)
+                d.point((x, t), fill=hi); d.point((x, t + w - 1), fill=lo)
+            else:
+                l = x - w // 2
+                d.rectangle([l, y, l + w - 1, y], fill=base)
+                d.point((l, y), fill=hi); d.point((l + w - 1, y), fill=lo)
+
+
+def kawara(im, x0, y0, x1, y1):
+    """The pack's tiled roof seen from above, its courses counted from y0."""
+    px = im.load()
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            px[x, y] = roof_tile(x, y - y0)
+
+
+def slab_roof(im, x0, y0, x1, y1):
+    """A flat roof seen from above: a 3 px steel coping lit from the upper left, a dark line inside it,
+    slate panels 9 wide with staggered joints, the row under the top coping lit."""
+    hl.fill(im, (x0, y0, x1, y1), D_GREY_HI)
+    hl.fill(im, (x0, y0, x1, y0), D_GREY_TOP); hl.fill(im, (x0, y0, x0, y1), D_GREY_TOP)
+    hl.fill(im, (x0, y1, x1, y1), D_GREY); hl.fill(im, (x1, y0, x1, y1), D_GREY)
+    hl.fill(im, (x0 + 3, y0 + 3, x1 - 3, y1 - 3), D_SLATE_LO)
+    px = im.load()
+    for y in range(y0 + 4, y1 - 3):
+        for x in range(x0 + 4, x1 - 3):
+            r = y - y0 - 4
+            joint = r % 8 == 7 or (x - x0 - 4 + (4 if r // 8 % 2 else 0)) % 9 == 8
+            px[x, y] = D_SLATE_LO if joint else (D_SLATE_HI if r == 0 else D_SLATE)
+
+
+def on_shade(im, cx, y, w):
+    """The sprite, outlined, over its ground shade (2a3151 at alpha 90, as maple() has): the shade gets no ink."""
+    hl.outline(im)
+    out = hl.canvas(*im.size)
+    ground_shade(ImageDraw.Draw(out), cx, y, w)
+    out.alpha_composite(im)
+    return out
+
+
+def akachochin(d, x0, y0, x1, y1):
+    """A red paper lantern: lit down its west side, dark down its east, ribbed, capped in ink."""
+    d.rectangle([x0, y0 + 1, x1, y1 - 1], fill=D_RED)
+    d.rectangle([x0, y0 + 1, x0, y1 - 1], fill=D_RED_HI); d.rectangle([x1, y0 + 1, x1, y1 - 1], fill=D_RED_LO)
+    for y in range(y0 + 4, y1 - 1, 4):
+        d.rectangle([x0 + 1, y, x1 - 1, y], fill=D_RED_LO)
+    d.rectangle([x0 + 1, y0, x1 - 1, y0], fill=D_INK); d.rectangle([x0 + 1, y1, x1 - 1, y1], fill=D_INK)
 
 
 def zelkova(variant):
     """A keyaki: a smooth grey trunk that forks low into a vase of rising
-    limbs, a broad dome of small leaves gone gold."""
+    limbs, a broad dome of small leaves gone gold (or russet), the ramp
+    shading through green and teal into blue and purple underneath."""
+    im, d = canvas(3, 4)                 # 96 x 128
+    cx, base = 48, 122
     if variant == 'a':
-        im, d = canvas(3, 4)             # 96 x 128
-        cx, base = 48, 122
-        sh, lv = (18, 112, 80, 126), (14, 82, 114, 126, (KEY, KEY_HI, KEY_LO, RUS), 34, 1)
-        limb(d, [(cx, base), (cx, 86)], 9)
-        d.polygon([(cx - 8, base), (cx - 4, base - 8), (cx + 4, base - 8), (cx + 8, base)], fill=ZBARK)   # root flare
-        d.line([(cx - 8, base), (cx - 4, base - 8)], fill=ZBARK_HI)
-        d.line([(cx + 8, base), (cx + 4, base - 8)], fill=ZBARK_LO)
-        for pts, w in (([(cx - 2, 90), (30, 62), (18, 44)], 5), ([(cx - 1, 88), (40, 56), (36, 30)], 5),
-                       ([(cx + 1, 88), (56, 56), (60, 28)], 5), ([(cx + 2, 90), (66, 64), (80, 46)], 5),
-                       ([(cx, 86), (48, 50), (48, 22)], 4)):
-            limb(d, pts, w)
-        for y in range(90, 120, 7):                               # the bark's flaking plates
-            d.point((cx - 1, y), fill=ZBARK_LO); d.point((cx + 2, y + 3), fill=ZBARK_HI)
-        pads = ((14, 52, 13, 11, 1, 0), (82, 54, 13, 11, 2, 2), (26, 36, 16, 13, 3, 0), (70, 36, 16, 13, 4, 1),
-                (48, 24, 20, 14, 5, 0), (34, 16, 14, 10, 6, 1), (62, 15, 14, 10, 7, 0), (48, 9, 12, 8, 8, 0),
-                (20, 62, 10, 8, 9, 2), (76, 64, 10, 8, 10, 1), (48, 46, 15, 11, 11, 0), (32, 56, 11, 8, 12, 1),
-                (64, 57, 11, 8, 13, 2))
+        tw, top, flare = 9, 86, (8, 7, 7, 6, 6, 5, 5, 5)
+        boughs = (([(cx - 2, 90), (30, 62), (18, 44)], 5), ([(cx - 1, 88), (40, 56), (36, 30)], 5),
+                  ([(cx + 1, 88), (56, 56), (60, 28)], 5), ([(cx + 2, 90), (66, 64), (80, 46)], 5),
+                  ([(cx, 86), (48, 50), (48, 22)], 4))
+        clumps = ((20, 62, 11, 8), (76, 64, 11, 8), (32, 56, 12, 8), (64, 57, 12, 8), (14, 51, 13, 11),
+                  (82, 53, 13, 11), (48, 46, 16, 11), (26, 36, 17, 13), (70, 36, 17, 13), (48, 25, 21, 14),
+                  (34, 16, 15, 10), (62, 15, 15, 10), (48, 10, 13, 8))
+        ramp, seed, shade_w, leaves, spread = D_KEYAKI_GOLD, 3, 30, (D_GOLD, D_GOLD_LO), 25
     else:
-        im, d = canvas(2, 4)             # 64 x 128
-        cx, base = 32, 122
-        sh, lv = (10, 112, 56, 126), (8, 58, 114, 126, (RUS, KEY, RUS_LO, KEY_HI), 22, 4)
-        limb(d, [(cx, base), (cx, 80)], 7)
-        d.polygon([(cx - 6, base), (cx - 3, base - 7), (cx + 3, base - 7), (cx + 6, base)], fill=ZBARK)
-        d.line([(cx - 6, base), (cx - 3, base - 7)], fill=ZBARK_HI)
-        for pts, w in (([(cx - 1, 84), (22, 58), (16, 40)], 4), ([(cx, 82), (30, 50), (28, 24)], 4),
-                       ([(cx + 1, 84), (42, 56), (48, 36)], 4)):
-            limb(d, pts, w)
-        pads = ((14, 46, 11, 10, 1, 1), (50, 44, 11, 10, 2, 2), (24, 30, 13, 11, 3, 1), (42, 28, 13, 11, 4, 0),
-                (32, 16, 14, 11, 5, 1), (32, 8, 10, 7, 6, 0), (32, 44, 11, 9, 7, 2), (18, 58, 8, 6, 8, 1),
-                (46, 58, 8, 6, 9, 2))
-    pal = ((KEY, KEY_HI, KEY_LO), (RUS, RUS_HI, RUS_LO), (KEY_LO, KEY, KEY_DK))
-    if variant == 'b':
-        pal = ((RUS, RUS_HI, RUS_LO), (KEY, KEY_HI, KEY_LO), (RUS_LO, RUS, KEY_DK))
-    for px, py, rx, ry, s, tone in sorted(pads, key=lambda p: -p[1]):         # lower pads first, the crown over them
-        a, b, c = pal[tone]
-        blob(d, px, py, rx, ry, a, b, c, s)
-    w, h = im.size
-    for i in range(110 if variant == 'a' else 60):                # single leaves catching the light, and gaps
-        x, y = 4 + (i * 29) % (w - 8), 4 + (i * 17) % 66
-        if im.getpixel((x, y))[3] and im.getpixel((x, y))[:3] not in (ZBARK[:3], ZBARK_HI[:3], ZBARK_LO[:3]):
-            d.point((x, y), fill=(KEY_HI, KEY_DK, RUS_HI, rgb('fff0a8'))[i % 4])
-    if variant == 'b':                                            # three cells wide, the trunk in the middle one
-        wide, d = canvas(3, 4)
-        wide.alpha_composite(im, (16, 0))
-        im = wide
-        sh = (sh[0] + 16, sh[1], sh[2] + 16, sh[3])
-        lv = (lv[0] + 16, lv[1] + 16) + lv[2:]
-    outline(im)
-    return grounded(im, [sh], leaves=lv)
-
-
-DBRONZE, DBRONZE_HI, DBRONZE_LO = rgb('6b4f3a'), rgb('a98458'), rgb('43302a')
+        tw, top, flare = 7, 80, (6, 5, 5, 4, 4, 4, 4)
+        boughs = (([(47, 84), (38, 58), (32, 40)], 4), ([(48, 82), (46, 50), (44, 24)], 4),
+                  ([(49, 84), (58, 56), (64, 36)], 4))
+        clumps = ((34, 58, 9, 7), (62, 58, 9, 7), (48, 45, 12, 9), (30, 46, 12, 10), (66, 44, 12, 10),
+                  (40, 30, 14, 11), (58, 28, 14, 11), (48, 17, 15, 11), (48, 9, 11, 7))
+        ramp, seed, shade_w, leaves, spread = D_KEYAKI_RUSSET, 11, 22, (D_EMBER, D_RED), 17
+    l = cx - tw // 2
+    d.rectangle([l, top, l + tw - 1, base], fill=D_GREY)
+    d.rectangle([l, top, l, base], fill=D_GREY_HI); d.rectangle([l + tw - 1, top, l + tw - 1, base], fill=D_GREY_LO)
+    for k, hw in enumerate(flare):                                # the root flare, up from the foot
+        d.rectangle([cx - hw, base - k, cx + hw, base - k], fill=D_GREY)
+        d.point((cx - hw, base - k), fill=D_GREY_HI); d.point((cx + hw, base - k), fill=D_GREY_LO)
+    for y in range(top + 4, base - 10, 7):                        # the bark's flaking plates
+        d.point((cx - 1, y), fill=D_GREY_LO); d.point((cx + 1, y + 3), fill=D_GREY_TOP)
+    for pts, w in boughs:
+        bough(d, pts, w, D_GREY, D_GREY_HI, D_GREY_LO)
+    foliage(im, clumps, ramp, seed)
+    im = on_shade(im, cx, base - 3, shade_w)
+    px = im.load()
+    for y in range(120, 124):                                     # fallen leaves in the shade
+        for x in range(cx - spread, cx + spread + 1):
+            if px[x, y][3] == 90 and speck(x, y, 5) < 9:
+                px[x, y] = leaves[speck(x, y, 6) % 2]
+    return im
 
 
 def jozenji_statue():
     """A bronze for the avenue's median, 2x3: a dancer on a granite block, the
     left arm flung up, the right held out with a bird on the hand, striding."""
     im, d = canvas(2, 3)                 # 64 x 96
-    ashlar(d, 13, 68, 50, 89, ch=11, bw=19, seed=3)               # the granite block
-    d.line([(13, 68), (13, 89)], fill=ASH_HI); d.rectangle([47, 68, 50, 89], fill=ASH_LO)
-    d.rectangle([11, 64, 52, 67], fill=ASH_HI); d.line([(11, 67), (52, 67)], fill=ASH_DK)
-    d.rectangle([10, 90, 53, 92], fill=ASH_LO); d.line([(10, 90), (53, 90)], fill=ASH)
-    d.rectangle([24, 75, 39, 82], fill=DBRONZE_LO); d.line([(26, 77), (37, 77)], fill=GOLD)   # the plate
-    d.line([(26, 80), (34, 80)], fill=GOLD_LO)
-    B, H, L = DBRONZE, DBRONZE_HI, DBRONZE_LO
-
-    def limb_(pts, w=3):
-        d.line(pts, fill=B, width=w)
-        d.line([(x - 1, y) for x, y in pts], fill=H)
-        d.line([(x + w // 2, y) for x, y in pts], fill=L)
-
-    d.rectangle([24, 61, 40, 63], fill=L); d.line([(24, 61), (40, 61)], fill=B)              # the base plate
-    limb_([(27, 61), (29, 52), (31, 44)], 4)                      # the standing leg
-    limb_([(39, 60), (37, 52), (34, 44)], 4)                      # the trailing leg, on its toe
-    d.polygon([(26, 46), (39, 46), (37, 35), (29, 35)], fill=B)   # the hips, a short skirt swung out
-    d.line([(26, 46), (29, 35)], fill=H); d.line([(39, 46), (37, 36)], fill=L)
-    d.line([(27, 47), (40, 47)], fill=L)
+    for y in range(68, 90):                                       # the granite block: courses, staggered stones
+        for x in range(13, 51):
+            r = y - 68
+            joint = r % 11 == 10 or (x - 13 + (9 if r // 11 % 2 else 0)) % 19 == 18
+            d.point((x, y), fill=D_GREY if joint else D_GREY_HI)
+    d.rectangle([13, 68, 13, 89], fill=D_GREY_TOP); d.rectangle([47, 68, 50, 89], fill=D_GREY)
+    d.rectangle([11, 64, 52, 66], fill=D_GREY_TOP); d.rectangle([11, 67, 52, 67], fill=D_GREY)          # the cap
+    d.rectangle([10, 90, 53, 92], fill=D_GREY); d.rectangle([10, 90, 53, 90], fill=D_GREY_HI)            # the foot
+    d.rectangle([10, 92, 53, 92], fill=D_GREY_LO)
+    d.rectangle([24, 75, 39, 82], fill=D_BRONZE_LO)                                                     # the plate
+    d.rectangle([26, 77, 37, 77], fill=D_GOLD); d.rectangle([26, 80, 34, 80], fill=D_GOLD_LO)
+    B, H, L = D_BRONZE, D_BRONZE_HI, D_BRONZE_LO
+    d.rectangle([24, 61, 40, 63], fill=L); d.rectangle([24, 61, 40, 61], fill=B)                     # the base plate
+    bough(d, [(27, 61), (29, 52), (31, 44)], 4, B, H, L)          # the standing leg
+    bough(d, [(39, 60), (37, 52), (34, 44)], 4, B, H, L)          # the trailing leg, on its toe
+    for y in range(35, 47):                                       # the hips, a short skirt swung out
+        x0, x1 = 29 - (y - 35) * 3 // 11, 37 + (y - 35) * 2 // 11
+        d.rectangle([x0, y, x1, y], fill=B); d.point((x0, y), fill=H); d.point((x1, y), fill=L)
+    d.rectangle([27, 47, 39, 47], fill=L)
     d.rectangle([29, 24, 36, 36], fill=B)                         # the torso
-    d.line([(29, 24), (29, 35)], fill=H); d.line([(36, 25), (36, 36)], fill=L)
-    d.line([(30, 30), (35, 30)], fill=L)
-    limb_([(30, 26), (24, 19), (21, 8)], 3)                       # the left arm, flung up
+    d.rectangle([29, 24, 29, 35], fill=H); d.rectangle([36, 25, 36, 36], fill=L)
+    d.rectangle([30, 30, 35, 30], fill=L)
+    bough(d, [(30, 26), (24, 19), (21, 8)], 3, B, H, L)           # the left arm, flung up
     d.rectangle([20, 5, 22, 8], fill=H)
-    limb_([(36, 26), (43, 24), (49, 19)], 3)                      # the right arm, held out
-    d.polygon([(48, 17), (52, 14), (56, 15), (53, 17), (55, 19), (50, 19)], fill=B)          # the bird on her hand
-    d.point((52, 15), fill=H); d.point((56, 15), fill=GOLD)
+    bough(d, [(36, 26), (43, 24), (49, 19)], 3, B, H, L)          # the right arm, held out
+    for y, x0, x1 in ((14, 51, 52), (15, 50, 56), (16, 49, 54), (17, 48, 53), (18, 50, 55), (19, 50, 54)):
+        d.rectangle([x0, y, x1, y], fill=B)                       # the bird on her hand
+    d.rectangle([50, 15, 52, 15], fill=H); d.rectangle([50, 18, 54, 18], fill=L); d.point((54, 15), fill=D_GOLD)
     d.rectangle([31, 21, 34, 24], fill=L)                         # the neck
-    d.ellipse([29, 13, 36, 21], fill=B)                           # the head, turned up to the bird
-    d.arc([29, 13, 36, 21], 150, 280, fill=H)
-    d.rectangle([28, 13, 31, 17], fill=L); d.ellipse([26, 14, 30, 18], fill=L)               # hair in a knot
-    for x, y in ((31, 40), (33, 43), (30, 28), (28, 55), (38, 56)):                          # verdigris in the folds
-        d.point((x, y), fill=BRONZE_HI)
-    outline(im)
-    return grounded(im, [(6, 86, 58, 95)])
+    for y, x0, x1 in ((13, 31, 34), (14, 30, 35), (15, 29, 36), (16, 29, 36), (17, 29, 36), (18, 29, 36),
+                      (19, 29, 36), (20, 30, 35), (21, 31, 34)):  # the head, turned up to the bird
+        d.rectangle([x0, y, x1, y], fill=B)
+        d.point((x0, y), fill=H if y < 18 else B); d.point((x1, y), fill=L)
+    d.rectangle([28, 13, 31, 17], fill=L); d.rectangle([26, 15, 30, 18], fill=L)                     # hair in a knot
+    d.point((27, 15), fill=B)
+    for x, y in ((31, 40), (33, 43), (30, 28), (28, 55), (38, 56), (33, 19)):                      # verdigris in the folds
+        d.point((x, y), fill=D_SAGE_DK)
+    return on_shade(im, 32, 90, 26)
 
 
 def coals(d, x0, y0, x1, y1):
@@ -858,87 +916,95 @@ def coals(d, x0, y0, x1, y1):
 
 
 def gyutan():
+    """A gyutan grill, 4x4: a kawara roof seen from above, charred cedar
+    boards, a black name board lettered in dim gold, a steel flue and its
+    smoke; below, the grill window with its cook and coals, paper doors
+    under a dark red noren, a red lantern and the menu."""
     im, d = canvas(4, 4)                 # 128 x 128
-    # ---- the upper wall: charred cedar boards, a plaster band, the board ---------
-    for x in range(6, 122):
-        for y in range(26, 72):
-            k = (x - 6) % 6
-            c = CHAR_LO if k == 5 else (CHAR_HI if k == 0 else CHAR)
-            if h3(x // 6, y, 6) < 22 and k not in (0, 5):
-                c = CHAR_LO                                       # the alligator skin of the burn
+    kawara(im, 2, 7, 125, 26)                                     # the roof, seen from above
+    d.rectangle([2, 4, 125, 6], fill=roof_tile(0, 0)); d.rectangle([2, 4, 125, 4], fill=D_GREEN)    # the ridge cap
+    d.rectangle([2, 27, 125, 27], fill=D_INK)
+    for x in range(4, 124):                                       # the upper wall: charred cedar boards
+        for y in range(28, 72):
+            k = (x - 4) % 6
+            c = D_CHAR_LO if k == 5 else (D_CHAR_HI if k == 0 else D_CHAR)
+            if k not in (0, 5) and speck(x // 6, y // 2, 6) < 12:
+                c = D_CHAR_LO                                     # the alligator skin of the burn
             d.point((x, y), fill=c)
-    d.rectangle([114, 26, 121, 72], fill=CHAR_LO)
-    d.rectangle([4, 20, 123, 26], fill=SOOT); d.line([(4, 20), (123, 20)], fill=rgb('55525c'))   # the parapet
-    d.line([(4, 26), (123, 26)], fill=INK)
-    bar(d, 20, 32, 83, 62, rgb('1c1a1f'), None, None)             # the name board: gold on black
-    d.rectangle([20, 32, 83, 62], outline=GOLD)
-    d.rectangle([22, 34, 81, 60], outline=GOLD_LO)
-    glyph(d, GYU, 27, 40, GOLD_HI, 2)
-    kana(d, ['ta'], 46, 40, GOLD_HI, 2); kana(d, ['n'], 63, 40, GOLD_HI, 2)
-    d.rectangle([90, 34, 99, 60], fill=VERM)                      # an upright tab: charcoal-grilled
-    d.line([(90, 34), (90, 60)], fill=VERM_HI); d.line([(99, 34), (99, 60)], fill=VERM_LO)
+    d.rectangle([4, 28, 123, 29], fill=D_CHAR_LO)                 # the eave's shadow
+    d.rectangle([20, 32, 83, 62], fill=D_CHAR_LO)                 # the name board: gold on black
+    d.rectangle([20, 32, 83, 62], outline=D_GOLD); d.rectangle([22, 34, 81, 60], outline=D_GOLD_LO)
+    for ch, x in (('牛', 28), ('タ', 46), ('ン', 64)):
+        hl.text(im, x, 41, ch, D_GOLD)
+    d.rectangle([90, 34, 99, 60], fill=D_RED)                     # an upright tab: charcoal-grilled
+    d.rectangle([90, 34, 90, 60], fill=D_RED_HI); d.rectangle([99, 34, 99, 60], fill=D_RED_LO)
     for y in (38, 45, 52):
-        d.rectangle([93, y, 96, y + 3], fill=WHITE)
+        d.rectangle([93, y, 96, y + 3], fill=D_PAPER)
     # ---- the flue up the east side, and its smoke ---------------------------------
-    bar(d, 104, 12, 111, 76, STONE, WHITE, STONE_DK)
-    d.rectangle([109, 12, 111, 76], fill=STONE_LO)
+    d.rectangle([104, 12, 111, 76], fill=D_GREY)
+    d.rectangle([104, 12, 104, 76], fill=D_GREY_HI); d.rectangle([110, 12, 111, 76], fill=D_GREY_LO)
     for y in (22, 40, 58):
-        d.line([(104, y), (111, y)], fill=STONE_DK)
-    d.rectangle([102, 10, 113, 13], fill=STONE_LO); d.line([(102, 10), (113, 10)], fill=STONE)
-    # ---- the pent roof over the front: black tile, a gold-capped eave --------------
-    for y in range(72, 82):
-        e = (y - 72)
-        for x in range(4 - e // 3, 124 + e // 3):
-            c = rgb('1f2029') if (y - 72) % 4 == 3 or (x + ((y - 72) // 4) * 3) % 6 == 0 else rgb('34364a')
-            d.point((x, y), fill=c)
-    d.rectangle([1, 82, 126, 83], fill=rgb('1f2029'))
+        d.rectangle([104, y, 111, y], fill=D_GREY_LO)
+    d.rectangle([102, 10, 113, 13], fill=D_GREY); d.rectangle([102, 10, 113, 10], fill=D_GREY_HI)
+    for x0, y0, x1, y1 in ((105, 6, 110, 9), (108, 3, 114, 7), (113, 1, 119, 4), (118, 3, 122, 5)):   # opaque, stepped
+        d.rectangle([x0, y0, x1, y1], fill=D_GREY_TOP); d.rectangle([x0, y1, x1, y1], fill=D_GREY_HI)
+    # ---- the pent roof over the front: two courses of kawara, a gilt-dotted eave ---
+    kawara(im, 1, 72, 126, 82)
     for x in range(3, 126, 5):
-        d.point((x, 83), fill=GOLD)
+        d.point((x, 82), fill=D_GOLD)
+    d.rectangle([1, 83, 126, 83], fill=D_INK)
     # ---- the ground floor ------------------------------------------------------------
-    d.rectangle([6, 84, 121, 122], fill=CHAR_LO)
+    d.rectangle([6, 84, 121, 122], fill=D_CHAR_LO)
     for x in (6, 62, 92, 118):                                    # posts
-        bar(d, x, 84, x + 3, 122, CHAR, CHAR_HI, INK)
-    # the grill window (cells 0-1): the cook, the mesh, slices of tongue, the coals
-    d.rectangle([10, 88, 61, 116], fill=rgb('40282a'))
-    d.rectangle([10, 88, 61, 90], fill=WARM)                      # the hood's light
-    d.rectangle([28, 91, 38, 104], fill=WHITE); d.rectangle([29, 86, 37, 91], fill=WHITE)    # the cook, in whites
-    d.rectangle([30, 92, 36, 97], fill=rgb('e8b99a')); d.point((31, 94), fill=INK); d.point((35, 94), fill=INK)
-    d.rectangle([24, 100, 42, 106], fill=WHITE); d.line([(24, 106), (42, 106)], fill=CREAM_LO)
-    d.line([(42, 102), (48, 105)], fill=rgb('e8b99a'), width=2)   # an arm, turning a slice
-    coals(d, 12, 110, 59, 115)
-    d.line([(12, 108), (59, 108)], fill=STONE_DK)                 # the mesh
+        d.rectangle([x, 84, x + 3, 122], fill=D_CHAR)
+        d.rectangle([x, 84, x, 122], fill=D_CHAR_HI)
+    # the grill window (cells 0-1), open: the hood's lamp, the cook, the mesh, slices of tongue, the coals
+    d.rectangle([10, 88, 61, 116], fill=D_CHAR)
+    d.rectangle([10, 88, 61, 90], fill=D_GOLD); d.rectangle([10, 90, 61, 90], fill=D_GOLD_LO)
+    d.rectangle([29, 91, 37, 94], fill=D_PAPER_HI); d.rectangle([29, 94, 37, 94], fill=D_GREY_TOP)  # the cook, in whites
+    d.rectangle([30, 95, 36, 99], fill=D_SKIN); d.point((31, 97), fill=D_INK); d.point((35, 97), fill=D_INK)
+    d.rectangle([25, 100, 41, 106], fill=D_PAPER_HI)
+    d.rectangle([38, 100, 41, 106], fill=D_GREY_TOP); d.rectangle([25, 106, 41, 106], fill=D_GREY_TOP)
+    d.rectangle([42, 102, 47, 104], fill=D_SKIN)                  # an arm, turning a slice
+    d.rectangle([12, 108, 59, 108], fill=D_GREY)                  # the mesh
+    for x in range(16, 56, 9):                                    # slices of tongue on it
+        d.rectangle([x, 106, x + 4, 107], fill=D_RED_HI); d.point((x + 1, 106), fill=D_SKIN)
+    for y in range(110, 116):                                     # the coal bed
+        for x in range(12, 60):
+            k = speck(x, y, 8)
+            d.point((x, y), fill=D_EMBER if k < 22 else (D_RED if k < 55 else D_CHAR_LO))
     for x in range(12, 60, 3):
-        d.point((x, 109), fill=STONE_DK)
-    for x in (16, 24, 32, 45, 53):                                # slices of tongue on it
-        d.rectangle([x, 106, x + 4, 107], fill=rgb('c98a78')); d.point((x + 1, 106), fill=rgb('e7b3a2'))
-    d.rectangle([10, 116, 61, 122], fill=CHAR); d.line([(10, 116), (61, 116)], fill=CHAR_HI)
-    puff(im, 20, 100, 3, a=70); puff(im, 50, 97, 4, a=70)
-    d = ImageDraw.Draw(im)
-    # the door (cell 2): lamplit lattice behind a short noren
-    d.rectangle([66, 88, 91, 122], fill=LQ)
-    shoji(d, 67, 96, 78, 121, lit=True, cw=3, chh=5); shoji(d, 79, 96, 90, 121, lit=True, cw=3, chh=5)
-    d.rectangle([65, 86, 92, 97], fill=UMBER)
+        d.point((x, 109), fill=D_GREY)
+    d.rectangle([10, 116, 61, 122], fill=D_CHAR); d.rectangle([10, 116, 61, 116], fill=D_CHAR_HI)
+    # the door (cell 2): paper leaves under a short noren
+    d.rectangle([66, 88, 91, 122], fill=D_CHAR)
+    for x0 in (67, 79):
+        d.rectangle([x0, 96, x0 + 11, 121], fill=D_PAPER)
+        for x in range(x0, x0 + 12, 3):
+            d.rectangle([x, 96, x, 121], fill=D_BRONZE_LO)
+        for y in range(96, 122, 5):
+            d.rectangle([x0, y, x0 + 11, y], fill=D_BRONZE_LO)
+        d.rectangle([x0 + 11, 96, x0 + 11, 121], fill=D_BRONZE_LO)
+    d.rectangle([64, 85, 93, 85], fill=D_GOLD_LO)                 # the noren's rod
     for k in range(3):
         x0 = 65 + k * 9 + (1 if k else 0)
-        d.rectangle([x0, 87, x0 + 8, 99 + (k % 2)], fill=rgb('7a2f2c'))
-        d.line([(x0, 87), (x0, 99)], fill=rgb('a04a3e'))
-    glyph(d, GYU, 75, 89, CREAM, 1)
-    d.line([(64, 86), (93, 86)], fill=GOLD_LO)
-    # the east bay (cell 3): a lantern, the menu, a stack of charcoal sacks
-    lantern(d, 98, 88, 9, 15)
-    bar(d, 110, 92, 117, 108, PAPER, WHITE, PAPER_LO)
+        d.rectangle([x0, 86, x0 + 8, 98 + (k % 2)], fill=D_RED_LO)
+        d.rectangle([x0, 86, x0, 98 + (k % 2)], fill=D_RED)
+    hl.text(im, 73, 87, '牛', D_PAPER)
+    # the east bay (cell 3): a red lantern, the menu, a stack of charcoal sacks
+    akachochin(d, 96, 88, 104, 103)
+    d.rectangle([110, 92, 117, 108], fill=D_PAPER); d.rectangle([110, 92, 117, 92], fill=D_PAPER_HI)
     for y in (95, 98, 101, 104):
-        d.line([(112, y), (115, y)], fill=CREAM_DK)
-    d.rectangle([96, 110, 112, 121], fill=rgb('8a6a4c')); d.line([(96, 110), (112, 110)], fill=rgb('b08a64'))
-    d.line([(96, 115), (112, 115)], fill=rgb('5f4a3a')); d.line([(104, 110), (104, 121)], fill=rgb('5f4a3a'))
-    d.rectangle([4, 122, 123, 126], fill=ASH_LO); d.line([(4, 122), (123, 122)], fill=ASH_HI)
-    outline(im)
-    puff(im, 109, 6, 3, a=170); puff(im, 114, 3, 4, a=130); puff(im, 120, 5, 3, a=90)      # charcoal smoke
-    puff(im, 104, 3, 2, a=110)
+        d.rectangle([112, y, 115, y], fill=D_PAPER_LO)
+    d.rectangle([96, 110, 112, 121], fill=D_PAPER_LO); d.rectangle([96, 110, 112, 110], fill=D_PAPER)
+    d.rectangle([96, 115, 112, 115], fill=D_BRONZE_LO); d.rectangle([104, 110, 104, 121], fill=D_BRONZE_LO)
+    d.rectangle([4, 122, 123, 126], fill=D_GREY); d.rectangle([4, 122, 123, 122], fill=D_GREY_HI)   # the step
+    d.rectangle([4, 126, 123, 126], fill=D_GREY_LO)
+    hl.outline(im)
     return im
 
 
-def edamame(d, x, y, c=ZUN_DK, hi=ZUN_HI):
+def edamame(d, x, y, c=D_SAGE_DK, hi=D_SAGE):
     """A pod: three beans in a row."""
     d.rectangle([x, y + 1, x + 9, y + 3], fill=c)
     for k in range(3):
@@ -948,59 +1014,60 @@ def edamame(d, x, y, c=ZUN_DK, hi=ZUN_HI):
 
 
 def zunda():
+    """A zunda sweet shop, 3x3: a slate roof seen from above, sage courses, a
+    ZUNDA board with pods, a striped awning, the window with its clerk, shakes
+    and plates of mochi, a glass door under a short green noren."""
     im, d = canvas(3, 3)                 # 96 x 96
-    bar(d, 5, 14, 90, 90, ZUN, ZUN_HI, ZUN_LO)                    # pale green render
-    d.rectangle([84, 14, 90, 90], fill=ZUN_LO)
-    for y in range(22, 46, 8):
-        d.line([(5, y), (90, y)], fill=ZUN_LO)
-    d.rectangle([3, 9, 92, 14], fill=WHITE); d.line([(3, 14), (92, 14)], fill=ZUN_DK)       # the cornice
-    d.line([(3, 9), (92, 9)], fill=ZUN_HI)
-    bar(d, 62, 2, 76, 9, ZUN_LO, ZUN, ZUN_DK)                     # a roof vent
-    # the board: ZUNDA and a pod on cream
-    bar(d, 8, 18, 87, 35, PAPER, WHITE, PAPER_LO)
-    d.rectangle([8, 18, 87, 35], outline=ZUN_DK)
-    text(d, 'ZUNDA', 26, 20, rgb('35603f'), scale=2)
-    edamame(d, 11, 21); edamame(d, 13, 28, rgb('3f7a4a'))
-    # the awning: green and white scallops
-    for x in range(3, 93):
+    slab_roof(im, 3, 2, 92, 15)
+    d.rectangle([62, 4, 76, 11], fill=D_SAGE_DK)                  # a roof vent
+    d.rectangle([62, 4, 76, 4], fill=D_SAGE_LO); d.rectangle([62, 4, 62, 11], fill=D_SAGE_LO)
+    d.rectangle([62, 11, 76, 11], fill=D_GREEN); d.rectangle([76, 4, 76, 11], fill=D_GREEN)
+    d.rectangle([5, 16, 90, 90], fill=D_SAGE)                     # the wall, in sage courses
+    for y in range(23, 90, 8):
+        d.rectangle([5, y, 90, y], fill=D_SAGE_LO)
+    d.rectangle([5, 16, 5, 90], fill=D_SAGE_HI); d.rectangle([84, 16, 90, 90], fill=D_SAGE_LO)
+    d.rectangle([8, 18, 87, 35], fill=D_PAPER); d.rectangle([8, 18, 87, 18], fill=D_PAPER_HI)        # the board
+    d.rectangle([8, 18, 87, 35], outline=D_SAGE_DK)
+    for i, ch in enumerate('ZUNDA'):
+        hl.text(im, 30 + i * 10, 22, ch, D_GREEN)
+    edamame(d, 11, 21); edamame(d, 13, 28, D_GREEN)
+    for x in range(3, 93):                                        # the awning: green and white scallops
         stripe = ((x - 3) // 6) % 2
         for y in range(38, 46):
-            d.point((x, y), fill=(ZUN_DK if y > 43 else rgb('6fae6a')) if stripe else (PAPER_LO if y > 43 else WHITE))
+            d.point((x, y), fill=(D_SAGE_DK if y > 43 else D_SAGE_LO) if stripe else (D_PAPER if y > 43 else D_PAPER_HI))
         if (x - 3) % 6 in (1, 2, 3, 4):
-            d.point((x, 46), fill=rgb('6fae6a') if stripe else WHITE)
-    d.line([(3, 38), (92, 38)], fill=ZUN_HI)
-    # the window (cells 0-1): plates of zunda mochi, a shake, a clerk
-    d.rectangle([9, 50, 55, 84], fill=WHITE)
-    d.rectangle([10, 51, 54, 83], fill=WARM)
-    d.line([(10, 51), (54, 51)], fill=WHITE)
-    d.rectangle([34, 54, 44, 68], fill=rgb('e8b99a'))             # the clerk: a green cap and apron
-    d.rectangle([33, 52, 45, 56], fill=ZUN_DK); d.point((36, 60), fill=INK); d.point((41, 60), fill=INK)
-    d.rectangle([31, 66, 47, 74], fill=rgb('6fae6a')); d.line([(31, 66), (47, 66)], fill=ZUN_HI)
-    d.rectangle([10, 74, 54, 83], fill=PAPER); d.line([(10, 74), (54, 74)], fill=PAPER_LO)  # the counter
+            d.point((x, 46), fill=D_SAGE_DK if stripe else D_PAPER)
+    # the window (cells 0-1): the clerk before dark glass, shakes, plates of zunda mochi
+    d.rectangle([9, 50, 55, 84], fill=D_PAPER_HI)
+    dark_pane(d, 10, 51, 54, 73)
+    d.rectangle([32, 51, 32, 73], fill=D_PAPER_HI)
+    d.rectangle([33, 52, 45, 56], fill=D_SAGE_DK); d.rectangle([33, 52, 45, 52], fill=D_SAGE_LO)    # the clerk's cap
+    d.rectangle([34, 57, 44, 66], fill=D_SKIN); d.point((36, 60), fill=D_INK); d.point((41, 60), fill=D_INK)
+    d.rectangle([31, 66, 47, 73], fill=D_SAGE); d.rectangle([31, 66, 47, 66], fill=D_SAGE_HI)       # the apron
+    for x0, y0 in ((14, 58), (22, 62)):                           # zunda shakes
+        d.rectangle([x0, y0, x0 + 5, 73], fill=D_PAPER_HI); d.rectangle([x0, y0, x0 + 5, y0 + 3], fill=D_SAGE)
+        d.rectangle([x0 + 5, y0 + 4, x0 + 5, 73], fill=D_PAPER)
+    d.rectangle([17, 53, 17, 57], fill=D_RED)
+    d.rectangle([10, 74, 54, 83], fill=D_PAPER); d.rectangle([10, 74, 54, 74], fill=D_PAPER_HI)     # the counter
     for x in (13, 24, 45):                                        # mochi under green paste, on plates
-        d.rectangle([x - 1, 80, x + 8, 81], fill=WHITE); d.line([(x - 1, 82), (x + 8, 82)], fill=PAPER_LO)
+        d.rectangle([x - 1, 80, x + 8, 81], fill=D_PAPER_HI); d.rectangle([x - 1, 82, x + 8, 82], fill=D_PAPER_JOINT)
         for k in range(3):
-            d.rectangle([x + k * 3, 77, x + k * 3 + 1, 79], fill=rgb('7fc06a'))
-            d.point((x + k * 3, 77), fill=ZUN_HI)
-    d.rectangle([14, 56, 20, 68], fill=WHITE); d.rectangle([14, 56, 20, 60], fill=rgb('8fd07a'))    # a zunda shake
-    d.rectangle([15, 61, 19, 67], fill=rgb('cfeebb')); d.line([(18, 50), (17, 56)], fill=RED)
-    d.rectangle([22, 60, 27, 68], fill=WHITE); d.rectangle([22, 60, 27, 63], fill=rgb('8fd07a'))
-    d.line([(32, 51), (32, 73)], fill=WHITE)
-    # the door (cell 2): glass, a short green noren with a pod on it
-    d.rectangle([62, 50, 85, 90], fill=WHITE)
-    d.rectangle([63, 51, 84, 90], fill=GLASS)
-    d.rectangle([63, 51, 84, 60], fill=rgb('4f8250'))
-    d.line([(63, 51), (84, 51)], fill=rgb('6a9c59'))
-    d.line([(70, 51), (70, 61)], fill=rgb('35603f')); d.line([(77, 51), (77, 61)], fill=rgb('35603f'))
-    edamame(d, 68, 54, ZUN_HI, WHITE)
-    d.line([(73, 61), (73, 90)], fill=WHITE); d.line([(64, 62), (72, 62)], fill=GLASS_HI)
-    d.line([(74, 62), (83, 62)], fill=GLASS_HI)
-    d.point((71, 76), fill=WHITE); d.point((75, 76), fill=WHITE)
-    d.rectangle([5, 84, 61, 90], fill=WHITE); d.line([(5, 84), (61, 84)], fill=ZUN_LO)       # the stall riser
+            d.rectangle([x + k * 3, 77, x + k * 3 + 1, 79], fill=D_SAGE)
+            d.point((x + k * 3, 77), fill=D_SAGE_HI)
+    # the door (cell 2): dark glass under a short green noren with a pod on it
+    d.rectangle([62, 50, 85, 90], fill=D_PAPER_HI)
+    dark_pane(d, 63, 61, 84, 89)
+    d.rectangle([73, 61, 73, 89], fill=D_PAPER_HI)
+    d.rectangle([63, 51, 84, 60], fill=D_SAGE_DK); d.rectangle([63, 51, 84, 51], fill=D_SAGE_LO)
+    d.rectangle([70, 52, 70, 60], fill=D_GREEN); d.rectangle([77, 52, 77, 60], fill=D_GREEN)
+    edamame(d, 66, 54, D_SAGE_HI, D_PAPER_HI)
+    d.point((71, 76), fill=D_PAPER); d.point((75, 76), fill=D_PAPER)
+    d.rectangle([5, 84, 61, 90], fill=D_PAPER); d.rectangle([5, 84, 61, 84], fill=D_PAPER_HI)       # the stall riser
     for x in range(8, 60, 6):
-        d.rectangle([x, 86, x + 3, 88], fill=ZUN)
-    d.rectangle([3, 90, 92, 94], fill=ASH_LO); d.line([(3, 90), (92, 90)], fill=ASH_HI)
-    outline(im)
+        d.rectangle([x, 86, x + 3, 88], fill=D_SAGE)
+    d.rectangle([3, 90, 92, 94], fill=D_GREY); d.rectangle([3, 90, 92, 90], fill=D_GREY_HI)          # the step
+    d.rectangle([3, 94, 92, 94], fill=D_GREY_LO)
+    hl.outline(im)
     return im
 
 
@@ -2232,136 +2299,149 @@ def sasakama_shop():
     return im
 
 
-def chochin(d, x, y, mark=VERM):
-    """A white paper lantern, a red mark on it."""
-    d.rectangle([x + 1, y, x + 5, y], fill=INK)
-    d.rectangle([x, y + 1, x + 6, y + 9], fill=PAPER)
-    d.line([(x, y + 1), (x, y + 9)], fill=WHITE); d.line([(x + 6, y + 1), (x + 6, y + 9)], fill=PAPER_LO)
+def chochin(d, x, y, mark=D_RED):
+    """A white paper lantern, unlit, a mark on it."""
+    d.rectangle([x + 1, y, x + 5, y], fill=D_INK)
+    d.rectangle([x, y + 1, x + 6, y + 9], fill=D_PAPER)
+    d.rectangle([x, y + 1, x, y + 9], fill=D_PAPER_HI); d.rectangle([x + 6, y + 1, x + 6, y + 9], fill=D_GREY_HI)
     for yy in (y + 3, y + 7):
-        d.line([(x + 1, yy), (x + 5, yy)], fill=PAPER_LO)
+        d.rectangle([x + 1, yy, x + 5, yy], fill=D_GREY_HI)
     d.rectangle([x + 2, y + 4, x + 4, y + 6], fill=mark)
-    d.rectangle([x + 1, y + 10, x + 5, y + 10], fill=INK)
+    d.rectangle([x + 1, y + 10, x + 5, y + 10], fill=D_INK)
 
 
 def izakaya():
-    """An alley izakaya, 3x4: weathered boards and lit paper windows upstairs,
-    a row of white lanterns under the eave, a long indigo noren, crates."""
+    """An alley izakaya, 3x4: a kawara roof seen from above, weathered boards
+    and two dark windows upstairs, a row of unlit paper lanterns under the
+    eave, a long indigo noren, a red lantern and crates."""
     im, d = canvas(3, 4)                 # 96 x 128
-    roof(d, 10, 22, (10, 85), (2, 93), TILE_P, ridge=True, caps=False, step=3, p=1.2)
+    kawara(im, 2, 6, 93, 25)                                      # the roof, seen from above
+    d.rectangle([2, 3, 93, 5], fill=roof_tile(0, 0)); d.rectangle([2, 3, 93, 3], fill=D_GREEN)      # the ridge cap
+    d.rectangle([2, 26, 93, 26], fill=D_INK)
     for x in range(6, 90):                                        # upstairs: grey weathered boards
-        for y in range(27, 66):
+        for y in range(27, 67):
             k = (x - 6) % 7
-            c = SHACK_HI if k == 0 else (SHACK_DK if k == 6 else (SHACK if h3(x // 7, y, 2) > 30 else SHACK_LO))
-            d.point((x, y), fill=c)
-    d.rectangle([83, 27, 89, 66], fill=SHACK_LO)
-    for x0 in (12, 54):                                           # two lit paper windows, a rail before them
-        shoji(d, x0, 33, x0 + 28, 54, lit=True, cw=6, chh=6)
-        d.rectangle([x0 - 2, 55, x0 + 30, 56], fill=WOOD_LO); d.line([(x0 - 2, 55), (x0 + 30, 55)], fill=WOOD)
+            d.point((x, y), fill=D_GREY_HI if k == 0 else (D_GREY_LO if k == 6 else D_GREY))
+    d.rectangle([6, 27, 89, 28], fill=D_GREY_LO)                  # the eave's shadow
+    for x0 in (9, 58):                                            # two windows, dark glass, a rail before them
+        d.rectangle([x0 - 1, 32, x0 + 29, 55], fill=D_BRONZE_LO)
+        dark_pane(d, x0, 33, x0 + 28, 54)
+        for x in range(x0 + 7, x0 + 28, 7):
+            d.rectangle([x, 33, x, 54], fill=D_BRONZE_LO)
+        d.rectangle([x0 - 2, 56, x0 + 30, 57], fill=D_BRONZE); d.rectangle([x0 - 2, 56, x0 + 30, 56], fill=D_GREY_HI)
         for x in range(x0 - 1, x0 + 30, 4):
-            d.line([(x, 57), (x, 61)], fill=WOOD_LO)
-        d.line([(x0 - 2, 62), (x0 + 30, 62)], fill=WOOD_DK)
-    bar(d, 44, 31, 51, 58, PAPER, WHITE, PAPER_LO)                # an upright board: sa-ke
-    d.rectangle([44, 31, 51, 58], outline=SHACK_DK)
-    glyph(d, KANA_SA, 45, 34, VERM, 1); kana(d, ['ke'], 45, 46, VERM, 1)
-    for y in range(66, 74):                                       # the pent roof over the door
-        e = (y - 66) // 2
-        for x in range(4 - e, 92 + e):
-            d.point((x, y), fill=TILE_P[1] if (y - 66) % 3 == 2 or (x + ((y - 66) // 3) * 3) % 6 == 0 else TILE_P[0])
-    d.rectangle([0, 74, 95, 75], fill=TILE_P[3])
-    d.rectangle([6, 76, 89, 122], fill=rgb('3a2c2c'))             # the ground floor, open to the street
-    for i, x in enumerate(range(8, 86, 10)):                      # the lanterns
-        chochin(d, x, 77, VERM if i % 2 == 0 else INDIGO_S)
-    d.rectangle([8, 90, 35, 118], fill=WARM)                      # the counter window (cell 0): bottles, a cook
-    d.line([(8, 90), (35, 90)], fill=WHITE)
-    for i, x in enumerate((10, 15, 20)):
-        d.rectangle([x, 96, x + 2, 104], fill=(rgb('3f7a4a'), rgb('7a4a2a'), rgb('2c3d6a'))[i]); d.point((x + 1, 94), fill=WHITE)
-        d.rectangle([x + 1, 94, x + 1, 95], fill=PAPER)
-    d.rectangle([25, 96, 32, 104], fill=rgb('e8b99a')); d.rectangle([24, 94, 33, 96], fill=INDIGO_S)
-    d.point((27, 100), fill=INK); d.point((30, 100), fill=INK)
-    d.rectangle([8, 105, 35, 107], fill=WOOD); d.line([(8, 105), (35, 105)], fill=rgb('d2a58c'))
-    d.rectangle([8, 108, 35, 118], fill=WOOD_LO)
+            d.rectangle([x, 58, x, 61], fill=D_BRONZE_LO)
+        d.rectangle([x0 - 2, 62, x0 + 30, 63], fill=D_BRONZE_LO)
+    d.rectangle([41, 30, 54, 59], fill=D_PAPER)                   # an upright board: sa-ke
+    d.rectangle([41, 30, 54, 59], outline=D_BRONZE_LO)
+    hl.text(im, 43, 33, 'サケ', D_RED, vertical=True)
+    kawara(im, 1, 67, 94, 75)                                     # the pent roof over the door
+    d.rectangle([1, 76, 94, 76], fill=D_INK)
+    d.rectangle([6, 77, 89, 122], fill=D_CHAR)                    # the ground floor, open to the street
+    for i, x in enumerate(range(9, 86, 10)):                      # the lanterns
+        chochin(d, x, 78, D_RED if i % 2 == 0 else D_INDIGO)
+    d.rectangle([8, 91, 35, 121], fill=D_INK)                     # the counter (cell 0): bottles, a cook
+    for x, c in ((10, D_SAGE_DK), (15, D_BRONZE), (20, D_INDIGO)):
+        d.rectangle([x, 96, x + 2, 104], fill=c); d.rectangle([x + 1, 94, x + 1, 95], fill=D_PAPER)
+    d.rectangle([25, 96, 32, 104], fill=D_SKIN); d.rectangle([24, 94, 33, 96], fill=D_INDIGO)
+    d.point((27, 100), fill=D_INK); d.point((30, 100), fill=D_INK)
+    d.rectangle([8, 105, 35, 107], fill=D_BRONZE); d.rectangle([8, 105, 35, 105], fill=D_GREY_HI)
+    hl.scanlines(im, (8, 108, 35, 121), D_BRONZE, D_BRONZE_LO)
     for x in range(10, 35, 5):
-        d.line([(x, 108), (x, 118)], fill=WOOD_DK)
-    d.rectangle([38, 90, 61, 122], fill=WOOD_DK)                  # the door (cell 1): lit lattice, a long noren
-    shoji(d, 39, 98, 49, 121, lit=True, cw=3, chh=5); shoji(d, 50, 98, 60, 121, lit=True, cw=3, chh=5)
-    d.rectangle([37, 89, 62, 104], fill=INDIGO_S); d.line([(37, 89), (62, 89)], fill=INDIGO_S_HI)
+        d.rectangle([x, 108, x, 121], fill=D_BRONZE_LO)
+    d.rectangle([38, 90, 61, 122], fill=D_BRONZE_LO)              # the door (cell 1): paper leaves, a long noren
+    for x0 in (39, 50):
+        d.rectangle([x0, 98, x0 + 10, 121], fill=D_PAPER)
+        for x in range(x0 + 2, x0 + 10, 3):
+            d.rectangle([x, 98, x, 121], fill=D_BRONZE_LO)
+        for y in range(102, 122, 5):
+            d.rectangle([x0, y, x0 + 10, y], fill=D_BRONZE_LO)
+    d.rectangle([37, 89, 62, 104], fill=D_INDIGO); d.rectangle([37, 89, 62, 89], fill=D_INDIGO_HI)
     for x in (45, 54):
-        d.line([(x, 89), (x, 105)], fill=INDIGO_S_LO)
-    for x in range(38, 62):
-        d.point((x, 97 + round(1.5 * math.sin(x / 2.2))), fill=WHITE)
-    lantern(d, 65, 90, 10, 17)                                    # the red lantern by the door (cell 2)
-    d.rectangle([68, 95, 70, 101], fill=PAPER)
-    for i, y in enumerate((106, 114)):                            # beer crates, stacked
-        bar(d, 66, y, 85, y + 7, AMBER if i else rgb('d9a82a'), rgb('fde08a'), rgb('b8862a'))
-        d.line([(66, y + 4), (85, y + 4)], fill=rgb('b8862a'))
+        d.rectangle([x, 89, x, 105], fill=D_INDIGO_LO)
+    for x in range(38, 62):                                       # its white wave
+        d.point((x, 97 + (0, 1, 1, 0, -1, -1)[x % 6]), fill=D_PAPER_HI)
+    akachochin(d, 66, 89, 74, 107)                                # the red lantern by the door (cell 2)
+    d.rectangle([69, 94, 71, 101], fill=D_PAPER)
+    for y in (108, 115):                                          # crates, stacked
+        d.rectangle([66, y, 86, y + 6], fill=D_GOLD); d.rectangle([66, y + 3, 86, y + 3], fill=D_GOLD_LO)
+        d.rectangle([86, y, 86, y + 6], fill=D_GOLD_LO); d.rectangle([66, y + 6, 86, y + 6], fill=D_GOLD_LO)
         for x in range(69, 85, 5):
-            d.rectangle([x, y + 1, x + 1, y + 2], fill=rgb('7a4a2a'))
+            d.rectangle([x, y + 1, x + 1, y + 2], fill=D_BRONZE_LO)
     for x in (6, 35, 62, 87):
-        bar(d, x, 76, x + 2, 122, SHACK_LO, SHACK, SHACK_DK)
-    d.rectangle([4, 122, 91, 126], fill=ASH_LO); d.line([(4, 122), (91, 122)], fill=ASH_HI)
-    outline(im)
+        d.rectangle([x, 77, x + 2, 122], fill=D_GREY)
+        d.rectangle([x, 77, x, 122], fill=D_GREY_HI); d.rectangle([x + 2, 77, x + 2, 122], fill=D_GREY_LO)
+    d.rectangle([4, 123, 91, 126], fill=D_GREY); d.rectangle([4, 123, 91, 123], fill=D_GREY_HI)      # the step
+    d.rectangle([4, 126, 91, 126], fill=D_GREY_LO)
+    hl.outline(im)
     return im
 
 
-MID, MID_HI, MID_LO, MID_DK = rgb('e6e0d2'), rgb('f7f3ea'), rgb('c4bca8'), rgb('9c937e')
+def roundel(d, cx, y, rows, c, vein):
+    """A stepped keyaki-leaf roundel: one row span a pixel row, a vein down the middle."""
+    for k, hw in enumerate(rows):
+        d.rectangle([cx - hw, y + k, cx + hw, y + k], fill=c)
+    d.rectangle([cx, y + 1, cx, y + len(rows) - 2], fill=vein)
 
 
 def midrise():
-    """Sendai's mid-rise: a six-storey store in pale tile, ribbon windows in
-    green glass, a rooftop board, a red upright banner down its east pier,
-    a zelkova-leaf roundel, a deep green canopy over lit windows and doors."""
+    """Sendai's mid-rise: a six-storey store in pale tile under a slate roof
+    with its AOBA board, ribbon windows of dark glass in green frames, a red
+    upright banner down its east pier, a green canopy, show windows and doors."""
     im, d = canvas(4, 6)                 # 128 x 192
-    for x0 in (36, 88):                                           # the board on the roof, on its frame
-        d.rectangle([x0, 14, x0 + 1, 22], fill=STONE_DK)
-    bar(d, 24, 1, 103, 17, rgb('2f5a44'), rgb('4a7a5c'), rgb('1e3f30'))
-    d.rectangle([24, 1, 103, 17], outline=rgb('1e3f30'))
-    text(d, 'AOBA', 64 - 23, 3, KEY_HI, scale=2)
+    slab_roof(im, 4, 2, 123, 23)
+    d.rectangle([24, 5, 103, 19], fill=D_GREEN)                   # the board on the roof
+    d.rectangle([24, 5, 103, 5], fill=D_GREEN_HI); d.rectangle([24, 19, 103, 19], fill=D_GREEN_LO)
+    d.rectangle([24, 5, 103, 19], outline=D_GOLD)
+    for i, ch in enumerate('AOBA'):
+        hl.text(im, 40 + i * 14, 8, ch, D_GOLD)
     for x in (30, 97):
-        d.ellipse([x - 3, 6, x + 3, 12], fill=KEY); d.line([(x, 7), (x, 11)], fill=rgb('2f5a44'))
-    bar(d, 6, 22, 121, 186, MID, MID_HI, MID_LO)                  # the body
-    d.rectangle([114, 22, 121, 186], fill=MID_LO)
-    d.rectangle([4, 19, 123, 23], fill=MID_DK); d.line([(4, 19), (123, 19)], fill=MID_LO)
-    for x in range(6, 114, 12):                                   # the tile joints
-        d.line([(x, 24), (x, 150)], fill=MID_LO)
+        roundel(d, x, 9, (1, 2, 3, 3, 3, 2, 1), D_GOLD, D_GREEN)
+    d.rectangle([4, 24, 123, 25], fill=D_PAPER_LO)                # the cornice
+    for y in range(26, 151):                                      # the body: pale tile
+        for x in range(6, 122):
+            joint = (y - 26) % 6 == 5 or (x - 6) % 12 == 11
+            d.point((x, y), fill=D_PAPER_JOINT if joint else D_PAPER)
+    d.rectangle([6, 26, 6, 150], fill=D_PAPER_HI); d.rectangle([114, 26, 121, 150], fill=D_PAPER_JOINT)
     for f in range(5):                                            # five floors of ribbon window (cells 0-2)
-        y = 28 + f * 24
-        d.rectangle([10, y, 91, y + 14], fill=rgb('2a4a44'))
+        y = 30 + f * 24
+        d.rectangle([10, y, 91, y + 14], fill=D_GREEN)
         for i, x in enumerate(range(11, 90, 10)):
-            lit = (i * 3 + f * 5) % 7 == 0
-            d.rectangle([x, y + 1, x + 8, y + 13], fill=WARM if lit else rgb('4f8a7a'))
-            d.line([(x, y + 1), (x + 8, y + 1)], fill=WHITE if lit else rgb('8fc4b0'))
-            d.line([(x + 1, y + 3), (x + 1, y + 10)], fill=WHITE if lit else rgb('8fc4b0'))
-            if not lit and (i + f) % 3 == 0:
-                d.rectangle([x, y + 8, x + 8, y + 13], fill=rgb('e9e4d6'))   # a blind half down
-        d.line([(10, y + 15), (91, y + 15)], fill=MID_HI); d.line([(10, y + 16), (91, y + 16)], fill=MID_DK)
-    d.rectangle([97, 28, 110, 132], fill=MAP)                     # the upright banner down the east pier
-    d.line([(97, 28), (97, 132)], fill=MAP_HI); d.line([(110, 28), (110, 132)], fill=MAP_LO)
-    text(d, 'AOBA', 99, 36, WHITE, scale=2, vertical=True)
-    d.ellipse([98, 108, 109, 119], fill=KEY); d.ellipse([100, 110, 107, 117], fill=MAP)
-    d.line([(103, 110), (103, 117)], fill=KEY_HI); d.line([(101, 113), (106, 113)], fill=KEY_HI)
-    d.rectangle([98, 136, 109, 146], fill=rgb('4f8a7a')); d.line([(98, 136), (109, 136)], fill=rgb('8fc4b0'))
-    # the canopy and the ground floor
-    d.rectangle([2, 150, 125, 157], fill=rgb('2f5a44')); d.line([(2, 150), (125, 150)], fill=rgb('4a7a5c'))
-    d.rectangle([2, 156, 125, 157], fill=rgb('1e3f30'))
+            dark_pane(d, x, y + 1, x + 8, y + 13)
+            if (i + f) % 3 == 0:                                  # a blind half down
+                d.rectangle([x, y + 1, x + 8, y + 6], fill=D_PAPER); d.rectangle([x, y + 7, x + 8, y + 7], fill=D_PAPER_JOINT)
+        d.rectangle([10, y + 15, 91, y + 15], fill=D_PAPER_HI); d.rectangle([10, y + 16, 91, y + 16], fill=D_PAPER_LO)
+    d.rectangle([97, 30, 110, 134], fill=D_RED)                   # the upright banner down the east pier
+    d.rectangle([97, 30, 97, 134], fill=D_RED_HI); d.rectangle([110, 30, 110, 134], fill=D_RED_LO)
+    hl.text(im, 101, 38, 'AOBA', D_PAPER_HI, vertical=True, pitch=14)
+    roundel(d, 103, 108, (2, 4, 5, 6, 6, 6, 6, 6, 6, 5, 4, 2), D_GOLD, D_RED)
+    dark_pane(d, 98, 138, 109, 148)
+    d.rectangle([2, 150, 125, 157], fill=D_GREEN)                 # the canopy and the ground floor
+    d.rectangle([2, 150, 125, 150], fill=D_GREEN_HI); d.rectangle([2, 156, 125, 157], fill=D_GREEN_LO)
     for x in range(5, 124, 6):
-        d.point((x, 157), fill=KEY_HI)
-    d.rectangle([6, 158, 121, 186], fill=GLASS_DK)
+        d.point((x, 157), fill=D_GOLD)
+    d.rectangle([6, 158, 121, 186], fill=rgb('2c2d51'))
     for i, x0 in enumerate((9, 98)):                              # show windows (cells 0 and 3)
-        d.rectangle([x0, 161, x0 + 21, 184], fill=WARM); d.line([(x0, 161), (x0 + 21, 161)], fill=WHITE)
+        dark_pane(d, x0, 161, x0 + 21, 184)
         for k, x in enumerate((x0 + 3, x0 + 13)):                 # dressed figures
-            c = (MAP, KEY, rgb('3f7a4a'), INDIGO_S)[(k + i * 2) % 4]
-            d.rectangle([x + 1, 165, x + 3, 168], fill=rgb('e8b99a'))
-            d.rectangle([x, 169, x + 4, 178], fill=c); d.rectangle([x + 1, 179, x + 3, 183], fill=SOOT)
-    for x0, c in ((33, RUS), (88, MAP)):                          # autumn sale banners
-        d.rectangle([x0, 160, x0 + 6, 182], fill=c); d.line([(x0, 160), (x0, 182)], fill=WHITE)
+            d.rectangle([x + 1, 165, x + 3, 168], fill=D_SKIN)
+            d.rectangle([x, 169, x + 4, 178], fill=(D_RED, D_GOLD, D_GREEN)[(k + i * 2) % 3])
+            d.rectangle([x + 1, 179, x + 3, 183], fill=D_GLASS_LO)
+    for x0, c in ((33, D_RED), (88, D_GOLD)):                     # autumn sale banners
+        d.rectangle([x0, 160, x0 + 6, 182], fill=c)
         for y in (164, 170, 176):
-            d.rectangle([x0 + 2, y, x0 + 4, y + 2], fill=WHITE)
-    glass_door(d, 42, 162, 62, 186); glass_door(d, 65, 162, 85, 186)          # the doors (cells 1-2)
-    d.rectangle([42, 158, 85, 161], fill=AMBER); d.line([(42, 158), (85, 158)], fill=WHITE)
+            d.rectangle([x0 + 2, y, x0 + 4, y + 2], fill=D_PAPER_HI)
+    for x0 in (42, 65):                                           # the doors (cells 1-2): steel frames, dark glass
+        d.rectangle([x0, 162, x0 + 20, 186], fill=D_GREY); d.rectangle([x0, 162, x0, 186], fill=D_GREY_HI)
+        dark_pane(d, x0 + 2, 164, x0 + 9, 185, 7); dark_pane(d, x0 + 11, 164, x0 + 18, 185, 7)
+        d.point((x0 + 9, 175), fill=D_GREY_HI); d.point((x0 + 11, 175), fill=D_GREY_HI)
+    d.rectangle([42, 158, 85, 160], fill=D_GOLD); d.rectangle([42, 161, 85, 161], fill=D_GOLD_LO)
     for x in (6, 30, 40, 86, 96, 119):
-        bar(d, x, 158, x + 2, 186, MID, MID_HI, MID_LO)
-    d.rectangle([4, 186, 123, 189], fill=STONE_LO); d.line([(4, 186), (123, 186)], fill=STONE)
-    outline(im)
+        d.rectangle([x, 158, x + 2, 186], fill=D_PAPER)
+        d.rectangle([x, 158, x, 186], fill=D_PAPER_HI); d.rectangle([x + 2, 158, x + 2, 186], fill=D_PAPER_JOINT)
+    d.rectangle([4, 186, 123, 189], fill=D_GREY); d.rectangle([4, 186, 123, 186], fill=D_GREY_HI)   # the step
+    d.rectangle([4, 189, 123, 189], fill=D_SLATE_LO)
+    hl.outline(im)
     return im
 
 

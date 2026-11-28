@@ -331,6 +331,13 @@ above in the pack's tile, and held by the same test file. Kenrokuen's lanterns, 
 and path tiles (#386) are drawn the same way; the ground tiles and the bridge are flat, and `2a3151` at alpha 90
 is their only translucent colour.
 
+Sendai's seven downtown pieces in `tools/generate_sendai_town_art.py` (the two keyaki, the Jozenji bronze,
+the gyutan grill, the zunda shop, the izakaya and the mid-rise; #343, part of #288) are drawn by the recipe:
+the trees' foliage in autumn ramps that run gold or russet into green, teal, blue and purple, the roofs
+kawara or slate seen from above, the glass dark with a slanted glare and gold only as the pack's dim `c6a663`.
+They are held to it by `tools/tests/sendai-town-art.test.js`, which also checks that the tool still draws
+every committed PNG it owns (the tool is not in `check_generators.ART_TOOLS`).
+
 ## Asset Generation
 
 Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/`:
