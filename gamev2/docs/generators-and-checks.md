@@ -304,17 +304,17 @@ appends the keys to the palette as it places them. Sizes are whole cells and are
 `generate_konbinis.py` assume - change the art, not the footprint. Needs Pillow.
 
 `tools/generate_seven_eleven_art.py [--preview out.png]` draws `seven-eleven_0_0`, the 7-Eleven on the
-street (issue #89): 3x4 cells, a two-storey store front on - a flat roof, an upstairs flat, the white fascia
-with the orange / green / red stripes and the 7 of the back wall inside, a lit glass shopfront and the
-sliding doors on the middle cell of the bottom row, the cell the `seven-eleven` prefab leaves open. **It is a
-placeholder**: it took the place of the white line drawing ported from the Godot game, and the store is
+street (issue #89): 3x4 cells, a one-storey store drawn in the manner of the GuttyKreum city pack - the flat
+roof seen from above with two condensers on it, the white fascia with the orange / green / red stripes and
+the 7, a dark glass shopfront with a slanted glare and the shelves showing through, and the sliding doors on
+the middle cell of the bottom row, the cell the `seven-eleven` prefab leaves open. Every colour is one the
+pack's sheets use and the outline is the pack's blue, not black. **It is a placeholder**: the store is
 still waiting for hand-made art (the issue stays open, `needs-art`). A PNG drawn by hand replaces
 `assets/sprites/seven-eleven_0_0.png` at the same 192x256; take the tool out of `check_generators.ART_TOOLS`
 (and delete it) in the same commit, or the check reports the hand-made picture as drift, and keep only the
 size, anchor and door of its case in `tools/tests/konbini.test.js`, which also counts this picture's colours.
-Fully procedural,
-in the konbini kit's palette, and drawn with rectangles and points only, so a re-run draws the same pixels on
-any Pillow. Size and anchor are fixed by the maps of every town that places it - change the art, not the
+Fully procedural, and drawn with rectangles and points only, so a re-run draws the same pixels on any
+Pillow. Size and anchor are fixed by the maps of every town that places it - change the art, not the
 footprint - and the tool does not touch `config.json`. Needs Pillow.
 
 `tools/generate_devhouse_art.py [--preview out.png]` draws the 37 `devhouse-*` sprites (issue #69): the two
