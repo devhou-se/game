@@ -331,6 +331,10 @@ above in the pack's tile, and held by the same test file. Kenrokuen's lanterns, 
 and path tiles (#386) are drawn the same way; the ground tiles and the bridge are flat, and `2a3151` at alpha 90
 is their only translucent colour.
 
+Sendai's distillery-yard pieces in `tools/generate_sendai_town_art.py` (the still house, the cask rack, the red
+maple and Yamadera; #344, part of #339) are drawn in the look with `house_look` and `generate_sendai_art`'s
+`roof_tile` / `foliage`, and held by `tools/tests/sendai-distillery-yard-art.test.js`.
+
 ## Asset Generation
 
 Python scripts in `tools/` directory generate 64×64 PNG tiles saved to `assets/`:

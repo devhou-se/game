@@ -1477,315 +1477,389 @@ def kabuto_stand():
 # ==============================================================================
 # The distillery yard, and Yamadera on the hill behind
 # ==============================================================================
-SLATE_P = (SLATE, SLATE_LO, SLATE_HI, rgb('1e2636'))
+import house_look as hl                 # noqa: E402
+import generate_sendai_art as sa        # noqa: E402  (as modules: this file has a limb() of its own)
+import generate_kanazawa_art as ka      # noqa: E402
+
+DY_INK = hl.INK
+DY_BRICK, DY_BRICK_HI, DY_BRICK_LO = rgb('aa4d31'), rgb('d16b56'), rgb('8a3a22')
+DY_STONE, DY_STONE_HI, DY_STONE_LO, DY_STONE_DK = rgb('e4cecc'), rgb('fafcfd'), rgb('be9e8c'), rgb('8e7366')
+DY_GREEN, DY_GREEN_HI, DY_GREEN_LO = rgb('395050'), rgb('506b6b'), rgb('2e4040')
+DY_CU = [rgb(c) for c in ('f6a583', 'f6a583', 'ce6a42', 'aa4d31', '8a3a22')]          # copper, lit to shade
+DY_OAK, DY_OAK_HI, DY_OAK_LO, DY_OAK_DK = rgb('aa775f'), rgb('bb8971'), rgb('86624f'), rgb('71412a')
+DY_HOOP, DY_HOOP_HI, DY_HOOP_LO = rgb('53596d'), rgb('be9e8c'), rgb('434857')
+DY_ROOF_LIT = [rgb(c) for c in ('0a1627', '172459', '53596d', '395050', '434857')]    # a fall facing west
+DY_ROOF_SH = [rgb(c) for c in ('0a1627', '0a1627', '395050', '2e4040', '2e4040')]     # a fall facing east
+DY_RIDGE, DY_RIDGE_HI = rgb('434857'), rgb('53596d')
+DY_FLAME = [rgb(c) for c in ('f6a583', 'e77f6a', 'ce6a42', 'aa4d31', '8a3a22', '5b283b')]   # the red maple
+DY_GINKGO = [rgb(c) for c in ('f3d890', 'c6a663', 'c6a663', 'a7843b', '86624f', '5b283b')]
+DY_ICHO = DY_GINKGO[1:4] + DY_GINKGO[3:]                                 # the hill's gold: no lamp yellow in it
+DY_FIR = sa.NEEDLE[1:]
+DY_MOMIJI = sa.AUTUMN[1:]
+DY_HILL_ROOF = [rgb(c) for c in ('0a1627', '172459', '434857', '2e4040', '2e4040')]
+DY_TIMBER, DY_TIMBER_LO = rgb('86624f'), rgb('5b283b')
 
 
-def brick_px(x, y, shade_=False):
-    """One pixel of running-bond brickwork (generate_sapporo_art.brick's bond)."""
-    base, lo = (BRICK_LO, BRICK_DK) if shade_ else (BRICK, BRICK_LO)
-    course = y // 3
-    if y % 3 == 2 or (x + course * 4) % 8 == 0:
-        return lo
-    k = ((x + course * 4) // 8 * 7 + course * 13) % 11
-    return BRICK_HI if (k == 0 and not shade_) else (lo if k == 5 else base)
+def dy_disc(r):
+    """A disc's half-widths, a row at a time from the top (2r + 1 rows): whole numbers only."""
+    return [math.isqrt(r * r - dy * dy + r) for dy in range(-r, r + 1)]
 
 
-def pot_still(d, cx, base):
-    """A copper pot still: a round pot, a tall tapering neck, the lyne arm
-    bending away at the top."""
-    d.line([(cx, base - 54), (cx + 10, base - 57), (cx + 19, base - 52)], fill=CU_LO, width=3)    # the lyne arm
-    d.line([(cx, base - 55), (cx + 10, base - 58), (cx + 19, base - 53)], fill=CU)
-    for y in range(base - 54, base - 30):                         # the neck
-        t = (y - (base - 54)) / 24.0
-        w = 2 + round(5 * t * t + 1.5 * t)
-        d.line([(cx - w, y), (cx + w, y)], fill=CU)
-        d.point((cx - w, y), fill=CU_HI); d.point((cx - w + 1, y), fill=CU_HI)
-        d.point((cx + w, y), fill=CU_DK); d.point((cx + w - 1, y), fill=CU_LO)
-    d.ellipse([cx - 14, base - 34, cx + 14, base - 4], fill=CU)   # the pot
-    d.chord([cx - 14, base - 34, cx + 14, base - 4], -40, 80, fill=CU_LO)
-    d.chord([cx - 14, base - 34, cx + 14, base - 4], 30, 150, fill=CU_LO)
-    d.arc([cx - 14, base - 34, cx + 14, base - 4], 150, 250, fill=CU_HI)
-    d.ellipse([cx - 10, base - 30, cx - 5, base - 22], fill=CU_HI)
-    d.point((cx - 9, base - 29), fill=WHITE); d.point((cx - 8, base - 28), fill=WHITE)
-    d.line([(cx - 13, base - 18), (cx + 13, base - 18)], fill=CU_DK)          # a riveted seam
-    for x in range(cx - 12, cx + 13, 3):
-        d.point((x, base - 19), fill=CU_HI)
-    d.ellipse([cx + 1, base - 16, cx + 8, base - 9], fill=CU_DK)  # the manhole
-    d.ellipse([cx + 2, base - 15, cx + 7, base - 10], fill=CU_LO); d.point((cx + 3, base - 14), fill=CU_HI)
-    d.line([(cx - 7, base - 31), (cx + 7, base - 31)], fill=CU_DK)            # the collar
-    d.rectangle([cx - 15, base - 5, cx + 15, base], fill=rgb('5c3b37'))        # its brick hearth
-    d.line([(cx - 15, base - 5), (cx + 15, base - 5)], fill=rgb('77514a'))
-    d.rectangle([cx - 5, base - 3, cx + 5, base - 1], fill=COAL); d.point((cx, base - 2), fill=AMBER)
+def dy_arch(im, x0, y0, x1, y1, c):
+    """A round-headed box, in rows."""
+    r = (x1 - x0 + 1) // 2
+    for k in range(r):
+        inset = r - (math.isqrt(4 * r * r - (2 * (r - k) - 1) ** 2) + 1) // 2
+        hl.fill(im, (x0 + inset, y0 + k, x1 - inset, y0 + k), c)
+    hl.fill(im, (x0, y0 + r, x1, y1), c)
 
 
-def cask_end(d, cx, cy, r, mark=0):
-    """A cask seen end on: the head's boards, the chime hoop, a stencil."""
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=STONE_DK)
-    d.ellipse([cx - r + 1, cy - r + 1, cx + r - 1, cy + r - 1], fill=WOOD_LO)
-    d.ellipse([cx - r + 3, cy - r + 3, cx + r - 3, cy + r - 3], fill=WOOD)
-    d.chord([cx - r + 3, cy - r + 3, cx + r - 3, cy + r - 3], 10, 150, fill=rgb('a87862'))
-    for x in range(cx - r + 5, cx + r - 3, 4):
-        h = int(math.sqrt(max(0, (r - 3) ** 2 - (x - cx) ** 2)))
-        d.line([(x, cy - h + 1), (x, cy + h - 1)], fill=WOOD_LO)
-    d.arc([cx - r + 3, cy - r + 3, cx + r - 3, cy + r - 3], 170, 280, fill=rgb('d2a58c'))
-    d.arc([cx - r, cy - r, cx + r, cy + r], 180, 270, fill=STONE_LO)
-    d.rectangle([cx - 4, cy - 3, cx + 3, cy + 1], fill=PAPER if mark % 2 == 0 else rgb('3a3336'))   # the stencil
-    d.line([(cx - 3, cy - 1), (cx + 2, cy - 1)], fill=INK if mark % 2 == 0 else PAPER)
-    d.point((cx + (2 if mark % 2 else -2), cy + 5), fill=WOOD_DK)                 # the bung
+def dy_glazed(im, x0, y0, x1, y1, step=9):
+    """generate_sendai_art.pane under a round head: dark glass, a slanted glare, a shaded head."""
+    dy_arch(im, x0, y0, x1, y1, sa.P_GLASS)
+    px = im.load()
+    for x in range(x0, x1 + 1):
+        top = next(y for y in range(y0, y1 + 1) if px[x, y] == sa.P_GLASS)
+        for y in range(top, y1 + 1):
+            px[x, y] = sa.P_GLASS_LO if y < top + 2 else sa.P_GLARE if (x - x0 + y1 - y) % step == 0 else sa.P_GLASS
+
+
+def cask_end(im, cx, cy, r, mark=0):
+    """A cask seen end on: an iron hoop, the chime, the head's boards lit from the upper left, a stencil."""
+    px = im.load()
+    for dy, hw in zip(range(-r, r + 1), dy_disc(r)):
+        for dx in range(-hw, hw + 1):
+            q, lean = dx * dx + dy * dy, dx + dy
+            if q > (r - 2) * (r - 2) + 2:                         # the hoop
+                c = DY_HOOP_HI if lean * 2 < -r else DY_HOOP_LO if lean * 2 > r else DY_HOOP
+            elif q > (r - 3) * (r - 3) + 2:                       # the chime
+                c = DY_OAK_DK
+            elif (dx + r) % 4 == 1:                               # a joint between two boards
+                c = DY_OAK_DK if lean > 0 or r <= 10 else DY_OAK_LO
+            else:
+                c = DY_OAK_HI if lean * 10 < -5 * r else (DY_OAK_LO if r > 10 else DY_OAK_DK) if lean * 10 > 6 * r else DY_OAK
+            px[cx + dx, cy + dy] = c
+    if r > 10:                                                    # the stencil, and the bung
+        hl.fill(im, (cx - 4, cy - 3, cx + 3, cy + 1), DY_STONE if mark % 2 == 0 else DY_OAK_DK)
+        hl.fill(im, (cx - 3, cy - 1, cx + 2, cy - 1), DY_INK if mark % 2 == 0 else DY_STONE)
+        hl.fill(im, (cx + (2 if mark % 2 else -3), cy + 5, cx + (3 if mark % 2 else -2), cy + 6), DY_OAK_DK)
+    else:
+        hl.fill(im, (cx - 2, cy - 1, cx + 1, cy), DY_STONE if mark % 2 == 0 else DY_OAK_DK)
+
+
+DY_NECK = (2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 7, 8, 9)
+
+
+def pot_still(im, cx, base):
+    """A copper pot still in rows: the lyne arm, the tapering neck, the round pot on a brick hearth,
+    banded from a lit upper left to a shaded lower right."""
+    px = im.load()
+
+    def cu(dx, dy, r):
+        return DY_CU[max(0, min(4, (dx * 3 + dy * 4 + 5 * r) * 5 // (10 * r)))]
+    for n in range(20):                                           # the lyne arm, bending away east
+        y = base - 48 + n * n // 70
+        hl.fill(im, (cx + n, y, cx + n, y + 2), DY_CU[2])
+        px[cx + n, y] = DY_CU[1]; px[cx + n, y + 2] = DY_CU[4]
+    for k, w in enumerate(DY_NECK):                                  # the neck
+        y = base - 45 + k
+        for dx in range(-w, w + 1):
+            px[cx + dx, y] = DY_CU[1] if dx <= -w + 1 else DY_CU[4] if dx == w else DY_CU[3] if dx >= w - 1 - w // 3 else DY_CU[2]
+    hl.fill(im, (cx - 9, base - 31, cx + 9, base - 31), DY_CU[4])  # the collar
+    r = 14
+    for dy, hw in zip(range(-r, r + 1), dy_disc(r)):                 # the pot
+        for dx in range(-hw, hw + 1):
+            px[cx + dx, base - 17 + dy] = cu(dx, dy, r)
+    hl.fill(im, (cx - 9, base - 26, cx - 8, base - 23), DY_STONE_HI)  # a glint
+    for dx in range(-13, 14):                                     # a riveted seam
+        px[cx + dx, base - 15] = DY_CU[4]
+        if dx % 3 == 0:
+            px[cx + dx, base - 16] = DY_CU[1]
+    for dy, hw in zip(range(-3, 4), dy_disc(3)):                     # the manhole
+        hl.fill(im, (cx + 5 - hw, base - 9 + dy, cx + 5 + hw, base - 9 + dy), DY_CU[4])
+    hl.fill(im, (cx + 4, base - 10, cx + 5, base - 9), DY_CU[2])
+    hl.fill(im, (cx - 16, base - 4, cx + 16, base), DY_BRICK_LO)   # the hearth, a fire door in it
+    hl.fill(im, (cx - 16, base - 4, cx + 16, base - 4), DY_BRICK)
+    hl.fill(im, (cx - 5, base - 2, cx + 5, base), DY_INK)
+    hl.fill(im, (cx - 3, base - 1, cx + 2, base - 1), sa.P_LAMP); px[cx - 1, base - 1] = sa.P_LAMP_HI
+
+
+def dy_stack(im, x, y):
+    """A brick chimney stack on the roof, seen from above, and its shade on the tiles."""
+    px = im.load()
+    for yy in range(y + 4, y + 22):                               # the shade, east and south of it
+        for xx in range(x + 3, x + 18):
+            if yy > y + 16 or xx > x + 12:
+                px[xx, yy] = sa.roof_tile(xx, yy, DY_ROOF_SH)
+    hl.fill(im, (x, y, x + 12, y + 16), DY_INK)
+    hl.fill(im, (x + 1, y + 4, x + 11, y + 15), DY_BRICK)
+    for yy in range(y + 6, y + 16, 3):
+        hl.fill(im, (x + 1, yy, x + 11, yy), DY_BRICK_LO)
+    hl.fill(im, (x + 9, y + 4, x + 11, y + 15), DY_BRICK_LO)
+    hl.fill(im, (x + 1, y + 1, x + 11, y + 3), DY_STONE_LO)        # the cap, and its flue
+    hl.fill(im, (x + 1, y + 1, x + 11, y + 1), DY_STONE)
+    hl.fill(im, (x + 4, y + 2, x + 8, y + 3), DY_INK)
 
 
 def distillery_warehouse():
     im, d = canvas(6, 4)                 # 192 x 128
-    roof(d, 12, 40, (16, 175), (2, 189), SLATE_P, ridge=True, caps=False, p=1.2)
-    for x in (40, 148):                                           # roof vents
-        bar(d, x, 2, x + 9, 9, rgb('5c3b37'), rgb('77514a'), rgb('432a2b'))
-        d.rectangle([x - 1, 0, x + 10, 2], fill=SLATE_LO)
-    # ---- the brick body ------------------------------------------------------------
-    for y in range(45, 116):
-        for x in range(6, 186):
-            d.point((x, y), fill=brick_px(x, y, x > 176))
-    d.rectangle([4, 43, 187, 46], fill=CREAM); d.line([(4, 43), (187, 43)], fill=WHITE)   # a stone cornice
-    d.line([(4, 46), (187, 46)], fill=CREAM_DK)
-    for x in range(8, 186, 6):                                    # dentils of brick under it
-        d.rectangle([x, 47, x + 2, 48], fill=BRICK_DK)
-    # ---- the centre gable, a cask in its roundel -------------------------------------
-    for y in range(8, 45):
-        half = round((y - 6) * 36 / 38)
-        for x in range(96 - half, 96 + half):
-            d.point((x, y), fill=brick_px(x, y))
-        d.point((96 - half - 1, y), fill=CREAM); d.point((96 - half, y), fill=WHITE)
-        d.point((96 + half, y), fill=CREAM_LO); d.point((96 + half - 1, y), fill=CREAM)
-    d.rectangle([92, 4, 99, 8], fill=CREAM); d.line([(92, 4), (99, 4)], fill=WHITE)
-    d.ellipse([85, 18, 106, 39], fill=CREAM)
-    cask_end(d, 96, 29, 8, 1)
-    # ---- arched windows with iron shutters (cells 0, 1 and 5) --------------------------
+    px = im.load()
+    # ---- the roof, seen from above: tile courses under a ridge, two brick stacks ----
+    for y in range(6, 44):
+        for x in range(1, 191):
+            px[x, y] = sa.roof_tile(x, y, DY_ROOF_SH if x > 183 else None)
+    hl.fill(im, (1, 2, 190, 5), DY_RIDGE); hl.fill(im, (1, 2, 190, 2), DY_RIDGE_HI)
+    hl.fill(im, (1, 5, 190, 5), DY_INK)
+    for x in range(6, 190, 8):
+        hl.fill(im, (x, 3, x, 4), DY_GREEN_LO)
+    hl.fill(im, (1, 6, 2, 43), DY_RIDGE_HI)                        # the west verge, lit
+    hl.fill(im, (1, 44, 190, 44), DY_RIDGE_HI); hl.fill(im, (1, 45, 190, 45), DY_GREEN_LO)   # the eave's lip
+    hl.fill(im, (1, 46, 190, 46), DY_INK)
+    dy_stack(im, 26, 9); dy_stack(im, 150, 9)
+    # ---- the cross roof over the still room: a ridge coming south, a fall either side ----
+    for y in range(6, 48):
+        half = min(29, (y - 5) * 29 // 38)
+        for x in range(96 - half, 97 + half):
+            c = sa.roof_tile(y, x, DY_ROOF_LIT) if x < 95 else sa.roof_tile(y, 192 - x, DY_ROOF_SH)
+            px[x, y] = c
+        px[96 - half, y] = DY_INK if y < 44 else DY_RIDGE_HI        # the valleys, then the verges
+        px[96 + half, y] = DY_INK
+    hl.fill(im, (95, 3, 97, 47), DY_RIDGE); hl.fill(im, (95, 3, 95, 47), DY_RIDGE_HI)
+    hl.fill(im, (97, 6, 97, 47), DY_INK)
+    hl.fill(im, (67, 48, 125, 48), DY_RIDGE_HI); hl.fill(im, (67, 49, 125, 49), DY_GREEN_LO)
+    hl.fill(im, (67, 50, 125, 50), DY_INK)
+    # ---- the brick body, the eave's shade along its top, a stone plinth ----
+    ka.bricks(px, 4, 47, 187, 115, DY_BRICK, DY_BRICK_HI, DY_BRICK_LO, DY_BRICK_LO)
+    hl.fill(im, (4, 47, 66, 48), DY_BRICK_LO); hl.fill(im, (126, 47, 187, 48), DY_BRICK_LO)
+    hl.fill(im, (67, 51, 125, 52), DY_BRICK_LO)
+    for x in range(4, 188):
+        if (x + 49) % 2 and not 67 <= x <= 125:
+            px[x, 49] = DY_BRICK_LO
+    hl.fill(im, (4, 116, 187, 121), DY_STONE_LO); hl.fill(im, (4, 116, 187, 116), DY_STONE)
+    hl.fill(im, (4, 121, 187, 121), DY_STONE_DK); hl.fill(im, (181, 117, 187, 121), DY_STONE_DK)
+    # ---- arched windows with iron shutters folded back (cells 0, 1 and 5) ----
     for i, x in enumerate((16, 42, 164)):
-        d.rectangle([x - 2, 66, x + 13, 97], fill=CREAM)
-        d.pieslice([x - 2, 58, x + 13, 74], 180, 360, fill=CREAM)
-        arch_window(d, x, 60, 96, 11, glass=WARM if i == 1 else GLASS_DK, hi=WHITE if i == 1 else GLASS,
-                    frame=rgb('2f4a44'))
-        d.rectangle([x - 2, 97, x + 13, 98], fill=WHITE); d.line([(x - 2, 99), (x + 13, 99)], fill=BRICK_DK)
-        for sx in (x - 8, x + 14):                                # the shutters, folded back
-            d.rectangle([sx, 66, sx + 5, 96], fill=rgb('2f4a44'))
-            d.line([(sx, 66), (sx, 96)], fill=rgb('46695c'))
-            for y in (72, 82, 92):
-                d.line([(sx, y), (sx + 5, y)], fill=rgb('1e302f'))
-    # ---- the still room's great arched WINDOW (cells 2-3): the pot still behind a rail --
-    d.rectangle([70, 76, 121, 115], fill=CREAM)
-    d.pieslice([70, 50, 121, 102], 180, 360, fill=CREAM)
-    for k in range(13):                                           # the joints of the arch stones
-        a = math.radians(180 + k * 15)
-        d.line([(96 + 22 * math.cos(a), 76 + 22 * math.sin(a)), (96 + 26 * math.cos(a), 76 + 26 * math.sin(a))],
-               fill=CREAM_DK)
-    d.rectangle([74, 76, 117, 112], fill=rgb('2c1e20'))
-    d.pieslice([74, 54, 117, 98], 180, 360, fill=rgb('2c1e20'))
-    d.pieslice([78, 58, 113, 94], 180, 360, fill=rgb('4a2f28'))   # the lamplit back wall
-    d.rectangle([78, 76, 113, 110], fill=rgb('4a2f28'))
-    for y in range(64, 110, 6):
-        d.line([(80, y), (111, y)], fill=rgb('3a2422'))
-    pot_still(d, 93, 112)
-    d.rectangle([109, 68, 112, 110], fill=CU_LO); d.line([(109, 68), (109, 110)], fill=CU)      # the condenser pipe
-    d.line([(74, 100), (117, 100)], fill=SOOT)                    # an iron rail across the opening
+        dy_arch(im, x - 2, 58, x + 13, 98, DY_STONE)
+        hl.fill(im, (x - 2, 66, x - 2, 98), DY_STONE_HI); hl.fill(im, (x + 13, 66, x + 13, 98), DY_STONE_LO)
+        dy_arch(im, x, 60, x + 11, 96, DY_GREEN_LO)
+        dy_glazed(im, x + 1, 61, x + 10, 95, 7)
+        if i == 1:                                                # a blind drawn in the second: the room in use
+            for y in range(66, 86):
+                hl.fill(im, (x + 1, y, x + 10, y), DY_STONE_LO if y % 3 else DY_STONE_DK)
+            hl.fill(im, (x + 1, 86, x + 10, 86), DY_STONE_DK)
+        hl.fill(im, (x + 5, 61, x + 6, 95), DY_GREEN_LO)
+        for y in (75, 85):
+            hl.fill(im, (x + 1, y, x + 10, y), DY_GREEN_LO)
+        hl.fill(im, (x - 3, 97, x + 14, 98), DY_STONE_HI); hl.fill(im, (x - 3, 99, x + 14, 99), DY_BRICK_LO)
+        for sx in (x - 8, x + 14):
+            hl.fill(im, (sx, 66, sx + 5, 96), DY_GREEN)
+            hl.fill(im, (sx, 66, sx, 96), DY_GREEN_HI); hl.fill(im, (sx + 5, 66, sx + 5, 96), DY_GREEN_LO)
+            for y in range(69, 96, 3):
+                hl.fill(im, (sx + 1, y, sx + 4, y), DY_GREEN_LO)
+            hl.fill(im, (sx, 66, sx + 5, 66), DY_GREEN_HI)
+    # ---- the still room's great arched window (cells 2-3): the pot still behind a rail ----
+    dy_arch(im, 70, 53, 121, 112, DY_STONE)
+    hl.fill(im, (70, 79, 70, 112), DY_STONE_HI); hl.fill(im, (121, 79, 121, 112), DY_STONE_LO)
+    dy_arch(im, 73, 56, 118, 112, DY_STONE_LO)
+    dy_arch(im, 74, 57, 117, 112, sa.P_GLASS)
+    for y in range(60, 110, 6):                                   # the back wall's courses, in the dark
+        for x in range(74, 118):
+            if px[x, y] == sa.P_GLASS:
+                px[x, y] = sa.P_GLASS_LO
+    for x in range(74, 118):                                      # the glass: a glare here and there
+        for y in range(57, 100):
+            if px[x, y] in (sa.P_GLASS, sa.P_GLASS_LO) and (x + y) % 19 == 0 and sa.speck(x // 6, y // 6, 4) < 70:
+                px[x, y] = sa.P_GLARE
+    pot_still(im, 93, 109)
+    hl.fill(im, (110, 70, 113, 109), DY_CU[3]); hl.fill(im, (110, 70, 110, 109), DY_CU[2])     # the condenser pipe
+    hl.fill(im, (113, 70, 113, 109), DY_CU[4])
+    hl.fill(im, (74, 99, 117, 99), DY_INK)                         # an iron rail across the opening
     for x in range(75, 118, 4):
-        d.line([(x, 100), (x, 110)], fill=SOOT)
-    d.rectangle([70, 110, 121, 112], fill=WHITE); d.line([(70, 112), (121, 112)], fill=CREAM_DK)  # its stone sill
-    for y in range(113, 116):
-        for x in range(70, 122):
-            d.point((x, y), fill=brick_px(x, y))
-    d.rectangle([65, 49, 126, 59], fill=SOOT)                     # the board
-    d.rectangle([65, 49, 126, 59], outline=GOLD_LO)
-    text(d, 'DISTILLERY', 96 - text_w('DISTILLERY') // 2, 51, PAPER)
-    # ---- the door (cell 4): green double doors in a stone surround, a fanlight, a lamp --
-    d.rectangle([131, 76, 156, 115], fill=CREAM)
-    d.pieslice([131, 63, 156, 89], 180, 360, fill=CREAM)
-    d.line([(131, 76), (131, 115)], fill=WHITE); d.line([(156, 76), (156, 115)], fill=CREAM_DK)
-    d.pieslice([134, 66, 153, 86], 180, 360, fill=WARM)           # the fanlight
-    for a in (210, 240, 270, 300, 330):
-        r = math.radians(a)
-        d.line([(143.5, 76), (143.5 + 10 * math.cos(r), 76 + 10 * math.sin(r))], fill=rgb('2f4a44'))
-    d.rectangle([134, 77, 153, 115], fill=rgb('1e302f'))
+        hl.fill(im, (x, 99, x, 109), DY_INK)
+    hl.fill(im, (69, 110, 122, 112), DY_STONE_HI); hl.fill(im, (69, 112, 122, 112), DY_STONE_LO)   # its stone sill
+    # ---- the door (cell 4): green double doors in a stone surround, a fanlight, a lamp ----
+    dy_arch(im, 131, 63, 156, 115, DY_STONE)
+    hl.fill(im, (131, 76, 131, 115), DY_STONE_HI); hl.fill(im, (156, 76, 156, 115), DY_STONE_LO)
+    dy_glazed(im, 134, 66, 153, 76, 7)
+    for x in (138, 143, 144, 149):
+        hl.fill(im, (x, 66 + (3 if x in (138, 149) else 0), x, 76), DY_GREEN_LO)
+    hl.fill(im, (134, 77, 153, 115), DY_GREEN_LO)
     for x0 in (135, 144):                                         # two panelled leaves
-        d.rectangle([x0, 78, x0 + 8, 115], fill=rgb('2f4a44'))
-        d.line([(x0, 78), (x0, 115)], fill=rgb('46695c'))
-        d.rectangle([x0 + 2, 81, x0 + 6, 93], fill=rgb('24403a')); d.rectangle([x0 + 2, 97, x0 + 6, 112], fill=rgb('24403a'))
-        d.line([(x0 + 2, 81), (x0 + 6, 81)], fill=rgb('1e302f')); d.line([(x0 + 2, 97), (x0 + 6, 97)], fill=rgb('1e302f'))
-    d.point((142, 96), fill=GOLD_HI); d.point((145, 96), fill=GOLD_HI)
-    d.rectangle([141, 58, 146, 63], fill=SOOT); d.rectangle([142, 59, 145, 62], fill=WARM)       # the lamp over it
-    d.line([(143, 55), (143, 57)], fill=SOOT)
-    # ---- ivy gone red up the east corner, casks by the west window -----------------
-    for y in range(47, 116):
-        for x in range(158, 186):
-            reach = (x - 150) / 36.0 + (116 - y) / 200.0
-            if 154 <= x <= 180 and 56 <= y <= 100:
-                continue                                          # it is kept cut back round the window
-            if h3(x, y, 13) < 255 * max(0.0, reach - 0.3) * 1.3:
-                d.point((x, y), fill=(MAP, MAP_HI, MAP_LO, RUS, MAP)[h3(x, y, 3) % 5])
-    cask_end(d, 16, 108, 8, 0); cask_end(d, 34, 108, 8, 1)
-    d.rectangle([4, 116, 187, 121], fill=ASH); d.line([(4, 116), (187, 116)], fill=ASH_HI)
-    d.line([(4, 121), (187, 121)], fill=ASH_DK)
-    d.rectangle([180, 116, 187, 121], fill=ASH_LO)
-    step_stone(d, 130, 157, 117)                                  # the door's step
-    outline(im)
+        hl.fill(im, (x0, 78, x0 + 8, 115), DY_GREEN)
+        hl.fill(im, (x0, 78, x0, 115), DY_GREEN_HI)
+        hl.fill(im, (x0 + 2, 81, x0 + 6, 93), DY_GREEN_LO); hl.fill(im, (x0 + 2, 97, x0 + 6, 112), DY_GREEN_LO)
+        hl.fill(im, (x0 + 3, 82, x0 + 6, 93), DY_GREEN); hl.fill(im, (x0 + 3, 98, x0 + 6, 112), DY_GREEN)
+    px[142, 96] = sa.P_LAMP; px[145, 96] = sa.P_LAMP
+    hl.fill(im, (143, 54, 144, 57), DY_INK)                        # the lamp over it: dim gold, never lit yellow
+    hl.fill(im, (140, 57, 147, 64), DY_INK)
+    hl.fill(im, (141, 58, 146, 63), sa.P_LAMP); hl.fill(im, (142, 59, 144, 61), sa.P_LAMP_HI)
+    hl.fill(im, (130, 116, 157, 121), DY_STONE); hl.fill(im, (130, 116, 157, 116), DY_STONE_HI)   # the step
+    hl.fill(im, (130, 121, 157, 121), DY_STONE_LO)
+    # ---- the board, two casks by the west window ----
+    hl.fill(im, (64, 51, 127, 61), sa.P_LAMP); hl.fill(im, (65, 52, 126, 60), sa.P_GLASS)
+    text(d, 'DISTILLERY', 96 - text_w('DISTILLERY') // 2, 53, DY_STONE)
+    cask_end(im, 15, 107, 8, 0); cask_end(im, 33, 107, 8, 1)
+    hl.outline(im)
     return im
 
 
 def cask_rack():
     im, d = canvas(3, 2)                 # 96 x 64: five casks end-on, on chocks
-    d.rectangle([3, 57, 92, 60], fill=WOOD_LO); d.line([(3, 57), (92, 57)], fill=WOOD)
-    d.line([(3, 60), (92, 60)], fill=WOOD_DK)
+    sa.ground_shade(d, 48, 57, 46)
+    hl.fill(im, (3, 56, 92, 59), DY_OAK_LO); hl.fill(im, (3, 56, 92, 56), DY_OAK)
+    hl.fill(im, (3, 59, 92, 59), DY_OAK_DK)
+    for x in (4, 33, 63, 91):                                     # the chocks
+        for k in range(5):
+            hl.fill(im, (x - k, 51 + k, x + k, 51 + k), DY_OAK_LO if k else DY_OAK)
     for i, cx in enumerate((18, 48, 78)):
-        cask_end(d, cx, 44, 13, i)
+        cask_end(im, cx, 43, 13, i)
     for i, cx in enumerate((33, 63)):
-        cask_end(d, cx, 21, 13, i + 1)
-    for x in (4, 32, 62, 90):                                     # the chocks
-        d.polygon([(x - 3, 57), (x + 3, 57), (x, 51)], fill=WOOD_LO)
-    outline(im)
-    return grounded(im, [(2, 54, 94, 63)])
+        cask_end(im, cx, 20, 13, i + 1)
+    px = im.load()
+    for cx in (33, 63):                                           # the upper pair's shade on the three under them
+        for dx in range(-9, 10):
+            for y in range(31, 35):
+                if px[cx + dx, y] in (DY_OAK, DY_OAK_HI):
+                    px[cx + dx, y] = DY_OAK_LO
+    hl.outline(im)
+    return im
 
 
 def red_maple():
     im, d = canvas(3, 4)                 # 96 x 128
-    trunk(d, [(48, 122), (46, 100), (48, 84)], 7)
-    trunk(d, [(47, 96), (30, 76), (20, 60)], 4); trunk(d, [(48, 90), (62, 72), (76, 58)], 4)
-    trunk(d, [(48, 86), (46, 60), (48, 40)], 4)
-    d.polygon([(41, 122), (44, 114), (52, 114), (56, 122)], fill=BARK)
-    d.line([(52, 114), (56, 122)], fill=BARK_LO)
-    pads = ((48, 22, 24, 13, 1, 0), (22, 36, 19, 11, 2, 1), (74, 36, 19, 11, 3, 0), (48, 46, 26, 12, 4, 0),
-            (13, 54, 11, 8, 5, 2), (83, 54, 11, 8, 6, 1), (32, 62, 15, 9, 7, 0), (64, 62, 15, 9, 8, 2),
-            (36, 14, 13, 8, 9, 1), (62, 13, 13, 8, 10, 0), (48, 72, 10, 6, 11, 1))
-    pal = ((MAP, MAP_HI, MAP_LO), (MAP_HI, COAL, MAP), (MAP_LO, MAP, MAP_DK))
-    for px, py, rx, ry, s, tone in sorted(pads, key=lambda p_: -p_[1]):
-        a, b, c = pal[tone]
-        blob(d, px, py, rx, ry, a, b, c, s)
-    for i in range(120):
-        x, y = 4 + (i * 31) % 88, 4 + (i * 19) % 74
-        if im.getpixel((x, y))[3] and im.getpixel((x, y))[:3] not in (BARK[:3], BARK_LO[:3]):
-            d.point((x, y), fill=(COAL, MAP_DK, rgb('f6b05a'), MAP_HI)[i % 4])
-    outline(im)
-    return grounded(im, [(16, 112, 82, 126)], leaves=(12, 86, 113, 126, (MAP, MAP_HI, MAP_LO, COAL), 40, 2))
+    sa.ground_shade(d, 49, 119, 30)
+    sa.stem(d, 44, 82, 123, 8)
+    for k in range(3):                                            # the roots' flare
+        hl.fill(im, (43 - k, 118 + k * 2, 43, 123), sa.P_BARK); hl.fill(im, (52, 118 + k * 2, 52 + k, 123), sa.P_BARK_LO)
+    sa.limb(d, 45, 96, 26, 74, 4); sa.limb(d, 48, 92, 70, 70, 4); sa.limb(d, 46, 84, 47, 56, 5)
+    sa.foliage(im, [(20, 62, 17, 13), (76, 62, 17, 13), (48, 68, 16, 10), (34, 50, 20, 14), (63, 50, 20, 14),
+                 (14, 44, 12, 10), (82, 44, 12, 10), (26, 30, 18, 13), (70, 30, 18, 13), (48, 36, 18, 13),
+                 (38, 17, 16, 11), (60, 16, 16, 11), (48, 11, 13, 9)], DY_FLAME, 21)
+    hl.outline(im)
+    return im
+
+
+DY_CRAG = ((4, 176), (14, 150), (26, 118), (36, 96), (44, 80), (52, 68), (60, 68), (68, 82), (78, 94), (88, 98),
+        (98, 90), (108, 70), (118, 58), (126, 54), (136, 56), (146, 72), (156, 94), (166, 118), (178, 150), (187, 176))
+
+
+def dy_top(x):
+    """The hill's skyline: two crags, by straight runs between whole-number points."""
+    for (xa, ya), (xb, yb) in zip(DY_CRAG, DY_CRAG[1:]):
+        if xa <= x <= xb:
+            return ya + (yb - ya) * (x - xa) // (xb - xa) + sa.speck(x // 2, 0, 31) % 3 - 1
+    return 186
+
+
+def dy_hill_roof(im, x0, y0, x1, y1):
+    """A small hipped roof seen from above: tile courses, a ridge along the top, a lip along the eave."""
+    px = im.load()
+    for y in range(y0, y1 + 1):
+        inset = max(0, 3 - (y - y0))
+        for x in range(x0 + inset, x1 - inset + 1):
+            px[x, y] = sa.roof_tile(x - x0, y - y0, DY_HILL_ROOF)
+    hl.fill(im, (x0 + 5, y0 - 3, x1 - 5, y0 - 1), DY_HILL_ROOF[2])
+    hl.fill(im, (x0 + 5, y0 - 1, x1 - 5, y0 - 1), DY_INK)
+    hl.fill(im, (x0, y1 + 1, x1, y1 + 1), DY_HILL_ROOF[2]); hl.fill(im, (x0, y1 + 2, x1, y1 + 2), DY_INK)
 
 
 def yamadera():
-    """The hill behind the distillery, a backdrop for the room's north edge:
-    a wooded mountain in autumn colour, two pale crags above the trees, the
-    red hall on the higher one and the lookout stage on stilts on the other,
-    the stone stair climbing through the wood from a gate at the foot. The
-    trees are a canopy of small pads - far smaller than the halls."""
+    """The hill behind the distillery, a backdrop for the room's north edge: a wooded mountain in
+    autumn colour, two pale crags above the trees, the red hall on the higher one and the lookout
+    stage on stilts on the other, the stone stair climbing through the wood from a gate at the foot."""
     im, d = canvas(6, 6)                 # 192 x 192
-
-    def top(x):
-        return (104 - 30 * math.exp(-((x - 56) / 19.0) ** 2) - 40 * math.exp(-((x - 128) / 22.0) ** 2)
-                - 12 * math.exp(-((x - 96) / 60.0) ** 2) + 2.0 * math.sin(x / 3.3) + 1.5 * math.sin(x / 1.7)
-                + max(0, 34 - x) * 2.3 + max(0, x - 158) * 2.3)
-
-    def tree_line(x):
-        return 112 + 9 * math.sin(x / 17.0) + 5 * math.sin(x / 6.0 + 1) - 16 * math.exp(-((x - 92) / 9.0) ** 2)
-
-    # ---- the rock: pale tuff in strata and ledges, lit from the west ------------------
+    px = im.load()
+    # ---- the rock: pale tuff, its west faces lit, its east faces and its clefts in shade ----
     for x in range(4, 188):
-        t = int(top(x))
-        slope = top(x + 2) - top(x - 2)
-        for y in range(max(2, t), 186):
-            depth = y - t
-            strata = (x + int(5 * math.sin(y / 11.0)) + (y // 23) * 3) % 9
-            ledge = (y + int(4 * math.sin(x / 7.0))) % 17
-            if strata == 0 or ledge == 0:
-                c = ROCK_DK
-            elif ledge == 1:
-                c = ROCK_HI
-            elif slope < -1.2 or strata in (1, 2):
-                c = ROCK_HI if depth < 30 and strata == 1 else ROCK
-            elif slope > 1.2 or strata in (7, 8):
-                c = ROCK_LO
+        t = dy_top(x)
+        fall = dy_top(min(187, x + 3)) - dy_top(max(4, x - 3))
+        for y in range(t, 186):
+            cleft = (x + y // 3 + sa.speck(y // 6, 0, 3) % 3) % 13
+            ledge = (y + sa.speck(x // 16, 0, 5) % 9) % 23 if sa.speck(x // 16, y // 23, 7) < 45 else 9
+            if cleft == 0 or (ledge == 0 and y - t > 6):
+                c = DY_STONE_DK
+            elif y - t < 2 or ledge == 1 or cleft == 1:
+                c = DY_STONE_HI
+            elif fall > 2 or cleft > 9:
+                c = DY_STONE_LO
+            elif fall < -2 or cleft < 5:
+                c = DY_STONE_HI if (x + y) % 2 and cleft == 2 else DY_STONE
             else:
-                c = ROCK if h3(x, y, 5) > 26 else ROCK_LO
-            if depth < 2:
-                c = ROCK_HI
-            d.point((x, y), fill=c)
+                c = DY_STONE if (x + y) % 2 or cleft < 8 else DY_STONE_LO
+            px[x, y] = c
     # ---- the lookout stage on the west crag: a timber hall on a stage on tall stilts ----
-    lx, ly = 56, int(top(56)) + 2
+    lx, ly = 56, 70
     for x in (lx - 14, lx - 5, lx + 4, lx + 13):
-        bar(d, x, ly - 12, x + 1, ly + 8 + abs(x - lx) // 4, WOOD_LO, WOOD, WOOD_DK)
-    d.line([(lx - 14, ly - 4), (lx + 14, ly + 2)], fill=WOOD_DK); d.line([(lx - 14, ly + 2), (lx + 14, ly - 4)], fill=WOOD_DK)
-    d.rectangle([lx - 18, ly - 16, lx + 18, ly - 12], fill=WOOD); d.line([(lx - 18, ly - 16), (lx + 18, ly - 16)], fill=rgb('d2a58c'))
-    d.line([(lx - 18, ly - 12), (lx + 18, ly - 12)], fill=WOOD_DK)
-    d.rectangle([lx - 15, ly - 31, lx + 15, ly - 17], fill=rgb('3a2c2c'))     # the open hall: posts, a rail
+        hl.fill(im, (x, ly - 12, x + 1, ly + 8 + abs(x - lx) // 4), DY_TIMBER)
+        hl.fill(im, (x + 1, ly - 12, x + 1, ly + 8 + abs(x - lx) // 4), DY_TIMBER_LO)
+    hl.fill(im, (lx - 14, ly - 2, lx + 14, ly - 2), DY_TIMBER_LO)
+    hl.fill(im, (lx - 18, ly - 16, lx + 18, ly - 12), DY_TIMBER); hl.fill(im, (lx - 18, ly - 16, lx + 18, ly - 16), DY_GINKGO[2])
+    hl.fill(im, (lx - 18, ly - 12, lx + 18, ly - 12), DY_TIMBER_LO)
+    hl.fill(im, (lx - 15, ly - 28, lx + 15, ly - 17), DY_TIMBER_LO)            # the open hall: posts, a rail
     for x in range(lx - 15, lx + 16, 6):
-        d.line([(x, ly - 31), (x, ly - 17)], fill=WOOD)
-    d.line([(lx - 17, ly - 22), (lx + 17, ly - 22)], fill=WOOD); d.line([(lx - 17, ly - 20), (lx + 17, ly - 20)], fill=WOOD_LO)
-    roof(d, ly - 42, ly - 33, (lx - 11, lx + 11), (lx - 21, lx + 21),
-         (rgb('6e5a50'), rgb('4c3d39'), rgb('93786a'), rgb('33292a')), ridge=False, step=3)
-    d.rectangle([lx - 12, ly - 46, lx + 12, ly - 43], fill=rgb('4c3d39'))
-    d.line([(lx - 12, ly - 46), (lx + 12, ly - 46)], fill=rgb('93786a'))
-    # ---- the red hall on the east pinnacle ----------------------------------------------
-    hx, hy = 128, int(top(128)) + 3
-    d.rectangle([hx - 19, hy - 4, hx + 19, hy], fill=ASH); d.line([(hx - 19, hy - 4), (hx + 19, hy - 4)], fill=ASH_HI)
-    d.line([(hx - 19, hy), (hx + 19, hy)], fill=ASH_DK)
-    bar(d, hx - 16, hy - 24, hx + 16, hy - 5, VERM, VERM_HI, VERM_LO)
-    d.rectangle([hx + 10, hy - 24, hx + 16, hy - 5], fill=VERM_LO)
-    d.rectangle([hx - 6, hy - 19, hx + 5, hy - 5], fill=rgb('3a2c2c'))        # the doors
-    d.line([(hx, hy - 19), (hx, hy - 5)], fill=GOLD_LO); d.point((hx - 2, hy - 12), fill=GOLD_HI); d.point((hx + 2, hy - 12), fill=GOLD_HI)
+        hl.fill(im, (x, ly - 28, x, ly - 17), DY_TIMBER)
+    hl.fill(im, (lx - 17, ly - 21, lx + 17, ly - 21), DY_GINKGO[2])
+    dy_hill_roof(im, lx - 19, ly - 40, lx + 19, ly - 31)
+    # ---- the red hall on the east pinnacle ----
+    hx, hy = 128, 58
+    hl.fill(im, (hx - 19, hy - 4, hx + 19, hy), DY_STONE_LO); hl.fill(im, (hx - 19, hy - 4, hx + 19, hy - 4), DY_STONE_HI)
+    hl.fill(im, (hx - 19, hy, hx + 19, hy), DY_STONE_DK)
+    hl.fill(im, (hx - 16, hy - 22, hx + 16, hy - 5), DY_BRICK)
+    hl.fill(im, (hx - 16, hy - 22, hx + 16, hy - 21), DY_BRICK_LO)             # the eave's shade
+    hl.fill(im, (hx - 16, hy - 20, hx - 15, hy - 5), DY_BRICK_HI); hl.fill(im, (hx + 11, hy - 20, hx + 16, hy - 5), DY_BRICK_LO)
+    hl.fill(im, (hx - 6, hy - 18, hx + 5, hy - 5), DY_TIMBER_LO)               # the doors
+    hl.fill(im, (hx - 1, hy - 18, hx, hy - 5), DY_TIMBER)
     for x0 in (hx - 14, hx + 8):
-        d.rectangle([x0, hy - 19, x0 + 5, hy - 10], fill=PAPER if x0 < hx else PAPER_LO)
-        d.line([(x0 + 3, hy - 19), (x0 + 3, hy - 10)], fill=VERM_LO); d.line([(x0, hy - 15), (x0 + 5, hy - 15)], fill=VERM_LO)
-    d.line([(hx - 16, hy - 22), (hx + 16, hy - 22)], fill=WHITE)
-    roof(d, hy - 40, hy - 26, (hx - 12, hx + 12), (hx - 24, hx + 24), SLATE_P, ridge=False, step=3, p=1.6)
-    d.rectangle([hx - 13, hy - 45, hx + 13, hy - 41], fill=SLATE_LO); d.line([(hx - 13, hy - 45), (hx + 13, hy - 45)], fill=SLATE_HI)
-    d.rectangle([hx - 1, hy - 51, hx + 1, hy - 45], fill=GOLD); d.point((hx, hy - 52), fill=GOLD_HI)
-    # ---- the wood: a canopy of small pads, upper rows first -----------------------------
-    pal = ((MAP, MAP_HI, MAP_LO), (KEY, KEY_HI, KEY_LO), (RUS, RUS_HI, RUS_LO), (MAP_LO, MAP, MAP_DK),
-           (PINE, PINE_HI, PINE_LO), (KEY_LO, KEY, KEY_DK), (PINE_LO, PINE, PINE_DK))
-    pads = []
-    for j in range(13):
-        y = 106 + j * 6
-        for i in range(-1, 24):
-            x = 4 + i * 8 + (j % 2) * 4 + h3(i, j, 3) % 3 - 1
-            yy = y + h3(j, i, 5) % 3
-            if not 8 <= x <= 184 or yy < tree_line(x) or yy < top(x) + 6:
+        hl.fill(im, (x0, hy - 18, x0 + 5, hy - 10), DY_STONE if x0 < hx else DY_STONE_LO)
+        hl.fill(im, (x0 + 3, hy - 18, x0 + 3, hy - 10), DY_BRICK_LO); hl.fill(im, (x0, hy - 14, x0 + 5, hy - 14), DY_BRICK_LO)
+    dy_hill_roof(im, hx - 21, hy - 37, hx + 21, hy - 25)
+    hl.fill(im, (hx - 1, hy - 45, hx + 1, hy - 41), DY_GINKGO[1]); px[hx - 1, hy - 45] = DY_GINKGO[0]
+    # ---- the wood: a canopy of small clumps in drifts of colour, upper rows first ----
+    ramps = (DY_MOMIJI, DY_ICHO, DY_FIR, DY_MOMIJI, DY_ICHO, DY_FIR, DY_MOMIJI)
+    clumps = []
+    for j in range(14):
+        for i in range(-1, 25):
+            x = 4 + i * 8 + (j % 2) * 4 + sa.speck(i, j, 3) % 3 - 1
+            y = 102 + j * 6 + sa.speck(j, i, 5) % 3
+            if not 9 <= x <= 183 or y < dy_top(x) + 22 - (10 if 84 < x < 100 else 0) + sa.speck(i // 2, 1, 9) % 14:
                 continue
-            tone = h3((i + j % 2) // 2, j // 2, 11) % 7 if h3(i, j, 29) > 60 else h3(i * 3, j * 7, 11) % 7
-            pads.append((yy, x, tone, i * 13 + j))                    # colour comes in drifts
-    for x, y in ((40, 92), (72, 96), (150, 84), (104, 84), (168, 104), (24, 110), (112, 96), (84, 106)):   # trees in the clefts
-        pads.append((y, x, (x + y) % 7, x))
-    for yy, x, tone, s in sorted(pads):
-        a, b, c = pal[tone]
-        blob(d, x, yy, 6, 5, a, b, c, s)
-    for i, (x, y) in enumerate(((16, 150), (34, 128), (50, 144), (74, 124), (118, 122), (142, 136), (160, 120),
-                                (176, 150), (130, 160), (62, 166), (22, 172), (154, 172))):                # cedars standing through it
-        for k in range(15):
-            w = 1 + k // 3
-            d.line([(x - w, y - 15 + k), (x + w, y - 15 + k)], fill=PINE_LO if k % 4 == 3 else PINE)
-            d.point((x - w, y - 15 + k), fill=PINE_HI)
-            d.point((x + w, y - 15 + k), fill=PINE_DK)
-    # ---- the stair: stone treads zig-zagging up from the gate ----------------------------
+            drift = sa.speck((i + j % 2) // 3, j // 2, 11) % 7 if sa.speck(i, j, 29) > 30 else sa.speck(i, j, 13) % 7
+            clumps.append((y, x, drift, i * 13 + j))
+    for x, y in ((40, 104), (72, 104), (150, 96), (104, 92), (168, 122), (24, 136), (112, 98), (84, 108)):   # trees in the clefts
+        clumps.append((y, x, (x + y) % 7, x))
+    for y, x, drift, seed in sorted(clumps):
+        sa.foliage(im, [(x, y, 7, 6)], ramps[drift], seed)
+    for x, y in ((16, 156), (34, 134), (50, 150), (74, 130), (118, 128), (142, 142), (160, 126), (176, 156),
+                 (130, 166), (62, 172), (22, 178), (154, 178)):                # cedars standing through it
+        sa.foliage(im, [(x, y - 3 - k * 4, 6 - k, 3) for k in range(5)], DY_FIR, x)
+    # ---- the stair: stone treads zig-zagging up from the gate ----
     path = [(96, 180), (96, 164), (74, 150), (108, 136), (86, 122), (104, 108), (92, 97), (112, 82), (118, 66)]
     for (xa, ya), (xb, yb) in zip(path, path[1:]):
         n = max(abs(xb - xa), abs(yb - ya))
         for i in range(n + 1):
-            x = round(xa + (xb - xa) * i / n); y = round(ya + (yb - ya) * i / n)
-            d.rectangle([x - 2, y, x + 2, y], fill=ASH_HI if y % 2 == 0 else ASH_LO)
-            d.point((x - 3, y), fill=ASH_DK); d.point((x + 3, y), fill=ASH_DK)
+            x, y = xa + (xb - xa) * i // n, ya + (yb - ya) * i // n
+            hl.fill(im, (x - 2, y, x + 2, y), DY_STONE_HI if y % 2 == 0 else DY_STONE_LO)
+            px[x - 3, y] = DY_TIMBER; px[x + 3, y] = DY_TIMBER
     for i, (x, y) in enumerate(((82, 160), (96, 146), (100, 128), (92, 115), (110, 142), (80, 136))):     # boughs over it
-        a, b, c = pal[(i * 2) % 7]
-        blob(d, x, y, 5, 4, a, b, c, i + 50)
-    # ---- the gate at the foot: red posts under a little roof ------------------------------
+        sa.foliage(im, [(x, y, 6, 5)], ramps[(i * 2) % 7], i + 50)
+    # ---- the gate at the foot: red posts under a little roof ----
     for x0 in (86, 103):
-        bar(d, x0, 166, x0 + 3, 184, VERM, VERM_HI, VERM_LO)
-    d.rectangle([84, 162, 108, 165], fill=VERM_LO); d.line([(84, 162), (108, 162)], fill=VERM)
-    roof(d, 153, 159, (88, 104), (80, 112), SLATE_P, ridge=False, step=3)
-    d.rectangle([91, 180, 101, 186], fill=ASH); d.line([(91, 180), (101, 180)], fill=ASH_HI)
-    d.line([(91, 183), (101, 183)], fill=ASH_LO)
-    # ---- its foot breaks into the ground: bushes and boulders, no straight edge -----------
+        hl.fill(im, (x0, 164, x0 + 3, 184), DY_BRICK); hl.fill(im, (x0, 164, x0, 184), DY_BRICK_HI)
+        hl.fill(im, (x0 + 3, 164, x0 + 3, 184), DY_BRICK_LO)
+    hl.fill(im, (84, 162, 108, 165), DY_BRICK_LO); hl.fill(im, (84, 162, 108, 162), DY_BRICK)
+    dy_hill_roof(im, 80, 152, 112, 159)
+    hl.fill(im, (91, 180, 101, 186), DY_STONE); hl.fill(im, (91, 180, 101, 180), DY_STONE_HI)
+    hl.fill(im, (91, 183, 101, 183), DY_STONE_LO)
+    # ---- its foot breaks into the ground: bushes and boulders, no straight edge ----
     for i, x in enumerate(range(6, 190, 9)):
-        if 82 < x < 110:
-            continue
-        a, b, c = pal[(i * 3 + 1) % 7]
-        blob(d, x, 182 + (i * 5) % 4, 6 + i % 2, 4, a, b, c, i + 70)
+        if not 82 < x < 110:
+            sa.foliage(im, [(x, 182 + (i * 5) % 4, 7 + i % 2, 5)], ramps[(i * 3 + 1) % 7], i + 70)
     for x, w in ((30, 9), (66, 7), (120, 8), (164, 10)):
-        d.ellipse([x, 181, x + w, 188], fill=ROCK); d.arc([x, 181, x + w, 188], 180, 300, fill=ROCK_HI)
-        d.chord([x, 181, x + w, 188], 10, 150, fill=ROCK_LO)
-    outline(im)
-    return grounded(im, [(0, 178, 191, 191)], a=70)
+        for k, inset in enumerate((2, 1, 0, 0, 0, 0, 1)):
+            hl.fill(im, (x + inset, 182 + k, x + w - inset, 182 + k), DY_STONE_HI if k < 1 else DY_STONE if k < 4 else DY_STONE_LO)
+        hl.fill(im, (x + w - 1, 184, x + w, 187), DY_STONE_LO)
+    hl.outline(im)
+    return im
 
 
 # ==============================================================================
@@ -2803,23 +2877,22 @@ PIECES = [
     ('sendai-distillery-warehouse_0_0', distillery_warehouse, (6, 4), NK, dict(
         door=[[4, 3]], solid=rows(6, 2, 3),
         lit=[[3.0, 2.9, CU_HEX, 1.1, 0.55], [1.5, 2.45, WARM_HEX, 0.7], [4.5, 2.3, WARM_HEX, 0.6, 0.6]]),
-     'The distillery\'s still house: red brick under slate, a centre gable with a cask roundel, arched '
-     'windows with green iron shutters, a DISTILLERY board over a great stone-arched WINDOW (an iron rail '
-     'and a stone sill across it) through which the copper pot still shows - pot, tall neck, lyne arm, a '
-     'fire under it. The DOOR is its own: green panelled double doors under a lit fanlight and a lamp, on '
-     'a pale step, in the fifth cell. Ivy gone red up the east corner, two casks by the west window. No '
-     'brand name or mark.'),
+     'The distillery\'s still house: red brick under a tile roof seen from above (a cross roof over the '
+     'still room, two brick stacks), arched windows of dark glass with green iron shutters (a blind drawn '
+     'in the second), a DISTILLERY board over a great stone-arched WINDOW (an iron rail and a stone sill '
+     'across it) through which the copper pot still shows - pot, neck, lyne arm, an ember under it. The '
+     'DOOR is its own: green panelled double doors under a dark fanlight and a dim lamp, on a pale step, in '
+     'the fifth cell. Two casks by the west window. No brand name or mark.'),
     ('sendai-cask-rack_0_0', cask_rack, (3, 2), NK, dict(solid=rows(3, 1, 1)),
      'Five whisky casks stacked end-on (three and two) on a timber rail with chocks, stencilled heads. '
      'Bigger than sendai-barrels; for the yard.'),
     ('sendai-red-maple_0_0', red_maple, (3, 4), NK, dict(solid=[[1, 3]]),
-     'A big spreading maple in deep red with orange lights, red leaves fallen under it. (sendai-maple is '
-     'the small 2x3 orange one.)'),
+     'A big spreading maple in deep red with orange lights. (sendai-maple is the small 2x3 orange one.)'),
     ('sendai-yamadera_0_0', yamadera, (6, 6), NK + ' (the hill behind: a backdrop for the north edge)', dict(
         solid=rows(6, 1, 5)),
      'Yamadera as a sealed landmark and BACKDROP: a wooded mountain in autumn colour (a canopy of small '
-     'maple, keyaki and russet pads with cedars standing through it), two pale crags above the trees, the '
-     'red hall on the higher one and the timber lookout stage on stilts on the other, the stone stair '
+     'ragged clumps in maple red, ochre and fir green with cedars standing through it), two pale crags '
+     'above the trees, the red hall on the higher one and the timber lookout stage on stilts on the other, the stone stair '
      'zig-zagging up through the wood from a red gate at the foot. Its foot is bushes and boulders, not a '
      'straight edge. Stand it on the north edge of the room: every row but the top is solid.'),
     ('sendai-godaido_0_0', godaido, (4, 4), MB, dict(solid=rows(4, 2, 3)),
