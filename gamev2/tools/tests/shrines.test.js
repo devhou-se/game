@@ -362,7 +362,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
             [{ x: 0, y: -1 }, { x: 1, y: 1 }, { x: 0, y: 0 }, { x: 0, y: 0 }]);
         const scene = src('GameScene.js'), input = src('systems/InputHandler.js');
         assert.ok(scene.includes('this.inputHandler.handleInput();\n        // a key still held against the offering box is the same bump, menu or no menu\n        if (this.shrineVisit) this.shrineVisit.hold(this.inputHandler.heading());'));
-        assert.ok(/heading\(\) \{[\s\S]{0,400}touchControls\.state/.test(input), 'the touch pad counts as a held key');
+        assert.ok(/heading\(latched = false\) \{[\s\S]{0,400}touchControls\.state/.test(input), 'the touch pad counts as a held key');
         assert.ok(src('ShrineVisit.js').includes('this.bump = ShrineVisit.held(this.bump, heading);'));
     });
 

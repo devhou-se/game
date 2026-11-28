@@ -32,6 +32,11 @@ synthesize the same keys (d-pad → WASD, A → SPACE, B → ESC, sprint pill �
 - **Movement**: WASD or arrows move 1 cell, Shift doubles speed (not distance)
 - **Time Travel**: arrows / WASD move a day or a week, SHIFT + left/right jumps to the previous / next trip, SHIFT + up / down to today / the game's day,
   SPACE/ENTER travels, ESC closes
+- **On a streetcar** (`TramRide`, see "Shuttles" in `ambient-traffic.md`): the direction keys do not walk. At a
+  stop, up / down (the d-pad) gets off on that side of the street, once the key that boarded has been let go;
+  left / right do nothing; ESC opens the menu as ever. `InputHandler.heading(true)` reads the latched keys, so a
+  tap that goes down and up between two frames still gets off, and the riding branch keeps
+  `lastKeyState.up / .down` in step, so an up or down held on the tram does not move the menu's selection
 - **Menu / overlays**: ESC toggles the menu (and closes any overlay), W/S or ↑/↓ navigate, SPACE/ENTER activates
 - **Dialogue**: SPACE/ENTER advances, ESC closes
 - **A shift at the job** (`Career`, see "Career" in `shop-and-economy.md`): SPACE/ENTER starts a shift and, on the

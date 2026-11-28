@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 11,
- "nextobjectid": 84,
+ "nextobjectid": 83,
  "properties": [
   {
    "name": "gv2room",
@@ -34,7 +34,7 @@
    "name": "gamev2",
    "tilewidth": 64,
    "tileheight": 64,
-   "tilecount": 68,
+   "tilecount": 67,
    "columns": 0,
    "objectalignment": "topleft",
    "grid": {
@@ -431,12 +431,6 @@
      "id": 64,
      "image": "../assets/sprites/toyama-tram-stop_0_0.png",
      "imagewidth": 192,
-     "imageheight": 128
-    },
-    {
-     "id": 65,
-     "image": "../assets/sprites/toyama-tram_0_0.png",
-     "imagewidth": 320,
      "imageheight": 128
     },
     {
@@ -7220,16 +7214,6 @@
     },
     {
      "id": 27,
-     "gid": 66,
-     "name": "toyama-tram_0_0",
-     "x": 1216,
-     "y": 1280,
-     "width": 320,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 28,
      "gid": 58,
      "name": "sendai-pine_0_0",
      "x": 128,
@@ -7239,7 +7223,7 @@
      "visible": true
     },
     {
-     "id": 29,
+     "id": 28,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 128,
@@ -7249,7 +7233,7 @@
      "visible": true
     },
     {
-     "id": 30,
+     "id": 29,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 128,
@@ -7259,7 +7243,7 @@
      "visible": true
     },
     {
-     "id": 31,
+     "id": 30,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 128,
@@ -7269,7 +7253,7 @@
      "visible": true
     },
     {
-     "id": 32,
+     "id": 31,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 128,
@@ -7279,11 +7263,21 @@
      "visible": true
     },
     {
-     "id": 33,
+     "id": 32,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 128,
      "y": 1664,
+     "width": 128,
+     "height": 256,
+     "visible": true
+    },
+    {
+     "id": 33,
+     "gid": 56,
+     "name": "sendai-cedar_0_0",
+     "x": 128,
+     "y": 1920,
      "width": 128,
      "height": 256,
      "visible": true
@@ -7293,23 +7287,13 @@
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 128,
-     "y": 1920,
-     "width": 128,
-     "height": 256,
-     "visible": true
-    },
-    {
-     "id": 35,
-     "gid": 56,
-     "name": "sendai-cedar_0_0",
-     "x": 128,
      "y": 384,
      "width": 128,
      "height": 256,
      "visible": true
     },
     {
-     "id": 36,
+     "id": 35,
      "gid": 65,
      "name": "toyama-tram-stop_0_0",
      "x": 1280,
@@ -7319,7 +7303,7 @@
      "visible": true
     },
     {
-     "id": 37,
+     "id": 36,
      "gid": 58,
      "name": "sendai-pine_0_0",
      "x": 1280,
@@ -7329,7 +7313,7 @@
      "visible": true
     },
     {
-     "id": 38,
+     "id": 37,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1280,
@@ -7339,7 +7323,7 @@
      "visible": true
     },
     {
-     "id": 39,
+     "id": 38,
      "gid": 58,
      "name": "sendai-pine_0_0",
      "x": 1280,
@@ -7349,7 +7333,7 @@
      "visible": true
     },
     {
-     "id": 40,
+     "id": 39,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1344,
@@ -7359,7 +7343,7 @@
      "visible": true
     },
     {
-     "id": 41,
+     "id": 40,
      "gid": 35,
      "name": "machiya-red_0_0",
      "x": 1408,
@@ -7369,7 +7353,7 @@
      "visible": true
     },
     {
-     "id": 42,
+     "id": 41,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 1408,
@@ -7379,7 +7363,7 @@
      "visible": true
     },
     {
-     "id": 43,
+     "id": 42,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 1408,
@@ -7389,7 +7373,7 @@
      "visible": true
     },
     {
-     "id": 44,
+     "id": 43,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1408,
@@ -7399,7 +7383,7 @@
      "visible": true
     },
     {
-     "id": 45,
+     "id": 44,
      "gid": 4,
      "name": "building-rafter-blue_0_0",
      "x": 1536,
@@ -7409,7 +7393,7 @@
      "visible": true
     },
     {
-     "id": 46,
+     "id": 45,
      "gid": 6,
      "name": "building-tier-blue_0_0",
      "x": 1536,
@@ -7419,7 +7403,7 @@
      "visible": true
     },
     {
-     "id": 47,
+     "id": 46,
      "gid": 3,
      "name": "building-entrance-1_0_0",
      "x": 1536,
@@ -7429,7 +7413,7 @@
      "visible": true
     },
     {
-     "id": 48,
+     "id": 47,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 1536,
@@ -7439,7 +7423,7 @@
      "visible": true
     },
     {
-     "id": 49,
+     "id": 48,
      "gid": 58,
      "name": "sendai-pine_0_0",
      "x": 1664,
@@ -7449,7 +7433,7 @@
      "visible": true
     },
     {
-     "id": 50,
+     "id": 49,
      "gid": 63,
      "name": "toyama-ramen_0_0",
      "x": 1728,
@@ -7459,7 +7443,7 @@
      "visible": true
     },
     {
-     "id": 51,
+     "id": 50,
      "gid": 23,
      "name": "hokuriku-ginkgo_0_0",
      "x": 1728,
@@ -7469,7 +7453,7 @@
      "visible": true
     },
     {
-     "id": 52,
+     "id": 51,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1728,
@@ -7479,7 +7463,7 @@
      "visible": true
     },
     {
-     "id": 53,
+     "id": 52,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1728,
@@ -7489,7 +7473,7 @@
      "visible": true
     },
     {
-     "id": 54,
+     "id": 53,
      "gid": 59,
      "name": "sendai-stone-lantern_0_0",
      "x": 1728,
@@ -7499,7 +7483,7 @@
      "visible": true
     },
     {
-     "id": 55,
+     "id": 54,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 1792,
@@ -7509,7 +7493,7 @@
      "visible": true
     },
     {
-     "id": 56,
+     "id": 55,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1792,
@@ -7519,7 +7503,7 @@
      "visible": true
     },
     {
-     "id": 57,
+     "id": 56,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1792,
@@ -7529,7 +7513,7 @@
      "visible": true
     },
     {
-     "id": 58,
+     "id": 57,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 1920,
@@ -7539,7 +7523,7 @@
      "visible": true
     },
     {
-     "id": 59,
+     "id": 58,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 1920,
@@ -7549,7 +7533,7 @@
      "visible": true
     },
     {
-     "id": 60,
+     "id": 59,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1920,
@@ -7559,7 +7543,7 @@
      "visible": true
     },
     {
-     "id": 61,
+     "id": 60,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1920,
@@ -7569,7 +7553,7 @@
      "visible": true
     },
     {
-     "id": 62,
+     "id": 61,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 1920,
@@ -7579,7 +7563,7 @@
      "visible": true
     },
     {
-     "id": 63,
+     "id": 62,
      "gid": 58,
      "name": "sendai-pine_0_0",
      "x": 2048,
@@ -7589,7 +7573,7 @@
      "visible": true
     },
     {
-     "id": 64,
+     "id": 63,
      "gid": 58,
      "name": "sendai-pine_0_0",
      "x": 2048,
@@ -7599,7 +7583,7 @@
      "visible": true
     },
     {
-     "id": 65,
+     "id": 64,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 2048,
@@ -7609,7 +7593,7 @@
      "visible": true
     },
     {
-     "id": 66,
+     "id": 65,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 2176,
@@ -7619,7 +7603,7 @@
      "visible": true
     },
     {
-     "id": 67,
+     "id": 66,
      "gid": 58,
      "name": "sendai-pine_0_0",
      "x": 2176,
@@ -7629,7 +7613,7 @@
      "visible": true
     },
     {
-     "id": 68,
+     "id": 67,
      "gid": 61,
      "name": "toyama-glass-museum_0_0",
      "x": 2240,
@@ -7639,7 +7623,7 @@
      "visible": true
     },
     {
-     "id": 69,
+     "id": 68,
      "gid": 62,
      "name": "toyama-port-tower_0_0",
      "x": 2304,
@@ -7649,7 +7633,7 @@
      "visible": true
     },
     {
-     "id": 70,
+     "id": 69,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 2304,
@@ -7659,7 +7643,7 @@
      "visible": true
     },
     {
-     "id": 71,
+     "id": 70,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 2304,
@@ -7669,7 +7653,7 @@
      "visible": true
     },
     {
-     "id": 72,
+     "id": 71,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 2304,
@@ -7679,27 +7663,27 @@
      "visible": true
     },
     {
-     "id": 73,
+     "id": 72,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 2432,
      "y": 1728,
+     "width": 128,
+     "height": 192,
+     "visible": true
+    },
+    {
+     "id": 73,
+     "gid": 58,
+     "name": "sendai-pine_0_0",
+     "x": 2432,
+     "y": 1984,
      "width": 128,
      "height": 192,
      "visible": true
     },
     {
      "id": 74,
-     "gid": 58,
-     "name": "sendai-pine_0_0",
-     "x": 2432,
-     "y": 1984,
-     "width": 128,
-     "height": 192,
-     "visible": true
-    },
-    {
-     "id": 75,
      "gid": 57,
      "name": "sendai-maple_0_0",
      "x": 2560,
@@ -7709,7 +7693,7 @@
      "visible": true
     },
     {
-     "id": 76,
+     "id": 75,
      "gid": 58,
      "name": "sendai-pine_0_0",
      "x": 2560,
@@ -7719,7 +7703,7 @@
      "visible": true
     },
     {
-     "id": 77,
+     "id": 76,
      "gid": 58,
      "name": "sendai-pine_0_0",
      "x": 2688,
@@ -7729,7 +7713,7 @@
      "visible": true
     },
     {
-     "id": 78,
+     "id": 77,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 2688,
@@ -7739,7 +7723,7 @@
      "visible": true
     },
     {
-     "id": 79,
+     "id": 78,
      "gid": 56,
      "name": "sendai-cedar_0_0",
      "x": 2688,
@@ -10830,7 +10814,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 80,
+     "id": 79,
      "gid": 5,
      "name": "building-roof-blue_0_0",
      "x": 1536,
@@ -11768,11 +11752,6 @@
     0,
     0,
     0,
-    17,
-    17,
-    17,
-    17,
-    17,
     0,
     0,
     0,
@@ -11787,22 +11766,6 @@
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
     0,
     0,
     0,
@@ -11817,6 +11780,27 @@
     17,
     17,
     17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     0,
     0,
     0,
@@ -12395,7 +12379,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 81,
+     "id": 80,
      "name": "transporter",
      "point": true,
      "x": 1184.0,
@@ -12432,7 +12416,7 @@
      ]
     },
     {
-     "id": 82,
+     "id": 81,
      "name": "transporter",
      "point": true,
      "x": 1248.0,
@@ -12469,7 +12453,7 @@
      ]
     },
     {
-     "id": 83,
+     "id": 82,
      "name": "boundary",
      "x": 0,
      "y": 0,

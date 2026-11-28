@@ -228,6 +228,18 @@ class InputHandler {
             return;
         }
 
+        // Priority 4.5: on a streetcar the direction keys do not walk; up / down
+        // at a stop gets off (TramRide). The two key states are synced as
+        // handlePlayerMovement does, so an up or down held on the tram does not
+        // move the menu's selection when ESC opens it.
+        const tramRide = this.scene.tramRide;
+        if (tramRide && tramRide.riding) {
+            tramRide.handleInput(this.heading(true));
+            this.lastKeyState.up = this.cursors.up.isDown || this.wKey.isDown;
+            this.lastKeyState.down = this.cursors.down.isDown || this.sKey.isDown;
+            return;
+        }
+
         // Priority 5: Player movement
         this.handlePlayerMovement();
     }
@@ -308,16 +320,20 @@ class InputHandler {
      * The direction held down right now, { x, y } with -1 / 0 / 1 each, from
      * the arrows, WASD and the touch pad - whoever owns the input this frame.
      * It moves nobody: it is for a rule that must know a key was never let go
-     * while an overlay was open (ShrineVisit.hold).
+     * while an overlay was open (ShrineVisit.hold). `latched` also counts a key
+     * tapped since the last frame (held()), for a rule that acts on the press:
+     * a tap that goes down and up between two frames must still get a rider
+     * off the tram (TramRide.handleInput).
      */
-    heading() {
+    heading(latched = false) {
         const t = (this.scene.touchControls && this.scene.touchControls.enabled)
             ? this.scene.touchControls.state : null;
+        const down = (key) => (latched ? this.held(key) : key.isDown);
         return InputHandler.headingOf({
-            left: this.cursors.left.isDown || this.aKey.isDown || !!(t && t.left),
-            right: this.cursors.right.isDown || this.dKey.isDown || !!(t && t.right),
-            up: this.cursors.up.isDown || this.wKey.isDown || !!(t && t.up),
-            down: this.cursors.down.isDown || this.sKey.isDown || !!(t && t.down),
+            left: down(this.cursors.left) || down(this.aKey) || !!(t && t.left),
+            right: down(this.cursors.right) || down(this.dKey) || !!(t && t.right),
+            up: down(this.cursors.up) || down(this.wKey) || !!(t && t.up),
+            down: down(this.cursors.down) || down(this.sKey) || !!(t && t.down),
         });
     }
 

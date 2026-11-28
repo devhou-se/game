@@ -14,9 +14,10 @@ edge, columns 18-19).
           on one side, ocean on the other")
   N       Iwase's old street: machiya shoulder to shoulder, and at its east end
           the BLACK-RAMEN SHOP - seven stools at a counter (posts 587, 611)
-  middle  the tram street: rails down the middle, a tram at the TRAM STOP
-          (post 583: "the Glass Art Museum by tram"), and on its north side the
-          GLASS ART MUSEUM (posts 576, 583)
+  middle  the tram street: rails down the middle, the TRAM STOP (post 583: "the
+          Glass Art Museum by tram"), and on its north side the GLASS ART MUSEUM
+          (posts 576, 583). The tram is not a tile: it runs the rails and can be
+          ridden (the room's `tramways` entry, src/AmbientTrams.js, issue #245)
   west    the Sho river, coming down from Shirakawa-go to the sea
   south   cedar woods, an old house in them (the Airbnb), and the path in from
           the mountains
@@ -98,9 +99,10 @@ k.trees('hokuriku-ginkgo', [(14, 18), (27, 18)])
 k.trees('sendai-maple', [(30, 18)])
 b.stamp('lantern-red', 12, 17); b.stamp('lantern-red', 26, 17)
 
-# ---- the tram street: the Glass Art Museum, the stop, a tram ----------------------------------
+# ---- the tram street: the Glass Art Museum, the stop, the rails --------------------------------
 k.road_h(R1 + 1, EAST, TRAM, cap_w=True, cap_e=True)
-for x in range(R1 + 2, EAST):
+RAILS = (R1 + 2, EAST - 1)                            # the rails' first and last column, on row TRAM + 1
+for x in range(RAILS[0], RAILS[1] + 1):
     b.put('Floor', x, TRAM + 1, 'toyama-tram-rail_0_0')
 MUSEUM = (35, 13)                                     # feet on row 18, doors on columns 37-38
 k.building('toyama-glass-museum', *MUSEUM, 6)
@@ -108,8 +110,6 @@ k.solid_rect(34, QUAY1 + 1, EAST, 12)
 k.woods(34, QUAY1 + 1, EAST, 12, ['sendai-pine'], rng)
 STOP = (20, 17)                                       # the shelter: feet on row 18, at the pavement's back
 b.stamp('toyama-tram-stop', *STOP)
-TRAMCAR = (19, TRAM)                                  # standing at the stop, on the rails
-b.stamp('toyama-tram', *TRAMCAR)
 for x in (16, 25, 34, 40):
     b.stamp('lamp-blue', x, TRAM + 3)
 b.stamp('bicycle-blue', 34, 18); b.stamp('vending-white', 41, 17)
@@ -140,6 +140,13 @@ cfg['rooms']['Toyama'] = b.room('Toyama', npcs=prev.get('npcs', []),
 cfg['rooms']['Toyama']['waterways'] = [
     {'axis': 'h', 'row': 1, 'rows': 3, 'from': R0 + 1, 'to': W - 1},
 ]
+# the tram (src/AmbientTrams.js, a shuttle: one car, always in the street, solid while it
+# stands and ridden by bumping it): it runs the rails end to end and stops under the
+# shelter, its middle over the shelter's middle column. Its art heads west.
+cfg['rooms']['Toyama']['tramways'] = [
+    {'row': TRAM + 1, 'from': RAILS[0], 'to': RAILS[1], 'sprite': 'toyama-tram_0_0', 'shuttle': True,
+     'name': 'tram', 'faces': 'west', 'stops': [STOP[0] + 1], 'speed': 256, 'dwell': 6, 'headway': 8},
+]
 rg.save_config(cfg)
-print(f'Toyama {W}x{H}; tower at {TOWER}, museum at {MUSEUM}, tram stop at {STOP}, tram at {TRAMCAR}, '
+print(f'Toyama {W}x{H}; tower at {TOWER}, museum at {MUSEUM}, tram stop at {STOP}, '
       f'ramen shop at {RAMEN}; path south on columns {hk.T_PATH}, river on columns {hk.T_RIVER}')

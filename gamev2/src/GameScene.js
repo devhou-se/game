@@ -382,7 +382,8 @@ class GameScene extends Phaser.Scene {
             this.viewRide = new ViewRide(this);
             this.ambientTrains = new AmbientTrains(this);
             this.ambientBoats = new AmbientBoats(this);
-            this.ambientTrams = new AmbientTrams(this);   // a room's `tramways` (none declared: nothing runs)
+            this.ambientTrams = new AmbientTrams(this);   // the streetcars on a room's `tramways`
+            this.tramRide = new TramRide(this);           // ...and riding one (issue #245)
             this.trafficLights = new TrafficLights(this);   // decorative signal cycle
             this.dialogueManager = new DialogueManager(this);
             this.shop = new Shop(this);
@@ -1255,6 +1256,8 @@ class GameScene extends Phaser.Scene {
         if (this.drinkingGame && !this.dialogueManager.isVisible() &&
             this.drinkingGame.checkStart(targetGridX, targetGridY)) return;
         this.npcManager.checkInteraction(targetGridX, targetGridY);
+        // bumping a streetcar standing at a stop is getting on it (issue #245)
+        if (this.tramRide && !this.dialogueManager.isVisible() && this.tramRide.check(targetGridX, targetGridY)) return;
         // bumping an airport's gate or its departures board opens the flights (issue #218)
         if (this.airTravel && this.stationPicker && !this.dialogueManager.isVisible() && !this.airTravel.flying &&
             !(this.shop && this.shop.isVisible()) && this.roomManager.interactionAt(targetGridX, targetGridY, 'flights')) {
@@ -1392,6 +1395,7 @@ class GameScene extends Phaser.Scene {
         this.roomManager.updateStreaming();
         if (this.dayNight) this.dayNight.cullGlows();   // ...and the lamp halos
         if (this.ambientTrams) this.ambientTrams.update(this.game.loop.delta);
+        if (this.tramRide) this.tramRide.update();   // the rider goes where the car went
         this.npcManager.updateLabels();
         if (this.playerNameLabel && this.player) {
             this.playerNameLabel.setPosition(

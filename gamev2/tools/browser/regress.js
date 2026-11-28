@@ -122,6 +122,18 @@ function install() {
                 inWindow: cx >= 0 && cx <= window.innerWidth && cy >= 0 && cy <= window.innerHeight,
                 visible: p.visible && p.alpha === 1, win: [window.innerWidth, window.innerHeight] };
         },
+        // the streetcar of line `i` of this room (AmbientTrams.lines), the cells under it, and its rider (issue #245)
+        car: (i) => {
+            const l = s.ambientTrams.lines[i], p = s.player;
+            if (!l || !l.plan || !l.image) return null;
+            const img = l.image, v = s.cameras.main.worldView;
+            const f = AmbientTrams.footprint(l.line.row, img.x, s.GRID_SIZE, img.width, img.height);
+            return { stopped: AmbientTrams.at(l.plan, l.t).stopped, dir: l.plan.dir, mirrored: img.flipX, x0: f.x0, x1: f.x1, y0: f.y0, y1: f.y1,
+                inView: img.visible && v.contains(img.x + img.width / 2, img.y + img.height / 2),
+                riding: s.tramRide.riding && s.tramRide.car === l, carried: s.tramRide.carried,
+                player: { x: p.gridX, y: p.gridY, shown: p.sprite.visible, facing: [p.facingX, p.facingY] },
+                toast: s.shop.toastText() };
+        },
         // furniture to get onto (issue #227): a solid seat cell `want(seat, dx, dy)` picks, in an ordinary room, with
         // open floor straight before it - and, with `wall`, something behind it that is neither floor nor seat, so
         // a key held down ends on it. Puts the player on that floor: { room, x, y, dx, dy, from } or null
@@ -371,6 +383,119 @@ async function devhouseStair(page, house) {
     need(st.hud.room.includes(stair.brief) && stair.brief !== house.brief && st.screen.inView && st.screen.visible, { upstairs: st, expected: stair.brief });
     await page.evaluate('__t.home()');
     await idle(page);
+}
+
+// ------------------------------------------------------------------ a streetcar (issue #245)
+
+/**
+ * A ride on a town's streetcar: on by walking into it at its stop, carried to the next halt, off on the side asked
+ * for, and on again. `input` is the real direction keys or the real d-pad, { down(dx, dy), up() }, and `hint` what a
+ * key hint calls them there. The car's timetable is a pure function of its line's clock, so the check moves that
+ * clock instead of waiting out a dwell and a run. `menu` (with a keyboard): the menu opened over a held direction.
+ */
+async function streetcar(page, input, { hint, menu, shot }) {
+    // the first shuttle the config declares, where the game put it (a district's line, in the city it is stitched into)
+    const line = await page.evaluate(() => {
+        const { s, rm } = __t, rooms = s.config.rooms;
+        for (const key of Object.keys(rooms)) {
+            const def = (rooms[key].tramways || []).find(d => d.shuttle);
+            if (!def) continue;
+            const from = rm.resolve(key, def.from, def.row);
+            __t.place(from.room, from.x, from.y);
+            const i = s.ambientTrams.lines.findIndex(l => l.line.shuttle && l.line.row === from.y && l.line.from === from.x);
+            const at = __t.car(i);
+            if (!at) continue;
+            // a free, quiet cell beside the car: the pavement north of it, else south
+            const beside = (y, dy) => { for (let x = at.x0; x <= at.x1; x++) if (__t.open(x, y) && __t.quiet(x, y, 1)) return { x, y, dy }; return null; };
+            const way = beside(at.y0 - 1, 1) || beside(at.y1 + 1, -1);
+            if (!way) continue;
+            __t.place(from.room, way.x, way.y);
+            s.ambientTrams.cross(i);    // from the top: standing at its first stop, as when the room loads
+            return { key, i, way, row: from.y, name: s.ambientTrams.lines[i].line.name, stops: (def.stops || []).map(x => rm.resolve(key, x, def.row).x), car: __t.car(i) };
+        }
+        return null;
+    });
+    need(line && line.car, 'no shuttle tramway (config rooms.<Room>.tramways) whose car has a free cell beside its first stop');
+    const car = () => page.evaluate(i => __t.car(i), line.i);
+    const clock = (t) => page.evaluate(([i, t]) => { __t.s.ambientTrams.lines[i].t = t; }, [line.i, t]);
+    const within = (c) => c.player.y === line.row && c.player.x >= c.x0 && c.player.x <= c.x1;
+    // it stands at a stop of its line, on the rails' row, heading the way its art does, and the camera has come to it
+    await until(page, `__t.car(${line.i}).inView`, 2000);
+    line.car = await car();
+    need(line.car.stopped && !line.car.mirrored && line.car.y1 === line.row && line.stops.some(x => x >= line.car.x0 && x <= line.car.x1) && line.car.inView, { carNotStandingAtItsStop: line });
+
+    // walking into it is getting on; the key that walked in, still down, gets nobody off
+    await idle(page);
+    await input.down(0, line.way.dy);
+    const boarded = await until(page, '__t.s.tramRide.riding', 3000);
+    await frames(page);
+    const on = await car();
+    if (shot) await page.screenshot({ path: path.join(SHOTS, shot) });
+    await input.up();
+    need(boarded && on.riding && on.carried && !on.player.shown && within(on) && on.stopped, { notOnBoard: on, line });
+    need(on.toast && on.toast.includes(line.name) && on.toast.includes(hint) && (hint === '↑/↓' || !/[↑↓]/.test(on.toast)), { boardingHint: on.toast, hint });
+    need(await until(page, '!__t.s.tramRide.carried', 1500), 'the rider was still carried after the key went up');
+
+    const legs = await page.evaluate((i) => {
+        const l = __t.s.ambientTrams.lines[i], legs = l.plan.legs, k = legs.findIndex(g => l.t >= g.t0 && l.t < g.t1);
+        const run = legs[k + 1], halt = legs[k + 2];
+        return run && halt && run.x0 !== run.x1 && halt.x0 === halt.x1 ? { run: run.t0, halt: halt.t0 } : null;
+    }, line.i);
+    need(legs, { noRunToANextHalt: await car() });
+    const off = -line.way.dy;       // back off on the side boarded from
+    if (menu) {
+        // a direction pressed while the car runs gets nobody off, and the menu opened over it does not take it for a press
+        await clock(legs.run);
+        need(await until(page, `!__t.car(${line.i}).stopped`, 1500), 'the car did not leave its stop');
+        await input.down(0, off);
+        await frames(page);
+        need(await press(page, 'Escape', '__t.s.menuManager.isVisible()'), 'ESC did not open the menu on the car');
+        await clock(legs.run);      // the run is not let end under the menu
+        await frames(page);
+        const m = await page.evaluate(i => ({ selected: __t.s.menuManager.selectedIndex, overlays: __t.overlays(), car: __t.car(i) }), line.i);
+        need(m.selected === 0 && m.overlays.join() === 'menu' && m.car.riding && !m.car.stopped, { heldKeyMovedTheMenu: m });
+        need(await press(page, 'Escape', '!__t.s.menuManager.isVisible()'), 'ESC did not close the menu on the car');
+        await input.up();
+        need((await car()).riding, 'a direction held while the car ran put the rider off');
+    }
+
+    // the next halt: the rider and the camera went with the car, and the hint says how to get off
+    await clock(legs.halt - 300);
+    need(await until(page, `__t.car(${line.i}).stopped`, 3000), 'the car did not come to its next halt');
+    await until(page, `__t.car(${line.i}).inView && __t.car(${line.i}).toast`, 2000);
+    const there = await car();
+    need(there.riding && !there.player.shown && within(there) && (there.x0 - on.x0) * there.dir > 0 && there.inView, { didNotRideToTheNextHalt: there, from: on });
+    need(there.toast && there.toast.includes(hint) && (hint === '↑/↓' || !/[↑↓]/.test(there.toast)), { haltHint: there.toast, hint });
+
+    // off on the side asked for: beside the car, back to it - and with the key still down, away from it, not on again
+    const edge = off < 0 ? there.y0 - 1 : there.y1 + 1;
+    await input.down(0, off);
+    const out = await until(page, '!__t.s.tramRide.riding', 3000);
+    const stood = await car();
+    await frames(page);
+    await frames(page);
+    const away = await car();
+    await input.up();
+    await idle(page);
+    const beyond = (c) => (c.player.y - edge) * off >= 0 && c.player.x >= c.x0 && c.player.x <= c.x1;
+    need(out && !stood.riding && stood.player.shown && beyond(stood) && stood.player.facing.join() === `0,${off}`, { notPutOffBesideTheCar: stood, edge, off });
+    need(!away.riding && away.player.shown && beyond(away), { backOnBoardWithTheKeyHeld: away, edge, off });
+    const screen = await page.evaluate('__t.onScreen()');
+    need(screen.visible && screen.inView, { playerNotBackOnScreen: screen });
+
+    // and walking back into the standing car is getting on again
+    await clock(legs.halt);
+    await input.down(0, -off);
+    const again = await until(page, '__t.s.tramRide.riding', 4000);
+    await input.up();
+    const back = await car();
+    need(again && back.riding && !back.player.shown && within(back), { didNotBoardAgain: back });
+
+    // nobody rides a car out of its room
+    await page.evaluate('__t.home()');
+    await idle(page);
+    const home = await page.evaluate('({ riding: __t.s.tramRide.riding, screen: __t.onScreen() })');
+    need(!home.riding && home.screen.visible && home.screen.inView, { stillRidingAtHome: home });
 }
 
 // ------------------------------------------------------------------ the lift up a tower (issue #242)
@@ -1099,6 +1224,15 @@ async function desktop(shared) {
             need(moved.x === st.pos.x + st.way.dx && moved.y === st.pos.y + st.way.dy && moved.room === dest.key, { inputStillLocked: moved, from: st.pos, way: st.way });
         });
 
+        // 8b --------------------------------------------------------------- a streetcar (issue #245)
+        await cleanly('tram-ride', async () => {
+            let key = null;
+            const keys = { down: (dx, dy) => { key = keyFor(dx, dy); return page.keyboard.down(key); }, up: () => page.keyboard.up(key) };
+            try {
+                await streetcar(page, keys, { hint: '↑/↓', menu: true, shot: 'regress_tram.png' });
+            } finally { if (key) await page.keyboard.up(key); }
+        });
+
         // 6 ---------------------------------------------------------------- an NPC on a fixed content day
         await cleanly('npc-dialogue', async () => {
             // the first content day on which the player starts in a room with somebody who has 2+ lines
@@ -1732,6 +1866,22 @@ async function phones() {
             need(bar.oneRow && bar.room.startsWith(house.brief), { floorNotOnTheBar: bar, expected: house.brief });
             await page.screenshot({ path: path.join(SHOTS, 'regress_phone_devhouse.png') });
             await devhouseStair(page, house);
+            need(errors.length === 0, { errors });
+        });
+
+        // a streetcar on the phone: on and off with the d-pad, and its hints say "d-pad" (issue #245)
+        await check('phone-landscape-tram', async () => {
+            const arrows = await page.evaluate(() => [...document.querySelectorAll('#touch-controls .tc-padzone .tc-pad')].map(b => { const q = b.getBoundingClientRect(); return { label: b.textContent, x: Math.round(q.left + q.width / 2), y: Math.round(q.top + q.height / 2) }; }));
+            const GLYPH = { '1,0': '▶', '-1,0': '◀', '0,1': '▼', '0,-1': '▲' };
+            need(Object.values(GLYPH).every(g => arrows.some(a => a.label === g)), { noDpad: arrows });
+            const cdp = await context.newCDPSession(page);
+            const pad = {
+                down: (dx, dy) => { const a = arrows.find(q => q.label === GLYPH[`${dx},${dy}`]); return cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: a.x, y: a.y }] }); },
+                up: () => cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }),
+            };
+            try {
+                await streetcar(page, pad, { hint: 'd-pad', shot: 'regress_phone_tram.png' });
+            } finally { await pad.up().catch(() => {}); }
             need(errors.length === 0, { errors });
         });
 

@@ -324,7 +324,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         };
         const LANDMARKS = {
             'sfb-clocks-station': 1, 'sfb-bridge-tower': 2, 'sfb-lady-': 6, 'sfb-mural-': 4, 'sfb-coffee': 2, 'sfb-pyramid': 1,
-            'sfb-spire': 1, 'sfb-cable-car': 1, 'sfb-tram': 1, 'sfb-oval_': 1, 'sfb-goalposts': 2, 'sfb-oval-lamp-post': 4,
+            'sfb-spire': 1, 'sfb-oval_': 1, 'sfb-goalposts': 2, 'sfb-oval-lamp-post': 4,
             'sfb-terminal': 1, 'sfb-pier': 1, 'sfb-sea-lions': 1, 'sfb-rowers': 3, 'sfb-rock': 1, 'seven-eleven': 1,
         };
         for (const [prefix, count] of Object.entries(LANDMARKS)) {
@@ -358,10 +358,17 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig }) => {
         assert.ok(/sea lions/.test(says(lions[0] + 2, lions[1])) && /sea lions/.test(says(lions[0] + 2, lions[1] + 1)));
         const clocks = where(room, /^sfb-clocks-station/)[0];
         assert.ok(/under the clocks/.test(says(clocks[0] + 5, clocks[1] + 6)));
-        // the vehicles share the street's rails; the oval is flat (walked on), the towers are looked up at
-        const rails = where(room, /^sfb-rail-h/);
+        // the vehicles share the street's rails, and are not tiles: each is a shuttle that runs its own stretch of
+        // them (#245; the lines themselves: glows-trams.test.js). The oval is flat (walked on), the towers are looked up at
+        const rails = where(room, /^sfb-rail-h/), railed = new Set(rails.map(([x, y]) => K(x, y)));
         assert.ok(rails.length > 40 && rails.every(([, y]) => y === rails[0][1]));
-        for (const [x, y, key] of where(room, /^sfb-(cable-car|tram)/)) assert.strictEqual(y + 1, rails[0][1], `${key} is on the rails`);
+        assert.deepStrictEqual(where(room, /^sfb-(cable-car|tram)/), [], 'neither vehicle stands in the street as a tile');
+        const lines = room.tramways || [];
+        assert.deepStrictEqual(Array.from(lines, (t) => t.sprite).sort(), ['sfb-cable-car_0_0', 'sfb-tram_0_0'], 'one line each');
+        for (const t of lines) {
+            assert.ok(t.shuttle === true && t.row === rails[0][1] && config.spriteMetadata[t.sprite], `${t.sprite} is a shuttle on the rails' row`);
+            for (let x = t.from; x <= t.to; x++) assert.ok(railed.has(K(x, t.row)), `${t.sprite} runs off the rails at ${x},${t.row}`);
+        }
         const [oval] = where(room, /^sfb-oval_/);
         assert.ok(walk.has(K(oval[0] + 6, oval[1] + 3)) && config.spriteMetadata['sfb-oval_0_0'].depthBias < 0);
         for (const tall of ['sfb-pyramid', 'sfb-spire']) assert.ok(tall in config.game.lookUp.sprites, `${tall} is looked up at`);

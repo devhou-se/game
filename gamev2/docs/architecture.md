@@ -57,7 +57,8 @@ A "see X" in the text names a section; if it is not in this file, the index in [
 - `assets/portraits/` - Optional hand-drawn character portraits (`manifest.json` + `<name>.png`, see its README)
 - `src/Voice.js` - Spoken NPC dialogue (lazy per-line audio clips) and the shared mute setting
 - `src/AmbientTrains.js` / `src/AmbientBoats.js` - Decorative passing trains and moat boats (see Ambient Traffic)
-- `src/AmbientTrams.js` - A streetcar on a room's declared `tramways` (see Ambient Traffic; no room declares one yet)
+- `src/AmbientTrams.js` - The streetcars on a room's declared `tramways` (see Ambient Traffic): Toyama's tram, San Franbourne's cable car and tram
+- `src/TramRide.js` - Riding one: bump a car standing at a stop, travel with it, up / down gets off (see "Shuttles" in Ambient Traffic)
 - `src/TrafficLights.js` - Decorative traffic-signal cycle (see Street accessories)
 - `editor/` - Canvas editor for `config.json` room data (see `editor/README.md`)
 - `studio/` - Read-only view of the whole world (see Studio in `tools-play-test-studio.md`)
@@ -92,6 +93,9 @@ All intermediate cells in movement path are checked for:
 - Stationary character positions
 - Moving character destinations
 - Path crossing (swap detection)
+- A streetcar standing at a stop (`AmbientTrams.carAt`): solid over its art's cells for everyone, and the player's
+  bump boards it (`TramRide`). Not a tile, so not in the collision layer; skipped where the scene has no cars
+  (`tools/world-model.js`, the unit tests)
 
 ### Sitting on furniture (issue #227)
 Chairs, stools, sofas, benches, beds, futons, the bunk, the bath and the toilet can be got onto. There is no

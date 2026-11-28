@@ -94,12 +94,15 @@ their route in the room's map data rather than in coordinates, have no collision
   from its generator; `AmbientBoats.WATER_TILE` is only for self-describing straight channel tiles like
   the moat. An ordinary pond is not a waterway.
 
-### Streetcars: a room's `tramways` (issue #219)
+### Streetcars: a room's `tramways` (issues #219, #245)
 
 `AmbientTrains` only runs station liveries on `train-track*` rows. A tram in a street is declared instead, in the
-room's config, and **no room declares one yet**: with no `tramways` nothing is built, nothing runs and nothing is
-drawn. A unit test (`tools/tests/glows-trams.test.js`) holds every declared row to what can run: a line
-`AmbientTrams.line` accepts, inside its room, with cars that are in `spriteMetadata` (so they are loaded).
+room's config; with no `tramways` nothing is built, nothing runs and nothing is drawn. **Three lines are declared,
+all shuttles that can be ridden** (below): Toyama's tram, and San Franbourne's cable car (west of the avenue) and
+tram (east of it). Their generators write them (`generate_toyama.py`, `generate_sanfranbourne.py`), as Toyama's
+writes its `waterways`. A unit test (`tools/tests/glows-trams.test.js`) holds every declared row to what can run:
+a line `AmbientTrams.line` accepts, inside its room, with cars that are in `spriteMetadata` (so they are loaded),
+and no two lines of a room sharing cells of a row.
 
 ```json
 "tramways": [{ "row": 21, "from": 4, "to": 55, "sprite": "sapporo-streetcar_0_0",
@@ -115,11 +118,15 @@ drawn. A unit test (`tools/tests/glows-trams.test.js`) holds every declared row 
   cells), `headway` the seconds between one car finishing and the next setting off (30), `stops` the cells it
   stops at - the car's middle over the middle of the cell - each for `dwell` seconds (4) or its own.
 - **One car is on a line at a time.** It runs west to east, waits `headway`, and the next runs east to west,
-  mirrored (`flipX`; the art heads east). An end on the room's edge is open - the car comes in from off the map
+  mirrored (`flipX`). An end on the room's edge is open - the car comes in from off the map
   and leaves the same way; any other end is a terminus, where it fades in / out standing on the last of the rails
   (as the Palace train does at the end of its track). It pulls away from and draws up to a stop or a terminus.
-- **It is decoration, like a passing train**: it adds nothing to collision, never waits for anyone, and the player
-  can stand in it. Its depth is `(row + 1) * 10 + 4` (`AmbientTrams.depthAt`) - with whatever stands on the rail
+- **`faces`** is the way the car's art is drawn heading: `"east"` (the default) or `"west"`. A car is mirrored only
+  when it runs against its art (`AmbientTrams.flipped`), and its first trip heads the way it is drawn
+  (`AmbientTrams.direction`), so the head lamp always leads. Both trams are drawn heading west (amber head lamp on
+  the left); the cable car is symmetric.
+- **A moving car is decoration, like a passing train**: it adds nothing to collision, never waits for anyone, and
+  the player can stand in it. Its depth is `(row + 1) * 10 + 4` (`AmbientTrams.depthAt`) - with whatever stands on the rail
   row and one under a character there, so a player on the rails is drawn over the car as it passes through them,
   and one on the row behind is hidden by it. That is the passing train's level-crossing rule without its cap of
   48: a tram is in the street and sorts like anything else on it. Being in the world, it is under the day/night
@@ -135,12 +142,49 @@ drawn. A unit test (`tools/tests/glows-trams.test.js`) holds every declared row 
   declaration (and moves it to its district's place in a stitched city), `AmbientTrams.plan(line, opts)` lays out
   one trip as legs, `AmbientTrams.at(plan, ms)` says where the car is. `GameScene.update` advances it; the car is
   hidden whenever the camera cannot see it, so off screen only that arithmetic runs, and it still arrives on time.
-- **Testing**: `game.scene.keys.GameScene.ambientTrams.cross(index, dir)` sends a car now (`dir` 1 east, -1 west).
-  Unit tests: `tools/tests/glows-trams.test.js`.
-- **Could it run San Franbourne's cable car and tram?** Yes, as one line: `{ "row": <the rail row of the tram
-  street>, "from", "to", "sprite": ["sfb-cable-car_0_0", "sfb-tram_0_0"] }` - explicit cells, because those rails
-  are part of the street's own tiles, and a terminus at each end, because the street is closed at both. They must
-  be ONE line taking turns: two lines on one row know nothing of each other and would drive through one another.
-  It is not wired: today both are standing `Collidables` with solid cells, and running them means the map taking
-  them (and their colliders) off the street.
+- **Testing**: `game.scene.keys.GameScene.ambientTrams.cross(index, dir)` sends a car now (`dir` 1 east, -1 west;
+  a shuttle starts over, standing at its first stop). Unit tests: `tools/tests/glows-trams.test.js`.
+
+#### Shuttles: the cars you can ride (issue #245)
+
+```json
+"tramways": [{ "row": 16, "from": 4, "to": 27, "sprite": "sfb-cable-car_0_0", "shuttle": true, "name": "cable car",
+               "stops": [11, 20], "speed": 192, "dwell": 5, "headway": 8 }]
+```
+
+- **`"shuttle": true` is one car that is always in the street.** Both ends must be termini (a shuttle with an end
+  on the room's edge, or with a list of sprites, is not a line). It never fades: it stands at each terminus for
+  `headway` seconds and runs back, the same car, mirrored. Its stops are snapped to whole cells (a car of an even
+  number of cells cannot have its middle over the middle of one). **On entering the room it stands at its first
+  stop**, drawn as its art is, so a town looks as it was authored until the car pulls away: the first stops are
+  the cells the three vehicles used to occupy as map tiles.
+- **A standing shuttle is solid** over the cells of its art, at a stop or a terminus: `AmbientTrams.carAt(x, y)`,
+  asked by `CollisionSystem.checkCollision` for the player and NPCs alike (and skipped where there are no cars:
+  `tools/world-model.js`, so `play.js`, and the unit tests - the terminal player sees open road). Moving, it is
+  decoration like any other line and passes through whoever is on the rails. Only the cells stepped *to* are
+  tested, so someone the car stopped on can step out.
+- **Bump a standing shuttle and you are on board** (`src/TramRide.js`, called from `GameScene.checkNPCInteraction`
+  after the NPC check). The car is not a tile, so this is not an `Interactions` rule. The player's sprite is hidden
+  and kept at the car's middle on the rail row, and `gridX` / `gridY` are the cell under it, so the camera, chunk
+  streaming, the district in the HUD and the map dot follow without knowing. It is free. The menu (ESC) still
+  opens; the direction keys do not walk. **At a halt, up / down gets off on that side of the street** - onto the
+  free cell nearest the car's middle (`TramRide.alightCell`), facing away from it - and on that side only: if it
+  is blocked a toast says so and the rider stays (put off on the other side with the key still held, they would
+  walk straight back into the car). The key that boarded does nothing until it is let go (`TramRide.step`).
+  `name` is what the boarding toast calls the car ("On the cable car"); it defaults to "tram". A ride ends where
+  the rider is if the room changes or the line is re-sent under them.
+- **Walking into a standing car boards it, wanted or not.** Toyama's way south (columns 18-19) passes the stop
+  (cells 19-23): on column 19, let go and press down again to get off on the south side; column 18 is clear.
+- **What a shuttle needs of the map** (the same test holds it for every declared one): nothing solid on the cells
+  it runs over (the rail row and the rows of its art above it), every halt on whole cells, and beside every halt a
+  walkable cell on the north side and one on the south. A car's size in cells there is its `spriteMetadata`
+  anchors' (`0.5 / anchorX` by `0.5 / anchorY`).
+- **Two lines may share a row if their cells do not overlap**: San Franbourne's are split at the avenue, the cable
+  car on the western rails and the tram on the eastern (which starts one cell in, clear of the traffic light drawn
+  over the first rail). One line with both sprites taking turns was the earlier sketch; a car that fades out at a
+  terminus cannot keep a passenger.
+- **Not shuttles yet**: buses (there are bus-stop signs but no bus art) and Sendai's moored ferry (`AmbientTrams`
+  is horizontal rails only) - issue #249.
+- **Testing**: `tools/tests/tram-ride.test.js` (the ride and the collision rule); the browser regression's
+  `tram-ride` and `phone-landscape-tram` checks ride a car with real keys and touches.
 

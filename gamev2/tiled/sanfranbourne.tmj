@@ -10,7 +10,7 @@
  "tileheight": 64,
  "infinite": false,
  "nextlayerid": 12,
- "nextobjectid": 145,
+ "nextobjectid": 143,
  "properties": [
   {
    "name": "gv2room",
@@ -34,7 +34,7 @@
    "name": "gamev2",
    "tilewidth": 64,
    "tileheight": 64,
-   "tilecount": 123,
+   "tilecount": 121,
    "columns": 0,
    "objectalignment": "topleft",
    "grid": {
@@ -542,12 +542,6 @@
      "imageheight": 448
     },
     {
-     "id": 83,
-     "image": "../assets/sprites/sfb-cable-car_0_0.png",
-     "imagewidth": 192,
-     "imageheight": 128
-    },
-    {
      "id": 84,
      "image": "../assets/sprites/sfb-clocks-station_0_0.png",
      "imagewidth": 768,
@@ -708,12 +702,6 @@
      "image": "../assets/sprites/sfb-terminal_0_0.png",
      "imagewidth": 576,
      "imageheight": 320
-    },
-    {
-     "id": 111,
-     "image": "../assets/sprites/sfb-tram_0_0.png",
-     "imagewidth": 256,
-     "imageheight": 128
     },
     {
      "id": 112,
@@ -19897,16 +19885,6 @@
     },
     {
      "id": 25,
-     "gid": 84,
-     "name": "sfb-cable-car_0_0",
-     "x": 640,
-     "y": 960,
-     "width": 192,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 26,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 768,
@@ -19916,7 +19894,7 @@
      "visible": true
     },
     {
-     "id": 27,
+     "id": 26,
      "gid": 93,
      "name": "sfb-lady-c_0_0",
      "x": 768,
@@ -19926,7 +19904,7 @@
      "visible": true
     },
     {
-     "id": 28,
+     "id": 27,
      "gid": 96,
      "name": "sfb-mural-b_0_0",
      "x": 768,
@@ -19936,7 +19914,7 @@
      "visible": true
     },
     {
-     "id": 29,
+     "id": 28,
      "gid": 85,
      "name": "sfb-clocks-station_0_0",
      "x": 832,
@@ -19946,7 +19924,7 @@
      "visible": true
     },
     {
-     "id": 30,
+     "id": 29,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 896,
@@ -19956,7 +19934,7 @@
      "visible": true
     },
     {
-     "id": 31,
+     "id": 30,
      "gid": 94,
      "name": "sfb-lady-d_0_0",
      "x": 960,
@@ -19966,7 +19944,7 @@
      "visible": true
     },
     {
-     "id": 32,
+     "id": 31,
      "gid": 97,
      "name": "sfb-mural-c_0_0",
      "x": 960,
@@ -19976,7 +19954,7 @@
      "visible": true
     },
     {
-     "id": 33,
+     "id": 32,
      "gid": 100,
      "name": "sfb-palm_0_0",
      "x": 960,
@@ -19986,7 +19964,7 @@
      "visible": true
     },
     {
-     "id": 34,
+     "id": 33,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 1024,
@@ -19996,7 +19974,7 @@
      "visible": true
     },
     {
-     "id": 35,
+     "id": 34,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 1152,
@@ -20006,7 +19984,7 @@
      "visible": true
     },
     {
-     "id": 36,
+     "id": 35,
      "gid": 91,
      "name": "sfb-lady-a_0_0",
      "x": 1152,
@@ -20016,7 +19994,7 @@
      "visible": true
     },
     {
-     "id": 37,
+     "id": 36,
      "gid": 86,
      "name": "sfb-coffee_0_0",
      "x": 1152,
@@ -20026,7 +20004,7 @@
      "visible": true
     },
     {
-     "id": 38,
+     "id": 37,
      "gid": 116,
      "name": "tree-3-base-shadow_0_0",
      "x": 1216,
@@ -20036,7 +20014,7 @@
      "visible": true
     },
     {
-     "id": 39,
+     "id": 38,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 128,
@@ -20046,7 +20024,7 @@
      "visible": true
     },
     {
-     "id": 40,
+     "id": 39,
      "gid": 100,
      "name": "sfb-palm_0_0",
      "x": 128,
@@ -20056,7 +20034,7 @@
      "visible": true
     },
     {
-     "id": 41,
+     "id": 40,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 1280,
@@ -20066,7 +20044,7 @@
      "visible": true
     },
     {
-     "id": 42,
+     "id": 41,
      "gid": 92,
      "name": "sfb-lady-b_0_0",
      "x": 1344,
@@ -20076,7 +20054,7 @@
      "visible": true
     },
     {
-     "id": 43,
+     "id": 42,
      "gid": 95,
      "name": "sfb-mural-a_0_0",
      "x": 1344,
@@ -20086,7 +20064,7 @@
      "visible": true
     },
     {
-     "id": 44,
+     "id": 43,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 1408,
@@ -20096,7 +20074,7 @@
      "visible": true
     },
     {
-     "id": 45,
+     "id": 44,
      "gid": 116,
      "name": "tree-3-base-shadow_0_0",
      "x": 1408,
@@ -20106,7 +20084,7 @@
      "visible": true
     },
     {
-     "id": 46,
+     "id": 45,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 1536,
@@ -20116,7 +20094,7 @@
      "visible": true
     },
     {
-     "id": 47,
+     "id": 46,
      "gid": 116,
      "name": "tree-3-base-shadow_0_0",
      "x": 1600,
@@ -20126,7 +20104,7 @@
      "visible": true
     },
     {
-     "id": 48,
+     "id": 47,
      "gid": 109,
      "name": "sfb-sea-lions_0_0",
      "x": 1600,
@@ -20136,7 +20114,7 @@
      "visible": true
     },
     {
-     "id": 49,
+     "id": 48,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 1664,
@@ -20146,7 +20124,7 @@
      "visible": true
     },
     {
-     "id": 50,
+     "id": 49,
      "gid": 115,
      "name": "traffic-light_0_0",
      "x": 1728,
@@ -20156,7 +20134,7 @@
      "visible": true
     },
     {
-     "id": 51,
+     "id": 50,
      "gid": 83,
      "name": "sfb-bridge-tower_0_0",
      "x": 1728,
@@ -20166,7 +20144,7 @@
      "visible": true
     },
     {
-     "id": 52,
+     "id": 51,
      "gid": 83,
      "name": "sfb-bridge-tower_0_0",
      "x": 1728,
@@ -20176,7 +20154,7 @@
      "visible": true
     },
     {
-     "id": 53,
+     "id": 52,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 1792,
@@ -20186,7 +20164,7 @@
      "visible": true
     },
     {
-     "id": 54,
+     "id": 53,
      "gid": 20,
      "name": "building-rafter-red_0_0",
      "x": 192,
@@ -20196,7 +20174,7 @@
      "visible": true
     },
     {
-     "id": 55,
+     "id": 54,
      "gid": 24,
      "name": "building-tier-red_0_0",
      "x": 192,
@@ -20206,7 +20184,7 @@
      "visible": true
     },
     {
-     "id": 56,
+     "id": 55,
      "gid": 18,
      "name": "building-entrance-3_0_0",
      "x": 192,
@@ -20216,7 +20194,7 @@
      "visible": true
     },
     {
-     "id": 57,
+     "id": 56,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 1920,
@@ -20226,7 +20204,7 @@
      "visible": true
     },
     {
-     "id": 58,
+     "id": 57,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 2048,
@@ -20236,7 +20214,7 @@
      "visible": true
     },
     {
-     "id": 59,
+     "id": 58,
      "gid": 115,
      "name": "traffic-light_0_0",
      "x": 2048,
@@ -20246,7 +20224,7 @@
      "visible": true
     },
     {
-     "id": 60,
+     "id": 59,
      "gid": 98,
      "name": "sfb-oval-lamp-post_0_0",
      "x": 2176,
@@ -20256,7 +20234,7 @@
      "visible": true
     },
     {
-     "id": 61,
+     "id": 60,
      "gid": 100,
      "name": "sfb-palm_0_0",
      "x": 2176,
@@ -20266,7 +20244,7 @@
      "visible": true
     },
     {
-     "id": 62,
+     "id": 61,
      "gid": 98,
      "name": "sfb-oval-lamp-post_0_0",
      "x": 2176,
@@ -20276,7 +20254,7 @@
      "visible": true
     },
     {
-     "id": 63,
+     "id": 62,
      "gid": 102,
      "name": "sfb-pyramid_0_0",
      "x": 2240,
@@ -20286,7 +20264,7 @@
      "visible": true
     },
     {
-     "id": 64,
+     "id": 63,
      "gid": 90,
      "name": "sfb-goalposts_0_0",
      "x": 2304,
@@ -20296,7 +20274,7 @@
      "visible": true
     },
     {
-     "id": 65,
+     "id": 64,
      "gid": 116,
      "name": "tree-3-base-shadow_0_0",
      "x": 2432,
@@ -20306,7 +20284,7 @@
      "visible": true
     },
     {
-     "id": 66,
+     "id": 65,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 256,
@@ -20316,7 +20294,7 @@
      "visible": true
     },
     {
-     "id": 67,
+     "id": 66,
      "gid": 110,
      "name": "sfb-spire_0_0",
      "x": 2624,
@@ -20326,7 +20304,7 @@
      "visible": true
     },
     {
-     "id": 68,
+     "id": 67,
      "gid": 108,
      "name": "sfb-rowers_0_0",
      "x": 2624,
@@ -20336,7 +20314,7 @@
      "visible": true
     },
     {
-     "id": 69,
+     "id": 68,
      "gid": 100,
      "name": "sfb-palm_0_0",
      "x": 2624,
@@ -20346,7 +20324,7 @@
      "visible": true
     },
     {
-     "id": 70,
+     "id": 69,
      "gid": 107,
      "name": "sfb-rock_0_0",
      "x": 2816,
@@ -20356,7 +20334,7 @@
      "visible": true
     },
     {
-     "id": 71,
+     "id": 70,
      "gid": 116,
      "name": "tree-3-base-shadow_0_0",
      "x": 2880,
@@ -20366,7 +20344,7 @@
      "visible": true
     },
     {
-     "id": 72,
+     "id": 71,
      "gid": 53,
      "name": "highrise-glass_0_0",
      "x": 2944,
@@ -20376,7 +20354,7 @@
      "visible": true
     },
     {
-     "id": 73,
+     "id": 72,
      "gid": 90,
      "name": "sfb-goalposts_0_0",
      "x": 2944,
@@ -20386,17 +20364,7 @@
      "visible": true
     },
     {
-     "id": 74,
-     "gid": 112,
-     "name": "sfb-tram_0_0",
-     "x": 3008,
-     "y": 960,
-     "width": 256,
-     "height": 128,
-     "visible": true
-    },
-    {
-     "id": 75,
+     "id": 73,
      "gid": 100,
      "name": "sfb-palm_0_0",
      "x": 3072,
@@ -20406,7 +20374,7 @@
      "visible": true
     },
     {
-     "id": 76,
+     "id": 74,
      "gid": 98,
      "name": "sfb-oval-lamp-post_0_0",
      "x": 3136,
@@ -20416,7 +20384,7 @@
      "visible": true
     },
     {
-     "id": 77,
+     "id": 75,
      "gid": 98,
      "name": "sfb-oval-lamp-post_0_0",
      "x": 3136,
@@ -20426,7 +20394,7 @@
      "visible": true
     },
     {
-     "id": 78,
+     "id": 76,
      "gid": 111,
      "name": "sfb-terminal_0_0",
      "x": 320,
@@ -20436,7 +20404,7 @@
      "visible": true
     },
     {
-     "id": 79,
+     "id": 77,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3200,
@@ -20446,7 +20414,7 @@
      "visible": true
     },
     {
-     "id": 80,
+     "id": 78,
      "gid": 108,
      "name": "sfb-rowers_0_0",
      "x": 3200,
@@ -20456,7 +20424,7 @@
      "visible": true
     },
     {
-     "id": 81,
+     "id": 79,
      "gid": 116,
      "name": "tree-3-base-shadow_0_0",
      "x": 3264,
@@ -20466,7 +20434,7 @@
      "visible": true
     },
     {
-     "id": 82,
+     "id": 80,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3328,
@@ -20476,7 +20444,7 @@
      "visible": true
     },
     {
-     "id": 83,
+     "id": 81,
      "gid": 116,
      "name": "tree-3-base-shadow_0_0",
      "x": 3328,
@@ -20486,7 +20454,7 @@
      "visible": true
     },
     {
-     "id": 84,
+     "id": 82,
      "gid": 80,
      "name": "seven-eleven_0_0",
      "x": 3328,
@@ -20496,7 +20464,7 @@
      "visible": true
     },
     {
-     "id": 85,
+     "id": 83,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3456,
@@ -20506,7 +20474,7 @@
      "visible": true
     },
     {
-     "id": 86,
+     "id": 84,
      "gid": 100,
      "name": "sfb-palm_0_0",
      "x": 3456,
@@ -20516,7 +20484,7 @@
      "visible": true
     },
     {
-     "id": 87,
+     "id": 85,
      "gid": 116,
      "name": "tree-3-base-shadow_0_0",
      "x": 3520,
@@ -20526,7 +20494,7 @@
      "visible": true
     },
     {
-     "id": 88,
+     "id": 86,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3584,
@@ -20536,7 +20504,7 @@
      "visible": true
     },
     {
-     "id": 89,
+     "id": 87,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20546,7 +20514,7 @@
      "visible": true
     },
     {
-     "id": 90,
+     "id": 88,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20556,7 +20524,7 @@
      "visible": true
     },
     {
-     "id": 91,
+     "id": 89,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20566,7 +20534,7 @@
      "visible": true
     },
     {
-     "id": 92,
+     "id": 90,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20576,7 +20544,7 @@
      "visible": true
     },
     {
-     "id": 93,
+     "id": 91,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20586,7 +20554,7 @@
      "visible": true
     },
     {
-     "id": 94,
+     "id": 92,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20596,7 +20564,7 @@
      "visible": true
     },
     {
-     "id": 95,
+     "id": 93,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20606,7 +20574,7 @@
      "visible": true
     },
     {
-     "id": 96,
+     "id": 94,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20616,7 +20584,7 @@
      "visible": true
     },
     {
-     "id": 97,
+     "id": 95,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20626,7 +20594,7 @@
      "visible": true
     },
     {
-     "id": 98,
+     "id": 96,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20636,7 +20604,7 @@
      "visible": true
     },
     {
-     "id": 99,
+     "id": 97,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20646,7 +20614,7 @@
      "visible": true
     },
     {
-     "id": 100,
+     "id": 98,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20656,7 +20624,7 @@
      "visible": true
     },
     {
-     "id": 101,
+     "id": 99,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20666,7 +20634,7 @@
      "visible": true
     },
     {
-     "id": 102,
+     "id": 100,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20676,7 +20644,7 @@
      "visible": true
     },
     {
-     "id": 103,
+     "id": 101,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20686,7 +20654,7 @@
      "visible": true
     },
     {
-     "id": 104,
+     "id": 102,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20696,7 +20664,7 @@
      "visible": true
     },
     {
-     "id": 105,
+     "id": 103,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20706,7 +20674,7 @@
      "visible": true
     },
     {
-     "id": 106,
+     "id": 104,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20716,7 +20684,7 @@
      "visible": true
     },
     {
-     "id": 107,
+     "id": 105,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20726,7 +20694,7 @@
      "visible": true
     },
     {
-     "id": 108,
+     "id": 106,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20736,7 +20704,7 @@
      "visible": true
     },
     {
-     "id": 109,
+     "id": 107,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 3712,
@@ -20746,7 +20714,7 @@
      "visible": true
     },
     {
-     "id": 110,
+     "id": 108,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 384,
@@ -20756,7 +20724,7 @@
      "visible": true
     },
     {
-     "id": 111,
+     "id": 109,
      "gid": 91,
      "name": "sfb-lady-a_0_0",
      "x": 384,
@@ -20766,7 +20734,7 @@
      "visible": true
     },
     {
-     "id": 112,
+     "id": 110,
      "gid": 95,
      "name": "sfb-mural-a_0_0",
      "x": 384,
@@ -20776,7 +20744,7 @@
      "visible": true
     },
     {
-     "id": 113,
+     "id": 111,
      "gid": 19,
      "name": "building-rafter-black_0_0",
      "x": 448,
@@ -20786,7 +20754,7 @@
      "visible": true
     },
     {
-     "id": 114,
+     "id": 112,
      "gid": 23,
      "name": "building-tier-black_0_0",
      "x": 448,
@@ -20796,7 +20764,7 @@
      "visible": true
     },
     {
-     "id": 115,
+     "id": 113,
      "gid": 17,
      "name": "building-entrance-2_0_0",
      "x": 448,
@@ -20806,7 +20774,7 @@
      "visible": true
     },
     {
-     "id": 116,
+     "id": 114,
      "gid": 113,
      "name": "shrub-large-circle_0_0",
      "x": 512,
@@ -20816,7 +20784,7 @@
      "visible": true
     },
     {
-     "id": 117,
+     "id": 115,
      "gid": 92,
      "name": "sfb-lady-b_0_0",
      "x": 576,
@@ -20826,7 +20794,7 @@
      "visible": true
     },
     {
-     "id": 118,
+     "id": 116,
      "gid": 86,
      "name": "sfb-coffee_0_0",
      "x": 576,
@@ -20836,7 +20804,7 @@
      "visible": true
     },
     {
-     "id": 119,
+     "id": 117,
      "gid": 108,
      "name": "sfb-rowers_0_0",
      "x": 576,
@@ -24505,7 +24473,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 120,
+     "id": 118,
      "gid": 117,
      "name": "tree-3-top_0_0",
      "x": 1216,
@@ -24515,7 +24483,7 @@
      "visible": true
     },
     {
-     "id": 121,
+     "id": 119,
      "gid": 117,
      "name": "tree-3-top_0_0",
      "x": 1408,
@@ -24525,7 +24493,7 @@
      "visible": true
     },
     {
-     "id": 122,
+     "id": 120,
      "gid": 117,
      "name": "tree-3-top_0_0",
      "x": 1600,
@@ -24535,7 +24503,7 @@
      "visible": true
     },
     {
-     "id": 123,
+     "id": 121,
      "gid": 22,
      "name": "building-roof-red_0_0",
      "x": 192,
@@ -24545,7 +24513,7 @@
      "visible": true
     },
     {
-     "id": 124,
+     "id": 122,
      "gid": 89,
      "name": "sfb-fog-b_0_0",
      "x": 1920,
@@ -24555,7 +24523,7 @@
      "visible": true
     },
     {
-     "id": 125,
+     "id": 123,
      "gid": 89,
      "name": "sfb-fog-b_0_0",
      "x": 2304,
@@ -24565,7 +24533,7 @@
      "visible": true
     },
     {
-     "id": 126,
+     "id": 124,
      "gid": 88,
      "name": "sfb-fog-a_0_0",
      "x": 2368,
@@ -24575,7 +24543,7 @@
      "visible": true
     },
     {
-     "id": 127,
+     "id": 125,
      "gid": 117,
      "name": "tree-3-top_0_0",
      "x": 2432,
@@ -24585,7 +24553,7 @@
      "visible": true
     },
     {
-     "id": 128,
+     "id": 126,
      "gid": 89,
      "name": "sfb-fog-b_0_0",
      "x": 2496,
@@ -24595,7 +24563,7 @@
      "visible": true
     },
     {
-     "id": 129,
+     "id": 127,
      "gid": 89,
      "name": "sfb-fog-b_0_0",
      "x": 2752,
@@ -24605,7 +24573,7 @@
      "visible": true
     },
     {
-     "id": 130,
+     "id": 128,
      "gid": 117,
      "name": "tree-3-top_0_0",
      "x": 2880,
@@ -24615,7 +24583,7 @@
      "visible": true
     },
     {
-     "id": 131,
+     "id": 129,
      "gid": 88,
      "name": "sfb-fog-a_0_0",
      "x": 3200,
@@ -24625,7 +24593,7 @@
      "visible": true
     },
     {
-     "id": 132,
+     "id": 130,
      "gid": 88,
      "name": "sfb-fog-a_0_0",
      "x": 3264,
@@ -24635,7 +24603,7 @@
      "visible": true
     },
     {
-     "id": 133,
+     "id": 131,
      "gid": 117,
      "name": "tree-3-top_0_0",
      "x": 3264,
@@ -24645,7 +24613,7 @@
      "visible": true
     },
     {
-     "id": 134,
+     "id": 132,
      "gid": 117,
      "name": "tree-3-top_0_0",
      "x": 3328,
@@ -24655,7 +24623,7 @@
      "visible": true
     },
     {
-     "id": 135,
+     "id": 133,
      "gid": 1,
      "name": "7-11-sign-left_0_0",
      "x": 3520,
@@ -24665,7 +24633,7 @@
      "visible": true
     },
     {
-     "id": 136,
+     "id": 134,
      "gid": 117,
      "name": "tree-3-top_0_0",
      "x": 3520,
@@ -24675,7 +24643,7 @@
      "visible": true
     },
     {
-     "id": 137,
+     "id": 135,
      "gid": 88,
      "name": "sfb-fog-a_0_0",
      "x": 384,
@@ -24685,7 +24653,7 @@
      "visible": true
     },
     {
-     "id": 138,
+     "id": 136,
      "gid": 21,
      "name": "building-roof-black_0_0",
      "x": 448,
@@ -25634,9 +25602,6 @@
     0,
     0,
     0,
-    42,
-    42,
-    42,
     0,
     0,
     0,
@@ -25651,52 +25616,6 @@
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    42,
-    42,
-    42,
-    42,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    42,
-    42,
-    42,
-    42,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    42,
-    42,
-    42,
     0,
     0,
     0,
@@ -25735,6 +25654,55 @@
     42,
     42,
     42,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     0,
     0,
     0,
@@ -28354,7 +28322,7 @@
    "draworder": "index",
    "objects": [
     {
-     "id": 139,
+     "id": 137,
      "name": "transporter",
      "point": true,
      "x": 608.0,
@@ -28391,7 +28359,7 @@
      ]
     },
     {
-     "id": 140,
+     "id": 138,
      "name": "transporter",
      "point": true,
      "x": 672.0,
@@ -28428,7 +28396,7 @@
      ]
     },
     {
-     "id": 141,
+     "id": 139,
      "name": "transporter",
      "point": true,
      "x": 3424.0,
@@ -28465,7 +28433,7 @@
      ]
     },
     {
-     "id": 142,
+     "id": 140,
      "name": "transporter",
      "point": true,
      "x": 3040.0,
@@ -28502,7 +28470,7 @@
      ]
     },
     {
-     "id": 143,
+     "id": 141,
      "name": "transporter",
      "point": true,
      "x": 3104.0,
@@ -28539,7 +28507,7 @@
      ]
     },
     {
-     "id": 144,
+     "id": 142,
      "name": "boundary",
      "x": 0,
      "y": 0,

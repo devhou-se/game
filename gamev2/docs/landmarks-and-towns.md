@@ -191,8 +191,9 @@ station: the owner's rule is that small places are walked to from their town, no
   fished from the quay; rows 1-3 east of the river mouth are its `waterways` entry, open at the east edge,
   so ambient boats sail it). On the quay, the **port observation tower** (3x7; `game.lookUp.sprites` has it,
   so the camera looks up). Below: Iwase's old street with the **black-ramen shop**, and the tram street with
-  the **Glass Art Museum**, the **tram stop** and a tram standing on `toyama-tram-rail` (plain Floor tiles,
-  not `train-track`: no ambient train).
+  the **Glass Art Museum**, the **tram stop** and `toyama-tram-rail` (plain Floor tiles, not `train-track`: no
+  ambient train). The **tram** is not a tile: it runs the rails end to end, stops under the shelter and can be
+  ridden (the room's `tramways` entry, issue #245; see "Shuttles" in `ambient-traffic.md`).
 - **No invisible walls**: every generator ends with `Kit.dress()` (`hokuriku.py`), which gives any bare
   collider a walker can touch a shrub (what `play.js lint` reports as `stray-collision`).
 - **The Map** (a map of Japan, `hud-input-touch.md`) has a dot for each of the three: `config.places` has
@@ -422,7 +423,8 @@ and the blog pipeline never offers it (`"blog": false` on the room, see `blog-pi
   `SanFranbourneAirport`) and the **sports ground** (north-east: a flat oval you walk on, four posts at each
   end, light towers that glow at night, banks of fog on `Tops`); the **tram street** (rows 15-17), where a
   **cable car** and a **green-and-yellow tram** share one pair of rails and the avenue crosses on a signalled
-  zebra crossing; the **painted ladies** (six terraces, each on a higher footing than the last) standing on a
+  zebra crossing (neither is a tile: the cable car runs the rails west of the avenue and the tram those east of
+  it, and both can be ridden - the room's `tramways`, issue #245; "Shuttles" in `ambient-traffic.md`); the **painted ladies** (six terraces, each on a higher footing than the last) standing on a
   bluestone wall of **street art** with two **coffee windows** let into it, the **laneway** along its foot;
   the plaza with the **pointy pyramid** beside the **arts-centre spire** (both in `game.lookUp.sprites`), a glass
   tower, vending machines and the 7-Eleven `KonbiniSanFranbourne1`; the **brown river** (solid, rowers on it)

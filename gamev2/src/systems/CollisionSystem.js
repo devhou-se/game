@@ -69,6 +69,14 @@ class CollisionSystem {
             return true;
         }
 
+        // A streetcar standing at a stop is solid over its cells (AmbientTrams.carAt;
+        // bumping it boards, TramRide). tools/world-model.js and the unit tests run
+        // this class on a scene with no cars: there is nothing to ask there.
+        const trams = this.scene.ambientTrams;
+        if (trams && cellsToCheck.some((cell) => trams.carAt(cell.x, cell.y))) {
+            return false;
+        }
+
         // Check collision with layer tiles
         if (!this.checkTileCollision(cellsToCheck)) {
             return false;

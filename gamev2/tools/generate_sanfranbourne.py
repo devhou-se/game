@@ -11,7 +11,10 @@ comes here and it is on no departures board. North to south:
           (east): an oval with four posts at each end and light towers, and
           the fog that rolls in over it every afternoon
   street  the tram street: a CABLE CAR and a GREEN-AND-YELLOW TRAM share one
-          pair of rails; the avenue crosses it on a signalled zebra crossing
+          pair of rails, the cable car west of the avenue and the tram east of
+          it; the avenue crosses on a signalled zebra crossing. Neither is a
+          tile: each runs its rails and can be ridden (the room's `tramways`,
+          src/AmbientTrams.js, issue #245)
   hill    PAINTED LADIES in a row, each a step higher than the last, on a
           bluestone wall covered in STREET ART with COFFEE WINDOWS let into it;
           the laneway runs along its foot (milk crates for seats)
@@ -143,13 +146,21 @@ for x in range(AVE_X0, AVE_X1 + 1):
     b.stamp('crossing-h', x, STREET_Y)
 b.stamp('traffic-light', AVE_X0 - 1, STREET_Y - 3)
 b.stamp('traffic-light', AVE_X1 + 1, STREET_Y + 1)
-CABLE_CAR = (10, STREET_Y)
-place('Collidables', *CABLE_CAR, 'sfb-cable-car', rg.block(3, 2))
-TRAM = (47, STREET_Y)
-place('Collidables', *TRAM, 'sfb-tram', rg.block(4, 2))
 for x in (7, 18, 24, 36, 44, 54):
     b.stamp('lamp-blue', x, STREET_Y + 3)
-b.stamp('bus-stop', 20, STREET_Y - 1)
+BUS_STOP = (20, STREET_Y - 1)
+b.stamp('bus-stop', *BUS_STOP)
+# the cable car and the tram (src/AmbientTrams.js, shuttles: one car each, always in the
+# street, solid while it stands and ridden by bumping it), one on each side of the avenue.
+# The cable car stops where it used to stand and at the bus stop; the tram, whose art
+# heads west, where it used to stand, and it turns back clear of the traffic light drawn
+# over the first rail east of the crossing.
+TRAMWAYS = [
+    {'row': STREET_Y + 1, 'from': ROAD_X0 + 1, 'to': AVE_X0 - 1, 'sprite': 'sfb-cable-car_0_0', 'shuttle': True,
+     'name': 'cable car', 'stops': [11, BUS_STOP[0]], 'speed': 192, 'dwell': 5, 'headway': 8},
+    {'row': STREET_Y + 1, 'from': AVE_X1 + 2, 'to': ROAD_X1 - 1, 'sprite': 'sfb-tram_0_0', 'shuttle': True,
+     'name': 'tram', 'faces': 'west', 'stops': [48], 'speed': 256, 'dwell': 6, 'headway': 8},
+]
 
 # ---- the hill: painted ladies on the wall of street art, the laneway below -------
 LADIES = [(6 + i * 3, 'abcdab'[i]) for i in range(6)]
@@ -249,6 +260,7 @@ cfg['rooms'][KEY]['blog'] = False        # the blog pipeline never offers this r
 # not a real longitude / latitude: the one stretch of sea where its long label clears every other
 # label in every view (tools/tests/japan-map.test.js). No label: the room's name.
 cfg.setdefault('places', {})[KEY] = {'geo': [141.5, 32.7], 'overseas': True}
+cfg['rooms'][KEY]['tramways'] = TRAMWAYS
 
 rg.save_config(cfg)
 print(f'{NAME} {W}x{H}; airport doors at {airport_doors} -> {AIRPORT}; clocks station at {STATION}, '

@@ -291,9 +291,19 @@ module.exports = ({ test, assert, fs, path, GV2, game, worldWith }) => {
         for (const xy of Object.keys(sea)) assert.ok(xy in layer('Toyama', 'Colliders'), `Toyama water cell ${xy} is walkable`);
         const [px, py] = at('Toyama', 'toyama-port-tower_0_0');
         assert.ok(name(sea[`${px + 1},${py + 3}`]).startsWith('pond-autotile_') && !name(sea[`${px + 1},${py + 6}`]), 'the port tower stands on the quay, the sea behind it');
-        const rails = sprites.Toyama['toyama-tram-rail_0_0'], [trx, try_] = at('Toyama', 'toyama-tram_0_0');
-        assert.ok(rails.length >= 20 && rails.every(([, y]) => y === try_ + 1), 'the tram stands on its rails');
-        assert.ok(Math.abs(at('Toyama', 'toyama-tram-stop_0_0')[0] - trx) <= 2, 'the tram is at its stop');
+        // the tram is not a tile: it runs the rails end to end and stops under the shelter (#245; the line itself: glows-trams.test.js)
+        const rails = sprites.Toyama['toyama-tram-rail_0_0'], railRow = rails[0][1], railCols = rails.map(([x]) => x);
+        assert.ok(rails.length >= 20 && rails.every(([, y]) => y === railRow), 'the rails are one row, most of the street long');
+        assert.ok(!sprites.Toyama['toyama-tram_0_0'], 'no tram stands in the street as a tile');
+        assert.ok(cfg.spriteMetadata['toyama-tram_0_0'], 'its art is still loaded');
+        const lines = (room.tramways || []).filter((t) => t.row === railRow);
+        assert.strictEqual((room.tramways || []).length, 1);
+        assert.strictEqual(lines.length, 1, 'one line, on the rails');
+        const [tram] = lines;
+        assert.deepStrictEqual([tram.shuttle, tram.sprite, tram.from, tram.to], [true, 'toyama-tram_0_0', Math.min(...railCols), Math.max(...railCols)],
+            'a shuttle that runs exactly the rails');
+        const [sx] = at('Toyama', 'toyama-tram-stop_0_0'), [sw] = cells('toyama-tram-stop_0_0');
+        assert.ok(tram.stops.length === 1 && tram.stops[0] >= sx && tram.stops[0] < sx + sw, 'the tram stops at its shelter');
     });
 
     test('Hokuriku stands north-west of Tokyo, clear of every other map in devhouse.world, and is on the world map (#68)', () => {
