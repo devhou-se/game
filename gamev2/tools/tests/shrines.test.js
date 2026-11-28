@@ -33,6 +33,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         ShrineKanazawa1: { host: 'Kanazawa', look: 'blue', size: 'standard' },
         ShrineFukuoka1: { host: 'Fukuoka', look: 'red', size: 'large', name: 'Kushida Shrine' },
         ShrineFukuoka2: { host: 'Fukuoka', look: 'red', size: 'large', name: 'Dazaifu Tenmangu' },
+        ShrineNara1: { host: 'Nara', look: 'red', size: 'standard', name: 'Kasuga Taisha' },   // #268
     };
     const at = (room, c, piece) => Object.entries(room.layers.flatMap((l) => Object.entries(l.tiles)))
         .map(([, [cell, id]]) => [cell, c.tilePalette[id]]).filter(([, key]) => key === piece).map(([cell]) => cell.split(',').map(Number));
@@ -41,7 +42,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         const c = cfg();
         const found = halls(c);
         // (Asahikawa's went when the zoo gate was built where it stood: issue #219, stage B)
-        assert.strictEqual(found.length, 6, 'Tokyo, Kanazawa, Market, Park, Kushida and Dazaifu Tenmangu in Fukuoka');
+        assert.strictEqual(found.length, 7, 'Tokyo, Kanazawa, Market, Park, Kushida and Dazaifu Tenmangu in Fukuoka, Kasuga Taisha in Nara');
         for (const h of found) {
             const prefab = JSON.parse(fs.readFileSync(path.join(GV2, 'tiled', 'prefabs', `${h.kind.prefab}.tmj`), 'utf8'));
             const seal = prefab.layers.find((l) => l.name === 'Colliders').data;
@@ -186,7 +187,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
         const rm = world.roomManager, cities = world.config.cities;
         const stitched = {};
         for (const [key, { host }] of Object.entries(WIRED)) {
-            // the room the host is played as: its city where it is a district (Tokyo's three, Kanazawa in Hokuriku)
+            // the room the host is played as: its city where it is a district (Tokyo's three, Kanazawa in Hokuriku, Nara in Kansai)
             const city = Object.keys(cities).find((k) => cities[k].rooms.some((r) => r.room === host)) || host;
             const t = rm.rooms[city].transporters.filter((x) => x.targetRoom === key);
             assert.strictEqual(t.length, 1, `${host}: one door in ${city}`);
@@ -196,7 +197,7 @@ module.exports = ({ test, assert, fs, path, vm, GV2, ctx, game, shopWith, worldW
             stitched[host] = city;
         }
         assert.deepStrictEqual(stitched, { Tokyo: 'TokyoCity', Market: 'TokyoCity', Park: 'TokyoCity', Kanazawa: 'HokurikuCity',
-            Fukuoka: 'Fukuoka' });
+            Fukuoka: 'Fukuoka', Nara: 'KansaiCity' });
     });
 
     test('an offering costs five yen, rings the bell and says a blessing; an empty wallet only bows (#212)', () => {

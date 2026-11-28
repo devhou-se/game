@@ -137,8 +137,9 @@ python3 tools/test_blog_to_npc.py                                   # unit check
   the real place it is about - see the stages below); the travel-day posts stay on their platforms. Stage 0 of the
   world rework (issue #68: real places only, laid out like Japan) moved eight more: Osaka, which had hosted
   no post, now tells its own (Damian's 768 at the Dotonbori arch, Bailey's 769 at Tsutenkaku Tower) and,
-  until that town exists, the day trip that ends the day there (Nara 764 on the canal bank under the
-  ferris wheel; Himeji's 754 stood in at Osaka's sakura trees too, until Himeji was built - issue #255
+  until that town exists, the day trip that ends the day there (Nara's 764 stood on the canal bank under the
+  ferris wheel until Nara was built - issue #268 moved it to `Nara · the Great Buddha Hall`, in front of the
+  hall; Himeji's 754 stood in at Osaka's sakura trees too, until Himeji was built - issue #255
   moved it to `Himeji · Himeji Castle`, in front of the keep; Okayama's 745 waited on Hakata's platform,
   `FukuokaStation · the platform`, where the day's train left from, until Okayama was built - issue #267
   moved it to `Okayama · Korakuen garden`, on the island's lawn); the four October test / bug-report posts (382, 391, 396,

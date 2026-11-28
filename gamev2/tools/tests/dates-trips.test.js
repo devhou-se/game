@@ -358,11 +358,11 @@ module.exports = ({ test, assert, ctx, game, realConfig, bootOn }) => {
             assert.ok(dylans.length <= 1, `${date}: ${dylans.length} Dylans`);
         }
         assert.strictEqual(where('2025-10-20').Dylan, 'TokyoStation 1,7');
-        // the posts about Osaka, and the day trip to Nara that ends the day there, are told in Osaka; the day
-        // at Himeji is told in Himeji, in front of the castle's keep (#255)
+        // the posts about Osaka are told in Osaka; the day at Himeji is told in Himeji, in front of the castle's
+        // keep (#255), and the day trip to Nara in Nara, in front of the Great Buddha Hall (#268)
         const posts = (name, date, room = 'Osaka') => (config.rooms[room].npcs.find(n => n.name === name).states[date].posts || []).map(p => p.id);
         assert.strictEqual(where('2025-11-13').Damian, 'Himeji 12,8'); assert.strictEqual(posts('Damian', '2025-11-13', 'Himeji').join(), '754');
-        assert.strictEqual(where('2025-11-14').Damian, 'Osaka 39,19'); assert.strictEqual(posts('Damian', '2025-11-14').join(), '764');
+        assert.strictEqual(where('2025-11-14').Damian, 'Nara 35,10'); assert.strictEqual(posts('Damian', '2025-11-14', 'Nara').join(), '764');
         assert.strictEqual(where('2025-11-15').Damian, 'Osaka 21,18'); assert.strictEqual(posts('Damian', '2025-11-15').join(), '768');
         assert.strictEqual(where('2025-11-16').Bailey, 'Osaka 26,43'); assert.strictEqual(posts('Bailey', '2025-11-16').join(), '769');
         assert.strictEqual(where('2025-11-18').Bailey, 'Tokyo 32,21', 'and Bailey is back in Tokyo for the last post');

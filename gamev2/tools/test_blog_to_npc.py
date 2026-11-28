@@ -1271,6 +1271,7 @@ REPLACED_219 = {
     ('Julia', '2025-11-01'): ('Market', (49, 30)),          # four Don Quijotes: beside the Don Takote's doors
     ('Dylan', '2025-11-01'): ('Market', (6, 38)),           # the izakaya night: beside its door, not in front
     ('Damian', '2025-11-12'): ('Okayama', (27, 31)),        # Hakata to Okayama: Korakuen's lawn (issue #267; it was Hakata's platform)
+    ('Damian', '2025-11-14'): ('Nara', (35, 10)),           # the day in Nara: in front of the Great Buddha Hall (issue #268; it was Osaka's canal bank)
 }
 
 

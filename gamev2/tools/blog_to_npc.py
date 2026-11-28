@@ -269,6 +269,11 @@ LANDMARKS = [
     ('okayama-crane_', 'Korakuen garden', (-1, 1), {'rooms': ('Okayama',)}),      # (27, 31): the lawn beside the first crane
     ('okayama-momotaro_', 'the Momotaro statue', (0, 3), {'rooms': ('Okayama',)}),    # (8, 20): the plaza in front of him
     ('okayama-bizen-stall_', 'the Bizen-ware stall', (1, 3), {'rooms': ('Okayama',)}),  # (16, 18): the pavement at its counter
+    ('nara-daibutsuden_', 'the Great Buddha Hall', (4, 8), {'rooms': ('Nara',)}),   # (35, 10): the court in front of the hall, off the axis
+    ('nara-nandaimon_', 'the Nandaimon gate', (1, 4), {'rooms': ('Nara',)}),       # (35, 16): the plaza below its west post, off the gateway
+    ('nara-senbei-stall_', 'the deer cracker stall', (0, 2), {'rooms': ('Nara',)}),   # (41, 18): the plaza at its counter
+    ('nara-deer-stag_', 'the deer of Nara Park', (1, 0), {'rooms': ('Nara',)}),    # (13, 29): the lawn beside the first stag
+    ('shrine-building', 'Kasuga Taisha', (2, 6), {'rooms': ('Nara',)}),            # (45, 32): the approach, east of the door's column
     ('karuizawa-fingerpost_', 'the road from Tokyo', (-1, 1), {'rooms': ('Karuizawa',)}),   # the verge beside its foot, clear of the road and the gate's landing cells
     ('karuizawa-falls_', 'Shiraito Falls', (1, 5), {'rooms': ('Karuizawa',)}),       # (13, 8): the bank, at the pool's south-west corner
     ('karuizawa-corn-stall_', 'the corn stall', (2, 2), {'rooms': ('Karuizawa',)}),  # (21, 8): at the east end of the counter

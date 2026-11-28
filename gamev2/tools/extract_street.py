@@ -15,6 +15,8 @@ traffic lights, a handful of iconic kerbside props, and the izakaya stool.
   bicycle-blue/-orange_0_0, scooter-grey/-red_0_0   1x1  parked two-wheelers
   traffic-cone_0_0   1x1  striped cone
   utility-pole_0_0   1x3  wooden pole with a transformer (Japanese City GK_JC_B_2)
+  nara-deer-doe_0_0, nara-deer-stag_0_0   1x1  the two deer resting on the
+                     grass, for Nara's park (issue #268)
       All at the 2x scale of every other GuttyKreum prop (one 32px sheet tile =
       one 64px cell), bottom-aligned in their cell(s) so they stand on the
       ground row. No bins: the packs' rubbish bins / dumpsters are deliberately
@@ -88,6 +90,9 @@ PROPS = {
     'scooter-red':    ('urban', (192, 224, 224, 256), 1, 1),
     'traffic-cone':   ('urban', (96, 384, 128, 416), 1, 1),
     'utility-pole':   ('city',  (480, 160, 512, 256), 1, 3),
+    # Nara's deer (issue #268): the two resting on the grass
+    'nara-deer-doe':  ('urban', (0, 128, 32, 160), 1, 1),
+    'nara-deer-stag': ('urban', (32, 128, 64, 160), 1, 1),
 }
 
 

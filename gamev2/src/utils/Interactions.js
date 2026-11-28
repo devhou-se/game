@@ -119,6 +119,15 @@ const Interactions = {
         { kind: 'momotaro', group: 'flavour', pattern: /^okayama-momotaro/, footprint: true, say: 'momotaro the peach boy, with his dog, monkey and pheasant. the ogres never stood a chance' },
         { kind: 'bizen-stall', group: 'flavour', pattern: /^okayama-bizen-stall/, footprint: true, say: 'bizen ware: no glaze, two weeks in the kiln, no two alike. beer tastes better from it, they say' },
         { kind: 'crane', group: 'flavour', pattern: /^okayama-crane/, footprint: true, say: 'a red-crowned crane. it looks at you, then at the pond, and chooses the pond' },
+        // ...the ones either side of the seam where Osaka's avenue walks on to Nara (issue #268), and what stands in Nara
+        { kind: 'fingerpost', group: 'flavour', pattern: /^nara-fingerpost/, footprint: true, say: 'west: osaka, dotonbori. east: nara, the great buddha and the deer' },
+        { kind: 'deer', group: 'flavour', pattern: /^nara-deer-(doe|stag)/, footprint: true, say: 'a deer, resting. it has seen ten thousand visitors today and you are not the interesting one' },
+        { kind: 'deer-bow', group: 'flavour', pattern: /^nara-deer-bow/, footprint: true, say: 'the deer bows. it wants a cracker. it bows again, lower, and stands on your foot' },
+        { kind: 'senbei-stall', group: 'flavour', pattern: /^nara-senbei-stall/, footprint: true, say: 'deer crackers, 200 yen a stack. every deer in the park knows the sound of the paper band' },
+        { kind: 'stone-lantern', group: 'flavour', pattern: /^nara-stone-lantern/, footprint: true, say: 'a stone lantern, furred with moss. there are two thousand along this path, each one given by somebody' },
+        { kind: 'nandaimon', group: 'flavour', pattern: /^nara-nandaimon/, footprint: true, say: 'the great south gate. two wooden guardians, eight metres tall, glare out of the dark either side' },
+        { kind: 'great-buddha-hall', group: 'flavour', pattern: /^nara-daibutsuden/, footprint: true, say: 'the great buddha hall. fifteen metres of bronze sit inside, and a pillar with a hole the size of his nostril' },
+        { kind: 'torii', group: 'flavour', pattern: /^nara-kasuga-torii/, footprint: true, say: 'the vermilion gate of kasuga taisha. the deer walk through without bowing' },
         // ...and the people folded double at the waist on its pavements: one line each
         // an underground arcade's other fronts and furniture
         { kind: 'bookshop', group: 'flavour', pattern: /^chika-shop-books/, footprint: true, say: 'this week\'s manga, tied shut with string. everyone is reading them standing up anyway' },

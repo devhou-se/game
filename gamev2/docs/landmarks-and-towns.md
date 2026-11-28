@@ -41,6 +41,9 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Okayama Castle: the black "crow" keep | Okayama | `okayama-keep_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
 | Korakuen: the Tsukimi bridge, the red-crowned cranes, the stones at the island's corners | Okayama | `okayama-bridge_0_0`, `okayama-crane_0_0`, `okayama-bank-rock_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
 | The Momotaro statue, the Bizen-ware stall | Okayama | `okayama-momotaro_0_0`, `okayama-bizen-stall_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| Todaiji: the Great Buddha Hall, the Nandaimon gate | Nara | `nara-daibutsuden_0_0`, `nara-nandaimon_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` (see "Kansai") |
+| Kasuga Taisha: the torii, the stone lanterns (the hall is the stock `shrine-red`) | Nara | `nara-kasuga-torii_0_0`, `nara-stone-lantern_0_0` | shaded pixel art drawn by `tools/generate_kansai_art.py` |
+| The deer of Nara Park, the deer cracker stall | Nara | `nara-deer-doe_0_0`, `nara-deer-stag_0_0` (cut from the UrbanAccessoriesv2 sheet by `tools/extract_street.py`), `nara-deer-bow_0_0`, `nara-senbei-stall_0_0` | the bowing deer and the stall drawn by `tools/generate_kansai_art.py` |
 
 The three placeholders are line drawings with colour laid on (#271): the drawing is kept in
 `../art-source/line-art/`, `tools/line_art.py` paints it by rule (regions of the drawing take a material, small
@@ -70,7 +73,8 @@ them over the player, see `occlusion.md`.)
   this ground line (#70) or moves the colliders with it: `map-data.test.js` fails on a solid bottom-row cell
   with nothing standing on it and on an open cell under the art.
 - **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reached by train, and the town of the
-  stitched city `KansaiCity` (see "Kansai": Himeji is walked to from its west edge, and Okayama from Himeji's):
+  stitched city `KansaiCity` (see "Kansai": Himeji is walked to from its west edge, Okayama from Himeji's, and
+  Nara from its east edge):
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
   plaza, with the ferris wheel on the north bank (a gondola at its foot is boarded for one turn and the view:
   see "A turn on the Dotonbori wheel", issue #242). The Dotonbori canal (rows 20-22) runs the whole width of
@@ -80,7 +84,7 @@ them over the player, see `occlusion.md`.)
   platform-edge fence and the continuous border hedges keep the player off the ballast and out from behind
   the fences. `OsakaStation` is registered in `tools/generate_stations.py`
   (`STATIONS` / `TOWN_DOORS`) and so in config `stations`; in `devhouse.world` Osaka sits where
-  `tools/kansai.py` puts it, with Himeji against its west edge (see "Kansai").
+  `tools/kansai.py` puts it, with Himeji against its west edge and Nara against its east edge (see "Kansai").
 - **Adding a landmark**: put a cell-aligned PNG in `assets/sprites/` (register `spriteMetadata` with
   `anchorX = 32/width`, `anchorY = 32/height`, plus `tileNames`), add a prefab spec to
   `tools/make_prefabs.py` (colliders = the base cells only), stamp it from the room generator, and add it to
@@ -133,6 +137,7 @@ Every town is made of named areas, and the data says so: config `districts`, key
 | Osaka | Dotonbori, Shinsekai |
 | Himeji | Himeji Castle, Koko-en garden |
 | Okayama | Okayama Castle, Momotaro Avenue, Korakuen garden |
+| Nara | Todaiji, Nara Park, Kasuga Taisha |
 | Sendai | Sendai Station front, Aoba Castle ruins, Downtown, Zuihoden, Nikka distillery, Samurai quarter, Matsushima bay |
 | Fukuoka | Hakata Station, Momochi, Canal City, Old Hakata, Nakasu, Dazaifu |
 | Kanazawa | Station front, Higashi Chaya and the temple hill, Katamachi, Castle, Kenrokuen, Nagamachi |
@@ -288,27 +293,32 @@ station: the owner's rule is that small places are walked to from their town, no
   7-Eleven / vending / pond spots. Fourteen devhouse 2 placements were re-homed there with `--rehome`
   (see `blog-pipeline.md`).
 
-### Kansai: Osaka, with Himeji and Okayama on foot (issues #255, #267; #68, runs 2 and 4)
+### Kansai: Osaka, with Himeji, Okayama and Nara on foot (issues #255, #267, #268; #68, runs 2, 4 and 5)
 
-Osaka, **Himeji** and **Okayama** are three generated rooms the game stitches into ONE walkable room,
-**`KansaiCity`** - the third stitched city, built as Hokuriku is (above; `stitched-city.md`). Osaka is the
-town and has the region's one station. Himeji and Okayama are small places with NO station: you walk to
-Himeji from Osaka, west along Canal-side Avenue, and on along the same avenue to Okayama, where it ends.
-Devhouse 2's Damian was in Okayama on 12 November 2025 (post 745) and in Himeji on the 13th (post 754).
-All three are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji and Okayama" below.
+Osaka, **Himeji**, **Okayama** and **Nara** are four generated rooms the game stitches into ONE walkable
+room, **`KansaiCity`** - the third stitched city, built as Hokuriku is (above; `stitched-city.md`). Osaka is
+the town and has the region's one station. Himeji, Okayama and Nara are small places with NO station: you
+walk to Himeji from Osaka, west along Canal-side Avenue, and on along the same avenue to Okayama, where it
+ends; and east along it the other way to Nara, where it ends below the Nandaimon. Devhouse 2's Damian was in
+Okayama on 12 November 2025 (post 745), in Himeji on the 13th (post 754) and in Nara on the 14th (post 764).
+All four are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji and Okayama" below.
 
 - **Layout** (`tools/kansai.py`, the one place the generators agree on it; city cells, the union's top-left
   is 0,0). Kansai is planned as FIVE districts, one ticket each, and `AT` / `SIZE` hold all five so that a
   later ticket moves nothing: **Okayama** 44x40 at (0,36), **Himeji** 44x40 at (44,36), **Osaka** 50x46 at
   (88,30), Nara 52x40 at (138,36), LakeBiwa 46x36 at (152,0). **`BUILT`** names the ones that exist
-  (`('Himeji', 'Okayama', 'Osaka')` today); config `cities.KansaiCity.rooms` is exactly those. A join
-  (`JOINS`, two today) is open only when both its districts are built: a generator asks
+  (`('Himeji', 'Nara', 'Okayama', 'Osaka')` today); config `cities.KansaiCity.rooms` is exactly those. A
+  join (`JOINS`, four rows today) is open only when both its districts are built: a generator asks
   `ks.is_open(district, side)` and closes its edge otherwise, so Himeji's west edge opened when Okayama was
-  built (`generate_himeji.py` keeps the closed branch), and Osaka's west rail caps and seam pieces are there
-  only because Himeji is. **Okayama's own west edge has no join**: nothing is planned beyond it. The city
-  today is 138x46 (`depthScale` 1): Himeji's and Okayama's top row is six rows below Osaka's, and that gap
-  is the stitcher's woodland (`cities.KansaiCity.backdrop`, a copy of Hokuriku's), which also carries
-  Osaka's railway on west to the city's edge - the track runs two rows above Himeji's keep's roof.
+  built (`generate_himeji.py` keeps the closed branch), Osaka's west and east rail caps and seam pieces are
+  there only because Himeji and Nara are, and **Nara's north edge is wood until Lake Biwa is built** (its row
+  `('Nara', 'n', …, 'LakeBiwa', …)` is already in `JOINS`, inert until then; issue #269 opens it).
+  **Okayama's own west edge has no join**, nor Nara's east and south ones: nothing is planned beyond them.
+  The city today is 190x46 (`depthScale` 1): Himeji's, Okayama's and Nara's top row is six rows below
+  Osaka's, and that gap is the stitcher's woodland (`cities.KansaiCity.backdrop`, a copy of Hokuriku's),
+  which also carries Osaka's railway on west and east to the city's edges - the track runs two rows above
+  Himeji's keep's roof, and above Nara on the bare strip the backdrop keeps clear of trees
+  (`extendClear`), in view from the end of the towpath.
 - **The seam**: Osaka's west edge meets Himeji's east edge. **Canal-side Avenue** (Osaka rows 24-28: a
   pavement, three rows of road, a pavement) is Himeji rows 18-22, and **Osaka's canal** (rows 20-22) runs on
   as the **castle moat** (Himeji rows 14-16): the same Floor and Water tiles either side of the edge, with
@@ -324,9 +334,15 @@ All three are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji
   same drawing): a `flavour` rule is matched by sprite key alone, so one key cannot say two lines, and a
   key beginning `kansai-fingerpost` would be caught by the first rule. Himeji has one of each, by the seam
   it is for.
-- **Osaka** changed only at its west edge: no bushes cap the rail corridor on (0, 3..5) - the line carries
-  on west - the pavement's seam pieces on (0,24) and (0,28), the fingerpost at (2,28), and the five seam
-  transporters. A later Osaka must keep the avenue on rows 24-28 and the canal on rows 20-22 at that edge.
+- **The third seam** (issue #268): Osaka's east edge meets Nara's west edge. The avenue carries on (Nara
+  rows 18-22) and the canal runs on as Nara's **river** (rows 14-16), with the same seam pieces and five
+  hidden transporters each way. Osaka's ten are its west five, then its east five: the row order of
+  `JOINS`, which `generate_osaka.py` writes as it is (it does not call `kept_order`), so keep Osaka's west
+  row first there. Its fingerposts are a third key, **`nara-fingerpost`**: Osaka (47,28), Nara (3,22).
+- **Osaka** changed only at its two edges: no bushes cap the rail corridor on (0, 3..5) or (49, 3..5) - the
+  line carries on west and east - the pavement's seam pieces on (0,24), (0,28), (49,24) and (49,28), the
+  fingerposts at (2,28) and (47,28), and the ten seam transporters. A later Osaka must keep the avenue on
+  rows 24-28 and the canal on rows 20-22 at both edges.
 - **Himeji** (`tools/generate_himeji.py`): north, **Himeji Castle** on its hill - the white **keep**
   (`himeji-keep`, 10x8 at (8,0), on the district's top row, so its art is exactly its footprint: nothing may
   overhang into the row above, which is not Himeji's; `game.lookUp.sprites` has it, so the camera looks up
@@ -359,10 +375,35 @@ All three are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji
   (`flavour` rows). The river is NOT a `waterways` run: no arm of the ring leads anywhere, so a boat would
   fade in and out in full view. There is no building with a door and no ordinary sealed building: the keep
   is looked at, not entered, and the stall is an open counter. The west, north and south edges are wood.
-- **The Map** has a dot for Himeji and one for Okayama (`config.places.Himeji` / `.Okayama`,
-  `"minor": true`: a small place, whose label gives way to the towns' - `hud-input-touch.md`). Debug
-  map-click travel lands on Himeji (40,18), on the avenue three cells in from Osaka, and on Okayama (40,18),
-  three cells in from Himeji (`Places.arrival`).
+- **Nara** (`tools/generate_nara.py`, issue #268, 52x40). **Todaiji** stands on one north-south axis,
+  columns 36-37: the **Great Buddha Hall** (`nara-daibutsuden`, 12x8 at (31,2): two broad hipped roofs, the
+  gold horns on the ridge, white plaster between dark posts, the curved gable over the middle doors; solid
+  over its whole footprint, roof rows too, with wood on rows 0-1 behind it; `game.lookUp.sprites` has it, so
+  the camera looks up from the court) over its gravel **court**, behind an earthen wall (rows 14-15,
+  Sendai's) crossed only through the **Nandaimon** (`nara-nandaimon`, 6x4 at (34,12); the gateway is its
+  columns 2-3, walked under like Koko-en's gate). The avenue in from Osaka ends below it in a paved **plaza**
+  with a **deer cracker stall** (`nara-senbei-stall`, 2x2 at (41,16)). West, Osaka's canal runs on as a
+  **river** (rows 14-16) that bends north up columns 20-22, with a gravel **towpath** (23-24) beside it; both
+  stop at row 2 until Lake Biwa joins there (the river's closed head is `edge-n` and a `corner-ne`, with an
+  `okayama-bank-rock` over its west corner and another over the inside of the bend: no `corner-nw`, which
+  the blog pipeline would read as "the pond"). The river is Nara's `waterways` entry as far as the bend
+  (columns 0-19), so the canal's boats sail on into it and fade out where it turns north. South, **Nara
+  Park**'s lawn with maples and pines, and **deer** on the lawn, the court and the plaza: the two resting
+  ones of the UrbanAccessoriesv2 sheet (`nara-deer-doe`, `nara-deer-stag`) and a drawn bowing one
+  (`nara-deer-bow`), all 1x1 and solid. South-east, **Kasuga Taisha**: through a vermilion torii
+  (`nara-kasuga-torii`, 4x4 at (31,24), its own art and not the kit's `torii-red`, which made Kansai worse
+  than its distinctness baseline), up a gravel approach lined with **stone lanterns** (`nara-stone-lantern`,
+  1x2, nineteen) round a cedar wood, to the stock `shrine-red` at (42,24), whose door (44,30) leads into its
+  worship hall `ShrineNara1`, named "Kasuga Taisha" (`generate_shrines.py` `NAMES`). The nineteenth
+  lantern, at the plaza's south-east corner, closes the one cell behind the shrine's roof (42,24). The
+  lanterns are unlit at night, like Sendai's (`DayNight.js` halos `-lanterns`, not `-lantern`: keep the key
+  singular). Every Nara sprite answers a bump (`flavour` rows). No station, no railway, no bin, no building
+  with a door but the shrine. The east and south edges are wood, and the north edge until Lake Biwa.
+- **The Map** has a dot each for Himeji, Okayama and Nara (`config.places.Himeji` / `.Okayama` / `.Nara`,
+  `"minor": true`: a small place, whose label gives way to the towns' - `hud-input-touch.md`). Nara's geo is
+  Todaiji's, so its dot touches Osaka's (`Places.order`). Debug map-click travel lands on Himeji (40,18), on
+  the avenue three cells in from Osaka, on Okayama (40,18), three cells in from Himeji, and on Nara (3,18),
+  three cells in from Osaka's east end (`Places.arrival`).
 - **Districts and the blog pipeline**: `districts.py` has `castle` and `kokoen`; `LANDMARKS` has `Himeji
   Castle` (the visitor stands at (12,8), on the terrace in front of the keep's middle, where the camera
   looks up) and `Koko-en garden`, both `rooms:`-scoped. "the pond" is a spot of Koko-en, not of the castle:
@@ -377,11 +418,19 @@ All three are to be rebuilt to one plan: see "Kansai: one plan for Osaka, Himeji
   before the river's corner `"5,24"` - keep the garden pond's first column between 10 and 43. Damian's 12
   November placement was re-homed from Hakata's platform with
   `blog_to_npc.py --rehome Damian 2025-11-12 "Okayama · Korakuen garden"`.
-- **Build order** (art tools with a Pillow python): `generate_kansai_art.py`, `make_prefabs.py`,
-  `generate_okayama.py`, `generate_himeji.py`, `generate_osaka.py`, the maps in `../devhouse.world` (as
-  `kansai.AT` places them: the city's (0,0) is world cell (-258,31), which is Okayama's corner now) and
-  `config cities.KansaiCity`, `sync_cities.py`, `districts.py`, `config_to_tiled.py Osaka Himeji Okayama`,
-  `play.js lint` for `Osaka`, `Himeji`, `Okayama` and `KansaiCity`,
+  Nara has `todaiji` (the hall, the court and the plaza), `nara-park` (the lawn, the river and the towpath)
+  and `kasuga`, and five `rooms:`-scoped `LANDMARKS` rows: `the Great Buddha Hall` (35,10), in front of the
+  hall and off the axis; `the Nandaimon gate` (35,16), the plaza below its west post; `the deer cracker
+  stall` (41,18); `the deer of Nara Park` (anchored on the first stag in `"x,y"` order, (12,29): the lawn
+  beside it, (13,29)); and `Kasuga Taisha` (45,32), the approach east of the door's column (the generic
+  `the shrine` is there too). Damian's 14 November placement was re-homed from Osaka's canal bank with
+  `blog_to_npc.py --rehome Damian 2025-11-14 "Nara · the Great Buddha Hall"`. No start room changed.
+- **Build order** (art tools with a Pillow python): `extract_street.py` (the deer), `generate_kansai_art.py`,
+  `make_prefabs.py`, `generate_okayama.py`, `generate_himeji.py`, `generate_nara.py`, `generate_osaka.py`,
+  `generate_shrines.py Nara`, the maps in `../devhouse.world` (as `kansai.AT` places them: the city's (0,0)
+  is world cell (-258,31), which is Okayama's corner now) and `config cities.KansaiCity`, `sync_cities.py`,
+  `districts.py`, `config_to_tiled.py Osaka Himeji Okayama Nara ShrineNara1`, `play.js lint` for `Osaka`,
+  `Himeji`, `Okayama`, `Nara`, `ShrineNara1` and `KansaiCity`,
   `make_worldmap.py`, `check_distinct.py` (its row is `Kansai`). A ticket that builds the next district
   adds its generator, adds the district to `BUILT` and to `cities.KansaiCity.rooms`, re-runs the neighbours'
   generators (their edge opens) and drops its stub from `japan-map.test.js`. In `devhouse.world` the five

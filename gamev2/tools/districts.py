@@ -161,6 +161,20 @@ DISTRICTS = {
           'the strolling garden on its island in the river, over the Tsukimi bridge: lawns, a pond, red-crowned cranes',
           (7, 27, 38, 35), stand=(22, 28)),
     ],
+    # Nara: walked to from Osaka, the east end of KansaiCity (issue #268)
+    'Nara': [
+        d('todaiji', 'Todaiji',
+          'the Great Buddha Hall behind the Nandaimon gate, its gravel court, and the plaza where the avenue ends: '
+          'the deer cracker stall',
+          (30, 2, 46, 23), stand=(35, 11)),
+        d('nara-park', 'Nara Park',
+          'the deer park: the lawn and its maples south of the avenue in from Osaka, deer resting on the grass, '
+          'the river and its towpath',
+          (2, 17, 29, 33), stand=(16, 25)),
+        d('kasuga', 'Kasuga Taisha',
+          'the vermilion shrine in the cedar wood: the torii, the approach lined with stone lanterns, the hall',
+          (30, 24, 46, 37), stand=(40, 35)),
+    ],
     # --- Tohoku -----------------------------------------------------------
     'Sendai': [
         d('station-front', 'Sendai Station front',

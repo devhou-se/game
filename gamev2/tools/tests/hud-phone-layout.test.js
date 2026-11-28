@@ -168,7 +168,8 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
         // shrine since #220 ("Park shrine" counts down on both phones). Since #219 the Tokyo districts have
         // their real names: "Imperial Palace" (15) is too long for a countdown on either phone, "Asakusa
         // shrine" (14) one character too long at 844x390, and the palace's hall is "Palace Shrine" (13), a
-        // name of its own, because "Imperial Palace shrine" would not fit one row at 667x375 at all
+        // name of its own, because "Imperial Palace shrine" would not fit one row at 667x375 at all; Nara's
+        // is "Kasuga Taisha" (13, #268), its real name, which does the same
         // Since #218 also, at both widths, the two airports and the home city, whose names are as long as a station's
         const stations = Object.keys(config.stations).map(k => config.rooms[k].name).sort();
         const abroad = Object.keys(config.airports).map(k => config.rooms[k].name).concat(config.rooms.SanFranbourne.name);
@@ -210,7 +211,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, realConfig }) => {
             'Lobby · Fukuoka 4', 'Lobby · Kanazawa 1', 'Lobby · Kanazawa 2', 'Lobby · Sapporo 1', 'Lobby · Sapporo 2', 'Lobby · Sapporo 3', 'Lobby · Sendai', ...SHINJUKU]);
         assert.deepStrictEqual(notHouses(bare[744]), stations.filter(n => n.length > 13).concat('Imperial Palace', NAMED, abroad).sort());
         assert.ok(bare[744].has('Kanazawa Station') && !bare[744].has('Tokyo Station'));
-        assert.deepStrictEqual(notHouses(bare[715]), stations.concat('Shirakawa-go', 'Imperial Palace', 'Palace Shrine', NAMED, abroad).sort());
+        assert.deepStrictEqual(notHouses(bare[715]), stations.concat('Shirakawa-go', 'Imperial Palace', 'Palace Shrine', 'Kasuga Taisha', NAMED, abroad).sort());
         // the three renamed districts and Park, on a lead-in day: Asakusa and Marunouchi count down on both phones
         assert.strictEqual(bar(744, 'Asakusa', '¥5,000', '2027-02-10'), 'Asakusa | devhouse 3 in 8 days | ¥5,000');
         assert.strictEqual(bar(715, 'Asakusa', '¥5,000', '2027-02-10'), 'Asakusa | devhouse 3 in 8d | ¥5,000');

@@ -65,6 +65,7 @@ NAMES = {
     # the hall inside the moat: "Shrine · Imperial Palace" is too long for a phone's one-row HUD bar
     # ("Imperial Palace shrine | Feb 10 | ¥5,000" is 2 characters over at 667x375, issue #219)
     ('Tokyo', 'shrine-building_0_0'): 'Palace Shrine',
+    ('Nara', 'shrine-building_0_0'): 'Kasuga Taisha',       # issue #268
 }
 LARGE = {('Fukuoka', 'shrine-building_0_0'), ('Fukuoka', 'dazaifu-hall_0_0')}
 PREFIX = rg.SHRINE_PREFIX   # room keys; roomgen.OWNED_DOORS keeps these doors through a town rebuild

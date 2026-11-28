@@ -217,6 +217,15 @@ class Places {
         return marks.filter(m => !boxes.some(b => b.x1 > m.x0 && b.x0 < m.x1 && b.y1 > m.y0 && b.y0 < m.y1));
     }
 
+    /** The order the dots choose their label's spot in: the most hemmed-in first (the distance to the
+     *  nearest other dot), every `minor` dot after the others. A small place whose dot touches a town's
+     *  does not hem that town in (issue #268); one that stands clear of it still counts. */
+    static order(dots) {
+        const apart = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+        const crowd = (d) => Math.min(...dots.filter(o => o !== d && !(o.minor && !d.minor && apart(o, d) < o.r + d.r)).map(o => apart(o, d)), Infinity);
+        return dots.slice().sort((a, b) => (!!a.minor - !!b.minor) || crowd(a) - crowd(b) || (a.key < b.key ? -1 : 1));
+    }
+
     /**
      * Where each dot's label goes. `dots` are [{ key, x, y, r, w, h, minor }]:
      * the dot's centre and radius and its label's size, in the px of `bounds`
@@ -238,7 +247,8 @@ class Places {
      * hemmed-in dots choose first, and every `minor` dot after the others
      * (issue #68: a town keeps the spot beside its dot; the caller does not
      * mark a small place `minor` while the player or friends are there, the
-     * label then being the one looked for). That order is a guess: when it
+     * label then being the one looked for); a small place whose dot touches
+     * a town's does not hem that town in (Places.order). That order is a guess: when it
      * leaves a label with no spot, that label goes first and the rest are
      * laid out again, as often as there are dots at most, and the layout
      * that left the fewest labels without a spot is the one kept. `fits` is
@@ -248,8 +258,7 @@ class Places {
     static layout(dots, bounds, avoid = []) {
         const hit = (a, b) => a.x1 > b.x0 && a.x0 < b.x1 && a.y1 > b.y0 && a.y0 < b.y1;
         const dotBox = (d) => ({ x0: d.x - d.r - 1, y0: d.y - d.r - 1, x1: d.x + d.r + 1, y1: d.y + d.r + 1 });
-        const crowd = (d) => Math.min(...dots.filter(o => o !== d).map(o => Math.hypot(o.x - d.x, o.y - d.y)), Infinity);
-        const sorted = dots.slice().sort((a, b) => (!!a.minor - !!b.minor) || crowd(a) - crowd(b) || (a.key < b.key ? -1 : 1));
+        const sorted = Places.order(dots);
         const once = (shun, order) => {
             const taken = [], out = {};
             for (const d of order) {

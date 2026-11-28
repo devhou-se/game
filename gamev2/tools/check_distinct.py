@@ -51,7 +51,7 @@ KIT = re.compile(r'^(seven-eleven|7-11-sign|.*vending-machine|road-|crossing-|tr
 LANDMARK_ART = re.compile(
     r'(asahikawa-|ramen-banner|canal-|dazaifu-|fukuoka-|hakata-|yatai-|dotonbori-|tsutenkaku|sapporo-|'
     r'sendai-(zuihoden|masamune|pub|kiln|gate|barrels)|matsushima-|tokyo-station|tokyo-tower|kanazawa-|karuizawa-|'
-    r'shirakawa-(?!paddy)|toyama-(?!tram-rail)|devhouse-|himeji-|kansai-|okayama-|'
+    r'shirakawa-(?!paddy)|toyama-(?!tram-rail)|devhouse-|himeji-|kansai-|okayama-|nara-|'
     # Asahikawa (issue #219, stage B): building prefixes only - `heiwa-`, `ramen-` or `zoo-` alone would
     # count the paving, Sapporo's ramen-alley-lanterns and the props
     r'heiwa-shop-|ramen-(shoyu|narrow|miso)-front|asahibashi-|hokkaido-house-|zoo-(gate|ticket-booth))')
