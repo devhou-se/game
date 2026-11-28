@@ -44,7 +44,7 @@ walkable floor - there is no traffic.
 
 The three landmarks are prefabs (tools/make_prefabs.py) whose art comes from
 tools/extract_dotonbori.py (real GuttyKreum Dotonbori art) and
-tools/generate_tsutenkaku.py (line-art placeholder). Deterministic and
+tools/generate_tsutenkaku.py (a shaded placeholder, issue #70). Deterministic and
 idempotent: rebuilds rooms.Osaka from scratch each run, keeping any NPCs the
 blog pipeline has placed there.
 
