@@ -61,7 +61,7 @@ or on a lift says one line. Nobody works there yet.
 
 A THIRD KIND, THE SHOP (issue #219, `--shops`): a shopfront in
 roomgen.SHOP_DOORS (Tanukikoji's souvenir shop, crab shop and drugstore, Susukino's
-karaoke bar) gets a
+karaoke bar, four in Asahikawa, Kyu-Karuizawa Ginza's three) gets a
 door into a `Shop<Town><n>` room, by the same rules. THE SHOP FLOOR is one
 layout (SHOP): a white back wall with posters, shelves against it, seven by
 five cells of floor, a counter with a till, a plant in each front corner and
@@ -207,6 +207,10 @@ SHOP_TYPES = {
     'heiwa-shop-bakery': ('Bakery', 'bakery', 'office-shelf-snacks_0_0'),
     'heiwa-shop-woodcraft': ('Woodcraft', 'souvenirs', 'office-shelf-glass_0_0'),
     'ramen-shoyu-front': ('Ramen', 'ramen', 'office-shelf-drinks_0_0'),
+    # Karuizawa (issue #261): Kyu-Karuizawa Ginza's bakery, jam and souvenir shop and cocktail lounge
+    'karuizawa-shop-bakery': ('Bakery', 'bakery', 'office-shelf-snacks_0_0'),
+    'karuizawa-shop-jam': ('Souvenirs', 'souvenirs', 'office-shelf-glass_0_0'),
+    'karuizawa-shop-lounge': ('Lounge', 'lounge', 'office-shelf-drinks_0_0'),
 }
 SHOP_FLAVOUR = ('office-counter2',)
 

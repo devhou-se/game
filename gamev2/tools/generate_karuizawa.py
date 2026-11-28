@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """generate_karuizawa.py — "Karuizawa", the mountain resort out of Tokyo's west
-gate (issues #68, #256; this is #260, part 1: the room and the gate).
+gate (issues #68, #256; #260 is part 1: the room and the gate; #261 part 2:
+Kyu-Karuizawa Ginza).
 
 devhouse 2's Damian and Julia were here on 1-2 November 2025. It is the fifth
 district of the stitched `TokyoCity`, west of the `Tokyo` room at world cell
@@ -13,11 +14,19 @@ Tokyo's west gate, along the old road out of Edo.
   post    the fingerpost on the verge just inside the gate: Tokyo one way, the
           road the other (src/utils/Interactions.js has its line)
   road    packed dirt, two cells wide: west from the gate to column 14, then
-          north up columns 14-15 to row 10 (parts 2 and 3 line it with the
-          shopfronts of Kyu-Karuizawa Ginza)
+          north up columns 14-15 to row 10
+  ginza   Kyu-Karuizawa Ginza, where the road in turns north: three 3x4
+          shopfronts side by side on its north side, (17 | 21 | 25, 29), a
+          bakery, a jam and souvenir shop and a cocktail lounge, the dirt
+          widened one row, (16..28, 33), to meet their doors. Every shopfront
+          in the game has its door in its bottom row, so the fronts face south
+          onto the road in, not onto the leg north. They are placed sealed;
+          tools/generate_houses.py --shops Karuizawa opens the door of each
+          (roomgen.SHOP_DOORS) into a ShopKaruizawa<n> shop floor, and
+          save_config keeps those doors through a rebuild here
   head    an open clearing, (10..21, 5..11), where the falls will stand
   woods   everywhere else, solid throughout. They are `tree-green`, Tokyo's
-          own tree, until part 2 draws `karuizawa-larch`
+          own tree, until a later part draws `karuizawa-larch`
 
 Every seam cell carries a hidden transporter to the cell three in from the
 neighbour's edge, which is what `?stitch=0` (and `play.js --stitch=0`) plays;
@@ -39,8 +48,9 @@ Run from gamev2/:  python3 tools/generate_karuizawa.py
 Build order:
     python3 tools/generate_karuizawa_art.py
     python3 tools/generate_karuizawa.py
+    python3 tools/generate_houses.py --shops Karuizawa
     python3 tools/districts.py
-    python3 tools/config_to_tiled.py Karuizawa Tokyo
+    python3 tools/config_to_tiled.py Karuizawa Tokyo ShopKaruizawa1 ShopKaruizawa2 ShopKaruizawa3
     python3 tools/sync_cities.py           # config `cities` from ../devhouse.world
     python3 tools/make_worldmap.py
 """
@@ -56,8 +66,10 @@ HOST_GATE = (41, 42)              # Tokyo: the same rows, at x = 0
 IN = 3                            # a seam transporter lands this many cells inside the neighbour
 BRICK = 'flat-grey-brick-autotile_center'
 POST = (44, 33)                   # the fingerpost's foot, on the verge north of the road
-LARCH = ['tree-green']            # part 2: karuizawa-larch
+LARCH = ['tree-green']            # a later part: karuizawa-larch
 RX0, RX1 = 14, 15                 # the columns of the road north
+GINZA_Y = 29                      # Kyu-Karuizawa Ginza: the top row of its fronts, each 3x4, and their west columns
+GINZA = [('karuizawa-shop-bakery_0_0', 17), ('karuizawa-shop-jam_0_0', 21), ('karuizawa-shop-lounge_0_0', 25)]
 
 cfg = rg.load_config()
 host = cfg['rooms'][HOST]
@@ -69,12 +81,19 @@ rng = random.Random(260)
 b.fill('grass-autotile')
 
 # ---- the road: in from the gate, west, then north to the clearing ---------------------
-b.autotile('dirt-outside-autotile', rect(RX0, GATE[0], W - 2, GATE[1]) + rect(RX0, 10, RX1, GATE[0] - 1))
+# (and one row wider along the Ginza, up to its doors)
+b.autotile('dirt-outside-autotile', rect(RX0, GATE[0], W - 2, GATE[1]) + rect(RX0, 10, RX1, GATE[0] - 1)
+           + rect(RX1 + 1, GATE[0] - 1, GINZA[-1][1] + 3, GATE[0] - 1))
 b.put('Floor', W - 2, GATE[0], 'dirt-outside-autotile_edge-n')    # open to the brick, not a closed end
 b.put('Floor', W - 2, GATE[1], 'dirt-outside-autotile_edge-s')
 for y in GATE:
     b.put('Floor', W - 1, y, BRICK)                               # the same brick as Tokyo's apron
 b.stand('karuizawa-fingerpost_0_0', *POST)
+
+# ---- Kyu-Karuizawa Ginza: three shopfronts on the north side of the road in ------------
+# Sealed here, before the woods are scattered round them; generate_houses.py --shops opens the doors.
+for key, x in GINZA:
+    b.prop(key, x, GINZA_Y, 3, 4)
 
 # ---- the woods: solid, everywhere but the road, its verges and the clearing ------------
 k.woods(0, 0, W - 1, 4, LARCH, rng)                               # north
@@ -119,4 +138,5 @@ for y, hy in zip(GATE, HOST_GATE):
 
 rg.save_config(cfg)
 print(f'Karuizawa {W}x{H}; gate on rows {GATE} of its east edge (Tokyo x=0, rows {HOST_GATE}), '
-      f'fingerpost at {POST}, road north on columns {(RX0, RX1)}')
+      f'fingerpost at {POST}, road north on columns {(RX0, RX1)}, '
+      f'Ginza fronts at columns {[x for _, x in GINZA]} of row {GINZA_Y}')

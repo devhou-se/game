@@ -15,7 +15,7 @@ lobbies in `landmarks-and-towns.md`). Of the ported houses, one opens: the red h
 (issue #68, door `(7,37)`, a `lantern-red` either side; `tools/generate_izakaya.py`). Houses (the
 `house-*` townhouses, and a machiya with no shop sign) get a generic home interior from
 `tools/generate_houses.py` - in Fukuoka, Market, Osaka and Sendai (issue #208, see House interiors; Sapporo's last townhouses went when Tanukikoji was built and Asahikawa's are Hokkaido houses of its own art, #219). The high-rises and
-apartment blocks get a lobby from the same tool (`--lobbies`; twenty-six in the nine towns that have a tower, all but Sendai's flats over its 7-Eleven, issues #216 and #219, see Tower lobbies), and a shopfront in `roomgen.SHOP_DOORS` a small shop floor (`--shops`; Tanukikoji's three, Susukino's karaoke bar, and in Asahikawa Heiwa-dori's three and the shoyu ramen counter, see Shop floors).
+apartment blocks get a lobby from the same tool (`--lobbies`; twenty-six in the nine towns that have a tower, all but Sendai's flats over its 7-Eleven, issues #216 and #219, see Tower lobbies), and a shopfront in `roomgen.SHOP_DOORS` a small shop floor (`--shops`; Tanukikoji's three, Susukino's karaoke bar, in Asahikawa Heiwa-dori's three and the shoyu ramen counter, and Kyu-Karuizawa Ginza's three, see Shop floors).
 
 | Prefab | Cells | Placed in |
 |---|---|---|

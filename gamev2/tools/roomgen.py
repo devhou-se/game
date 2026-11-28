@@ -64,13 +64,16 @@ SHRINE_DOORS = {'shrine-building_0_0': [(1, 4)], 'dazaifu-hall_0_0': [(3, 4)]}
 SHRINE_PREFIX = 'Shrine'    # rooms.Shrine<Town><n>, the worship halls generate_shrines.py owns
 # The shopfronts the same generator gives a small shop floor (issue #219, stage 3,
 # `generate_houses.py --shops`): the sprite -> its door cells. Tanukikoji's three,
-# Susukino's karaoke bar (stage 4), and Asahikawa's (stage B): three of Heiwa-dori's
-# shops and one ramen front. A front with no row here keeps a solid door cell
+# Susukino's karaoke bar (stage 4), Asahikawa's (stage B): three of Heiwa-dori's
+# shops and one ramen front, and Kyu-Karuizawa Ginza's bakery, jam shop and lounge
+# (issue #261). A front with no row here keeps a solid door cell
 # (the bookshop, the other two ramen shops: one of a kind is opened per street).
 SHOP_DOORS = {'tanukikoji-shop-souvenir_0_0': [(1, 3)], 'tanukikoji-shop-crab_0_0': [(1, 3)],
               'tanukikoji-shop-drug_0_0': [(1, 3)], 'susukino-karaoke_0_0': [(1, 4)],
               'heiwa-shop-sake_0_0': [(1, 3)], 'heiwa-shop-bakery_0_0': [(1, 3)],
-              'heiwa-shop-woodcraft_0_0': [(3, 2)], 'ramen-shoyu-front_0_0': [(3, 3)]}
+              'heiwa-shop-woodcraft_0_0': [(3, 2)], 'ramen-shoyu-front_0_0': [(3, 3)],
+              'karuizawa-shop-bakery_0_0': [(1, 3)], 'karuizawa-shop-jam_0_0': [(1, 3)],
+              'karuizawa-shop-lounge_0_0': [(1, 3)]}
 SHOP_PREFIX = 'Shop'        # rooms.Shop<Town><n>
 # The palace's audience hall (issue #215, tools/generate_palace.py): the foot of
 # each end tower of the palace building (`pagoda-floor`, under its `pagoda-roof`)

@@ -338,7 +338,7 @@ west along Canal-side Avenue. Devhouse 2's Damian was there on 13 November 2025 
   south to (-330,90) to stay clear and stay the westernmost map. `kansai.test.js` checks that nothing else
   stands in any of the five.
 
-### Karuizawa: out of Tokyo's west gate, on foot (issues #68, #256; part 1 is #260)
+### Karuizawa: out of Tokyo's west gate, on foot (issues #68, #256; parts 1 and 2 are #260 and #261)
 
 The mountain resort devhouse 2's Damian and Julia went to on 1-2 November 2025. A small place with NO
 station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth district of `TokyoCity`**, a
@@ -346,16 +346,34 @@ station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth
 `(-48, 8)`, west of the `Tokyo` room, entered through Tokyo's west gate (see The west gate in
 `stitched-city.md`: the same generator reopens it).
 
-- **What is there now** (part 1: the room and the gate; room cells): the gate on the east edge, `(47, 34..35)`,
+- **What is there now** (part 1: the room and the gate; part 2: the Ginza; room cells): the gate on the east edge, `(47, 34..35)`,
   on Tokyo's own brick; a two-cell packed-dirt road (`dirt-outside-autotile`) west from it along rows 34-35 to
   column 14, then north up columns 14-15 to row 10; an open clearing at the head of it, `(10..21, 5..11)`;
   solid woods everywhere else, so the gate cells are the only open cells on the room's edge. The woods are
   `tree-green`, Tokyo's tree, until the next part draws the larches. The **fingerpost**
   (`karuizawa-fingerpost_0_0`, 1x2) stands on the verge inside the gate, foot at `(44, 33)`, beside the cell
   the gate lands you on with `?stitch=0`; bumping it reads which way is Tokyo and which Karuizawa
-  (`Interactions.js`, kind `fingerpost`). The falls, the larches, the corn stall and the shopfronts of
-  Kyu-Karuizawa Ginza are the later parts of #256: each adds its sprites to the art tool's `SPRITES` and its
-  pieces to the generator.
+  (`Interactions.js`, kind `fingerpost`). The falls, the larches and the corn stall are the later parts of
+  #256: each adds its sprites to the art tool's `SPRITES` and its pieces to the generator.
+- **Kyu-Karuizawa Ginza** (part 2, issue #261): three shopfronts side by side on the north side of the road
+  in, where it turns north, each 3x4 with its top-left on row 29 and its door in the middle of its bottom
+  row. Every shopfront in the game has its door in its bottom row, so they face south onto the road in, not
+  onto the leg north; the dirt is one row wider there, `(16..28, 33)`, to meet the doors. The gaps between
+  them, `(20 | 24, 29..32)`, are solid. Each door leads into a shop floor (see Shop floors:
+  `generate_houses.py --shops Karuizawa`, which opens the doors the town generator places sealed):
+
+  | front (`karuizawa-shop-*_0_0`) | at | door | room | name | `shopMenu` |
+  |---|---|---|---|---|---|
+  | `bakery`: a half-timbered boulangerie under a steep red-brown gable | `(17, 29)` | `(18, 32)` | `ShopKaruizawa1` | `Bakery · Karuizawa` | `bakery` |
+  | `jam`: the jam and souvenir shop, white clapboard under a green roof | `(21, 29)` | `(22, 32)` | `ShopKaruizawa2` | `Souvenirs · Karuizawa` | `souvenirs` |
+  | `lounge`: the cocktail lounge, dark boards over a stone dado | `(25, 29)` | `(26, 32)` | `ShopKaruizawa3` | `Lounge · Karuizawa` | `lounge` |
+
+  The lounge's list is its own row of `Shop.VENUES` (LOUNGE: Highball, Vodka Redbull, Nama Beer; see Shop).
+  Each front's lit window and door are glow spots in its `spriteMetadata` (`GLOW` in the art tool), so the
+  street is lit at night. Nothing else is built: no sealed ordinary building, no bin. Keep the doors and the
+  cells in front of them, `(18 | 22 | 26, 32..33)`, free of NPCs and blog spots: somebody standing there
+  seals that shop on the next `generate_houses.py` run (`tools/tests/karuizawa.test.js` holds it). Moving
+  the Ginza is `GINZA_Y`, the three columns of `GINZA` and the widened-dirt rectangle in the generator.
 - **No track.** The room has no `train-track*` tile and must not get one: the city's ambient train runs on
   the topmost track row of the whole stitched room, and the Palace line's cutting passes under Karuizawa
   three rows south of its last row.
@@ -367,9 +385,12 @@ station, walked to from its town like Shirakawa-go and Toyama: it is the **fifth
 - **Blog pipeline**: one district, `larch-road` (`tools/districts.py`), and one named spot, `the road from
   Tokyo` (beside the fingerpost; `LANDMARKS` in `tools/blog_to_npc.py`, `rooms:`-scoped). No placement has
   been re-homed there yet.
-- **Build order**: `generate_karuizawa_art.py`, `generate_karuizawa.py`, `districts.py`,
-  `config_to_tiled.py Karuizawa Tokyo`, `sync_cities.py`, `make_worldmap.py`, then
-  `play.js lint Karuizawa Tokyo TokyoCity`. Both tools are in `check_generators.py`.
+- **Build order**: `generate_karuizawa_art.py`, `generate_karuizawa.py`,
+  `generate_houses.py --shops Karuizawa`, `districts.py`,
+  `config_to_tiled.py Karuizawa Tokyo ShopKaruizawa1 ShopKaruizawa2 ShopKaruizawa3`, `sync_cities.py`,
+  `make_worldmap.py`, then `play.js lint Karuizawa Tokyo TokyoCity ShopKaruizawa1 ShopKaruizawa2
+  ShopKaruizawa3`. Both tools are in `check_generators.py`, and so is `generate_houses.py`, which rebuilds
+  the three shop floors.
 
 ### Hokkaido: Sapporo and Asahikawa (issue #43)
 
@@ -760,6 +781,9 @@ souvenir shop, crab shop and drugstore are `ShopSapporo1..3`, and Susukino's kar
 **And to Asahikawa** (stage B): Heiwa-dori's sake shop (`Sake bar · Asahikawa`, list `standbar`), bakery
 (`bakery`) and woodcraft shop (`Woodcraft · Asahikawa`, list `souvenirs`) are `ShopAsahikawa1..3`, and ramen
 alley's shoyu counter (`Ramen · Asahikawa`, list `ramen`) is `ShopAsahikawa4`.
+**And to Karuizawa** (issue #261): Kyu-Karuizawa Ginza's bakery (`Bakery · Karuizawa`, list `bakery`), jam
+shop (`Souvenirs · Karuizawa`, list `souvenirs`) and cocktail lounge (`Lounge · Karuizawa`, list `lounge`)
+are `ShopKaruizawa1..3` (see Karuizawa).
 
 - **One layout** (`SHOP`): a white back wall with two posters, two shelves either side against it, seven by five
   cells of floor, a counter with a till, a plant in each front corner, the mat below the middle. All of it is the
@@ -768,7 +792,7 @@ alley's shoyu counter (`Ramen · Asahikawa`, list `ramen`) is `ShopAsahikawa4`.
   `Crab shop · Sapporo`, `Drugstore · Sapporo`, `Karaoke bar · Sapporo` (numbered only where a town has several
   of one type).
 - **It sells**: the room is `interior`, `shopEnabled: false` (not a store: no stamp, no Konbini Pilgrim, the
-  shelves are only to look at) and `shopMenu: souvenirs | crab | drugstore | bar`, so a bump on the counter opens that
+  shelves are only to look at) and `shopMenu: souvenirs | crab | drugstore | bar | standbar | bakery | ramen | lounge`, so a bump on the counter opens that
   row of `Shop.VENUES` - two or three things off the existing catalogue (see Shop). The room's `shop` marker is
   `{host, door, type}`.
 - A new shopfront elsewhere is a row in `roomgen.SHOP_DOORS` and one in `SHOP_TYPES` (and a `Shop.VENUES` row

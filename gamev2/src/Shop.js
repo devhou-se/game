@@ -959,6 +959,9 @@ Shop.VENUES = {
     // (`pub` above is the airport's bar; this one is `taproom` so each keeps its own title.)
     taproom: { title: 'THE PUB',         sells: i => i.where === 'izakaya' },
     tasting: { title: 'TASTING BAR',     sells: i => i.id === 'highball' },
+    // the cocktail lounge of Kyu-Karuizawa Ginza (issue #261; a Shop<Town><n> room's `shopMenu`): three
+    // drinks off the catalogue, over the counter; no stamp, no fish bought
+    lounge:  { title: 'LOUNGE',          sells: i => ['highball', 'vodka-redbull', 'nama-beer'].includes(i.id) },
 };
 
 /**

@@ -1,5 +1,7 @@
 // Karuizawa (issues #68, #256; #260 is part 1): the fifth district of the stitched TokyoCity, out of
 // Tokyo's west gate. tools/generate_karuizawa.py builds the room and reopens the gate e3cb4d0d fenced.
+// Part 2 (#261) is Kyu-Karuizawa Ginza: three shopfronts where the road in turns north, each with a shop
+// floor behind its door (tools/generate_houses.py --shops Karuizawa).
 module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWith }) => {
     const cfg = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8'));
     const name = (t) => (typeof t === 'number' ? cfg.tilePalette[t] : t) || '';
@@ -41,14 +43,16 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         assert.deepStrictEqual(plain(P.arrival(config, KEY)), { room: KEY, x: 44, y: 34 });
         // no track tile: the city's ambient train runs on the topmost track row of the whole city room
         assert.deepStrictEqual(tilesOf(KEY).filter(([k]) => k.startsWith('train-track')), []);
-        assert.deepStrictEqual(room.transporters.map((t) => t.targetRoom), [HOST, HOST], 'the gate is the only way in or out');
+        assert.deepStrictEqual(room.transporters.map((t) => t.targetRoom), [HOST, HOST, 'ShopKaruizawa1', 'ShopKaruizawa2', 'ShopKaruizawa3'],
+            'the gate and the three shop doors are the only ways in or out');
         // one generator builds the room and owns the gate cells of the ported Tokyo map
         const py = fs.readFileSync(path.join(GV2, 'tools', 'check_generators.py'), 'utf8');
         assert.ok(/GENERATORS \+= \['generate_karuizawa'\]/.test(py) && /ART_TOOLS \+= \['generate_karuizawa_art'\]/.test(py));
     });
 
     test('Karuizawa: the gate is Tokyo\'s west gate, open both ways on the same brick, and the only open cells on the room\'s edge (#260)', () => {
-        assert.deepStrictEqual(cfg.rooms[KEY].transporters, [seam(W - 1, 34, HOST, 3, 41), seam(W - 1, 35, HOST, 3, 42)]);
+        const gate = cfg.rooms[KEY].transporters.filter((t) => t.targetRoom === HOST);
+        assert.deepStrictEqual(gate, [seam(W - 1, 34, HOST, 3, 41), seam(W - 1, 35, HOST, 3, 42)]);
         assert.deepStrictEqual(cfg.rooms[HOST].transporters.filter((t) => t.targetRoom === KEY),
             [seam(0, 41, KEY, W - 4, 34), seam(0, 42, KEY, W - 4, 35)]);
         const floor = (room, x, y) => name(layer(room, 'Floor')[`${x},${y}`]);
@@ -70,7 +74,7 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
             assert.ok(!solid(KEY, x, y), `the road is blocked at ${x},${y}`);
         }
         // from the gate: plenty of room to walk in, and the only edge cells that can be reached are the gate's
-        const todo = cfg.rooms[KEY].transporters.map((t) => [t.gridX, t.gridY]);
+        const todo = gate.map((t) => [t.gridX, t.gridY]);
         const seen = new Set(todo.map((c) => c.join()));
         while (todo.length) {
             const [x, y] = todo.pop();
@@ -152,5 +156,92 @@ module.exports = ({ test, assert, fs, path, GV2, game, load, realConfig, worldWi
         const spots = fs.readFileSync(path.join(GV2, 'tools', 'blog_to_npc.py'), 'utf8');
         assert.ok(spots.includes("('karuizawa-fingerpost_', 'the road from Tokyo', (-1, 1), {'rooms': ('Karuizawa',)})"));
         assert.deepStrictEqual(cfg.districts[KEY].map((d) => [d.key, d.spots]), [['larch-road', ['the road from Tokyo']]]);
+    });
+
+    test('Kyu-Karuizawa Ginza: a bakery, a souvenir shop and a lounge you can enter, each with its list (#261)', () => {
+        // the fronts: three of the room's own, side by side on the north side of the road in, lit at night
+        const fronts = [['karuizawa-shop-bakery_0_0', 17], ['karuizawa-shop-jam_0_0', 21], ['karuizawa-shop-lounge_0_0', 25]];
+        assert.deepStrictEqual(tilesOf(KEY).filter(([k]) => /^karuizawa-shop-/.test(k)), fronts.map(([key, x]) => [key, `${x},29`, 'Collidables']));
+        for (const [key] of fronts) {
+            const meta = cfg.spriteMetadata[key];
+            assert.deepStrictEqual([meta.anchorX, meta.anchorY, meta.frameCount], [32 / 192, 32 / 256, 1], `${key}: three cells wide, four tall`);
+            assert.ok(Array.isArray(meta.glow) && meta.glow.length, `${key}: no glow spots for the night`);
+            assert.strictEqual(cfg.tileNames[key], key.replace(/_0_0$/, ''));
+        }
+        // only real places: no sealed ordinary building stands in the room
+        assert.deepStrictEqual(tilesOf(KEY).filter(([k]) => /^(house-|machiya-|highrise-|midrise-|discount-store|seven-eleven)/.test(k)), []);
+        // the cells the gate reaches on foot
+        const seen = new Set(), todo = [[W - 1, 34]];
+        while (todo.length) {
+            const [x, y] = todo.pop();
+            if (x < 0 || y < 0 || x >= W || y >= H || solid(KEY, x, y) || seen.has(`${x},${y}`)) continue;
+            seen.add(`${x},${y}`);
+            todo.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        }
+        if (game('typeof Interactions') === 'undefined') load('utils/Interactions.js');
+        const Interactions = game('Interactions'), venues = game('Shop.VENUES'), items = Array.from(game('Shop.DEFAULT_ITEMS'));
+        const shops = { ShopKaruizawa1: [18, 'Bakery · Karuizawa', 'bakery'], ShopKaruizawa2: [22, 'Souvenirs · Karuizawa', 'souvenirs'],
+            ShopKaruizawa3: [26, 'Lounge · Karuizawa', 'lounge'] };
+        assert.deepStrictEqual(Object.keys(cfg.rooms).filter((k) => /^ShopKaruizawa/.test(k)).sort(), Object.keys(shops));
+        const stood = new Set(cfg.rooms[KEY].npcs.flatMap((n) => (n.states || [n]).map((st) => `${st.gridX},${st.gridY}`)));
+        for (const [key, [x, title, menu]] of Object.entries(shops)) {
+            const r = cfg.rooms[key], d = cfg.rooms[KEY].transporters.find((t) => t.gridX === x && t.gridY === 32);
+            // the door is the one open cell of the front's 3x4 footprint
+            for (let fx = x - 1; fx <= x + 1; fx++) {
+                for (let fy = 29; fy <= 32; fy++) assert.strictEqual(solid(KEY, fx, fy), !(fx === x && fy === 32), `${key}: the front's cell ${fx},${fy}`);
+            }
+            // the door and the mat lead to each other; you come back out on the cell in front of the door
+            assert.ok(d && d.targetRoom === key && d.hidden, `${key}: its door at ${x},32`);
+            assert.deepStrictEqual(r.transporters.map((t) => [t.targetRoom, t.targetX, t.targetY]), [[KEY, x, 33]], key);
+            assert.deepStrictEqual([d.targetX, d.targetY], [r.transporters[0].gridX, r.transporters[0].gridY - 1], `${key}: you land one above the way out`);
+            assert.ok(name(layer(KEY, 'Floor')[`${x},33`]).startsWith('dirt-outside-autotile_') && seen.has(`${x},33`), `${key}: the street reaches its door`);
+            assert.ok(!stood.has(`${x},32`) && !stood.has(`${x},33`), `${key}: somebody stands in its doorway`);
+            // the room: a shop floor named by what the front sells, whose counter opens that list
+            assert.strictEqual(r.name, title);
+            assert.ok(r.interior === true && r.shopEnabled === false && r.shopMenu === menu, key);
+            assert.deepStrictEqual(r.shop, { host: KEY, door: [x, 32], type: menu });
+            assert.deepStrictEqual({ ...Interactions.match('office-counter2_0_0', r, venues) }, { kind: menu, group: 'shop', footprint: true },
+                `${key}: a bump on the counter opens its list`);
+        }
+        // the lists: the bakery's and the souvenir shop's are the ones other towns have, the lounge's is new
+        const sells = (kind) => items.filter((i) => venues[kind].sells(i)).map((i) => i.id).sort();
+        assert.deepStrictEqual(sells('bakery'), ['canned-coffee', 'melon-pan', 'nikuman']);
+        assert.deepStrictEqual(sells('souvenirs'), ['green-tea', 'melon-pan', 'ramune']);
+        assert.deepStrictEqual(sells('lounge'), ['highball', 'nama-beer', 'vodka-redbull']);
+        assert.strictEqual(game('Shop.titleFor')('lounge', cfg.rooms.ShopKaruizawa3), 'LOUNGE');
+        assert.ok(!venues.lounge.buys && !venues.lounge.grills, 'the lounge buys no fish and grills none');
+        // walking it: in from Tokyo, into each shop through its door and out again onto the street
+        for (const stitch of [true, false]) {
+            const { world } = worldWith(stitch);
+            const rm = world.roomManager, tag = stitch ? 'stitched' : '?stitch=0';
+            const here = () => [world.here().room, world.here().x, world.here().y];
+            const walk = (room, x, y) => {
+                const to = rm.resolve(room, x, y);
+                const route = world.path(to.x, to.y);
+                assert.ok(route, `${tag}: no way on foot to ${room} ${x},${y} from ${here()}`);
+                for (const dir of route) assert.ok(world.step(dir).moved, `${tag}: blocked on the way to ${room} ${x},${y}`);
+                assert.deepStrictEqual(here(), [room, x, y], tag);
+            };
+            world.enter(HOST, 6, 41);
+            if (!stitch) {
+                walk(HOST, 1, 41);
+                assert.ok(world.step('w').transported, `${tag}: the gate cell is the door`);
+            }
+            for (const [key, [x]] of Object.entries(shops)) {
+                walk(KEY, x, 33);
+                const into = world.step('n');
+                assert.ok(into.moved && into.transported, `${tag}: ${key}'s door does not take you in`);
+                assert.deepStrictEqual(here(), [key, 9, 9], tag);
+                const out = world.step('s');
+                assert.ok(out.moved && out.transported, `${tag}: ${key}'s mat does not take you out`);
+                assert.deepStrictEqual(here(), [KEY, x, 33], tag);
+            }
+        }
+        // the two tables the shop generator opens the doors from
+        const doors = fs.readFileSync(path.join(GV2, 'tools', 'roomgen.py'), 'utf8'), types = fs.readFileSync(path.join(GV2, 'tools', 'generate_houses.py'), 'utf8');
+        for (const [key] of fronts) {
+            assert.ok(new RegExp(`'${key}': \\[\\(1, 3\\)\\]`).test(doors), `roomgen.SHOP_DOORS has no ${key}`);
+            assert.ok(new RegExp(`'${key.replace(/_0_0$/, '')}': \\('`).test(types), `generate_houses.SHOP_TYPES has no ${key}`);
+        }
     });
 };
