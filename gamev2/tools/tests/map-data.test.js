@@ -1,4 +1,4 @@
-module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith, require }) => {
+module.exports = ({ test, assert, fs, path, GV2, load, game, realConfig, worldWith, require }) => {
     test('every room has a display name for the HUD, and no interior shows its key', () => {
         const rooms = JSON.parse(fs.readFileSync(path.join(GV2, 'config.json'), 'utf8')).rooms;
         for (const [key, room] of Object.entries(rooms)) {
@@ -210,6 +210,49 @@ module.exports = ({ test, assert, fs, path, GV2, load, game, worldWith, require 
             if (a >= b || (inCity.has(a) && inCity.has(b))) continue;
             const A = at[a], B = at[b];
             assert.ok(A.x + A.width <= B.x || B.x + B.width <= A.x || A.y + A.height <= B.y || B.y + B.height <= A.y, `${a} and ${b} overlap`);
+        }
+    });
+
+    test('Tokyo Station is solid where it stands and no further: the paving in front of its wings is walked on (#259)', () => {
+        // the sprite is 41x8 cells, but only the two pavilions and the entrance come down into its bottom row:
+        // the wings end in the row above. The whole rectangle was solid, so a player walking north stopped a
+        // cell and a half short of a wing with nothing in the way. The forecourt gardens, lamps and vending
+        // machine stand in that bottom row too and stay solid
+        const png = require('./png');
+        const KEY = 'tokyo-station_0_0', G = 64, room = realConfig().rooms.Palace;
+        const at = Object.entries(room.layers.find((l) => l.name === 'Collidables').tiles).find(([, k]) => k === KEY)[0];
+        const [sx, sy] = at.split(',').map(Number);
+        const { width, height, data } = png.decode(fs.readFileSync(path.join(GV2, 'assets', 'sprites', KEY + '.png')));
+        assert.deepStrictEqual([sx, sy, width / G, height / G], [7, 2, 41, 8]);
+        const art = (x, y) => {
+            for (let py = (y - sy) * G; py < (y - sy + 1) * G; py++) for (let px = (x - sx) * G; px < (x - sx + 1) * G; px++) {
+                if (data[(py * width + px) * 4 + 3]) return true;
+            }
+            return false;
+        };
+        const solid = new Set(room.layers.filter((l) => l.collision).flatMap((l) => Object.keys(l.tiles)));
+        // something else standing in the cell: a shrub, a lamp's top, the vending machine
+        const other = (xy) => room.layers.some((l) => !l.collision && l.z >= 2 && l.tiles[xy] && l.tiles[xy] !== KEY);
+        const door = room.transporters.find((t) => t.targetRoom === 'TokyoStation');
+        assert.deepStrictEqual([door.gridX, door.gridY], [27, 9]);
+        const bottom = sy + height / G - 1, free = [], bad = [];
+        for (let y = sy; y <= bottom; y++) for (let x = sx; x < sx + width / G; x++) {
+            const xy = `${x},${y}`;
+            if (!solid.has(xy)) {
+                free.push(xy);
+                if (art(x, y) && xy !== '27,9') bad.push(xy + ' is open under the station');
+            } else if (y === bottom && !art(x, y) && !other(xy)) bad.push(xy + ' is solid with nothing standing on it');
+        }
+        assert.deepStrictEqual(bad, []);
+        // the west wing either side of its pavilion, the door, and the same on the east
+        const cols = [7, 8, 9, 15, 16, 17, 18, 19, 20, 21, 22, 27, 32, 33, 34, 35, 36, 37, 38, 39, 45, 46, 47];
+        assert.deepStrictEqual(free, cols.map((x) => `${x},9`));
+        for (const xy of ['23,9', '24,9', '25,9', '29,9', '30,9', '31,9', '29,10']) assert.ok(solid.has(xy), xy + ': the forecourt stays solid');
+        // ...and a player gets onto every one of them, in the city and with the districts apart (?stitch=0)
+        for (const stitch of [true, false]) {
+            const world = worldWith(stitch).world;
+            const reach = new Set(world.reachByRoom(world.survey(null, { npcs: false }).reach).Palace);
+            assert.deepStrictEqual(free.filter((xy) => !reach.has(xy)), [], stitch ? 'stitched' : 'not stitched');
         }
     });
 };

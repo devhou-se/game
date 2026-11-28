@@ -36,6 +36,16 @@ solid at the base, walk-behind above), each wrapped in a prefab so generators ca
 | Gassho farmhouses, the suspension bridge, the viewpoint, the peaks | Shirakawago | `shirakawa-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 | Glass Art Museum, tram and stop, black-ramen shop, port observation tower | Toyama | `toyama-*_0_0` | shaded pixel art drawn by `tools/generate_hokuriku_art.py` |
 
+- **Tokyo Station's footprint** (issue #259): the sprite is 41x8 cells at Palace (7,2), but only its two
+  pavilions (columns 10..14 and 40..44) and the entrance (26..28) come down into its bottom row, row 9; the
+  wings end in row 8. So Palace's `Colliders` are solid over rows 2..8 and, in row 9, only under those and
+  under the forecourt (the gardens, lamps and vending machine at columns 23..31, which show where the sprite
+  is clear); the door is (27,9). The rest of row 9 is paving the player walks on, drawn in front of the
+  sprite (a character in its bottom row sorts past its feet). The whole rectangle used to be solid, and a
+  player walking north stopped a cell and a half short of a wing with nothing in the way. Row 8 stays solid
+  though the foot of it is paving: someone standing there would be drawn under the wall. A redrawn station keeps
+  this ground line (#70) or moves the colliders with it: `map-data.test.js` fails on a solid bottom-row cell
+  with nothing standing on it and on an open cell under the art.
 - **Osaka** (`tools/generate_osaka.py`, 50x46) is a generated town reachable only by train:
   station house -> arch over the main street -> the canal bridge -> Canal-side Avenue -> Tsutenkaku on its
   plaza, with the ferris wheel on the north bank (a gondola at its foot is boarded for one turn and the view:
